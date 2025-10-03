@@ -79,7 +79,6 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Space Grotesk', sans-serif;
-    cursor: url('/magic-wand-cursor.png') 16 16, auto;
   }
   
   /* Custom scrollbar */

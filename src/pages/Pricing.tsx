@@ -94,7 +94,7 @@ const plans = [
     ],
     popular: false,
     badge: "ENTERPRISE POWER",
-    color: "bg-neon-yellow",
+    color: "bg-neon-red",
     description: "Enterprise power at freelancer prices. 75,000 tokens for just $39.99/mo—competitors charge $99+ for less.",
     savings: "Save $60-85/mo vs competitors",
   },

@@ -130,7 +130,7 @@ const Pricing = () => {
           <div className="text-center space-y-4 mb-8">
             <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-green border-3 border-black brutal-shadow">
-                <span className="text-xs font-black">MOST AFFORDABLE IN MARKET</span>
+                <span className="text-xs font-black">AFFORDABLE & COMPETITIVE</span>
               </div>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-yellow border-3 border-black brutal-shadow">
                 <span className="text-xs font-black">SAVE 50–80% VS COMPETITORS</span>
@@ -280,7 +280,7 @@ const Pricing = () => {
                 <h3 className="text-3xl md:text-4xl font-black text-white">Join 10,000+ Creators Who Switched to Save Money</h3>
                 <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
                   <div className="px-6 py-3 bg-white/20 backdrop-blur rounded-full border-2 border-white">
-                    <span className="text-white font-black text-sm">LOWEST PRICES GUARANTEED</span>
+                    <span className="text-white font-black text-sm">COMPETITIVE PRICES</span>
                   </div>
                   <div className="px-6 py-3 bg-white/20 backdrop-blur rounded-full border-2 border-white">
                     <span className="text-white font-black text-sm">NO HIDDEN FEES</span>

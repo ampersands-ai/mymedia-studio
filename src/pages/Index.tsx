@@ -21,7 +21,7 @@ const Index = () => {
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "Artifio.ai",
-      "description": "The most affordable AI content creation platform. Create videos, images, music & text for 50-80% less than competitors. Plans from $3.99/mo.",
+      "description": "An affordable AI content creation platform. Create videos, images, music & text for 50-80% less than competitors. Plans from $3.99/mo.",
       "url": "https://artifio.ai",
       "applicationCategory": "MultimediaApplication",
       "slogan": "Professional AI Content. Student-Friendly Prices.",
@@ -45,7 +45,7 @@ const Index = () => {
     document.head.appendChild(script);
 
     // Update meta tags
-    document.title = "Artifio.ai - Most Affordable AI Content Creation Platform";
+    document.title = "Artifio.ai - Affordable AI Content Creation Platform";
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute('content', 'Create videos, images, music & text with AI for 50-80% less than competitors. Plans from $3.99/mo. Start free with 500 tokens.');
@@ -172,7 +172,7 @@ const Index = () => {
               </div>
             </div>
             <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight px-4">
-              <span className="gradient-text">The World's Most Affordable</span>
+              <span className="gradient-text">An Affordable</span>
               <br />
               <span className="block mt-2">AI Creation Platform</span>
             </h2>
@@ -323,7 +323,7 @@ const Index = () => {
             
             <div className="text-center mt-8">
               <p className="text-sm font-medium text-foreground/60 px-4">
-                💰 From $0.00053 per token—the lowest in the industry
+                💰 From $0.00053 per token—highly competitive rates
               </p>
             </div>
           </div>

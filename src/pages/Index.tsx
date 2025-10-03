@@ -76,7 +76,7 @@ const Index = () => {
           <div className="max-w-5xl mx-auto text-center space-y-8">
             <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-neon-yellow border-4 border-black brutal-shadow mb-4">
               <Sparkles className="h-5 w-5" />
-              <span className="text-sm font-black">POWERED BY KIE.AI MODELS</span>
+              <span className="text-sm font-black">POWERED BY ADVANCED AI</span>
             </div>
             <h2 className="text-7xl md:text-8xl font-black leading-tight">
               <span className="gradient-text">ARTIFIO</span>

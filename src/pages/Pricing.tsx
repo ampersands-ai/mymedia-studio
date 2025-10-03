@@ -24,7 +24,7 @@ const plans = [
   },
   {
     name: "Explorer",
-    monthlyPrice: "$5.32",
+    monthlyPrice: "$4.99",
     annualPrice: "$3.99",
     period: "/mo",
     tokens: "4,000",
@@ -44,7 +44,7 @@ const plans = [
   },
   {
     name: "Creators",
-    monthlyPrice: "$10.65",
+    monthlyPrice: "$9.99",
     annualPrice: "$7.99",
     period: "/mo",
     tokens: "10,000",
@@ -64,7 +64,7 @@ const plans = [
   },
   {
     name: "Professional",
-    monthlyPrice: "$26.65",
+    monthlyPrice: "$24.99",
     annualPrice: "$19.99",
     period: "/mo",
     tokens: "32,500",
@@ -79,13 +79,13 @@ const plans = [
     ],
     popular: false,
     color: "bg-primary",
-    badge: "BEST FOR BUSINESS",
+    badge: "FOR CREATORS",
     description: "All the tools you need for less than $20/mo. 32,500 tokens + unlimited image & text. Save $100s every year.",
     savings: "Save $80-105/mo vs competitors",
   },
   {
     name: "Ultimate",
-    monthlyPrice: "$53.32",
+    monthlyPrice: "$49.99",
     annualPrice: "$39.99",
     period: "/mo",
     tokens: "75,000",
@@ -135,35 +135,6 @@ const Pricing = () => {
 
         {/* Pricing Content */}
         <main className="container mx-auto px-4 py-16">
-          {/* Billing Toggle */}
-          <div className="flex justify-center mb-8">
-            <div className="inline-flex items-center gap-4 px-6 py-3 rounded-full bg-card border-3 border-black brutal-shadow">
-              <button
-                onClick={() => setIsAnnual(false)}
-                className={`px-4 py-2 rounded-full font-black transition-all ${
-                  !isAnnual
-                    ? "bg-primary text-white"
-                    : "text-foreground/60 hover:text-foreground"
-                }`}
-              >
-                MONTHLY
-              </button>
-              <button
-                onClick={() => setIsAnnual(true)}
-                className={`px-4 py-2 rounded-full font-black transition-all ${
-                  isAnnual
-                    ? "bg-primary text-white"
-                    : "text-foreground/60 hover:text-foreground"
-                }`}
-              >
-                ANNUAL
-                <span className="ml-2 text-xs px-2 py-1 bg-accent text-accent-foreground rounded-full">
-                  SAVE 25%
-                </span>
-              </button>
-            </div>
-          </div>
-
           <div className="text-center space-y-4 mb-8">
             <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-blue border-3 border-black brutal-shadow">
@@ -232,6 +203,35 @@ const Pricing = () => {
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Billing Toggle */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex items-center gap-4 px-6 py-3 rounded-full bg-card border-3 border-black brutal-shadow">
+              <button
+                onClick={() => setIsAnnual(false)}
+                className={`px-4 py-2 rounded-full font-black transition-all ${
+                  !isAnnual
+                    ? "bg-primary text-white"
+                    : "text-foreground/60 hover:text-foreground"
+                }`}
+              >
+                MONTHLY
+              </button>
+              <button
+                onClick={() => setIsAnnual(true)}
+                className={`px-4 py-2 rounded-full font-black transition-all ${
+                  isAnnual
+                    ? "bg-primary text-white"
+                    : "text-foreground/60 hover:text-foreground"
+                }`}
+              >
+                ANNUAL
+                <span className="ml-2 text-xs px-2 py-1 bg-accent text-accent-foreground rounded-full">
+                  SAVE 25%
+                </span>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">

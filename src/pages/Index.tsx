@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Video, Image, Music, MessageSquare, Sparkles, Zap, Shield } from "lucide-react";
+import { Video, Image, Music, MessageSquare, Zap, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import logo from "@/assets/logo.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ const Index = () => {
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-6 w-6 text-primary" />
+                <img src={logo} alt="Artifio Logo" className="h-8 w-8" />
                 <h1 className="text-2xl font-bold glow-text">Artifio.ai</h1>
               </div>
               <div className="flex items-center gap-4">
@@ -64,7 +65,7 @@ const Index = () => {
         <section className="container mx-auto px-4 py-24">
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
-              <Sparkles className="h-4 w-4 text-primary" />
+              <img src={logo} alt="Artifio" className="h-5 w-5" />
               <span className="text-sm font-medium">Powered by Advanced AI</span>
             </div>
             <h2 className="text-6xl md:text-7xl font-bold leading-tight">
@@ -154,8 +155,8 @@ const Index = () => {
               </div>
               
               <div className="text-center space-y-4">
-                <div className="h-16 w-16 rounded-full bg-gradient-primary flex items-center justify-center mx-auto">
-                  <Sparkles className="h-8 w-8" />
+                <div className="h-16 w-16 rounded-full bg-gradient-primary flex items-center justify-center mx-auto p-3">
+                  <img src={logo} alt="Premium" className="h-full w-full object-contain" />
                 </div>
                 <h4 className="text-2xl font-semibold">Premium Quality</h4>
                 <p className="text-muted-foreground">
@@ -190,7 +191,7 @@ const Index = () => {
           <div className="container mx-auto px-4 py-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
+                <img src={logo} alt="Artifio" className="h-6 w-6" />
                 <span className="font-semibold">Artifio.ai</span>
               </div>
               <p className="text-sm text-muted-foreground">

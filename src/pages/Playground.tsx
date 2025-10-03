@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Video, Image, Music, MessageSquare, Coins, LogOut } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const Playground = () => {
   const navigate = useNavigate();
@@ -65,6 +66,7 @@ const Playground = () => {
         <header className="border-b border-border/50 backdrop-blur-xl bg-background/50">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
+              <img src={logo} alt="Artifio Logo" className="h-8 w-8" />
               <h1 className="text-2xl font-bold glow-text">Artifio.ai</h1>
             </div>
             <div className="flex items-center gap-4">

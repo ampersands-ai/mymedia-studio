@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Sparkles } from "lucide-react";
+import { Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import logo from "@/assets/logo.png";
 
 const plans = [
   {
@@ -91,7 +92,7 @@ const Pricing = () => {
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-6 w-6 text-primary" />
+                <img src={logo} alt="Artifio Logo" className="h-8 w-8" />
                 <h1 className="text-2xl font-bold glow-text">Artifio.ai</h1>
               </div>
               <Button variant="ghost" onClick={() => navigate("/")}>

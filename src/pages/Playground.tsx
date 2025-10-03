@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Video, Image, Music, MessageSquare, Coins, LogOut } from "lucide-react";
-import logo from "@/assets/logo.png";
+import { Video, Image, Music, MessageSquare, Coins, LogOut, Sparkles } from "lucide-react";
 
 const Playground = () => {
   const navigate = useNavigate();
@@ -66,7 +65,9 @@ const Playground = () => {
         <header className="border-b-4 border-black bg-card">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={logo} alt="Artifio Logo" className="h-10 w-10" />
+              <div className="h-10 w-10 rounded-xl bg-gradient-primary border-3 border-black brutal-shadow flex items-center justify-center">
+                <Sparkles className="h-6 w-6 text-white" />
+              </div>
               <h1 className="text-3xl font-black gradient-text">ARTIFIO.AI</h1>
             </div>
             <div className="flex items-center gap-4">

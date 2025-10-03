@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Video, Image, Music, MessageSquare, Zap, Shield } from "lucide-react";
+import { Video, Image, Music, MessageSquare, Zap, Shield, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import logo from "@/assets/logo.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -11,26 +10,30 @@ const Index = () => {
     {
       icon: Video,
       title: "AI Video Generation",
-      description: "Transform text into stunning video content in seconds",
+      description: "Veo 3, Veo 3 Fast, Runway, Luma - Create stunning videos with synchronized audio",
       color: "bg-neon-blue",
+      models: "Veo 3 • Runway • Luma",
     },
     {
       icon: Image,
       title: "Image Creation",
-      description: "Generate high-quality images from your imagination",
+      description: "GPT-Image-1, Midjourney V7, Flux - Generate high-quality images from text or images",
       color: "bg-neon-pink",
+      models: "4o Image • Midjourney • Flux",
     },
     {
       icon: Music,
-      title: "Music Composition",
-      description: "Create original soundtracks and audio with AI",
+      title: "Music & Audio",
+      description: "Suno API - Create original soundtracks, convert speech to text, and generate voice",
       color: "bg-neon-yellow",
+      models: "Suno • TTS • STT",
     },
     {
       icon: MessageSquare,
-      title: "Smart Chat",
-      description: "Engage with advanced AI for creative assistance",
+      title: "Multi-Modal AI",
+      description: "Text to Video, Image to Video, Image Editing, and advanced AI capabilities",
       color: "bg-primary",
+      models: "All in One API",
     },
   ];
 
@@ -44,7 +47,9 @@ const Index = () => {
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <img src={logo} alt="Artifio Logo" className="h-10 w-10" />
+                <div className="h-10 w-10 rounded-xl bg-gradient-primary border-3 border-black brutal-shadow flex items-center justify-center">
+                  <Sparkles className="h-6 w-6 text-white" />
+                </div>
                 <h1 className="text-3xl font-black gradient-text">ARTIFIO.AI</h1>
               </div>
               <div className="flex items-center gap-3">
@@ -70,8 +75,8 @@ const Index = () => {
         <section className="container mx-auto px-4 py-20">
           <div className="max-w-5xl mx-auto text-center space-y-8">
             <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-neon-yellow border-4 border-black brutal-shadow mb-4">
-              <img src={logo} alt="Artifio" className="h-6 w-6" />
-              <span className="text-sm font-black">POWERED BY ADVANCED AI</span>
+              <Sparkles className="h-5 w-5" />
+              <span className="text-sm font-black">POWERED BY KIE.AI MODELS</span>
             </div>
             <h2 className="text-7xl md:text-8xl font-black leading-tight">
               <span className="gradient-text">ARTIFIO</span>
@@ -79,7 +84,7 @@ const Index = () => {
               <span className="block mt-2">"Got an idea?<br/>Just text me."</span>
             </h2>
             <p className="text-xl md:text-2xl text-foreground/80 max-w-3xl mx-auto font-medium">
-              Your AI buddy that turns your thoughts into 🔥 text, 🎨 images, 🎵 audio, or 🎬 video — instantly.
+              Access Veo 3, Runway, Midjourney, GPT-Image-1, Suno, and more—all in one platform. Create 🎬 videos, 🎨 images, 🎵 music instantly.
             </p>
             <div className="flex items-center justify-center gap-4 pt-4">
               <Button
@@ -101,12 +106,12 @@ const Index = () => {
             </div>
             <div className="flex items-center justify-center gap-8 pt-8">
               <div className="brutal-card-sm px-6 py-4 bg-neon-blue">
-                <div className="text-3xl font-black">1000+</div>
-                <div className="text-sm font-bold">HAPPY USERS</div>
+                <div className="text-3xl font-black">10,000+</div>
+                <div className="text-sm font-bold">DAILY CALLS</div>
               </div>
               <div className="brutal-card-sm px-6 py-4 bg-primary">
-                <div className="text-3xl font-black text-white">INSTANT</div>
-                <div className="text-sm font-bold text-white">AI REPLIES</div>
+                <div className="text-3xl font-black text-white">99.9%</div>
+                <div className="text-sm font-bold text-white">UPTIME</div>
               </div>
             </div>
             <p className="text-base font-bold pt-4">
@@ -118,9 +123,9 @@ const Index = () => {
         {/* Features Grid */}
         <section className="container mx-auto px-4 py-20">
           <div className="text-center mb-16">
-            <h3 className="text-5xl font-black mb-4">POWERFUL AI TOOLS</h3>
+            <h3 className="text-5xl font-black mb-4">AVAILABLE AI MODELS</h3>
             <p className="text-xl text-foreground/80 font-medium">
-              Everything you need to bring your creative vision to life
+              Access the best AI models through one unified API
             </p>
           </div>
           
@@ -135,6 +140,9 @@ const Index = () => {
                     </div>
                     <h4 className="text-2xl font-black">{feature.title}</h4>
                     <p className="text-foreground/80 font-medium">{feature.description}</p>
+                    <div className="pt-2 text-xs font-black text-foreground/60 uppercase">
+                      {feature.models}
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -156,7 +164,7 @@ const Index = () => {
                 </div>
                 <h4 className="text-3xl font-black">LIGHTNING FAST</h4>
                 <p className="text-foreground/80 font-medium text-lg">
-                  Generate content in seconds with our optimized AI infrastructure
+                  Average 25.2s response time with 99.9% uptime guarantee
                 </p>
               </div>
               
@@ -164,19 +172,19 @@ const Index = () => {
                 <div className="h-20 w-20 rounded-full bg-neon-blue border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
                   <Shield className="h-10 w-10 text-white" />
                 </div>
-                <h4 className="text-3xl font-black">SECURE & PRIVATE</h4>
+                <h4 className="text-3xl font-black">SECURE & RELIABLE</h4>
                 <p className="text-foreground/80 font-medium text-lg">
-                  Your data is encrypted and never shared. Full privacy guaranteed
+                  #1 data security, 24/7 support, and enterprise-grade infrastructure
                 </p>
               </div>
               
               <div className="text-center space-y-4">
-                <div className="h-20 w-20 rounded-full bg-neon-pink border-4 border-black flex items-center justify-center mx-auto brutal-shadow p-3">
-                  <img src={logo} alt="Premium" className="h-full w-full object-contain" />
+                <div className="h-20 w-20 rounded-full bg-neon-pink border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
+                  <Sparkles className="h-10 w-10 text-white" />
                 </div>
-                <h4 className="text-3xl font-black">PREMIUM QUALITY</h4>
+                <h4 className="text-3xl font-black">ALL-IN-ONE API</h4>
                 <p className="text-foreground/80 font-medium text-lg">
-                  Professional-grade outputs powered by state-of-the-art AI models
+                  70% cheaper than Fal & Replicate—access all top models in one place
                 </p>
               </div>
             </div>
@@ -208,7 +216,9 @@ const Index = () => {
           <div className="container mx-auto px-4 py-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <img src={logo} alt="Artifio" className="h-8 w-8" />
+                <div className="h-8 w-8 rounded-lg bg-gradient-primary border-2 border-black brutal-shadow flex items-center justify-center">
+                  <Sparkles className="h-5 w-5 text-white" />
+                </div>
                 <span className="font-black text-xl">ARTIFIO.AI</span>
               </div>
               <p className="text-sm font-medium text-foreground/60">

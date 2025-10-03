@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import logo from "@/assets/logo.png";
+import { Sparkles } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -58,7 +58,9 @@ const Auth = () => {
       <Card className="w-full max-w-md relative z-10">
         <CardHeader className="space-y-1 text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <img src={logo} alt="Artifio Logo" className="h-12 w-12" />
+            <div className="h-12 w-12 rounded-xl bg-gradient-primary border-3 border-black brutal-shadow flex items-center justify-center">
+              <Sparkles className="h-7 w-7 text-white" />
+            </div>
             <h1 className="text-4xl font-black gradient-text">ARTIFIO.AI</h1>
           </div>
           <CardTitle className="text-3xl font-black">

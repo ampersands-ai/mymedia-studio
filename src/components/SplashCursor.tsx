@@ -348,7 +348,7 @@ function SplashCursor({
               c *= diffuse;
           #endif
 
-          float a = max(c.r, max(c.g, c.b)) * 0.05;
+          float a = max(c.r, max(c.g, c.b)) * 0.50;
           gl_FragColor = vec4(c, a);
       }
     `;

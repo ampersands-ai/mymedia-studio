@@ -111,7 +111,7 @@ const Pricing = () => {
         {/* Header */}
         <header className="border-b-4 border-black bg-card">
           <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col items-center justify-center gap-4">
               <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                 <div className="h-10 w-10 rounded-xl bg-gradient-primary border-3 border-black brutal-shadow flex items-center justify-center">
                   <Sparkles className="h-6 w-6 text-white" />
@@ -151,7 +151,7 @@ const Pricing = () => {
               <CardContent className="p-6 md:p-8">
                 <h3 className="text-2xl md:text-3xl font-black text-center mb-6">Compare Prices</h3>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left">
+                  <table className="w-full text-center">
                     <thead>
                       <tr className="border-b-2 border-black">
                         <th className="py-3 px-2 md:px-4 font-black text-sm md:text-base">Feature</th>

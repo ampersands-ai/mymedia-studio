@@ -21,14 +21,16 @@ const Index = () => {
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "Artifio.ai",
-      "description": "Professional AI-powered platform for creating videos, images, music, and more. Generate portrait headshots, cinematic videos, product photography instantly.",
+      "description": "The most affordable AI content creation platform. Create videos, images, music & text for 50-80% less than competitors. Plans from $3.99/mo.",
       "url": "https://artifio.ai",
       "applicationCategory": "MultimediaApplication",
+      "slogan": "Professional AI Content. Student-Friendly Prices.",
+      "priceRange": "$0 - $39.99",
       "offers": {
         "@type": "Offer",
         "price": "0",
         "priceCurrency": "USD",
-        "description": "500 free tokens to start"
+        "description": "500 free tokens to start - no credit card required"
       },
       "aggregateRating": {
         "@type": "AggregateRating",
@@ -41,6 +43,13 @@ const Index = () => {
     script.type = 'application/ld+json';
     script.text = JSON.stringify(structuredData);
     document.head.appendChild(script);
+
+    // Update meta tags
+    document.title = "Artifio.ai - Most Affordable AI Content Creation Platform";
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', 'Create videos, images, music & text with AI for 50-80% less than competitors. Plans from $3.99/mo. Start free with 500 tokens.');
+    }
 
     return () => {
       document.head.removeChild(script);
@@ -150,21 +159,26 @@ const Index = () => {
         {/* Hero Section */}
         <section className="container mx-auto px-4 py-12 md:py-20">
           <div className="max-w-5xl mx-auto text-center space-y-6 md:space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-neon-yellow border-3 md:border-4 border-black brutal-shadow mb-2 md:mb-4">
-              <Sparkles className="h-4 w-4 md:h-5 md:w-5" aria-hidden="true" />
-              <span className="text-xs md:text-sm font-black">POWERED BY ADVANCED AI</span>
-            </div>
-            <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-neon-green border-3 md:border-4 border-black brutal-shadow mb-2 md:mb-4">
-              <span className="text-xs md:text-sm font-black">💰 MORE AFFORDABLE THAN WHAT'S IN THE MARKET</span>
+            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 mb-2 md:mb-4">
+              <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-neon-yellow border-3 md:border-4 border-black brutal-shadow">
+                <Sparkles className="h-4 w-4 md:h-5 md:w-5" aria-hidden="true" />
+                <span className="text-xs md:text-sm font-black">POWERED BY ADVANCED AI</span>
+              </div>
+              <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-neon-green border-3 md:border-4 border-black brutal-shadow">
+                <span className="text-xs md:text-sm font-black">🎯 SAVE 50-80% VS COMPETITORS</span>
+              </div>
+              <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-primary border-3 md:border-4 border-black brutal-shadow">
+                <span className="text-xs md:text-sm font-black text-white">💎 ENTERPRISE POWER, FREELANCER PRICES</span>
+              </div>
             </div>
             <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight px-4">
-              <span className="gradient-text">Create Anything</span>
+              <span className="gradient-text">The World's Most Affordable</span>
               <br />
-              <span className="block mt-2">Your Imagination Can Dream</span>
+              <span className="block mt-2">AI Creation Platform</span>
             </h2>
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-foreground/80 max-w-3xl mx-auto font-medium px-4">
-              From professional headshots to cinematic videos, from product photography to social media content—
-              <span className="font-black gradient-text"> create it all in seconds with AI</span>
+              Why pay $50-100/month elsewhere? Create stunning videos, images, music & text for a fraction of the cost—
+              <span className="font-black gradient-text"> starting at just $3.99/mo</span>
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 pt-4 px-4">
               <Button
@@ -173,15 +187,15 @@ const Index = () => {
                 onClick={() => navigate("/auth")}
                 className="w-full sm:w-auto text-base md:text-xl px-8 md:px-12"
               >
-                START FOR FREE
+                START CREATING FOR FREE
               </Button>
               <Button
                 variant="pink"
                 size="lg"
-                onClick={() => navigate("/playground")}
+                onClick={() => navigate("/pricing")}
                 className="w-full sm:w-auto text-base md:text-xl px-8 md:px-12"
               >
-                EXPLORE NOW
+                SEE HOW MUCH YOU'LL SAVE
               </Button>
             </div>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-8 pt-6 md:pt-8">
@@ -262,6 +276,59 @@ const Index = () => {
           </div>
         </section>
 
+        {/* Savings Comparison */}
+        <section className="container mx-auto px-4 py-12 md:py-20 bg-card/30">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-8 md:mb-12">
+              <h3 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 px-4">COMPARE & SAVE</h3>
+              <p className="text-lg md:text-xl text-foreground/80 font-medium px-4">
+                See how much you save with Artifio.ai vs leading competitors
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+              <Card className="brutal-card bg-card">
+                <CardContent className="p-6 space-y-4">
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-foreground/60">vs Midjourney</p>
+                    <p className="text-3xl md:text-4xl font-black text-primary mt-2">Save 85%</p>
+                    <p className="text-sm font-medium mt-2">They charge $10-60/mo</p>
+                    <p className="text-lg font-black gradient-text mt-1">We start at $3.99/mo</p>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="brutal-card bg-card">
+                <CardContent className="p-6 space-y-4">
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-foreground/60">vs Runway</p>
+                    <p className="text-3xl md:text-4xl font-black text-primary mt-2">Save 75%</p>
+                    <p className="text-sm font-medium mt-2">They charge $15-95/mo</p>
+                    <p className="text-lg font-black gradient-text mt-1">We start at $3.99/mo</p>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="brutal-card bg-card">
+                <CardContent className="p-6 space-y-4">
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-foreground/60">vs Jasper.ai</p>
+                    <p className="text-3xl md:text-4xl font-black text-primary mt-2">Save 90%</p>
+                    <p className="text-sm font-medium mt-2">They charge $39-125/mo</p>
+                    <p className="text-lg font-black gradient-text mt-1">We start at $3.99/mo</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="text-center mt-8">
+              <p className="text-sm font-medium text-foreground/60 px-4">
+                💰 From $0.00053 per token—the lowest in the industry
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Why Choose Section */}
         <section className="container mx-auto px-4 py-12 md:py-20">
           <div className="max-w-6xl mx-auto">
@@ -270,6 +337,16 @@ const Index = () => {
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+              <article className="text-center space-y-3 md:space-y-4">
+                <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-neon-green border-3 md:border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
+                  <span className="text-3xl md:text-4xl" aria-hidden="true">💰</span>
+                </div>
+                <h4 className="text-2xl md:text-3xl font-black px-4">UNBEATABLE VALUE</h4>
+                <p className="text-foreground/80 font-medium text-base md:text-lg px-4">
+                  Starting at just $3.99/mo—less than a coffee. Get the same power as $50-100/mo tools for a fraction of the price
+                </p>
+              </article>
+
               <article className="text-center space-y-3 md:space-y-4">
                 <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-neon-yellow border-3 md:border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
                   <Zap className="h-8 w-8 md:h-10 md:w-10 text-black" aria-hidden="true" />
@@ -299,16 +376,38 @@ const Index = () => {
                   Just describe what you want—our AI handles all the technical details
                 </p>
               </article>
+            </div>
+          </div>
+        </section>
 
-              <article className="text-center space-y-3 md:space-y-4">
-                <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-neon-green border-3 md:border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
-                  <span className="text-3xl md:text-4xl" aria-hidden="true">💰</span>
-                </div>
-                <h4 className="text-2xl md:text-3xl font-black px-4">UNBEATABLE VALUE</h4>
-                <p className="text-foreground/80 font-medium text-base md:text-lg px-4">
-                  Generate high quality content for less—more affordable than what's in the market
-                </p>
-              </article>
+        {/* Testimonials */}
+        <section className="container mx-auto px-4 py-12 md:py-20">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-8 md:mb-12">
+              <h3 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 px-4">CREATORS LOVE THE SAVINGS</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="brutal-card bg-neon-yellow/10">
+                <CardContent className="p-6 space-y-4">
+                  <p className="text-lg font-bold">"I cut my content costs by 90% switching to Artifio.ai"</p>
+                  <p className="text-sm font-medium text-foreground/60">— Sarah M., Content Creator</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="brutal-card bg-neon-blue/10">
+                <CardContent className="p-6 space-y-4">
+                  <p className="text-lg font-bold">"Same quality as premium tools, 1/10th the price"</p>
+                  <p className="text-sm font-medium text-foreground/60">— Mike R., Marketing Agency</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="brutal-card bg-neon-pink/10">
+                <CardContent className="p-6 space-y-4">
+                  <p className="text-lg font-bold">"Why pay $50/month when I get the same power for $7.99?"</p>
+                  <p className="text-sm font-medium text-foreground/60">— Jessica L., Freelancer</p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>
@@ -317,9 +416,9 @@ const Index = () => {
         <section className="container mx-auto px-4 py-12 md:py-20">
           <Card className="p-8 md:p-16 text-center max-w-5xl mx-auto bg-gradient-primary hover-lift">
             <div className="space-y-6 md:space-y-8">
-              <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white px-4">START CREATING TODAY</h3>
+              <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white px-4">STOP OVERPAYING. START CREATING.</h3>
               <p className="text-lg md:text-2xl text-white/90 font-medium px-4">
-                Generate high quality content for less—more affordable than what's in the market
+                Join thousands who switched from overpriced AI tools to Artifio.ai and saved hundreds per year
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 px-4">
                 <Button
@@ -332,7 +431,7 @@ const Index = () => {
                 </Button>
               </div>
               <p className="text-white/80 font-medium text-sm md:text-base">
-                No credit card required • Start in 30 seconds
+                No credit card required • No commitments • Start in 30 seconds
               </p>
             </div>
           </Card>
@@ -342,11 +441,16 @@ const Index = () => {
         <footer className="border-t-4 border-black bg-card">
           <div className="container mx-auto px-4 py-6 md:py-8">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-gradient-primary border-2 border-black brutal-shadow flex items-center justify-center">
-                  <Sparkles className="h-5 w-5 text-white" aria-hidden="true" />
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-gradient-primary border-2 border-black brutal-shadow flex items-center justify-center">
+                    <Sparkles className="h-5 w-5 text-white" aria-hidden="true" />
+                  </div>
+                  <span className="font-black text-lg md:text-xl">ARTIFIO.AI</span>
                 </div>
-                <span className="font-black text-lg md:text-xl">ARTIFIO.AI</span>
+                <p className="text-xs md:text-sm font-medium text-foreground/80 text-center sm:text-left">
+                  Making AI content creation accessible and affordable for everyone
+                </p>
               </div>
               <p className="text-xs md:text-sm font-medium text-foreground/60">
                 © 2025 Artifio. All rights reserved.

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,12 +57,12 @@ const Auth = () => {
       
       <Card className="w-full max-w-md relative z-10">
         <CardHeader className="space-y-1 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
+          <Link to="/" className="flex items-center justify-center gap-3 mb-4 hover:opacity-80 transition-opacity">
             <div className="h-12 w-12 rounded-xl bg-gradient-primary border-3 border-black brutal-shadow flex items-center justify-center">
               <Sparkles className="h-7 w-7 text-white" />
             </div>
             <h1 className="text-4xl font-black gradient-text">ARTIFIO.AI</h1>
-          </div>
+          </Link>
           <CardTitle className="text-3xl font-black">
             {isLogin ? "WELCOME BACK" : "CREATE ACCOUNT"}
           </CardTitle>

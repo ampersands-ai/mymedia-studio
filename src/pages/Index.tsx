@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Zap, Shield, Sparkles } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useEffect } from "react";
 import portraitHeadshots from "@/assets/portrait-headshots.jpg";
 import photoEditing from "@/assets/photo-editing.jpg";
@@ -130,12 +130,12 @@ const Index = () => {
         <header className="border-b-4 border-black bg-card">
           <nav className="container mx-auto px-4 py-3 md:py-4" aria-label="Main navigation">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 md:gap-3">
+              <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity">
                 <div className="h-8 w-8 md:h-10 md:w-10 rounded-xl bg-gradient-primary border-3 border-black brutal-shadow flex items-center justify-center">
                   <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-white" aria-hidden="true" />
                 </div>
                 <h1 className="text-xl md:text-3xl font-black gradient-text">ARTIFIO.AI</h1>
-              </div>
+              </Link>
               <div className="flex items-center gap-2 md:gap-3">
                 <Button variant="ghost" onClick={() => navigate("/pricing")} className="text-sm md:text-base px-2 md:px-4">
                   Pricing

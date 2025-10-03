@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, Sparkles } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const plans = [
   {
@@ -112,12 +112,12 @@ const Pricing = () => {
         <header className="border-b-4 border-black bg-card">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                 <div className="h-10 w-10 rounded-xl bg-gradient-primary border-3 border-black brutal-shadow flex items-center justify-center">
                   <Sparkles className="h-6 w-6 text-white" />
                 </div>
                 <h1 className="text-3xl font-black gradient-text">ARTIFIO.AI</h1>
-              </div>
+              </Link>
               <Button variant="outline" onClick={() => navigate("/")}>
                 BACK TO HOME
               </Button>

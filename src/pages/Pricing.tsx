@@ -217,20 +217,20 @@ const Pricing = () => {
                 )}
                 <CardHeader className={`${plan.color} ${plan.color !== 'bg-muted' ? 'text-white' : ''}`}>
                   <CardTitle className="text-3xl font-black">{plan.name}</CardTitle>
-                  <CardDescription className={`${plan.color !== 'bg-muted' ? 'text-white/80' : ''} font-bold`}>
+                  <CardDescription className={`${plan.color !== 'bg-muted' ? 'text-white' : ''} font-bold`}>
                     {plan.regions || "Global access"}
                   </CardDescription>
                   <div className="pt-4">
                     <span className="text-5xl font-black">{plan.price}</span>
                     {plan.period && (
-                      <span className={`${plan.color !== 'bg-muted' ? 'text-white/80' : 'text-foreground/60'} font-bold`}>{plan.period}</span>
+                      <span className={`${plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'} font-bold`}>{plan.period}</span>
                     )}
                   </div>
                   <div className={`text-sm font-black pt-2 ${plan.color !== 'bg-muted' ? 'text-white' : ''}`}>
                     {plan.tokens} TOKENS
                   </div>
                   {plan.perToken && (
-                    <div className={`text-xs font-bold pt-1 ${plan.color !== 'bg-muted' ? 'text-white/70' : 'text-foreground/60'}`}>
+                    <div className={`text-xs font-bold pt-1 ${plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'}`}>
                       💰 {plan.perToken}
                     </div>
                   )}

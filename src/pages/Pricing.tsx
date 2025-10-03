@@ -7,7 +7,7 @@ import logo from "@/assets/logo.png";
 const plans = [
   {
     name: "Freemium",
-    price: "Free",
+    price: "FREE",
     tokens: "500",
     features: [
       "500 tokens included",
@@ -16,6 +16,7 @@ const plans = [
       "Basic support",
     ],
     popular: false,
+    color: "bg-muted",
   },
   {
     name: "Explorer",
@@ -30,6 +31,7 @@ const plans = [
     ],
     popular: false,
     regions: "APAC/LATAM only",
+    color: "bg-neon-blue",
   },
   {
     name: "Creators",
@@ -44,6 +46,7 @@ const plans = [
       "Advanced features",
     ],
     popular: true,
+    color: "bg-neon-pink",
   },
   {
     name: "Professional",
@@ -59,6 +62,7 @@ const plans = [
       "Dedicated support",
     ],
     popular: false,
+    color: "bg-primary",
   },
   {
     name: "Ultimate",
@@ -76,6 +80,7 @@ const plans = [
     ],
     popular: false,
     badge: "Best Value",
+    color: "bg-neon-yellow",
   },
 ];
 
@@ -83,20 +88,20 @@ const Pricing = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,hsl(270_80%_65%/0.15),transparent_70%)]" />
+    <div className="min-h-screen bg-background">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
       <div className="relative z-10">
         {/* Header */}
-        <header className="border-b border-border/50 backdrop-blur-xl bg-background/50">
+        <header className="border-b-4 border-black bg-card">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <img src={logo} alt="Artifio Logo" className="h-8 w-8" />
-                <h1 className="text-2xl font-bold glow-text">Artifio.ai</h1>
+              <div className="flex items-center gap-3">
+                <img src={logo} alt="Artifio Logo" className="h-10 w-10" />
+                <h1 className="text-3xl font-black gradient-text">ARTIFIO.AI</h1>
               </div>
-              <Button variant="ghost" onClick={() => navigate("/")}>
-                Back to Home
+              <Button variant="outline" onClick={() => navigate("/")}>
+                BACK TO HOME
               </Button>
             </div>
           </div>
@@ -105,8 +110,8 @@ const Pricing = () => {
         {/* Pricing Content */}
         <main className="container mx-auto px-4 py-16">
           <div className="text-center space-y-4 mb-12">
-            <h2 className="text-5xl font-bold">Choose Your Plan</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <h2 className="text-6xl font-black">CHOOSE YOUR PLAN</h2>
+            <p className="text-2xl text-foreground/80 max-w-2xl mx-auto font-medium">
               Scale your creativity with flexible pricing. Start free, upgrade anytime.
             </p>
           </div>
@@ -115,53 +120,55 @@ const Pricing = () => {
             {plans.map((plan) => (
               <Card
                 key={plan.name}
-                className={`glass-card relative ${
-                  plan.popular ? "glow-border ring-2 ring-primary" : ""
+                className={`relative hover-lift ${
+                  plan.popular ? "ring-4 ring-primary scale-105" : ""
                 }`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-primary px-4 py-1 rounded-full text-sm font-semibold">
-                    Most Popular
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary px-4 py-1 rounded-full border-3 border-black brutal-shadow text-sm font-black text-white">
+                    MOST POPULAR
                   </div>
                 )}
                 {plan.badge && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-accent px-4 py-1 rounded-full text-sm font-semibold">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-neon-yellow px-4 py-1 rounded-full border-3 border-black brutal-shadow text-sm font-black">
                     {plan.badge}
                   </div>
                 )}
-                <CardHeader>
-                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                  <CardDescription>
+                <CardHeader className={`${plan.color} ${plan.color !== 'bg-muted' ? 'text-white' : ''}`}>
+                  <CardTitle className="text-3xl font-black">{plan.name}</CardTitle>
+                  <CardDescription className={`${plan.color !== 'bg-muted' ? 'text-white/80' : ''} font-bold`}>
                     {plan.regions || "Global access"}
                   </CardDescription>
                   <div className="pt-4">
-                    <span className="text-4xl font-bold">{plan.price}</span>
+                    <span className="text-5xl font-black">{plan.price}</span>
                     {plan.period && (
-                      <span className="text-muted-foreground">{plan.period}</span>
+                      <span className={`${plan.color !== 'bg-muted' ? 'text-white/80' : 'text-foreground/60'} font-bold`}>{plan.period}</span>
                     )}
                   </div>
-                  <div className="text-sm text-primary font-semibold pt-2">
-                    {plan.tokens} tokens
+                  <div className={`text-sm font-black pt-2 ${plan.color !== 'bg-muted' ? 'text-white' : ''}`}>
+                    {plan.tokens} TOKENS
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 pt-6">
                   <ul className="space-y-3">
                     {plan.features.map((feature) => (
                       <li key={feature} className="flex items-start gap-2">
                         <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{feature}</span>
+                        <span className="text-sm font-medium">{feature}</span>
                       </li>
                     ))}
                   </ul>
                   <Button
                     className={`w-full ${
                       plan.popular
-                        ? "bg-gradient-primary hover:opacity-90"
-                        : "bg-muted hover:bg-muted/80"
+                        ? ""
+                        : ""
                     }`}
+                    variant={plan.popular ? "neon" : "outline"}
+                    size="lg"
                     onClick={() => navigate("/auth")}
                   >
-                    {plan.price === "Free" ? "Get Started" : "Subscribe"}
+                    {plan.price === "FREE" ? "GET STARTED" : "SUBSCRIBE"}
                   </Button>
                 </CardContent>
               </Card>
@@ -169,9 +176,9 @@ const Pricing = () => {
           </div>
 
           <div className="mt-16 text-center">
-            <p className="text-muted-foreground">
+            <p className="text-foreground/80 font-medium text-lg">
               All plans include access to our AI playground. Enterprise solutions available.{" "}
-              <a href="#" className="text-primary hover:text-primary-glow">
+              <a href="#" className="text-primary hover:text-primary/80 font-bold underline">
                 Contact us
               </a>
             </p>

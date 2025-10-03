@@ -58,28 +58,26 @@ const Playground = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,hsl(270_80%_65%/0.15),transparent_70%)]" />
+    <div className="min-h-screen bg-background">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
       <div className="relative z-10">
         {/* Header */}
-        <header className="border-b border-border/50 backdrop-blur-xl bg-background/50">
+        <header className="border-b-4 border-black bg-card">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <img src={logo} alt="Artifio Logo" className="h-8 w-8" />
-              <h1 className="text-2xl font-bold glow-text">Artifio.ai</h1>
+            <div className="flex items-center gap-3">
+              <img src={logo} alt="Artifio Logo" className="h-10 w-10" />
+              <h1 className="text-3xl font-black gradient-text">ARTIFIO.AI</h1>
             </div>
             <div className="flex items-center gap-4">
+              <div className="brutal-card-sm px-4 py-2 bg-neon-yellow">
+                <div className="flex items-center gap-2">
+                  <Coins className="h-5 w-5" />
+                  <span className="font-black">{tokensRemaining} tokens</span>
+                </div>
+              </div>
               <Button
                 variant="outline"
-                className="gap-2"
-                onClick={() => navigate("/pricing")}
-              >
-                <Coins className="h-4 w-4" />
-                {tokensRemaining} tokens
-              </Button>
-              <Button
-                variant="ghost"
                 size="icon"
                 onClick={handleSignOut}
               >
@@ -90,67 +88,68 @@ const Playground = () => {
         </header>
 
         {/* Main Content */}
-        <main className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto space-y-6">
+        <main className="container mx-auto px-4 py-12">
+          <div className="max-w-4xl mx-auto space-y-8">
             <div className="text-center space-y-2">
-              <h2 className="text-4xl font-bold">AI Playground</h2>
-              <p className="text-muted-foreground">
+              <h2 className="text-5xl font-black">AI PLAYGROUND</h2>
+              <p className="text-xl text-foreground/80 font-medium">
                 Create stunning content with AI-powered tools
               </p>
             </div>
 
-            <Card className="glass-card glow-border p-6">
+            <Card className="p-8">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="grid grid-cols-4 w-full bg-muted/50">
-                  <TabsTrigger value="video" className="gap-2">
-                    <Video className="h-4 w-4" />
-                    Video
+                <TabsList className="grid grid-cols-4 w-full bg-muted h-14">
+                  <TabsTrigger value="video" className="gap-2 font-bold data-[state=active]:bg-neon-blue data-[state=active]:text-white">
+                    <Video className="h-5 w-5" />
+                    VIDEO
                   </TabsTrigger>
-                  <TabsTrigger value="image" className="gap-2">
-                    <Image className="h-4 w-4" />
-                    Image
+                  <TabsTrigger value="image" className="gap-2 font-bold data-[state=active]:bg-neon-pink data-[state=active]:text-white">
+                    <Image className="h-5 w-5" />
+                    IMAGE
                   </TabsTrigger>
-                  <TabsTrigger value="music" className="gap-2">
-                    <Music className="h-4 w-4" />
-                    Music
+                  <TabsTrigger value="music" className="gap-2 font-bold data-[state=active]:bg-neon-yellow data-[state=active]:text-black">
+                    <Music className="h-5 w-5" />
+                    MUSIC
                   </TabsTrigger>
-                  <TabsTrigger value="chat" className="gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    Chat
+                  <TabsTrigger value="chat" className="gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">
+                    <MessageSquare className="h-5 w-5" />
+                    CHAT
                   </TabsTrigger>
                 </TabsList>
 
                 {["video", "image", "music", "chat"].map((tab) => (
                   <TabsContent key={tab} value={tab} className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">
-                        Describe what you want to create
+                      <label className="text-sm font-black">
+                        DESCRIBE WHAT YOU WANT TO CREATE
                       </label>
                       <Textarea
                         placeholder={`Enter your ${tab} prompt...`}
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
-                        className="min-h-[120px] bg-muted/50 resize-none"
+                        className="min-h-[150px] border-3 border-black brutal-shadow resize-none font-medium text-base"
                       />
                     </div>
 
-                    <div className="flex justify-between items-center">
-                      <p className="text-sm text-muted-foreground">
-                        This will use approximately 50 tokens
+                    <div className="flex justify-between items-center pt-4">
+                      <p className="text-sm text-foreground/80 font-bold">
+                        ⚡ This will use approximately 50 tokens
                       </p>
                       <Button
                         onClick={handleGenerate}
-                        className="bg-gradient-primary hover:opacity-90"
+                        variant={tab === "video" ? "blue" : tab === "image" ? "pink" : tab === "music" ? "neon" : "default"}
+                        size="lg"
                         disabled={tokensRemaining < 50}
                       >
-                        Generate {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                        GENERATE {tab.toUpperCase()}
                       </Button>
                     </div>
 
                     {tokensRemaining < 50 && (
-                      <div className="text-center p-4 bg-destructive/10 rounded-lg">
-                        <p className="text-sm text-destructive">
-                          Not enough tokens. Please upgrade your plan.
+                      <div className="text-center p-6 bg-destructive/10 rounded-xl border-3 border-destructive">
+                        <p className="text-sm text-destructive font-black">
+                          ⚠️ NOT ENOUGH TOKENS. PLEASE UPGRADE YOUR PLAN.
                         </p>
                       </div>
                     )}

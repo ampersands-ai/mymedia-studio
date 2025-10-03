@@ -12,38 +12,42 @@ const Index = () => {
       icon: Video,
       title: "AI Video Generation",
       description: "Transform text into stunning video content in seconds",
+      color: "bg-neon-blue",
     },
     {
       icon: Image,
       title: "Image Creation",
       description: "Generate high-quality images from your imagination",
+      color: "bg-neon-pink",
     },
     {
       icon: Music,
       title: "Music Composition",
       description: "Create original soundtracks and audio with AI",
+      color: "bg-neon-yellow",
     },
     {
       icon: MessageSquare,
       title: "Smart Chat",
       description: "Engage with advanced AI for creative assistance",
+      color: "bg-primary",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,hsl(270_80%_65%/0.15),transparent_70%)]" />
+    <div className="min-h-screen bg-background">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
       <div className="relative z-10">
         {/* Header */}
-        <header className="border-b border-border/50 backdrop-blur-xl bg-background/50">
+        <header className="border-b-4 border-black bg-card">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <img src={logo} alt="Artifio Logo" className="h-8 w-8" />
-                <h1 className="text-2xl font-bold glow-text">Artifio.ai</h1>
+              <div className="flex items-center gap-3">
+                <img src={logo} alt="Artifio Logo" className="h-10 w-10" />
+                <h1 className="text-3xl font-black gradient-text">ARTIFIO.AI</h1>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <Button variant="ghost" onClick={() => navigate("/pricing")}>
                   Pricing
                 </Button>
@@ -51,8 +55,9 @@ const Index = () => {
                   Sign In
                 </Button>
                 <Button
+                  variant="neon"
+                  size="lg"
                   onClick={() => navigate("/auth")}
-                  className="bg-gradient-primary hover:opacity-90"
                 >
                   Get Started
                 </Button>
@@ -62,63 +67,74 @@ const Index = () => {
         </header>
 
         {/* Hero Section */}
-        <section className="container mx-auto px-4 py-24">
-          <div className="max-w-4xl mx-auto text-center space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
-              <img src={logo} alt="Artifio" className="h-5 w-5" />
-              <span className="text-sm font-medium">Powered by Advanced AI</span>
+        <section className="container mx-auto px-4 py-20">
+          <div className="max-w-5xl mx-auto text-center space-y-8">
+            <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-neon-yellow border-4 border-black brutal-shadow mb-4">
+              <img src={logo} alt="Artifio" className="h-6 w-6" />
+              <span className="text-sm font-black">POWERED BY ADVANCED AI</span>
             </div>
-            <h2 className="text-6xl md:text-7xl font-bold leading-tight">
-              Create Anything
+            <h2 className="text-7xl md:text-8xl font-black leading-tight">
+              <span className="gradient-text">ARTIFIO</span>
               <br />
-              <span className="glow-text">With AI Magic</span>
+              <span className="block mt-2">"Got an idea?<br/>Just text me."</span>
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Transform your ideas into reality with our cutting-edge AI platform.
-              Generate videos, images, music, and more—all in one place.
+            <p className="text-xl md:text-2xl text-foreground/80 max-w-3xl mx-auto font-medium">
+              Your AI buddy that turns your thoughts into 🔥 text, 🎨 images, 🎵 audio, or 🎬 video — instantly.
             </p>
             <div className="flex items-center justify-center gap-4 pt-4">
               <Button
+                variant="neon"
                 size="lg"
                 onClick={() => navigate("/auth")}
-                className="bg-gradient-primary hover:opacity-90 text-lg px-8 animate-glow"
+                className="text-xl px-12"
               >
-                Start Creating Free
+                START CREATING FREE
               </Button>
               <Button
+                variant="pink"
                 size="lg"
-                variant="outline"
                 onClick={() => navigate("/playground")}
+                className="text-xl px-12"
               >
-                Try Playground
+                TRY PLAYGROUND
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <div className="flex items-center justify-center gap-8 pt-8">
+              <div className="brutal-card-sm px-6 py-4 bg-neon-blue">
+                <div className="text-3xl font-black">1000+</div>
+                <div className="text-sm font-bold">HAPPY USERS</div>
+              </div>
+              <div className="brutal-card-sm px-6 py-4 bg-primary">
+                <div className="text-3xl font-black text-white">INSTANT</div>
+                <div className="text-sm font-bold text-white">AI REPLIES</div>
+              </div>
+            </div>
+            <p className="text-base font-bold pt-4">
               🎉 New users get 500 free tokens • No credit card required
             </p>
           </div>
         </section>
 
         {/* Features Grid */}
-        <section className="container mx-auto px-4 py-24">
-          <div className="text-center mb-12">
-            <h3 className="text-4xl font-bold mb-4">Powerful AI Tools</h3>
-            <p className="text-muted-foreground text-lg">
+        <section className="container mx-auto px-4 py-20">
+          <div className="text-center mb-16">
+            <h3 className="text-5xl font-black mb-4">POWERFUL AI TOOLS</h3>
+            <p className="text-xl text-foreground/80 font-medium">
               Everything you need to bring your creative vision to life
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
             {features.map((feature) => {
               const Icon = feature.icon;
               return (
-                <Card key={feature.title} className="glass-card hover:glow-border transition-all group">
-                  <CardContent className="p-6 space-y-4">
-                    <div className="h-12 w-12 rounded-lg bg-gradient-primary flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Icon className="h-6 w-6" />
+                <Card key={feature.title} className="hover-lift cursor-pointer">
+                  <CardContent className="p-8 space-y-4">
+                    <div className={`h-16 w-16 rounded-2xl ${feature.color} border-4 border-black flex items-center justify-center brutal-shadow`}>
+                      <Icon className="h-8 w-8 text-black" />
                     </div>
-                    <h4 className="text-xl font-semibold">{feature.title}</h4>
-                    <p className="text-muted-foreground">{feature.description}</p>
+                    <h4 className="text-2xl font-black">{feature.title}</h4>
+                    <p className="text-foreground/80 font-medium">{feature.description}</p>
                   </CardContent>
                 </Card>
               );
@@ -127,39 +143,39 @@ const Index = () => {
         </section>
 
         {/* Why Choose Section */}
-        <section className="container mx-auto px-4 py-24">
+        <section className="container mx-auto px-4 py-20">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h3 className="text-4xl font-bold mb-4">Why Choose Artifio</h3>
+            <div className="text-center mb-16">
+              <h3 className="text-5xl font-black mb-4">WHY CHOOSE ARTIFIO</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center space-y-4">
-                <div className="h-16 w-16 rounded-full bg-gradient-primary flex items-center justify-center mx-auto">
-                  <Zap className="h-8 w-8" />
+                <div className="h-20 w-20 rounded-full bg-neon-yellow border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
+                  <Zap className="h-10 w-10 text-black" />
                 </div>
-                <h4 className="text-2xl font-semibold">Lightning Fast</h4>
-                <p className="text-muted-foreground">
+                <h4 className="text-3xl font-black">LIGHTNING FAST</h4>
+                <p className="text-foreground/80 font-medium text-lg">
                   Generate content in seconds with our optimized AI infrastructure
                 </p>
               </div>
               
               <div className="text-center space-y-4">
-                <div className="h-16 w-16 rounded-full bg-gradient-primary flex items-center justify-center mx-auto">
-                  <Shield className="h-8 w-8" />
+                <div className="h-20 w-20 rounded-full bg-neon-blue border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
+                  <Shield className="h-10 w-10 text-white" />
                 </div>
-                <h4 className="text-2xl font-semibold">Secure & Private</h4>
-                <p className="text-muted-foreground">
+                <h4 className="text-3xl font-black">SECURE & PRIVATE</h4>
+                <p className="text-foreground/80 font-medium text-lg">
                   Your data is encrypted and never shared. Full privacy guaranteed
                 </p>
               </div>
               
               <div className="text-center space-y-4">
-                <div className="h-16 w-16 rounded-full bg-gradient-primary flex items-center justify-center mx-auto p-3">
+                <div className="h-20 w-20 rounded-full bg-neon-pink border-4 border-black flex items-center justify-center mx-auto brutal-shadow p-3">
                   <img src={logo} alt="Premium" className="h-full w-full object-contain" />
                 </div>
-                <h4 className="text-2xl font-semibold">Premium Quality</h4>
-                <p className="text-muted-foreground">
+                <h4 className="text-3xl font-black">PREMIUM QUALITY</h4>
+                <p className="text-foreground/80 font-medium text-lg">
                   Professional-grade outputs powered by state-of-the-art AI models
                 </p>
               </div>
@@ -168,33 +184,34 @@ const Index = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="container mx-auto px-4 py-24">
-          <Card className="glass-card glow-border p-12 text-center max-w-4xl mx-auto">
-            <div className="space-y-6">
-              <h3 className="text-4xl font-bold">Ready to Create?</h3>
-              <p className="text-xl text-muted-foreground">
+        <section className="container mx-auto px-4 py-20">
+          <Card className="p-16 text-center max-w-5xl mx-auto bg-gradient-primary hover-lift">
+            <div className="space-y-8">
+              <h3 className="text-5xl font-black text-white">READY TO CREATE?</h3>
+              <p className="text-2xl text-white/90 font-medium">
                 Join thousands of creators using Artifio to bring their ideas to life
               </p>
               <Button
+                variant="neon"
                 size="lg"
                 onClick={() => navigate("/auth")}
-                className="bg-gradient-primary hover:opacity-90 text-lg px-12"
+                className="text-xl px-16"
               >
-                Start Free with 500 Tokens
+                START FREE WITH 500 TOKENS
               </Button>
             </div>
           </Card>
         </section>
 
         {/* Footer */}
-        <footer className="border-t border-border/50 backdrop-blur-xl bg-background/50">
+        <footer className="border-t-4 border-black bg-card">
           <div className="container mx-auto px-4 py-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <img src={logo} alt="Artifio" className="h-6 w-6" />
-                <span className="font-semibold">Artifio.ai</span>
+                <img src={logo} alt="Artifio" className="h-8 w-8" />
+                <span className="font-black text-xl">ARTIFIO.AI</span>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm font-medium text-foreground/60">
                 © 2025 Artifio. All rights reserved.
               </p>
             </div>

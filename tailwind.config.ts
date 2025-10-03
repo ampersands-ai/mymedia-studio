@@ -59,11 +59,22 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        neon: {
+          yellow: "hsl(var(--neon-yellow))",
+          pink: "hsl(var(--neon-pink))",
+          blue: "hsl(var(--neon-blue))",
+        },
       },
       backgroundImage: {
         'gradient-primary': 'var(--gradient-primary)',
         'gradient-accent': 'var(--gradient-accent)',
         'gradient-hero': 'var(--gradient-hero)',
+      },
+      fontFamily: {
+        sans: ['Space Grotesk', 'sans-serif'],
+      },
+      borderWidth: {
+        '3': '3px',
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function SplashCursor({
   // Add whatever props you like for customization
@@ -19,6 +19,7 @@ function SplashCursor({
   TRANSPARENT = true,
 }) {
   const canvasRef = useRef(null);
+  const [isHidden, setIsHidden] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -1259,8 +1260,49 @@ function SplashCursor({
     TRANSPARENT,
   ]);
 
+  // Track cursor position and hide over interactive elements
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      // Temporarily enable pointer events to check element underneath
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      
+      canvas.style.pointerEvents = 'none';
+      const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
+      
+      if (elementBelow) {
+        // Check if hovering over interactive elements or content areas
+        const isInteractive = !!(
+          elementBelow.tagName === 'BUTTON' ||
+          elementBelow.tagName === 'A' ||
+          elementBelow.tagName === 'INPUT' ||
+          elementBelow.tagName === 'TEXTAREA' ||
+          elementBelow.tagName === 'SELECT' ||
+          elementBelow.closest('button') ||
+          elementBelow.closest('a') ||
+          elementBelow.closest('input') ||
+          elementBelow.closest('textarea') ||
+          elementBelow.closest('[role="button"]') ||
+          elementBelow.closest('[role="link"]') ||
+          elementBelow.closest('.card') ||
+          elementBelow.closest('[class*="card"]') ||
+          elementBelow.closest('main') ||
+          elementBelow.closest('article')
+        );
+        
+        setIsHidden(isInteractive);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   return (
-    <div className="fixed top-0 left-0 z-50 pointer-events-none">
+    <div 
+      className="fixed top-0 left-0 z-50 pointer-events-none transition-opacity duration-300"
+      style={{ opacity: isHidden ? 0 : 1 }}
+    >
       <canvas ref={canvasRef} id="fluid" className="w-screen h-screen" />
     </div>
   );

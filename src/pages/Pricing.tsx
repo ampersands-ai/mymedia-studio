@@ -53,7 +53,7 @@ const plans = [
     ],
     popular: true,
     color: "bg-neon-pink",
-    badge: "BEST FOR BUSINESS",
+    badge: "FOR CREATORS",
     description: "The indie creator's choice. 10,000 tokens for just $7.99/mo—competitors charge $30-50 for similar plans.",
     savings: "Save $22-42/mo vs competitors",
   },

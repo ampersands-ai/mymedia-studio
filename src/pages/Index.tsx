@@ -154,6 +154,9 @@ const Index = () => {
               <Sparkles className="h-4 w-4 md:h-5 md:w-5" aria-hidden="true" />
               <span className="text-xs md:text-sm font-black">POWERED BY ADVANCED AI</span>
             </div>
+            <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-neon-green border-3 md:border-4 border-black brutal-shadow mb-2 md:mb-4">
+              <span className="text-xs md:text-sm font-black">💰 MORE AFFORDABLE THAN WHAT'S IN THE MARKET</span>
+            </div>
             <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight px-4">
               <span className="gradient-text">Create Anything</span>
               <br />
@@ -193,6 +196,9 @@ const Index = () => {
             </div>
             <p className="text-sm md:text-base font-bold pt-4">
               🎉 No credit card • Start creating immediately
+            </p>
+            <p className="text-base md:text-lg font-black pt-2 gradient-text">
+              💰 Generate high quality content for less • More affordable than competitors
             </p>
           </div>
         </section>
@@ -263,7 +269,7 @@ const Index = () => {
               <h3 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 px-4">WHY ARTIFIO</h3>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
               <article className="text-center space-y-3 md:space-y-4">
                 <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-neon-yellow border-3 md:border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
                   <Zap className="h-8 w-8 md:h-10 md:w-10 text-black" aria-hidden="true" />
@@ -293,6 +299,16 @@ const Index = () => {
                   Just describe what you want—our AI handles all the technical details
                 </p>
               </article>
+
+              <article className="text-center space-y-3 md:space-y-4">
+                <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-neon-green border-3 md:border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
+                  <span className="text-3xl md:text-4xl" aria-hidden="true">💰</span>
+                </div>
+                <h4 className="text-2xl md:text-3xl font-black px-4">UNBEATABLE VALUE</h4>
+                <p className="text-foreground/80 font-medium text-base md:text-lg px-4">
+                  Generate high quality content for less—more affordable than what's in the market
+                </p>
+              </article>
             </div>
           </div>
         </section>
@@ -303,7 +319,7 @@ const Index = () => {
             <div className="space-y-6 md:space-y-8">
               <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white px-4">START CREATING TODAY</h3>
               <p className="text-lg md:text-2xl text-white/90 font-medium px-4">
-                Join thousands of creators bringing their ideas to life with AI
+                Generate high quality content for less—more affordable than what's in the market
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 px-4">
                 <Button

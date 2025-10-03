@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Zap, Shield, Sparkles } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import portraitHeadshots from "@/assets/portrait-headshots.jpg";
 import photoEditing from "@/assets/photo-editing.jpg";
 import videoCreation from "@/assets/video-creation.jpg";
@@ -14,6 +15,7 @@ import textGeneration from "@/assets/text-generation.jpg";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Add structured data for SEO
   useEffect(() => {
@@ -140,17 +142,30 @@ const Index = () => {
                 <Button variant="ghost" onClick={() => navigate("/pricing")} className="text-sm md:text-base px-2 md:px-4">
                   Pricing
                 </Button>
-                <Button variant="outline" onClick={() => navigate("/auth")} className="hidden sm:inline-flex text-sm md:text-base">
-                  Sign In
-                </Button>
-                <Button
-                  variant="neon"
-                  size="sm"
-                  onClick={() => navigate("/auth")}
-                  className="md:text-base"
-                >
-                  Get Started
-                </Button>
+                {!user ? (
+                  <>
+                    <Button variant="outline" onClick={() => navigate("/auth")} className="hidden sm:inline-flex text-sm md:text-base">
+                      Sign In
+                    </Button>
+                    <Button
+                      variant="neon"
+                      size="sm"
+                      onClick={() => navigate("/auth")}
+                      className="md:text-base"
+                    >
+                      Get Started
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="neon"
+                    size="sm"
+                    onClick={() => navigate("/playground")}
+                    className="md:text-base"
+                  >
+                    Go to Playground
+                  </Button>
+                )}
               </div>
             </div>
           </nav>

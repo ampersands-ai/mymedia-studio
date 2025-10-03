@@ -129,8 +129,8 @@ const Pricing = () => {
         <main className="container mx-auto px-4 py-16">
           <div className="text-center space-y-4 mb-8">
             <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-green border-3 border-black brutal-shadow">
-                <span className="text-xs font-black">AFFORDABLE & COMPETITIVE</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-blue border-3 border-black brutal-shadow">
+                <span className="text-xs font-black text-white">AFFORDABLE & COMPETITIVE</span>
               </div>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-yellow border-3 border-black brutal-shadow">
                 <span className="text-xs font-black">SAVE 50–80% VS COMPETITORS</span>
@@ -206,12 +206,12 @@ const Pricing = () => {
                 }`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary px-4 py-1 rounded-full border-3 border-black brutal-shadow text-sm font-black text-white">
+                  <div className="absolute z-20 -top-4 left-1/2 -translate-x-1/2 bg-primary px-4 py-1 rounded-full border-3 border-black brutal-shadow text-sm font-black text-white">
                     MOST POPULAR
                   </div>
                 )}
                 {plan.badge && !plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-neon-green px-4 py-1 rounded-full border-3 border-black brutal-shadow text-sm font-black">
+                  <div className="absolute z-20 -top-4 left-1/2 -translate-x-1/2 bg-neon-yellow px-4 py-1 rounded-full border-3 border-black brutal-shadow text-sm font-black text-black">
                     {plan.badge}
                   </div>
                 )}
@@ -242,7 +242,7 @@ const Pricing = () => {
                     </p>
                   )}
                   {plan.savings && (
-                    <div className="bg-neon-green/20 border-2 border-neon-green rounded-lg px-3 py-2 mb-4">
+                    <div className="bg-accent/20 border-2 border-accent rounded-lg px-3 py-2 mb-4">
                       <p className="text-sm font-black text-center">
                         💰 {plan.savings}
                       </p>
@@ -279,14 +279,14 @@ const Pricing = () => {
               <CardContent className="p-8 md:p-12 text-center space-y-4">
                 <h3 className="text-3xl md:text-4xl font-black text-white">Join 10,000+ Creators Who Switched to Save Money</h3>
                 <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-                  <div className="px-6 py-3 bg-white/20 backdrop-blur rounded-full border-2 border-white">
-                    <span className="text-white font-black text-sm">COMPETITIVE PRICES</span>
+                  <div className="px-6 py-3 bg-white/90 backdrop-blur-0 rounded-full border-2 border-white text-foreground">
+                    <span className="font-black text-sm">COMPETITIVE PRICES</span>
                   </div>
-                  <div className="px-6 py-3 bg-white/20 backdrop-blur rounded-full border-2 border-white">
-                    <span className="text-white font-black text-sm">NO HIDDEN FEES</span>
+                  <div className="px-6 py-3 bg-white/90 backdrop-blur-0 rounded-full border-2 border-white text-foreground">
+                    <span className="font-black text-sm">NO HIDDEN FEES</span>
                   </div>
-                  <div className="px-6 py-3 bg-white/20 backdrop-blur rounded-full border-2 border-white">
-                    <span className="text-white font-black text-sm">GLOBAL ACCESS</span>
+                  <div className="px-6 py-3 bg-white/90 backdrop-blur-0 rounded-full border-2 border-white text-foreground">
+                    <span className="font-black text-sm">GLOBAL ACCESS</span>
                   </div>
                 </div>
               </CardContent>

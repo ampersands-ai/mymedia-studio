@@ -186,7 +186,7 @@ const Index = () => {
                 <div className="text-2xl md:text-3xl font-black">500</div>
                 <div className="text-xs md:text-sm font-bold">FREE TOKENS</div>
               </div>
-              <div className="brutal-card-sm px-6 md:px-8 py-3 md:py-4 bg-primary">
+              <div className="brutal-card-sm px-6 md:px-8 py-3 md:py-4 bg-neon-pink">
                 <div className="text-2xl md:text-3xl font-black text-white">NO CC</div>
                 <div className="text-xs md:text-sm font-bold text-white">REQUIRED</div>
               </div>

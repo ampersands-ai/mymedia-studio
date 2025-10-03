@@ -328,6 +328,148 @@ const Pricing = () => {
             ))}
           </div>
 
+          {/* Add-Ons & Extras Section */}
+          <div className="mt-24 max-w-7xl mx-auto">
+            <div className="text-center space-y-4 mb-12">
+              <h2 className="text-4xl md:text-5xl font-black">Add-Ons & Extras</h2>
+              <p className="text-xl text-foreground/80 font-medium">
+                Customize your plan with additional features and token packs
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Extra Tokens Column */}
+              <Card className="brutal-card bg-card">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-black text-center">Extra Tokens</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-black/10 hover:border-primary/50 transition-colors">
+                      <div>
+                        <div className="font-black">5,000 Token Pack</div>
+                        <div className="text-sm text-foreground/60">One-time purchase</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-black text-xl">$4.99</div>
+                        <div className="text-xs text-foreground/60">one-time</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-black/10 hover:border-primary/50 transition-colors">
+                      <div>
+                        <div className="font-black">12,000 Token Pack</div>
+                        <div className="text-sm text-foreground/60">One-time purchase</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-black text-xl">$9.99</div>
+                        <div className="text-xs text-foreground/60">one-time</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-black/10 hover:border-primary/50 transition-colors">
+                      <div>
+                        <div className="font-black">35,000 Token Pack</div>
+                        <div className="text-sm text-foreground/60">One-time purchase</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-black text-xl">$24.99</div>
+                        <div className="text-xs text-foreground/60">one-time</div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Premium Features Column */}
+              <Card className="brutal-card bg-card">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-black text-center">Premium Features</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-black/10 hover:border-primary/50 transition-colors">
+                      <div>
+                        <div className="font-black">Fast Queue Pass</div>
+                        <div className="text-sm text-foreground/60">Jump the rendering queue</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-black text-xl">$5</div>
+                        <div className="text-xs text-foreground/60">/month</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-black/10 hover:border-primary/50 transition-colors">
+                      <div>
+                        <div className="font-black">Commercial License</div>
+                        <div className="text-sm text-foreground/60">Use content commercially</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-black text-xl">$10</div>
+                        <div className="text-xs text-foreground/60">/month</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-black/10 hover:border-primary/50 transition-colors">
+                      <div>
+                        <div className="font-black">Team Add-On</div>
+                        <div className="text-sm text-foreground/60">Per extra seat (shared tokens)</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-black text-xl">$5</div>
+                        <div className="text-xs text-foreground/60">/month</div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Unlimited Access Column */}
+              <Card className="brutal-card bg-card">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-black text-center">Unlimited Access</CardTitle>
+                  <CardDescription className="text-center font-medium">(For Creators/Explorer)</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-black/10 hover:border-primary/50 transition-colors">
+                      <div>
+                        <div className="font-black">Unlimited Images</div>
+                        <div className="text-sm text-foreground/60">Same as Professional+</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-black text-xl">$2.99</div>
+                        <div className="text-xs text-foreground/60">/month</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-black/10 hover:border-primary/50 transition-colors">
+                      <div>
+                        <div className="font-black">Unlimited Text</div>
+                        <div className="text-sm text-foreground/60">Unlimited conversations</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-black text-xl">$1.99</div>
+                        <div className="text-xs text-foreground/60">/month</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-colors">
+                      <div>
+                        <div className="font-black">Combo (Images + Text)</div>
+                        <div className="text-sm text-foreground/60">Best value combo</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-black text-xl">$3.99</div>
+                        <div className="text-xs text-foreground/60">/month</div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
           {/* Social Proof Section */}
           <div className="mt-16 max-w-4xl mx-auto">
             <Card className="brutal-card bg-gradient-primary">

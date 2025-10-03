@@ -1,40 +1,82 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Video, Image, Music, MessageSquare, Zap, Shield, Sparkles } from "lucide-react";
+import { Zap, Shield, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import portraitHeadshots from "@/assets/portrait-headshots.jpg";
+import photoEditing from "@/assets/photo-editing.jpg";
+import videoCreation from "@/assets/video-creation.jpg";
+import productPhotos from "@/assets/product-photos.jpg";
+import socialMedia from "@/assets/social-media.jpg";
+import creativeDesign from "@/assets/creative-design.jpg";
+import audioProcessing from "@/assets/audio-processing.jpg";
+import textGeneration from "@/assets/text-generation.jpg";
 
 const Index = () => {
   const navigate = useNavigate();
 
-  const features = [
+  const useCases = [
     {
-      icon: Video,
-      title: "AI Video Generation",
-      description: "Veo 3, Veo 3 Fast, Runway, Luma - Create stunning videos with synchronized audio",
-      color: "bg-neon-blue",
-      models: "Veo 3 • Runway • Luma",
+      title: "Portrait Headshots",
+      description: "Professional AI-generated headshots for business profiles and portfolios",
+      image: portraitHeadshots,
+      category: "Image Creation",
     },
     {
-      icon: Image,
-      title: "Image Creation",
-      description: "GPT-Image-1, Midjourney V7, Flux - Generate high-quality images from text or images",
-      color: "bg-neon-pink",
-      models: "4o Image • Midjourney • Flux",
+      title: "Photo Editing",
+      description: "Enhance, retouch, and perfect your images with AI-powered editing tools",
+      image: photoEditing,
+      category: "Image Editing",
     },
     {
-      icon: Music,
-      title: "Music & Audio",
-      description: "Suno API - Create original soundtracks, convert speech to text, and generate voice",
-      color: "bg-neon-yellow",
-      models: "Suno • TTS • STT",
+      title: "Cinematic Videos",
+      description: "Create stunning videos with professional effects and transitions",
+      image: videoCreation,
+      category: "Video Generation",
     },
     {
-      icon: MessageSquare,
-      title: "Multi-Modal AI",
-      description: "Text to Video, Image to Video, Image Editing, and advanced AI capabilities",
-      color: "bg-primary",
-      models: "All in One API",
+      title: "Product Photography",
+      description: "Generate perfect product shots for e-commerce and marketing",
+      image: productPhotos,
+      category: "E-commerce",
     },
+    {
+      title: "Social Media Content",
+      description: "Design engaging posts, stories, and ads for all platforms",
+      image: socialMedia,
+      category: "Marketing",
+    },
+    {
+      title: "Creative Design",
+      description: "Bring your artistic vision to life with AI-powered design tools",
+      image: creativeDesign,
+      category: "Creative",
+    },
+    {
+      title: "Audio Processing",
+      description: "Generate music, voiceovers, and process audio with AI",
+      image: audioProcessing,
+      category: "Audio",
+    },
+    {
+      title: "Text Generation",
+      description: "Create compelling content, documents, and copy instantly",
+      image: textGeneration,
+      category: "Text Processing",
+    },
+  ];
+
+  const capabilities = [
+    "Remove Backgrounds",
+    "Photo Enhancing",
+    "Product Videos",
+    "Document Processing",
+    "Web & Link Processing",
+    "Multi-Language Support",
+    "Educational Content",
+    "Business & Professional",
+    "Location & Travel",
+    "Branding & Identity",
+    "Family & Entertainment",
   ];
 
   return (
@@ -78,13 +120,14 @@ const Index = () => {
               <Sparkles className="h-5 w-5" />
               <span className="text-sm font-black">POWERED BY ADVANCED AI</span>
             </div>
-            <h2 className="text-7xl md:text-8xl font-black leading-tight">
-              <span className="gradient-text">ARTIFIO</span>
+            <h2 className="text-6xl md:text-7xl font-black leading-tight">
+              <span className="gradient-text">Create Anything</span>
               <br />
-              <span className="block mt-2">"Got an idea?<br/>Just text me."</span>
+              <span className="block mt-2">Your Imagination Can Dream</span>
             </h2>
             <p className="text-xl md:text-2xl text-foreground/80 max-w-3xl mx-auto font-medium">
-              Access Veo 3, Runway, Midjourney, GPT-Image-1, Suno, and more—all in one platform. Create 🎬 videos, 🎨 images, 🎵 music instantly.
+              From professional headshots to cinematic videos, from product photography to social media content—
+              <span className="font-black gradient-text"> create it all in seconds with AI</span>
             </p>
             <div className="flex items-center justify-center gap-4 pt-4">
               <Button
@@ -93,7 +136,7 @@ const Index = () => {
                 onClick={() => navigate("/auth")}
                 className="text-xl px-12"
               >
-                START CREATING FREE
+                START FOR FREE
               </Button>
               <Button
                 variant="pink"
@@ -101,52 +144,76 @@ const Index = () => {
                 onClick={() => navigate("/playground")}
                 className="text-xl px-12"
               >
-                TRY PLAYGROUND
+                EXPLORE NOW
               </Button>
             </div>
             <div className="flex items-center justify-center gap-8 pt-8">
               <div className="brutal-card-sm px-6 py-4 bg-neon-blue">
-                <div className="text-3xl font-black">10,000+</div>
-                <div className="text-sm font-bold">DAILY CALLS</div>
+                <div className="text-3xl font-black">500</div>
+                <div className="text-sm font-bold">FREE TOKENS</div>
               </div>
               <div className="brutal-card-sm px-6 py-4 bg-primary">
-                <div className="text-3xl font-black text-white">99.9%</div>
-                <div className="text-sm font-bold text-white">UPTIME</div>
+                <div className="text-3xl font-black text-white">NO CC</div>
+                <div className="text-sm font-bold text-white">REQUIRED</div>
               </div>
             </div>
             <p className="text-base font-bold pt-4">
-              🎉 New users get 500 free tokens • No credit card required
+              🎉 No credit card • Start creating immediately
             </p>
           </div>
         </section>
 
-        {/* Features Grid */}
+        {/* Use Cases Grid */}
         <section className="container mx-auto px-4 py-20">
           <div className="text-center mb-16">
-            <h3 className="text-5xl font-black mb-4">AVAILABLE AI MODELS</h3>
-            <p className="text-xl text-foreground/80 font-medium">
-              Access the best AI models through one unified API
+            <h3 className="text-5xl font-black mb-4">WHAT YOU CAN CREATE</h3>
+            <p className="text-xl text-foreground/80 font-medium max-w-3xl mx-auto">
+              Professional-grade AI tools for every creative need—no experience required
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-            {features.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <Card key={feature.title} className="hover-lift cursor-pointer">
-                  <CardContent className="p-8 space-y-4">
-                    <div className={`h-16 w-16 rounded-2xl ${feature.color} border-4 border-black flex items-center justify-center brutal-shadow`}>
-                      <Icon className="h-8 w-8 text-black" />
-                    </div>
-                    <h4 className="text-2xl font-black">{feature.title}</h4>
-                    <p className="text-foreground/80 font-medium">{feature.description}</p>
-                    <div className="pt-2 text-xs font-black text-foreground/60 uppercase">
-                      {feature.models}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+            {useCases.map((useCase) => (
+              <Card key={useCase.title} className="hover-lift cursor-pointer overflow-hidden group">
+                <div className="relative h-48 overflow-hidden">
+                  <img 
+                    src={useCase.image} 
+                    alt={useCase.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
+                  <div className="absolute top-3 right-3 bg-neon-yellow px-3 py-1 rounded-full border-2 border-black text-xs font-black">
+                    {useCase.category}
+                  </div>
+                </div>
+                <CardContent className="p-6 space-y-2">
+                  <h4 className="text-xl font-black">{useCase.title}</h4>
+                  <p className="text-foreground/80 font-medium text-sm">{useCase.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* More Capabilities */}
+        <section className="container mx-auto px-4 py-20">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h3 className="text-4xl font-black mb-4">AND SO MUCH MORE</h3>
+              <p className="text-lg text-foreground/80 font-medium">
+                Explore our complete suite of AI-powered capabilities
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap gap-3 justify-center">
+              {capabilities.map((capability) => (
+                <div
+                  key={capability}
+                  className="brutal-card-sm px-5 py-3 bg-card hover-lift cursor-pointer"
+                >
+                  <span className="font-bold text-sm">{capability}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -154,7 +221,7 @@ const Index = () => {
         <section className="container mx-auto px-4 py-20">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
-              <h3 className="text-5xl font-black mb-4">WHY CHOOSE ARTIFIO</h3>
+              <h3 className="text-5xl font-black mb-4">WHY ARTIFIO</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -162,9 +229,9 @@ const Index = () => {
                 <div className="h-20 w-20 rounded-full bg-neon-yellow border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
                   <Zap className="h-10 w-10 text-black" />
                 </div>
-                <h4 className="text-3xl font-black">LIGHTNING FAST</h4>
+                <h4 className="text-3xl font-black">INSTANT RESULTS</h4>
                 <p className="text-foreground/80 font-medium text-lg">
-                  Average 25.2s response time with 99.9% uptime guarantee
+                  No waiting, no rendering queues—your creations are ready in seconds
                 </p>
               </div>
               
@@ -172,9 +239,9 @@ const Index = () => {
                 <div className="h-20 w-20 rounded-full bg-neon-blue border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
                   <Shield className="h-10 w-10 text-white" />
                 </div>
-                <h4 className="text-3xl font-black">SECURE & RELIABLE</h4>
+                <h4 className="text-3xl font-black">ENTERPRISE GRADE</h4>
                 <p className="text-foreground/80 font-medium text-lg">
-                  #1 data security, 24/7 support, and enterprise-grade infrastructure
+                  99.9% uptime with bank-level security and 24/7 support
                 </p>
               </div>
               
@@ -182,9 +249,9 @@ const Index = () => {
                 <div className="h-20 w-20 rounded-full bg-neon-pink border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
                   <Sparkles className="h-10 w-10 text-white" />
                 </div>
-                <h4 className="text-3xl font-black">ALL-IN-ONE API</h4>
+                <h4 className="text-3xl font-black">NO EXPERIENCE NEEDED</h4>
                 <p className="text-foreground/80 font-medium text-lg">
-                  70% cheaper than Fal & Replicate—access all top models in one place
+                  Just describe what you want—our AI handles all the technical details
                 </p>
               </div>
             </div>
@@ -195,18 +262,23 @@ const Index = () => {
         <section className="container mx-auto px-4 py-20">
           <Card className="p-16 text-center max-w-5xl mx-auto bg-gradient-primary hover-lift">
             <div className="space-y-8">
-              <h3 className="text-5xl font-black text-white">READY TO CREATE?</h3>
+              <h3 className="text-5xl font-black text-white">START CREATING TODAY</h3>
               <p className="text-2xl text-white/90 font-medium">
-                Join thousands of creators using Artifio to bring their ideas to life
+                Join thousands of creators bringing their ideas to life with AI
               </p>
-              <Button
-                variant="neon"
-                size="lg"
-                onClick={() => navigate("/auth")}
-                className="text-xl px-16"
-              >
-                START FREE WITH 500 TOKENS
-              </Button>
+              <div className="flex items-center justify-center gap-4">
+                <Button
+                  variant="neon"
+                  size="lg"
+                  onClick={() => navigate("/auth")}
+                  className="text-xl px-16"
+                >
+                  GET 500 FREE TOKENS
+                </Button>
+              </div>
+              <p className="text-white/80 font-medium">
+                No credit card required • Start in 30 seconds
+              </p>
             </div>
           </Card>
         </section>

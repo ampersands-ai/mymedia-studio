@@ -2,11 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, Sparkles } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
+import { useState } from "react";
 
 const plans = [
   {
     name: "Freemium",
     price: "FREE",
+    monthlyPrice: "FREE",
+    annualPrice: "FREE",
     tokens: "500",
     perToken: "Always Free",
     features: [
@@ -21,7 +24,8 @@ const plans = [
   },
   {
     name: "Explorer",
-    price: "$3.99",
+    monthlyPrice: "$5.32",
+    annualPrice: "$3.99",
     period: "/mo",
     tokens: "4,000",
     perToken: "$0.001 per token",
@@ -40,7 +44,8 @@ const plans = [
   },
   {
     name: "Creators",
-    price: "$7.99",
+    monthlyPrice: "$10.65",
+    annualPrice: "$7.99",
     period: "/mo",
     tokens: "10,000",
     perToken: "$0.0008 per token",
@@ -59,7 +64,8 @@ const plans = [
   },
   {
     name: "Professional",
-    price: "$19.99",
+    monthlyPrice: "$26.65",
+    annualPrice: "$19.99",
     period: "/mo",
     tokens: "32,500",
     perToken: "$0.0006 per token",
@@ -79,7 +85,8 @@ const plans = [
   },
   {
     name: "Ultimate",
-    price: "$39.99",
+    monthlyPrice: "$53.32",
+    annualPrice: "$39.99",
     period: "/mo",
     tokens: "75,000",
     perToken: "$0.00053 per token",
@@ -102,6 +109,7 @@ const plans = [
 
 const Pricing = () => {
   const navigate = useNavigate();
+  const [isAnnual, setIsAnnual] = useState(true);
 
   return (
     <div className="min-h-screen bg-background">
@@ -127,6 +135,35 @@ const Pricing = () => {
 
         {/* Pricing Content */}
         <main className="container mx-auto px-4 py-16">
+          {/* Billing Toggle */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex items-center gap-4 px-6 py-3 rounded-full bg-card border-3 border-black brutal-shadow">
+              <button
+                onClick={() => setIsAnnual(false)}
+                className={`px-4 py-2 rounded-full font-black transition-all ${
+                  !isAnnual
+                    ? "bg-primary text-white"
+                    : "text-foreground/60 hover:text-foreground"
+                }`}
+              >
+                MONTHLY
+              </button>
+              <button
+                onClick={() => setIsAnnual(true)}
+                className={`px-4 py-2 rounded-full font-black transition-all ${
+                  isAnnual
+                    ? "bg-primary text-white"
+                    : "text-foreground/60 hover:text-foreground"
+                }`}
+              >
+                ANNUAL
+                <span className="ml-2 text-xs px-2 py-1 bg-accent text-accent-foreground rounded-full">
+                  SAVE 25%
+                </span>
+              </button>
+            </div>
+          </div>
+
           <div className="text-center space-y-4 mb-8">
             <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-blue border-3 border-black brutal-shadow">
@@ -221,9 +258,27 @@ const Pricing = () => {
                     {plan.regions || "Global access"}
                   </CardDescription>
                   <div className="pt-4">
-                    <span className="text-5xl font-black">{plan.price}</span>
-                    {plan.period && (
-                      <span className={`${plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'} font-bold`}>{plan.period}</span>
+                    {isAnnual && plan.monthlyPrice !== "FREE" ? (
+                      <div className="space-y-1">
+                        <div className={`text-2xl font-bold line-through ${plan.color !== 'bg-muted' ? 'text-white/60' : 'text-foreground/40'}`}>
+                          {plan.monthlyPrice}
+                        </div>
+                        <div>
+                          <span className="text-5xl font-black">{plan.annualPrice}</span>
+                          {plan.period && (
+                            <span className={`${plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'} font-bold`}>{plan.period}</span>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="text-5xl font-black">
+                          {plan.monthlyPrice === "FREE" ? plan.monthlyPrice : isAnnual ? plan.annualPrice : plan.monthlyPrice}
+                        </span>
+                        {plan.period && plan.monthlyPrice !== "FREE" && (
+                          <span className={`${plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'} font-bold`}>{plan.period}</span>
+                        )}
+                      </div>
                     )}
                   </div>
                   <div className={`text-sm font-black pt-2 ${plan.color !== 'bg-muted' ? 'text-white' : ''}`}>
@@ -266,7 +321,7 @@ const Pricing = () => {
                     size="lg"
                     onClick={() => navigate("/auth")}
                   >
-                    {plan.price === "FREE" ? "GET STARTED" : "SUBSCRIBE"}
+                    {plan.monthlyPrice === "FREE" ? "GET STARTED" : "SUBSCRIBE"}
                   </Button>
                 </CardContent>
               </Card>

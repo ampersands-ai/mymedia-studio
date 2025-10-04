@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import logo from "@/assets/logo.png";
+import textLogo from "@/assets/text-logo.png";
 
 const plans = [
   {
@@ -112,6 +115,7 @@ const plans = [
 
 const Pricing = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isAnnual, setIsAnnual] = useState(true);
 
   // Add structured data for SEO
@@ -224,7 +228,59 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-16">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+      
+      <div className="relative z-10">
+        {/* Header */}
+        <header className="border-b-4 border-black bg-card">
+          <nav className="container mx-auto px-4 py-3 md:py-4" aria-label="Main navigation">
+            <div className="flex items-center justify-between">
+              <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity">
+                <img 
+                  src={logo} 
+                  alt="Artifio.ai logo symbol" 
+                  className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
+                />
+                <img 
+                  src={textLogo} 
+                  alt="Artifio" 
+                  className="h-6 md:h-8"
+                />
+              </Link>
+              <div className="flex items-center gap-2 md:gap-3">
+                <Button variant="ghost" onClick={() => navigate("/pricing")} className="text-sm md:text-base px-2 md:px-4">
+                  Pricing
+                </Button>
+                {!user ? (
+                  <>
+                    <Button variant="outline" onClick={() => navigate("/auth")} className="hidden sm:inline-flex text-sm md:text-base">
+                      Sign In
+                    </Button>
+                    <Button
+                      variant="neon"
+                      size="sm"
+                      onClick={() => navigate("/auth")}
+                      className="md:text-base"
+                    >
+                      Get Started
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="neon"
+                    size="sm"
+                    onClick={() => navigate("/dashboard/create")}
+                    className="md:text-base"
+                  >
+                    Go to Dashboard
+                  </Button>
+                )}
+              </div>
+            </div>
+          </nav>
+        </header>
+
+        <main className="container mx-auto px-4 py-16">
           <div className="text-center space-y-6 mb-12">
             <h2 className="text-5xl md:text-6xl font-black">Simple, Transparent Pricing</h2>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
@@ -426,6 +482,45 @@ const Pricing = () => {
             </div>
           </div>
         </main>
+
+        {/* Footer */}
+        <footer className="border-t-4 border-black bg-card">
+          <div className="container mx-auto px-4 py-6 md:py-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <img 
+                    src={logo} 
+                    alt="Artifio.ai logo symbol" 
+                    className="h-8 w-8 rounded-xl border-3 border-black brutal-shadow"
+                  />
+                  <img 
+                    src={textLogo} 
+                    alt="Artifio" 
+                    className="h-6"
+                  />
+                </div>
+                <p className="text-xs md:text-sm font-medium text-foreground/80 text-center sm:text-left">
+                  Making AI content creation accessible and affordable for everyone
+                </p>
+              </div>
+              <div className="flex flex-col md:flex-row items-center gap-4">
+                <div className="flex gap-6">
+                  <Link to="/privacy" className="text-xs md:text-sm text-foreground/60 hover:text-foreground font-bold transition-colors">
+                    Privacy
+                  </Link>
+                  <Link to="/terms" className="text-xs md:text-sm text-foreground/60 hover:text-foreground font-bold transition-colors">
+                    Terms
+                  </Link>
+                </div>
+                <p className="text-xs md:text-sm font-medium text-foreground/60">
+                  © 2025 Artifio. All rights reserved.
+                </p>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 };

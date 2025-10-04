@@ -20,8 +20,6 @@ const Playground = () => {
   const [resolution, setResolution] = useState<"Native" | "HD">("Native");
   const [generatedOutput, setGeneratedOutput] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [viewMode, setViewMode] = useState<"form" | "json">("form");
-  const [outputMode, setOutputMode] = useState<"preview" | "json">("preview");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -206,244 +204,190 @@ const Playground = () => {
           {/* Two Column Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
             {/* Input Panel */}
-            <Card className="bg-card border-2">
-              <div className="border-b px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold">Input</h3>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={viewMode === "form" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setViewMode("form")}
-                      className="h-8 px-4"
-                    >
-                      Form
-                    </Button>
-                    <Button
-                      variant={viewMode === "json" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setViewMode("json")}
-                      className="h-8 px-4"
-                    >
-                      JSON
-                    </Button>
-                  </div>
-                </div>
+            <Card className="bg-card border">
+              <div className="border-b px-6 py-4 bg-muted/30">
+                <h3 className="text-lg font-bold">Input</h3>
               </div>
 
               <div className="p-6 space-y-6">
-                {viewMode === "form" ? (
-                  <>
-                    {/* Prompt */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">
-                        prompt <span className="text-destructive">*</span>
-                      </label>
-                      <Textarea
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        placeholder="turn this photo into a character figure. Behind it, place a box with the character's image printed on it, and a computer showing the Blender modeling process on its screen..."
-                        className="min-h-[120px] resize-none"
-                      />
-                      <p className="text-xs text-muted-foreground">The prompt for image editing</p>
-                    </div>
+                {/* Prompt */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    prompt <span className="text-destructive">*</span>
+                  </label>
+                  <Textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="turn this photo into a character figure. Behind it, place a box with the character's image printed on it, and a computer showing the Blender modeling process on its screen..."
+                    className="min-h-[120px] resize-none"
+                  />
+                  <p className="text-xs text-muted-foreground">The prompt for image editing</p>
+                </div>
 
-                    {/* Image Upload */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium">
-                          image_urls <span className="text-destructive">*</span>
-                        </label>
-                        {uploadedImages.length > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setUploadedImages([])}
-                            className="h-8 text-pink-500 hover:text-pink-600"
-                          >
-                            Remove All
-                          </Button>
-                        )}
-                      </div>
-
-                      {uploadedImages.map((file, index) => (
-                        <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
-                          <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                          <span className="text-sm flex-1">File {index + 1}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeImage(index)}
-                            className="h-8 text-pink-500 hover:text-pink-600"
-                          >
-                            Remove
-                          </Button>
-                          <div className="w-24 h-24 border rounded-lg overflow-hidden bg-muted">
-                            <img
-                              src={URL.createObjectURL(file)}
-                              alt={`Upload ${index + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        </div>
-                      ))}
-
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleFileUpload}
-                        className="hidden"
-                      />
-
+                {/* Image Upload */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">
+                      image_urls <span className="text-destructive">*</span>
+                    </label>
+                    {uploadedImages.length > 0 && (
                       <Button
-                        variant="outline"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadedImages.length >= 10}
-                        className="w-full border-dashed"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setUploadedImages([])}
+                        className="h-8 text-muted-foreground hover:text-foreground"
                       >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Add more files ({uploadedImages.length}/10)
+                        Remove All
                       </Button>
-
-                      <p className="text-xs text-muted-foreground">
-                        List of URLs of input images for editing, up to 10 images.
-                      </p>
-                    </div>
-
-                    {/* Output Format */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">output_format</label>
-                      <div className="flex gap-2">
-                        <Button
-                          variant={outputFormat === "PNG" ? "default" : "outline"}
-                          onClick={() => setOutputFormat("PNG")}
-                          className="flex-1"
-                        >
-                          PNG
-                        </Button>
-                        <Button
-                          variant={outputFormat === "JPEG" ? "default" : "outline"}
-                          onClick={() => setOutputFormat("JPEG")}
-                          className="flex-1"
-                        >
-                          JPEG
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground">Output format for the images</p>
-                    </div>
-
-                    {/* Resolution */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Resolution</label>
-                      <div className="flex gap-2">
-                        <Button
-                          variant={resolution === "Native" ? "default" : "outline"}
-                          onClick={() => setResolution("Native")}
-                          className="flex-1"
-                        >
-                          Native
-                        </Button>
-                        <Button
-                          variant={resolution === "HD" ? "default" : "outline"}
-                          onClick={() => setResolution("HD")}
-                          className="flex-1"
-                        >
-                          HD
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-3 pt-4">
-                      <Button variant="outline" onClick={handleReset} className="flex-1">
-                        Reset
-                      </Button>
-                      <Button
-                        onClick={handleGenerate}
-                        disabled={!prompt || isGenerating}
-                        className="flex-1"
-                      >
-                        <Play className="h-4 w-4 mr-2" />
-                        {isGenerating ? "Generating..." : "Run"}
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="bg-muted p-4 rounded-lg font-mono text-sm">
-                    <pre>{JSON.stringify({ prompt, image_urls: uploadedImages.map(f => f.name), output_format: outputFormat.toLowerCase(), resolution: resolution.toLowerCase() }, null, 2)}</pre>
+                    )}
                   </div>
-                )}
+
+                  {uploadedImages.map((file, index) => (
+                    <div key={index} className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
+                      <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-sm flex-1">File {index + 1}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeImage(index)}
+                        className="h-8 text-muted-foreground hover:text-foreground"
+                      >
+                        Remove
+                      </Button>
+                      <div className="w-24 h-24 border rounded-lg overflow-hidden bg-muted">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`Upload ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+                  ))}
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadedImages.length >= 10}
+                    className="w-full border-dashed"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Add more files ({uploadedImages.length}/10)
+                  </Button>
+
+                  <p className="text-xs text-muted-foreground">
+                    List of URLs of input images for editing, up to 10 images.
+                  </p>
+                </div>
+
+                {/* Output Format */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">output_format</label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={outputFormat === "PNG" ? "default" : "outline"}
+                      onClick={() => setOutputFormat("PNG")}
+                      className="flex-1"
+                    >
+                      PNG
+                    </Button>
+                    <Button
+                      variant={outputFormat === "JPEG" ? "default" : "outline"}
+                      onClick={() => setOutputFormat("JPEG")}
+                      className="flex-1"
+                    >
+                      JPEG
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Output format for the images</p>
+                </div>
+
+                {/* Resolution */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Resolution</label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={resolution === "Native" ? "default" : "outline"}
+                      onClick={() => setResolution("Native")}
+                      className="flex-1"
+                    >
+                      Native
+                    </Button>
+                    <Button
+                      variant={resolution === "HD" ? "default" : "outline"}
+                      onClick={() => setResolution("HD")}
+                      className="flex-1"
+                    >
+                      HD
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4">
+                  <Button variant="outline" onClick={handleReset} className="flex-1">
+                    Reset
+                  </Button>
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={!prompt || isGenerating}
+                    className="flex-1"
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    {isGenerating ? "Generating..." : "Run"}
+                  </Button>
+                </div>
               </div>
             </Card>
 
             {/* Output Panel */}
-            <Card className="bg-card border-2">
-              <div className="border-b px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold">Output</h3>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={outputMode === "preview" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setOutputMode("preview")}
-                      className="h-8 px-4"
-                    >
-                      Preview
-                    </Button>
-                    <Button
-                      variant={outputMode === "json" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setOutputMode("json")}
-                      className="h-8 px-4"
-                    >
-                      JSON
-                    </Button>
-                  </div>
-                </div>
+            <Card className="bg-card border">
+              <div className="border-b px-6 py-4 bg-muted/30">
+                <h3 className="text-lg font-bold">Output</h3>
               </div>
 
               <div className="p-6">
-                {outputMode === "preview" ? (
-                  <div className="space-y-4">
-                    <div>
-                      <span className="text-sm text-muted-foreground mr-2">output type</span>
-                      <Badge variant="secondary">image</Badge>
-                    </div>
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-sm text-muted-foreground mr-2">output type</span>
+                    <Badge variant="secondary">image</Badge>
+                  </div>
 
-                    <div className="border-2 rounded-lg overflow-hidden bg-muted aspect-[4/3] flex items-center justify-center">
-                      {generatedOutput ? (
-                        <img
-                          src={generatedOutput}
-                          alt="Generated output"
-                          className="w-full h-full object-contain"
-                        />
-                      ) : (
-                        <div className="text-center text-muted-foreground">
-                          <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm">Output will appear here</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {generatedOutput && (
-                      <div className="flex gap-3 justify-end">
-                        <Button size="sm" variant="default">
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <History className="h-4 w-4 mr-2" />
-                          View full history
-                        </Button>
+                  <div className="border rounded-lg overflow-hidden bg-muted/30 aspect-[4/3] flex items-center justify-center">
+                    {generatedOutput ? (
+                      <img
+                        src={generatedOutput}
+                        alt="Generated output"
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div className="text-center text-muted-foreground">
+                        <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Output will appear here</p>
                       </div>
                     )}
                   </div>
-                ) : (
-                  <div className="bg-muted p-4 rounded-lg font-mono text-sm">
-                    <pre>{JSON.stringify({ output_type: "image", url: generatedOutput || null }, null, 2)}</pre>
-                  </div>
-                )}
+
+                  {generatedOutput && (
+                    <div className="flex gap-3 justify-end">
+                      <Button size="sm" variant="default">
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <History className="h-4 w-4 mr-2" />
+                        View full history
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </Card>
           </div>

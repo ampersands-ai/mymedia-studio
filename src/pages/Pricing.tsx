@@ -105,6 +105,29 @@ const plans = [
     description: "Enterprise power at freelancer prices. 75,000 tokens for just $39.99/mo—competitors charge $99+ for less.",
     savings: "Save $60-85/mo vs competitors",
   },
+  {
+    name: "Veo Connoisseur",
+    monthlyPrice: "$119.99",
+    annualPrice: "$89.99",
+    period: "/mo",
+    tokens: "200,000",
+    perToken: "$0.00045 per token",
+    features: [
+      "200,000 tokens",
+      "No watermark",
+      "Commercial license",
+      "Fastest rendering priority",
+      "API access",
+      "White-label options",
+      "24/7 premium support",
+      "Early access to new features",
+    ],
+    popular: false,
+    badge: "PREMIUM",
+    color: "bg-accent",
+    description: "Ultimate power for professionals and agencies. 200,000 tokens at the best rate—unmatched value for serious creators.",
+    savings: "Best per-token pricing available",
+  },
 ];
 
 const Pricing = () => {

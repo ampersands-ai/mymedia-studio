@@ -13,55 +13,119 @@ import { Sparkles, Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 
-const countries = [
-  { value: "united-states", label: "United States" },
-  { value: "canada", label: "Canada" },
-  { value: "united-kingdom", label: "United Kingdom" },
-  { value: "australia", label: "Australia" },
-  { value: "germany", label: "Germany" },
-  { value: "france", label: "France" },
-  { value: "spain", label: "Spain" },
-  { value: "italy", label: "Italy" },
-  { value: "japan", label: "Japan" },
-  { value: "china", label: "China" },
-  { value: "india", label: "India" },
-  { value: "brazil", label: "Brazil" },
-  { value: "mexico", label: "Mexico" },
-  { value: "south-korea", label: "South Korea" },
-  { value: "netherlands", label: "Netherlands" },
-  { value: "sweden", label: "Sweden" },
-  { value: "switzerland", label: "Switzerland" },
-  { value: "belgium", label: "Belgium" },
-  { value: "norway", label: "Norway" },
-  { value: "denmark", label: "Denmark" },
-  { value: "finland", label: "Finland" },
-  { value: "poland", label: "Poland" },
-  { value: "portugal", label: "Portugal" },
-  { value: "greece", label: "Greece" },
-  { value: "austria", label: "Austria" },
-  { value: "ireland", label: "Ireland" },
-  { value: "new-zealand", label: "New Zealand" },
-  { value: "singapore", label: "Singapore" },
-  { value: "hong-kong", label: "Hong Kong" },
-  { value: "south-africa", label: "South Africa" },
-  { value: "russia", label: "Russia" },
-  { value: "turkey", label: "Turkey" },
-  { value: "argentina", label: "Argentina" },
-  { value: "chile", label: "Chile" },
-  { value: "colombia", label: "Colombia" },
-  { value: "egypt", label: "Egypt" },
-  { value: "israel", label: "Israel" },
-  { value: "thailand", label: "Thailand" },
-  { value: "malaysia", label: "Malaysia" },
-  { value: "indonesia", label: "Indonesia" },
-  { value: "philippines", label: "Philippines" },
-  { value: "vietnam", label: "Vietnam" },
-  { value: "pakistan", label: "Pakistan" },
-  { value: "bangladesh", label: "Bangladesh" },
-  { value: "nigeria", label: "Nigeria" },
-  { value: "kenya", label: "Kenya" },
-  { value: "uae", label: "United Arab Emirates" },
-  { value: "saudi-arabia", label: "Saudi Arabia" },
+const countryCodes = [
+  { code: "+1", country: "United States", flag: "🇺🇸" },
+  { code: "+1", country: "Canada", flag: "🇨🇦" },
+  { code: "+44", country: "United Kingdom", flag: "🇬🇧" },
+  { code: "+61", country: "Australia", flag: "🇦🇺" },
+  { code: "+91", country: "India", flag: "🇮🇳" },
+  { code: "+81", country: "Japan", flag: "🇯🇵" },
+  { code: "+86", country: "China", flag: "🇨🇳" },
+  { code: "+49", country: "Germany", flag: "🇩🇪" },
+  { code: "+33", country: "France", flag: "🇫🇷" },
+  { code: "+39", country: "Italy", flag: "🇮🇹" },
+  { code: "+34", country: "Spain", flag: "🇪🇸" },
+  { code: "+7", country: "Russia", flag: "🇷🇺" },
+  { code: "+55", country: "Brazil", flag: "🇧🇷" },
+  { code: "+52", country: "Mexico", flag: "🇲🇽" },
+  { code: "+82", country: "South Korea", flag: "🇰🇷" },
+  { code: "+31", country: "Netherlands", flag: "🇳🇱" },
+  { code: "+46", country: "Sweden", flag: "🇸🇪" },
+  { code: "+41", country: "Switzerland", flag: "🇨🇭" },
+  { code: "+32", country: "Belgium", flag: "🇧🇪" },
+  { code: "+47", country: "Norway", flag: "🇳🇴" },
+  { code: "+45", country: "Denmark", flag: "🇩🇰" },
+  { code: "+358", country: "Finland", flag: "🇫🇮" },
+  { code: "+48", country: "Poland", flag: "🇵🇱" },
+  { code: "+351", country: "Portugal", flag: "🇵🇹" },
+  { code: "+30", country: "Greece", flag: "🇬🇷" },
+  { code: "+43", country: "Austria", flag: "🇦🇹" },
+  { code: "+353", country: "Ireland", flag: "🇮🇪" },
+  { code: "+64", country: "New Zealand", flag: "🇳🇿" },
+  { code: "+65", country: "Singapore", flag: "🇸🇬" },
+  { code: "+852", country: "Hong Kong", flag: "🇭🇰" },
+  { code: "+27", country: "South Africa", flag: "🇿🇦" },
+  { code: "+90", country: "Turkey", flag: "🇹🇷" },
+  { code: "+54", country: "Argentina", flag: "🇦🇷" },
+  { code: "+56", country: "Chile", flag: "🇨🇱" },
+  { code: "+57", country: "Colombia", flag: "🇨🇴" },
+  { code: "+20", country: "Egypt", flag: "🇪🇬" },
+  { code: "+972", country: "Israel", flag: "🇮🇱" },
+  { code: "+66", country: "Thailand", flag: "🇹🇭" },
+  { code: "+60", country: "Malaysia", flag: "🇲🇾" },
+  { code: "+62", country: "Indonesia", flag: "🇮🇩" },
+  { code: "+63", country: "Philippines", flag: "🇵🇭" },
+  { code: "+84", country: "Vietnam", flag: "🇻🇳" },
+  { code: "+92", country: "Pakistan", flag: "🇵🇰" },
+  { code: "+880", country: "Bangladesh", flag: "🇧🇩" },
+  { code: "+234", country: "Nigeria", flag: "🇳🇬" },
+  { code: "+254", country: "Kenya", flag: "🇰🇪" },
+  { code: "+971", country: "United Arab Emirates", flag: "🇦🇪" },
+  { code: "+966", country: "Saudi Arabia", flag: "🇸🇦" },
+  { code: "+974", country: "Qatar", flag: "🇶🇦" },
+  { code: "+965", country: "Kuwait", flag: "🇰🇼" },
+  { code: "+973", country: "Bahrain", flag: "🇧🇭" },
+  { code: "+968", country: "Oman", flag: "🇴🇲" },
+  { code: "+962", country: "Jordan", flag: "🇯🇴" },
+  { code: "+961", country: "Lebanon", flag: "🇱🇧" },
+  { code: "+212", country: "Morocco", flag: "🇲🇦" },
+  { code: "+216", country: "Tunisia", flag: "🇹🇳" },
+  { code: "+233", country: "Ghana", flag: "🇬🇭" },
+  { code: "+255", country: "Tanzania", flag: "🇹🇿" },
+  { code: "+256", country: "Uganda", flag: "🇺🇬" },
+  { code: "+260", country: "Zambia", flag: "🇿🇲" },
+  { code: "+263", country: "Zimbabwe", flag: "🇿🇼" },
+  { code: "+591", country: "Bolivia", flag: "🇧🇴" },
+  { code: "+593", country: "Ecuador", flag: "🇪🇨" },
+  { code: "+595", country: "Paraguay", flag: "🇵🇾" },
+  { code: "+598", country: "Uruguay", flag: "🇺🇾" },
+  { code: "+51", country: "Peru", flag: "🇵🇪" },
+  { code: "+58", country: "Venezuela", flag: "🇻🇪" },
+  { code: "+420", country: "Czech Republic", flag: "🇨🇿" },
+  { code: "+36", country: "Hungary", flag: "🇭🇺" },
+  { code: "+40", country: "Romania", flag: "🇷🇴" },
+  { code: "+421", country: "Slovakia", flag: "🇸🇰" },
+  { code: "+359", country: "Bulgaria", flag: "🇧🇬" },
+  { code: "+385", country: "Croatia", flag: "🇭🇷" },
+  { code: "+386", country: "Slovenia", flag: "🇸🇮" },
+  { code: "+370", country: "Lithuania", flag: "🇱🇹" },
+  { code: "+371", country: "Latvia", flag: "🇱🇻" },
+  { code: "+372", country: "Estonia", flag: "🇪🇪" },
+  { code: "+354", country: "Iceland", flag: "🇮🇸" },
+  { code: "+377", country: "Monaco", flag: "🇲🇨" },
+  { code: "+356", country: "Malta", flag: "🇲🇹" },
+  { code: "+357", country: "Cyprus", flag: "🇨🇾" },
+  { code: "+382", country: "Montenegro", flag: "🇲🇪" },
+  { code: "+381", country: "Serbia", flag: "🇷🇸" },
+  { code: "+387", country: "Bosnia and Herzegovina", flag: "🇧🇦" },
+  { code: "+389", country: "North Macedonia", flag: "🇲🇰" },
+  { code: "+355", country: "Albania", flag: "🇦🇱" },
+  { code: "+995", country: "Georgia", flag: "🇬🇪" },
+  { code: "+374", country: "Armenia", flag: "🇦🇲" },
+  { code: "+994", country: "Azerbaijan", flag: "🇦🇿" },
+  { code: "+375", country: "Belarus", flag: "🇧🇾" },
+  { code: "+380", country: "Ukraine", flag: "🇺🇦" },
+  { code: "+373", country: "Moldova", flag: "🇲🇩" },
+  { code: "+996", country: "Kyrgyzstan", flag: "🇰🇬" },
+  { code: "+998", country: "Uzbekistan", flag: "🇺🇿" },
+  { code: "+7", country: "Kazakhstan", flag: "🇰🇿" },
+  { code: "+993", country: "Turkmenistan", flag: "🇹🇲" },
+  { code: "+992", country: "Tajikistan", flag: "🇹🇯" },
+  { code: "+976", country: "Mongolia", flag: "🇲🇳" },
+  { code: "+977", country: "Nepal", flag: "🇳🇵" },
+  { code: "+94", country: "Sri Lanka", flag: "🇱🇰" },
+  { code: "+95", country: "Myanmar", flag: "🇲🇲" },
+  { code: "+855", country: "Cambodia", flag: "🇰🇭" },
+  { code: "+856", country: "Laos", flag: "🇱🇦" },
+  { code: "+673", country: "Brunei", flag: "🇧🇳" },
+  { code: "+670", country: "Timor-Leste", flag: "🇹🇱" },
+  { code: "+960", country: "Maldives", flag: "🇲🇻" },
+  { code: "+975", country: "Bhutan", flag: "🇧🇹" },
+  { code: "+93", country: "Afghanistan", flag: "🇦🇫" },
+  { code: "+98", country: "Iran", flag: "🇮🇷" },
+  { code: "+964", country: "Iraq", flag: "🇮🇶" },
+  { code: "+963", country: "Syria", flag: "🇸🇾" },
+  { code: "+967", country: "Yemen", flag: "🇾🇪" },
 ];
 
 const Auth = () => {
@@ -72,9 +136,9 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [countryCode, setCountryCode] = useState("+1");
+  const [countryCodeOpen, setCountryCodeOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [country, setCountry] = useState("");
-  const [countryOpen, setCountryOpen] = useState(false);
   const [zipcode, setZipcode] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -107,8 +171,7 @@ const Auth = () => {
               full_name: `${firstName} ${lastName}`.trim(),
               first_name: firstName,
               last_name: lastName,
-              phone_number: phoneNumber || null,
-              country: country ? countries.find(c => c.value === country)?.label : null,
+              phone_number: phoneNumber ? `${countryCode}${phoneNumber}` : null,
               zipcode: zipcode || null,
             },
             emailRedirectTo: `${window.location.origin}/playground`,
@@ -117,7 +180,7 @@ const Auth = () => {
         if (error) throw error;
         
         // Check if user provided all optional fields
-        const hasAllFields = phoneNumber && country && zipcode;
+        const hasAllFields = phoneNumber && zipcode;
         if (hasAllFields) {
           toast.success("Account created! You've received 500 free tokens. Verify your email for 100 bonus tokens!");
         } else {
@@ -256,61 +319,85 @@ const Auth = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phoneNumber" className="font-bold">Phone Number</Label>
+                  <Label htmlFor="email" className="font-bold">Email</Label>
                   <Input
-                    id="phoneNumber"
-                    type="tel"
-                    placeholder="+1 234 567 8900"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                     className="border-3 border-black brutal-shadow h-12 font-medium"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="country" className="font-bold">Country</Label>
-                  <Popover open={countryOpen} onOpenChange={setCountryOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={countryOpen}
-                        className="w-full justify-between border-3 border-black brutal-shadow h-12 font-medium"
-                      >
-                        {country
-                          ? countries.find((c) => c.value === country)?.label
-                          : "Select country..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0 bg-background z-50" align="start">
-                      <Command className="bg-background">
-                        <CommandInput placeholder="Search country..." className="h-9" />
-                        <CommandList>
-                          <CommandEmpty>No country found.</CommandEmpty>
-                          <CommandGroup>
-                            {countries.map((c) => (
-                              <CommandItem
-                                key={c.value}
-                                value={c.value}
-                                onSelect={(currentValue) => {
-                                  setCountry(currentValue === country ? "" : currentValue);
-                                  setCountryOpen(false);
-                                }}
-                              >
-                                {c.label}
-                                <Check
-                                  className={cn(
-                                    "ml-auto h-4 w-4",
-                                    country === c.value ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <Label htmlFor="password" className="font-bold">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="border-3 border-black brutal-shadow h-12 font-medium"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phoneNumber" className="font-bold">Phone Number</Label>
+                  <div className="flex gap-2">
+                    <Popover open={countryCodeOpen} onOpenChange={setCountryCodeOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={countryCodeOpen}
+                          className="w-[140px] justify-between border-3 border-black brutal-shadow h-12 font-medium"
+                        >
+                          <span className="truncate">
+                            {countryCodes.find((c) => c.code === countryCode)?.flag} {countryCode}
+                          </span>
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[280px] p-0 bg-background z-50" align="start">
+                        <Command className="bg-background">
+                          <CommandInput placeholder="Search country..." className="h-9" />
+                          <CommandList>
+                            <CommandEmpty>No country found.</CommandEmpty>
+                            <CommandGroup>
+                              {countryCodes.map((c, idx) => (
+                                <CommandItem
+                                  key={`${c.code}-${c.country}-${idx}`}
+                                  value={`${c.country} ${c.code}`}
+                                  onSelect={() => {
+                                    setCountryCode(c.code);
+                                    setCountryCodeOpen(false);
+                                  }}
+                                >
+                                  <span className="mr-2">{c.flag}</span>
+                                  {c.country} ({c.code})
+                                  <Check
+                                    className={cn(
+                                      "ml-auto h-4 w-4",
+                                      countryCode === c.code ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <Input
+                      id="phoneNumber"
+                      type="tel"
+                      placeholder="234 567 8900"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="flex-1 border-3 border-black brutal-shadow h-12 font-medium"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="zipcode" className="font-bold">Zipcode</Label>
@@ -323,6 +410,10 @@ const Auth = () => {
                     className="border-3 border-black brutal-shadow h-12 font-medium"
                   />
                 </div>
+              </>
+            )}
+            {isLogin && (
+              <>
               </>
             )}
             <div className="space-y-2">

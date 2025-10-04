@@ -13,6 +13,7 @@ import creativeDesign from "@/assets/creative-design.jpg";
 import audioProcessing from "@/assets/audio-processing.jpg";
 import textGeneration from "@/assets/text-generation.jpg";
 import logo from "@/assets/logo.png";
+import textLogo from "@/assets/text-logo.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -251,10 +252,14 @@ const Index = () => {
               <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity">
                 <img 
                   src={logo} 
-                  alt="Artifio.ai logo" 
+                  alt="Artifio.ai logo symbol" 
                   className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
                 />
-                <h1 className="text-xl md:text-3xl font-black gradient-text">ARTIFIO.AI</h1>
+                <img 
+                  src={textLogo} 
+                  alt="Artifio" 
+                  className="h-6 md:h-8"
+                />
               </Link>
               <div className="flex items-center gap-2 md:gap-3">
                 <Button variant="ghost" onClick={() => navigate("/pricing")} className="text-sm md:text-base px-2 md:px-4">

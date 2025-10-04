@@ -5,6 +5,7 @@ import { Coins, Sparkles, History, Settings, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
+import textLogo from "@/assets/text-logo.png";
 
 export const DashboardLayout = () => {
   const navigate = useNavigate();
@@ -60,10 +61,14 @@ export const DashboardLayout = () => {
           <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <img 
               src={logo} 
-              alt="Artifio.ai logo" 
+              alt="Artifio.ai logo symbol" 
               className="h-10 w-10 rounded-xl border-3 border-black brutal-shadow"
             />
-            <h1 className="text-3xl font-black gradient-text">ARTIFIO.AI</h1>
+            <img 
+              src={textLogo} 
+              alt="Artifio" 
+              className="h-8"
+            />
           </Link>
 
           <div className="flex items-center gap-4">

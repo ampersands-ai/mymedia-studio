@@ -530,8 +530,19 @@ const Playground = () => {
 
                   {generatedOutput && (
                     <div className="flex gap-3 justify-end">
-                      <Button size="sm" variant="default">
-                        <Download className="h-4 w-4" />
+                      <Button 
+                        size="sm" 
+                        variant="default"
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = generatedOutput;
+                          link.download = `artifio-${Date.now()}.${outputFormat.toLowerCase()}`;
+                          link.click();
+                          toast.success("Image downloaded!");
+                        }}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
                       </Button>
                       <Button size="sm" variant="outline">
                         <History className="h-4 w-4 mr-2" />

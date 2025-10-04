@@ -164,7 +164,7 @@ const Pricing = () => {
                 <span className="text-xs font-black text-white">AFFORDABLE & COMPETITIVE</span>
               </div>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-yellow border-3 border-black brutal-shadow">
-                <span className="text-xs font-black">SAVE 50–80% VS COMPETITORS</span>
+                <span className="text-xs font-black text-foreground">SAVE 50–80% VS COMPETITORS</span>
               </div>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary border-3 border-black brutal-shadow">
                 <span className="text-xs font-black text-white">BEST VALUE FOR CREATORS</span>
@@ -233,7 +233,7 @@ const Pricing = () => {
             <div className="inline-flex items-center gap-4 px-6 py-3 rounded-full bg-card border-3 border-black brutal-shadow">
               <button
                 onClick={() => setIsAnnual(false)}
-                className={`px-4 py-2 rounded-full font-black transition-all ${
+                className={`inline-flex items-center px-4 py-2 rounded-full font-black transition-all ${
                   !isAnnual
                     ? "bg-primary text-white"
                     : "text-foreground/60 hover:text-foreground"
@@ -243,14 +243,14 @@ const Pricing = () => {
               </button>
               <button
                 onClick={() => setIsAnnual(true)}
-                className={`px-4 py-2 rounded-full font-black transition-all ${
+                className={`inline-flex items-center px-4 py-2 rounded-full font-black transition-all ${
                   isAnnual
                     ? "bg-primary text-white"
                     : "text-foreground/60 hover:text-foreground"
                 }`}
               >
                 ANNUAL
-                <span className="ml-2 text-xs px-2 py-1 bg-accent text-accent-foreground rounded-full">
+                <span className="ml-2 inline-flex items-center leading-none h-6 text-xs px-2 py-0.5 bg-accent text-accent-foreground rounded-full">
                   SAVE 25%
                 </span>
               </button>
@@ -275,21 +275,21 @@ const Pricing = () => {
                     {plan.badge}
                   </div>
                 )}
-                <CardHeader className={`${plan.color} ${plan.color !== 'bg-muted' ? 'text-white' : ''}`}>
+                <CardHeader className={`${plan.color} ${plan.color === 'bg-accent' ? 'text-accent-foreground' : plan.color !== 'bg-muted' ? 'text-white' : ''}`}>
                   <CardTitle className="text-3xl font-black">{plan.name}</CardTitle>
-                  <CardDescription className={`${plan.color !== 'bg-muted' ? 'text-white' : ''} font-bold`}>
+                  <CardDescription className={`${plan.color === 'bg-accent' ? 'text-accent-foreground' : plan.color !== 'bg-muted' ? 'text-white' : ''} font-bold`}>
                     {plan.regions || "Global access"}
                   </CardDescription>
                   <div className="pt-4">
                     {isAnnual && plan.monthlyPrice !== "FREE" ? (
                       <div className="space-y-1">
-                        <div className={`text-2xl font-bold line-through ${plan.color !== 'bg-muted' ? 'text-white/60' : 'text-foreground/40'}`}>
+                        <div className={`text-2xl font-bold line-through ${plan.color === 'bg-accent' ? 'text-foreground/40' : plan.color !== 'bg-muted' ? 'text-white/60' : 'text-foreground/40'}`}>
                           {plan.monthlyPrice}
                         </div>
                         <div>
                           <span className="text-5xl font-black">{plan.annualPrice}</span>
                           {plan.period && (
-                            <span className={`${plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'} font-bold`}>{plan.period}</span>
+                            <span className={`${plan.color === 'bg-accent' ? 'text-accent-foreground' : plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'} font-bold`}>{plan.period}</span>
                           )}
                         </div>
                       </div>
@@ -299,16 +299,16 @@ const Pricing = () => {
                           {plan.monthlyPrice === "FREE" ? plan.monthlyPrice : isAnnual ? plan.annualPrice : plan.monthlyPrice}
                         </span>
                         {plan.period && plan.monthlyPrice !== "FREE" && (
-                          <span className={`${plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'} font-bold`}>{plan.period}</span>
+                          <span className={`${plan.color === 'bg-accent' ? 'text-accent-foreground' : plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'} font-bold`}>{plan.period}</span>
                         )}
                       </div>
                     )}
                   </div>
-                  <div className={`text-sm font-black pt-2 ${plan.color !== 'bg-muted' ? 'text-white' : ''}`}>
+                  <div className={`text-sm font-black pt-2 ${plan.color === 'bg-accent' ? '' : plan.color !== 'bg-muted' ? 'text-white' : ''}`}>
                     {plan.tokens} TOKENS
                   </div>
                   {plan.perToken && (
-                    <div className={`text-xs font-bold pt-1 ${plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'}`}>
+                    <div className={`text-xs font-bold pt-1 ${plan.color === 'bg-accent' ? 'text-foreground/60' : plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'}`}>
                       💰 {plan.perToken}
                     </div>
                   )}

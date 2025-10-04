@@ -258,7 +258,7 @@ const Index = () => {
                 <img 
                   src={textLogo} 
                   alt="Artifio" 
-                  className="h-6 md:h-8"
+                  className="h-60 md:h-80"
                 />
               </Link>
               <div className="flex items-center gap-2 md:gap-3">
@@ -581,10 +581,16 @@ const Index = () => {
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex flex-col sm:flex-row items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-gradient-primary border-2 border-black brutal-shadow flex items-center justify-center">
-                    <Sparkles className="h-5 w-5 text-white" aria-hidden="true" />
-                  </div>
-                  <span className="font-black text-lg md:text-xl">ARTIFIO.AI</span>
+                  <img 
+                    src={logo} 
+                    alt="Artifio.ai logo symbol" 
+                    className="h-8 w-8 rounded-xl border-3 border-black brutal-shadow"
+                  />
+                  <img 
+                    src={textLogo} 
+                    alt="Artifio" 
+                    className="h-6"
+                  />
                 </div>
                 <p className="text-xs md:text-sm font-medium text-foreground/80 text-center sm:text-left">
                   Making AI content creation accessible and affordable for everyone

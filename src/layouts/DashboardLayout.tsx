@@ -67,7 +67,7 @@ export const DashboardLayout = () => {
             <img 
               src={textLogo} 
               alt="Artifio" 
-              className="h-8"
+              className="h-80"
             />
           </Link>
 

@@ -95,60 +95,100 @@ const Create = () => {
 
   const categories = [
     {
-      title: "Portrait Headshots",
-      description: "Professional AI-generated headshots for business profiles and portfolios",
-      badge: "Image Creation",
+      title: "Image Creation",
+      badge: "Image",
+      prefix: "IMG",
       image: portraitHeadshots,
-      templates: ["Professional Business", "Creative Artist", "Corporate Executive", "Startup Founder"]
+      templates: [
+        { id: "001", name: "Portrait Headshots", image: portraitHeadshots },
+        { id: "002", name: "Professional Business", image: portraitHeadshots },
+        { id: "003", name: "Creative Artist", image: portraitHeadshots },
+        { id: "004", name: "Corporate Executive", image: portraitHeadshots },
+      ]
     },
     {
       title: "Photo Editing",
-      description: "Enhance, retouch, and perfect your images with AI-powered editing tools",
-      badge: "Image Editing",
+      badge: "Edit",
+      prefix: "EDT",
       image: photoEditing,
-      templates: ["Background Removal", "Color Enhancement", "Portrait Retouch", "Object Removal"]
+      templates: [
+        { id: "001", name: "Background Removal", image: photoEditing },
+        { id: "002", name: "Color Enhancement", image: photoEditing },
+        { id: "003", name: "Portrait Retouch", image: photoEditing },
+        { id: "004", name: "Object Removal", image: photoEditing },
+      ]
     },
     {
-      title: "Cinematic Videos",
-      description: "Create stunning videos with professional effects and transitions",
-      badge: "Video Generation",
+      title: "Video Generation",
+      badge: "Video",
+      prefix: "VID",
       image: videoCreation,
-      templates: ["Product Demo", "Social Ads", "Explainer Video", "Brand Story"]
+      templates: [
+        { id: "001", name: "Product Demo", image: videoCreation },
+        { id: "002", name: "Social Ads", image: videoCreation },
+        { id: "003", name: "Explainer Video", image: videoCreation },
+        { id: "004", name: "Brand Story", image: videoCreation },
+      ]
     },
     {
       title: "Product Photography",
-      description: "Generate perfect product shots for e-commerce and marketing",
-      badge: "E-commerce",
+      badge: "Product",
+      prefix: "PRD",
       image: productPhotos,
-      templates: ["White Background", "Lifestyle Scene", "360° View", "Close-up Detail"]
+      templates: [
+        { id: "001", name: "White Background", image: productPhotos },
+        { id: "002", name: "Lifestyle Scene", image: productPhotos },
+        { id: "003", name: "360° View", image: productPhotos },
+        { id: "004", name: "Close-up Detail", image: productPhotos },
+      ]
     },
     {
       title: "Social Media Content",
-      description: "Design engaging posts, stories, and ads for all platforms",
-      badge: "Marketing",
+      badge: "Social",
+      prefix: "SOC",
       image: socialMedia,
-      templates: ["Instagram Story", "Facebook Post", "Twitter Header", "LinkedIn Banner"]
+      templates: [
+        { id: "001", name: "Instagram Story", image: socialMedia },
+        { id: "002", name: "Facebook Post", image: socialMedia },
+        { id: "003", name: "Twitter Header", image: socialMedia },
+        { id: "004", name: "LinkedIn Banner", image: socialMedia },
+      ]
     },
     {
       title: "Creative Design",
-      description: "Bring your artistic vision to life with AI-powered design tools",
-      badge: "Creative",
+      badge: "Design",
+      prefix: "DSN",
       image: creativeDesign,
-      templates: ["Logo Design", "Brand Identity", "Illustration", "Digital Art"]
+      templates: [
+        { id: "001", name: "Logo Design", image: creativeDesign },
+        { id: "002", name: "Brand Identity", image: creativeDesign },
+        { id: "003", name: "Illustration", image: creativeDesign },
+        { id: "004", name: "Digital Art", image: creativeDesign },
+      ]
     },
     {
       title: "Audio Processing",
-      description: "Generate music, voiceovers, and process audio with AI",
       badge: "Audio",
+      prefix: "AUD",
       image: audioProcessing,
-      templates: ["Background Music", "Voiceover", "Sound Effects", "Podcast Intro"]
+      templates: [
+        { id: "001", name: "Background Music", image: audioProcessing },
+        { id: "002", name: "Voiceover", image: audioProcessing },
+        { id: "003", name: "Sound Effects", image: audioProcessing },
+        { id: "004", name: "Podcast Intro", image: audioProcessing },
+      ]
     },
     {
       title: "Text Generation",
-      description: "Create compelling content, documents, and copy instantly",
-      badge: "Text Processing",
+      badge: "Text",
+      prefix: "TXT",
       image: textGeneration,
-      templates: ["Blog Post", "Product Description", "Ad Copy", "Email Template"]
+      templates: [
+        { id: "001", name: "Blog Post", image: textGeneration },
+        { id: "002", name: "Product Description", image: textGeneration },
+        { id: "003", name: "Ad Copy", image: textGeneration },
+        { id: "004", name: "Email Template", image: textGeneration },
+      ]
     }
   ];
 
@@ -165,72 +205,62 @@ const Create = () => {
           </p>
         </div>
 
-        {/* Category Carousels */}
+        {/* Category Carousels - Mobile First */}
         <div className="space-y-8 mb-12">
-            {categories.map((category, index) => (
-              <div key={index} className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <h3 className="text-xl font-black">{category.title}</h3>
-                  <Badge className="bg-neon-yellow text-foreground border-2 border-black">
-                    {category.badge}
-                  </Badge>
-                </div>
-                
-                <Carousel className="w-full">
-                  <CarouselContent className="-ml-2 md:-ml-3">
-                    {/* Main Category Card */}
-                    <CarouselItem className="pl-2 md:pl-3 basis-1/3 md:basis-1/4 lg:basis-1/5">
-                      <Card className="brutal-card hover-lift h-full">
-                        <div className="relative h-24 overflow-hidden">
+          {categories.map((category, index) => (
+            <div key={index} className="space-y-3">
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg md:text-xl font-black">{category.title}</h3>
+                <Badge className="bg-neon-yellow text-foreground border-2 border-black text-xs">
+                  {category.badge}
+                </Badge>
+              </div>
+              
+              <Carousel 
+                className="w-full"
+                opts={{
+                  align: "start",
+                  loop: false,
+                }}
+              >
+                <CarouselContent className="-ml-2">
+                  {category.templates.map((template) => (
+                    <CarouselItem key={template.id} className="pl-2 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6">
+                      <Card 
+                        className="brutal-card-sm hover-lift cursor-pointer overflow-hidden"
+                        onClick={() => {
+                          navigate('/dashboard/custom-creation');
+                          toast.success(`Template ${category.prefix}-${template.id} selected!`);
+                        }}
+                      >
+                        <div className="aspect-square relative overflow-hidden">
                           <img 
-                            src={category.image} 
-                            alt={category.title}
+                            src={template.image} 
+                            alt={`Template ${category.prefix}-${template.id}`}
                             className="w-full h-full object-cover"
                           />
-                          <div className="absolute top-2 right-2 bg-neon-yellow px-2 py-0.5 rounded-full border-2 border-black text-xs font-black">
-                            {category.badge}
+                          <div className="absolute top-2 left-2 bg-black/80 text-white px-2 py-1 rounded text-xs font-black">
+                            {category.prefix}-{template.id}
                           </div>
                         </div>
-                        <CardContent className="p-3 space-y-2">
-                          <h4 className="text-lg font-black">{category.title}</h4>
-                          <p className="text-foreground/80 font-medium text-sm line-clamp-2">{category.description}</p>
+                        <CardContent className="p-2">
                           <Button 
-                            className="w-full mt-2 bg-primary hover:bg-primary/90 text-white font-black text-sm"
-                            onClick={() => navigate('/dashboard/custom-creation')}
+                            className="w-full bg-primary hover:bg-primary/90 text-white font-black text-xs h-8"
+                            size="sm"
                           >
-                            Start Creating
+                            Use Template
                           </Button>
                         </CardContent>
                       </Card>
                     </CarouselItem>
-                    
-                    {/* Template Cards */}
-                    {category.templates.map((template, templateIndex) => (
-                      <CarouselItem key={templateIndex} className="pl-2 md:pl-3 basis-1/3 md:basis-1/4 lg:basis-1/5">
-                        <Card className="brutal-card-sm hover-lift h-full cursor-pointer" onClick={() => {
-                          navigate('/dashboard/custom-creation');
-                          toast.success(`Template "${template}" selected!`);
-                        }}>
-                          <CardContent className="p-3 space-y-2 h-full flex flex-col justify-between">
-                            <div>
-                              <h5 className="text-base font-black mb-1">{template}</h5>
-                              <p className="text-sm text-foreground/70">Click to use this template</p>
-                            </div>
-                            <div className="flex items-center justify-between pt-2">
-                              <Sparkles className="h-5 w-5 text-primary" />
-                              <span className="text-xs font-bold text-muted-foreground">TEMPLATE</span>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious className="brutal-shadow" />
-                  <CarouselNext className="brutal-shadow" />
-                </Carousel>
-              </div>
-            ))}
-          </div>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="hidden sm:flex brutal-shadow -left-4" />
+                <CarouselNext className="hidden sm:flex brutal-shadow -right-4" />
+              </Carousel>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

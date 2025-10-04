@@ -15,11 +15,16 @@ const Playground = () => {
   const { user, session, loading } = useAuth();
   const [tokensRemaining, setTokensRemaining] = useState(0);
   const [prompt, setPrompt] = useState("");
+  const [contentType, setContentType] = useState<"image" | "video" | "music" | "text">("image");
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [outputFormat, setOutputFormat] = useState<"PNG" | "JPEG">("PNG");
   const [resolution, setResolution] = useState<"Native" | "HD">("Native");
+  const [theme, setTheme] = useState<string>("realistic");
+  const [applyBrand, setApplyBrand] = useState(false);
   const [generatedOutput, setGeneratedOutput] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [estimatedTokens, setEstimatedTokens] = useState(50);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -146,12 +151,54 @@ const Playground = () => {
     }
   };
 
+  const handleEnhancePrompt = async () => {
+    if (!prompt.trim()) {
+      toast.error("Please enter a prompt first");
+      return;
+    }
+    
+    setIsEnhancing(true);
+    try {
+      // Simulate AI enhancement
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      const enhanced = `${prompt}. Ultra high quality, professional lighting, cinematic composition, 8K resolution, highly detailed`;
+      setPrompt(enhanced);
+      toast.success("Prompt enhanced!");
+    } catch (error) {
+      toast.error("Failed to enhance prompt");
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  const calculateTokens = () => {
+    const baseTokens = {
+      image: 50,
+      video: 200,
+      music: 150,
+      text: 20
+    };
+    
+    let tokens = baseTokens[contentType];
+    if (resolution === "HD") tokens *= 1.5;
+    if (uploadedImages.length > 0) tokens += uploadedImages.length * 10;
+    if (applyBrand) tokens += 25;
+    
+    return Math.ceil(tokens);
+  };
+
+  useEffect(() => {
+    setEstimatedTokens(calculateTokens());
+  }, [contentType, resolution, uploadedImages, applyBrand]);
+
   const handleReset = () => {
     setPrompt("");
     setUploadedImages([]);
     setGeneratedOutput(null);
     setOutputFormat("PNG");
     setResolution("Native");
+    setTheme("realistic");
+    setApplyBrand(false);
   };
 
   if (loading) {
@@ -210,18 +257,67 @@ const Playground = () => {
               </div>
 
               <div className="p-6 space-y-6">
+                {/* Content Type Selection */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Content Type</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    <Button
+                      variant={contentType === "image" ? "default" : "outline"}
+                      onClick={() => setContentType("image")}
+                      className={contentType === "image" ? "bg-blue-500 hover:bg-blue-600 text-white" : ""}
+                    >
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                      Image
+                    </Button>
+                    <Button
+                      variant={contentType === "video" ? "default" : "outline"}
+                      onClick={() => setContentType("video")}
+                      className={contentType === "video" ? "bg-purple-500 hover:bg-purple-600 text-white" : ""}
+                    >
+                      <Play className="h-4 w-4 mr-2" />
+                      Video
+                    </Button>
+                    <Button
+                      variant={contentType === "music" ? "default" : "outline"}
+                      onClick={() => setContentType("music")}
+                      className={contentType === "music" ? "bg-pink-500 hover:bg-pink-600 text-white" : ""}
+                    >
+                      🎵 Music
+                    </Button>
+                    <Button
+                      variant={contentType === "text" ? "default" : "outline"}
+                      onClick={() => setContentType("text")}
+                      className={contentType === "text" ? "bg-green-500 hover:bg-green-600 text-white" : ""}
+                    >
+                      💬 Text
+                    </Button>
+                  </div>
+                </div>
+
                 {/* Prompt */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    prompt <span className="text-destructive">*</span>
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">
+                      prompt <span className="text-destructive">*</span>
+                    </label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleEnhancePrompt}
+                      disabled={isEnhancing || !prompt}
+                      className="h-8 text-primary hover:text-primary/80"
+                    >
+                      <Sparkles className="h-4 w-4 mr-1" />
+                      {isEnhancing ? "Enhancing..." : "Enhance"}
+                    </Button>
+                  </div>
                   <Textarea
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder="turn this photo into a character figure. Behind it, place a box with the character's image printed on it, and a computer showing the Blender modeling process on its screen..."
                     className="min-h-[120px] resize-none"
                   />
-                  <p className="text-xs text-muted-foreground">The prompt for image editing</p>
+                  <p className="text-xs text-muted-foreground">Describe what you want to create</p>
                 </div>
 
                 {/* Image Upload */}
@@ -331,6 +427,54 @@ const Playground = () => {
                   </div>
                 </div>
 
+                {/* Theme Selection */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Theme</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {["realistic", "artistic", "anime", "abstract", "cyberpunk", "fantasy"].map((t) => (
+                      <Button
+                        key={t}
+                        variant={theme === t ? "default" : "outline"}
+                        onClick={() => setTheme(t)}
+                        className={theme === t ? "capitalize" : "capitalize"}
+                        size="sm"
+                      >
+                        {t}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Brand Toggle */}
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="space-y-0.5">
+                    <label className="text-sm font-medium">Apply Brand</label>
+                    <p className="text-xs text-muted-foreground">Add your brand style to outputs (+25 tokens)</p>
+                  </div>
+                  <Button
+                    variant={applyBrand ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setApplyBrand(!applyBrand)}
+                    className={applyBrand ? "bg-indigo-500 hover:bg-indigo-600 text-white" : ""}
+                  >
+                    {applyBrand ? "Enabled" : "Disabled"}
+                  </Button>
+                </div>
+
+                {/* Token Cost Display */}
+                <div className="p-4 bg-primary/10 rounded-lg border-2 border-primary/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Coins className="h-5 w-5 text-primary" />
+                      <span className="text-sm font-medium">Estimated Cost</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-black text-primary">{estimatedTokens}</div>
+                      <div className="text-xs text-muted-foreground">tokens</div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-4">
                   <Button variant="outline" onClick={handleReset} className="flex-1">
@@ -338,13 +482,21 @@ const Playground = () => {
                   </Button>
                   <Button
                     onClick={handleGenerate}
-                    disabled={!prompt || isGenerating}
-                    className="flex-1"
+                    disabled={!prompt || isGenerating || tokensRemaining < estimatedTokens}
+                    className="flex-1 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                   >
                     <Play className="h-4 w-4 mr-2" />
                     {isGenerating ? "Generating..." : "Run"}
                   </Button>
                 </div>
+
+                {tokensRemaining < estimatedTokens && (
+                  <div className="text-center p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+                    <p className="text-sm text-destructive font-bold">
+                      ⚠️ Not enough tokens. Need {estimatedTokens} but have {tokensRemaining}
+                    </p>
+                  </div>
+                )}
               </div>
             </Card>
 

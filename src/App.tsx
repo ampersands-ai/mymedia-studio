@@ -9,16 +9,18 @@ import { Analytics } from "./components/Analytics";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Playground from "./pages/Playground";
+import Create from "./pages/Create";
 import Pricing from "./pages/Pricing";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
+import { DashboardLayout } from "./layouts/DashboardLayout";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   const location = useLocation();
-  const showCursor = location.pathname !== "/playground";
+  const showCursor = !location.pathname.startsWith("/dashboard");
 
   return (
     <>
@@ -27,7 +29,9 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />
-        <Route path="/playground" element={<Playground />} />
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route path="create" element={<Create />} />
+        </Route>
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />

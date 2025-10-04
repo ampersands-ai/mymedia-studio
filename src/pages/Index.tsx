@@ -17,44 +17,159 @@ const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Add structured data for SEO
+  // Add structured data for SEO and AEO
   useEffect(() => {
-    const structuredData = {
+    // Main WebApplication schema
+    const webAppSchema = {
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "Artifio.ai",
       "description": "An affordable AI content creation platform. Create videos, images, music & text for 50-80% less than competitors. Plans from $3.99/mo.",
       "url": "https://artifio.ai",
       "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Web Browser",
       "slogan": "Professional AI Content. Student-Friendly Prices.",
-      "priceRange": "$0 - $39.99",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD",
-        "description": "500 free tokens to start - no credit card required"
-      },
+      "priceRange": "$0 - $119.99",
+      "offers": [
+        {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "name": "Freemium Plan",
+          "description": "500 free tokens to start - no credit card required"
+        },
+        {
+          "@type": "Offer",
+          "price": "3.99",
+          "priceCurrency": "USD",
+          "name": "Explorer Plan",
+          "description": "4,000 tokens monthly"
+        },
+        {
+          "@type": "Offer",
+          "price": "7.99",
+          "priceCurrency": "USD",
+          "name": "Creators Plan",
+          "description": "10,000 tokens monthly"
+        }
+      ],
       "aggregateRating": {
         "@type": "AggregateRating",
         "ratingValue": "4.8",
-        "ratingCount": "1250"
-      }
+        "ratingCount": "1250",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "featureList": [
+        "AI Video Generation",
+        "AI Image Creation",
+        "AI Music Generation",
+        "AI Text Generation",
+        "Portrait Headshots",
+        "Photo Editing",
+        "Product Photography",
+        "Social Media Content"
+      ]
     };
 
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.text = JSON.stringify(structuredData);
-    document.head.appendChild(script);
+    // FAQ Schema for AEO (Answer Engine Optimization)
+    const faqSchema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How much does Artifio.ai cost?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Artifio.ai plans start at just $3.99/mo for the Explorer plan with 4,000 tokens. We offer a free tier with 500 tokens, and plans go up to $89.99/mo for 200,000 tokens. All plans are 50-80% cheaper than competitors like Midjourney, Runway, and Jasper.ai."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What can I create with Artifio.ai?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "With Artifio.ai, you can create AI-generated videos, images, music, and text content. Our platform supports portrait headshots, photo editing, cinematic videos, product photography, social media content, creative design, audio processing, and text generation. Perfect for creators, businesses, and professionals."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is there a free plan?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes! Artifio.ai offers a free Freemium plan with 500 tokens. No credit card required. You can start creating AI content immediately with watermarked outputs. Upgrade anytime to remove watermarks and get more tokens."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does Artifio.ai compare to competitors?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Artifio.ai is 50-80% cheaper than competitors. While Midjourney charges $10-60/mo, Runway charges $15-95/mo, and Jasper.ai charges $39-125/mo, our plans start at just $3.99/mo. You get the same professional AI-powered tools for a fraction of the cost."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are tokens and how do they work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Tokens are credits used to generate AI content on Artifio.ai. Different types of content use different amounts of tokens. For example, generating a video might use approximately 50 tokens. Our most affordable rate is $0.00045 per token on the Veo Connoisseur plan."
+          }
+        }
+      ]
+    };
+
+    // Organization schema
+    const orgSchema = {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Artifio.ai",
+      "url": "https://artifio.ai",
+      "logo": "https://artifio.ai/favicon.ico",
+      "sameAs": [],
+      "description": "Affordable AI content creation platform for videos, images, music, and text generation."
+    };
+
+    // BreadcrumbList schema
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://artifio.ai/"
+        }
+      ]
+    };
+
+    // Add all schemas to page
+    const schemas = [webAppSchema, faqSchema, orgSchema, breadcrumbSchema];
+    const scriptElements: HTMLScriptElement[] = [];
+
+    schemas.forEach(schema => {
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.text = JSON.stringify(schema);
+      document.head.appendChild(script);
+      scriptElements.push(script);
+    });
 
     // Update meta tags
-    document.title = "Artifio.ai - Affordable AI Content Creation Platform";
+    document.title = "Artifio.ai - Create AI Videos, Images & Content in Seconds | 50-80% Cheaper";
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Create videos, images, music & text with AI for 50-80% less than competitors. Plans from $3.99/mo. Start free with 500 tokens.');
+      metaDescription.setAttribute('content', 'Professional AI-powered platform for creating videos, images, music, and more. Generate content 50-80% cheaper than Midjourney, Runway & Jasper. Start free with 500 tokens.');
     }
 
     return () => {
-      document.head.removeChild(script);
+      scriptElements.forEach(script => {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      });
     };
   }, []);
 

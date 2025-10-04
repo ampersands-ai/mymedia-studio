@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, Sparkles } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const plans = [
   {
@@ -133,6 +133,114 @@ const plans = [
 const Pricing = () => {
   const navigate = useNavigate();
   const [isAnnual, setIsAnnual] = useState(true);
+
+  // Add structured data for SEO
+  useEffect(() => {
+    // Product/Service offers schema
+    const offersSchema = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "Artifio.ai AI Content Creation Platform",
+      "description": "Affordable AI-powered content creation with plans from $3.99/mo. Create videos, images, music, and text.",
+      "brand": {
+        "@type": "Brand",
+        "name": "Artifio.ai"
+      },
+      "offers": plans.map(plan => ({
+        "@type": "Offer",
+        "name": plan.name,
+        "price": plan.annualPrice === "FREE" ? "0" : plan.annualPrice.replace('$', ''),
+        "priceCurrency": "USD",
+        "description": plan.description,
+        "priceValidUntil": "2025-12-31",
+        "availability": "https://schema.org/InStock",
+        "url": "https://artifio.ai/pricing"
+      })),
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "1250"
+      }
+    };
+
+    // Comparison table schema
+    const comparisonSchema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How much cheaper is Artifio.ai compared to Midjourney?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Artifio.ai is 85% cheaper than Midjourney. While Midjourney charges $10-60/mo, Artifio.ai starts at just $3.99/mo with similar features."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the cheapest AI video creation plan?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Artifio.ai Explorer plan is the cheapest at $3.99/mo (annual billing) with 4,000 tokens, perfect for APAC and LATAM creators."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does Artifio.ai offer a free plan?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, Artifio.ai offers a Freemium plan with 500 free tokens. No credit card required. Perfect for testing the platform before upgrading."
+          }
+        }
+      ]
+    };
+
+    // BreadcrumbList
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://artifio.ai/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Pricing",
+          "item": "https://artifio.ai/pricing"
+        }
+      ]
+    };
+
+    const schemas = [offersSchema, comparisonSchema, breadcrumbSchema];
+    const scriptElements: HTMLScriptElement[] = [];
+
+    schemas.forEach(schema => {
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.text = JSON.stringify(schema);
+      document.head.appendChild(script);
+      scriptElements.push(script);
+    });
+
+    // Update meta tags
+    document.title = "Pricing - Artifio.ai | AI Content Creation from $3.99/mo";
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', 'Affordable AI content creation plans starting at $3.99/mo. 50-80% cheaper than Midjourney, Runway & Jasper. Free plan available with 500 tokens. Compare and save today.');
+    }
+
+    return () => {
+      scriptElements.forEach(script => {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      });
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">

@@ -26,6 +26,69 @@ const Playground = () => {
     }
   }, [user, session, loading, navigate]);
 
+  // Add structured data for Playground
+  useEffect(() => {
+    const webAppSchema = {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Artifio.ai Playground",
+      "applicationCategory": "MultimediaApplication",
+      "description": "AI-powered creative playground for generating videos, images, music, and text content.",
+      "url": "https://artifio.ai/playground",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "description": "Start with 500 free tokens"
+      }
+    };
+
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://artifio.ai/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Playground",
+          "item": "https://artifio.ai/playground"
+        }
+      ]
+    };
+
+    const schemas = [webAppSchema, breadcrumbSchema];
+    const scriptElements: HTMLScriptElement[] = [];
+
+    schemas.forEach(schema => {
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.text = JSON.stringify(schema);
+      document.head.appendChild(script);
+      scriptElements.push(script);
+    });
+
+    document.title = "Playground - Artifio.ai | Create AI Content Now";
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', 'Create stunning AI-generated videos, images, music, and text in the Artifio.ai Playground. Start creating with 500 free tokens.');
+    }
+
+    return () => {
+      scriptElements.forEach(script => {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      });
+    };
+  }, []);
+
   const fetchTokenBalance = async (userId: string) => {
     const { data, error } = await supabase
       .from("user_subscriptions")

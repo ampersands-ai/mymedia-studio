@@ -54,7 +54,7 @@ export const GlobalHeader = () => {
 
   return (
     <header className="border-b-4 border-black bg-card sticky top-0 z-50">
-      <nav className="container mx-auto px-4 py-3 md:py-4">
+      <nav className="container mx-auto px-4 py-4 md:py-6">
         <div className="flex items-center justify-between">
           {/* Left Side - Logo + Navigation */}
           <div className="flex items-center gap-3 md:gap-4">
@@ -70,30 +70,6 @@ export const GlobalHeader = () => {
                 className="h-6 md:h-8"
               />
             </Link>
-
-            {/* Context-aware navigation buttons */}
-            {isDashboardCreate && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/dashboard/custom-creation")}
-                className="brutal-card-sm font-black hidden sm:flex"
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                Custom Creation
-              </Button>
-            )}
-
-            {isCustomCreation && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/dashboard/create")}
-                className="brutal-card-sm font-black hidden sm:flex"
-              >
-                Dashboard
-              </Button>
-            )}
 
             {!isDashboardCreate && !isCustomCreation && (
               <>
@@ -128,6 +104,30 @@ export const GlobalHeader = () => {
 
           {/* Right Side - Settings (dashboard only), Token Balance, Logout */}
           <div className="flex items-center gap-2 md:gap-3">
+            {/* Context-aware navigation buttons */}
+            {isDashboardCreate && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/dashboard/custom-creation")}
+                className="brutal-card-sm font-black hidden sm:flex"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Custom Creation
+              </Button>
+            )}
+
+            {isCustomCreation && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/dashboard/create")}
+                className="brutal-card-sm font-black hidden sm:flex"
+              >
+                Dashboard
+              </Button>
+            )}
+
             {isDashboardCreate && (
               <Button
                 variant="outline"

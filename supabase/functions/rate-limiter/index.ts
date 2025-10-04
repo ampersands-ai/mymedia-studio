@@ -163,6 +163,21 @@ Deno.serve(async (req) => {
     }
 
     if (isBlocked) {
+      // Log rate limit block to audit logs
+      await supabaseAdmin.from('audit_logs').insert({
+        user_id: null,
+        action: 'rate_limit_blocked',
+        resource_type: 'rate_limit',
+        resource_id: identifier,
+        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
+        user_agent: req.headers.get('user-agent') || 'unknown',
+        metadata: { 
+          action, 
+          attempt_count: newAttemptCount,
+          blocked_until: updateData.blocked_until 
+        },
+      });
+
       return new Response(
         JSON.stringify({ 
           allowed: false, 

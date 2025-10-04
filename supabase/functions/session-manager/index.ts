@@ -84,6 +84,17 @@ Deno.serve(async (req) => {
           throw insertError;
         }
 
+        // Log session creation to audit logs
+        await supabaseAdmin.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'session_created',
+          resource_type: 'session',
+          resource_id: sessionId,
+          ip_address,
+          user_agent,
+          metadata: { expires_at: expiresAt.toISOString() },
+        });
+
         return new Response(
           JSON.stringify({ success: true, session_id: sessionId }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -134,7 +145,11 @@ Deno.serve(async (req) => {
         await supabaseAdmin.from('audit_logs').insert({
           user_id: user.id,
           action: 'session_revoked',
-          metadata: { session_id, ip_address, user_agent },
+          resource_type: 'session',
+          resource_id: session_id,
+          ip_address,
+          user_agent,
+          metadata: { session_id },
         });
 
         return new Response(

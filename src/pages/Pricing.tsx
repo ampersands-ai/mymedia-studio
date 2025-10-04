@@ -24,26 +24,6 @@ const plans = [
   },
   {
     name: "Explorer",
-    monthlyPrice: "$4.99",
-    annualPrice: "$3.99",
-    period: "/mo",
-    tokens: "4,000",
-    perToken: "$0.001 per token",
-    features: [
-      "4,000 tokens",
-      "No watermark",
-      "Regional access (APAC/LATAM)",
-      "Priority support",
-    ],
-    popular: false,
-    regions: "APAC/LATAM only",
-    color: "bg-neon-blue",
-    badge: "CHEAPEST ENTRY",
-    description: "Affordable entry for APAC & LATAM creators. Less than a coffee per month—4,000 tokens to get started.",
-    savings: "Perfect for getting started affordably",
-  },
-  {
-    name: "Creators",
     monthlyPrice: "$9.99",
     annualPrice: "$7.99",
     period: "/mo",
@@ -56,7 +36,7 @@ const plans = [
       "Priority rendering",
       "Advanced features",
     ],
-    popular: true,
+    popular: false,
     color: "bg-neon-pink",
     badge: "FOR CREATORS",
     description: "The indie creator's choice. 10,000 tokens for just $7.99/mo—competitors charge $30-50 for similar plans.",
@@ -77,9 +57,9 @@ const plans = [
       "API access",
       "Dedicated support",
     ],
-    popular: false,
+    popular: true,
     color: "bg-primary",
-    badge: "FOR CREATORS",
+    badge: "MOST POPULAR",
     description: "All the tools you need for less than $20/mo. 32,500 tokens + unlimited image & text. Save $100s every year.",
     savings: "Save $80-105/mo vs competitors",
   },
@@ -283,21 +263,21 @@ const Pricing = () => {
 
           {/* All Plans Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto mb-16">
-            {plans.map((plan) => (
-              <Card
-                key={plan.name}
-                className={`relative hover-lift ${plan.popular ? "ring-4 ring-primary" : ""}`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 rounded-full text-xs font-black text-white">
-                    MOST POPULAR
-                  </div>
-                )}
-                <CardHeader>
-                  <CardTitle className="text-2xl font-black">{plan.name}</CardTitle>
-                  <CardDescription className="text-sm">
-                    {plan.regions || "Global access"}
-                  </CardDescription>
+          {plans.map((plan) => (
+            <Card
+              key={plan.name}
+              className={`relative hover-lift ${plan.popular ? "ring-4 ring-primary" : ""}`}
+            >
+              {plan.badge && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 rounded-full text-xs font-black text-white">
+                  {plan.badge}
+                </div>
+              )}
+              <CardHeader>
+                <CardTitle className="text-2xl font-black">{plan.name}</CardTitle>
+                <CardDescription className="text-sm">
+                  Global access
+                </CardDescription>
                   <div className="pt-3">
                     {isAnnual && plan.monthlyPrice !== "FREE" ? (
                       <div className="space-y-1">

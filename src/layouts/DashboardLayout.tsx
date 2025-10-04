@@ -76,14 +76,14 @@ export const DashboardLayout = () => {
               to="/dashboard/create"
               className={({ isActive }) =>
                 `brutal-card-sm px-4 py-2 transition-colors ${
-                  isActive ? "bg-primary border-black" : "bg-card text-foreground hover:bg-muted"
+                  isActive ? "bg-neon-pink text-white border-black" : "bg-card text-foreground hover:bg-muted border-black"
                 }`
               }
             >
               {({ isActive }) => (
                 <div className="flex items-center gap-2">
-                  <Sparkles className={`h-5 w-5 ${isActive ? 'text-white' : ''}`} />
-                  <span className={`font-black ${isActive ? 'text-white' : ''}`}>Start Custom Creation</span>
+                  <Sparkles className={`h-5 w-5 ${isActive ? 'text-white' : 'text-foreground'}`} />
+                  <span className={`font-black ${isActive ? 'text-white' : 'text-foreground'}`}>Start Custom Creation</span>
                 </div>
               )}
             </NavLink>
@@ -91,14 +91,14 @@ export const DashboardLayout = () => {
               to="/dashboard/settings"
               className={({ isActive }) =>
                 `brutal-card-sm px-4 py-2 transition-colors ${
-                  isActive ? "bg-primary border-black" : "bg-card text-foreground hover:bg-muted"
+                  isActive ? "bg-primary text-white border-black" : "bg-card text-foreground hover:bg-muted border-black"
                 }`
               }
             >
               {({ isActive }) => (
                 <div className="flex items-center gap-2">
-                  <Settings className={`h-5 w-5 ${isActive ? 'text-white' : ''}`} />
-                  <span className={`font-black ${isActive ? 'text-white' : ''}`}>Settings</span>
+                  <Settings className={`h-5 w-5 ${isActive ? 'text-white' : 'text-foreground'}`} />
+                  <span className={`font-black ${isActive ? 'text-white' : 'text-foreground'}`}>Settings</span>
                 </div>
               )}
             </NavLink>

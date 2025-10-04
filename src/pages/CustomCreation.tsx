@@ -22,6 +22,57 @@ const CustomCreation = () => {
   const [estimatedTokens, setEstimatedTokens] = useState(50);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const exampleImages = [
+    {
+      image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=400&fit=crop",
+      prompt: "Abstract art with vibrant colors and geometric shapes",
+      contentType: "image",
+      resolution: "HD",
+      theme: "abstract",
+      tokens: 75
+    },
+    {
+      image: "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=400&h=400&fit=crop",
+      prompt: "Futuristic cyberpunk cityscape with neon lights",
+      contentType: "image",
+      resolution: "HD",
+      theme: "cyberpunk",
+      tokens: 80
+    },
+    {
+      image: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=400&h=400&fit=crop",
+      prompt: "Fantasy dragon in mystical forest with magical atmosphere",
+      contentType: "image",
+      resolution: "Native",
+      theme: "fantasy",
+      tokens: 65
+    },
+    {
+      image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&h=400&fit=crop",
+      prompt: "Anime character portrait with detailed background",
+      contentType: "image",
+      resolution: "HD",
+      theme: "anime",
+      tokens: 70
+    },
+    {
+      image: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=400&h=400&fit=crop",
+      prompt: "Photorealistic portrait with natural lighting",
+      contentType: "image",
+      resolution: "Native",
+      theme: "realistic",
+      tokens: 55
+    },
+    {
+      image: "https://images.unsplash.com/photo-1577083552431-6e5fd01988ec?w=400&h=400&fit=crop",
+      prompt: "Artistic landscape painting with bold brushstrokes",
+      contentType: "image",
+      resolution: "Native",
+      theme: "artistic",
+      tokens: 60
+    }
+  ];
+
   useEffect(() => {
     document.title = "Custom Creation Studio - Artifio.ai";
     const metaDescription = document.querySelector('meta[name="description"]');
@@ -419,6 +470,67 @@ const CustomCreation = () => {
               </div>
             </div>
           </Card>
+        </div>
+
+        {/* Community Creations Section */}
+        <div className="mt-16">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-black mb-2">COMMUNITY CREATIONS</h2>
+            <p className="text-foreground/80 font-medium">
+              Get inspired by what others have created
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {exampleImages.map((example, index) => (
+              <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                <div className="aspect-square overflow-hidden bg-muted">
+                  <img
+                    src={example.image}
+                    alt={example.prompt}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <div className="p-4 space-y-3">
+                  <p className="text-sm font-medium line-clamp-2">{example.prompt}</p>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {example.contentType}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {example.resolution}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs capitalize">
+                      {example.theme}
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <div className="flex items-center gap-1 text-primary">
+                      <Coins className="h-4 w-4" />
+                      <span className="text-sm font-bold">{example.tokens}</span>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => {
+                        setPrompt(example.prompt);
+                        setContentType(example.contentType as typeof contentType);
+                        setResolution(example.resolution as typeof resolution);
+                        setTheme(example.theme);
+                        toast.success("Settings loaded!");
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="text-xs"
+                    >
+                      Use This
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     </div>

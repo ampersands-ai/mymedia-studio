@@ -76,27 +76,31 @@ export const DashboardLayout = () => {
               to="/dashboard/create"
               className={({ isActive }) =>
                 `brutal-card-sm px-4 py-2 transition-colors ${
-                  isActive ? "bg-primary text-white" : "bg-card text-foreground hover:bg-muted"
+                  isActive ? "bg-primary border-black" : "bg-card text-foreground hover:bg-muted"
                 }`
               }
             >
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5" />
-                <span className="font-black">Start Creating</span>
-              </div>
+              {({ isActive }) => (
+                <div className="flex items-center gap-2">
+                  <Sparkles className={`h-5 w-5 ${isActive ? 'text-white' : ''}`} />
+                  <span className={`font-black ${isActive ? 'text-white' : ''}`}>Start Creating</span>
+                </div>
+              )}
             </NavLink>
             <NavLink
               to="/dashboard/settings"
               className={({ isActive }) =>
                 `brutal-card-sm px-4 py-2 transition-colors ${
-                  isActive ? "bg-primary text-white" : "bg-card text-foreground hover:bg-muted"
+                  isActive ? "bg-primary border-black" : "bg-card text-foreground hover:bg-muted"
                 }`
               }
             >
-              <div className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                <span className="font-black">Settings</span>
-              </div>
+              {({ isActive }) => (
+                <div className="flex items-center gap-2">
+                  <Settings className={`h-5 w-5 ${isActive ? 'text-white' : ''}`} />
+                  <span className={`font-black ${isActive ? 'text-white' : ''}`}>Settings</span>
+                </div>
+              )}
             </NavLink>
             <div className="brutal-card-sm px-4 py-2 bg-neon-yellow">
               <div className="flex items-center gap-2">

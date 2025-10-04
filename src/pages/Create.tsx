@@ -189,9 +189,9 @@ const Create = () => {
                 <Carousel className="w-full">
                   <CarouselContent className="-ml-2 md:-ml-3">
                     {/* Main Category Card */}
-                    <CarouselItem className="pl-2 md:pl-3 basis-1/2 md:basis-1/3 lg:basis-1/4">
+                    <CarouselItem className="pl-2 md:pl-3 basis-1/3 md:basis-1/4 lg:basis-1/5">
                       <Card className="brutal-card hover-lift h-full">
-                        <div className="relative h-32 overflow-hidden">
+                        <div className="relative h-24 overflow-hidden">
                           <img 
                             src={category.image} 
                             alt={category.title}
@@ -216,7 +216,7 @@ const Create = () => {
                     
                     {/* Template Cards */}
                     {category.templates.map((template, templateIndex) => (
-                      <CarouselItem key={templateIndex} className="pl-2 md:pl-3 basis-1/2 md:basis-1/3 lg:basis-1/4">
+                      <CarouselItem key={templateIndex} className="pl-2 md:pl-3 basis-1/3 md:basis-1/4 lg:basis-1/5">
                         <Card className="brutal-card-sm hover-lift h-full cursor-pointer" onClick={() => {
                           navigate('/dashboard/custom-creation');
                           toast.success(`Template "${template}" selected!`);

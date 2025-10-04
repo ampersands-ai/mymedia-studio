@@ -12,6 +12,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { TemplateCard } from "@/components/TemplateCard";
 import portraitHeadshots from "@/assets/portrait-headshots.jpg";
 import photoEditing from "@/assets/photo-editing.jpg";
 import videoCreation from "@/assets/video-creation.jpg";
@@ -124,10 +125,10 @@ const Create = () => {
       prefix: "VID",
       image: videoCreation,
       templates: [
-        { id: "001", name: "Product Demo", image: videoCreation },
-        { id: "002", name: "Social Ads", image: videoCreation },
-        { id: "003", name: "Explainer Video", image: videoCreation },
-        { id: "004", name: "Brand Story", image: videoCreation },
+        { id: "001", name: "Product Demo", image: videoCreation, video: "https://videos.pexels.com/video-files/3163534/3163534-uhd_2560_1440_25fps.mp4" },
+        { id: "002", name: "Social Ads", image: videoCreation, video: "https://videos.pexels.com/video-files/7579955/7579955-uhd_2560_1440_25fps.mp4" },
+        { id: "003", name: "Explainer Video", image: videoCreation, video: "https://videos.pexels.com/video-files/3252036/3252036-uhd_2560_1440_25fps.mp4" },
+        { id: "004", name: "Brand Story", image: videoCreation, video: "https://videos.pexels.com/video-files/3129671/3129671-uhd_2560_1440_25fps.mp4" },
       ]
     },
     {
@@ -234,12 +235,13 @@ const Create = () => {
                         }}
                       >
                         <div className="aspect-square relative overflow-hidden">
-                          <img 
-                            src={template.image} 
+                          <TemplateCard
+                            image={template.image}
+                            video={(template as any).video}
                             alt={`Template ${category.prefix}-${template.id}`}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full"
                           />
-                          <div className="absolute top-2 left-2 bg-black/80 text-white px-2 py-1 rounded text-xs font-black">
+                          <div className="absolute top-2 left-2 bg-black/80 text-white px-2 py-1 rounded text-xs font-black z-10">
                             {category.prefix}-{template.id}
                           </div>
                         </div>

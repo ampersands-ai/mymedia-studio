@@ -18,6 +18,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { TemplateCard } from "@/components/TemplateCard";
 
 // Template categories with square images and IDs
 const templateCategories = {
@@ -161,6 +162,7 @@ const templateCategories = {
     {
       id: "VID-001",
       image: "https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?w=400&h=400&fit=crop",
+      video: "https://videos.pexels.com/video-files/3129671/3129671-uhd_2560_1440_25fps.mp4",
       prompt: "Animated logo reveal",
       contentType: "video",
       resolution: "HD",
@@ -169,6 +171,7 @@ const templateCategories = {
     {
       id: "VID-002",
       image: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=400&fit=crop",
+      video: "https://videos.pexels.com/video-files/6985001/6985001-uhd_2560_1440_25fps.mp4",
       prompt: "Product showcase animation",
       contentType: "video",
       resolution: "HD",
@@ -177,6 +180,7 @@ const templateCategories = {
     {
       id: "VID-003",
       image: "https://images.unsplash.com/photo-1524712245354-2c4e5e7121c0?w=400&h=400&fit=crop",
+      video: "https://videos.pexels.com/video-files/3141211/3141211-uhd_2560_1440_25fps.mp4",
       prompt: "Cinematic intro sequence",
       contentType: "video",
       resolution: "HD",
@@ -185,6 +189,7 @@ const templateCategories = {
     {
       id: "VID-004",
       image: "https://images.unsplash.com/photo-1536240478700-b869070f9279?w=400&h=400&fit=crop",
+      video: "https://videos.pexels.com/video-files/7579955/7579955-uhd_2560_1440_25fps.mp4",
       prompt: "Social media video ad",
       contentType: "video",
       resolution: "Native",
@@ -667,16 +672,20 @@ const CustomCreation = () => {
                       <CarouselItem key={template.id} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
                         <Card className="overflow-hidden hover-lift cursor-pointer group">
                           <div className="aspect-square overflow-hidden bg-muted relative">
-                            <img
-                              src={template.image}
+                            <TemplateCard
+                              image={template.image}
+                              video={(template as any).video}
                               alt={template.id}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                              className="w-full h-full"
                             />
+                            <div className="absolute top-2 left-2 bg-black/80 text-white px-2 py-1 rounded text-xs font-black z-10">
+                              {template.id}
+                            </div>
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                               <Button
                                 onClick={() => loadTemplate(template)}
                                 size="sm"
-                                className="bg-primary hover:bg-primary/90"
+                                className="bg-primary hover:bg-primary/90 z-10"
                               >
                                 Use Template
                               </Button>

@@ -83,11 +83,34 @@ const CustomCreation = () => {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    
     if (uploadedImages.length + files.length > 10) {
       toast.error("Maximum 10 images allowed");
       return;
     }
-    setUploadedImages([...uploadedImages, ...files]);
+    
+    // Validate each file before adding
+    const validFiles: File[] = [];
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    
+    for (const file of files) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`"${file.name}" is too large (max 10MB)`);
+        continue;
+      }
+      
+      if (!validTypes.includes(file.type)) {
+        toast.error(`"${file.name}" has invalid type. Only JPEG, PNG, and WebP allowed.`);
+        continue;
+      }
+      
+      validFiles.push(file);
+    }
+    
+    if (validFiles.length > 0) {
+      setUploadedImages([...uploadedImages, ...validFiles]);
+      toast.success(`${validFiles.length} image(s) uploaded successfully`);
+    }
   };
 
   const removeImage = (index: number) => {
@@ -95,18 +118,58 @@ const CustomCreation = () => {
   };
 
   const handleGenerate = async () => {
+    // Validation
     if (!prompt.trim()) {
       toast.error("Please enter a prompt");
       return;
     }
     
+    if (prompt.length > 1000) {
+      toast.error("Prompt is too long. Please keep it under 1000 characters.");
+      return;
+    }
+
+    if (prompt.length < 3) {
+      toast.error("Prompt is too short. Please provide more details.");
+      return;
+    }
+
+    // Check for uploaded images file size
+    for (const image of uploadedImages) {
+      if (image.size > 10 * 1024 * 1024) { // 10MB limit
+        toast.error(`Image "${image.name}" is too large. Maximum size is 10MB.`);
+        return;
+      }
+      
+      // Check file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(image.type)) {
+        toast.error(`Invalid file type for "${image.name}". Only JPEG, PNG, and WebP are supported.`);
+        return;
+      }
+    }
+    
     setIsGenerating(true);
     try {
+      // TODO: Implement actual generation with token deduction
+      // const tokensNeeded = calculateTokens();
+      // await supabase.functions.invoke('deduct-tokens', {
+      //   body: { tokens_to_deduct: tokensNeeded }
+      // });
+      
       await new Promise(resolve => setTimeout(resolve, 2000));
       setGeneratedOutput("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=600&fit=crop");
       toast.success("Image generated successfully!");
-    } catch (error) {
-      toast.error("Generation failed");
+    } catch (error: any) {
+      console.error("Generation error:", error);
+      
+      if (error.message?.includes("Insufficient tokens")) {
+        toast.error("You don't have enough tokens. Please upgrade your plan.");
+      } else if (error.message?.includes("network")) {
+        toast.error("Network error. Please check your connection and try again.");
+      } else {
+        toast.error(error.message || "Generation failed. Please try again.");
+      }
     } finally {
       setIsGenerating(false);
     }

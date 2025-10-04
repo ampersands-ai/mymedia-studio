@@ -1,1 +1,4 @@
 project_id = "gzlwkvmivbfcvczoqphq"
+
+[functions.deduct-tokens]
+verify_jwt = true

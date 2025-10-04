@@ -145,7 +145,7 @@ const Auth = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
-      navigate("/playground");
+      navigate("/dashboard/create");
     }
   }, [user, authLoading, navigate]);
 
@@ -159,9 +159,14 @@ const Auth = () => {
           email,
           password,
         });
-        if (error) throw error;
+        if (error) {
+          if (error.message.includes("Invalid login credentials")) {
+            throw new Error("Invalid email or password. Please try again.");
+          }
+          throw error;
+        }
         toast.success("Welcome back!");
-        navigate("/playground");
+        navigate("/dashboard/create");
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -174,19 +179,26 @@ const Auth = () => {
               phone_number: phoneNumber ? `${countryCode}${phoneNumber}` : null,
               zipcode: zipcode || null,
             },
-            emailRedirectTo: `${window.location.origin}/playground`,
+            emailRedirectTo: `${window.location.origin}/dashboard/create`,
           },
         });
-        if (error) throw error;
+        if (error) {
+          if (error.message.includes("already registered")) {
+            throw new Error("This email is already registered. Please sign in instead.");
+          } else if (error.message.includes("Password")) {
+            throw new Error("Password must be at least 6 characters long.");
+          }
+          throw error;
+        }
         
         // Check if user provided all optional fields
         const hasAllFields = phoneNumber && zipcode;
         if (hasAllFields) {
-          toast.success("Account created! You've received 500 free tokens. Verify your email for 100 bonus tokens!");
+          toast.success("Account created! You've received 500 free tokens. Email auto-confirmed!");
         } else {
-          toast.success("Account created! You've received 500 free tokens. Complete your profile & verify email for 100 bonus tokens!");
+          toast.success("Account created! You've received 500 free tokens. Complete your profile for 100 bonus tokens!");
         }
-        navigate("/playground");
+        navigate("/dashboard/create");
       }
     } catch (error: any) {
       toast.error(error.message || "An error occurred");
@@ -200,7 +212,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/playground`,
+          redirectTo: `${window.location.origin}/dashboard/create`,
         },
       });
       if (error) throw error;

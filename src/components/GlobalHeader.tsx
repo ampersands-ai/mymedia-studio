@@ -28,12 +28,25 @@ export const GlobalHeader = () => {
         .from("user_subscriptions")
         .select("tokens_remaining")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
-      setTokenBalance(data?.tokens_remaining ?? 0);
+      if (error) {
+        console.error("Error fetching token balance:", error);
+        toast.error("Failed to load token balance");
+        setTokenBalance(0);
+        return;
+      }
+      
+      if (!data) {
+        console.warn("No subscription data found for user");
+        setTokenBalance(0);
+        return;
+      }
+      
+      setTokenBalance(data.tokens_remaining ?? 0);
     } catch (error) {
       console.error("Error fetching token balance:", error);
+      toast.error("An error occurred while fetching your balance");
       setTokenBalance(0);
     }
   };

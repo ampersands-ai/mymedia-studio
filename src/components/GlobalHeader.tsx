@@ -51,6 +51,7 @@ export const GlobalHeader = () => {
 
   const isDashboardCreate = location.pathname === "/dashboard/create";
   const isCustomCreation = location.pathname === "/dashboard/custom-creation";
+  const isSettingsPage = location.pathname === "/dashboard/settings";
 
   return (
     <header className="border-b-4 border-black bg-card sticky top-0 z-50">
@@ -71,31 +72,31 @@ export const GlobalHeader = () => {
               />
             </Link>
 
-            {!isDashboardCreate && !isCustomCreation && (
+            {!isDashboardCreate && !isCustomCreation && !isSettingsPage && (
               <>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="default"
                   onClick={() => navigate("/pricing")}
-                  className="hidden sm:inline-flex font-bold"
+                  className="hidden sm:inline-flex font-black text-base"
                 >
                   Pricing
                 </Button>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="default"
                   onClick={() => navigate("/dashboard/create")}
-                  className="hidden sm:inline-flex font-bold"
+                  className="hidden sm:inline-flex font-black text-base"
                 >
                   Dashboard
                 </Button>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="default"
                   onClick={() => navigate("/dashboard/custom-creation")}
                   className="brutal-card-sm font-black hidden sm:flex"
                 >
-                  <Sparkles className="h-4 w-4 mr-2" />
+                  <Sparkles className="h-5 w-5 mr-2" />
                   Custom Creation
                 </Button>
               </>
@@ -104,40 +105,90 @@ export const GlobalHeader = () => {
 
           {/* Right Side - Settings (dashboard only), Token Balance, Logout */}
           <div className="flex items-center gap-2 md:gap-3">
+            {/* Settings page navigation */}
+            {isSettingsPage && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="default"
+                  onClick={() => navigate("/pricing")}
+                  className="hidden sm:inline-flex font-black text-base"
+                >
+                  Pricing
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="default"
+                  onClick={() => navigate("/dashboard/create")}
+                  className="hidden sm:inline-flex font-black text-base"
+                >
+                  Dashboard
+                </Button>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={() => navigate("/dashboard/custom-creation")}
+                  className="brutal-card-sm font-black hidden sm:flex"
+                >
+                  <Sparkles className="h-5 w-5 mr-2" />
+                  Custom Creation
+                </Button>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={() => navigate("/dashboard/settings")}
+                  className="brutal-card-sm font-black hidden sm:flex"
+                >
+                  <Settings className="h-5 w-5 mr-2" />
+                  Settings
+                </Button>
+              </>
+            )}
+
             {/* Context-aware navigation buttons */}
             {isDashboardCreate && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/dashboard/custom-creation")}
-                className="brutal-card-sm font-black hidden sm:flex"
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                Custom Creation
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={() => navigate("/dashboard/custom-creation")}
+                  className="brutal-card-sm font-black hidden sm:flex"
+                >
+                  <Sparkles className="h-5 w-5 mr-2" />
+                  Custom Creation
+                </Button>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={() => navigate("/dashboard/settings")}
+                  className="brutal-card-sm font-black hidden sm:flex"
+                >
+                  <Settings className="h-5 w-5 mr-2" />
+                  Settings
+                </Button>
+              </>
             )}
 
             {isCustomCreation && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/dashboard/create")}
-                className="brutal-card-sm font-black hidden sm:flex"
-              >
-                Dashboard
-              </Button>
-            )}
-
-            {isDashboardCreate && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/dashboard/settings")}
-                className="brutal-card-sm font-black hidden sm:flex"
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={() => navigate("/dashboard/create")}
+                  className="brutal-card-sm font-black hidden sm:flex"
+                >
+                  Dashboard
+                </Button>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={() => navigate("/dashboard/settings")}
+                  className="brutal-card-sm font-black hidden sm:flex"
+                >
+                  <Settings className="h-5 w-5 mr-2" />
+                  Settings
+                </Button>
+              </>
             )}
 
             {tokenBalance !== null && (
@@ -149,11 +200,11 @@ export const GlobalHeader = () => {
 
             <Button
               variant="outline"
-              size="sm"
+              size="default"
               onClick={handleSignOut}
               className="brutal-card-sm font-black"
             >
-              <LogOut className="h-4 w-4 sm:mr-2" />
+              <LogOut className="h-5 w-5 sm:mr-2" />
               <span className="hidden sm:inline">Logout</span>
             </Button>
           </div>

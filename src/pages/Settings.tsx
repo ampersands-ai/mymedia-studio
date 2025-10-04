@@ -16,8 +16,9 @@ const Settings = () => {
         <h1 className="text-4xl font-black gradient-text mb-8">Settings</h1>
         
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
             <TabsTrigger value="pricing">Pricing</TabsTrigger>
             <TabsTrigger value="account">Account</TabsTrigger>
           </TabsList>
@@ -26,6 +27,13 @@ const Settings = () => {
             <Card className="p-6">
               <h3 className="text-xl font-bold mb-4">General Settings</h3>
               <p className="text-muted-foreground">General settings will be available here</p>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="history" className="space-y-4 mt-6">
+            <Card className="p-6">
+              <h3 className="text-xl font-bold mb-4">Generation History</h3>
+              <p className="text-muted-foreground">Your creation history will appear here</p>
             </Card>
           </TabsContent>
           

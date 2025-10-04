@@ -63,43 +63,33 @@ export const DashboardLayout = () => {
             <h1 className="text-3xl font-black gradient-text">ARTIFIO.AI</h1>
           </Link>
 
-          <nav className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             <NavLink
               to="/dashboard/create"
               className={({ isActive }) =>
-                `flex items-center gap-2 font-bold transition-colors ${
-                  isActive ? "text-primary" : "text-foreground/70 hover:text-foreground"
+                `brutal-card-sm px-4 py-2 transition-colors ${
+                  isActive ? "bg-primary text-primary-foreground" : "bg-card hover:bg-muted"
                 }`
               }
             >
-              <Sparkles className="h-5 w-5" />
-              Start Creating
-            </NavLink>
-            <NavLink
-              to="/dashboard/history"
-              className={({ isActive }) =>
-                `flex items-center gap-2 font-bold transition-colors ${
-                  isActive ? "text-primary" : "text-foreground/70 hover:text-foreground"
-                }`
-              }
-            >
-              <History className="h-5 w-5" />
-              History
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5" />
+                <span className="font-black">Start Creating</span>
+              </div>
             </NavLink>
             <NavLink
               to="/dashboard/settings"
               className={({ isActive }) =>
-                `flex items-center gap-2 font-bold transition-colors ${
-                  isActive ? "text-primary" : "text-foreground/70 hover:text-foreground"
+                `brutal-card-sm px-4 py-2 transition-colors ${
+                  isActive ? "bg-primary text-primary-foreground" : "bg-card hover:bg-muted"
                 }`
               }
             >
-              <Settings className="h-5 w-5" />
-              Settings
+              <div className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                <span className="font-black">Settings</span>
+              </div>
             </NavLink>
-          </nav>
-
-          <div className="flex items-center gap-4">
             <div className="brutal-card-sm px-4 py-2 bg-neon-yellow">
               <div className="flex items-center gap-2">
                 <Coins className="h-5 w-5" />

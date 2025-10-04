@@ -9,7 +9,6 @@ import { Analytics } from "./components/Analytics";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Create from "./pages/Create";
-import History from "./pages/History";
 import Settings from "./pages/Settings";
 import Pricing from "./pages/Pricing";
 import Privacy from "./pages/Privacy";
@@ -32,7 +31,6 @@ const AppContent = () => {
         <Route path="/auth" element={<Auth />} />
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route path="create" element={<Create />} />
-          <Route path="history" element={<History />} />
           <Route path="settings" element={<Settings />} />
         </Route>
         <Route path="/pricing" element={<Pricing />} />

@@ -76,7 +76,7 @@ export const DashboardLayout = () => {
               to="/dashboard/create"
               className={({ isActive }) =>
                 `brutal-card-sm px-4 py-2 transition-colors ${
-                  isActive ? "bg-primary text-primary-foreground" : "bg-card hover:bg-muted"
+                  isActive ? "bg-primary text-white" : "bg-card text-foreground hover:bg-muted"
                 }`
               }
             >
@@ -89,7 +89,7 @@ export const DashboardLayout = () => {
               to="/dashboard/settings"
               className={({ isActive }) =>
                 `brutal-card-sm px-4 py-2 transition-colors ${
-                  isActive ? "bg-primary text-primary-foreground" : "bg-card hover:bg-muted"
+                  isActive ? "bg-primary text-white" : "bg-card text-foreground hover:bg-muted"
                 }`
               }
             >

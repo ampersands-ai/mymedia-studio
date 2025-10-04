@@ -20,183 +20,120 @@ import {
 } from "@/components/ui/collapsible";
 import { TemplateCard } from "@/components/TemplateCard";
 
-// Template categories with square images and IDs
-const templateCategories = {
-  "Image Creation": [
-    {
-      id: "IMG-001",
-      image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=400&fit=crop",
-      prompt: "Abstract art with vibrant colors and geometric shapes",
-      contentType: "image",
-      resolution: "HD",
-      theme: "abstract",
-    },
-    {
-      id: "IMG-002",
-      image: "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=400&h=400&fit=crop",
-      prompt: "Futuristic cyberpunk cityscape with neon lights",
-      contentType: "image",
-      resolution: "HD",
-      theme: "cyberpunk",
-    },
-    {
-      id: "IMG-003",
-      image: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=400&h=400&fit=crop",
-      prompt: "Fantasy dragon in mystical forest",
-      contentType: "image",
-      resolution: "Native",
-      theme: "fantasy",
-    },
-    {
-      id: "IMG-004",
-      image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&h=400&fit=crop",
-      prompt: "Anime character portrait",
-      contentType: "image",
-      resolution: "HD",
-      theme: "anime",
-    },
-  ],
-  "Photo Editing": [
-    {
-      id: "PHT-001",
-      image: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=400&h=400&fit=crop",
-      prompt: "Portrait enhancement with natural lighting",
-      contentType: "image",
-      resolution: "Native",
-      theme: "realistic",
-    },
-    {
-      id: "PHT-002",
-      image: "https://images.unsplash.com/photo-1577083552431-6e5fd01988ec?w=400&h=400&fit=crop",
-      prompt: "Landscape color grading",
-      contentType: "image",
-      resolution: "Native",
-      theme: "artistic",
-    },
-    {
-      id: "PHT-003",
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop",
-      prompt: "Sky replacement and enhancement",
-      contentType: "image",
-      resolution: "HD",
-      theme: "realistic",
-    },
-    {
-      id: "PHT-004",
-      image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=400&fit=crop",
-      prompt: "Night sky enhancement",
-      contentType: "image",
-      resolution: "HD",
-      theme: "realistic",
-    },
-  ],
-  "Product Photography": [
-    {
-      id: "PRD-001",
-      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
-      prompt: "Product on clean white background",
-      contentType: "image",
-      resolution: "HD",
-      theme: "realistic",
-    },
-    {
-      id: "PRD-002",
-      image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&h=400&fit=crop",
-      prompt: "Luxury product with dramatic lighting",
-      contentType: "image",
-      resolution: "HD",
-      theme: "realistic",
-    },
-    {
-      id: "PRD-003",
-      image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop",
-      prompt: "Minimalist product showcase",
-      contentType: "image",
-      resolution: "Native",
-      theme: "realistic",
-    },
-    {
-      id: "PRD-004",
-      image: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop",
-      prompt: "Smartwatch product photography",
-      contentType: "image",
-      resolution: "HD",
-      theme: "realistic",
-    },
-  ],
-  "Social Media Content": [
-    {
-      id: "SOC-001",
-      image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=400&fit=crop",
-      prompt: "Instagram story template design",
-      contentType: "image",
-      resolution: "Native",
-      theme: "artistic",
-    },
-    {
-      id: "SOC-002",
-      image: "https://images.unsplash.com/photo-1432821596592-e2c18b78144f?w=400&h=400&fit=crop",
-      prompt: "Quote post with typography",
-      contentType: "image",
-      resolution: "Native",
-      theme: "artistic",
-    },
-    {
-      id: "SOC-003",
-      image: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&h=400&fit=crop",
-      prompt: "Social media banner design",
-      contentType: "image",
-      resolution: "HD",
-      theme: "abstract",
-    },
-    {
-      id: "SOC-004",
-      image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400&h=400&fit=crop",
-      prompt: "Business profile header",
-      contentType: "image",
-      resolution: "HD",
-      theme: "realistic",
-    },
-  ],
-  "Video Generation": [
-    {
-      id: "VID-001",
-      image: "https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?w=400&h=400&fit=crop",
-      video: "https://videos.pexels.com/video-files/3129671/3129671-uhd_2560_1440_25fps.mp4",
-      prompt: "Animated logo reveal",
-      contentType: "video",
-      resolution: "HD",
-      theme: "abstract",
-    },
-    {
-      id: "VID-002",
-      image: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=400&fit=crop",
-      video: "https://videos.pexels.com/video-files/6985001/6985001-uhd_2560_1440_25fps.mp4",
-      prompt: "Product showcase animation",
-      contentType: "video",
-      resolution: "HD",
-      theme: "realistic",
-    },
-    {
-      id: "VID-003",
-      image: "https://images.unsplash.com/photo-1524712245354-2c4e5e7121c0?w=400&h=400&fit=crop",
-      video: "https://videos.pexels.com/video-files/3141211/3141211-uhd_2560_1440_25fps.mp4",
-      prompt: "Cinematic intro sequence",
-      contentType: "video",
-      resolution: "HD",
-      theme: "cinematic",
-    },
-    {
-      id: "VID-004",
-      image: "https://images.unsplash.com/photo-1536240478700-b869070f9279?w=400&h=400&fit=crop",
-      video: "https://videos.pexels.com/video-files/7579955/7579955-uhd_2560_1440_25fps.mp4",
-      prompt: "Social media video ad",
-      contentType: "video",
-      resolution: "Native",
-      theme: "artistic",
-    },
-  ],
-};
+// Community creations data
+const communityCreations = [
+  {
+    id: "CC-001",
+    image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=400&fit=crop",
+    contentType: "image",
+    resolution: "HD",
+    theme: "abstract",
+    author: "Alex M.",
+    likes: 342
+  },
+  {
+    id: "CC-002",
+    image: "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=400&h=400&fit=crop",
+    contentType: "image",
+    resolution: "HD",
+    theme: "cyberpunk",
+    author: "Sarah K.",
+    likes: 567
+  },
+  {
+    id: "CC-003",
+    image: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=400&h=400&fit=crop",
+    contentType: "image",
+    resolution: "Native",
+    theme: "fantasy",
+    author: "Jordan P.",
+    likes: 289
+  },
+  {
+    id: "CC-004",
+    image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&h=400&fit=crop",
+    contentType: "image",
+    resolution: "HD",
+    theme: "anime",
+    author: "Chris L.",
+    likes: 891
+  },
+  {
+    id: "CC-005",
+    image: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=400&h=400&fit=crop",
+    contentType: "image",
+    resolution: "Native",
+    theme: "realistic",
+    author: "Emily R.",
+    likes: 423
+  },
+  {
+    id: "CC-006",
+    image: "https://images.unsplash.com/photo-1577083552431-6e5fd01988ec?w=400&h=400&fit=crop",
+    contentType: "image",
+    resolution: "Native",
+    theme: "artistic",
+    author: "Mike D.",
+    likes: 678
+  },
+  {
+    id: "CC-007",
+    image: "https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?w=400&h=400&fit=crop",
+    video: "https://videos.pexels.com/video-files/3129671/3129671-uhd_2560_1440_25fps.mp4",
+    contentType: "video",
+    resolution: "HD",
+    theme: "abstract",
+    author: "Taylor B.",
+    likes: 534
+  },
+  {
+    id: "CC-008",
+    image: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=400&fit=crop",
+    video: "https://videos.pexels.com/video-files/6985001/6985001-uhd_2560_1440_25fps.mp4",
+    contentType: "video",
+    resolution: "HD",
+    theme: "realistic",
+    author: "Nina S.",
+    likes: 756
+  },
+  {
+    id: "CC-009",
+    image: "https://images.unsplash.com/photo-1524712245354-2c4e5e7121c0?w=400&h=400&fit=crop",
+    video: "https://videos.pexels.com/video-files/3141211/3141211-uhd_2560_1440_25fps.mp4",
+    contentType: "video",
+    resolution: "HD",
+    theme: "fantasy",
+    author: "David H.",
+    likes: 412
+  },
+  {
+    id: "CC-010",
+    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+    contentType: "image",
+    resolution: "HD",
+    theme: "realistic",
+    author: "Lisa W.",
+    likes: 623
+  },
+  {
+    id: "CC-011",
+    image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&h=400&fit=crop",
+    contentType: "image",
+    resolution: "HD",
+    theme: "realistic",
+    author: "Mark J.",
+    likes: 489
+  },
+  {
+    id: "CC-012",
+    image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=400&fit=crop",
+    contentType: "image",
+    resolution: "Native",
+    theme: "artistic",
+    author: "Sophia T.",
+    likes: 701
+  },
+];
 
 const CustomCreation = () => {
   const { user } = useAuth();
@@ -363,6 +300,18 @@ const CustomCreation = () => {
     toast.success(`${template.id} loaded!`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Filter community creations based on current settings
+  const filteredCommunityCreations = communityCreations.filter((creation) => {
+    return creation.contentType === contentType &&
+           creation.resolution === resolution &&
+           creation.theme === theme;
+  });
+
+  // Show all if no matches
+  const displayedCreations = filteredCommunityCreations.length > 0 
+    ? filteredCommunityCreations 
+    : communityCreations.slice(0, 6);
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-8">
@@ -652,60 +601,194 @@ const CustomCreation = () => {
           </Button>
         </div>
 
-        {/* Template Categories */}
-        <div className="mt-12 md:mt-16 space-y-8 md:space-y-12">
-          <div className="text-center">
-            <h2 className="text-2xl md:text-4xl font-black mb-2">TEMPLATES</h2>
+        {/* Community Creations */}
+        <div className="mt-12 md:mt-16 space-y-6 md:space-y-8">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl md:text-4xl font-black">COMMUNITY CREATIONS</h2>
             <p className="text-sm md:text-base text-foreground/80 font-medium">
-              Quick start with pre-made templates
+              {filteredCommunityCreations.length > 0 
+                ? `Creations using ${contentType} • ${resolution} • ${theme}`
+                : "Popular creations from the community"}
             </p>
           </div>
 
-          {Object.entries(templateCategories).map(([category, templates]) => (
-            <div key={category} className="space-y-4">
-              <h3 className="text-lg md:text-xl font-black">{category}</h3>
-              
-              <div className="relative">
-                <Carousel className="w-full" opts={{ align: "start", slidesToScroll: 1 }}>
-                  <CarouselContent className="-ml-2 md:-ml-4">
-                    {templates.map((template) => (
-                      <CarouselItem key={template.id} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
-                        <Card className="overflow-hidden hover-lift cursor-pointer group">
-                          <div className="aspect-square overflow-hidden bg-muted relative">
-                            <TemplateCard
-                              image={template.image}
-                              video={(template as any).video}
-                              alt={template.id}
-                              className="w-full h-full"
-                            />
-                            <div className="absolute top-2 left-2 bg-black/80 text-white px-2 py-1 rounded text-xs font-black z-10">
-                              {template.id}
-                            </div>
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                              <Button
-                                onClick={() => loadTemplate(template)}
-                                size="sm"
-                                className="bg-primary hover:bg-primary/90 z-10"
-                              >
-                                Use Template
-                              </Button>
-                            </div>
-                          </div>
-                          <div className="p-3 bg-card">
-                            <div className="text-center">
-                              <p className="text-sm font-black">{template.id}</p>
-                            </div>
-                          </div>
-                        </Card>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious className="hidden md:flex -left-4 bg-background border-2 border-black hover:bg-muted" />
-                  <CarouselNext className="hidden md:flex -right-4 bg-background border-2 border-black hover:bg-muted" />
-                </Carousel>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+            {displayedCreations.map((creation) => (
+              <Card key={creation.id} className="overflow-hidden hover-lift cursor-pointer group">
+                <div className="aspect-square overflow-hidden bg-muted relative">
+                  <TemplateCard
+                    image={creation.image}
+                    video={(creation as any).video}
+                    alt={creation.id}
+                    className="w-full h-full"
+                  />
+                  <div className="absolute top-2 left-2 bg-black/80 text-white px-2 py-1 rounded text-xs font-black z-10">
+                    {creation.id}
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <p className="text-white text-xs font-medium">{creation.author}</p>
+                    <p className="text-white/70 text-xs">❤️ {creation.likes}</p>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Best Practices - Use Cases */}
+        <div className="mt-12 md:mt-16 space-y-6 md:space-y-8 pb-24 md:pb-12">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl md:text-4xl font-black">BEST PRACTICES</h2>
+            <p className="text-sm md:text-base text-foreground/80 font-medium">
+              Learn how to get the best results
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {/* Image Creation */}
+            <Card className="p-4 md:p-6 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <ImageIcon className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="font-black text-base md:text-lg">Image Creation</h3>
               </div>
-            </div>
-          ))}
+              <ul className="space-y-2 text-xs md:text-sm text-foreground/80">
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Be specific about style, colors, and composition</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Use HD resolution for detailed artwork</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Select appropriate theme for best results</span>
+                </li>
+              </ul>
+            </Card>
+
+            {/* Video Generation */}
+            <Card className="p-4 md:p-6 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Play className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="font-black text-base md:text-lg">Video Generation</h3>
+              </div>
+              <ul className="space-y-2 text-xs md:text-sm text-foreground/80">
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Describe motion and camera movements clearly</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Keep scenes simple for better coherence</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Always use HD for professional quality</span>
+                </li>
+              </ul>
+            </Card>
+
+            {/* Photo Enhancement */}
+            <Card className="p-4 md:p-6 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Upload className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="font-black text-base md:text-lg">Photo Enhancement</h3>
+              </div>
+              <ul className="space-y-2 text-xs md:text-sm text-foreground/80">
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Upload high-quality source images</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Use realistic theme for natural edits</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Describe specific changes you want</span>
+                </li>
+              </ul>
+            </Card>
+
+            {/* Brand Integration */}
+            <Card className="p-4 md:p-6 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="font-black text-base md:text-lg">Brand Integration</h3>
+              </div>
+              <ul className="space-y-2 text-xs md:text-sm text-foreground/80">
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Enable "Apply Brand" for consistent style</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Works best with your brand colors defined</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Adds +25 tokens to generation cost</span>
+                </li>
+              </ul>
+            </Card>
+
+            {/* Prompt Tips */}
+            <Card className="p-4 md:p-6 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-primary font-black text-lg">✍️</span>
+                </div>
+                <h3 className="font-black text-base md:text-lg">Prompt Writing</h3>
+              </div>
+              <ul className="space-y-2 text-xs md:text-sm text-foreground/80">
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Use descriptive adjectives and details</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Click "Enhance" to improve your prompt</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Longer prompts = more specific results</span>
+                </li>
+              </ul>
+            </Card>
+
+            {/* Resolution Guide */}
+            <Card className="p-4 md:p-6 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-primary font-black text-lg">📐</span>
+                </div>
+                <h3 className="font-black text-base md:text-lg">Resolution Guide</h3>
+              </div>
+              <ul className="space-y-2 text-xs md:text-sm text-foreground/80">
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Native: Fast generation, standard quality</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>HD: Professional quality, slower generation</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>HD costs more tokens but worth it</span>
+                </li>
+              </ul>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

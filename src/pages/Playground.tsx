@@ -295,14 +295,14 @@ const Playground = () => {
                     <Button
                       variant={outputFormat === "PNG" ? "default" : "outline"}
                       onClick={() => setOutputFormat("PNG")}
-                      className="flex-1"
+                      className={outputFormat === "PNG" ? "flex-1 bg-blue-500 hover:bg-blue-600 text-white" : "flex-1"}
                     >
                       PNG
                     </Button>
                     <Button
                       variant={outputFormat === "JPEG" ? "default" : "outline"}
                       onClick={() => setOutputFormat("JPEG")}
-                      className="flex-1"
+                      className={outputFormat === "JPEG" ? "flex-1 bg-purple-500 hover:bg-purple-600 text-white" : "flex-1"}
                     >
                       JPEG
                     </Button>
@@ -317,14 +317,14 @@ const Playground = () => {
                     <Button
                       variant={resolution === "Native" ? "default" : "outline"}
                       onClick={() => setResolution("Native")}
-                      className="flex-1"
+                      className={resolution === "Native" ? "flex-1 bg-green-500 hover:bg-green-600 text-white" : "flex-1"}
                     >
                       Native
                     </Button>
                     <Button
                       variant={resolution === "HD" ? "default" : "outline"}
                       onClick={() => setResolution("HD")}
-                      className="flex-1"
+                      className={resolution === "HD" ? "flex-1 bg-orange-500 hover:bg-orange-600 text-white" : "flex-1"}
                     >
                       HD
                     </Button>
@@ -393,13 +393,13 @@ const Playground = () => {
           </div>
 
           {/* Example Gallery */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="text-center">
-              <h3 className="text-2xl font-black mb-2">COMMUNITY CREATIONS</h3>
-              <p className="text-muted-foreground">See what others have created with Artifio.ai</p>
+              <h3 className="text-xl font-black mb-1">COMMUNITY CREATIONS</h3>
+              <p className="text-sm text-muted-foreground">See what others have created with Artifio.ai</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {exampleImages.map((example, index) => (
                 <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow">
                   <div className="aspect-square bg-muted overflow-hidden">
@@ -409,11 +409,11 @@ const Playground = () => {
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                     />
                   </div>
-                  <div className="p-4 space-y-2">
-                    <p className="text-sm font-medium line-clamp-2">{example.prompt}</p>
-                    <div className="flex gap-2 text-xs text-muted-foreground">
-                      <Badge variant="secondary">{example.format}</Badge>
-                      <Badge variant="secondary">{example.resolution}</Badge>
+                  <div className="p-2 space-y-1">
+                    <p className="text-xs font-medium line-clamp-2">{example.prompt}</p>
+                    <div className="flex gap-1 text-xs">
+                      <Badge variant="secondary" className="text-[10px] px-1 py-0">{example.format}</Badge>
+                      <Badge variant="secondary" className="text-[10px] px-1 py-0">{example.resolution}</Badge>
                     </div>
                   </div>
                 </Card>

@@ -275,10 +275,10 @@ const Index = () => {
                   <Button
                     variant="neon"
                     size="sm"
-                    onClick={() => navigate("/playground")}
+                    onClick={() => navigate("/dashboard/create")}
                     className="md:text-base"
                   >
-                    Go to Playground
+                    Go to Dashboard
                   </Button>
                 )}
               </div>

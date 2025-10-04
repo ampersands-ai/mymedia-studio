@@ -28,26 +28,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Parse URL params UP FRONT
+    const url = new URL(window.location.href);
+    const hasCode = url.searchParams.get("code");
+    const hasError = url.searchParams.get("error_description") || url.searchParams.get("error");
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        setLoading(false);
+        // Avoid turning off loading on INITIAL_SESSION if we're about to exchange the code
+        if (event !== "INITIAL_SESSION" || !hasCode) {
+          setLoading(false);
+        }
       }
     );
-
-    // If returning from OAuth provider, exchange the code for a session
-    const url = new URL(window.location.href);
-    const hasCode = url.searchParams.get("code");
-    const hasError = url.searchParams.get("error_description") || url.searchParams.get("error");
 
     if (hasCode && !hasError) {
       // Perform the OAuth code exchange once, then auth listener will update state
       supabase.auth
         .exchangeCodeForSession(window.location.href)
         .catch((e) => console.error("OAuth exchange failed:", e))
-        .finally(() => setLoading(false));
+        .finally(() => {
+          // Clean the URL so we don't keep re-exchanging the code on refresh
+          const cleanUrl = `${url.origin}${url.pathname}${url.hash}`;
+          window.history.replaceState({}, document.title, cleanUrl);
+          setLoading(false);
+        });
     } else {
       // THEN check for existing session
       supabase.auth.getSession().then(({ data: { session } }) => {

@@ -60,25 +60,37 @@ export type Database = {
       }
       profiles: {
         Row: {
+          country: string | null
           created_at: string
           email: string | null
+          email_verified: boolean | null
           full_name: string | null
           id: string
+          phone_number: string | null
           updated_at: string
+          zipcode: string | null
         }
         Insert: {
+          country?: string | null
           created_at?: string
           email?: string | null
+          email_verified?: boolean | null
           full_name?: string | null
           id: string
+          phone_number?: string | null
           updated_at?: string
+          zipcode?: string | null
         }
         Update: {
+          country?: string | null
           created_at?: string
           email?: string | null
+          email_verified?: boolean | null
           full_name?: string | null
           id?: string
+          phone_number?: string | null
           updated_at?: string
+          zipcode?: string | null
         }
         Relationships: []
       }

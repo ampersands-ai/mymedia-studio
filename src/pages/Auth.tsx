@@ -16,6 +16,9 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [country, setCountry] = useState("");
+  const [zipcode, setZipcode] = useState("");
   const [loading, setLoading] = useState(false);
 
   // Redirect if already logged in
@@ -45,12 +48,15 @@ const Auth = () => {
           options: {
             data: {
               full_name: fullName,
+              phone_number: phoneNumber || null,
+              country: country || null,
+              zipcode: zipcode || null,
             },
             emailRedirectTo: `${window.location.origin}/playground`,
           },
         });
         if (error) throw error;
-        toast.success("Account created! You've received 500 free tokens.");
+        toast.success("Account created! You've received 500 free tokens. Verify your email for 100 bonus tokens!");
         navigate("/playground");
       }
     } catch (error: any) {
@@ -151,18 +157,59 @@ const Auth = () => {
 
           <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="fullName" className="font-bold">Full Name</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="John Doe"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required={!isLogin}
-                  className="border-3 border-black brutal-shadow h-12 font-medium"
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="font-bold">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="John Doe"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required={!isLogin}
+                    className="border-3 border-black brutal-shadow h-12 font-medium"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phoneNumber" className="font-bold">
+                    Phone Number <span className="text-muted-foreground font-normal">(optional)</span>
+                  </Label>
+                  <Input
+                    id="phoneNumber"
+                    type="tel"
+                    placeholder="+1 234 567 8900"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="border-3 border-black brutal-shadow h-12 font-medium"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="country" className="font-bold">
+                    Country <span className="text-muted-foreground font-normal">(optional)</span>
+                  </Label>
+                  <Input
+                    id="country"
+                    type="text"
+                    placeholder="United States"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="border-3 border-black brutal-shadow h-12 font-medium"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="zipcode" className="font-bold">
+                    Zipcode <span className="text-muted-foreground font-normal">(optional)</span>
+                  </Label>
+                  <Input
+                    id="zipcode"
+                    type="text"
+                    placeholder="12345"
+                    value={zipcode}
+                    onChange={(e) => setZipcode(e.target.value)}
+                    className="border-3 border-black brutal-shadow h-12 font-medium"
+                  />
+                </div>
+              </>
             )}
             <div className="space-y-2">
               <Label htmlFor="email" className="font-bold">Email</Label>

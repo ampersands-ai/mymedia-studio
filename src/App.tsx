@@ -8,8 +8,9 @@ import { SplashCursor } from "./components/SplashCursor";
 import { Analytics } from "./components/Analytics";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Playground from "./pages/Playground";
 import Create from "./pages/Create";
+import History from "./pages/History";
+import Settings from "./pages/Settings";
 import Pricing from "./pages/Pricing";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
@@ -31,6 +32,8 @@ const AppContent = () => {
         <Route path="/auth" element={<Auth />} />
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route path="create" element={<Create />} />
+          <Route path="history" element={<History />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/privacy" element={<Privacy />} />

@@ -83,7 +83,7 @@ export const DashboardLayout = () => {
               {({ isActive }) => (
                 <div className="flex items-center gap-2">
                   <Sparkles className={`h-5 w-5 ${isActive ? 'text-white' : ''}`} />
-                  <span className={`font-black ${isActive ? 'text-white' : ''}`}>Start Creating</span>
+                  <span className={`font-black ${isActive ? 'text-white' : ''}`}>Start Custom Creation</span>
                 </div>
               )}
             </NavLink>

@@ -96,6 +96,20 @@ serve(async (req) => {
       });
     }
 
+    // Log token usage for security monitoring
+    try {
+      await supabase.from('audit_logs').insert({
+        user_id: user.id,
+        action: 'tokens_deducted',
+        metadata: {
+          tokens_deducted: tokens_to_deduct,
+          tokens_remaining: updatedSubscription.tokens_remaining,
+        },
+      });
+    } catch (logError) {
+      console.error('Failed to log token deduction:', logError);
+    }
+
     console.log(`Successfully deducted ${tokens_to_deduct} tokens for user ${user.id}`);
 
     return new Response(

@@ -26,6 +26,10 @@ const Settings = () => {
   const [generations, setGenerations] = useState<any[]>([]);
   const [loadingGenerations, setLoadingGenerations] = useState(true);
   const [subscription, setSubscription] = useState<any>(null);
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [loadingAuditLogs, setLoadingAuditLogs] = useState(false);
 
   useEffect(() => {
     document.title = "Settings - Artifio.ai";
@@ -33,6 +37,8 @@ const Settings = () => {
       fetchProfile();
       fetchGenerations();
       fetchSubscription();
+      fetchSessions();
+      fetchAuditLogs();
     }
   }, [user]);
 
@@ -91,6 +97,56 @@ const Settings = () => {
       setSubscription(data);
     } catch (error) {
       console.error("Error fetching subscription:", error);
+    }
+  };
+
+  const fetchSessions = async () => {
+    setLoadingSessions(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('session-manager', {
+        body: { action: 'list' }
+      });
+
+      if (error) throw error;
+      setSessions(data?.sessions || []);
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+    } finally {
+      setLoadingSessions(false);
+    }
+  };
+
+  const fetchAuditLogs = async () => {
+    setLoadingAuditLogs(true);
+    try {
+      const { data, error } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .eq("user_id", user?.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      setAuditLogs(data || []);
+    } catch (error) {
+      console.error("Error fetching audit logs:", error);
+    } finally {
+      setLoadingAuditLogs(false);
+    }
+  };
+
+  const handleRevokeSession = async (sessionId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('session-manager', {
+        body: { action: 'revoke', session_id: sessionId }
+      });
+
+      if (error) throw error;
+      toast.success("Session revoked successfully");
+      fetchSessions();
+    } catch (error: any) {
+      console.error("Error revoking session:", error);
+      toast.error(error.message || "Failed to revoke session");
     }
   };
 
@@ -176,8 +232,9 @@ const Settings = () => {
         <h1 className="text-4xl font-black gradient-text mb-8">Settings</h1>
         
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
             <TabsTrigger value="pricing">Pricing</TabsTrigger>
             <TabsTrigger value="account">Account</TabsTrigger>
@@ -268,6 +325,121 @@ const Settings = () => {
                     )}
                   </Button>
                 </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="security" className="space-y-4 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Active Sessions</CardTitle>
+                <CardDescription>Manage your active login sessions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingSessions ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : sessions.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No active sessions found.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {sessions.map((session) => (
+                      <div
+                        key={session.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant={session.is_active ? "default" : "secondary"}>
+                              {session.is_active ? "Active" : "Revoked"}
+                            </Badge>
+                            <span className="text-sm font-semibold">{session.ip_address}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground line-clamp-1">
+                            {session.user_agent}
+                          </p>
+                          <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
+                            <span>Created: {new Date(session.created_at).toLocaleString()}</span>
+                            <span>Last active: {new Date(session.last_activity_at).toLocaleString()}</span>
+                          </div>
+                        </div>
+                        {session.is_active && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleRevokeSession(session.session_id)}
+                            aria-label="Revoke session"
+                          >
+                            Revoke
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Security Activity Log</CardTitle>
+                <CardDescription>Recent security-related activities on your account</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingAuditLogs ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : auditLogs.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No security activities yet.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {auditLogs.map((log) => (
+                      <div
+                        key={log.id}
+                        className="flex items-center justify-between p-3 border rounded-lg text-sm"
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs capitalize">
+                              {log.action.replace(/_/g, ' ')}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(log.created_at).toLocaleString()}
+                            </span>
+                          </div>
+                          {log.ip_address && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              IP: {log.ip_address}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Two-Factor Authentication (2FA)</CardTitle>
+                <CardDescription>Add an extra layer of security to your account</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Two-factor authentication adds an additional layer of security to your account by requiring more than just a password to sign in.
+                  </p>
+                  <Button variant="outline" disabled>
+                    Enable 2FA (Coming Soon)
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

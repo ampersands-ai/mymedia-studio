@@ -209,7 +209,7 @@ const Auth = () => {
       }
 
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: authData, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -227,6 +227,17 @@ const Auth = () => {
           }
           // Generic error message to prevent user enumeration
           throw new Error("Invalid credentials. Please check your email and password.");
+        }
+        
+        // Create session record
+        if (authData.session) {
+          try {
+            await supabase.functions.invoke('session-manager', {
+              body: { action: 'create' }
+            });
+          } catch (sessionError) {
+            console.error('Failed to create session record:', sessionError);
+          }
         }
         
         // Log successful login

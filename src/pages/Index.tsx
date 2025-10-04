@@ -12,6 +12,7 @@ import socialMedia from "@/assets/social-media.jpg";
 import creativeDesign from "@/assets/creative-design.jpg";
 import audioProcessing from "@/assets/audio-processing.jpg";
 import textGeneration from "@/assets/text-generation.jpg";
+import logo from "@/assets/logo.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -126,7 +127,7 @@ const Index = () => {
       "@type": "Organization",
       "name": "Artifio.ai",
       "url": "https://artifio.ai",
-      "logo": "https://artifio.ai/favicon.ico",
+      "logo": "https://artifio.ai/favicon.png",
       "sameAs": [],
       "description": "Affordable AI content creation platform for videos, images, music, and text generation."
     };
@@ -248,9 +249,11 @@ const Index = () => {
           <nav className="container mx-auto px-4 py-3 md:py-4" aria-label="Main navigation">
             <div className="flex items-center justify-between">
               <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity">
-                <div className="h-8 w-8 md:h-10 md:w-10 rounded-xl bg-gradient-primary border-3 border-black brutal-shadow flex items-center justify-center">
-                  <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-white" aria-hidden="true" />
-                </div>
+                <img 
+                  src={logo} 
+                  alt="Artifio.ai logo" 
+                  className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
+                />
                 <h1 className="text-xl md:text-3xl font-black gradient-text">ARTIFIO.AI</h1>
               </Link>
               <div className="flex items-center gap-2 md:gap-3">

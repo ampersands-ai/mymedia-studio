@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Coins, Sparkles, History, Settings, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import logo from "@/assets/logo.png";
 
 export const DashboardLayout = () => {
   const navigate = useNavigate();
@@ -57,9 +58,11 @@ export const DashboardLayout = () => {
       <header className="border-b-4 border-black bg-card sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="h-10 w-10 rounded-xl bg-gradient-primary border-3 border-black brutal-shadow flex items-center justify-center">
-              <Sparkles className="h-6 w-6 text-white" />
-            </div>
+            <img 
+              src={logo} 
+              alt="Artifio.ai logo" 
+              className="h-10 w-10 rounded-xl border-3 border-black brutal-shadow"
+            />
             <h1 className="text-3xl font-black gradient-text">ARTIFIO.AI</h1>
           </Link>
 

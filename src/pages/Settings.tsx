@@ -129,6 +129,23 @@ const Settings = () => {
         .eq("id", user?.id);
 
       if (error) throw error;
+      
+      // Log profile update
+      try {
+        await supabase.functions.invoke('audit-log', {
+          body: { 
+            action: 'profile_updated',
+            resource_type: 'profile',
+            resource_id: user?.id,
+            metadata: {
+              updated_fields: ['full_name', 'phone_number', 'zipcode']
+            }
+          }
+        });
+      } catch (logError) {
+        console.error('Failed to log audit event:', logError);
+      }
+      
       toast.success("Profile updated successfully!");
     } catch (error: any) {
       console.error("Error updating profile:", error);

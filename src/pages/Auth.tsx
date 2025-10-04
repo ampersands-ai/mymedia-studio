@@ -214,13 +214,37 @@ const Auth = () => {
           password,
         });
         if (error) {
+          // Log failed login attempt
+          try {
+            await supabase.functions.invoke('audit-log', {
+              body: { 
+                action: 'login_failed',
+                metadata: { email: email.toLowerCase(), reason: 'invalid_credentials' }
+              }
+            });
+          } catch (logError) {
+            console.error('Failed to log audit event:', logError);
+          }
           // Generic error message to prevent user enumeration
           throw new Error("Invalid credentials. Please check your email and password.");
         }
+        
+        // Log successful login
+        try {
+          await supabase.functions.invoke('audit-log', {
+            body: { 
+              action: 'login_success',
+              metadata: { email: email.toLowerCase() }
+            }
+          });
+        } catch (logError) {
+          console.error('Failed to log audit event:', logError);
+        }
+        
         toast.success("Welcome back!");
         navigate("/dashboard/create");
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { error, data } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -235,8 +259,37 @@ const Auth = () => {
           },
         });
         if (error) {
+          // Log failed signup attempt
+          try {
+            await supabase.functions.invoke('audit-log', {
+              body: { 
+                action: 'signup_failed',
+                metadata: { email: email.toLowerCase(), reason: error.message }
+              }
+            });
+          } catch (logError) {
+            console.error('Failed to log audit event:', logError);
+          }
           // Generic error message to prevent user enumeration
           throw new Error("Unable to create account. Please try a different email.");
+        }
+        
+        // Log successful signup
+        if (data.user) {
+          try {
+            await supabase.functions.invoke('audit-log', {
+              body: { 
+                action: 'signup_success',
+                metadata: { 
+                  email: email.toLowerCase(),
+                  has_phone: !!phoneNumber,
+                  has_zipcode: !!zipcode
+                }
+              }
+            });
+          } catch (logError) {
+            console.error('Failed to log audit event:', logError);
+          }
         }
         
         const hasAllFields = phoneNumber && zipcode;

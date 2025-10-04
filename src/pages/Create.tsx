@@ -3,10 +3,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play } from "lucide-react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import portraitHeadshots from "@/assets/portrait-headshots.jpg";
+import photoEditing from "@/assets/photo-editing.jpg";
+import videoCreation from "@/assets/video-creation.jpg";
+import productPhotos from "@/assets/product-photos.jpg";
+import socialMedia from "@/assets/social-media.jpg";
+import creativeDesign from "@/assets/creative-design.jpg";
+import audioProcessing from "@/assets/audio-processing.jpg";
+import textGeneration from "@/assets/text-generation.jpg";
 
 const Create = () => {
   const { user } = useAuth();
@@ -174,11 +189,155 @@ const Create = () => {
     setApplyBrand(false);
   };
 
+  const categories = [
+    {
+      title: "Portrait Headshots",
+      description: "Professional AI-generated headshots for business profiles and portfolios",
+      badge: "Image Creation",
+      image: portraitHeadshots,
+      templates: ["Professional Business", "Creative Artist", "Corporate Executive", "Startup Founder"]
+    },
+    {
+      title: "Photo Editing",
+      description: "Enhance, retouch, and perfect your images with AI-powered editing tools",
+      badge: "Image Editing",
+      image: photoEditing,
+      templates: ["Background Removal", "Color Enhancement", "Portrait Retouch", "Object Removal"]
+    },
+    {
+      title: "Cinematic Videos",
+      description: "Create stunning videos with professional effects and transitions",
+      badge: "Video Generation",
+      image: videoCreation,
+      templates: ["Product Demo", "Social Ads", "Explainer Video", "Brand Story"]
+    },
+    {
+      title: "Product Photography",
+      description: "Generate perfect product shots for e-commerce and marketing",
+      badge: "E-commerce",
+      image: productPhotos,
+      templates: ["White Background", "Lifestyle Scene", "360° View", "Close-up Detail"]
+    },
+    {
+      title: "Social Media Content",
+      description: "Design engaging posts, stories, and ads for all platforms",
+      badge: "Marketing",
+      image: socialMedia,
+      templates: ["Instagram Story", "Facebook Post", "Twitter Header", "LinkedIn Banner"]
+    },
+    {
+      title: "Creative Design",
+      description: "Bring your artistic vision to life with AI-powered design tools",
+      badge: "Creative",
+      image: creativeDesign,
+      templates: ["Logo Design", "Brand Identity", "Illustration", "Digital Art"]
+    },
+    {
+      title: "Audio Processing",
+      description: "Generate music, voiceovers, and process audio with AI",
+      badge: "Audio",
+      image: audioProcessing,
+      templates: ["Background Music", "Voiceover", "Sound Effects", "Podcast Intro"]
+    },
+    {
+      title: "Text Generation",
+      description: "Create compelling content, documents, and copy instantly",
+      badge: "Text Processing",
+      image: textGeneration,
+      templates: ["Blog Post", "Product Description", "Ad Copy", "Email Template"]
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
       <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* What You Can Create Section */}
+        <div className="mb-12 space-y-8">
+          <div className="text-center space-y-3">
+            <h2 className="text-4xl md:text-5xl font-black">WHAT YOU CAN CREATE</h2>
+            <p className="text-lg text-foreground/80 font-medium max-w-3xl mx-auto">
+              Professional-grade AI tools for every creative need—no experience required
+            </p>
+          </div>
+
+          {/* Category Carousels */}
+          <div className="space-y-8">
+            {categories.map((category, index) => (
+              <div key={index} className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-xl font-black">{category.title}</h3>
+                  <Badge className="bg-neon-yellow text-foreground border-2 border-black">
+                    {category.badge}
+                  </Badge>
+                </div>
+                
+                <Carousel className="w-full">
+                  <CarouselContent className="-ml-2 md:-ml-4">
+                    {/* Main Category Card */}
+                    <CarouselItem className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3">
+                      <Card className="brutal-card hover-lift h-full">
+                        <div className="relative h-48 overflow-hidden">
+                          <img 
+                            src={category.image} 
+                            alt={category.title}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute top-3 right-3 bg-neon-yellow px-3 py-1 rounded-full border-2 border-black text-xs font-black">
+                            {category.badge}
+                          </div>
+                        </div>
+                        <CardContent className="p-6 space-y-2">
+                          <h4 className="text-lg font-black">{category.title}</h4>
+                          <p className="text-foreground/80 font-medium text-sm">{category.description}</p>
+                          <Button 
+                            className="w-full mt-4 bg-primary hover:bg-primary/90 text-white font-black"
+                            onClick={() => {
+                              setContentType(category.badge.includes('Video') ? 'video' : category.badge.includes('Audio') ? 'music' : category.badge.includes('Text') ? 'text' : 'image');
+                              window.scrollTo({ top: 400, behavior: 'smooth' });
+                            }}
+                          >
+                            Start Creating
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </CarouselItem>
+                    
+                    {/* Template Cards */}
+                    {category.templates.map((template, templateIndex) => (
+                      <CarouselItem key={templateIndex} className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3">
+                        <Card className="brutal-card-sm hover-lift h-full cursor-pointer" onClick={() => {
+                          setPrompt(`Create ${template.toLowerCase()} style ${category.title.toLowerCase()}`);
+                          setContentType(category.badge.includes('Video') ? 'video' : category.badge.includes('Audio') ? 'music' : category.badge.includes('Text') ? 'text' : 'image');
+                          window.scrollTo({ top: 400, behavior: 'smooth' });
+                          toast.success(`Template "${template}" loaded!`);
+                        }}>
+                          <CardContent className="p-6 space-y-3 h-full flex flex-col">
+                            <div className="flex-1">
+                              <h5 className="text-base font-black mb-2">{template}</h5>
+                              <p className="text-sm text-foreground/70">Click to use this template</p>
+                            </div>
+                            <div className="flex items-center justify-between pt-2">
+                              <Sparkles className="h-5 w-5 text-primary" />
+                              <span className="text-xs font-bold text-muted-foreground">TEMPLATE</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="brutal-shadow" />
+                  <CarouselNext className="brutal-shadow" />
+                </Carousel>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="my-12 border-t-4 border-black"></div>
+
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
           {/* Input Panel */}

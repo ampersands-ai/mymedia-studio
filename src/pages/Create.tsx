@@ -166,11 +166,11 @@ const Create = () => {
             </p>
           </div>
           <Button
-            size="lg"
-            className="brutal-card bg-gradient-to-r from-primary to-purple-600 text-white hover:from-primary/90 hover:to-purple-600/90 px-8 py-6 text-lg font-black shadow-lg hover:shadow-xl transition-all"
+            size="default"
+            className="brutal-card bg-gradient-to-r from-primary to-purple-600 text-white hover:from-primary/90 hover:to-purple-600/90 px-4 py-3 text-base font-black shadow-lg hover:shadow-xl transition-all"
             onClick={() => navigate('/dashboard/custom-creation')}
           >
-            <Sparkles className="h-6 w-6 mr-2" />
+            <Sparkles className="h-3 w-3 mr-2" />
             START CUSTOM CREATION
           </Button>
         </div>
@@ -179,9 +179,9 @@ const Create = () => {
         <div className="space-y-8 mb-12">
             {categories.map((category, index) => (
               <div key={index} className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <h3 className="text-xl font-black">{category.title}</h3>
-                  <Badge className="bg-neon-yellow text-foreground border-2 border-black">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-black">{category.title}</h3>
+                  <Badge className="bg-neon-yellow text-foreground border-2 border-black text-xs">
                     {category.badge}
                   </Badge>
                 </div>
@@ -191,21 +191,22 @@ const Create = () => {
                     {/* Main Category Card */}
                     <CarouselItem className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3">
                       <Card className="brutal-card hover-lift h-full">
-                        <div className="relative h-48 overflow-hidden">
+                        <div className="relative h-24 overflow-hidden">
                           <img 
                             src={category.image} 
                             alt={category.title}
                             className="w-full h-full object-cover"
                           />
-                          <div className="absolute top-3 right-3 bg-neon-yellow px-3 py-1 rounded-full border-2 border-black text-xs font-black">
+                          <div className="absolute top-1.5 right-1.5 bg-neon-yellow px-2 py-0.5 rounded-full border border-black text-[10px] font-black">
                             {category.badge}
                           </div>
                         </div>
-                        <CardContent className="p-6 space-y-2">
-                          <h4 className="text-lg font-black">{category.title}</h4>
-                          <p className="text-foreground/80 font-medium text-sm">{category.description}</p>
+                        <CardContent className="p-3 space-y-1">
+                          <h4 className="text-sm font-black">{category.title}</h4>
+                          <p className="text-foreground/80 font-medium text-xs">{category.description}</p>
                           <Button 
-                            className="w-full mt-4 bg-primary hover:bg-primary/90 text-white font-black"
+                            size="sm"
+                            className="w-full mt-2 bg-primary hover:bg-primary/90 text-white font-black text-xs"
                             onClick={() => navigate('/dashboard/custom-creation')}
                           >
                             Start Creating
@@ -221,22 +222,22 @@ const Create = () => {
                           navigate('/dashboard/custom-creation');
                           toast.success(`Template "${template}" selected!`);
                         }}>
-                          <CardContent className="p-6 space-y-3 h-full flex flex-col">
+                          <CardContent className="p-3 space-y-2 h-full flex flex-col">
                             <div className="flex-1">
-                              <h5 className="text-base font-black mb-2">{template}</h5>
-                              <p className="text-sm text-foreground/70">Click to use this template</p>
+                              <h5 className="text-xs font-black mb-1">{template}</h5>
+                              <p className="text-[10px] text-foreground/70">Click to use this template</p>
                             </div>
-                            <div className="flex items-center justify-between pt-2">
-                              <Sparkles className="h-2.5 w-2.5 text-primary" />
-                              <span className="text-xs font-bold text-muted-foreground">TEMPLATE</span>
+                            <div className="flex items-center justify-between pt-1">
+                              <Sparkles className="h-1.5 w-1.5 text-primary" />
+                              <span className="text-[10px] font-bold text-muted-foreground">TEMPLATE</span>
                             </div>
                           </CardContent>
                         </Card>
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className="brutal-shadow" />
-                  <CarouselNext className="brutal-shadow" />
+                  <CarouselPrevious className="brutal-shadow h-6 w-6" />
+                  <CarouselNext className="brutal-shadow h-6 w-6" />
                 </Carousel>
               </div>
             ))}

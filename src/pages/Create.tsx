@@ -168,12 +168,7 @@ const Create = () => {
           <Button
             size="lg"
             className="brutal-card bg-gradient-to-r from-primary to-purple-600 text-white hover:from-primary/90 hover:to-purple-600/90 px-8 py-6 text-lg font-black shadow-lg hover:shadow-xl transition-all"
-            onClick={() => {
-              const customSection = document.getElementById('custom-creation');
-              if (customSection) {
-                customSection.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
+            onClick={() => navigate('/dashboard/custom-creation')}
           >
             <Sparkles className="h-6 w-6 mr-2" />
             START CUSTOM CREATION

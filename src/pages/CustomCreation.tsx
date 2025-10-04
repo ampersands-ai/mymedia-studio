@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play } from "lucide-react";
+import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ArrowLeft } from "lucide-react";
 
 const CustomCreation = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [prompt, setPrompt] = useState("");
   const [contentType, setContentType] = useState<"image" | "video" | "music" | "text">("image");
@@ -115,11 +117,23 @@ const CustomCreation = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
       <div className="relative z-10 container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl md:text-4xl font-black mb-2">CUSTOM CREATION STUDIO</h2>
-          <p className="text-foreground/80 font-medium">
-            Fine-tune every detail with advanced controls
-          </p>
+        <div className="flex items-center justify-between mb-8">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/dashboard/create')}
+            className="font-bold"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </Button>
+          <div className="text-center flex-1">
+            <h2 className="text-3xl md:text-4xl font-black mb-2">CUSTOM CREATION STUDIO</h2>
+            <p className="text-foreground/80 font-medium">
+              Fine-tune every detail with advanced controls
+            </p>
+          </div>
+          <div className="w-[180px]" /> {/* Spacer for centering */}
         </div>
 
         {/* Two Column Layout */}

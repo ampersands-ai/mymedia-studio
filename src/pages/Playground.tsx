@@ -301,11 +301,11 @@ const Playground = () => {
                       prompt <span className="text-destructive">*</span>
                     </label>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={handleEnhancePrompt}
                       disabled={isEnhancing || !prompt}
-                      className="h-8 text-primary hover:text-primary/80"
+                      className="h-8 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 border-0 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Sparkles className="h-4 w-4 mr-1" />
                       {isEnhancing ? "Enhancing..." : "Enhance"}

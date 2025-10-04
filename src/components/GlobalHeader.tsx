@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import textLogo from "@/assets/text-logo.png";
+import { MobileMenu } from "@/components/MobileMenu";
 
 export const GlobalHeader = () => {
   const navigate = useNavigate();
@@ -70,6 +71,11 @@ export const GlobalHeader = () => {
     <header className="border-b-4 border-black bg-card sticky top-0 z-50">
       <nav className="container mx-auto px-4 py-4 md:py-6">
         <div className="flex items-center justify-between">
+          {/* Mobile Menu */}
+          <div className="md:hidden">
+            <MobileMenu tokenBalance={tokenBalance ?? undefined} />
+          </div>
+
           {/* Left Side - Logo + Navigation */}
           <div className="flex items-center gap-3 md:gap-4">
             <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity">
@@ -116,8 +122,8 @@ export const GlobalHeader = () => {
             )}
           </div>
 
-          {/* Right Side - Settings (dashboard only), Token Balance, Logout */}
-          <div className="flex items-center gap-2 md:gap-3">
+          {/* Right Side - Desktop Only Navigation */}
+          <div className="hidden md:flex items-center gap-2 md:gap-3">
             {/* Settings page navigation */}
             {isSettingsPage && (
               <>
@@ -217,10 +223,18 @@ export const GlobalHeader = () => {
               onClick={handleSignOut}
               className="brutal-card-sm font-black"
             >
-              <LogOut className="h-5 w-5 sm:mr-2" />
-              <span className="hidden sm:inline">Logout</span>
+              <LogOut className="h-5 w-5 mr-2" />
+              Logout
             </Button>
           </div>
+
+          {/* Mobile - Token Balance Only */}
+          {tokenBalance !== null && (
+            <div className="md:hidden brutal-card-sm px-3 py-1.5 bg-neon-yellow flex items-center gap-1.5">
+              <Coins className="h-4 w-4" />
+              <span className="font-black text-sm">{tokenBalance.toLocaleString()}</span>
+            </div>
+          )}
         </div>
       </nav>
     </header>

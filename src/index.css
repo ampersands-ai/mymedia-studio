@@ -79,6 +79,26 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+  }
+  
+  /* Mobile-first base font sizes */
+  @media (max-width: 768px) {
+    body {
+      font-size: 14px;
+    }
+    
+    h1 {
+      font-size: 1.75rem;
+    }
+    
+    h2 {
+      font-size: 1.5rem;
+    }
+    
+    h3 {
+      font-size: 1.25rem;
+    }
   }
   
   /* Custom scrollbar */

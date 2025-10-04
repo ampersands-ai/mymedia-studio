@@ -570,7 +570,7 @@ const Index = () => {
         {/* Footer */}
         <footer className="border-t-4 border-black bg-card">
           <div className="container mx-auto px-4 py-6 md:py-8">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex flex-col sm:flex-row items-center gap-4">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-lg bg-gradient-primary border-2 border-black brutal-shadow flex items-center justify-center">
@@ -582,9 +582,19 @@ const Index = () => {
                   Making AI content creation accessible and affordable for everyone
                 </p>
               </div>
-              <p className="text-xs md:text-sm font-medium text-foreground/60">
-                © 2025 Artifio. All rights reserved.
-              </p>
+              <div className="flex flex-col md:flex-row items-center gap-4">
+                <div className="flex gap-6">
+                  <Link to="/privacy" className="text-xs md:text-sm text-foreground/60 hover:text-foreground font-bold transition-colors">
+                    Privacy
+                  </Link>
+                  <Link to="/terms" className="text-xs md:text-sm text-foreground/60 hover:text-foreground font-bold transition-colors">
+                    Terms
+                  </Link>
+                </div>
+                <p className="text-xs md:text-sm font-medium text-foreground/60">
+                  © 2025 Artifio. All rights reserved.
+                </p>
+              </div>
             </div>
           </div>
         </footer>

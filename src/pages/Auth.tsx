@@ -15,7 +15,8 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [country, setCountry] = useState("");
   const [zipcode, setZipcode] = useState("");
@@ -47,7 +48,9 @@ const Auth = () => {
           password,
           options: {
             data: {
-              full_name: fullName,
+              full_name: `${firstName} ${lastName}`.trim(),
+              first_name: firstName,
+              last_name: lastName,
               phone_number: phoneNumber || null,
               country: country || null,
               zipcode: zipcode || null,
@@ -170,22 +173,34 @@ const Auth = () => {
           <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="fullName" className="font-bold">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="John Doe"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required={!isLogin}
-                    className="border-3 border-black brutal-shadow h-12 font-medium"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName" className="font-bold">First Name</Label>
+                    <Input
+                      id="firstName"
+                      type="text"
+                      placeholder="John"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required={!isLogin}
+                      className="border-3 border-black brutal-shadow h-12 font-medium"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="font-bold">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      placeholder="Doe"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required={!isLogin}
+                      className="border-3 border-black brutal-shadow h-12 font-medium"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phoneNumber" className="font-bold">
-                    Phone Number <span className="text-xs text-muted-foreground">(+100 tokens)</span>
-                  </Label>
+                  <Label htmlFor="phoneNumber" className="font-bold">Phone Number</Label>
                   <Input
                     id="phoneNumber"
                     type="tel"
@@ -196,9 +211,7 @@ const Auth = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="country" className="font-bold">
-                    Country <span className="text-xs text-muted-foreground">(+100 tokens)</span>
-                  </Label>
+                  <Label htmlFor="country" className="font-bold">Country</Label>
                   <Input
                     id="country"
                     type="text"
@@ -209,9 +222,7 @@ const Auth = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="zipcode" className="font-bold">
-                    Zipcode <span className="text-xs text-muted-foreground">(+100 tokens)</span>
-                  </Label>
+                  <Label htmlFor="zipcode" className="font-bold">Zipcode</Label>
                   <Input
                     id="zipcode"
                     type="text"

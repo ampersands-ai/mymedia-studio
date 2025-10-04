@@ -227,7 +227,7 @@ const Create = () => {
                               <p className="text-sm text-foreground/70">Click to use this template</p>
                             </div>
                             <div className="flex items-center justify-between pt-2">
-                              <Sparkles className="h-5 w-5 text-primary" />
+                              <Sparkles className="h-2.5 w-2.5 text-primary" />
                               <span className="text-xs font-bold text-muted-foreground">TEMPLATE</span>
                             </div>
                           </CardContent>

@@ -73,7 +73,7 @@ export const DashboardLayout = () => {
 
           <div className="flex items-center gap-4">
             <NavLink
-              to="/dashboard/create"
+              to="/dashboard/custom-creation"
               className={({ isActive }) =>
                 `brutal-card-sm px-4 py-2 transition-colors ${
                   isActive ? "bg-neon-pink text-white border-black" : "bg-card text-foreground hover:bg-muted border-black"

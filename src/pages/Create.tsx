@@ -253,17 +253,31 @@ const Create = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
       <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* What You Can Create Section */}
-        <div className="mb-12 space-y-8">
-          <div className="text-center space-y-3">
+        {/* Header with Start Custom Creation */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="space-y-1">
             <h2 className="text-4xl md:text-5xl font-black">WHAT YOU CAN CREATE</h2>
-            <p className="text-lg text-foreground/80 font-medium max-w-3xl mx-auto">
+            <p className="text-lg text-foreground/80 font-medium">
               Professional-grade AI tools for every creative need—no experience required
             </p>
           </div>
+          <Button
+            size="lg"
+            className="brutal-card bg-gradient-to-r from-primary to-purple-600 text-white hover:from-primary/90 hover:to-purple-600/90 px-8 py-6 text-lg font-black shadow-lg hover:shadow-xl transition-all"
+            onClick={() => {
+              const customSection = document.getElementById('custom-creation');
+              if (customSection) {
+                customSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
+            <Sparkles className="h-6 w-6 mr-2" />
+            START CUSTOM CREATION
+          </Button>
+        </div>
 
-          {/* Category Carousels */}
-          <div className="space-y-8">
+        {/* Category Carousels */}
+        <div className="space-y-8 mb-12">
             {categories.map((category, index) => (
               <div key={index} className="space-y-3">
                 <div className="flex items-center gap-3">
@@ -295,7 +309,10 @@ const Create = () => {
                             className="w-full mt-4 bg-primary hover:bg-primary/90 text-white font-black"
                             onClick={() => {
                               setContentType(category.badge.includes('Video') ? 'video' : category.badge.includes('Audio') ? 'music' : category.badge.includes('Text') ? 'text' : 'image');
-                              window.scrollTo({ top: 400, behavior: 'smooth' });
+                              const customSection = document.getElementById('custom-creation');
+                              if (customSection) {
+                                customSection.scrollIntoView({ behavior: 'smooth' });
+                              }
                             }}
                           >
                             Start Creating
@@ -310,7 +327,10 @@ const Create = () => {
                         <Card className="brutal-card-sm hover-lift h-full cursor-pointer" onClick={() => {
                           setPrompt(`Create ${template.toLowerCase()} style ${category.title.toLowerCase()}`);
                           setContentType(category.badge.includes('Video') ? 'video' : category.badge.includes('Audio') ? 'music' : category.badge.includes('Text') ? 'text' : 'image');
-                          window.scrollTo({ top: 400, behavior: 'smooth' });
+                          const customSection = document.getElementById('custom-creation');
+                          if (customSection) {
+                            customSection.scrollIntoView({ behavior: 'smooth' });
+                          }
                           toast.success(`Template "${template}" loaded!`);
                         }}>
                           <CardContent className="p-6 space-y-3 h-full flex flex-col">
@@ -335,8 +355,16 @@ const Create = () => {
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="my-12 border-t-4 border-black"></div>
+        {/* Custom Creation Section */}
+        <div id="custom-creation" className="scroll-mt-8">
+          <div className="border-t-4 border-black my-12"></div>
+          
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-black mb-2">CUSTOM CREATION STUDIO</h2>
+            <p className="text-foreground/80 font-medium">
+              Fine-tune every detail with advanced controls
+            </p>
+          </div>
 
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
@@ -629,84 +657,16 @@ const Create = () => {
                     <Button size="sm" variant="outline">
                       <History className="h-4 w-4 mr-2" />
                       View full history
-                    </Button>
+                     </Button>
                   </div>
                 )}
               </div>
             </div>
           </Card>
         </div>
-
-        {/* Example Gallery */}
-        <div className="space-y-4">
-          <div className="text-center">
-            <h3 className="text-xl font-black mb-1">COMMUNITY CREATIONS</h3>
-            <p className="text-sm text-muted-foreground">See what others have created with Artifio.ai</p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {exampleImages.map((example, index) => (
-              <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="aspect-square bg-muted overflow-hidden">
-                  <img
-                    src={example.image}
-                    alt={example.prompt}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <div className="p-2 space-y-1">
-                  <p className="text-xs font-medium line-clamp-2">{example.prompt}</p>
-                  <div className="flex gap-1 text-xs">
-                    <Badge variant="secondary" className="text-[10px] px-1 py-0">{example.format}</Badge>
-                    <Badge variant="secondary" className="text-[10px] px-1 py-0">{example.resolution}</Badge>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
 };
-
-const exampleImages = [
-  {
-    image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=500&h=500&fit=crop",
-    prompt: "A futuristic cyberpunk cityscape at night with neon lights and flying cars",
-    format: "PNG",
-    resolution: "HD"
-  },
-  {
-    image: "https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=500&h=500&fit=crop",
-    prompt: "Portrait of a magical forest fairy with glowing wings and flowers",
-    format: "PNG",
-    resolution: "Native"
-  },
-  {
-    image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&h=500&fit=crop",
-    prompt: "Abstract geometric shapes in vibrant colors floating in space",
-    format: "JPEG",
-    resolution: "HD"
-  },
-  {
-    image: "https://images.unsplash.com/photo-1618556450994-a6a128ef0d9d?w=500&h=500&fit=crop",
-    prompt: "A serene Japanese zen garden with cherry blossoms and koi pond",
-    format: "PNG",
-    resolution: "HD"
-  },
-  {
-    image: "https://images.unsplash.com/photo-1620121478247-ec786b9be2fa?w=500&h=500&fit=crop",
-    prompt: "Steampunk robot character with intricate mechanical details",
-    format: "PNG",
-    resolution: "Native"
-  },
-  {
-    image: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=500&h=500&fit=crop",
-    prompt: "Cosmic nebula with swirling galaxies and stars in deep space",
-    format: "JPEG",
-    resolution: "HD"
-  }
-];
 
 export default Create;

@@ -258,7 +258,7 @@ const Index = () => {
                 <img 
                   src={textLogo} 
                   alt="Artifio" 
-                  className="h-60 md:h-80"
+                  className="h-6 md:h-8"
                 />
               </Link>
               <div className="flex items-center gap-2 md:gap-3">

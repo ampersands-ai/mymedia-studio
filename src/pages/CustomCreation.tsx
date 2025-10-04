@@ -481,7 +481,7 @@ const CustomCreation = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             {exampleImages.map((example, index) => (
               <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
                 <div className="aspect-square overflow-hidden bg-muted">
@@ -491,25 +491,22 @@ const CustomCreation = () => {
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                   />
                 </div>
-                <div className="p-4 space-y-3">
-                  <p className="text-sm font-medium line-clamp-2">{example.prompt}</p>
+                <div className="p-3 space-y-2">
+                  <p className="text-xs font-medium line-clamp-2">{example.prompt}</p>
                   
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="text-xs">
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                       {example.contentType}
                     </Badge>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                       {example.resolution}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs capitalize">
-                      {example.theme}
                     </Badge>
                   </div>
                   
-                  <div className="flex items-center justify-between pt-2 border-t">
+                  <div className="flex items-center justify-between pt-1.5 border-t">
                     <div className="flex items-center gap-1 text-primary">
-                      <Coins className="h-4 w-4" />
-                      <span className="text-sm font-bold">{example.tokens}</span>
+                      <Coins className="h-3 w-3" />
+                      <span className="text-xs font-bold">{example.tokens}</span>
                     </div>
                     <Button 
                       variant="ghost" 
@@ -522,9 +519,9 @@ const CustomCreation = () => {
                         toast.success("Settings loaded!");
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
-                      className="text-xs"
+                      className="text-[10px] h-6 px-2"
                     >
-                      Use This
+                      Use
                     </Button>
                   </div>
                 </div>

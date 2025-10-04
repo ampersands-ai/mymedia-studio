@@ -62,12 +62,12 @@ export const GlobalHeader = () => {
               <img 
                 src={logo} 
                 alt="Artifio.ai logo" 
-                className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
+                className="h-10 w-10 md:h-12 md:w-12 rounded-xl border-3 border-black brutal-shadow"
               />
               <img 
                 src={textLogo} 
                 alt="Artifio" 
-                className="h-6 md:h-8"
+                className="h-8 md:h-10"
               />
             </Link>
 
@@ -141,9 +141,9 @@ export const GlobalHeader = () => {
             )}
 
             {tokenBalance !== null && (
-              <div className="brutal-card-sm px-3 py-2 bg-neon-yellow flex items-center gap-2">
-                <Coins className="h-4 w-4" />
-                <span className="font-black text-sm">{tokenBalance.toLocaleString()}</span>
+              <div className="brutal-card-sm px-4 py-2 bg-neon-yellow flex items-center gap-2">
+                <Coins className="h-5 w-5" />
+                <span className="font-black text-base">{tokenBalance.toLocaleString()}</span>
               </div>
             )}
 

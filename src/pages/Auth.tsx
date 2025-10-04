@@ -9,8 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Sparkles, Check, ChevronsUpDown } from "lucide-react";
+import { Sparkles, Check, ChevronsUpDown, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { signupSchema, loginSchema } from "@/lib/validation-schemas";
 
 
 const countryCodes = [
@@ -141,6 +142,7 @@ const Auth = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [zipcode, setZipcode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   // Redirect if already logged in
   useEffect(() => {
@@ -151,19 +153,69 @@ const Auth = () => {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationErrors({});
     setLoading(true);
 
     try {
+      // Validate inputs
+      if (isLogin) {
+        const result = loginSchema.safeParse({ email, password });
+        if (!result.success) {
+          const errors: Record<string, string> = {};
+          result.error.errors.forEach((err) => {
+            if (err.path[0]) {
+              errors[err.path[0].toString()] = err.message;
+            }
+          });
+          setValidationErrors(errors);
+          setLoading(false);
+          return;
+        }
+      } else {
+        const result = signupSchema.safeParse({
+          email,
+          password,
+          firstName,
+          lastName,
+          phoneNumber: phoneNumber ? `${countryCode}${phoneNumber}` : "",
+          zipcode,
+        });
+        if (!result.success) {
+          const errors: Record<string, string> = {};
+          result.error.errors.forEach((err) => {
+            if (err.path[0]) {
+              errors[err.path[0].toString()] = err.message;
+            }
+          });
+          setValidationErrors(errors);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Check rate limiting
+      const { data: rateLimitData, error: rateLimitError } = await supabase.functions.invoke(
+        'rate-limiter',
+        {
+          body: { 
+            identifier: email.toLowerCase(), 
+            action: isLogin ? 'login' : 'signup' 
+          },
+        }
+      );
+
+      if (rateLimitError || !rateLimitData?.allowed) {
+        throw new Error(rateLimitData?.error || 'Too many attempts. Please try again later.');
+      }
+
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) {
-          if (error.message.includes("Invalid login credentials")) {
-            throw new Error("Invalid email or password. Please try again.");
-          }
-          throw error;
+          // Generic error message to prevent user enumeration
+          throw new Error("Invalid credentials. Please check your email and password.");
         }
         toast.success("Welcome back!");
         navigate("/dashboard/create");
@@ -183,15 +235,10 @@ const Auth = () => {
           },
         });
         if (error) {
-          if (error.message.includes("already registered")) {
-            throw new Error("This email is already registered. Please sign in instead.");
-          } else if (error.message.includes("Password")) {
-            throw new Error("Password must be at least 6 characters long.");
-          }
-          throw error;
+          // Generic error message to prevent user enumeration
+          throw new Error("Unable to create account. Please try a different email.");
         }
         
-        // Check if user provided all optional fields
         const hasAllFields = phoneNumber && zipcode;
         if (hasAllFields) {
           toast.success("Account created! You've received 500 free tokens. Email auto-confirmed!");
@@ -312,10 +359,22 @@ const Auth = () => {
                       type="text"
                       placeholder="John"
                       value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
+                      onChange={(e) => {
+                        setFirstName(e.target.value);
+                        setValidationErrors(prev => ({ ...prev, firstName: "" }));
+                      }}
                       required={!isLogin}
-                      className="border-3 border-black brutal-shadow h-12 font-medium"
+                      className={cn(
+                        "border-3 border-black brutal-shadow h-12 font-medium",
+                        validationErrors.firstName && "border-red-500"
+                      )}
                     />
+                    {validationErrors.firstName && (
+                      <p className="text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {validationErrors.firstName}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="lastName" className="font-bold">Last Name</Label>
@@ -324,10 +383,22 @@ const Auth = () => {
                       type="text"
                       placeholder="Doe"
                       value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
+                      onChange={(e) => {
+                        setLastName(e.target.value);
+                        setValidationErrors(prev => ({ ...prev, lastName: "" }));
+                      }}
                       required={!isLogin}
-                      className="border-3 border-black brutal-shadow h-12 font-medium"
+                      className={cn(
+                        "border-3 border-black brutal-shadow h-12 font-medium",
+                        validationErrors.lastName && "border-red-500"
+                      )}
                     />
+                    {validationErrors.lastName && (
+                      <p className="text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {validationErrors.lastName}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -337,10 +408,22 @@ const Auth = () => {
                     type="email"
                     placeholder="you@example.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setValidationErrors(prev => ({ ...prev, email: "" }));
+                    }}
                     required
-                    className="border-3 border-black brutal-shadow h-12 font-medium"
+                    className={cn(
+                      "border-3 border-black brutal-shadow h-12 font-medium",
+                      validationErrors.email && "border-red-500"
+                    )}
                   />
+                  {validationErrors.email && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {validationErrors.email}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password" className="font-bold">Password</Label>
@@ -349,10 +432,22 @@ const Auth = () => {
                     type="password"
                     placeholder="••••••••"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setValidationErrors(prev => ({ ...prev, password: "" }));
+                    }}
                     required
-                    className="border-3 border-black brutal-shadow h-12 font-medium"
+                    className={cn(
+                      "border-3 border-black brutal-shadow h-12 font-medium",
+                      validationErrors.password && "border-red-500"
+                    )}
                   />
+                  {validationErrors.password && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {validationErrors.password}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phoneNumber" className="font-bold">Phone Number</Label>
@@ -406,10 +501,22 @@ const Auth = () => {
                       type="tel"
                       placeholder="234 567 8900"
                       value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="flex-1 border-3 border-black brutal-shadow h-12 font-medium"
+                      onChange={(e) => {
+                        setPhoneNumber(e.target.value);
+                        setValidationErrors(prev => ({ ...prev, phoneNumber: "" }));
+                      }}
+                      className={cn(
+                        "flex-1 border-3 border-black brutal-shadow h-12 font-medium",
+                        validationErrors.phoneNumber && "border-red-500"
+                      )}
                     />
                   </div>
+                  {validationErrors.phoneNumber && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {validationErrors.phoneNumber}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="zipcode" className="font-bold">Zipcode</Label>
@@ -418,9 +525,21 @@ const Auth = () => {
                     type="text"
                     placeholder="12345"
                     value={zipcode}
-                    onChange={(e) => setZipcode(e.target.value)}
-                    className="border-3 border-black brutal-shadow h-12 font-medium"
+                    onChange={(e) => {
+                      setZipcode(e.target.value);
+                      setValidationErrors(prev => ({ ...prev, zipcode: "" }));
+                    }}
+                    className={cn(
+                      "border-3 border-black brutal-shadow h-12 font-medium",
+                      validationErrors.zipcode && "border-red-500"
+                    )}
                   />
+                  {validationErrors.zipcode && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {validationErrors.zipcode}
+                    </p>
+                  )}
                 </div>
               </>
             )}
@@ -433,10 +552,22 @@ const Auth = () => {
                     type="email"
                     placeholder="you@example.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setValidationErrors(prev => ({ ...prev, email: "" }));
+                    }}
                     required
-                    className="border-3 border-black brutal-shadow h-12 font-medium"
+                    className={cn(
+                      "border-3 border-black brutal-shadow h-12 font-medium",
+                      validationErrors.email && "border-red-500"
+                    )}
                   />
+                  {validationErrors.email && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {validationErrors.email}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password" className="font-bold">Password</Label>
@@ -445,10 +576,22 @@ const Auth = () => {
                     type="password"
                     placeholder="••••••••"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setValidationErrors(prev => ({ ...prev, password: "" }));
+                    }}
                     required
-                    className="border-3 border-black brutal-shadow h-12 font-medium"
+                    className={cn(
+                      "border-3 border-black brutal-shadow h-12 font-medium",
+                      validationErrors.password && "border-red-500"
+                    )}
                   />
+                  {validationErrors.password && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {validationErrors.password}
+                    </p>
+                  )}
                 </div>
               </>
             )}

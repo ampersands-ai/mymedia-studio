@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, Download, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, Download, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { profileUpdateSchema } from "@/lib/validation-schemas";
+import { cn } from "@/lib/utils";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -20,6 +22,7 @@ const Settings = () => {
     zipcode: "",
     email_verified: false,
   });
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [generations, setGenerations] = useState<any[]>([]);
   const [loadingGenerations, setLoadingGenerations] = useState(true);
   const [subscription, setSubscription] = useState<any>(null);
@@ -93,9 +96,29 @@ const Settings = () => {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationErrors({});
     setLoading(true);
 
     try {
+      // Validate inputs
+      const result = profileUpdateSchema.safeParse({
+        full_name: profileData.full_name,
+        phoneNumber: profileData.phone_number,
+        zipcode: profileData.zipcode,
+      });
+
+      if (!result.success) {
+        const errors: Record<string, string> = {};
+        result.error.errors.forEach((err) => {
+          if (err.path[0]) {
+            errors[err.path[0].toString()] = err.message;
+          }
+        });
+        setValidationErrors(errors);
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -156,30 +179,60 @@ const Settings = () => {
                     <Input
                       id="full_name"
                       value={profileData.full_name}
-                      onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
+                      onChange={(e) => {
+                        setProfileData({ ...profileData, full_name: e.target.value });
+                        setValidationErrors(prev => ({ ...prev, full_name: "" }));
+                      }}
                       placeholder="John Doe"
                       aria-label="Full name"
+                      className={cn(validationErrors.full_name && "border-red-500")}
                     />
+                    {validationErrors.full_name && (
+                      <p className="text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {validationErrors.full_name}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone_number">Phone Number</Label>
                     <Input
                       id="phone_number"
                       value={profileData.phone_number}
-                      onChange={(e) => setProfileData({ ...profileData, phone_number: e.target.value })}
+                      onChange={(e) => {
+                        setProfileData({ ...profileData, phone_number: e.target.value });
+                        setValidationErrors(prev => ({ ...prev, phoneNumber: "" }));
+                      }}
                       placeholder="+1234567890"
                       aria-label="Phone number"
+                      className={cn(validationErrors.phoneNumber && "border-red-500")}
                     />
+                    {validationErrors.phoneNumber && (
+                      <p className="text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {validationErrors.phoneNumber}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="zipcode">Zipcode</Label>
                     <Input
                       id="zipcode"
                       value={profileData.zipcode}
-                      onChange={(e) => setProfileData({ ...profileData, zipcode: e.target.value })}
+                      onChange={(e) => {
+                        setProfileData({ ...profileData, zipcode: e.target.value });
+                        setValidationErrors(prev => ({ ...prev, zipcode: "" }));
+                      }}
                       placeholder="12345"
                       aria-label="Zipcode"
+                      className={cn(validationErrors.zipcode && "border-red-500")}
                     />
+                    {validationErrors.zipcode && (
+                      <p className="text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {validationErrors.zipcode}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <Label>Email Verification Status:</Label>

@@ -187,25 +187,25 @@ const Create = () => {
                 </div>
                 
                 <Carousel className="w-full">
-                  <CarouselContent className="-ml-2 md:-ml-4">
+                  <CarouselContent className="-ml-2 md:-ml-3">
                     {/* Main Category Card */}
-                    <CarouselItem className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3">
+                    <CarouselItem className="pl-2 md:pl-3 basis-1/2 md:basis-1/3 lg:basis-1/4">
                       <Card className="brutal-card hover-lift h-full">
-                        <div className="relative h-48 overflow-hidden">
+                        <div className="relative h-32 overflow-hidden">
                           <img 
                             src={category.image} 
                             alt={category.title}
                             className="w-full h-full object-cover"
                           />
-                          <div className="absolute top-3 right-3 bg-neon-yellow px-3 py-1 rounded-full border-2 border-black text-xs font-black">
+                          <div className="absolute top-2 right-2 bg-neon-yellow px-2 py-0.5 rounded-full border-2 border-black text-xs font-black">
                             {category.badge}
                           </div>
                         </div>
-                        <CardContent className="p-6 space-y-2">
+                        <CardContent className="p-3 space-y-2">
                           <h4 className="text-lg font-black">{category.title}</h4>
-                          <p className="text-foreground/80 font-medium text-sm">{category.description}</p>
+                          <p className="text-foreground/80 font-medium text-sm line-clamp-2">{category.description}</p>
                           <Button 
-                            className="w-full mt-4 bg-primary hover:bg-primary/90 text-white font-black"
+                            className="w-full mt-2 bg-primary hover:bg-primary/90 text-white font-black text-sm"
                             onClick={() => navigate('/dashboard/custom-creation')}
                           >
                             Start Creating
@@ -216,14 +216,14 @@ const Create = () => {
                     
                     {/* Template Cards */}
                     {category.templates.map((template, templateIndex) => (
-                      <CarouselItem key={templateIndex} className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3">
+                      <CarouselItem key={templateIndex} className="pl-2 md:pl-3 basis-1/2 md:basis-1/3 lg:basis-1/4">
                         <Card className="brutal-card-sm hover-lift h-full cursor-pointer" onClick={() => {
                           navigate('/dashboard/custom-creation');
                           toast.success(`Template "${template}" selected!`);
                         }}>
-                          <CardContent className="p-6 space-y-3 h-full flex flex-col">
-                            <div className="flex-1">
-                              <h5 className="text-base font-black mb-2">{template}</h5>
+                          <CardContent className="p-3 space-y-2 h-full flex flex-col justify-between">
+                            <div>
+                              <h5 className="text-base font-black mb-1">{template}</h5>
                               <p className="text-sm text-foreground/70">Click to use this template</p>
                             </div>
                             <div className="flex items-center justify-between pt-2">

@@ -266,78 +266,15 @@ const Pricing = () => {
 
         {/* Pricing Content */}
         <main className="container mx-auto px-4 py-16">
-          <div className="text-center space-y-4 mb-8">
-            <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-blue border-3 border-black brutal-shadow">
-                <span className="text-xs font-black text-white">AFFORDABLE & COMPETITIVE</span>
-              </div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-yellow border-3 border-black brutal-shadow">
-                <span className="text-xs font-black text-foreground">SAVE 50–80% VS COMPETITORS</span>
-              </div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary border-3 border-black brutal-shadow">
-                <span className="text-xs font-black text-white">BEST VALUE FOR CREATORS</span>
-              </div>
-            </div>
-            <h2 className="text-5xl md:text-6xl font-black">AI for Everyone — Plans Starting at Just $3.99</h2>
-            <p className="text-xl md:text-2xl text-foreground/80 max-w-3xl mx-auto font-medium">
-              Other AI tools cost $20–$50/month. Artifio.ai gives you the same power for a fraction of the price.
+          <div className="text-center space-y-6 mb-12">
+            <h2 className="text-5xl md:text-6xl font-black">Simple, Transparent Pricing</h2>
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
+              Choose the plan that fits your needs. All plans include no watermark on exports.
             </p>
           </div>
 
-          {/* Price Comparison Table */}
-          <div className="max-w-4xl mx-auto mb-16">
-            <Card className="brutal-card bg-card">
-              <CardContent className="p-6 md:p-8">
-                <h3 className="text-2xl md:text-3xl font-black text-center mb-6">Compare Prices</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-center">
-                    <thead>
-                      <tr className="border-b-2 border-black">
-                        <th className="py-3 px-2 md:px-4 font-black text-sm md:text-base">Feature</th>
-                        <th className="py-3 px-2 md:px-4 font-black text-primary text-sm md:text-base">Artifio.ai</th>
-                        <th className="py-3 px-2 md:px-4 font-bold text-foreground/60 text-sm md:text-base">Midjourney</th>
-                        <th className="py-3 px-2 md:px-4 font-bold text-foreground/60 text-sm md:text-base">Runway</th>
-                        <th className="py-3 px-2 md:px-4 font-bold text-foreground/60 text-sm md:text-base">Jasper.ai</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b border-black/20">
-                        <td className="py-3 px-2 md:px-4 font-medium text-sm md:text-base">Starting Price</td>
-                        <td className="py-3 px-2 md:px-4 font-black text-primary text-sm md:text-base">$3.99/mo</td>
-                        <td className="py-3 px-2 md:px-4 text-sm md:text-base">$10/mo</td>
-                        <td className="py-3 px-2 md:px-4 text-sm md:text-base">$15/mo</td>
-                        <td className="py-3 px-2 md:px-4 text-sm md:text-base">$39/mo</td>
-                      </tr>
-                      <tr className="border-b border-black/20">
-                        <td className="py-3 px-2 md:px-4 font-medium text-sm md:text-base">Best Plan Value</td>
-                        <td className="py-3 px-2 md:px-4 font-black text-primary text-sm md:text-base">$39.99/mo</td>
-                        <td className="py-3 px-2 md:px-4 text-sm md:text-base">$60/mo</td>
-                        <td className="py-3 px-2 md:px-4 text-sm md:text-base">$95/mo</td>
-                        <td className="py-3 px-2 md:px-4 text-sm md:text-base">$125/mo</td>
-                      </tr>
-                      <tr className="border-b border-black/20">
-                        <td className="py-3 px-2 md:px-4 font-medium text-sm md:text-base">Free Tier</td>
-                        <td className="py-3 px-2 md:px-4 font-black text-primary text-sm md:text-base">✅ 500 tokens</td>
-                        <td className="py-3 px-2 md:px-4 text-sm md:text-base">❌</td>
-                        <td className="py-3 px-2 md:px-4 text-sm md:text-base">❌</td>
-                        <td className="py-3 px-2 md:px-4 text-sm md:text-base">❌</td>
-                      </tr>
-                      <tr>
-                        <td className="py-3 px-2 md:px-4 font-medium text-sm md:text-base">Video Creation</td>
-                        <td className="py-3 px-2 md:px-4 font-black text-primary text-sm md:text-base">✅</td>
-                        <td className="py-3 px-2 md:px-4 text-sm md:text-base">❌</td>
-                        <td className="py-3 px-2 md:px-4 text-sm md:text-base">✅</td>
-                        <td className="py-3 px-2 md:px-4 text-sm md:text-base">❌</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
           {/* Billing Toggle */}
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-12">
             <div className="inline-flex items-center gap-4 px-6 py-3 rounded-full bg-card border-3 border-black brutal-shadow">
               <button
                 onClick={() => setIsAnnual(false)}
@@ -365,272 +302,260 @@ const Pricing = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">
-            {plans.map((plan) => (
-              <Card
-                key={plan.name}
-                className={`relative hover-lift ${
-                  plan.popular ? "ring-4 ring-primary scale-105" : ""
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute z-20 -top-4 left-1/2 -translate-x-1/2 bg-primary px-4 py-1 rounded-full border-3 border-black brutal-shadow text-sm font-black text-white">
-                    MOST POPULAR
-                  </div>
-                )}
-                {plan.badge && !plan.popular && (
-                  <div className="absolute z-20 -top-4 left-1/2 -translate-x-1/2 bg-neon-yellow px-4 py-1 rounded-full border-3 border-black brutal-shadow text-sm font-black text-black">
-                    {plan.badge}
-                  </div>
-                )}
-                <CardHeader className={`${plan.color} ${plan.color === 'bg-accent' ? 'text-accent-foreground' : plan.color !== 'bg-muted' ? 'text-white' : ''}`}>
-                  <CardTitle className="text-3xl font-black">{plan.name}</CardTitle>
-                  <CardDescription className={`${plan.color === 'bg-accent' ? 'text-accent-foreground' : plan.color !== 'bg-muted' ? 'text-white' : ''} font-bold`}>
-                    {plan.regions || "Global access"}
-                  </CardDescription>
-                  <div className="pt-4">
-                    {isAnnual && plan.monthlyPrice !== "FREE" ? (
-                      <div className="space-y-1">
-                        <div className={`text-2xl font-bold line-through ${plan.color === 'bg-accent' ? 'text-foreground/40' : plan.color !== 'bg-muted' ? 'text-white/60' : 'text-foreground/40'}`}>
-                          {plan.monthlyPrice}
-                        </div>
-                        <div>
-                          <span className="text-5xl font-black">{plan.annualPrice}</span>
-                          {plan.period && (
-                            <span className={`${plan.color === 'bg-accent' ? 'text-accent-foreground' : plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'} font-bold`}>{plan.period}</span>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
+          {/* Main Plans Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
+            {/* Freemium */}
+            <Card className="relative hover-lift">
+              <CardHeader>
+                <CardTitle className="text-3xl font-black">Free</CardTitle>
+                <CardDescription className="text-base">Perfect for trying out</CardDescription>
+                <div className="pt-4">
+                  <span className="text-5xl font-black">FREE</span>
+                </div>
+                <div className="text-sm font-medium text-muted-foreground pt-2">
+                  500 tokens included
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-sm">500 tokens</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-sm">Watermark on videos</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-sm">Limited access</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-sm">Basic support</span>
+                  </li>
+                </ul>
+                <Button className="w-full font-bold" variant="outline" onClick={() => navigate("/auth")}>
+                  START FREE
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Creators - Most Popular */}
+            <Card className="relative hover-lift ring-4 ring-primary scale-105">
+              <div className="absolute z-20 -top-4 left-1/2 -translate-x-1/2 bg-primary px-4 py-1 rounded-full border-3 border-black brutal-shadow text-sm font-black text-white">
+                MOST POPULAR
+              </div>
+              <CardHeader>
+                <CardTitle className="text-3xl font-black">Creators</CardTitle>
+                <CardDescription className="text-base">Best for most users</CardDescription>
+                <div className="pt-4">
+                  {isAnnual ? (
+                    <div className="space-y-1">
+                      <div className="text-2xl font-bold line-through text-muted-foreground">$9.99</div>
                       <div>
-                        <span className="text-5xl font-black">
-                          {plan.monthlyPrice === "FREE" ? plan.monthlyPrice : isAnnual ? plan.annualPrice : plan.monthlyPrice}
-                        </span>
-                        {plan.period && plan.monthlyPrice !== "FREE" && (
-                          <span className={`${plan.color === 'bg-accent' ? 'text-accent-foreground' : plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'} font-bold`}>{plan.period}</span>
-                        )}
+                        <span className="text-5xl font-black">$7.99</span>
+                        <span className="text-muted-foreground font-bold">/mo</span>
                       </div>
-                    )}
-                  </div>
-                  <div className={`text-sm font-black pt-2 ${plan.color === 'bg-accent' ? '' : plan.color !== 'bg-muted' ? 'text-white' : ''}`}>
-                    {plan.tokens} TOKENS
-                  </div>
-                  {plan.perToken && (
-                    <div className={`text-xs font-bold pt-1 ${plan.color === 'bg-accent' ? 'text-foreground/60' : plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'}`}>
-                      💰 {plan.perToken}
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="text-5xl font-black">$9.99</span>
+                      <span className="text-muted-foreground font-bold">/mo</span>
                     </div>
                   )}
-                </CardHeader>
-                <CardContent className="space-y-4 pt-6">
-                  {plan.description && (
-                    <p className="text-sm font-medium text-foreground/80 pb-2">
-                      {plan.description}
-                    </p>
-                  )}
-                  {plan.savings && (
-                    <div className="bg-accent/20 border-2 border-accent rounded-lg px-3 py-2 mb-4">
-                      <p className="text-sm font-black text-center">
-                        💰 {plan.savings}
-                      </p>
+                </div>
+                <div className="text-sm font-medium text-muted-foreground pt-2">
+                  10,000 tokens • $0.0008 per token
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-sm">10,000 tokens</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-sm">No watermark</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-sm">Global availability</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-sm">Priority rendering</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-sm">Advanced features</span>
+                  </li>
+                </ul>
+                <Button className="w-full font-bold" onClick={() => navigate("/auth")}>
+                  GET STARTED
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Ultimate */}
+            <Card className="relative hover-lift">
+              <CardHeader>
+                <CardTitle className="text-3xl font-black">Ultimate</CardTitle>
+                <CardDescription className="text-base">For power users</CardDescription>
+                <div className="pt-4">
+                  {isAnnual ? (
+                    <div className="space-y-1">
+                      <div className="text-2xl font-bold line-through text-muted-foreground">$49.99</div>
+                      <div>
+                        <span className="text-5xl font-black">$39.99</span>
+                        <span className="text-muted-foreground font-bold">/mo</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="text-5xl font-black">$49.99</span>
+                      <span className="text-muted-foreground font-bold">/mo</span>
                     </div>
                   )}
-                  <ul className="space-y-3">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2">
-                        <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm font-medium">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    className={`w-full ${
-                      plan.popular
-                        ? ""
-                        : ""
-                    }`}
-                    variant={plan.popular ? "neon" : "outline"}
-                    size="lg"
-                    onClick={() => navigate("/auth")}
-                  >
-                    {plan.monthlyPrice === "FREE" ? "GET STARTED" : "SUBSCRIBE"}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+                <div className="text-sm font-medium text-muted-foreground pt-2">
+                  75,000 tokens • $0.00053 per token
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-sm">75,000 tokens</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-sm">No watermark</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-sm">Commercial license</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-sm">Fastest rendering</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-sm">API access</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-sm">24/7 premium support</span>
+                  </li>
+                </ul>
+                <Button className="w-full font-bold" variant="outline" onClick={() => navigate("/auth")}>
+                  GET STARTED
+                </Button>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Add-Ons & Extras Section */}
-          <div className="mt-24 max-w-7xl mx-auto">
-            <div className="text-center space-y-4 mb-12">
-              <h2 className="text-4xl md:text-5xl font-black">Add-Ons & Extras</h2>
-              <p className="text-xl text-foreground/80 font-medium">
-                Customize your plan with additional features and token packs
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Extra Tokens Column */}
-              <Card className="brutal-card bg-card">
-                <CardHeader>
-                  <CardTitle className="text-2xl font-black text-center">Extra Tokens</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-black/10 hover:border-primary/50 transition-colors">
-                      <div>
-                        <div className="font-black">5,000 Token Pack</div>
-                        <div className="text-sm text-foreground/60">One-time purchase</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-black text-xl">$4.99</div>
-                        <div className="text-xs text-foreground/60">one-time</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-black/10 hover:border-primary/50 transition-colors">
-                      <div>
-                        <div className="font-black">12,000 Token Pack</div>
-                        <div className="text-sm text-foreground/60">One-time purchase</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-black text-xl">$9.99</div>
-                        <div className="text-xs text-foreground/60">one-time</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-black/10 hover:border-primary/50 transition-colors">
-                      <div>
-                        <div className="font-black">35,000 Token Pack</div>
-                        <div className="text-sm text-foreground/60">One-time purchase</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-black text-xl">$24.99</div>
-                        <div className="text-xs text-foreground/60">one-time</div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Premium Features Column */}
-              <Card className="brutal-card bg-card">
-                <CardHeader>
-                  <CardTitle className="text-2xl font-black text-center">Premium Features</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-black/10 hover:border-primary/50 transition-colors">
-                      <div>
-                        <div className="font-black">Fast Queue Pass</div>
-                        <div className="text-sm text-foreground/60">Jump the rendering queue</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-black text-xl">$5</div>
-                        <div className="text-xs text-foreground/60">/month</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-black/10 hover:border-primary/50 transition-colors">
-                      <div>
-                        <div className="font-black">Commercial License</div>
-                        <div className="text-sm text-foreground/60">Use content commercially</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-black text-xl">$10</div>
-                        <div className="text-xs text-foreground/60">/month</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-black/10 hover:border-primary/50 transition-colors">
-                      <div>
-                        <div className="font-black">Team Add-On</div>
-                        <div className="text-sm text-foreground/60">Per extra seat (shared tokens)</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-black text-xl">$5</div>
-                        <div className="text-xs text-foreground/60">/month</div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Unlimited Access Column */}
-              <Card className="brutal-card bg-card">
-                <CardHeader>
-                  <CardTitle className="text-2xl font-black text-center">Unlimited Access</CardTitle>
-                  <CardDescription className="text-center font-medium">(For Creators/Explorer)</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-black/10 hover:border-primary/50 transition-colors">
-                      <div>
-                        <div className="font-black">Unlimited Images</div>
-                        <div className="text-sm text-foreground/60">Same as Professional+</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-black text-xl">$2.99</div>
-                        <div className="text-xs text-foreground/60">/month</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-black/10 hover:border-primary/50 transition-colors">
-                      <div>
-                        <div className="font-black">Unlimited Text</div>
-                        <div className="text-sm text-foreground/60">Unlimited conversations</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-black text-xl">$1.99</div>
-                        <div className="text-xs text-foreground/60">/month</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 rounded-lg border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-colors">
-                      <div>
-                        <div className="font-black">Combo (Images + Text)</div>
-                        <div className="text-sm text-foreground/60">Best value combo</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-black text-xl">$3.99</div>
-                        <div className="text-xs text-foreground/60">/month</div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {/* Social Proof Section */}
-          <div className="mt-16 max-w-4xl mx-auto">
-            <Card className="brutal-card bg-gradient-primary">
-              <CardContent className="p-8 md:p-12 text-center space-y-4">
-                <h3 className="text-3xl md:text-4xl font-black text-white">Join 10,000+ Creators Who Switched to Save Money</h3>
-                <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-                  <div className="px-6 py-3 bg-white/90 backdrop-blur-0 rounded-full border-2 border-white text-foreground">
-                    <span className="font-black text-sm">COMPETITIVE PRICES</span>
-                  </div>
-                  <div className="px-6 py-3 bg-white/90 backdrop-blur-0 rounded-full border-2 border-white text-foreground">
-                    <span className="font-black text-sm">NO HIDDEN FEES</span>
-                  </div>
-                  <div className="px-6 py-3 bg-white/90 backdrop-blur-0 rounded-full border-2 border-white text-foreground">
-                    <span className="font-black text-sm">GLOBAL ACCESS</span>
-                  </div>
+          {/* All Plans Comparison */}
+          <div className="max-w-6xl mx-auto mb-16">
+            <h3 className="text-3xl font-black text-center mb-8">Compare All Plans</h3>
+            <Card className="brutal-card">
+              <CardContent className="p-6 md:p-8">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b-2 border-black">
+                        <th className="py-4 px-4 text-left font-black">Plan</th>
+                        <th className="py-4 px-4 text-center font-black">Price</th>
+                        <th className="py-4 px-4 text-center font-black">Tokens</th>
+                        <th className="py-4 px-4 text-center font-black">Best For</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {plans.map((plan) => (
+                        <tr key={plan.name} className="border-b border-border">
+                          <td className="py-4 px-4 font-bold">{plan.name}</td>
+                          <td className="py-4 px-4 text-center font-medium">
+                            {plan.monthlyPrice === "FREE" ? "FREE" : isAnnual ? plan.annualPrice + "/mo" : plan.monthlyPrice + "/mo"}
+                          </td>
+                          <td className="py-4 px-4 text-center text-muted-foreground">{plan.tokens}</td>
+                          <td className="py-4 px-4 text-center text-sm text-muted-foreground">
+                            {plan.name === "Freemium" && "Testing & trying"}
+                            {plan.name === "Explorer" && "APAC/LATAM entry"}
+                            {plan.name === "Creators" && "Most users"}
+                            {plan.name === "Professional" && "Small teams"}
+                            {plan.name === "Ultimate" && "Power users"}
+                            {plan.name === "Veo Connoisseur" && "Agencies"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          <div className="mt-12 text-center space-y-4">
-            <p className="text-foreground/80 font-medium text-lg max-w-3xl mx-auto">
-              <span className="font-black gradient-text">Our Mission:</span> Make AI content creation accessible and affordable for everyone—not just big-budget studios.
+          {/* Competitor Comparison */}
+          <div className="max-w-4xl mx-auto mb-16">
+            <h3 className="text-3xl font-black text-center mb-8">Why Choose Artifio.ai?</h3>
+            <Card className="brutal-card">
+              <CardContent className="p-6 md:p-8">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-center">
+                    <thead>
+                      <tr className="border-b-2 border-black">
+                        <th className="py-3 px-4 font-black">Feature</th>
+                        <th className="py-3 px-4 font-black text-primary">Artifio.ai</th>
+                        <th className="py-3 px-4 font-bold text-muted-foreground">Midjourney</th>
+                        <th className="py-3 px-4 font-bold text-muted-foreground">Runway</th>
+                        <th className="py-3 px-4 font-bold text-muted-foreground">Jasper.ai</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-border">
+                        <td className="py-3 px-4 font-medium">Starting Price</td>
+                        <td className="py-3 px-4 font-black text-primary">$3.99/mo</td>
+                        <td className="py-3 px-4">$10/mo</td>
+                        <td className="py-3 px-4">$15/mo</td>
+                        <td className="py-3 px-4">$39/mo</td>
+                      </tr>
+                      <tr className="border-b border-border">
+                        <td className="py-3 px-4 font-medium">Free Tier</td>
+                        <td className="py-3 px-4 font-black text-primary">✅ 500 tokens</td>
+                        <td className="py-3 px-4">❌</td>
+                        <td className="py-3 px-4">❌</td>
+                        <td className="py-3 px-4">❌</td>
+                      </tr>
+                      <tr>
+                        <td className="py-3 px-4 font-medium">Video Creation</td>
+                        <td className="py-3 px-4 font-black text-primary">✅</td>
+                        <td className="py-3 px-4">❌</td>
+                        <td className="py-3 px-4">✅</td>
+                        <td className="py-3 px-4">❌</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Final CTA Section */}
+          <div className="max-w-3xl mx-auto text-center space-y-6 py-16">
+            <h3 className="text-4xl md:text-5xl font-black">Ready to Start Creating?</h3>
+            <p className="text-xl text-muted-foreground">
+              Join thousands of creators making stunning AI content.
             </p>
-            <p className="text-foreground/80 font-medium text-lg">
-              All plans include access to our AI playground. Enterprise solutions available.{" "}
-              <a href="#" className="text-primary hover:text-primary/80 font-bold underline">
-                Contact us
-              </a>
-            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" onClick={() => navigate("/auth")} className="font-bold text-lg">
+                START FREE
+              </Button>
+              <Button size="lg" variant="outline" onClick={() => navigate("/")} className="font-bold text-lg">
+                LEARN MORE
+              </Button>
+            </div>
           </div>
         </main>
       </div>

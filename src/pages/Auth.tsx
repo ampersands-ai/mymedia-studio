@@ -61,17 +61,32 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen bg-background">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
-      <Card className="w-full max-w-md relative z-10">
-        <CardHeader className="space-y-1 text-center">
-          <Link to="/" className="flex items-center justify-center gap-3 mb-4 hover:opacity-80 transition-opacity">
-            <div className="h-12 w-12 rounded-xl bg-gradient-primary border-3 border-black brutal-shadow flex items-center justify-center">
-              <Sparkles className="h-7 w-7 text-white" />
+      {/* Header Navigation */}
+      <header className="border-b-4 border-black bg-card relative z-10">
+        <nav className="container mx-auto px-4 py-3 md:py-4" aria-label="Main navigation">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity">
+              <div className="h-8 w-8 md:h-10 md:w-10 rounded-xl bg-gradient-primary border-3 border-black brutal-shadow flex items-center justify-center">
+                <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-white" aria-hidden="true" />
+              </div>
+              <h1 className="text-xl md:text-3xl font-black gradient-text">ARTIFIO.AI</h1>
+            </Link>
+            <div className="flex items-center gap-2 md:gap-3">
+              <Button variant="ghost" onClick={() => navigate("/pricing")} className="text-sm md:text-base px-2 md:px-4">
+                Pricing
+              </Button>
             </div>
-            <h1 className="text-4xl font-black gradient-text">ARTIFIO.AI</h1>
-          </Link>
+          </div>
+        </nav>
+      </header>
+      
+      {/* Auth Card */}
+      <div className="relative z-10 flex items-center justify-center min-h-[calc(100vh-5rem)] p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-3xl font-black">
             {isLogin ? "WELCOME BACK" : "CREATE ACCOUNT"}
           </CardTitle>
@@ -144,6 +159,7 @@ const Auth = () => {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };

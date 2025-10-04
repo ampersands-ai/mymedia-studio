@@ -250,14 +250,14 @@ const Pricing = () => {
                 }`}
               >
                 ANNUAL
-                <span className="ml-2 text-xs px-2 py-1 bg-accent text-accent-foreground rounded-full">
+                <span className="ml-2 text-xs px-2 py-1 bg-accent text-black rounded-full font-black">
                   SAVE 25%
                 </span>
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
             {plans.map((plan) => (
               <Card
                 key={plan.name}
@@ -275,21 +275,21 @@ const Pricing = () => {
                     {plan.badge}
                   </div>
                 )}
-                <CardHeader className={`${plan.color} ${plan.color !== 'bg-muted' ? 'text-white' : ''}`}>
+                <CardHeader className={`${plan.color} ${plan.color !== 'bg-muted' && plan.color !== 'bg-accent' ? 'text-white' : ''} ${plan.color === 'bg-accent' ? 'text-black' : ''}`}>
                   <CardTitle className="text-3xl font-black">{plan.name}</CardTitle>
-                  <CardDescription className={`${plan.color !== 'bg-muted' ? 'text-white' : ''} font-bold`}>
+                  <CardDescription className={`${plan.color !== 'bg-muted' && plan.color !== 'bg-accent' ? 'text-white' : 'text-foreground/80'} font-bold`}>
                     {plan.regions || "Global access"}
                   </CardDescription>
                   <div className="pt-4">
                     {isAnnual && plan.monthlyPrice !== "FREE" ? (
                       <div className="space-y-1">
-                        <div className={`text-2xl font-bold line-through ${plan.color !== 'bg-muted' ? 'text-white/60' : 'text-foreground/40'}`}>
+                        <div className={`text-2xl font-bold line-through ${plan.color !== 'bg-muted' && plan.color !== 'bg-accent' ? 'text-white/60' : 'text-foreground/40'}`}>
                           {plan.monthlyPrice}
                         </div>
                         <div>
                           <span className="text-5xl font-black">{plan.annualPrice}</span>
                           {plan.period && (
-                            <span className={`${plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'} font-bold`}>{plan.period}</span>
+                            <span className={`${plan.color !== 'bg-muted' && plan.color !== 'bg-accent' ? 'text-white' : 'text-foreground/60'} font-bold`}>{plan.period}</span>
                           )}
                         </div>
                       </div>
@@ -299,16 +299,16 @@ const Pricing = () => {
                           {plan.monthlyPrice === "FREE" ? plan.monthlyPrice : isAnnual ? plan.annualPrice : plan.monthlyPrice}
                         </span>
                         {plan.period && plan.monthlyPrice !== "FREE" && (
-                          <span className={`${plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'} font-bold`}>{plan.period}</span>
+                          <span className={`${plan.color !== 'bg-muted' && plan.color !== 'bg-accent' ? 'text-white' : 'text-foreground/60'} font-bold`}>{plan.period}</span>
                         )}
                       </div>
                     )}
                   </div>
-                  <div className={`text-sm font-black pt-2 ${plan.color !== 'bg-muted' ? 'text-white' : ''}`}>
+                  <div className={`text-sm font-black pt-2 ${plan.color !== 'bg-muted' && plan.color !== 'bg-accent' ? 'text-white' : ''}`}>
                     {plan.tokens} TOKENS
                   </div>
                   {plan.perToken && (
-                    <div className={`text-xs font-bold pt-1 ${plan.color !== 'bg-muted' ? 'text-white' : 'text-foreground/60'}`}>
+                    <div className={`text-xs font-bold pt-1 ${plan.color !== 'bg-muted' && plan.color !== 'bg-accent' ? 'text-white' : 'text-foreground/60'}`}>
                       💰 {plan.perToken}
                     </div>
                   )}

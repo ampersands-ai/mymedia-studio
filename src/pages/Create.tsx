@@ -190,8 +190,8 @@ const Create = () => {
                   <CarouselContent className="-ml-2 md:-ml-4">
                     {/* Main Category Card */}
                     <CarouselItem className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3">
-                      <Card className="brutal-card hover-lift h-full">
-                        <div className="relative h-24 overflow-hidden">
+                      <Card className="brutal-card hover-lift aspect-square flex flex-col">
+                        <div className="relative h-1/2 overflow-hidden">
                           <img 
                             src={category.image} 
                             alt={category.title}
@@ -201,9 +201,9 @@ const Create = () => {
                             {category.badge}
                           </div>
                         </div>
-                        <CardContent className="p-3 space-y-1">
+                        <CardContent className="p-3 space-y-1 flex-1 flex flex-col">
                           <h4 className="text-sm font-black">{category.title}</h4>
-                          <p className="text-foreground/80 font-medium text-xs">{category.description}</p>
+                          <p className="text-foreground/80 font-medium text-xs flex-1">{category.description}</p>
                           <Button 
                             size="sm"
                             className="w-full mt-2 bg-primary hover:bg-primary/90 text-white font-black text-xs"
@@ -218,12 +218,12 @@ const Create = () => {
                     {/* Template Cards */}
                     {category.templates.map((template, templateIndex) => (
                       <CarouselItem key={templateIndex} className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3">
-                        <Card className="brutal-card-sm hover-lift h-full cursor-pointer" onClick={() => {
+                        <Card className="brutal-card-sm hover-lift aspect-square cursor-pointer" onClick={() => {
                           navigate('/dashboard/custom-creation');
                           toast.success(`Template "${template}" selected!`);
                         }}>
-                          <CardContent className="p-3 space-y-2 h-full flex flex-col">
-                            <div className="flex-1">
+                          <CardContent className="p-3 space-y-2 h-full flex flex-col justify-between">
+                            <div className="flex-1 flex flex-col justify-center">
                               <h5 className="text-xs font-black mb-1">{template}</h5>
                               <p className="text-[10px] text-foreground/70">Click to use this template</p>
                             </div>

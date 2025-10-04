@@ -56,7 +56,14 @@ const Auth = () => {
           },
         });
         if (error) throw error;
-        toast.success("Account created! You've received 500 free tokens. Verify your email for 100 bonus tokens!");
+        
+        // Check if user provided all optional fields
+        const hasAllFields = phoneNumber && country && zipcode;
+        if (hasAllFields) {
+          toast.success("Account created! You've received 500 free tokens. Verify your email for 100 bonus tokens!");
+        } else {
+          toast.success("Account created! You've received 500 free tokens. Complete your profile & verify email for 100 bonus tokens!");
+        }
         navigate("/playground");
       }
     } catch (error: any) {
@@ -113,8 +120,13 @@ const Auth = () => {
           <CardDescription className="text-base font-medium">
             {isLogin
               ? "Sign in to continue creating"
-              : "Start creating with 500 free tokens"}
+              : "Start with 500 free tokens + 100 bonus tokens when you verify your email and complete your profile"}
           </CardDescription>
+          {!isLogin && (
+            <p className="text-xs text-muted-foreground mt-2">
+              🔒 We don't sell your data. No spam, absolutely.
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           {/* Social Auth Buttons */}
@@ -172,7 +184,7 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phoneNumber" className="font-bold">
-                    Phone Number <span className="text-muted-foreground font-normal">(optional)</span>
+                    Phone Number <span className="text-xs text-muted-foreground">(+100 tokens)</span>
                   </Label>
                   <Input
                     id="phoneNumber"
@@ -185,7 +197,7 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="country" className="font-bold">
-                    Country <span className="text-muted-foreground font-normal">(optional)</span>
+                    Country <span className="text-xs text-muted-foreground">(+100 tokens)</span>
                   </Label>
                   <Input
                     id="country"
@@ -198,7 +210,7 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="zipcode" className="font-bold">
-                    Zipcode <span className="text-muted-foreground font-normal">(optional)</span>
+                    Zipcode <span className="text-xs text-muted-foreground">(+100 tokens)</span>
                   </Label>
                   <Input
                     id="zipcode"

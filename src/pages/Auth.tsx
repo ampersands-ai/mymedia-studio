@@ -6,8 +6,63 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+
+const countries = [
+  { value: "united-states", label: "United States" },
+  { value: "canada", label: "Canada" },
+  { value: "united-kingdom", label: "United Kingdom" },
+  { value: "australia", label: "Australia" },
+  { value: "germany", label: "Germany" },
+  { value: "france", label: "France" },
+  { value: "spain", label: "Spain" },
+  { value: "italy", label: "Italy" },
+  { value: "japan", label: "Japan" },
+  { value: "china", label: "China" },
+  { value: "india", label: "India" },
+  { value: "brazil", label: "Brazil" },
+  { value: "mexico", label: "Mexico" },
+  { value: "south-korea", label: "South Korea" },
+  { value: "netherlands", label: "Netherlands" },
+  { value: "sweden", label: "Sweden" },
+  { value: "switzerland", label: "Switzerland" },
+  { value: "belgium", label: "Belgium" },
+  { value: "norway", label: "Norway" },
+  { value: "denmark", label: "Denmark" },
+  { value: "finland", label: "Finland" },
+  { value: "poland", label: "Poland" },
+  { value: "portugal", label: "Portugal" },
+  { value: "greece", label: "Greece" },
+  { value: "austria", label: "Austria" },
+  { value: "ireland", label: "Ireland" },
+  { value: "new-zealand", label: "New Zealand" },
+  { value: "singapore", label: "Singapore" },
+  { value: "hong-kong", label: "Hong Kong" },
+  { value: "south-africa", label: "South Africa" },
+  { value: "russia", label: "Russia" },
+  { value: "turkey", label: "Turkey" },
+  { value: "argentina", label: "Argentina" },
+  { value: "chile", label: "Chile" },
+  { value: "colombia", label: "Colombia" },
+  { value: "egypt", label: "Egypt" },
+  { value: "israel", label: "Israel" },
+  { value: "thailand", label: "Thailand" },
+  { value: "malaysia", label: "Malaysia" },
+  { value: "indonesia", label: "Indonesia" },
+  { value: "philippines", label: "Philippines" },
+  { value: "vietnam", label: "Vietnam" },
+  { value: "pakistan", label: "Pakistan" },
+  { value: "bangladesh", label: "Bangladesh" },
+  { value: "nigeria", label: "Nigeria" },
+  { value: "kenya", label: "Kenya" },
+  { value: "uae", label: "United Arab Emirates" },
+  { value: "saudi-arabia", label: "Saudi Arabia" },
+];
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -19,6 +74,7 @@ const Auth = () => {
   const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [country, setCountry] = useState("");
+  const [countryOpen, setCountryOpen] = useState(false);
   const [zipcode, setZipcode] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -52,7 +108,7 @@ const Auth = () => {
               first_name: firstName,
               last_name: lastName,
               phone_number: phoneNumber || null,
-              country: country || null,
+              country: country ? countries.find(c => c.value === country)?.label : null,
               zipcode: zipcode || null,
             },
             emailRedirectTo: `${window.location.origin}/playground`,
@@ -212,14 +268,49 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="country" className="font-bold">Country</Label>
-                  <Input
-                    id="country"
-                    type="text"
-                    placeholder="United States"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    className="border-3 border-black brutal-shadow h-12 font-medium"
-                  />
+                  <Popover open={countryOpen} onOpenChange={setCountryOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={countryOpen}
+                        className="w-full justify-between border-3 border-black brutal-shadow h-12 font-medium"
+                      >
+                        {country
+                          ? countries.find((c) => c.value === country)?.label
+                          : "Select country..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0 bg-background z-50" align="start">
+                      <Command className="bg-background">
+                        <CommandInput placeholder="Search country..." className="h-9" />
+                        <CommandList>
+                          <CommandEmpty>No country found.</CommandEmpty>
+                          <CommandGroup>
+                            {countries.map((c) => (
+                              <CommandItem
+                                key={c.value}
+                                value={c.value}
+                                onSelect={(currentValue) => {
+                                  setCountry(currentValue === country ? "" : currentValue);
+                                  setCountryOpen(false);
+                                }}
+                              >
+                                {c.label}
+                                <Check
+                                  className={cn(
+                                    "ml-auto h-4 w-4",
+                                    country === c.value ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="zipcode" className="font-bold">Zipcode</Label>

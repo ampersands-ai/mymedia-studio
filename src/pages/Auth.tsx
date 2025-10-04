@@ -414,32 +414,32 @@ const Auth = () => {
             )}
             {isLogin && (
               <>
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="font-bold">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="border-3 border-black brutal-shadow h-12 font-medium"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="font-bold">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="border-3 border-black brutal-shadow h-12 font-medium"
+                  />
+                </div>
               </>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="font-bold">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="border-3 border-black brutal-shadow h-12 font-medium"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" className="font-bold">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="border-3 border-black brutal-shadow h-12 font-medium"
-              />
-            </div>
             <Button
               type="submit"
               className="w-full"

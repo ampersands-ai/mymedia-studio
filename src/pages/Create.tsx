@@ -157,22 +157,12 @@ const Create = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
       <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header with Start Custom Creation */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="space-y-1">
-            <h2 className="text-4xl md:text-5xl font-black">WHAT YOU CAN CREATE</h2>
-            <p className="text-lg text-foreground/80 font-medium">
-              Professional-grade AI tools for every creative need—no experience required
-            </p>
-          </div>
-          <Button
-            size="lg"
-            className="brutal-card bg-gradient-to-r from-primary to-purple-600 text-white hover:from-primary/90 hover:to-purple-600/90 px-8 py-6 text-lg font-black shadow-lg hover:shadow-xl transition-all"
-            onClick={() => navigate('/dashboard/custom-creation')}
-          >
-            <Sparkles className="h-6 w-6 mr-2" />
-            START CUSTOM CREATION
-          </Button>
+        {/* Header */}
+        <div className="mb-8 space-y-1">
+          <h2 className="text-4xl md:text-5xl font-black">WHAT YOU CAN CREATE</h2>
+          <p className="text-lg text-foreground/80 font-medium">
+            Professional-grade AI tools for every creative need—no experience required
+          </p>
         </div>
 
         {/* Category Carousels */}

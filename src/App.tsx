@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { SplashCursor } from "./components/SplashCursor";
 import { Analytics } from "./components/Analytics";
+import { GlobalHeader } from "./components/GlobalHeader";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Create from "./pages/Create";
@@ -16,17 +17,21 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import { DashboardLayout } from "./layouts/DashboardLayout";
+import { useAuth } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   const location = useLocation();
+  const { user } = useAuth();
   const showCursor = !location.pathname.startsWith("/dashboard");
+  const isDashboardRoute = location.pathname.startsWith("/dashboard");
 
   return (
     <>
       {showCursor && <SplashCursor />}
       <Analytics />
+      {user && isDashboardRoute && <GlobalHeader />}
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />

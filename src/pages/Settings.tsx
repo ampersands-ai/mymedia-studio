@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, Download, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Loader2, Download, Clock, CheckCircle, XCircle, AlertCircle, Coins, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { profileUpdateSchema } from "@/lib/validation-schemas";
 import { cn } from "@/lib/utils";
@@ -231,43 +231,94 @@ const Settings = () => {
       <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-4xl font-black gradient-text mb-8">Settings</h1>
         
-        <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
+        <Tabs defaultValue="profile" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="subscription">Subscription</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
-            <TabsTrigger value="pricing">Pricing</TabsTrigger>
-            <TabsTrigger value="account">Account</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="general" className="space-y-4 mt-6">
+          <TabsContent value="profile" className="space-y-4 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Profile Settings</CardTitle>
-                <CardDescription>Update your profile information</CardDescription>
+                <CardTitle>Profile Information</CardTitle>
+                <CardDescription>Manage your personal information and verification status</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleUpdateProfile} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="full_name">Full Name</Label>
-                    <Input
-                      id="full_name"
-                      value={profileData.full_name}
-                      onChange={(e) => {
-                        setProfileData({ ...profileData, full_name: e.target.value });
-                        setValidationErrors(prev => ({ ...prev, full_name: "" }));
-                      }}
-                      placeholder="John Doe"
-                      aria-label="Full name"
-                      className={cn(validationErrors.full_name && "border-red-500")}
-                    />
-                    {validationErrors.full_name && (
-                      <p className="text-sm text-red-600 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
-                        {validationErrors.full_name}
-                      </p>
-                    )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="first_name">First Name</Label>
+                      <Input
+                        id="first_name"
+                        value={profileData.full_name?.split(' ')[0] || ''}
+                        onChange={(e) => {
+                          const lastName = profileData.full_name?.split(' ').slice(1).join(' ') || '';
+                          setProfileData({ ...profileData, full_name: `${e.target.value} ${lastName}`.trim() });
+                          setValidationErrors(prev => ({ ...prev, full_name: "" }));
+                        }}
+                        placeholder="John"
+                        aria-label="First name"
+                        className={cn(validationErrors.full_name && "border-red-500")}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="last_name">Last Name</Label>
+                      <Input
+                        id="last_name"
+                        value={profileData.full_name?.split(' ').slice(1).join(' ') || ''}
+                        onChange={(e) => {
+                          const firstName = profileData.full_name?.split(' ')[0] || '';
+                          setProfileData({ ...profileData, full_name: `${firstName} ${e.target.value}`.trim() });
+                          setValidationErrors(prev => ({ ...prev, full_name: "" }));
+                        }}
+                        placeholder="Doe"
+                        aria-label="Last name"
+                        className={cn(validationErrors.full_name && "border-red-500")}
+                      />
+                    </div>
                   </div>
+                  {validationErrors.full_name && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {validationErrors.full_name}
+                    </p>
+                  )}
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email Address</Label>
+                      <Input
+                        id="email"
+                        value={user?.email || ''}
+                        disabled
+                        aria-label="Email address"
+                        className="bg-muted"
+                      />
+                      <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="zipcode">Zipcode</Label>
+                      <Input
+                        id="zipcode"
+                        value={profileData.zipcode}
+                        onChange={(e) => {
+                          setProfileData({ ...profileData, zipcode: e.target.value });
+                          setValidationErrors(prev => ({ ...prev, zipcode: "" }));
+                        }}
+                        placeholder="12345"
+                        aria-label="Zipcode"
+                        className={cn(validationErrors.zipcode && "border-red-500")}
+                      />
+                      {validationErrors.zipcode && (
+                        <p className="text-sm text-red-600 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {validationErrors.zipcode}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="phone_number">Phone Number</Label>
                     <Input
@@ -288,28 +339,9 @@ const Settings = () => {
                       </p>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="zipcode">Zipcode</Label>
-                    <Input
-                      id="zipcode"
-                      value={profileData.zipcode}
-                      onChange={(e) => {
-                        setProfileData({ ...profileData, zipcode: e.target.value });
-                        setValidationErrors(prev => ({ ...prev, zipcode: "" }));
-                      }}
-                      placeholder="12345"
-                      aria-label="Zipcode"
-                      className={cn(validationErrors.zipcode && "border-red-500")}
-                    />
-                    {validationErrors.zipcode && (
-                      <p className="text-sm text-red-600 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
-                        {validationErrors.zipcode}
-                      </p>
-                    )}
-                  </div>
+
                   <div className="flex items-center gap-2">
-                    <Label>Email Verification Status:</Label>
+                    <Label>Verification Status:</Label>
                     <Badge variant={profileData.email_verified ? "default" : "secondary"}>
                       {profileData.email_verified ? "Verified" : "Not Verified"}
                     </Badge>
@@ -329,117 +361,67 @@ const Settings = () => {
             </Card>
           </TabsContent>
           
-          <TabsContent value="security" className="space-y-4 mt-6">
+          <TabsContent value="subscription" className="space-y-4 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Active Sessions</CardTitle>
-                <CardDescription>Manage your active login sessions</CardDescription>
+                <CardTitle>Subscription & Tokens</CardTitle>
+                <CardDescription>Manage your subscription and view token usage</CardDescription>
               </CardHeader>
-              <CardContent>
-                {loadingSessions ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : sessions.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    No active sessions found.
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {sessions.map((session) => (
-                      <div
-                        key={session.id}
-                        className="flex items-center justify-between p-4 border rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge variant={session.is_active ? "default" : "secondary"}>
-                              {session.is_active ? "Active" : "Revoked"}
-                            </Badge>
-                            <span className="text-sm font-semibold">{session.ip_address}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground line-clamp-1">
-                            {session.user_agent}
-                          </p>
-                          <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-                            <span>Created: {new Date(session.created_at).toLocaleString()}</span>
-                            <span>Last active: {new Date(session.last_activity_at).toLocaleString()}</span>
-                          </div>
-                        </div>
-                        {session.is_active && (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleRevokeSession(session.session_id)}
-                            aria-label="Revoke session"
-                          >
-                            Revoke
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Security Activity Log</CardTitle>
-                <CardDescription>Recent security-related activities on your account</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loadingAuditLogs ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : auditLogs.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    No security activities yet.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {auditLogs.map((log) => (
-                      <div
-                        key={log.id}
-                        className="flex items-center justify-between p-3 border rounded-lg text-sm"
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs capitalize">
-                              {log.action.replace(/_/g, ' ')}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(log.created_at).toLocaleString()}
-                            </span>
-                          </div>
-                          {log.ip_address && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              IP: {log.ip_address}
-                            </p>
-                          )}
+              <CardContent className="space-y-4">
+                {subscription && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Current Plan</Label>
+                        <div className="flex items-center gap-2">
+                          <Badge className="text-base px-4 py-1 capitalize">{subscription.plan}</Badge>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      <div className="space-y-2">
+                        <Label>Status</Label>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={subscription.status === 'active' ? 'default' : 'secondary'} className="text-base px-4 py-1 capitalize">
+                            {subscription.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Two-Factor Authentication (2FA)</CardTitle>
-                <CardDescription>Add an extra layer of security to your account</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Two-factor authentication adds an additional layer of security to your account by requiring more than just a password to sign in.
-                  </p>
-                  <Button variant="outline" disabled>
-                    Enable 2FA (Coming Soon)
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 bg-neon-yellow/20 rounded-lg border-2 border-neon-yellow/40">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Tokens Remaining</p>
+                            <p className="text-3xl font-black">{subscription.tokens_remaining}</p>
+                          </div>
+                          <Coins className="h-8 w-8" />
+                        </div>
+                      </div>
+                      <div className="p-4 bg-neon-blue/20 rounded-lg border-2 border-neon-blue/40">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Total Tokens</p>
+                            <p className="text-3xl font-black">{subscription.tokens_total}</p>
+                          </div>
+                          <Sparkles className="h-8 w-8" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {subscription.current_period_end && (
+                      <div className="space-y-2">
+                        <Label>Next Billing Date</Label>
+                        <p className="text-sm">{new Date(subscription.current_period_end).toLocaleDateString()}</p>
+                      </div>
+                    )}
+                  </>
+                )}
+                
+                <Link to="/pricing">
+                  <Button className="w-full bg-neon-green hover:bg-neon-green/90 text-black font-bold" aria-label="View all pricing plans">
+                    Upgrade Plan
                   </Button>
-                </div>
+                </Link>
               </CardContent>
             </Card>
           </TabsContent>
@@ -499,67 +481,6 @@ const Settings = () => {
             </Card>
           </TabsContent>
           
-          <TabsContent value="pricing" className="space-y-4 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Pricing & Subscription</CardTitle>
-                <CardDescription>Manage your subscription and view pricing options</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {subscription && (
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold">Current Plan:</span>
-                      <Badge variant="default" className="capitalize">
-                        {subscription.plan}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold">Tokens Remaining:</span>
-                      <span className="font-bold">{subscription.tokens_remaining.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold">Total Tokens:</span>
-                      <span className="text-muted-foreground">{subscription.tokens_total.toLocaleString()}</span>
-                    </div>
-                  </div>
-                )}
-                <Link to="/pricing">
-                  <Button className="w-full" aria-label="View all pricing plans">
-                    View All Pricing Plans
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="account" className="space-y-4 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Information</CardTitle>
-                <CardDescription>View your account details</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Email Address</Label>
-                  <Input value={user?.email || ""} disabled aria-label="Email address" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Account Created</Label>
-                  <Input
-                    value={user?.created_at ? new Date(user.created_at).toLocaleDateString() : "N/A"}
-                    disabled
-                    aria-label="Account creation date"
-                  />
-                </div>
-                <div className="pt-4 border-t">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Need to update your email or password? Contact support.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
     </div>

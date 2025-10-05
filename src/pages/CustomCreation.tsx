@@ -272,7 +272,7 @@ const CustomCreation = () => {
     
     try {
       const customParameters: Record<string, any> = {
-        resolution: resolution === "Native" ? "auto" : "hd",
+        image_size: resolution === "Native" ? "auto" : "hd",
       };
 
       // Upload images to storage if required

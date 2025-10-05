@@ -15,6 +15,23 @@ import audioProcessing from "@/assets/audio-processing.jpg";
 import textGeneration from "@/assets/text-generation.jpg";
 import logo from "@/assets/logo.png";
 import textLogo from "@/assets/text-logo.png";
+import openaiLogo from "@/assets/partners/openai.png";
+import googleLogo from "@/assets/partners/google.png";
+import sunoLogo from "@/assets/partners/suno.png";
+import runwayLogo from "@/assets/partners/runway.png";
+import fluxLogo from "@/assets/partners/flux.png";
+import midjourneyLogo from "@/assets/partners/midjourney.png";
+import klingLogo from "@/assets/partners/kling.png";
+import lumaLogo from "@/assets/partners/luma.png";
+import bytedanceLogo from "@/assets/partners/bytedance.png";
+import ideogramLogo from "@/assets/partners/ideogram.png";
+import qwenLogo from "@/assets/partners/qwen.png";
+import elevenlabsLogo from "@/assets/partners/elevenlabs.png";
+import recraftLogo from "@/assets/partners/recraft.png";
+import topazLogo from "@/assets/partners/topazlabs.png";
+import hailuoLogo from "@/assets/partners/hailuo.png";
+import veedLogo from "@/assets/partners/veed.png";
+import wanLogo from "@/assets/partners/wan.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -241,6 +258,26 @@ const Index = () => {
     "Family & Entertainment",
   ];
 
+  const partners = [
+    { name: "OpenAI", logo: openaiLogo },
+    { name: "Google", logo: googleLogo },
+    { name: "Suno", logo: sunoLogo },
+    { name: "Runway", logo: runwayLogo },
+    { name: "Black Forest Labs", logo: fluxLogo },
+    { name: "Midjourney", logo: midjourneyLogo },
+    { name: "Wan", logo: wanLogo },
+    { name: "Kling", logo: klingLogo },
+    { name: "Luma", logo: lumaLogo },
+    { name: "ByteDance", logo: bytedanceLogo },
+    { name: "Ideogram", logo: ideogramLogo },
+    { name: "Qwen", logo: qwenLogo },
+    { name: "ElevenLabs", logo: elevenlabsLogo },
+    { name: "Recraft", logo: recraftLogo },
+    { name: "Topaz", logo: topazLogo },
+    { name: "Hailuo", logo: hailuoLogo },
+    { name: "Veed", logo: veedLogo },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
@@ -353,6 +390,45 @@ const Index = () => {
             <p className="text-base md:text-lg font-black pt-2 gradient-text">
               💰 Generate high quality content for less • More affordable than competitors
             </p>
+          </div>
+        </section>
+
+        {/* Technology Partners */}
+        <section className="py-12 md:py-16 bg-card/30 overflow-hidden">
+          <div className="container mx-auto px-4 mb-8">
+            <h3 className="text-2xl md:text-3xl font-black text-center">POWERED BY LEADING AI MODELS</h3>
+          </div>
+          <div className="relative">
+            <div className="flex animate-[scroll_30s_linear_infinite] hover:pause">
+              {/* First set of logos */}
+              {partners.map((partner, index) => (
+                <div
+                  key={`first-${index}`}
+                  className="flex-shrink-0 mx-6 md:mx-8 grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
+                >
+                  <img
+                    src={partner.logo}
+                    alt={`${partner.name} logo`}
+                    className="h-12 md:h-16 w-auto object-contain"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+              {/* Duplicate set for seamless loop */}
+              {partners.map((partner, index) => (
+                <div
+                  key={`second-${index}`}
+                  className="flex-shrink-0 mx-6 md:mx-8 grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
+                >
+                  <img
+                    src={partner.logo}
+                    alt={`${partner.name} logo`}
+                    className="h-12 md:h-16 w-auto object-contain"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 

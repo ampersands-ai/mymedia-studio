@@ -682,28 +682,28 @@ const CustomCreation = () => {
         </div>
 
         {/* Best Practices Section */}
-        <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
+        <Card className="bg-card border">
           <div className="p-4 md:p-6">
             <h3 className="text-lg md:text-xl font-black mb-4 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
+              <Sparkles className="h-5 w-5" />
               BEST PRACTICES
             </h3>
             <div className="grid md:grid-cols-2 gap-3 md:gap-4 text-sm">
               <div className="flex gap-3">
-                <span className="text-primary font-bold">01</span>
-                <p>Be specific and descriptive in your prompts for better results</p>
+                <span className="font-bold text-black">01</span>
+                <p className="text-foreground">Be specific and descriptive in your prompts for better results</p>
               </div>
               <div className="flex gap-3">
-                <span className="text-primary font-bold">02</span>
-                <p>Use the "Enhance" feature to automatically improve your prompts</p>
+                <span className="font-bold text-black">02</span>
+                <p className="text-foreground">Use the "Enhance" feature to automatically improve your prompts</p>
               </div>
               <div className="flex gap-3">
-                <span className="text-primary font-bold">03</span>
-                <p>Upload reference images to guide the AI's creative direction</p>
+                <span className="font-bold text-black">03</span>
+                <p className="text-foreground">Upload reference images to guide the AI's creative direction</p>
               </div>
               <div className="flex gap-3">
-                <span className="text-primary font-bold">04</span>
-                <p>Experiment with different models to find your perfect style</p>
+                <span className="font-bold text-black">04</span>
+                <p className="text-foreground">Experiment with different models to find your perfect style</p>
               </div>
             </div>
           </div>

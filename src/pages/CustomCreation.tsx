@@ -658,25 +658,33 @@ const CustomCreation = () => {
             <div className="p-4 md:p-6">
               {(localGenerating || isGenerating) ? (
                 <div className="space-y-4">
-                  <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
-                    <Skeleton className="w-full h-full" />
-                    <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
-                      <div className="text-center space-y-4">
-                        <Loader2 className="h-12 w-12 mx-auto animate-spin text-primary" />
-                        <div className="space-y-2">
-                          <p className="text-sm font-bold">Creating your masterpiece...</p>
-                          <div className="flex gap-1 justify-center">
-                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0ms' }} />
-                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '150ms' }} />
-                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '300ms' }} />
-                          </div>
+                  <div className="relative aspect-square bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" 
+                         style={{ backgroundSize: '1000px 100%' }} />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-purple-500 rounded-full blur-xl opacity-50 animate-glow-pulse" />
+                        <Sparkles className="h-16 w-16 text-purple-600 animate-float relative z-10" />
+                      </div>
+                      <div className="mt-8 space-y-4 text-center">
+                        <p className="text-lg font-bold text-purple-900 animate-bounce-subtle">
+                          Creating your masterpiece...
+                        </p>
+                        <div className="flex gap-2 justify-center">
+                          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                        <div className="relative h-2 w-48 mx-auto bg-purple-200 rounded-full overflow-hidden">
+                          <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 animate-shimmer" 
+                               style={{ backgroundSize: '200% 100%' }} />
                         </div>
                       </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full animate-pulse" />
+                    <Skeleton className="h-10 w-full animate-pulse" style={{ animationDelay: '150ms' }} />
                   </div>
                 </div>
               ) : generatedOutput ? (

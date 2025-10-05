@@ -157,6 +157,19 @@ const CustomCreation = () => {
   const [enhancePrompt, setEnhancePrompt] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const surprisePrompts = [
+    "A majestic dragon soaring over a cyberpunk city at sunset",
+    "An underwater palace made of coral and bioluminescent creatures",
+    "A steampunk robot gardener tending to a garden of mechanical flowers",
+    "A cosmic library floating in space with books made of stardust",
+    "An ancient tree with doors to different magical realms in its trunk",
+    "A futuristic marketplace on Mars with diverse alien species",
+    "A mystical forest where the trees are made of crystalline ice",
+    "A floating island city powered by giant wind turbines and solar panels",
+    "An enchanted bakery where pastries come to life at midnight",
+    "A retrofuturistic train traveling through a neon-lit tunnel",
+  ];
+
   useEffect(() => {
     document.title = "Custom Creation Studio - Artifio.ai";
     const metaDescription = document.querySelector('meta[name="description"]');
@@ -274,6 +287,12 @@ const CustomCreation = () => {
     setResolution("Native");
   };
 
+  const handleSurpriseMe = () => {
+    const randomPrompt = surprisePrompts[Math.floor(Math.random() * surprisePrompts.length)];
+    setPrompt(randomPrompt);
+    toast.success("Random prompt generated!");
+  };
+
   // Show empty state immediately if no models
   if (!modelsLoading && (!modelsByContentType || Object.keys(modelsByContentType).length === 0)) {
     return (
@@ -344,20 +363,31 @@ const CustomCreation = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium">Prompt <span className="text-destructive">*</span></label>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEnhancePrompt(!enhancePrompt)}
-                    className={cn(
-                      "h-8",
-                      enhancePrompt 
-                        ? "bg-neon-green hover:bg-neon-green/90 text-black font-bold border-black" 
-                        : "hover:bg-muted"
-                    )}
-                  >
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    Enhance
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSurpriseMe}
+                      className="h-8 hover:bg-muted"
+                      disabled={isGenerating}
+                    >
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Surprise Me
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEnhancePrompt(!enhancePrompt)}
+                      className={cn(
+                        "h-8 transition-all",
+                        enhancePrompt 
+                          ? "bg-neon-green text-black font-bold border-black hover:bg-neon-green/90" 
+                          : "hover:bg-muted"
+                      )}
+                    >
+                      {enhancePrompt ? "✓ " : ""}Enhance
+                    </Button>
+                  </div>
                 </div>
                 <Textarea
                   value={prompt}

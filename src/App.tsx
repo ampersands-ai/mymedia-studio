@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { SplashCursor } from "./components/SplashCursor";
 import { Analytics } from "./components/Analytics";
-import { GlobalHeader } from "./components/GlobalHeader";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Create from "./pages/Create";
@@ -16,14 +15,12 @@ import Pricing from "./pages/Pricing";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
-import History from "./pages/dashboard/History";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AIModelsManager from "./pages/admin/AIModelsManager";
 import TemplatesManager from "./pages/admin/TemplatesManager";
 import UsersManager from "./pages/admin/UsersManager";
-import { useAuth } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
@@ -41,7 +38,6 @@ const AppContent = () => {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route path="create" element={<Create />} />
           <Route path="custom-creation" element={<CustomCreation />} />
-          <Route path="history" element={<History />} />
           <Route path="settings" element={<Settings />} />
         </Route>
         <Route path="/admin" element={<AdminLayout />}>

@@ -3,10 +3,11 @@ import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Sparkles, Settings, Menu, X, Coins, History } from "lucide-react";
+import { LogOut, Sparkles, Settings, Menu, X, Coins } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { Footer } from "@/components/Footer";
+import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
 import textLogo from "@/assets/text-logo.png";
 
@@ -54,29 +55,22 @@ export const DashboardLayout = () => {
             <nav className="hidden md:flex items-center gap-2">
               <Link to="/dashboard/create">
                 <Button
-                  variant={isActive("/dashboard/create") ? "default" : "ghost"}
+                  variant={isActive("/dashboard/create") ? "default" : "outline"}
                   size="sm"
+                  className={isActive("/dashboard/create") ? "bg-neon-blue hover:bg-neon-blue/90" : ""}
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
-                  Create
+                  Templates
                 </Button>
               </Link>
               <Link to="/dashboard/custom-creation">
                 <Button
-                  variant={isActive("/dashboard/custom-creation") ? "default" : "ghost"}
+                  variant={isActive("/dashboard/custom-creation") ? "default" : "outline"}
                   size="sm"
+                  className={isActive("/dashboard/custom-creation") ? "bg-neon-pink text-white hover:bg-neon-pink/90" : ""}
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
                   Custom Creation
-                </Button>
-              </Link>
-              <Link to="/dashboard/history">
-                <Button
-                  variant={isActive("/dashboard/history") ? "default" : "ghost"}
-                  size="sm"
-                >
-                  <History className="h-4 w-4 mr-2" />
-                  History
                 </Button>
               </Link>
               <Link to="/dashboard/settings">
@@ -116,36 +110,38 @@ export const DashboardLayout = () => {
                 <SheetContent>
                   <nav className="flex flex-col gap-4 mt-8">
                     <Link 
-                      to="/dashboard/create" 
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors"
-                    >
-                      <Sparkles className="h-5 w-5" />
-                      <span className="font-medium">Create</span>
-                    </Link>
-                    <Link 
                       to="/dashboard/custom-creation" 
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors"
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors",
+                        isActive("/dashboard/custom-creation") 
+                          ? "bg-neon-pink text-white" 
+                          : "hover:bg-accent"
+                      )}
                     >
                       <Sparkles className="h-5 w-5" />
-                      <span className="font-medium">Custom Creation</span>
+                      <span>Custom Creation</span>
                     </Link>
                     <Link 
-                      to="/dashboard/history" 
+                      to="/dashboard/create" 
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors"
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors",
+                        isActive("/dashboard/create") 
+                          ? "bg-neon-blue" 
+                          : "hover:bg-accent"
+                      )}
                     >
-                      <History className="h-5 w-5" />
-                      <span className="font-medium">History</span>
+                      <Sparkles className="h-5 w-5" />
+                      <span>Templates</span>
                     </Link>
                     <Link 
                       to="/dashboard/settings" 
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors font-medium"
                     >
                       <Settings className="h-5 w-5" />
-                      <span className="font-medium">Settings</span>
+                      <span>Settings</span>
                     </Link>
                     <Button
                       variant="outline"

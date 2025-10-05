@@ -191,7 +191,7 @@ serve(async (req) => {
     // Call provider
     try {
       const providerRequest = {
-        model: model.model_name,
+        model: model.id, // Use model ID instead of display name for API calls
         prompt: finalPrompt,
         parameters,
         api_endpoint: model.api_endpoint

@@ -41,11 +41,11 @@ export async function callKieAI(request: ProviderRequest): Promise<ProviderRespo
     }
 
     const createData = await createResponse.json();
-    console.log('Task creation response:', createData);
+    console.log('Task created:', createData);
 
     // Check response structure
     if (createData.code !== 200 || !createData.data?.taskId) {
-      throw new Error(`Kie.ai task creation failed: ${createData.msg || createData.message || 'Unknown error'}`);
+      throw new Error(`Kie.ai task creation failed: ${createData.message || 'Unknown error'}`);
     }
 
     const taskId = createData.data.taskId;

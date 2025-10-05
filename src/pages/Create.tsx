@@ -17,8 +17,6 @@ import { useTemplatesByCategory } from "@/hooks/useTemplates";
 import { Textarea } from "@/components/ui/textarea";
 import { useGeneration } from "@/hooks/useGeneration";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
 
 const Create = () => {
   const navigate = useNavigate();
@@ -27,12 +25,6 @@ const Create = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [prompt, setPrompt] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
-
-  // Determine if selected template's model requires images
-  const requiresImages = Array.isArray(selectedTemplate?.ai_models?.input_schema?.required)
-    ? selectedTemplate.ai_models.input_schema.required.includes("image_urls")
-    : false;
 
   // Add structured data for Create page
   useEffect(() => {
@@ -106,47 +98,19 @@ const Create = () => {
   const handleTemplateSelect = (template: any) => {
     setSelectedTemplate(template);
     setPrompt("");
-    setUploadedImages([]);
     setDialogOpen(true);
   };
 
   const handleGenerate = async () => {
-    console.log("[Create] Generate clicked", { templateId: selectedTemplate?.id, requiresImages, uploadedImagesCount: uploadedImages.length });
     if (!prompt.trim()) {
       toast.error("Please enter a prompt");
       return;
     }
 
-    if (requiresImages && uploadedImages.length === 0) {
-      toast.error("This template requires at least one input image");
-      return;
-    }
-
     try {
-      let customParameters: Record<string, any> | undefined = undefined;
-
-      if (requiresImages && uploadedImages.length > 0) {
-        const uploads = await Promise.all(
-          uploadedImages.map(async (file, idx) => {
-            const ext = file.name.split(".").pop() || "png";
-            const path = `user_uploads/templates/${Date.now()}-${idx}.${ext}`;
-            const { error: uploadError } = await supabase.storage
-              .from("generated-content")
-              .upload(path, file, { contentType: file.type, upsert: true });
-            if (uploadError) throw uploadError;
-            const { data } = supabase.storage
-              .from("generated-content")
-              .getPublicUrl(path);
-            return data.publicUrl;
-          })
-        );
-        customParameters = { image_urls: uploads };
-      }
-
       const result = await generate({
         template_id: selectedTemplate.id,
         prompt: prompt.trim(),
-        ...(customParameters ? { custom_parameters: customParameters } : {}),
       });
       
       setDialogOpen(false);
@@ -257,23 +221,6 @@ const Create = () => {
                   disabled={isGenerating}
                 />
               </div>
-
-              {requiresImages && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Input Image(s)</label>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    disabled={isGenerating}
-                    onChange={(e) => setUploadedImages(Array.from(e.target.files || []))}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {uploadedImages.length} image(s) selected
-                  </p>
-                </div>
-              )}
-
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -284,10 +231,9 @@ const Create = () => {
                   Cancel
                 </Button>
                 <Button
-                  type="button"
                   onClick={handleGenerate}
-                  className="flex-1 pointer-events-auto"
-                  disabled={isGenerating}
+                  className="flex-1"
+                  disabled={isGenerating || !prompt.trim()}
                 >
                   {isGenerating ? (
                     <>

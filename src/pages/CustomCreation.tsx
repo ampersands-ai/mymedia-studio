@@ -176,15 +176,8 @@ const CustomCreation = () => {
     return groups.includes(selectedGroup);
   }) || [];
 
-  // Get current model info
-  const currentModel = allModels?.find(m => String(m.id) === selectedModel);
-  
-  // Determine if image upload is required (by group OR by model schema)
+  // Determine if image upload is required for current group
   const isImageRequired = selectedGroup === "image_editing" || selectedGroup === "image_to_video";
-  const schemaRequired: string[] = Array.isArray((currentModel as any)?.input_schema?.required)
-    ? (currentModel as any).input_schema.required
-    : [];
-  const requiresImages = isImageRequired || schemaRequired.includes("image_urls");
   const isPromptRequired = selectedGroup !== "image_editing";
 
   const surprisePrompts = [
@@ -256,17 +249,14 @@ const CustomCreation = () => {
   };
 
   const handleGenerate = async () => {
-    console.log("[CustomCreation] Generate clicked", { selectedModel, uploadedImagesCount: uploadedImages.length });
-    toast.message("Starting generation...");
-
-    // Validate based on requirements
+    // Validate based on group requirements
     if (isPromptRequired && !prompt.trim()) {
       toast.error("Please enter a prompt");
       return;
     }
     
-    if (requiresImages && uploadedImages.length === 0) {
-      toast.error("This model requires at least one input image");
+    if (isImageRequired && uploadedImages.length === 0) {
+      toast.error("Please upload at least one image for this creation type");
       return;
     }
 
@@ -280,8 +270,8 @@ const CustomCreation = () => {
         resolution: resolution.toLowerCase(),
       };
 
-      // For models that require input images, upload and pass public URLs
-      if (requiresImages && uploadedImages.length > 0) {
+      // For image editing or flows that require an input image, upload and pass public URLs
+      if (isImageRequired && uploadedImages.length > 0) {
         if (!user?.id) {
           toast.error("You must be logged in to upload images");
           return;
@@ -585,11 +575,10 @@ const CustomCreation = () => {
               {/* Action Buttons */}
               <div className="flex flex-col gap-2">
                 <Button 
-                  type="button"
                   onClick={handleGenerate} 
-                  disabled={isGenerating}
+                  disabled={isGenerating || !selectedModel || (isPromptRequired && !prompt.trim()) || (isImageRequired && uploadedImages.length === 0)}
                   size="lg"
-                  className="pointer-events-auto w-full h-12 md:h-11 text-base font-bold bg-[#FFFF00] hover:bg-[#FFEB00] text-black border-2 border-black shadow-lg"
+                  className="w-full h-12 md:h-11 text-base font-bold bg-[#FFFF00] hover:bg-[#FFEB00] text-black border-2 border-black shadow-lg"
                 >
                   {isGenerating ? (
                     <>

@@ -345,12 +345,14 @@ const CustomCreation = () => {
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium">Prompt <span className="text-destructive">*</span></label>
                   <Button
-                    variant={enhancePrompt ? "default" : "outline"}
+                    variant="outline"
                     size="sm"
                     onClick={() => setEnhancePrompt(!enhancePrompt)}
                     className={cn(
                       "h-8",
-                      enhancePrompt && "bg-neon-green hover:bg-neon-green/90 text-black font-bold"
+                      enhancePrompt 
+                        ? "bg-neon-green hover:bg-neon-green/90 text-black font-bold border-black" 
+                        : "hover:bg-muted"
                     )}
                   >
                     <Sparkles className="h-3 w-3 mr-1" />

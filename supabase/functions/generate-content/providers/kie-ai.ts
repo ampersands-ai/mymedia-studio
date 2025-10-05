@@ -80,7 +80,7 @@ export async function callKieAI(request: ProviderRequest): Promise<ProviderRespo
     
     return {
       output_data,
-      file_extension,
+      file_extension: fileExtension,
       file_size: output_data.length,
       metadata: {
         model: request.model,

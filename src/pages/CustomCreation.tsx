@@ -601,6 +601,7 @@ const CustomCreation = () => {
                         modelSchema={currentModel.input_schema}
                         onChange={setModelParameters}
                         currentValues={modelParameters}
+                        excludeFields={['prompt', 'image_urls']}
                       />
                     ) : (
                       // Legacy Resolution fallback if no schema

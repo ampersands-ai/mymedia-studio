@@ -5,9 +5,10 @@ interface ModelParameterFormProps {
   modelSchema: any;
   onChange: (params: Record<string, any>) => void;
   currentValues?: Record<string, any>;
+  excludeFields?: string[];
 }
 
-export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {} }: ModelParameterFormProps) => {
+export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, excludeFields = [] }: ModelParameterFormProps) => {
   const [parameters, setParameters] = useState<Record<string, any>>(currentValues);
 
   // Initialize with defaults from schema
@@ -40,9 +41,14 @@ export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {} }
   const properties = modelSchema.properties;
   const required = modelSchema.required || [];
 
+  // Filter out excluded fields
+  const filteredProperties = Object.entries(properties).filter(
+    ([key]) => !excludeFields.includes(key)
+  );
+
   return (
     <div className="space-y-4">
-      {Object.entries(properties).map(([key, schema]: [string, any]) => (
+      {filteredProperties.map(([key, schema]: [string, any]) => (
         <SchemaInput
           key={key}
           name={key}

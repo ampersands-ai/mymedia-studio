@@ -570,7 +570,7 @@ const CustomCreation = () => {
                       </div>
                       <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded absolute right-2">
                         <Coins className="h-4 w-4" />
-                        <span className="text-sm font-bold">-{estimatedTokens}</span>
+                        <span className="text-sm font-bold">-{estimatedTokens} tokens</span>
                       </div>
                     </div>
                   )}

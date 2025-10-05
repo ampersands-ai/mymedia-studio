@@ -353,23 +353,25 @@ const CustomCreation = () => {
         </div>
 
         {/* Group Selection */}
-        <div className="mb-8">
-          <h2 className="text-lg md:text-xl font-bold mb-4">Select Creation Type</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+        <div className="mb-6">
+          <h2 className="text-base md:text-lg font-bold mb-3">Select Creation Type</h2>
+          <div className="flex flex-wrap gap-2">
             {CREATION_GROUPS.map((group) => (
               <button
                 key={group.id}
                 onClick={() => setSelectedGroup(group.id)}
                 className={cn(
-                  "p-4 md:p-6 rounded-xl border-2 transition-all duration-300 hover:scale-105",
+                  "p-2 md:p-3 rounded-lg border-2 transition-all duration-200 flex items-center gap-2",
                   selectedGroup === group.id
-                    ? "bg-primary/10 border-primary shadow-lg shadow-primary/20"
-                    : "bg-card border-border hover:border-primary/50"
+                    ? "bg-yellow-400 border-black text-black font-bold shadow-lg"
+                    : "bg-muted/30 border-muted-foreground/20 text-muted-foreground hover:bg-muted/50"
                 )}
               >
-                <div className="text-3xl md:text-4xl mb-2">{group.icon}</div>
-                <div className="font-semibold text-xs md:text-sm mb-1">{group.label}</div>
-                <div className="text-xs text-muted-foreground hidden md:block">{group.description}</div>
+                <span className="text-2xl md:text-3xl">{group.icon}</span>
+                <div className="flex flex-col items-start">
+                  <span className="font-semibold text-xs md:text-sm">{group.label}</span>
+                  <span className="text-[10px] md:text-xs opacity-70 hidden md:block">{group.description}</span>
+                </div>
               </button>
             ))}
           </div>

@@ -270,29 +270,6 @@ const CustomCreation = () => {
         resolution: resolution.toLowerCase(),
       };
 
-      // For image editing or flows that require an input image, upload and pass public URLs
-      if (isImageRequired && uploadedImages.length > 0) {
-        if (!user?.id) {
-          toast.error("You must be logged in to upload images");
-          return;
-        }
-        const toPublicUrl = (path: string) =>
-          supabase.storage.from("generated-content").getPublicUrl(path).data.publicUrl;
-
-        const uploads = await Promise.all(
-          uploadedImages.map(async (file, idx) => {
-            const ext = file.name.split(".").pop() || "png";
-            const path = `user_uploads/${user.id}/${Date.now()}-${idx}.${ext}`;
-            const { error: uploadError } = await supabase.storage
-              .from("generated-content")
-              .upload(path, file, { contentType: file.type, upsert: true });
-            if (uploadError) throw uploadError;
-            return toPublicUrl(path);
-          })
-        );
-        customParameters.image_urls = uploads;
-      }
-
       const result = await generate({
         model_id: selectedModel,
         prompt: prompt.trim(),

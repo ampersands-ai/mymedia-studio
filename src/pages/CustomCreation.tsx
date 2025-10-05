@@ -23,6 +23,7 @@ import { TemplateCard } from "@/components/TemplateCard";
 import { useGeneration } from "@/hooks/useGeneration";
 import { useModelsByContentType } from "@/hooks/useModels";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 // Community creations data
 const communityCreations = [
@@ -315,7 +316,10 @@ const CustomCreation = () => {
                         key={model.id}
                         variant={selectedModel === model.id ? "default" : "outline"}
                         onClick={() => setSelectedModel(model.id)}
-                        className="h-auto py-3 px-4 justify-start text-left"
+                        className={cn(
+                          "h-auto py-3 px-4 justify-start text-left",
+                          selectedModel === model.id && "bg-neon-blue hover:bg-neon-blue/90 text-black font-bold"
+                        )}
                       >
                         <div className="flex flex-col gap-1 w-full">
                           <div className="flex items-center justify-between w-full">

@@ -55,7 +55,7 @@ export const DashboardLayout = () => {
             <nav className="hidden md:flex items-center gap-2">
               <Link to="/dashboard/create">
                 <Button
-                  variant={isActive("/dashboard/create") ? "default" : "outline"}
+                  variant={isActive("/dashboard/create") ? "default" : "ghost"}
                   className={cn(
                     "text-base px-6 py-5",
                     isActive("/dashboard/create") ? "bg-neon-blue hover:bg-neon-blue/90 text-black font-bold" : ""
@@ -67,7 +67,7 @@ export const DashboardLayout = () => {
               </Link>
               <Link to="/dashboard/custom-creation">
                 <Button
-                  variant={isActive("/dashboard/custom-creation") ? "default" : "outline"}
+                  variant={isActive("/dashboard/custom-creation") ? "default" : "ghost"}
                   className={cn(
                     "text-base px-6 py-5",
                     isActive("/dashboard/custom-creation") ? "bg-neon-green hover:bg-neon-green/90 text-black font-bold" : ""

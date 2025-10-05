@@ -322,11 +322,7 @@ const CustomCreation = () => {
       });
 
       if (result?.output_url) {
-        const { data } = supabase.storage
-          .from("generated-content")
-          .getPublicUrl(result.output_url);
-        
-        setGeneratedOutput(data.publicUrl);
+        setGeneratedOutput(result.output_url);
       }
       
       toast.success("Generation complete! Check your History.");

@@ -1,13 +1,11 @@
 import { ProviderRequest, ProviderResponse } from "./index.ts";
 
 export async function callKieAI(request: ProviderRequest): Promise<ProviderResponse> {
-  // Kie.ai integration temporarily disabled to allow project remixing
-  // To re-enable: uncomment the API key check below and add KIE_AI_API_KEY secret
-  const KIE_AI_API_KEY = Deno.env.get('KIE_AI_API_KEY') || 'DISABLED';
+  const KIE_AI_API_KEY = Deno.env.get('KIE_AI_API_KEY');
   
-  // if (!KIE_AI_API_KEY) {
-  //   throw new Error('KIE_AI_API_KEY not configured. Please add it to your Supabase secrets.');
-  // }
+  if (!KIE_AI_API_KEY) {
+    throw new Error('KIE_AI_API_KEY not configured. Please add it to your Supabase secrets.');
+  }
 
   const baseUrl = 'https://api.kie.ai';
   const createTaskEndpoint = request.api_endpoint || '/api/v1/jobs/createTask';

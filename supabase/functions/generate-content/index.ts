@@ -201,12 +201,12 @@ serve(async (req) => {
 
     // Call provider with timeout
     const TIMEOUT_MS = 600000; // 600 seconds
-    let timeoutId: number;
+    let timeoutId: number | undefined;
     
     const timeoutPromise = new Promise((_, reject) => {
       timeoutId = setTimeout(() => {
         reject(new Error('Request timed out after 600 seconds'));
-      }, TIMEOUT_MS);
+      }, TIMEOUT_MS) as unknown as number;
     });
 
     try {
@@ -217,13 +217,13 @@ serve(async (req) => {
         api_endpoint: model.api_endpoint
       };
 
-      const providerResponse = await Promise.race([
+      const providerResponse: any = await Promise.race([
         callProvider(model.provider, providerRequest),
         timeoutPromise
       ]);
 
       // Clear timeout if successful
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
 
       console.log('Provider response received');
 

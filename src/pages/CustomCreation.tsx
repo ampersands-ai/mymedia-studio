@@ -335,11 +335,13 @@ const CustomCreation = () => {
                     {modelsByContentType[contentType].map((model) => (
                       <Button
                         key={model.id}
-                        variant={selectedModel === model.id ? "default" : "outline"}
+                        variant="outline"
                         onClick={() => setSelectedModel(model.id)}
                         className={cn(
-                          "h-auto py-3 px-4 justify-start text-left",
-                          selectedModel === model.id && "bg-red-500 hover:bg-red-600 text-white font-bold border-black"
+                          "h-auto py-3 px-4 justify-start text-left border-2 transition-all",
+                          selectedModel === model.id 
+                            ? "bg-red-500 hover:bg-red-600 text-white font-bold border-black" 
+                            : "hover:bg-muted border-border"
                         )}
                       >
                         <div className="flex flex-col gap-1 w-full">

@@ -656,42 +656,61 @@ const CustomCreation = () => {
             </div>
 
             <div className="p-4 md:p-6">
-              {(localGenerating || isGenerating) ? (
+              {generatedOutput ? (
                 <div className="space-y-4">
                   <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
-                    <Skeleton className="w-full h-full" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center space-y-4">
-                        <Loader2 className="h-12 w-12 mx-auto animate-spin text-primary" />
-                        <div className="space-y-2">
-                          <p className="text-sm font-bold">Creating your masterpiece...</p>
-                          <div className="flex gap-1 justify-center">
-                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0ms' }} />
-                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '150ms' }} />
-                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '300ms' }} />
+                    {(localGenerating || isGenerating) ? (
+                      <>
+                        <Skeleton className="w-full h-full" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+                          <div className="text-center space-y-4">
+                            <Loader2 className="h-12 w-12 mx-auto animate-spin text-primary" />
+                            <div className="space-y-2">
+                              <p className="text-sm font-bold">Creating your masterpiece...</p>
+                              <div className="flex gap-1 justify-center">
+                                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0ms' }} />
+                                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '150ms' }} />
+                                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '300ms' }} />
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                </div>
-              ) : generatedOutput ? (
-                <div className="space-y-4">
-                  <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
-                    <img src={generatedOutput} alt="Generated content" className="w-full h-full object-cover" />
+                      </>
+                    ) : (
+                      <img src={generatedOutput} alt="Generated content" className="w-full h-full object-cover" />
+                    )}
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" className="flex-1" asChild>
-                      <a href={generatedOutput} download>
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </a>
+                    <Button 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(generatedOutput);
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `artifio-${Date.now()}.png`;
+                          document.body.appendChild(a);
+                          a.click();
+                          window.URL.revokeObjectURL(url);
+                          document.body.removeChild(a);
+                        } catch (error) {
+                          console.error('Download failed:', error);
+                        }
+                      }}
+                      disabled={localGenerating || isGenerating}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
                     </Button>
-                    <Button variant="outline" className="flex-1" onClick={() => navigate("/dashboard/history")}>
+                    <Button 
+                      variant="outline" 
+                      className="flex-1" 
+                      onClick={() => navigate("/dashboard/history")}
+                      disabled={localGenerating || isGenerating}
+                    >
                       <History className="h-4 w-4 mr-2" />
                       History
                     </Button>

@@ -3,6 +3,7 @@ import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { Sparkles, Database, FileText, Users, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Footer } from "@/components/Footer";
 
 export const AdminLayout = () => {
   const navigate = useNavigate();
@@ -63,6 +64,8 @@ export const AdminLayout = () => {
           <Outlet />
         </main>
       </div>
+      
+      <Footer />
     </div>
   );
 };

@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Sparkles, Check, ChevronsUpDown, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signupSchema, loginSchema } from "@/lib/validation-schemas";
+import { Footer } from "@/components/Footer";
 
 
 const countryCodes = [
@@ -683,6 +684,7 @@ const Auth = () => {
         </CardContent>
       </Card>
       </div>
+      <Footer />
     </div>
   );
 };

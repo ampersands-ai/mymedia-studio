@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Footer } from "@/components/Footer";
 import logo from "@/assets/logo.png";
 import textLogo from "@/assets/text-logo.png";
 
@@ -483,43 +484,7 @@ const Pricing = () => {
           </div>
         </main>
 
-        {/* Footer */}
-        <footer className="border-t-4 border-black bg-card">
-          <div className="container mx-auto px-4 py-6 md:py-8">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <img 
-                    src={logo} 
-                    alt="Artifio.ai logo symbol" 
-                    className="h-8 w-8 rounded-xl border-3 border-black brutal-shadow"
-                  />
-                  <img 
-                    src={textLogo} 
-                    alt="Artifio" 
-                    className="h-6"
-                  />
-                </div>
-                <p className="text-xs md:text-sm font-medium text-foreground/80 text-center sm:text-left">
-                  Making AI content creation accessible and affordable for everyone
-                </p>
-              </div>
-              <div className="flex flex-col md:flex-row items-center gap-4">
-                <div className="flex gap-6">
-                  <Link to="/privacy" className="text-xs md:text-sm text-foreground/60 hover:text-foreground font-bold transition-colors">
-                    Privacy
-                  </Link>
-                  <Link to="/terms" className="text-xs md:text-sm text-foreground/60 hover:text-foreground font-bold transition-colors">
-                    Terms
-                  </Link>
-                </div>
-                <p className="text-xs md:text-sm font-medium text-foreground/60">
-                  © 2025 Artifio. All rights reserved.
-                </p>
-              </div>
-            </div>
-          </div>
-        </footer>
+        <Footer />
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Sparkles, Settings, Menu, X, Coins, History } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useUserTokens } from "@/hooks/useUserTokens";
+import { Footer } from "@/components/Footer";
 import logo from "@/assets/logo.png";
 import textLogo from "@/assets/text-logo.png";
 
@@ -58,6 +59,15 @@ export const DashboardLayout = () => {
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
                   Create
+                </Button>
+              </Link>
+              <Link to="/dashboard/custom-creation">
+                <Button
+                  variant={isActive("/dashboard/custom-creation") ? "default" : "ghost"}
+                  size="sm"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Custom Creation
                 </Button>
               </Link>
               <Link to="/dashboard/history">
@@ -114,6 +124,14 @@ export const DashboardLayout = () => {
                       <span className="font-medium">Create</span>
                     </Link>
                     <Link 
+                      to="/dashboard/custom-creation" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors"
+                    >
+                      <Sparkles className="h-5 w-5" />
+                      <span className="font-medium">Custom Creation</span>
+                    </Link>
+                    <Link 
                       to="/dashboard/history" 
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors"
@@ -149,6 +167,8 @@ export const DashboardLayout = () => {
       <main className="flex-1">
         <Outlet />
       </main>
+
+      <Footer />
     </div>
   );
 };

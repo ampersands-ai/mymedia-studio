@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { useEffect } from "react";
+import { Footer } from "@/components/Footer";
 
 const Privacy = () => {
   useEffect(() => {
@@ -169,24 +170,7 @@ const Privacy = () => {
         </article>
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t-4 border-black bg-card mt-20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-foreground/60 font-medium text-center md:text-left">
-              © 2025 ARTIFIO.AI. All rights reserved.
-            </p>
-            <div className="flex gap-6">
-              <Link to="/privacy" className="text-foreground/60 hover:text-foreground font-bold transition-colors">
-                Privacy
-              </Link>
-              <Link to="/terms" className="text-foreground/60 hover:text-foreground font-bold transition-colors">
-                Terms
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

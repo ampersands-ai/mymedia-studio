@@ -264,6 +264,11 @@ const CustomCreation = () => {
       toast.error("Please select a model");
       return;
     }
+
+    if (!user?.id) {
+      toast.error("Please sign in to upload images");
+      return;
+    }
     
     try {
       const customParameters: Record<string, any> = {

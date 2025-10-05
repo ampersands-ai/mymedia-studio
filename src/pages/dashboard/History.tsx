@@ -146,7 +146,9 @@ const History = () => {
 
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>{format(new Date(generation.created_at), "MMM d, yyyy")}</span>
-                  <span>{generation.tokens_used} tokens</span>
+                  {generation.status !== 'failed' && (
+                    <span>{generation.tokens_used} tokens</span>
+                  )}
                 </div>
 
                 <div className="flex gap-2">

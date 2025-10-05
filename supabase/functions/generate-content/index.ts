@@ -289,11 +289,17 @@ serve(async (req) => {
         })
         .eq('id', generation.id);
 
-      // Refund tokens
-      await supabase
+      // Refund tokens due to provider failure
+      const { error: refundError } = await supabase
         .from('user_subscriptions')
         .update({ tokens_remaining: subscription.tokens_remaining })
         .eq('user_id', user.id);
+
+      if (refundError) {
+        console.error('Failed to refund tokens:', refundError);
+      } else {
+        console.log(`Tokens refunded: ${tokenCost} tokens returned to user ${user.id} due to provider failure`);
+      }
 
       // Audit log
       await supabase.from('audit_logs').insert({
@@ -303,11 +309,19 @@ serve(async (req) => {
         resource_id: generation.id,
         metadata: {
           error: providerError.message,
-          model_id: model.id
+          model_id: model.id,
+          tokens_refunded: tokenCost
         }
       });
 
-      throw new Error(`Generation failed: ${providerError.message}`);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Generation failed due to provider error. Your tokens have been refunded.',
+          details: providerError.message,
+          tokens_refunded: tokenCost
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
   } catch (error: any) {

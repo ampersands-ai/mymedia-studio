@@ -66,7 +66,12 @@ export const useGeneration = () => {
       }
 
       if (data.error) {
-        toast.error(data.error);
+        // Check if tokens were refunded
+        if (data.tokens_refunded) {
+          toast.error(`${data.error} ${data.tokens_refunded} tokens have been refunded.`);
+        } else {
+          toast.error(data.error);
+        }
         throw new Error(data.error);
       }
 

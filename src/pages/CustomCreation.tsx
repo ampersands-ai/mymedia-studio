@@ -555,7 +555,7 @@ const CustomCreation = () => {
                   onClick={handleGenerate} 
                   disabled={isGenerating || !selectedModel || (isPromptRequired && !prompt.trim()) || (isImageRequired && uploadedImages.length === 0)}
                   size="lg"
-                  className="w-full h-12 md:h-11 text-base font-bold bg-yellow-400 hover:bg-yellow-500 text-black border-2 border-black shadow-lg"
+                  className="w-full h-12 md:h-11 text-base font-bold bg-[#FFFF00] hover:bg-[#FFEB00] text-black border-2 border-black shadow-lg"
                 >
                   {isGenerating ? (
                     <>
@@ -563,14 +563,14 @@ const CustomCreation = () => {
                       Generating...
                     </>
                   ) : (
-                    <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center justify-center gap-3 w-full relative">
                       <div className="flex items-center">
                         <Sparkles className="mr-2 h-5 w-5" />
                         Generate
                       </div>
-                      <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded">
+                      <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded absolute right-2">
                         <Coins className="h-4 w-4" />
-                        <span className="text-sm font-bold">{estimatedTokens}</span>
+                        <span className="text-sm font-bold">-{estimatedTokens}</span>
                       </div>
                     </div>
                   )}

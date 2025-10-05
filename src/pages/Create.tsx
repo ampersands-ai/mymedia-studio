@@ -1,10 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -13,17 +13,18 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { TemplateCard } from "@/components/TemplateCard";
-import portraitHeadshots from "@/assets/portrait-headshots.jpg";
-import photoEditing from "@/assets/photo-editing.jpg";
-import videoCreation from "@/assets/video-creation.jpg";
-import productPhotos from "@/assets/product-photos.jpg";
-import socialMedia from "@/assets/social-media.jpg";
-import creativeDesign from "@/assets/creative-design.jpg";
-import audioProcessing from "@/assets/audio-processing.jpg";
-import textGeneration from "@/assets/text-generation.jpg";
+import { useTemplatesByCategory } from "@/hooks/useTemplates";
+import { Textarea } from "@/components/ui/textarea";
+import { useGeneration } from "@/hooks/useGeneration";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const Create = () => {
   const navigate = useNavigate();
+  const { templatesByCategory, templates, isLoading } = useTemplatesByCategory();
+  const { generate, isGenerating } = useGeneration();
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [prompt, setPrompt] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // Add structured data for Create page
   useEffect(() => {
@@ -94,104 +95,42 @@ const Create = () => {
     };
   }, []);
 
-  const categories = [
-    {
-      title: "Image Creation",
-      badge: "Image",
-      prefix: "IMG",
-      image: portraitHeadshots,
-      templates: [
-        { id: "001", name: "Portrait Headshots", image: portraitHeadshots },
-        { id: "002", name: "Professional Business", image: portraitHeadshots },
-        { id: "003", name: "Creative Artist", image: portraitHeadshots },
-        { id: "004", name: "Corporate Executive", image: portraitHeadshots },
-      ]
-    },
-    {
-      title: "Photo Editing",
-      badge: "Edit",
-      prefix: "EDT",
-      image: photoEditing,
-      templates: [
-        { id: "001", name: "Background Removal", image: photoEditing },
-        { id: "002", name: "Color Enhancement", image: photoEditing },
-        { id: "003", name: "Portrait Retouch", image: photoEditing },
-        { id: "004", name: "Object Removal", image: photoEditing },
-      ]
-    },
-    {
-      title: "Video Generation",
-      badge: "Video",
-      prefix: "VID",
-      image: videoCreation,
-      templates: [
-        { id: "001", name: "Product Demo", image: videoCreation, video: "https://videos.pexels.com/video-files/3163534/3163534-uhd_2560_1440_25fps.mp4" },
-        { id: "002", name: "Social Ads", image: videoCreation, video: "https://videos.pexels.com/video-files/7579955/7579955-uhd_2560_1440_25fps.mp4" },
-        { id: "003", name: "Explainer Video", image: videoCreation, video: "https://videos.pexels.com/video-files/3252036/3252036-uhd_2560_1440_25fps.mp4" },
-        { id: "004", name: "Brand Story", image: videoCreation, video: "https://videos.pexels.com/video-files/3129671/3129671-uhd_2560_1440_25fps.mp4" },
-      ]
-    },
-    {
-      title: "Product Photography",
-      badge: "Product",
-      prefix: "PRD",
-      image: productPhotos,
-      templates: [
-        { id: "001", name: "White Background", image: productPhotos },
-        { id: "002", name: "Lifestyle Scene", image: productPhotos },
-        { id: "003", name: "360° View", image: productPhotos },
-        { id: "004", name: "Close-up Detail", image: productPhotos },
-      ]
-    },
-    {
-      title: "Social Media Content",
-      badge: "Social",
-      prefix: "SOC",
-      image: socialMedia,
-      templates: [
-        { id: "001", name: "Instagram Story", image: socialMedia },
-        { id: "002", name: "Facebook Post", image: socialMedia },
-        { id: "003", name: "Twitter Header", image: socialMedia },
-        { id: "004", name: "LinkedIn Banner", image: socialMedia },
-      ]
-    },
-    {
-      title: "Creative Design",
-      badge: "Design",
-      prefix: "DSN",
-      image: creativeDesign,
-      templates: [
-        { id: "001", name: "Logo Design", image: creativeDesign },
-        { id: "002", name: "Brand Identity", image: creativeDesign },
-        { id: "003", name: "Illustration", image: creativeDesign },
-        { id: "004", name: "Digital Art", image: creativeDesign },
-      ]
-    },
-    {
-      title: "Audio Processing",
-      badge: "Audio",
-      prefix: "AUD",
-      image: audioProcessing,
-      templates: [
-        { id: "001", name: "Background Music", image: audioProcessing },
-        { id: "002", name: "Voiceover", image: audioProcessing },
-        { id: "003", name: "Sound Effects", image: audioProcessing },
-        { id: "004", name: "Podcast Intro", image: audioProcessing },
-      ]
-    },
-    {
-      title: "Text Generation",
-      badge: "Text",
-      prefix: "TXT",
-      image: textGeneration,
-      templates: [
-        { id: "001", name: "Blog Post", image: textGeneration },
-        { id: "002", name: "Product Description", image: textGeneration },
-        { id: "003", name: "Ad Copy", image: textGeneration },
-        { id: "004", name: "Email Template", image: textGeneration },
-      ]
+  const handleTemplateSelect = (template: any) => {
+    setSelectedTemplate(template);
+    setPrompt("");
+    setDialogOpen(true);
+  };
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) {
+      toast.error("Please enter a prompt");
+      return;
     }
-  ];
+
+    try {
+      const result = await generate({
+        template_id: selectedTemplate.id,
+        prompt: prompt.trim(),
+      });
+      
+      setDialogOpen(false);
+      toast.success("Generation complete! Check your History.");
+      navigate("/dashboard/history");
+    } catch (error) {
+      // Error already handled in useGeneration hook
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+          <p className="text-lg font-bold">Loading templates...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -208,12 +147,12 @@ const Create = () => {
 
         {/* Category Carousels - Mobile First */}
         <div className="space-y-8 mb-12">
-          {categories.map((category, index) => (
-            <div key={index} className="space-y-3">
+          {templatesByCategory && Object.entries(templatesByCategory).map(([category, categoryTemplates]) => (
+            <div key={category} className="space-y-3">
               <div className="flex items-center gap-2">
-                <h3 className="text-lg md:text-xl font-black">{category.title}</h3>
+                <h3 className="text-lg md:text-xl font-black capitalize">{category}</h3>
                 <Badge className="bg-neon-yellow text-foreground border-2 border-black text-xs">
-                  {category.badge}
+                  {categoryTemplates.length} templates
                 </Badge>
               </div>
               
@@ -225,27 +164,24 @@ const Create = () => {
                 }}
               >
                 <CarouselContent className="-ml-2">
-                  {category.templates.map((template) => (
+                  {categoryTemplates.map((template) => (
                     <CarouselItem key={template.id} className="pl-2 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6">
                       <Card 
                         className="brutal-card-sm hover-lift cursor-pointer overflow-hidden"
-                        onClick={() => {
-                          navigate('/dashboard/custom-creation');
-                          toast.success(`Template ${category.prefix}-${template.id} selected!`);
-                        }}
+                        onClick={() => handleTemplateSelect(template)}
                       >
                         <div className="aspect-square relative overflow-hidden">
                           <TemplateCard
-                            image={template.image}
-                            video={(template as any).video}
-                            alt={`Template ${category.prefix}-${template.id}`}
+                            image={template.thumbnail_url || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=400&fit=crop"}
+                            alt={template.name}
                             className="w-full h-full"
                           />
                           <div className="absolute top-2 left-2 bg-black/80 text-white px-2 py-1 rounded text-xs font-black z-10">
-                            {category.prefix}-{template.id}
+                            {template.ai_models?.content_type?.toUpperCase() || "AI"}
                           </div>
                         </div>
                         <CardContent className="p-2">
+                          <p className="text-xs font-bold mb-1 truncate">{template.name}</p>
                           <Button 
                             className="w-full bg-primary hover:bg-primary/90 text-white font-black text-xs h-8"
                             size="sm"
@@ -263,6 +199,57 @@ const Create = () => {
             </div>
           ))}
         </div>
+
+        {/* Generation Dialog */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="font-black">{selectedTemplate?.name}</DialogTitle>
+              <DialogDescription>
+                {selectedTemplate?.description || "Enter your prompt to generate content"}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Prompt</label>
+                <Textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Describe what you want to create..."
+                  className="min-h-[100px] resize-none"
+                  disabled={isGenerating}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setDialogOpen(false)}
+                  className="flex-1"
+                  disabled={isGenerating}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleGenerate}
+                  className="flex-1"
+                  disabled={isGenerating || !prompt.trim()}
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Generate
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

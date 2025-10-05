@@ -36,6 +36,7 @@ import { useGeneration } from "@/hooks/useGeneration";
 import { useModels } from "@/hooks/useModels";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { ModelParameterForm } from "@/components/generation/ModelParameterForm";
 
 // Group type definition
 type CreationGroup = "image_editing" | "prompt_to_image" | "prompt_to_video" | "image_to_video" | "prompt_to_audio";
@@ -181,6 +182,7 @@ const CustomCreation = () => {
   const [enhancePrompt, setEnhancePrompt] = useState(true);
   const [localGenerating, setLocalGenerating] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [modelParameters, setModelParameters] = useState<Record<string, any>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Filter models by selected group
@@ -286,8 +288,11 @@ const CustomCreation = () => {
     setLocalGenerating(true);
     
     try {
+      // Merge model parameters with legacy resolution setting
       const customParameters: Record<string, any> = {
-        image_size: resolution === "Native" ? "auto" : "hd",
+        ...modelParameters,
+        // Legacy fallback if image_size not set via form
+        ...(modelParameters.image_size ? {} : { image_size: resolution === "Native" ? "auto" : "hd" }),
       };
 
       // Upload images to storage if required
@@ -378,6 +383,7 @@ const CustomCreation = () => {
     setUploadedImages([]);
     setGeneratedOutput(null);
     setResolution("Native");
+    setModelParameters({});
     setShowResetDialog(false);
     toast.success("Reset complete");
   };
@@ -587,26 +593,38 @@ const CustomCreation = () => {
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-4 mt-4">
-                  {/* Resolution */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Resolution</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        variant={resolution === "Native" ? "default" : "outline"}
-                        onClick={() => setResolution("Native")}
-                        className="h-11 md:h-10"
-                      >
-                        Native
-                      </Button>
-                      <Button
-                        variant={resolution === "HD" ? "default" : "outline"}
-                        onClick={() => setResolution("HD")}
-                        className="h-11 md:h-10"
-                      >
-                        HD
-                      </Button>
-                    </div>
-                  </div>
+                  {/* Dynamic Model Parameters */}
+                  {selectedModel && filteredModels && (() => {
+                    const currentModel = filteredModels.find(m => m.id === selectedModel);
+                    return currentModel?.input_schema ? (
+                      <ModelParameterForm
+                        modelSchema={currentModel.input_schema}
+                        onChange={setModelParameters}
+                        currentValues={modelParameters}
+                      />
+                    ) : (
+                      // Legacy Resolution fallback if no schema
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Resolution</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant={resolution === "Native" ? "default" : "outline"}
+                            onClick={() => setResolution("Native")}
+                            className="h-11 md:h-10"
+                          >
+                            Native
+                          </Button>
+                          <Button
+                            variant={resolution === "HD" ? "default" : "outline"}
+                            onClick={() => setResolution("HD")}
+                            className="h-11 md:h-10"
+                          >
+                            HD
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </CollapsibleContent>
               </Collapsible>
 

@@ -11,9 +11,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Power, PowerOff, Trash2 } from "lucide-react";
+import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { ModelFormDialog } from "@/components/admin/ModelFormDialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const CREATION_GROUPS = [
   { id: "image_editing", label: "Image Editing" },
@@ -41,6 +48,7 @@ export default function AIModelsManager() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingModel, setEditingModel] = useState<AIModel | null>(null);
+  const [sortBy, setSortBy] = useState<string>("created_at");
 
   useEffect(() => {
     fetchModels();
@@ -131,6 +139,58 @@ export default function AIModelsManager() {
     fetchModels();
   };
 
+  const handleEnableAll = async () => {
+    try {
+      const { error } = await supabase
+        .from("ai_models")
+        .update({ is_active: true })
+        .neq("is_active", true);
+
+      if (error) throw error;
+      toast.success("All models enabled");
+      fetchModels();
+    } catch (error) {
+      console.error("Error enabling all models:", error);
+      toast.error("Failed to enable all models");
+    }
+  };
+
+  const handleDisableAll = async () => {
+    if (!confirm("Are you sure you want to disable all models?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("ai_models")
+        .update({ is_active: false })
+        .eq("is_active", true);
+
+      if (error) throw error;
+      toast.success("All models disabled");
+      fetchModels();
+    } catch (error) {
+      console.error("Error disabling all models:", error);
+      toast.error("Failed to disable all models");
+    }
+  };
+
+  const sortedModels = [...models].sort((a, b) => {
+    switch (sortBy) {
+      case "name":
+        return a.model_name.localeCompare(b.model_name);
+      case "provider":
+        return a.provider.localeCompare(b.provider);
+      case "type":
+        return a.content_type.localeCompare(b.content_type);
+      case "cost":
+        return a.base_token_cost - b.base_token_cost;
+      case "status":
+        return (a.is_active === b.is_active) ? 0 : a.is_active ? -1 : 1;
+      case "created_at":
+      default:
+        return 0; // Already sorted by created_at from query
+    }
+  });
+
   // No loading state - render immediately
   return (
     <div className="space-y-6">
@@ -152,7 +212,43 @@ export default function AIModelsManager() {
 
       <Card className="border-3 border-black brutal-shadow">
         <CardHeader>
-          <CardTitle>All Models ({models.length})</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>All Models ({models.length})</CardTitle>
+            <div className="flex gap-2 items-center">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[180px]">
+                  <ArrowUpDown className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Sort by..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="created_at">Recently Added</SelectItem>
+                  <SelectItem value="name">Model Name</SelectItem>
+                  <SelectItem value="provider">Provider</SelectItem>
+                  <SelectItem value="type">Content Type</SelectItem>
+                  <SelectItem value="cost">Base Cost</SelectItem>
+                  <SelectItem value="status">Status</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleEnableAll}
+                className="border-2"
+              >
+                <Power className="h-4 w-4 mr-2" />
+                Enable All
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDisableAll}
+                className="border-2"
+              >
+                <PowerOff className="h-4 w-4 mr-2" />
+                Disable All
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {models.length === 0 ? (
@@ -183,7 +279,7 @@ export default function AIModelsManager() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {models.map((model) => (
+                {sortedModels.map((model) => (
                   <TableRow key={model.id}>
                     <TableCell className="font-mono text-sm">
                       {model.id}

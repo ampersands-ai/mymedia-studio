@@ -11,9 +11,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Power, PowerOff, Trash2 } from "lucide-react";
+import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { TemplateFormDialog } from "@/components/admin/TemplateFormDialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ContentTemplate {
   id: string;
@@ -33,6 +40,7 @@ export default function TemplatesManager() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<ContentTemplate | null>(null);
+  const [sortBy, setSortBy] = useState<string>("display_order");
 
   useEffect(() => {
     fetchTemplates();
@@ -112,6 +120,55 @@ export default function TemplatesManager() {
     fetchTemplates();
   };
 
+  const handleEnableAll = async () => {
+    try {
+      const { error } = await supabase
+        .from("content_templates")
+        .update({ is_active: true })
+        .neq("is_active", true);
+
+      if (error) throw error;
+      toast.success("All templates enabled");
+      fetchTemplates();
+    } catch (error) {
+      console.error("Error enabling all templates:", error);
+      toast.error("Failed to enable all templates");
+    }
+  };
+
+  const handleDisableAll = async () => {
+    if (!confirm("Are you sure you want to disable all templates?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("content_templates")
+        .update({ is_active: false })
+        .eq("is_active", true);
+
+      if (error) throw error;
+      toast.success("All templates disabled");
+      fetchTemplates();
+    } catch (error) {
+      console.error("Error disabling all templates:", error);
+      toast.error("Failed to disable all templates");
+    }
+  };
+
+  const sortedTemplates = [...templates].sort((a, b) => {
+    switch (sortBy) {
+      case "name":
+        return a.name.localeCompare(b.name);
+      case "category":
+        return a.category.localeCompare(b.category);
+      case "display_order":
+        return a.display_order - b.display_order;
+      case "status":
+        return (a.is_active === b.is_active) ? 0 : a.is_active ? -1 : 1;
+      default:
+        return 0;
+    }
+  });
+
   // No loading state - render immediately
   return (
     <div className="space-y-6">
@@ -133,7 +190,41 @@ export default function TemplatesManager() {
 
       <Card className="border-3 border-black brutal-shadow">
         <CardHeader>
-          <CardTitle>All Templates ({templates.length})</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>All Templates ({templates.length})</CardTitle>
+            <div className="flex gap-2 items-center">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[180px]">
+                  <ArrowUpDown className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Sort by..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="display_order">Display Order</SelectItem>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="category">Category</SelectItem>
+                  <SelectItem value="status">Status</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleEnableAll}
+                className="border-2"
+              >
+                <Power className="h-4 w-4 mr-2" />
+                Enable All
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDisableAll}
+                className="border-2"
+              >
+                <PowerOff className="h-4 w-4 mr-2" />
+                Disable All
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {templates.length === 0 ? (
@@ -163,7 +254,7 @@ export default function TemplatesManager() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {templates.map((template) => (
+                {sortedTemplates.map((template) => (
                   <TableRow key={template.id}>
                     <TableCell className="font-mono text-sm">
                       {template.id}

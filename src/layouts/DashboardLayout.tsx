@@ -56,29 +56,33 @@ export const DashboardLayout = () => {
               <Link to="/dashboard/create">
                 <Button
                   variant={isActive("/dashboard/create") ? "default" : "outline"}
-                  size="sm"
-                  className={isActive("/dashboard/create") ? "bg-neon-blue hover:bg-neon-blue/90" : ""}
+                  className={cn(
+                    "text-base px-6 py-5",
+                    isActive("/dashboard/create") ? "bg-neon-blue hover:bg-neon-blue/90" : ""
+                  )}
                 >
-                  <Sparkles className="h-4 w-4 mr-2" />
+                  <Sparkles className="h-5 w-5 mr-2" />
                   Templates
                 </Button>
               </Link>
               <Link to="/dashboard/custom-creation">
                 <Button
                   variant={isActive("/dashboard/custom-creation") ? "default" : "outline"}
-                  size="sm"
-                  className={isActive("/dashboard/custom-creation") ? "bg-neon-pink text-white hover:bg-neon-pink/90" : ""}
+                  className={cn(
+                    "text-base px-6 py-5",
+                    isActive("/dashboard/custom-creation") ? "bg-primary hover:bg-primary/90 text-white" : ""
+                  )}
                 >
-                  <Sparkles className="h-4 w-4 mr-2" />
+                  <Sparkles className="h-5 w-5 mr-2" />
                   Custom Creation
                 </Button>
               </Link>
               <Link to="/dashboard/settings">
                 <Button
                   variant={isActive("/dashboard/settings") ? "default" : "ghost"}
-                  size="sm"
+                  className="text-base px-6 py-5"
                 >
-                  <Settings className="h-4 w-4 mr-2" />
+                  <Settings className="h-5 w-5 mr-2" />
                   Settings
                 </Button>
               </Link>
@@ -115,7 +119,7 @@ export const DashboardLayout = () => {
                       className={cn(
                         "flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors",
                         isActive("/dashboard/custom-creation") 
-                          ? "bg-neon-pink text-white" 
+                          ? "bg-primary text-white" 
                           : "hover:bg-accent"
                       )}
                     >

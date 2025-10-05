@@ -334,16 +334,45 @@ const CustomCreation = () => {
                 </div>
               )}
 
-              {/* Prompt */}
+              {/* Prompt with integrated buttons */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Prompt <span className="text-destructive">*</span></label>
-                <Textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Describe what you want to create..."
-                  className="min-h-[100px] md:min-h-[120px] resize-none text-sm md:text-base"
-                  disabled={isGenerating}
-                />
+                <div className="relative">
+                  <Textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Describe what you want to create..."
+                    className="min-h-[120px] md:min-h-[140px] pb-16 resize-none text-sm md:text-base"
+                    disabled={isGenerating}
+                  />
+                  <div className="absolute bottom-2 left-2 right-2 flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={handleReset} 
+                      className="flex-1 h-10 bg-background hover:bg-muted"
+                      disabled={isGenerating}
+                    >
+                      Reset
+                    </Button>
+                    <Button
+                      onClick={handleGenerate}
+                      disabled={!prompt || !selectedModel || isGenerating}
+                      className="flex-1 h-10 bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Generate
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
 
               {/* Image Upload */}
@@ -456,55 +485,6 @@ const CustomCreation = () => {
           </Card>
         </div>
 
-        {/* Sticky Bottom Action Bar - Mobile Only */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t-4 border-black lg:hidden z-40">
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={handleReset} className="flex-1 h-12">
-              Reset
-            </Button>
-            <Button
-              onClick={handleGenerate}
-              disabled={!prompt || !selectedModel || isGenerating}
-              className="flex-1 h-12 bg-gradient-to-r from-primary to-purple-600"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4 mr-2" />
-                  Generate
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-
-        {/* Desktop Action Buttons */}
-        <div className="hidden lg:flex gap-3 mb-12">
-          <Button variant="outline" onClick={handleReset} className="flex-1">
-            Reset
-          </Button>
-          <Button
-            onClick={handleGenerate}
-            disabled={!prompt || !selectedModel || isGenerating}
-            className="flex-1 bg-gradient-to-r from-primary to-purple-600"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4 mr-2" />
-                Generate
-              </>
-            )}
-          </Button>
-        </div>
 
         {/* Community Creations Section - Removed */}
         {/* Removed community creations carousel to simplify the page */}

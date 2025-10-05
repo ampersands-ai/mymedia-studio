@@ -16,6 +16,7 @@ import Pricing from "./pages/Pricing";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
+import History from "./pages/dashboard/History";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -43,6 +44,7 @@ const AppContent = () => {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route path="create" element={<Create />} />
           <Route path="custom-creation" element={<CustomCreation />} />
+          <Route path="history" element={<History />} />
           <Route path="settings" element={<Settings />} />
         </Route>
         <Route path="/admin" element={<AdminLayout />}>

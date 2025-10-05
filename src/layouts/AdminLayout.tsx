@@ -1,28 +1,34 @@
 import { useEffect } from "react";
-import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
+import { Outlet, useNavigate, Link, useLocation, Navigate } from "react-router-dom";
 import { useAdminRole } from "@/hooks/useAdminRole";
-import { Sparkles, Database, FileText, Users, BarChart3 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Sparkles, Database, FileText, Users, BarChart3, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Footer } from "@/components/Footer";
 
 export const AdminLayout = () => {
-  const navigate = useNavigate();
   const location = useLocation();
-  const { isAdmin, loading } = useAdminRole();
+  const { loading: authLoading } = useAuth();
+  const { isAdmin, loading: roleLoading } = useAdminRole();
 
-  useEffect(() => {
-    if (!loading && !isAdmin) {
-      navigate("/dashboard/create");
-    }
-  }, [isAdmin, loading, navigate]);
+  // Combined loading state
+  const loading = authLoading || roleLoading;
 
-  // Redirect non-admins without showing loading state
-  if (!loading && !isAdmin) {
-    navigate("/dashboard/create");
-    return null;
+  // Show loading spinner while checking
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
-  // Render immediately, no loading state
+  // Only redirect after all checks complete
+  if (!isAdmin) {
+    return <Navigate to="/dashboard/create" replace />;
+  }
+
+  // Render admin layout
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">

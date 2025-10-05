@@ -44,7 +44,21 @@ export default function AIModelsManager() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        // Check if it's an RLS policy error
+        const isRLSError = error.code === 'PGRST301' || 
+                          error.message?.includes('row-level security') ||
+                          error.message?.includes('policy');
+        
+        if (isRLSError) {
+          toast.error("Access denied. Please ensure you have admin privileges.");
+          console.error("RLS policy blocked access:", error);
+        } else {
+          throw error;
+        }
+        return;
+      }
+      
       setModels(data || []);
     } catch (error) {
       console.error("Error fetching models:", error);

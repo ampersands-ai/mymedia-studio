@@ -15,40 +15,28 @@ export const AdminLayout = () => {
     }
   }, [isAdmin, loading, navigate]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="h-12 w-12 rounded-xl bg-gradient-primary border-3 border-black brutal-shadow flex items-center justify-center mx-auto animate-pulse">
-            <Sparkles className="h-6 w-6 text-white" />
-          </div>
-          <p className="text-lg font-bold">Loading Admin Panel...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
+  // Redirect non-admins without showing loading state
+  if (!loading && !isAdmin) {
+    navigate("/dashboard/create");
     return null;
   }
 
-  const navItems = [
-    { path: "/admin/dashboard", label: "Overview", icon: BarChart3 },
-    { path: "/admin/models", label: "AI Models", icon: Database },
-    { path: "/admin/templates", label: "Templates", icon: FileText },
-    { path: "/admin/users", label: "Users", icon: Users },
-  ];
-
+  // Render immediately, no loading state
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">
         {/* Sidebar */}
         <aside className="w-64 min-h-screen bg-card border-r-3 border-black brutal-shadow">
           <div className="p-6 border-b-3 border-black">
-            <h1 className="text-2xl font-black">Admin Panel</h1>
+            <h1 className="text-2xl font-black">ADMIN PANEL</h1>
           </div>
           <nav className="p-4 space-y-2">
-            {navItems.map((item) => {
+            {[
+              { path: "/admin/dashboard", label: "Overview", icon: BarChart3 },
+              { path: "/admin/models", label: "AI Models", icon: Database },
+              { path: "/admin/templates", label: "Templates", icon: FileText },
+              { path: "/admin/users", label: "Users", icon: Users },
+            ].map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
               return (

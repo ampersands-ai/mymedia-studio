@@ -210,12 +210,16 @@ serve(async (req) => {
     });
 
     try {
+      console.log('Parameters being sent to provider:', JSON.stringify(parameters));
+      
       const providerRequest = {
         model: model.id, // Use model ID instead of display name for API calls
         prompt: finalPrompt,
         parameters,
         api_endpoint: model.api_endpoint
       };
+
+      console.log('Provider request:', JSON.stringify(providerRequest));
 
       const providerResponse: any = await Promise.race([
         callProvider(model.provider, providerRequest),

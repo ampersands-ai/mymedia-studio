@@ -199,7 +199,16 @@ serve(async (req) => {
 
     console.log('Generation record created:', generation.id);
 
-    // Call provider
+    // Call provider with timeout
+    const TIMEOUT_MS = 600000; // 600 seconds
+    let timeoutId: number;
+    
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error('Request timed out after 600 seconds'));
+      }, TIMEOUT_MS);
+    });
+
     try {
       const providerRequest = {
         model: model.id, // Use model ID instead of display name for API calls
@@ -208,10 +217,13 @@ serve(async (req) => {
         api_endpoint: model.api_endpoint
       };
 
-      const providerResponse = await callProvider(
-        model.provider,
-        providerRequest
-      );
+      const providerResponse = await Promise.race([
+        callProvider(model.provider, providerRequest),
+        timeoutPromise
+      ]);
+
+      // Clear timeout if successful
+      clearTimeout(timeoutId);
 
       console.log('Provider response received');
 
@@ -280,16 +292,19 @@ serve(async (req) => {
     } catch (providerError: any) {
       console.error('Provider error:', providerError);
 
+      const isTimeout = providerError.message?.includes('timed out');
+
       // Update generation record with failure
       await supabase
         .from('generations')
         .update({
           status: 'failed',
+          tokens_used: 0, // Set to 0 for failed generations
           provider_response: { error: providerError.message }
         })
         .eq('id', generation.id);
 
-      // Refund tokens due to provider failure
+      // Refund tokens due to provider failure or timeout
       const { error: refundError } = await supabase
         .from('user_subscriptions')
         .update({ tokens_remaining: subscription.tokens_remaining })
@@ -298,7 +313,7 @@ serve(async (req) => {
       if (refundError) {
         console.error('Failed to refund tokens:', refundError);
       } else {
-        console.log(`Tokens refunded: ${tokenCost} tokens returned to user ${user.id} due to provider failure`);
+        console.log(`Tokens refunded: ${tokenCost} tokens returned to user ${user.id} due to ${isTimeout ? 'timeout' : 'provider failure'}`);
       }
 
       // Audit log
@@ -310,13 +325,16 @@ serve(async (req) => {
         metadata: {
           error: providerError.message,
           model_id: model.id,
-          tokens_refunded: tokenCost
+          tokens_refunded: tokenCost,
+          reason: isTimeout ? 'timeout' : 'provider_error'
         }
       });
 
       return new Response(
         JSON.stringify({ 
-          error: 'Generation failed due to provider error. Your tokens have been refunded.',
+          error: isTimeout 
+            ? 'Generation timed out after 10 minutes. Your tokens have been refunded.'
+            : 'Generation failed due to provider error. Your tokens have been refunded.',
           details: providerError.message,
           tokens_refunded: tokenCost
         }),

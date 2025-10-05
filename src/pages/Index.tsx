@@ -404,7 +404,7 @@ const Index = () => {
               {partners.map((partner, index) => (
                 <div
                   key={`first-${index}`}
-                  className="flex-shrink-0 mx-6 md:mx-8 grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
+                  className="flex-shrink-0 mx-6 md:mx-8 transition-all duration-300 hover:scale-110"
                 >
                   <img
                     src={partner.logo}
@@ -418,7 +418,7 @@ const Index = () => {
               {partners.map((partner, index) => (
                 <div
                   key={`second-${index}`}
-                  className="flex-shrink-0 mx-6 md:mx-8 grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
+                  className="flex-shrink-0 mx-6 md:mx-8 transition-all duration-300 hover:scale-110"
                 >
                   <img
                     src={partner.logo}

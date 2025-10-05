@@ -361,10 +361,10 @@ const CustomCreation = () => {
                 key={group.id}
                 onClick={() => setSelectedGroup(group.id)}
                 className={cn(
-                  "p-2 md:p-3 rounded-lg border-2 transition-all duration-200 flex items-center gap-2",
+                  "p-2 md:p-3 rounded-xl border-3 transition-all duration-200 flex items-center gap-2",
                   selectedGroup === group.id
                     ? "bg-yellow-400 border-black text-black font-bold shadow-lg"
-                    : "bg-muted/30 border-muted-foreground/20 text-muted-foreground hover:bg-muted/50"
+                    : "bg-white border-border text-foreground hover:bg-muted/50"
                 )}
               >
                 <span className="text-2xl md:text-3xl">{group.icon}</span>

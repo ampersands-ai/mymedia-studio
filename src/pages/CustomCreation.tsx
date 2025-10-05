@@ -342,7 +342,21 @@ const CustomCreation = () => {
 
               {/* Prompt */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Prompt <span className="text-destructive">*</span></label>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Prompt <span className="text-destructive">*</span></label>
+                  <Button
+                    variant={enhancePrompt ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setEnhancePrompt(!enhancePrompt)}
+                    className={cn(
+                      "h-8",
+                      enhancePrompt && "bg-neon-green hover:bg-neon-green/90 text-black font-bold"
+                    )}
+                  >
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    Enhance
+                  </Button>
+                </div>
                 <Textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
@@ -350,19 +364,6 @@ const CustomCreation = () => {
                   className="min-h-[100px] md:min-h-[120px] resize-none text-sm md:text-base"
                   disabled={isGenerating}
                 />
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="enhance-prompt"
-                    checked={enhancePrompt}
-                    onCheckedChange={(checked) => setEnhancePrompt(checked as boolean)}
-                  />
-                  <label
-                    htmlFor="enhance-prompt"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                  >
-                    Enhance prompt
-                  </label>
-                </div>
               </div>
 
               {/* Image Upload */}

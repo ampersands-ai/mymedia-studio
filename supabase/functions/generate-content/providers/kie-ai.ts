@@ -13,13 +13,21 @@ export async function callKieAI(request: ProviderRequest): Promise<ProviderRespo
   console.log('Calling Kie.ai API - Model:', request.model, 'Endpoint:', createTaskEndpoint);
 
   // Build request payload according to Kie.ai's structure
-  const payload = {
+  // Extract image_urls to place at root level (Kie.ai API requirement)
+  const { image_urls, ...otherParameters } = request.parameters;
+
+  const payload: any = {
     model: request.model,
     input: {
       prompt: request.prompt,
-      ...request.parameters
+      ...otherParameters
     }
   };
+
+  // Add image_urls at root level if present
+  if (image_urls) {
+    payload.image_urls = image_urls;
+  }
 
   try {
     // Step 1: Create the task

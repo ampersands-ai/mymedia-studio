@@ -256,6 +256,9 @@ const CustomCreation = () => {
   };
 
   const handleGenerate = async () => {
+    console.log("[CustomCreation] Generate clicked", { selectedModel, uploadedImagesCount: uploadedImages.length });
+    toast.message("Starting generation...");
+
     // Validate based on requirements
     if (isPromptRequired && !prompt.trim()) {
       toast.error("Please enter a prompt");
@@ -582,10 +585,11 @@ const CustomCreation = () => {
               {/* Action Buttons */}
               <div className="flex flex-col gap-2">
                 <Button 
+                  type="button"
                   onClick={handleGenerate} 
                   disabled={isGenerating}
                   size="lg"
-                  className="w-full h-12 md:h-11 text-base font-bold bg-[#FFFF00] hover:bg-[#FFEB00] text-black border-2 border-black shadow-lg"
+                  className="pointer-events-auto w-full h-12 md:h-11 text-base font-bold bg-[#FFFF00] hover:bg-[#FFEB00] text-black border-2 border-black shadow-lg"
                 >
                   {isGenerating ? (
                     <>

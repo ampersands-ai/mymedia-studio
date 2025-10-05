@@ -111,6 +111,7 @@ const Create = () => {
   };
 
   const handleGenerate = async () => {
+    console.log("[Create] Generate clicked", { templateId: selectedTemplate?.id, requiresImages, uploadedImagesCount: uploadedImages.length });
     if (!prompt.trim()) {
       toast.error("Please enter a prompt");
       return;
@@ -283,8 +284,9 @@ const Create = () => {
                   Cancel
                 </Button>
                 <Button
+                  type="button"
                   onClick={handleGenerate}
-                  className="flex-1"
+                  className="flex-1 pointer-events-auto"
                   disabled={isGenerating}
                 >
                   {isGenerating ? (

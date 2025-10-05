@@ -334,45 +334,16 @@ const CustomCreation = () => {
                 </div>
               )}
 
-              {/* Prompt with integrated buttons */}
+              {/* Prompt */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Prompt <span className="text-destructive">*</span></label>
-                <div className="relative">
-                  <Textarea
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Describe what you want to create..."
-                    className="min-h-[120px] md:min-h-[140px] pb-16 resize-none text-sm md:text-base"
-                    disabled={isGenerating}
-                  />
-                  <div className="absolute bottom-2 left-2 right-2 flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      onClick={handleReset} 
-                      className="flex-1 h-10 bg-background hover:bg-muted"
-                      disabled={isGenerating}
-                    >
-                      Reset
-                    </Button>
-                    <Button
-                      onClick={handleGenerate}
-                      disabled={!prompt || !selectedModel || isGenerating}
-                      className="flex-1 h-10 bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white"
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          Generate
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
+                <Textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Describe what you want to create..."
+                  className="min-h-[100px] md:min-h-[120px] resize-none text-sm md:text-base"
+                  disabled={isGenerating}
+                />
               </div>
 
               {/* Image Upload */}
@@ -435,14 +406,44 @@ const CustomCreation = () => {
                 </CollapsibleContent>
               </Collapsible>
 
-              {/* Token Cost */}
-              <div className="p-3 md:p-4 bg-primary/10 rounded-lg border-2 border-primary/20">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Coins className="h-4 md:h-5 w-4 md:w-5 text-primary" />
-                    <span className="text-xs md:text-sm font-medium">Cost</span>
+              {/* Token Cost and Action Buttons */}
+              <div className="space-y-3">
+                <div className="p-3 md:p-4 bg-neon-yellow/20 rounded-lg border-2 border-neon-yellow/40">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Coins className="h-4 md:h-5 w-4 md:w-5" />
+                      <span className="text-xs md:text-sm font-medium">Estimated Cost</span>
+                    </div>
+                    <div className="text-xl md:text-2xl font-black">{estimatedTokens}</div>
                   </div>
-                  <div className="text-xl md:text-2xl font-black text-primary">{estimatedTokens}</div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleReset} 
+                    className="flex-1 h-11 md:h-12"
+                    disabled={isGenerating}
+                  >
+                    Reset
+                  </Button>
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={!prompt || !selectedModel || isGenerating}
+                    className="flex-1 h-11 md:h-12 bg-neon-blue hover:bg-neon-blue/90 text-black font-bold"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Generate
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
             </div>
@@ -486,8 +487,73 @@ const CustomCreation = () => {
         </div>
 
 
-        {/* Community Creations Section - Removed */}
-        {/* Removed community creations carousel to simplify the page */}
+        {/* Community Creations Section */}
+        <div className="mt-12 md:mt-16 space-y-6 md:space-y-8">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl md:text-4xl font-black">COMMUNITY CREATIONS</h2>
+            <p className="text-sm md:text-base text-foreground/80 font-medium">
+              Get inspired by what others are creating
+            </p>
+          </div>
+
+          <Carousel className="w-full">
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {communityCreations.map((creation) => (
+                <CarouselItem key={creation.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                  <Card className="overflow-hidden group cursor-pointer hover-lift">
+                    <div className="relative aspect-square overflow-hidden bg-muted">
+                      {creation.contentType === "video" && creation.video ? (
+                        <video
+                          src={creation.video}
+                          poster={creation.image}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          muted
+                          loop
+                          onMouseEnter={(e) => e.currentTarget.play()}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.pause();
+                            e.currentTarget.currentTime = 0;
+                          }}
+                        />
+                      ) : (
+                        <img
+                          src={creation.image}
+                          alt={`Community creation ${creation.id}`}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      )}
+                      <div className="absolute top-2 right-2 flex gap-2">
+                        <Badge className="bg-neon-blue text-black font-bold border-2 border-black">
+                          {creation.resolution}
+                        </Badge>
+                        <Badge className="bg-background/90 backdrop-blur">
+                          {creation.contentType}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="p-3 md:p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-neon-blue to-neon-green flex items-center justify-center text-xs font-black">
+                            {creation.author.charAt(0)}
+                          </div>
+                          <span className="text-xs md:text-sm font-medium">{creation.author}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <span>❤️</span>
+                          <span className="font-medium">{creation.likes}</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2 capitalize">{creation.theme} theme</p>
+                    </div>
+                  </Card>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden md:flex" />
+            <CarouselNext className="hidden md:flex" />
+          </Carousel>
+        </div>
 
         {/* Best Practices - Use Cases */}
         <div className="mt-12 md:mt-16 space-y-6 md:space-y-8 pb-24 md:pb-12">

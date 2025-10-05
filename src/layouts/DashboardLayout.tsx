@@ -58,7 +58,7 @@ export const DashboardLayout = () => {
                   variant={isActive("/dashboard/create") ? "default" : "outline"}
                   className={cn(
                     "text-base px-6 py-5",
-                    isActive("/dashboard/create") ? "bg-neon-blue hover:bg-neon-blue/90" : ""
+                    isActive("/dashboard/create") ? "bg-neon-blue hover:bg-neon-blue/90 text-black font-bold" : ""
                   )}
                 >
                   <Sparkles className="h-5 w-5 mr-2" />
@@ -70,7 +70,7 @@ export const DashboardLayout = () => {
                   variant={isActive("/dashboard/custom-creation") ? "default" : "outline"}
                   className={cn(
                     "text-base px-6 py-5",
-                    isActive("/dashboard/custom-creation") ? "bg-primary hover:bg-primary/90 text-white" : ""
+                    isActive("/dashboard/custom-creation") ? "bg-neon-green hover:bg-neon-green/90 text-black font-bold" : ""
                   )}
                 >
                   <Sparkles className="h-5 w-5 mr-2" />
@@ -119,7 +119,7 @@ export const DashboardLayout = () => {
                       className={cn(
                         "flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors",
                         isActive("/dashboard/custom-creation") 
-                          ? "bg-primary text-white" 
+                          ? "bg-neon-green text-black" 
                           : "hover:bg-accent"
                       )}
                     >
@@ -132,7 +132,7 @@ export const DashboardLayout = () => {
                       className={cn(
                         "flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors",
                         isActive("/dashboard/create") 
-                          ? "bg-neon-blue" 
+                          ? "bg-neon-blue text-black" 
                           : "hover:bg-accent"
                       )}
                     >

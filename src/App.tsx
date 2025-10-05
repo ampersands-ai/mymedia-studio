@@ -29,15 +29,12 @@ const queryClient = new QueryClient();
 
 const AppContent = () => {
   const location = useLocation();
-  const { user } = useAuth();
   const showCursor = !location.pathname.startsWith("/dashboard");
-  const isDashboardRoute = location.pathname.startsWith("/dashboard");
 
   return (
     <>
       {showCursor && <SplashCursor />}
       <Analytics />
-      {user && isDashboardRoute && <GlobalHeader />}
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />

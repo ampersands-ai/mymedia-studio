@@ -22,9 +22,21 @@ import {
 } from "@/components/ui/collapsible";
 import { TemplateCard } from "@/components/TemplateCard";
 import { useGeneration } from "@/hooks/useGeneration";
-import { useModelsByContentType } from "@/hooks/useModels";
+import { useModels } from "@/hooks/useModels";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+
+// Group type definition
+type CreationGroup = "image_editing" | "prompt_to_image" | "prompt_to_video" | "image_to_video" | "prompt_to_audio";
+
+// Group configuration
+const CREATION_GROUPS = [
+  { id: "image_editing" as CreationGroup, label: "Image Editing", icon: "🎨", description: "Modify existing images" },
+  { id: "prompt_to_image" as CreationGroup, label: "Prompt to Image", icon: "🖼️", description: "Generate images from text" },
+  { id: "prompt_to_video" as CreationGroup, label: "Prompt to Video", icon: "🎬", description: "Generate videos from text" },
+  { id: "image_to_video" as CreationGroup, label: "Image to Video", icon: "🎞️", description: "Animate images into videos" },
+  { id: "prompt_to_audio" as CreationGroup, label: "Prompt to Audio", icon: "🎵", description: "Generate audio from text" },
+];
 
 // Community creations data
 const communityCreations = [
@@ -144,7 +156,8 @@ const communityCreations = [
 const CustomCreation = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { modelsByContentType, isLoading: modelsLoading } = useModelsByContentType();
+  const [selectedGroup, setSelectedGroup] = useState<CreationGroup>("prompt_to_image");
+  const { data: allModels, isLoading: modelsLoading } = useModels();
   const { generate, isGenerating } = useGeneration();
   const [prompt, setPrompt] = useState("");
   const [contentType, setContentType] = useState<"image" | "video" | "music" | "text">("image");
@@ -156,6 +169,16 @@ const CustomCreation = () => {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [enhancePrompt, setEnhancePrompt] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Filter models by selected group
+  const filteredModels = allModels?.filter(model => {
+    const groups = model.groups as string[] || [];
+    return groups.includes(selectedGroup);
+  }) || [];
+
+  // Determine if image upload is required for current group
+  const isImageRequired = selectedGroup === "image_editing" || selectedGroup === "image_to_video";
+  const isPromptRequired = selectedGroup !== "image_editing";
 
   const surprisePrompts = [
     "A majestic dragon soaring over a cyberpunk city at sunset",
@@ -178,15 +201,17 @@ const CustomCreation = () => {
     }
   }, []);
 
-  // Auto-select first model when content type changes (only if none selected or previous no longer available)
+  // Reset model selection when group changes
   useEffect(() => {
-    const list = modelsByContentType?.[contentType] || [];
-    if (list.length === 0) return;
-    setSelectedModel((prev) => {
-      if (prev && list.some((m) => String(m.id) === String(prev))) return prev;
-      return String(list[0].id);
-    });
-  }, [contentType, modelsByContentType]);
+    setSelectedModel(null);
+  }, [selectedGroup]);
+
+  // Auto-select first model when filtered models change
+  useEffect(() => {
+    if (filteredModels.length > 0 && !selectedModel) {
+      setSelectedModel(String(filteredModels[0].id));
+    }
+  }, [filteredModels, selectedModel]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -224,8 +249,14 @@ const CustomCreation = () => {
   };
 
   const handleGenerate = async () => {
-    if (!prompt.trim()) {
+    // Validate based on group requirements
+    if (isPromptRequired && !prompt.trim()) {
       toast.error("Please enter a prompt");
+      return;
+    }
+    
+    if (isImageRequired && uploadedImages.length === 0) {
+      toast.error("Please upload at least one image for this creation type");
       return;
     }
 
@@ -260,9 +291,9 @@ const CustomCreation = () => {
   };
 
   const calculateTokens = () => {
-    if (!selectedModel || !modelsByContentType) return 50;
+    if (!selectedModel || !filteredModels) return 50;
 
-    const currentModel = modelsByContentType[contentType]?.find(m => m.id === selectedModel);
+    const currentModel = filteredModels.find(m => m.id === selectedModel);
     if (!currentModel) return 50;
 
     let tokens = currentModel.base_token_cost;
@@ -281,7 +312,7 @@ const CustomCreation = () => {
 
   useEffect(() => {
     setEstimatedTokens(calculateTokens());
-  }, [selectedModel, resolution, uploadedImages, contentType, modelsByContentType]);
+  }, [selectedModel, resolution, uploadedImages, selectedGroup, filteredModels]);
 
   const handleReset = () => {
     setPrompt("");
@@ -297,7 +328,7 @@ const CustomCreation = () => {
   };
 
   // Show empty state immediately if no models
-  if (!modelsLoading && (!modelsByContentType || Object.keys(modelsByContentType).length === 0)) {
+  if (!modelsLoading && (!allModels || allModels.length === 0)) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 text-center">
@@ -317,8 +348,31 @@ const CustomCreation = () => {
         <div className="text-center mb-6 md:mb-8">
           <h1 className="text-2xl md:text-4xl font-black mb-2">CREATION STUDIO</h1>
           <p className="text-sm md:text-base text-foreground/80 font-medium">
-            Fine-tune every detail
+            Choose your creation type and fine-tune every detail
           </p>
+        </div>
+
+        {/* Group Selection */}
+        <div className="mb-8">
+          <h2 className="text-lg md:text-xl font-bold mb-4">Select Creation Type</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+            {CREATION_GROUPS.map((group) => (
+              <button
+                key={group.id}
+                onClick={() => setSelectedGroup(group.id)}
+                className={cn(
+                  "p-4 md:p-6 rounded-xl border-2 transition-all duration-300 hover:scale-105",
+                  selectedGroup === group.id
+                    ? "bg-primary/10 border-primary shadow-lg shadow-primary/20"
+                    : "bg-card border-border hover:border-primary/50"
+                )}
+              >
+                <div className="text-3xl md:text-4xl mb-2">{group.icon}</div>
+                <div className="font-semibold text-xs md:text-sm mb-1">{group.label}</div>
+                <div className="text-xs text-muted-foreground hidden md:block">{group.description}</div>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Mobile-First Layout - Stacked vertically on mobile, side-by-side on desktop */}
@@ -331,43 +385,63 @@ const CustomCreation = () => {
 
             <div className="p-4 md:p-6 space-y-4 md:space-y-6">
               {/* Model Selection */}
-              {modelsByContentType && modelsByContentType[contentType] && (
+              {filteredModels.length > 0 && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">AI Model</label>
                   <div className="grid grid-cols-1 gap-2">
-                    {modelsByContentType[contentType].map((model) => (
-                      <Button
-                        key={String(model.id)}
-                        variant="outline"
-                        onClick={() => setSelectedModel(String(model.id))}
-                        className={cn(
-                          "h-auto py-3 px-4 justify-start text-left border-2 transition-all",
-                          String(selectedModel) === String(model.id) 
-                            ? "bg-red-500 hover:bg-red-600 text-white font-bold border-black" 
-                            : "hover:bg-muted border-border"
-                        )}
-                      >
-                        <div className="flex flex-col gap-1 w-full">
-                          <div className="flex items-center justify-between w-full">
-                            <span className="font-bold text-sm">{model.model_name}</span>
-                            <Badge variant="secondary" className="text-xs">
-                              {model.base_token_cost} tokens
-                            </Badge>
+                    {filteredModels.map((model) => {
+                      const modelGroups = (model.groups as string[]) || [];
+                      const otherGroups = modelGroups.filter(g => g !== selectedGroup);
+                      
+                      return (
+                        <Button
+                          key={String(model.id)}
+                          variant="outline"
+                          onClick={() => setSelectedModel(String(model.id))}
+                          className={cn(
+                            "h-auto py-3 px-4 justify-start text-left border-2 transition-all",
+                            String(selectedModel) === String(model.id) 
+                              ? "bg-red-500 hover:bg-red-600 text-white font-bold border-black" 
+                              : "hover:bg-muted border-border"
+                          )}
+                        >
+                          <div className="flex flex-col gap-1 w-full">
+                            <div className="flex items-center justify-between w-full">
+                              <span className="font-bold text-sm">{model.model_name}</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {model.base_token_cost} tokens
+                              </Badge>
+                            </div>
+                            <span className={cn("text-xs capitalize", String(selectedModel) === String(model.id) ? "text-white/80" : "text-muted-foreground")}>
+                              {model.provider} • {model.content_type}
+                            </span>
+                            {otherGroups.length > 0 && (
+                              <span className={cn("text-xs", String(selectedModel) === String(model.id) ? "text-white/60" : "text-muted-foreground/60")}>
+                                Also in: {otherGroups.map(g => 
+                                  CREATION_GROUPS.find(cg => cg.id === g)?.label
+                                ).join(", ")}
+                              </span>
+                            )}
                           </div>
-                          <span className={cn("text-xs capitalize", String(selectedModel) === String(model.id) ? "text-white/80" : "text-muted-foreground")}>
-                            {model.provider} • {model.content_type}
-                          </span>
-                        </div>
-                      </Button>
-                    ))}
+                        </Button>
+                      );
+                    })}
                   </div>
+                </div>
+              )}
+
+              {filteredModels.length === 0 && !modelsLoading && (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">No models available for this creation type</p>
                 </div>
               )}
 
               {/* Prompt */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Prompt <span className="text-destructive">*</span></label>
+                  <label className="text-sm font-medium">
+                    Prompt {isPromptRequired && <span className="text-destructive">*</span>}
+                  </label>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
@@ -400,12 +474,16 @@ const CustomCreation = () => {
                   placeholder="Describe what you want to create..."
                   className="min-h-[100px] md:min-h-[120px] resize-none text-sm md:text-base"
                   disabled={isGenerating}
+                  required={isPromptRequired}
                 />
               </div>
 
               {/* Image Upload */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Images (Optional)</label>
+                <label className="text-sm font-medium">
+                  Images {isImageRequired && <span className="text-destructive">*</span>}
+                  {!isImageRequired && <span className="text-muted-foreground text-xs ml-1">(Optional)</span>}
+                </label>
 
                 {uploadedImages.map((file, index) => (
                   <div key={index} className="flex items-center gap-2 p-2 md:p-3 border rounded-lg bg-muted/30">
@@ -429,6 +507,12 @@ const CustomCreation = () => {
                   <Upload className="h-4 w-4 mr-2" />
                   Add Images ({uploadedImages.length}/10)
                 </Button>
+                
+                {isImageRequired && uploadedImages.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {selectedGroup === "image_editing" ? "Upload an image to edit" : "Upload an image to animate"}
+                  </p>
+                )}
               </div>
 
               {/* Collapsible Advanced Options */}
@@ -463,83 +547,38 @@ const CustomCreation = () => {
                 </CollapsibleContent>
               </Collapsible>
 
-              {/* Action Buttons and Token Cost - Desktop: side by side, Mobile: buttons below cost */}
-              <div className="space-y-3">
-                {/* Desktop Layout: Buttons on left, Cost on right */}
-                <div className="hidden md:flex gap-3 items-stretch">
-                  <Button 
-                    variant="outline" 
-                    onClick={handleReset} 
-                    className="flex-1 h-14"
-                    disabled={isGenerating}
-                  >
-                    Reset
-                  </Button>
-                  <Button
-                    onClick={handleGenerate}
-                    disabled={!prompt || !selectedModel || isGenerating}
-                    className="flex-1 h-14 bg-neon-blue hover:bg-neon-blue/90 text-black font-bold"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Generate
-                      </>
-                    )}
-                  </Button>
-                  <div className="p-4 bg-neon-yellow/20 rounded-lg border-2 border-neon-yellow/40 flex-1 h-14 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Coins className="h-5 w-5" />
-                      <span className="text-sm font-medium">Cost</span>
-                    </div>
-                    <div className="text-2xl font-black">{estimatedTokens}</div>
-                  </div>
+              {/* Token Estimate */}
+              <div className="flex items-center justify-between p-3 md:p-4 bg-muted/50 rounded-lg border">
+                <div className="flex items-center gap-2">
+                  <Coins className="h-5 w-5 text-primary" />
+                  <span className="text-sm font-medium">Estimated Cost</span>
                 </div>
+                <span className="text-base md:text-lg font-bold text-primary">{estimatedTokens} tokens</span>
+              </div>
 
-                {/* Mobile Layout: Cost first, then buttons below */}
-                <div className="md:hidden space-y-3">
-                  <div className="p-3 bg-neon-yellow/20 rounded-lg border-2 border-neon-yellow/40">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Coins className="h-5 w-5" />
-                        <span className="text-sm font-medium">Estimated Cost</span>
-                      </div>
-                      <div className="text-2xl font-black">{estimatedTokens}</div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      onClick={handleReset} 
-                      className="flex-1 h-11"
-                      disabled={isGenerating}
-                    >
-                      Reset
-                    </Button>
-                    <Button
-                      onClick={handleGenerate}
-                      disabled={!prompt || !selectedModel || isGenerating}
-                      className="flex-1 h-11 bg-neon-blue hover:bg-neon-blue/90 text-black font-bold"
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          Generate
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-2">
+                <Button 
+                  onClick={handleGenerate} 
+                  disabled={isGenerating || !selectedModel || (isPromptRequired && !prompt.trim()) || (isImageRequired && uploadedImages.length === 0)}
+                  size="lg"
+                  className="w-full h-12 md:h-11 text-base font-bold"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      Generate
+                    </>
+                  )}
+                </Button>
+                <Button onClick={handleReset} variant="outline" size="lg" className="w-full h-11 md:h-10">
+                  Reset
+                </Button>
               </div>
             </div>
           </Card>
@@ -551,59 +590,60 @@ const CustomCreation = () => {
             </div>
 
             <div className="p-4 md:p-6">
-              <div className="space-y-4">
-                <div className="border rounded-lg overflow-hidden bg-muted/30 aspect-[4/3] flex items-center justify-center">
-                  {generatedOutput ? (
-                    <img src={generatedOutput} alt="Generated output" className="w-full h-full object-contain" />
-                  ) : (
-                    <div className="text-center text-muted-foreground">
-                      <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">Output will appear here</p>
-                    </div>
-                  )}
-                </div>
-
-                {generatedOutput && (
-                  <div className="flex gap-2 md:gap-3">
-                    <Button 
-                      size="sm" 
-                      variant="default"
-                      onClick={() => navigate("/dashboard/history")}
-                      className="flex-1 h-11 md:h-10"
-                    >
+              {generatedOutput ? (
+                <div className="space-y-4">
+                  <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
+                    <img src={generatedOutput} alt="Generated content" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1" asChild>
+                      <a href={generatedOutput} download>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </a>
+                    </Button>
+                    <Button variant="outline" className="flex-1" onClick={() => navigate("/dashboard/history")}>
                       <History className="h-4 w-4 mr-2" />
-                      View History
+                      History
                     </Button>
                   </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
+                  <div className="text-center p-4 md:p-8">
+                    <ImageIcon className="h-12 w-12 md:h-16 md:w-16 mx-auto mb-4 text-muted-foreground/50" />
+                    <p className="text-sm md:text-base text-muted-foreground">
+                      Your generated content will appear here
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
         </div>
 
-
         {/* Community Creations Section */}
-        <div className="mt-12 md:mt-16 space-y-6 md:space-y-8">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl md:text-4xl font-black">COMMUNITY CREATIONS</h2>
-            <p className="text-sm md:text-base text-foreground/80 font-medium">
-              Get inspired by what others are creating
-            </p>
+        <div className="mb-8 md:mb-12">
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <h2 className="text-xl md:text-2xl font-black">COMMUNITY CREATIONS</h2>
+            <Button variant="outline" size="sm" className="h-8 md:h-9">
+              View All
+            </Button>
           </div>
 
-          <Carousel className="w-full">
+          <Carousel opts={{ align: "start", loop: true }} className="w-full">
             <CarouselContent className="-ml-2 md:-ml-4">
               {communityCreations.map((creation) => (
-                <CarouselItem key={creation.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-                  <Card className="overflow-hidden group cursor-pointer hover-lift">
-                    <div className="relative aspect-square overflow-hidden bg-muted">
-                      {creation.contentType === "video" && creation.video ? (
+                <CarouselItem key={creation.id} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
+                  <Card className="overflow-hidden border-2 hover:border-primary transition-colors group">
+                    <div className="relative aspect-square bg-muted">
+                      {creation.video ? (
                         <video
                           src={creation.video}
-                          poster={creation.image}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          muted
+                          className="w-full h-full object-cover"
                           loop
+                          muted
+                          playsInline
                           onMouseEnter={(e) => e.currentTarget.play()}
                           onMouseLeave={(e) => {
                             e.currentTarget.pause();
@@ -611,35 +651,27 @@ const CustomCreation = () => {
                           }}
                         />
                       ) : (
-                        <img
-                          src={creation.image}
-                          alt={`Community creation ${creation.id}`}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
+                        <img src={creation.image} alt={creation.theme} className="w-full h-full object-cover" />
                       )}
-                      <div className="absolute top-2 right-2 flex gap-2">
-                        <Badge className="bg-neon-blue text-black font-bold border-2 border-black">
-                          {creation.resolution}
-                        </Badge>
-                        <Badge className="bg-background/90 backdrop-blur">
-                          {creation.contentType}
-                        </Badge>
-                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      {creation.video && (
+                        <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                          <Play className="h-3 w-3" />
+                          Video
+                        </div>
+                      )}
                     </div>
-                    <div className="p-3 md:p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-neon-blue to-neon-green flex items-center justify-center text-xs font-black">
-                            {creation.author.charAt(0)}
-                          </div>
-                          <span className="text-xs md:text-sm font-medium">{creation.author}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <span>❤️</span>
-                          <span className="font-medium">{creation.likes}</span>
-                        </div>
+                    <div className="p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <Badge variant="secondary" className="text-xs capitalize">
+                          {creation.theme}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">{creation.resolution}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-2 capitalize">{creation.theme} theme</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium">{creation.author}</span>
+                        <span className="text-xs text-muted-foreground">❤️ {creation.likes}</span>
+                      </div>
                     </div>
                   </Card>
                 </CarouselItem>
@@ -650,161 +682,33 @@ const CustomCreation = () => {
           </Carousel>
         </div>
 
-        {/* Best Practices - Use Cases */}
-        <div className="mt-12 md:mt-16 space-y-6 md:space-y-8 pb-24 md:pb-12">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl md:text-4xl font-black">BEST PRACTICES</h2>
-            <p className="text-sm md:text-base text-foreground/80 font-medium">
-              Learn how to get the best results
-            </p>
+        {/* Best Practices Section */}
+        <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
+          <div className="p-4 md:p-6">
+            <h3 className="text-lg md:text-xl font-black mb-4 flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              BEST PRACTICES
+            </h3>
+            <div className="grid md:grid-cols-2 gap-3 md:gap-4 text-sm">
+              <div className="flex gap-3">
+                <span className="text-primary font-bold">01</span>
+                <p>Be specific and descriptive in your prompts for better results</p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-primary font-bold">02</span>
+                <p>Use the "Enhance" feature to automatically improve your prompts</p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-primary font-bold">03</span>
+                <p>Upload reference images to guide the AI's creative direction</p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-primary font-bold">04</span>
+                <p>Experiment with different models to find your perfect style</p>
+              </div>
+            </div>
           </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {/* Image Creation */}
-            <Card className="p-4 md:p-6 space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <ImageIcon className="h-5 w-5 text-primary" />
-                </div>
-                <h3 className="font-black text-base md:text-lg">Image Creation</h3>
-              </div>
-              <ul className="space-y-2 text-xs md:text-sm text-foreground/80">
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Be specific about style, colors, and composition</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Use HD resolution for detailed artwork</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Select appropriate theme for best results</span>
-                </li>
-              </ul>
-            </Card>
-
-            {/* Video Generation */}
-            <Card className="p-4 md:p-6 space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Play className="h-5 w-5 text-primary" />
-                </div>
-                <h3 className="font-black text-base md:text-lg">Video Generation</h3>
-              </div>
-              <ul className="space-y-2 text-xs md:text-sm text-foreground/80">
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Describe motion and camera movements clearly</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Keep scenes simple for better coherence</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Always use HD for professional quality</span>
-                </li>
-              </ul>
-            </Card>
-
-            {/* Photo Enhancement */}
-            <Card className="p-4 md:p-6 space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Upload className="h-5 w-5 text-primary" />
-                </div>
-                <h3 className="font-black text-base md:text-lg">Photo Enhancement</h3>
-              </div>
-              <ul className="space-y-2 text-xs md:text-sm text-foreground/80">
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Upload high-quality source images</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Use realistic theme for natural edits</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Describe specific changes you want</span>
-                </li>
-              </ul>
-            </Card>
-
-            {/* Brand Integration */}
-            <Card className="p-4 md:p-6 space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                </div>
-                <h3 className="font-black text-base md:text-lg">Brand Integration</h3>
-              </div>
-              <ul className="space-y-2 text-xs md:text-sm text-foreground/80">
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Enable "Apply Brand" for consistent style</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Works best with your brand colors defined</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Adds +25 tokens to generation cost</span>
-                </li>
-              </ul>
-            </Card>
-
-            {/* Prompt Tips */}
-            <Card className="p-4 md:p-6 space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary font-black text-lg">✍️</span>
-                </div>
-                <h3 className="font-black text-base md:text-lg">Prompt Writing</h3>
-              </div>
-              <ul className="space-y-2 text-xs md:text-sm text-foreground/80">
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Use descriptive adjectives and details</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Click "Enhance" to improve your prompt</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Longer prompts = more specific results</span>
-                </li>
-              </ul>
-            </Card>
-
-            {/* Resolution Guide */}
-            <Card className="p-4 md:p-6 space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary font-black text-lg">📐</span>
-                </div>
-                <h3 className="font-black text-base md:text-lg">Resolution Guide</h3>
-              </div>
-              <ul className="space-y-2 text-xs md:text-sm text-foreground/80">
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Native: Fast generation, standard quality</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>HD: Professional quality, slower generation</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>HD costs more tokens but worth it</span>
-                </li>
-              </ul>
-            </Card>
-          </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

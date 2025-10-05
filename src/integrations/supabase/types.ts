@@ -21,6 +21,7 @@ export type Database = {
           content_type: string
           cost_multipliers: Json | null
           created_at: string
+          groups: Json | null
           id: string
           input_schema: Json
           is_active: boolean | null
@@ -34,6 +35,7 @@ export type Database = {
           content_type: string
           cost_multipliers?: Json | null
           created_at?: string
+          groups?: Json | null
           id: string
           input_schema?: Json
           is_active?: boolean | null
@@ -47,6 +49,7 @@ export type Database = {
           content_type?: string
           cost_multipliers?: Json | null
           created_at?: string
+          groups?: Json | null
           id?: string
           input_schema?: Json
           is_active?: boolean | null

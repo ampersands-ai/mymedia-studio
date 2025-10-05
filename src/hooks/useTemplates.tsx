@@ -11,6 +11,7 @@ export interface AIModel {
   input_schema: any;
   api_endpoint: string | null;
   is_active: boolean;
+  groups?: string[];
 }
 
 export interface ContentTemplate {

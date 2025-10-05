@@ -17,6 +17,11 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import { DashboardLayout } from "./layouts/DashboardLayout";
+import { AdminLayout } from "./layouts/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AIModelsManager from "./pages/admin/AIModelsManager";
+import TemplatesManager from "./pages/admin/TemplatesManager";
+import UsersManager from "./pages/admin/UsersManager";
 import { useAuth } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -39,6 +44,12 @@ const AppContent = () => {
           <Route path="create" element={<Create />} />
           <Route path="custom-creation" element={<CustomCreation />} />
           <Route path="settings" element={<Settings />} />
+        </Route>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="models" element={<AIModelsManager />} />
+          <Route path="templates" element={<TemplatesManager />} />
+          <Route path="users" element={<UsersManager />} />
         </Route>
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/privacy" element={<Privacy />} />

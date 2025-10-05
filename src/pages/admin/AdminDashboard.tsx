@@ -1,0 +1,151 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Database, FileText, Zap, TrendingUp } from "lucide-react";
+
+export default function AdminDashboard() {
+  const [stats, setStats] = useState({
+    totalModels: 0,
+    activeModels: 0,
+    totalTemplates: 0,
+    activeTemplates: 0,
+    todayGenerations: 0,
+    totalGenerations: 0,
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Fetch models count
+        const { count: totalModels } = await supabase
+          .from("ai_models")
+          .select("*", { count: "exact", head: true });
+
+        const { count: activeModels } = await supabase
+          .from("ai_models")
+          .select("*", { count: "exact", head: true })
+          .eq("is_active", true);
+
+        // Fetch templates count
+        const { count: totalTemplates } = await supabase
+          .from("content_templates")
+          .select("*", { count: "exact", head: true });
+
+        const { count: activeTemplates } = await supabase
+          .from("content_templates")
+          .select("*", { count: "exact", head: true })
+          .eq("is_active", true);
+
+        // Fetch generations count
+        const { count: totalGenerations } = await supabase
+          .from("generations")
+          .select("*", { count: "exact", head: true });
+
+        const today = new Date().toISOString().split("T")[0];
+        const { count: todayGenerations } = await supabase
+          .from("generations")
+          .select("*", { count: "exact", head: true })
+          .gte("created_at", today);
+
+        setStats({
+          totalModels: totalModels || 0,
+          activeModels: activeModels || 0,
+          totalTemplates: totalTemplates || 0,
+          activeTemplates: activeTemplates || 0,
+          todayGenerations: todayGenerations || 0,
+          totalGenerations: totalGenerations || 0,
+        });
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-4xl font-black mb-2">Admin Dashboard</h1>
+        <p className="text-muted-foreground">
+          Manage AI models, templates, and monitor system activity
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="border-3 border-black brutal-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-bold">AI Models</CardTitle>
+            <Database className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-black">{stats.activeModels}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.totalModels} total
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-3 border-black brutal-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-bold">Templates</CardTitle>
+            <FileText className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-black">{stats.activeTemplates}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.totalTemplates} total
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-3 border-black brutal-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-bold">Today</CardTitle>
+            <Zap className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-black">{stats.todayGenerations}</div>
+            <p className="text-xs text-muted-foreground">Generations</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-3 border-black brutal-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-bold">Total</CardTitle>
+            <TrendingUp className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-black">{stats.totalGenerations}</div>
+            <p className="text-xs text-muted-foreground">All time</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="border-3 border-black brutal-shadow">
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground">
+            Use the sidebar to navigate to different admin sections:
+          </p>
+          <ul className="list-disc list-inside space-y-2 text-sm">
+            <li>
+              <strong>AI Models:</strong> Add, edit, or disable AI models and
+              configure their token costs
+            </li>
+            <li>
+              <strong>Templates:</strong> Create and manage content templates
+              with preset parameters
+            </li>
+            <li>
+              <strong>Users:</strong> View users, manage subscriptions, and
+              grant admin roles
+            </li>
+          </ul>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

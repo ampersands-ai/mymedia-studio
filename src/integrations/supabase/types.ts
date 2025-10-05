@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_models: {
+        Row: {
+          api_endpoint: string | null
+          base_token_cost: number
+          content_type: string
+          cost_multipliers: Json | null
+          created_at: string
+          id: string
+          input_schema: Json
+          is_active: boolean | null
+          model_name: string
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          api_endpoint?: string | null
+          base_token_cost: number
+          content_type: string
+          cost_multipliers?: Json | null
+          created_at?: string
+          id: string
+          input_schema?: Json
+          is_active?: boolean | null
+          model_name: string
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          api_endpoint?: string | null
+          base_token_cost?: number
+          content_type?: string
+          cost_multipliers?: Json | null
+          created_at?: string
+          id?: string
+          input_schema?: Json
+          is_active?: boolean | null
+          model_name?: string
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -50,41 +92,138 @@ export type Database = {
         }
         Relationships: []
       }
+      content_templates: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          display_order: number | null
+          enhancement_instruction: string | null
+          id: string
+          is_active: boolean | null
+          model_id: string | null
+          name: string
+          preset_parameters: Json
+          thumbnail_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          enhancement_instruction?: string | null
+          id: string
+          is_active?: boolean | null
+          model_id?: string | null
+          name: string
+          preset_parameters?: Json
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          enhancement_instruction?: string | null
+          id?: string
+          is_active?: boolean | null
+          model_id?: string | null
+          name?: string
+          preset_parameters?: Json
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_templates_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "ai_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generations: {
         Row: {
+          actual_token_cost: number | null
           created_at: string
+          enhanced_prompt: string | null
+          enhancement_provider: string | null
+          file_size_bytes: number | null
           id: string
+          model_id: string | null
+          original_prompt: string | null
           output_url: string | null
           prompt: string
+          provider_request: Json | null
+          provider_response: Json | null
           settings: Json | null
           status: string
+          storage_path: string | null
+          template_id: string | null
           tokens_used: number
           type: string
           user_id: string
         }
         Insert: {
+          actual_token_cost?: number | null
           created_at?: string
+          enhanced_prompt?: string | null
+          enhancement_provider?: string | null
+          file_size_bytes?: number | null
           id?: string
+          model_id?: string | null
+          original_prompt?: string | null
           output_url?: string | null
           prompt: string
+          provider_request?: Json | null
+          provider_response?: Json | null
           settings?: Json | null
           status?: string
+          storage_path?: string | null
+          template_id?: string | null
           tokens_used: number
           type: string
           user_id: string
         }
         Update: {
+          actual_token_cost?: number | null
           created_at?: string
+          enhanced_prompt?: string | null
+          enhancement_provider?: string | null
+          file_size_bytes?: number | null
           id?: string
+          model_id?: string | null
+          original_prompt?: string | null
           output_url?: string | null
           prompt?: string
+          provider_request?: Json | null
+          provider_response?: Json | null
           settings?: Json | null
           status?: string
+          storage_path?: string | null
+          template_id?: string | null
           tokens_used?: number
           type?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "generations_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "ai_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generations_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "content_templates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "generations_user_id_fkey"
             columns: ["user_id"]

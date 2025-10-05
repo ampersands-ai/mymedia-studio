@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Settings, Coins, LogOut } from "lucide-react";
+import { Sparkles, Settings, Coins, LogOut, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminRole } from "@/hooks/useAdminRole";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import textLogo from "@/assets/text-logo.png";
@@ -13,6 +14,7 @@ export const GlobalHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { isAdmin } = useAdminRole();
   const [tokenBalance, setTokenBalance] = useState<number | null>(null);
 
   useEffect(() => {
@@ -215,6 +217,18 @@ export const GlobalHeader = () => {
                 <Coins className="h-5 w-5" />
                 <span className="font-black text-base">{tokenBalance.toLocaleString()}</span>
               </div>
+            )}
+
+            {isAdmin && (
+              <Button
+                variant="outline"
+                size="default"
+                onClick={() => navigate("/admin/dashboard")}
+                className="brutal-card-sm font-black"
+              >
+                <Shield className="h-5 w-5 mr-2" />
+                Admin
+              </Button>
             )}
 
             <Button

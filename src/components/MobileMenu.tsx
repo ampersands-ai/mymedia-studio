@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminRole } from "@/hooks/useAdminRole";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -8,7 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Menu, Home, Wand2, Settings, LogOut, Coins } from "lucide-react";
+import { Menu, Home, Wand2, Settings, LogOut, Coins, Shield } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -19,6 +20,7 @@ interface MobileMenuProps {
 
 export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
   const { user } = useAuth();
+  const { isAdmin } = useAdminRole();
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
@@ -96,6 +98,17 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
               <Settings className="h-5 w-5 mr-3" />
               Settings
             </Button>
+
+            {isAdmin && (
+              <Button
+                variant={isActive("/admin/dashboard") ? "default" : "ghost"}
+                className="justify-start h-12 text-base"
+                onClick={() => handleNavigation("/admin/dashboard")}
+              >
+                <Shield className="h-5 w-5 mr-3" />
+                Admin Panel
+              </Button>
+            )}
           </nav>
 
           {/* Sign Out */}

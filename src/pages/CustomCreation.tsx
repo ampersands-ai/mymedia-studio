@@ -481,9 +481,6 @@ const CustomCreation = () => {
                                 {model.base_token_cost} tokens
                               </Badge>
                             </div>
-                            <span className={cn("text-xs capitalize", String(selectedModel) === String(model.id) ? "text-white/80" : "text-muted-foreground")}>
-                              {model.provider} • {model.content_type}
-                            </span>
                             {otherGroups.length > 0 && (
                               <span className={cn("text-xs", String(selectedModel) === String(model.id) ? "text-white/60" : "text-muted-foreground/60")}>
                                 Also in: {otherGroups.map(g => 

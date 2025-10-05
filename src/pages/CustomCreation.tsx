@@ -178,11 +178,14 @@ const CustomCreation = () => {
     }
   }, []);
 
-  // Auto-select first model when content type changes
+  // Auto-select first model when content type changes (only if none selected or previous no longer available)
   useEffect(() => {
-    if (modelsByContentType && modelsByContentType[contentType]?.length > 0) {
-      setSelectedModel(modelsByContentType[contentType][0].id);
-    }
+    const list = modelsByContentType?.[contentType] || [];
+    if (list.length === 0) return;
+    setSelectedModel((prev) => {
+      if (prev && list.some((m) => String(m.id) === String(prev))) return prev;
+      return String(list[0].id);
+    });
   }, [contentType, modelsByContentType]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -307,7 +310,7 @@ const CustomCreation = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-8">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
       <div className="relative z-10 container mx-auto px-4 py-4 md:py-8">
         {/* Header */}
@@ -334,12 +337,12 @@ const CustomCreation = () => {
                   <div className="grid grid-cols-1 gap-2">
                     {modelsByContentType[contentType].map((model) => (
                       <Button
-                        key={model.id}
+                        key={String(model.id)}
                         variant="outline"
-                        onClick={() => setSelectedModel(model.id)}
+                        onClick={() => setSelectedModel(String(model.id))}
                         className={cn(
                           "h-auto py-3 px-4 justify-start text-left border-2 transition-all",
-                          selectedModel === model.id 
+                          String(selectedModel) === String(model.id) 
                             ? "bg-red-500 hover:bg-red-600 text-white font-bold border-black" 
                             : "hover:bg-muted border-border"
                         )}
@@ -351,7 +354,7 @@ const CustomCreation = () => {
                               {model.base_token_cost} tokens
                             </Badge>
                           </div>
-                          <span className={cn("text-xs capitalize", selectedModel === model.id ? "text-white/80" : "text-muted-foreground")}>
+                          <span className={cn("text-xs capitalize", String(selectedModel) === String(model.id) ? "text-white/80" : "text-muted-foreground")}>
                             {model.provider} • {model.content_type}
                           </span>
                         </div>

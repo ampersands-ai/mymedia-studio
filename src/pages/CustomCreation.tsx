@@ -20,6 +20,17 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TemplateCard } from "@/components/TemplateCard";
 import { useGeneration } from "@/hooks/useGeneration";
 import { useModels } from "@/hooks/useModels";
@@ -169,6 +180,7 @@ const CustomCreation = () => {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [enhancePrompt, setEnhancePrompt] = useState(true);
   const [localGenerating, setLocalGenerating] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Filter models by selected group
@@ -361,11 +373,13 @@ const CustomCreation = () => {
     setEstimatedTokens(calculateTokens());
   }, [selectedModel, resolution, uploadedImages, selectedGroup, filteredModels]);
 
-  const handleReset = () => {
+  const handleResetConfirm = () => {
     setPrompt("");
     setUploadedImages([]);
     setGeneratedOutput(null);
     setResolution("Native");
+    setShowResetDialog(false);
+    toast.success("Reset complete");
   };
 
   const handleSurpriseMe = () => {
@@ -622,7 +636,13 @@ const CustomCreation = () => {
                     </div>
                   )}
                 </Button>
-                <Button onClick={handleReset} variant="outline" size="lg" className="w-full h-11 md:h-10">
+                <Button 
+                  onClick={() => setShowResetDialog(true)} 
+                  variant="outline" 
+                  size="lg" 
+                  className="w-full h-11 md:h-10"
+                  disabled={localGenerating || isGenerating}
+                >
                   Reset
                 </Button>
               </div>
@@ -636,7 +656,30 @@ const CustomCreation = () => {
             </div>
 
             <div className="p-4 md:p-6">
-              {generatedOutput ? (
+              {(localGenerating || isGenerating) ? (
+                <div className="space-y-4">
+                  <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
+                    <Skeleton className="w-full h-full" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center space-y-4">
+                        <Loader2 className="h-12 w-12 mx-auto animate-spin text-primary" />
+                        <div className="space-y-2">
+                          <p className="text-sm font-bold">Creating your masterpiece...</p>
+                          <div className="flex gap-1 justify-center">
+                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0ms' }} />
+                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '150ms' }} />
+                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '300ms' }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                </div>
+              ) : generatedOutput ? (
                 <div className="space-y-4">
                   <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
                     <img src={generatedOutput} alt="Generated content" className="w-full h-full object-cover" />
@@ -756,6 +799,23 @@ const CustomCreation = () => {
           </div>
         </Card>
       </div>
+
+      {/* Reset Confirmation Dialog */}
+      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Creation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will clear all your inputs and uploaded images. If you generate again after resetting, 
+              it will consume tokens. Are you sure you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetConfirm}>Reset</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

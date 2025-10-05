@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2 } from "lucide-react";
 import {
@@ -153,6 +154,7 @@ const CustomCreation = () => {
   const [generatedOutput, setGeneratedOutput] = useState<string | null>(null);
   const [estimatedTokens, setEstimatedTokens] = useState(50);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [enhancePrompt, setEnhancePrompt] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -318,7 +320,7 @@ const CustomCreation = () => {
                         onClick={() => setSelectedModel(model.id)}
                         className={cn(
                           "h-auto py-3 px-4 justify-start text-left",
-                          selectedModel === model.id && "bg-red-500 hover:bg-red-600 text-white font-bold border-red-600"
+                          selectedModel === model.id && "bg-red-500 hover:bg-red-600 text-white font-bold border-black"
                         )}
                       >
                         <div className="flex flex-col gap-1 w-full">
@@ -348,6 +350,19 @@ const CustomCreation = () => {
                   className="min-h-[100px] md:min-h-[120px] resize-none text-sm md:text-base"
                   disabled={isGenerating}
                 />
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="enhance-prompt"
+                    checked={enhancePrompt}
+                    onCheckedChange={(checked) => setEnhancePrompt(checked as boolean)}
+                  />
+                  <label
+                    htmlFor="enhance-prompt"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    Enhance prompt
+                  </label>
+                </div>
               </div>
 
               {/* Image Upload */}
@@ -413,42 +428,38 @@ const CustomCreation = () => {
               {/* Action Buttons and Token Cost - Desktop: side by side, Mobile: buttons below cost */}
               <div className="space-y-3">
                 {/* Desktop Layout: Buttons on left, Cost on right */}
-                <div className="hidden md:flex gap-3">
-                  <div className="flex gap-2 flex-1">
-                    <Button 
-                      variant="outline" 
-                      onClick={handleReset} 
-                      className="flex-1 h-12"
-                      disabled={isGenerating}
-                    >
-                      Reset
-                    </Button>
-                    <Button
-                      onClick={handleGenerate}
-                      disabled={!prompt || !selectedModel || isGenerating}
-                      className="flex-1 h-12 bg-neon-blue hover:bg-neon-blue/90 text-black font-bold"
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          Generate
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                  <div className="p-3 md:p-4 bg-neon-yellow/20 rounded-lg border-2 border-neon-yellow/40 flex-shrink-0 min-w-[180px]">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Coins className="h-4 md:h-5 w-4 md:w-5" />
-                        <span className="text-xs md:text-sm font-medium">Cost</span>
-                      </div>
-                      <div className="text-xl md:text-2xl font-black">{estimatedTokens}</div>
+                <div className="hidden md:flex gap-3 items-stretch">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleReset} 
+                    className="flex-1 h-14"
+                    disabled={isGenerating}
+                  >
+                    Reset
+                  </Button>
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={!prompt || !selectedModel || isGenerating}
+                    className="flex-1 h-14 bg-neon-blue hover:bg-neon-blue/90 text-black font-bold"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Generate
+                      </>
+                    )}
+                  </Button>
+                  <div className="p-4 bg-neon-yellow/20 rounded-lg border-2 border-neon-yellow/40 flex-1 h-14 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Coins className="h-5 w-5" />
+                      <span className="text-sm font-medium">Cost</span>
                     </div>
+                    <div className="text-2xl font-black">{estimatedTokens}</div>
                   </div>
                 </div>
 

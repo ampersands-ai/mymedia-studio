@@ -355,7 +355,7 @@ const CustomCreation = () => {
         {/* Group Selection */}
         <div className="mb-6">
           <h2 className="text-base md:text-lg font-bold mb-3">Select Creation Type</h2>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 justify-center">
             {CREATION_GROUPS.map((group) => (
               <button
                 key={group.id}
@@ -552,10 +552,10 @@ const CustomCreation = () => {
               {/* Token Estimate */}
               <div className="flex items-center justify-between p-3 md:p-4 bg-muted/50 rounded-lg border">
                 <div className="flex items-center gap-2">
-                  <Coins className="h-5 w-5 text-primary" />
+                  <Coins className="h-5 w-5 text-foreground" />
                   <span className="text-sm font-medium">Estimated Cost</span>
                 </div>
-                <span className="text-base md:text-lg font-bold text-primary">{estimatedTokens} tokens</span>
+                <span className="text-base md:text-lg font-bold text-foreground">{estimatedTokens} tokens</span>
               </div>
 
               {/* Action Buttons */}
@@ -564,7 +564,7 @@ const CustomCreation = () => {
                   onClick={handleGenerate} 
                   disabled={isGenerating || !selectedModel || (isPromptRequired && !prompt.trim()) || (isImageRequired && uploadedImages.length === 0)}
                   size="lg"
-                  className="w-full h-12 md:h-11 text-base font-bold"
+                  className="w-full h-12 md:h-11 text-base font-bold bg-yellow-400 hover:bg-yellow-500 text-black border-2 border-black shadow-lg"
                 >
                   {isGenerating ? (
                     <>

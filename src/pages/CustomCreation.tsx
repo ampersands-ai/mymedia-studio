@@ -168,6 +168,7 @@ const CustomCreation = () => {
   const [estimatedTokens, setEstimatedTokens] = useState(50);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [enhancePrompt, setEnhancePrompt] = useState(true);
+  const [localGenerating, setLocalGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Filter models by selected group
@@ -270,6 +271,8 @@ const CustomCreation = () => {
       return;
     }
     
+    setLocalGenerating(true);
+    
     try {
       const customParameters: Record<string, any> = {
         image_size: resolution === "Native" ? "auto" : "hd",
@@ -329,6 +332,8 @@ const CustomCreation = () => {
     } catch (error: any) {
       console.error('Generation error:', error);
       // Error already handled in useGeneration hook
+    } finally {
+      setLocalGenerating(false);
     }
   };
 
@@ -492,7 +497,7 @@ const CustomCreation = () => {
                       size="sm"
                       onClick={handleSurpriseMe}
                       className="h-8 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white font-bold border-2 border-black hover:opacity-90"
-                      disabled={isGenerating}
+                      disabled={localGenerating || isGenerating}
                     >
                       <Sparkles className="h-3 w-3 mr-1" />
                       Surprise Me
@@ -517,7 +522,7 @@ const CustomCreation = () => {
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="Describe what you want to create..."
                   className="min-h-[100px] md:min-h-[120px] resize-none text-sm md:text-base"
-                  disabled={isGenerating}
+                  disabled={localGenerating || isGenerating}
                   required={isPromptRequired}
                 />
               </div>
@@ -595,11 +600,11 @@ const CustomCreation = () => {
               <div className="flex flex-col gap-2">
                 <Button 
                   onClick={handleGenerate} 
-                  disabled={isGenerating || !selectedModel || (isPromptRequired && !prompt.trim()) || (isImageRequired && uploadedImages.length === 0)}
+                  disabled={localGenerating || isGenerating || !selectedModel || (isPromptRequired && !prompt.trim()) || (isImageRequired && uploadedImages.length === 0)}
                   size="lg"
                   className="w-full h-12 md:h-11 text-base font-bold bg-[#FFFF00] hover:bg-[#FFEB00] text-black border-2 border-black shadow-lg"
                 >
-                  {isGenerating ? (
+                  {(localGenerating || isGenerating) ? (
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       Generating...

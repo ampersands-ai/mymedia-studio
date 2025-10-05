@@ -58,7 +58,7 @@ export const DashboardLayout = () => {
                   variant={isActive("/dashboard/create") ? "default" : "ghost"}
                   className={cn(
                     "text-base px-6 py-5",
-                    isActive("/dashboard/create") ? "bg-neon-blue hover:bg-neon-blue/90 text-black font-bold" : ""
+                    isActive("/dashboard/create") && "bg-neon-blue hover:bg-neon-blue/90 text-black font-bold"
                   )}
                 >
                   <Sparkles className="h-5 w-5 mr-2" />
@@ -70,7 +70,7 @@ export const DashboardLayout = () => {
                   variant={isActive("/dashboard/custom-creation") ? "default" : "ghost"}
                   className={cn(
                     "text-base px-6 py-5",
-                    isActive("/dashboard/custom-creation") ? "bg-neon-green hover:bg-neon-green/90 text-black font-bold" : ""
+                    isActive("/dashboard/custom-creation") && "bg-neon-green hover:bg-neon-green/90 text-black font-bold border-3 border-black"
                   )}
                 >
                   <Sparkles className="h-5 w-5 mr-2" />
@@ -80,7 +80,10 @@ export const DashboardLayout = () => {
               <Link to="/dashboard/settings">
                 <Button
                   variant={isActive("/dashboard/settings") ? "default" : "ghost"}
-                  className="text-base px-6 py-5"
+                  className={cn(
+                    "text-base px-6 py-5",
+                    isActive("/dashboard/settings") && "bg-foreground text-background"
+                  )}
                 >
                   <Settings className="h-5 w-5 mr-2" />
                   Settings

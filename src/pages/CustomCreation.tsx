@@ -318,7 +318,7 @@ const CustomCreation = () => {
                         onClick={() => setSelectedModel(model.id)}
                         className={cn(
                           "h-auto py-3 px-4 justify-start text-left",
-                          selectedModel === model.id && "bg-neon-blue hover:bg-neon-blue/90 text-black font-bold"
+                          selectedModel === model.id && "bg-red-500 hover:bg-red-600 text-white font-bold border-red-600"
                         )}
                       >
                         <div className="flex flex-col gap-1 w-full">
@@ -328,7 +328,7 @@ const CustomCreation = () => {
                               {model.base_token_cost} tokens
                             </Badge>
                           </div>
-                          <span className="text-xs text-muted-foreground capitalize">
+                          <span className={cn("text-xs capitalize", selectedModel === model.id ? "text-white/80" : "text-muted-foreground")}>
                             {model.provider} • {model.content_type}
                           </span>
                         </div>
@@ -410,44 +410,86 @@ const CustomCreation = () => {
                 </CollapsibleContent>
               </Collapsible>
 
-              {/* Token Cost and Action Buttons */}
+              {/* Action Buttons and Token Cost - Desktop: side by side, Mobile: buttons below cost */}
               <div className="space-y-3">
-                <div className="p-3 md:p-4 bg-neon-yellow/20 rounded-lg border-2 border-neon-yellow/40">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Coins className="h-4 md:h-5 w-4 md:w-5" />
-                      <span className="text-xs md:text-sm font-medium">Estimated Cost</span>
+                {/* Desktop Layout: Buttons on left, Cost on right */}
+                <div className="hidden md:flex gap-3">
+                  <div className="flex gap-2 flex-1">
+                    <Button 
+                      variant="outline" 
+                      onClick={handleReset} 
+                      className="flex-1 h-12"
+                      disabled={isGenerating}
+                    >
+                      Reset
+                    </Button>
+                    <Button
+                      onClick={handleGenerate}
+                      disabled={!prompt || !selectedModel || isGenerating}
+                      className="flex-1 h-12 bg-neon-blue hover:bg-neon-blue/90 text-black font-bold"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Generate
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <div className="p-3 md:p-4 bg-neon-yellow/20 rounded-lg border-2 border-neon-yellow/40 flex-shrink-0 min-w-[180px]">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Coins className="h-4 md:h-5 w-4 md:w-5" />
+                        <span className="text-xs md:text-sm font-medium">Cost</span>
+                      </div>
+                      <div className="text-xl md:text-2xl font-black">{estimatedTokens}</div>
                     </div>
-                    <div className="text-xl md:text-2xl font-black">{estimatedTokens}</div>
                   </div>
                 </div>
-                
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={handleReset} 
-                    className="flex-1 h-11 md:h-12"
-                    disabled={isGenerating}
-                  >
-                    Reset
-                  </Button>
-                  <Button
-                    onClick={handleGenerate}
-                    disabled={!prompt || !selectedModel || isGenerating}
-                    className="flex-1 h-11 md:h-12 bg-neon-blue hover:bg-neon-blue/90 text-black font-bold"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Generate
-                      </>
-                    )}
-                  </Button>
+
+                {/* Mobile Layout: Cost first, then buttons below */}
+                <div className="md:hidden space-y-3">
+                  <div className="p-3 bg-neon-yellow/20 rounded-lg border-2 border-neon-yellow/40">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Coins className="h-5 w-5" />
+                        <span className="text-sm font-medium">Estimated Cost</span>
+                      </div>
+                      <div className="text-2xl font-black">{estimatedTokens}</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={handleReset} 
+                      className="flex-1 h-11"
+                      disabled={isGenerating}
+                    >
+                      Reset
+                    </Button>
+                    <Button
+                      onClick={handleGenerate}
+                      disabled={!prompt || !selectedModel || isGenerating}
+                      className="flex-1 h-11 bg-neon-blue hover:bg-neon-blue/90 text-black font-bold"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Generate
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

@@ -184,7 +184,7 @@ const Create = () => {
                         <CardContent className="p-2">
                           <p className="text-xs font-bold mb-1 truncate">{template.name}</p>
                           <Button 
-                            className="w-full bg-primary hover:bg-primary/90 text-white font-black text-xs h-8"
+                            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-black text-xs h-8"
                             size="sm"
                           >
                             Use Template

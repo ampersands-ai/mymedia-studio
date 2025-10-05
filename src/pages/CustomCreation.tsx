@@ -191,9 +191,21 @@ const CustomCreation = () => {
     return groups.includes(selectedGroup);
   }) || [];
 
-  // Determine if image upload is required for current group
-  const isImageRequired = selectedGroup === "image_editing" || selectedGroup === "image_to_video";
-  const isPromptRequired = selectedGroup !== "image_editing";
+  // Helper function to get required fields from model schema
+  const getSchemaRequiredFields = (): string[] => {
+    if (!selectedModel) return [];
+    const currentModel = filteredModels.find(m => m.id === selectedModel);
+    return currentModel?.input_schema?.required || [];
+  };
+
+  // Check schema requirements for main form fields
+  const schemaRequired = getSchemaRequiredFields();
+  const isImageRequiredBySchema = schemaRequired.includes('image_urls');
+  const isPromptRequiredBySchema = schemaRequired.includes('prompt');
+
+  // Fallback to group-based logic if no schema requirements
+  const isImageRequired = isImageRequiredBySchema || selectedGroup === "image_editing" || selectedGroup === "image_to_video";
+  const isPromptRequired = isPromptRequiredBySchema || selectedGroup !== "image_editing";
 
   const surprisePrompts = [
     "A majestic dragon soaring over a cyberpunk city at sunset",
@@ -264,20 +276,41 @@ const CustomCreation = () => {
   };
 
   const handleGenerate = async () => {
-    // Validate based on group requirements
+    // Validate prompt requirement
     if (isPromptRequired && !prompt.trim()) {
       toast.error("Please enter a prompt");
       return;
     }
     
+    // Validate image requirement
     if (isImageRequired && uploadedImages.length === 0) {
       toast.error("Please upload at least one image for this creation type");
       return;
     }
 
+    // Validate model selection
     if (!selectedModel) {
       toast.error("Please select a model");
       return;
+    }
+
+    // Validate required fields from model schema (advanced options)
+    const currentModel = filteredModels.find(m => m.id === selectedModel);
+    if (currentModel?.input_schema) {
+      const requiredFields = currentModel.input_schema.required || [];
+      const schemaProperties = currentModel.input_schema.properties || {};
+      const excludeFields = ['prompt', 'image_urls']; // Already validated above
+
+      for (const field of requiredFields) {
+        if (excludeFields.includes(field)) continue;
+        
+        const value = modelParameters[field];
+        if (value === undefined || value === null || value === '') {
+          const fieldTitle = schemaProperties[field]?.title || field;
+          toast.error(`Please provide a value for: ${fieldTitle}`);
+          return;
+        }
+      }
     }
 
     if (!user?.id) {
@@ -630,7 +663,13 @@ const CustomCreation = () => {
               <div className="flex flex-col gap-2">
                 <Button 
                   onClick={handleGenerate} 
-                  disabled={localGenerating || isGenerating || !selectedModel || (isPromptRequired && !prompt.trim()) || (isImageRequired && uploadedImages.length === 0)}
+                  disabled={
+                    localGenerating || 
+                    isGenerating || 
+                    !selectedModel || 
+                    (isPromptRequired && !prompt.trim()) || 
+                    (isImageRequired && uploadedImages.length === 0)
+                  }
                   size="lg"
                   className="w-full h-12 md:h-11 text-base font-bold bg-[#FFFF00] hover:bg-[#FFEB00] text-black border-2 border-black shadow-lg"
                 >

@@ -11,8 +11,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Power, PowerOff } from "lucide-react";
+import { Plus, Edit, Power, PowerOff, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { TemplateFormDialog } from "@/components/admin/TemplateFormDialog";
 
 interface ContentTemplate {
   id: string;
@@ -20,6 +21,9 @@ interface ContentTemplate {
   name: string;
   description: string | null;
   model_id: string | null;
+  preset_parameters: any;
+  enhancement_instruction: string | null;
+  thumbnail_url: string | null;
   is_active: boolean;
   display_order: number;
 }
@@ -27,6 +31,8 @@ interface ContentTemplate {
 export default function TemplatesManager() {
   const [templates, setTemplates] = useState<ContentTemplate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<ContentTemplate | null>(null);
 
   useEffect(() => {
     fetchTemplates();
@@ -69,6 +75,43 @@ export default function TemplatesManager() {
     }
   };
 
+  const handleDelete = async (templateId: string) => {
+    if (!confirm("Are you sure you want to delete this template? This cannot be undone.")) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("content_templates")
+        .delete()
+        .eq("id", templateId);
+
+      if (error) throw error;
+      
+      toast.success("Template deleted successfully");
+      fetchTemplates();
+    } catch (error) {
+      console.error("Error deleting template:", error);
+      toast.error("Failed to delete template");
+    }
+  };
+
+  const handleEdit = (template: ContentTemplate) => {
+    setEditingTemplate(template);
+    setDialogOpen(true);
+  };
+
+  const handleAdd = () => {
+    setEditingTemplate(null);
+    setDialogOpen(true);
+  };
+
+  const handleSuccess = () => {
+    setDialogOpen(false);
+    setEditingTemplate(null);
+    fetchTemplates();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -87,6 +130,7 @@ export default function TemplatesManager() {
           </p>
         </div>
         <Button
+          onClick={handleAdd}
           className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold border-3 border-black brutal-shadow"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -105,6 +149,7 @@ export default function TemplatesManager() {
                 No templates configured yet
               </p>
               <Button
+                onClick={handleAdd}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold border-3 border-black brutal-shadow"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -147,7 +192,11 @@ export default function TemplatesManager() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEdit(template)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
@@ -166,6 +215,13 @@ export default function TemplatesManager() {
                             <Power className="h-4 w-4" />
                           )}
                         </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(template.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -175,6 +231,13 @@ export default function TemplatesManager() {
           )}
         </CardContent>
       </Card>
+
+      <TemplateFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        template={editingTemplate}
+        onSuccess={handleSuccess}
+      />
     </div>
   );
 }

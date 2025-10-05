@@ -11,8 +11,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Power, PowerOff } from "lucide-react";
+import { Plus, Edit, Power, PowerOff, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { ModelFormDialog } from "@/components/admin/ModelFormDialog";
 
 interface AIModel {
   id: string;
@@ -20,13 +21,17 @@ interface AIModel {
   model_name: string;
   content_type: string;
   base_token_cost: number;
-  is_active: boolean;
+  cost_multipliers: any;
+  input_schema: any;
   api_endpoint: string | null;
+  is_active: boolean;
 }
 
 export default function AIModelsManager() {
   const [models, setModels] = useState<AIModel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingModel, setEditingModel] = useState<AIModel | null>(null);
 
   useEffect(() => {
     fetchModels();
@@ -66,6 +71,43 @@ export default function AIModelsManager() {
     }
   };
 
+  const handleDelete = async (modelId: string) => {
+    if (!confirm("Are you sure you want to delete this model? This cannot be undone.")) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("ai_models")
+        .delete()
+        .eq("id", modelId);
+
+      if (error) throw error;
+      
+      toast.success("Model deleted successfully");
+      fetchModels();
+    } catch (error) {
+      console.error("Error deleting model:", error);
+      toast.error("Failed to delete model");
+    }
+  };
+
+  const handleEdit = (model: AIModel) => {
+    setEditingModel(model);
+    setDialogOpen(true);
+  };
+
+  const handleAdd = () => {
+    setEditingModel(null);
+    setDialogOpen(true);
+  };
+
+  const handleSuccess = () => {
+    setDialogOpen(false);
+    setEditingModel(null);
+    fetchModels();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -84,6 +126,7 @@ export default function AIModelsManager() {
           </p>
         </div>
         <Button
+          onClick={handleAdd}
           className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold border-3 border-black brutal-shadow"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -102,6 +145,7 @@ export default function AIModelsManager() {
                 No AI models configured yet
               </p>
               <Button
+                onClick={handleAdd}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold border-3 border-black brutal-shadow"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -146,7 +190,11 @@ export default function AIModelsManager() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEdit(model)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
@@ -162,6 +210,13 @@ export default function AIModelsManager() {
                             <Power className="h-4 w-4" />
                           )}
                         </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(model.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -171,6 +226,13 @@ export default function AIModelsManager() {
           )}
         </CardContent>
       </Card>
+
+      <ModelFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        model={editingModel}
+        onSuccess={handleSuccess}
+      />
     </div>
   );
 }

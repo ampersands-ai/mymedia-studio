@@ -176,8 +176,15 @@ const CustomCreation = () => {
     return groups.includes(selectedGroup);
   }) || [];
 
-  // Determine if image upload is required for current group
+  // Get current model info
+  const currentModel = allModels?.find(m => String(m.id) === selectedModel);
+  
+  // Determine if image upload is required (by group OR by model schema)
   const isImageRequired = selectedGroup === "image_editing" || selectedGroup === "image_to_video";
+  const schemaRequired: string[] = Array.isArray((currentModel as any)?.input_schema?.required)
+    ? (currentModel as any).input_schema.required
+    : [];
+  const requiresImages = isImageRequired || schemaRequired.includes("image_urls");
   const isPromptRequired = selectedGroup !== "image_editing";
 
   const surprisePrompts = [
@@ -249,13 +256,6 @@ const CustomCreation = () => {
   };
 
   const handleGenerate = async () => {
-    // Determine if images are required by group OR model schema
-    const currentModel = allModels?.find(m => String(m.id) === selectedModel);
-    const schemaRequired: string[] = Array.isArray((currentModel as any)?.input_schema?.required)
-      ? (currentModel as any).input_schema.required
-      : [];
-    const requiresImages = isImageRequired || schemaRequired.includes("image_urls");
-
     // Validate based on requirements
     if (isPromptRequired && !prompt.trim()) {
       toast.error("Please enter a prompt");
@@ -583,7 +583,7 @@ const CustomCreation = () => {
               <div className="flex flex-col gap-2">
                 <Button 
                   onClick={handleGenerate} 
-                  disabled={isGenerating || !selectedModel || (isPromptRequired && !prompt.trim()) || (isImageRequired && uploadedImages.length === 0)}
+                  disabled={isGenerating || !selectedModel || (isPromptRequired && !prompt.trim()) || (requiresImages && uploadedImages.length === 0)}
                   size="lg"
                   className="w-full h-12 md:h-11 text-base font-bold bg-[#FFFF00] hover:bg-[#FFEB00] text-black border-2 border-black shadow-lg"
                 >

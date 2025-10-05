@@ -108,19 +108,12 @@ export default function AIModelsManager() {
     fetchModels();
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">Loading models...</p>
-      </div>
-    );
-  }
-
+  // No loading state - render immediately
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-black mb-2">AI Models</h1>
+          <h1 className="text-4xl font-black mb-2">AI MODELS</h1>
           <p className="text-muted-foreground">
             Manage AI models, providers, and token costs
           </p>

@@ -271,12 +271,13 @@ const CustomCreation = () => {
     setResolution("Native");
   };
 
-  if (modelsLoading) {
+  // Show empty state immediately if no models
+  if (!modelsLoading && (!modelsByContentType || Object.keys(modelsByContentType).length === 0)) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-          <p className="text-lg font-bold">Loading models...</p>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8 text-center">
+          <h2 className="text-4xl font-black mb-4">NO MODELS AVAILABLE</h2>
+          <p className="text-lg text-muted-foreground">Please contact your administrator to add AI models.</p>
         </div>
       </div>
     );

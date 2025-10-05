@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Sparkles, Settings, Menu, X, Coins, History } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useUserTokens } from "@/hooks/useUserTokens";
 import logo from "@/assets/logo.png";
 import textLogo from "@/assets/text-logo.png";
 
@@ -12,32 +13,14 @@ export const DashboardLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, session, loading } = useAuth();
-  const [tokensRemaining, setTokensRemaining] = useState(0);
+  const { data: tokenData } = useUserTokens();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !session) {
       navigate("/auth");
-      return;
     }
-    if (user) {
-      fetchTokenBalance(user.id);
-    }
-  }, [user, session, loading, navigate]);
-
-  const fetchTokenBalance = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("user_subscriptions")
-      .select("tokens_remaining")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Error fetching tokens:", error);
-      return;
-    }
-    setTokensRemaining(data?.tokens_remaining || 0);
-  };
+  }, [session, loading, navigate]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -46,19 +29,7 @@ export const DashboardLayout = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="h-12 w-12 rounded-xl bg-gradient-primary border-3 border-black brutal-shadow flex items-center justify-center mx-auto animate-pulse">
-            <Sparkles className="h-6 w-6 text-white" />
-          </div>
-          <p className="text-lg font-bold">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Instant render - no loading state
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -113,7 +84,7 @@ export const DashboardLayout = () => {
               <div className="brutal-card-sm px-3 md:px-4 py-2 bg-neon-yellow">
                 <div className="flex items-center gap-2">
                   <Coins className="h-4 w-4 md:h-5 md:w-5" />
-                  <span className="font-black text-sm md:text-base">{tokensRemaining}</span>
+                  <span className="font-black text-sm md:text-base">{tokenData?.tokens_remaining || 0}</span>
                 </div>
               </div>
               <Button

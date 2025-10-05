@@ -23,7 +23,7 @@ interface Generation {
 const History = () => {
   const { user } = useAuth();
 
-  const { data: generations, isLoading, refetch } = useQuery({
+  const { data: generations, refetch } = useQuery({
     queryKey: ["generations", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -36,6 +36,8 @@ const History = () => {
       return data as Generation[];
     },
     enabled: !!user,
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const handleDelete = async (id: string) => {
@@ -80,16 +82,7 @@ const History = () => {
     document.title = "History - Artifio.ai";
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-pulse text-lg font-medium">Loading history...</div>
-        </div>
-      </div>
-    );
-  }
-
+  // No loading state - show empty state immediately or render data
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -107,7 +100,7 @@ const History = () => {
             <p className="text-muted-foreground mb-6">
               Start creating to see your history here
             </p>
-            <Button onClick={() => window.location.href = "/dashboard/create"}>
+            <Button onClick={() => (window.location.href = "/dashboard/create")} className="bg-primary hover:bg-primary/90">
               Start Creating
             </Button>
           </CardContent>

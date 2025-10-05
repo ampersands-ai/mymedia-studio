@@ -549,15 +549,6 @@ const CustomCreation = () => {
                 </CollapsibleContent>
               </Collapsible>
 
-              {/* Token Estimate */}
-              <div className="flex items-center justify-between p-3 md:p-4 bg-muted/50 rounded-lg border">
-                <div className="flex items-center gap-2">
-                  <Coins className="h-5 w-5 text-foreground" />
-                  <span className="text-sm font-medium">Estimated Cost</span>
-                </div>
-                <span className="text-base md:text-lg font-bold text-foreground">{estimatedTokens} tokens</span>
-              </div>
-
               {/* Action Buttons */}
               <div className="flex flex-col gap-2">
                 <Button 
@@ -572,10 +563,16 @@ const CustomCreation = () => {
                       Generating...
                     </>
                   ) : (
-                    <>
-                      <Sparkles className="mr-2 h-5 w-5" />
-                      Generate
-                    </>
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        <Sparkles className="mr-2 h-5 w-5" />
+                        Generate
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded">
+                        <Coins className="h-4 w-4" />
+                        <span className="text-sm font-bold">{estimatedTokens}</span>
+                      </div>
+                    </div>
                   )}
                 </Button>
                 <Button onClick={handleReset} variant="outline" size="lg" className="w-full h-11 md:h-10">

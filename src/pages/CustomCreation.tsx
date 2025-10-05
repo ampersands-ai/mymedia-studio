@@ -368,7 +368,7 @@ const CustomCreation = () => {
                       variant="outline"
                       size="sm"
                       onClick={handleSurpriseMe}
-                      className="h-8 hover:bg-muted"
+                      className="h-8 bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 to-purple-500 text-white font-bold border-0 hover:opacity-90"
                       disabled={isGenerating}
                     >
                       <Sparkles className="h-3 w-3 mr-1" />
@@ -379,10 +379,10 @@ const CustomCreation = () => {
                       size="sm"
                       onClick={() => setEnhancePrompt(!enhancePrompt)}
                       className={cn(
-                        "h-8 transition-all",
+                        "h-8 transition-all font-bold",
                         enhancePrompt 
-                          ? "bg-neon-green text-black font-bold border-black hover:bg-neon-green/90" 
-                          : "hover:bg-muted"
+                          ? "bg-green-500 text-white border-green-600 hover:bg-green-600" 
+                          : "bg-white text-black border-black hover:bg-gray-100"
                       )}
                     >
                       {enhancePrompt ? "✓ " : ""}Enhance

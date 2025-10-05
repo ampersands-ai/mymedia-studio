@@ -15,6 +15,14 @@ import { Plus, Edit, Power, PowerOff, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ModelFormDialog } from "@/components/admin/ModelFormDialog";
 
+const CREATION_GROUPS = [
+  { id: "image_editing", label: "Image Editing" },
+  { id: "prompt_to_image", label: "Prompt to Image" },
+  { id: "prompt_to_video", label: "Prompt to Video" },
+  { id: "image_to_video", label: "Image to Video" },
+  { id: "prompt_to_audio", label: "Prompt to Audio" },
+];
+
 interface AIModel {
   id: string;
   provider: string;
@@ -25,6 +33,7 @@ interface AIModel {
   input_schema: any;
   api_endpoint: string | null;
   is_active: boolean;
+  groups?: any; // Json type from Supabase
 }
 
 export default function AIModelsManager() {
@@ -167,6 +176,7 @@ export default function AIModelsManager() {
                   <TableHead className="font-bold">Provider</TableHead>
                   <TableHead className="font-bold">Model Name</TableHead>
                   <TableHead className="font-bold">Type</TableHead>
+                  <TableHead className="font-bold">Groups</TableHead>
                   <TableHead className="font-bold">Base Cost</TableHead>
                   <TableHead className="font-bold">Status</TableHead>
                   <TableHead className="font-bold">Actions</TableHead>
@@ -184,6 +194,18 @@ export default function AIModelsManager() {
                     <TableCell>{model.model_name}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{model.content_type}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {(Array.isArray(model.groups) ? model.groups : []).map((group: string) => (
+                          <Badge key={group} variant="secondary" className="text-xs">
+                            {CREATION_GROUPS.find(g => g.id === group)?.label || group}
+                          </Badge>
+                        ))}
+                        {(!model.groups || (Array.isArray(model.groups) && model.groups.length === 0)) && (
+                          <span className="text-xs text-muted-foreground">None</span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="font-bold">
                       {model.base_token_cost} tokens

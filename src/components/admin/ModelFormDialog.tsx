@@ -19,6 +19,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const AVAILABLE_GROUPS = [
+  { id: "image_editing", label: "Image Editing" },
+  { id: "prompt_to_image", label: "Prompt to Image" },
+  { id: "prompt_to_video", label: "Prompt to Video" },
+  { id: "image_to_video", label: "Image to Video" },
+  { id: "prompt_to_audio", label: "Prompt to Audio" },
+];
 
 interface AIModel {
   id: string;
@@ -30,6 +39,7 @@ interface AIModel {
   input_schema: Record<string, any>;
   api_endpoint: string | null;
   is_active: boolean;
+  groups?: string[];
 }
 
 interface ModelFormDialogProps {
@@ -55,6 +65,7 @@ export function ModelFormDialog({
     input_schema: "{}",
     api_endpoint: "",
   });
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -69,6 +80,7 @@ export function ModelFormDialog({
         input_schema: JSON.stringify(model.input_schema, null, 2),
         api_endpoint: model.api_endpoint || "",
       });
+      setSelectedGroups(model.groups || []);
     } else {
       setFormData({
         id: "",
@@ -80,6 +92,7 @@ export function ModelFormDialog({
         input_schema: "{}",
         api_endpoint: "",
       });
+      setSelectedGroups([]);
     }
   }, [model, open]);
 
@@ -117,6 +130,7 @@ export function ModelFormDialog({
         cost_multipliers: costMultipliers,
         input_schema: inputSchema,
         api_endpoint: formData.api_endpoint || null,
+        groups: selectedGroups,
         is_active: true,
       };
 
@@ -254,6 +268,36 @@ export function ModelFormDialog({
                 placeholder="/v1/generate"
               />
             </div>
+          </div>
+
+          <div className="space-y-2 col-span-2">
+            <Label>Creation Types (Groups)</Label>
+            <div className="grid grid-cols-2 gap-2 p-4 border-2 border-border rounded-md">
+              {AVAILABLE_GROUPS.map(group => (
+                <div key={group.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={group.id}
+                    checked={selectedGroups.includes(group.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedGroups([...selectedGroups, group.id]);
+                      } else {
+                        setSelectedGroups(selectedGroups.filter(g => g !== group.id));
+                      }
+                    }}
+                  />
+                  <label 
+                    htmlFor={group.id} 
+                    className="text-sm cursor-pointer select-none"
+                  >
+                    {group.label}
+                  </label>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Select which creation types this model supports
+            </p>
           </div>
 
           <div className="space-y-2">

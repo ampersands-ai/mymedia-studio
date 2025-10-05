@@ -344,7 +344,7 @@ const Index = () => {
                 <span className="text-xs md:text-sm font-black">🎯 SAVE 50-80% VS COMPETITORS</span>
               </div>
               <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-primary border-3 md:border-4 border-black brutal-shadow">
-                <span className="text-xs md:text-sm font-black text-white">💎 ENTERPRISE POWER, FREELANCER PRICES</span>
+                <span className="text-xs md:text-sm font-black text-primary-foreground">💎 ENTERPRISE POWER, FREELANCER PRICES</span>
               </div>
             </div>
             <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight px-4">

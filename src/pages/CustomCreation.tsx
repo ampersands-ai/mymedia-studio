@@ -249,14 +249,21 @@ const CustomCreation = () => {
   };
 
   const handleGenerate = async () => {
-    // Validate based on group requirements
+    // Determine if images are required by group OR model schema
+    const currentModel = allModels?.find(m => String(m.id) === selectedModel);
+    const schemaRequired: string[] = Array.isArray((currentModel as any)?.input_schema?.required)
+      ? (currentModel as any).input_schema.required
+      : [];
+    const requiresImages = isImageRequired || schemaRequired.includes("image_urls");
+
+    // Validate based on requirements
     if (isPromptRequired && !prompt.trim()) {
       toast.error("Please enter a prompt");
       return;
     }
     
-    if (isImageRequired && uploadedImages.length === 0) {
-      toast.error("Please upload at least one image for this creation type");
+    if (requiresImages && uploadedImages.length === 0) {
+      toast.error("This model requires at least one input image");
       return;
     }
 
@@ -270,8 +277,8 @@ const CustomCreation = () => {
         resolution: resolution.toLowerCase(),
       };
 
-      // For image editing or flows that require an input image, upload and pass public URLs
-      if (isImageRequired && uploadedImages.length > 0) {
+      // For models that require input images, upload and pass public URLs
+      if (requiresImages && uploadedImages.length > 0) {
         if (!user?.id) {
           toast.error("You must be logged in to upload images");
           return;

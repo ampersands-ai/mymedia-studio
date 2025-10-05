@@ -285,7 +285,7 @@ const Create = () => {
                 <Button
                   onClick={handleGenerate}
                   className="flex-1"
-                  disabled={isGenerating || !prompt.trim() || (requiresImages && uploadedImages.length === 0)}
+                  disabled={isGenerating}
                 >
                   {isGenerating ? (
                     <>

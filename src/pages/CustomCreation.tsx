@@ -583,7 +583,7 @@ const CustomCreation = () => {
               <div className="flex flex-col gap-2">
                 <Button 
                   onClick={handleGenerate} 
-                  disabled={isGenerating || !selectedModel || (isPromptRequired && !prompt.trim()) || (requiresImages && uploadedImages.length === 0)}
+                  disabled={isGenerating}
                   size="lg"
                   className="w-full h-12 md:h-11 text-base font-bold bg-[#FFFF00] hover:bg-[#FFEB00] text-black border-2 border-black shadow-lg"
                 >

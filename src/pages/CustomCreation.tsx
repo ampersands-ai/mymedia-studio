@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, ChevronLeft } from "lucide-react";
+import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2 } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -19,6 +20,9 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { TemplateCard } from "@/components/TemplateCard";
+import { useGeneration } from "@/hooks/useGeneration";
+import { useModelsByContentType } from "@/hooks/useModels";
+import { supabase } from "@/integrations/supabase/client";
 
 // Community creations data
 const communityCreations = [
@@ -137,16 +141,15 @@ const communityCreations = [
 
 const CustomCreation = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { modelsByContentType, isLoading: modelsLoading } = useModelsByContentType();
+  const { generate, isGenerating } = useGeneration();
   const [prompt, setPrompt] = useState("");
   const [contentType, setContentType] = useState<"image" | "video" | "music" | "text">("image");
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
-  const [outputFormat, setOutputFormat] = useState<"PNG" | "JPEG">("PNG");
+  const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [resolution, setResolution] = useState<"Native" | "HD">("Native");
-  const [theme, setTheme] = useState<string>("realistic");
-  const [applyBrand, setApplyBrand] = useState(false);
   const [generatedOutput, setGeneratedOutput] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isEnhancing, setIsEnhancing] = useState(false);
   const [estimatedTokens, setEstimatedTokens] = useState(50);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -158,6 +161,13 @@ const CustomCreation = () => {
       metaDescription.setAttribute('content', 'Create custom AI-generated content with advanced controls and fine-tuning options.');
     }
   }, []);
+
+  // Auto-select first model when content type changes
+  useEffect(() => {
+    if (modelsByContentType && modelsByContentType[contentType]?.length > 0) {
+      setSelectedModel(modelsByContentType[contentType][0].id);
+    }
+  }, [contentType, modelsByContentType]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -199,119 +209,78 @@ const CustomCreation = () => {
       toast.error("Please enter a prompt");
       return;
     }
+
+    if (!selectedModel) {
+      toast.error("Please select a model");
+      return;
+    }
     
-    if (prompt.length > 1000) {
-      toast.error("Prompt is too long. Please keep it under 1000 characters.");
-      return;
-    }
+    try {
+      const customParameters: Record<string, any> = {
+        resolution: resolution.toLowerCase(),
+      };
 
-    if (prompt.length < 3) {
-      toast.error("Prompt is too short. Please provide more details.");
-      return;
-    }
+      const result = await generate({
+        model_id: selectedModel,
+        prompt: prompt.trim(),
+        custom_parameters: customParameters,
+      });
 
-    for (const image of uploadedImages) {
-      if (image.size > 10 * 1024 * 1024) {
-        toast.error(`Image "${image.name}" is too large. Maximum size is 10MB.`);
-        return;
+      if (result?.output_url) {
+        const { data } = supabase.storage
+          .from("generated-content")
+          .getPublicUrl(result.output_url);
+        
+        setGeneratedOutput(data.publicUrl);
       }
       
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-      if (!validTypes.includes(image.type)) {
-        toast.error(`Invalid file type for "${image.name}". Only JPEG, PNG, and WebP are supported.`);
-        return;
-      }
-    }
-    
-    setIsGenerating(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setGeneratedOutput("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=600&fit=crop");
-      toast.success("Image generated successfully!");
-    } catch (error: any) {
-      console.error("Generation error:", error);
-      
-      if (error.message?.includes("Insufficient tokens")) {
-        toast.error("You don't have enough tokens. Please upgrade your plan.");
-      } else if (error.message?.includes("network")) {
-        toast.error("Network error. Please check your connection and try again.");
-      } else {
-        toast.error(error.message || "Generation failed. Please try again.");
-      }
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleEnhancePrompt = async () => {
-    if (!prompt.trim()) {
-      toast.error("Please enter a prompt first");
-      return;
-    }
-    
-    setIsEnhancing(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      const enhanced = `${prompt}. Ultra high quality, professional lighting, cinematic composition, 8K resolution, highly detailed`;
-      setPrompt(enhanced);
-      toast.success("Prompt enhanced!");
+      toast.success("Generation complete! Check your History.");
     } catch (error) {
-      toast.error("Failed to enhance prompt");
-    } finally {
-      setIsEnhancing(false);
+      // Error already handled in useGeneration hook
     }
   };
 
   const calculateTokens = () => {
-    const baseTokens = {
-      image: 50,
-      video: 200,
-      music: 150,
-      text: 20
-    };
+    if (!selectedModel || !modelsByContentType) return 50;
+
+    const currentModel = modelsByContentType[contentType]?.find(m => m.id === selectedModel);
+    if (!currentModel) return 50;
+
+    let tokens = currentModel.base_token_cost;
+    const multipliers = currentModel.cost_multipliers || {};
     
-    let tokens = baseTokens[contentType];
-    if (resolution === "HD") tokens *= 1.5;
-    if (uploadedImages.length > 0) tokens += uploadedImages.length * 10;
-    if (applyBrand) tokens += 25;
+    if (resolution === "HD" && multipliers.hd) {
+      tokens *= multipliers.hd;
+    }
+    
+    if (uploadedImages.length > 0 && multipliers.uploaded_image) {
+      tokens += uploadedImages.length * multipliers.uploaded_image;
+    }
     
     return Math.ceil(tokens);
   };
 
   useEffect(() => {
     setEstimatedTokens(calculateTokens());
-  }, [contentType, resolution, uploadedImages, applyBrand]);
+  }, [selectedModel, resolution, uploadedImages, contentType, modelsByContentType]);
 
   const handleReset = () => {
     setPrompt("");
     setUploadedImages([]);
     setGeneratedOutput(null);
-    setOutputFormat("PNG");
     setResolution("Native");
-    setTheme("realistic");
-    setApplyBrand(false);
   };
 
-  const loadTemplate = (template: any) => {
-    setPrompt(template.prompt);
-    setContentType(template.contentType as typeof contentType);
-    setResolution(template.resolution as typeof resolution);
-    setTheme(template.theme);
-    toast.success(`${template.id} loaded!`);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Filter community creations based on current settings
-  const filteredCommunityCreations = communityCreations.filter((creation) => {
-    return creation.contentType === contentType &&
-           creation.resolution === resolution &&
-           creation.theme === theme;
-  });
-
-  // Show all if no matches
-  const displayedCreations = filteredCommunityCreations.length > 0 
-    ? filteredCommunityCreations 
-    : communityCreations.slice(0, 6);
+  if (modelsLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+          <p className="text-lg font-bold">Loading models...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-8">
@@ -335,63 +304,44 @@ const CustomCreation = () => {
             </div>
 
             <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-              {/* Content Type */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Content Type</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  <Button
-                    variant={contentType === "image" ? "default" : "outline"}
-                    onClick={() => setContentType("image")}
-                    className="h-11 md:h-10 text-sm"
-                  >
-                    <ImageIcon className="h-4 w-4 mr-1 md:mr-2" />
-                    Image
-                  </Button>
-                  <Button
-                    variant={contentType === "video" ? "default" : "outline"}
-                    onClick={() => setContentType("video")}
-                    className="h-11 md:h-10 text-sm"
-                  >
-                    <Play className="h-4 w-4 mr-1 md:mr-2" />
-                    Video
-                  </Button>
-                  <Button
-                    variant={contentType === "music" ? "default" : "outline"}
-                    onClick={() => setContentType("music")}
-                    className="h-11 md:h-10 text-sm"
-                  >
-                    🎵 Music
-                  </Button>
-                  <Button
-                    variant={contentType === "text" ? "default" : "outline"}
-                    onClick={() => setContentType("text")}
-                    className="h-11 md:h-10 text-sm"
-                  >
-                    💬 Text
-                  </Button>
+              {/* Model Selection */}
+              {modelsByContentType && modelsByContentType[contentType] && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">AI Model</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {modelsByContentType[contentType].map((model) => (
+                      <Button
+                        key={model.id}
+                        variant={selectedModel === model.id ? "default" : "outline"}
+                        onClick={() => setSelectedModel(model.id)}
+                        className="h-auto py-3 px-4 justify-start text-left"
+                      >
+                        <div className="flex flex-col gap-1 w-full">
+                          <div className="flex items-center justify-between w-full">
+                            <span className="font-bold text-sm">{model.model_name}</span>
+                            <Badge variant="secondary" className="text-xs">
+                              {model.base_token_cost} tokens
+                            </Badge>
+                          </div>
+                          <span className="text-xs text-muted-foreground capitalize">
+                            {model.provider} • {model.content_type}
+                          </span>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Prompt */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Prompt <span className="text-destructive">*</span></label>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleEnhancePrompt}
-                    disabled={isEnhancing || !prompt}
-                    className="h-8 text-xs"
-                  >
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    {isEnhancing ? "..." : "Enhance"}
-                  </Button>
-                </div>
+                <label className="text-sm font-medium">Prompt <span className="text-destructive">*</span></label>
                 <Textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="Describe what you want to create..."
                   className="min-h-[100px] md:min-h-[120px] resize-none text-sm md:text-base"
+                  disabled={isGenerating}
                 />
               </div>
 
@@ -432,27 +382,6 @@ const CustomCreation = () => {
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-4 mt-4">
-                  {/* Output Format */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Format</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        variant={outputFormat === "PNG" ? "default" : "outline"}
-                        onClick={() => setOutputFormat("PNG")}
-                        className="h-11 md:h-10"
-                      >
-                        PNG
-                      </Button>
-                      <Button
-                        variant={outputFormat === "JPEG" ? "default" : "outline"}
-                        onClick={() => setOutputFormat("JPEG")}
-                        className="h-11 md:h-10"
-                      >
-                        JPEG
-                      </Button>
-                    </div>
-                  </div>
-
                   {/* Resolution */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Resolution</label>
@@ -472,39 +401,6 @@ const CustomCreation = () => {
                         HD
                       </Button>
                     </div>
-                  </div>
-
-                  {/* Theme */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Theme</label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {["realistic", "artistic", "anime", "abstract", "cyberpunk", "fantasy"].map((t) => (
-                        <Button
-                          key={t}
-                          variant={theme === t ? "default" : "outline"}
-                          onClick={() => setTheme(t)}
-                          className="capitalize h-11 md:h-10 text-xs md:text-sm"
-                          size="sm"
-                        >
-                          {t}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Brand Toggle */}
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="space-y-0.5">
-                      <label className="text-sm font-medium">Apply Brand</label>
-                      <p className="text-xs text-muted-foreground">+25 tokens</p>
-                    </div>
-                    <Button
-                      variant={applyBrand ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setApplyBrand(!applyBrand)}
-                    >
-                      {applyBrand ? "ON" : "OFF"}
-                    </Button>
                   </div>
                 </CollapsibleContent>
               </Collapsible>
@@ -546,21 +442,11 @@ const CustomCreation = () => {
                     <Button 
                       size="sm" 
                       variant="default"
-                      onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = generatedOutput;
-                        link.download = `artifio-${Date.now()}.${outputFormat.toLowerCase()}`;
-                        link.click();
-                        toast.success("Downloaded!");
-                      }}
+                      onClick={() => navigate("/dashboard/history")}
                       className="flex-1 h-11 md:h-10"
                     >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
-                    <Button size="sm" variant="outline" className="flex-1 h-11 md:h-10">
                       <History className="h-4 w-4 mr-2" />
-                      History
+                      View History
                     </Button>
                   </div>
                 )}
@@ -577,11 +463,20 @@ const CustomCreation = () => {
             </Button>
             <Button
               onClick={handleGenerate}
-              disabled={!prompt || isGenerating}
+              disabled={!prompt || !selectedModel || isGenerating}
               className="flex-1 h-12 bg-gradient-to-r from-primary to-purple-600"
             >
-              <Play className="h-4 w-4 mr-2" />
-              {isGenerating ? "..." : "Generate"}
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4 mr-2" />
+                  Generate
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -593,47 +488,25 @@ const CustomCreation = () => {
           </Button>
           <Button
             onClick={handleGenerate}
-            disabled={!prompt || isGenerating}
+            disabled={!prompt || !selectedModel || isGenerating}
             className="flex-1 bg-gradient-to-r from-primary to-purple-600"
           >
-            <Play className="h-4 w-4 mr-2" />
-            {isGenerating ? "Generating..." : "Generate"}
+            {isGenerating ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Play className="h-4 w-4 mr-2" />
+                Generate
+              </>
+            )}
           </Button>
         </div>
 
-        {/* Community Creations */}
-        <div className="mt-12 md:mt-16 space-y-6 md:space-y-8">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl md:text-4xl font-black">COMMUNITY CREATIONS</h2>
-            <p className="text-sm md:text-base text-foreground/80 font-medium">
-              {filteredCommunityCreations.length > 0 
-                ? `Creations using ${contentType} • ${resolution} • ${theme}`
-                : "Popular creations from the community"}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-            {displayedCreations.map((creation) => (
-              <Card key={creation.id} className="overflow-hidden hover-lift cursor-pointer group">
-                <div className="aspect-square overflow-hidden bg-muted relative">
-                  <TemplateCard
-                    image={creation.image}
-                    video={(creation as any).video}
-                    alt={creation.id}
-                    className="w-full h-full"
-                  />
-                  <div className="absolute top-2 left-2 bg-black/80 text-white px-2 py-1 rounded text-xs font-black z-10">
-                    {creation.id}
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <p className="text-white text-xs font-medium">{creation.author}</p>
-                    <p className="text-white/70 text-xs">❤️ {creation.likes}</p>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
+        {/* Community Creations Section - Removed */}
+        {/* Removed community creations carousel to simplify the page */}
 
         {/* Best Practices - Use Cases */}
         <div className="mt-12 md:mt-16 space-y-6 md:space-y-8 pb-24 md:pb-12">

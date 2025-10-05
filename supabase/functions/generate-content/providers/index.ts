@@ -21,8 +21,11 @@ export async function callProvider(
   console.log(`Calling provider: ${provider}`);
 
   switch (provider) {
+    // Kie.ai provider temporarily disabled to allow project remixing
+    // The KIE_AI_API_KEY secret prevents remixing when active
+    // To re-enable: uncomment this code, add KIE_AI_API_KEY secret, and reactivate models
     case 'kie_ai':
-      return await callKieAI(request);
+      throw new Error('Kie.ai provider is currently disabled. To re-enable, add KIE_AI_API_KEY secret and reactivate models.');
     
     case 'json2video':
       throw new Error('JSON2Video provider not yet implemented. Please configure in providers/json2video.ts');

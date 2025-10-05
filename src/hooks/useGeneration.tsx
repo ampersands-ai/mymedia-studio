@@ -38,15 +38,25 @@ export const useGeneration = () => {
       });
 
       if (error) {
+        console.error("Edge function error:", error);
         // Handle specific error codes
         if (error.message?.includes("402")) {
           toast.error("Insufficient tokens. Please upgrade your plan.");
           throw new Error("Insufficient tokens");
         }
+        if (error.message?.includes("429")) {
+          toast.error("Rate limited. Please try again later.");
+          throw new Error("Rate limited");
+        }
+        if (error.message?.includes("400")) {
+          toast.error("Invalid parameters: " + (error.message || "Missing required fields"));
+          throw new Error("Invalid parameters");
+        }
         throw error;
       }
 
       if (data.error) {
+        toast.error(data.error);
         throw new Error(data.error);
       }
 

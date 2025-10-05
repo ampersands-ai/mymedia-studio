@@ -94,6 +94,17 @@ serve(async (req) => {
 
     console.log('Using model:', model.id, 'Provider:', model.provider);
 
+    // Validate required fields based on model's input schema
+    const inputSchema = model.input_schema || {};
+    if (inputSchema.image_urls && inputSchema.image_urls.required) {
+      if (!parameters.image_urls || !Array.isArray(parameters.image_urls) || parameters.image_urls.length === 0) {
+        return new Response(
+          JSON.stringify({ error: 'image_urls is required for this model' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Enhance prompt if requested
     let finalPrompt = prompt;
     let originalPrompt = prompt;

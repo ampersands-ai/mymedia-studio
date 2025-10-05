@@ -267,8 +267,48 @@ const CustomCreation = () => {
     
     try {
       const customParameters: Record<string, any> = {
-        resolution: resolution.toLowerCase(),
+        resolution: resolution === "Native" ? "auto" : "hd",
       };
+
+      // Upload images to storage if required
+      if (isImageRequired && uploadedImages.length > 0) {
+        const timestamp = Date.now();
+        const imageUrls: string[] = [];
+
+        for (let i = 0; i < uploadedImages.length; i++) {
+          const file = uploadedImages[i];
+          const fileExt = file.name.split('.').pop();
+          const filePath = `${user?.id}/uploads/${timestamp}/${i}.${fileExt}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('generated-content')
+            .upload(filePath, file, {
+              cacheControl: '3600',
+              upsert: false
+            });
+
+          if (uploadError) {
+            toast.error(`Failed to upload image: ${file.name}`);
+            console.error('Upload error:', uploadError);
+            return;
+          }
+
+          const { data } = supabase.storage
+            .from('generated-content')
+            .getPublicUrl(filePath);
+
+          imageUrls.push(data.publicUrl);
+        }
+
+        customParameters.image_urls = imageUrls;
+        console.log('Uploaded images:', imageUrls);
+      }
+
+      console.log('Generation payload:', {
+        model_id: selectedModel,
+        prompt: prompt.trim(),
+        custom_parameters: customParameters
+      });
 
       const result = await generate({
         model_id: selectedModel,
@@ -285,7 +325,8 @@ const CustomCreation = () => {
       }
       
       toast.success("Generation complete! Check your History.");
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Generation error:', error);
       // Error already handled in useGeneration hook
     }
   };

@@ -240,6 +240,24 @@ const CustomCreation = () => {
     }
   }, [filteredModels, selectedModel]);
 
+  // Initialize schema defaults into modelParameters when model changes
+  useEffect(() => {
+    if (!selectedModel) return;
+    const currentModel = filteredModels.find(m => m.id === selectedModel);
+    const props = currentModel?.input_schema?.properties;
+    if (!props) return;
+
+    const defaults: Record<string, any> = {};
+    for (const [key, schema] of Object.entries<any>(props)) {
+      if (schema?.default !== undefined && modelParameters[key] === undefined) {
+        defaults[key] = schema.default;
+      }
+    }
+    if (Object.keys(defaults).length > 0) {
+      setModelParameters(prev => ({ ...defaults, ...prev }));
+    }
+  }, [selectedModel, filteredModels]);
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     

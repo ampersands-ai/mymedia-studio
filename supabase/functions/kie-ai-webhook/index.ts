@@ -27,7 +27,7 @@ serve(async (req) => {
       );
     }
 
-    const { taskId, state, resultJson, failMsg } = payload.data;
+    const taskId = payload.data?.taskId;
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -51,9 +51,13 @@ serve(async (req) => {
 
     console.log('Found generation:', generation.id);
 
+    // Check if this is a success or failure based on Kie.ai response structure
+    const isSuccess = payload.code === 200 || (payload.msg && payload.msg.toLowerCase().includes('success'));
+    const isFailed = payload.code === 400 || payload.code === 422 || (payload.msg && payload.msg.toLowerCase().includes('fail'));
+
     // Handle failure
-    if (state === 'failed' || payload.status === 400) {
-      console.error('Generation failed:', failMsg);
+    if (isFailed) {
+      console.error('Generation failed:', payload.msg);
       
       // Update generation to failed and refund tokens
       const { error: updateError } = await supabase
@@ -83,11 +87,10 @@ serve(async (req) => {
     }
 
     // Handle success
-    if (state === 'success' && resultJson) {
+    if (isSuccess && payload.data?.info) {
       console.log('Processing successful generation');
       
-      const result = JSON.parse(resultJson);
-      const resultUrl = result.resultUrls?.[0];
+      const resultUrl = payload.data.info.resultUrls?.[0] || payload.data.info.result_urls?.[0];
 
       if (!resultUrl) {
         throw new Error('No result URL found in response');
@@ -161,7 +164,7 @@ serve(async (req) => {
     }
 
     // Unknown state
-    console.warn('Unknown state:', state);
+    console.warn('Unknown webhook state - code:', payload.code, 'msg:', payload.msg);
     return new Response(
       JSON.stringify({ success: true, message: 'Webhook received but state unknown' }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

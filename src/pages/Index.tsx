@@ -25,6 +25,14 @@ import elevenlabsLogo from "@/assets/partners/elevenlabs.png";
 import veo3Logo from "@/assets/partners/veo3.png";
 import runwayLogo from "@/assets/partners/runway.png";
 import geminiLogo from "@/assets/partners/gemini.png";
+import midjourneyLogo from "@/assets/partners/midjourney.jpg";
+import openaiLogo from "@/assets/partners/openai.png";
+import chatgptLogo from "@/assets/partners/chatgpt.png";
+import hailuoLogo from "@/assets/partners/hailuo.png";
+import seedanceLogo from "@/assets/partners/seedance.png";
+import googleLogo from "@/assets/partners/google.webp";
+import googleAILogo from "@/assets/partners/google-ai.png";
+import topazLogo from "@/assets/partners/topaz.webp";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -255,16 +263,24 @@ const Index = () => {
   ];
 
   const partners = [
+    { name: "OpenAI", logo: openaiLogo },
+    { name: "ChatGPT", logo: chatgptLogo },
+    { name: "Google", logo: googleLogo },
+    { name: "Google AI", logo: googleAILogo },
     { name: "Gemini", logo: geminiLogo },
     { name: "Sora 2", logo: sora2Logo },
     { name: "Veo 3", logo: veo3Logo },
     { name: "Runway", logo: runwayLogo },
+    { name: "Midjourney", logo: midjourneyLogo },
     { name: "Luma", logo: lumaLogo },
     { name: "Kling", logo: klingLogo },
     { name: "ByteDance", logo: bytedanceLogo },
     { name: "Wan", logo: wanLogo },
+    { name: "Hailuo", logo: hailuoLogo },
     { name: "ElevenLabs", logo: elevenlabsLogo },
     { name: "Recraft", logo: recraftLogo },
+    { name: "Seedance", logo: seedanceLogo },
+    { name: "Topaz Labs", logo: topazLogo },
   ];
 
   return (

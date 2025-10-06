@@ -13,6 +13,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const Create = lazy(() => import("./pages/Create"));
 const CustomCreation = lazy(() => import("./pages/CustomCreation"));
 const Settings = lazy(() => import("./pages/Settings"));
+const History = lazy(() => import("./pages/dashboard/History"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
@@ -47,6 +48,7 @@ const AppContent = () => {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route path="create" element={<Create />} />
           <Route path="custom-creation" element={<CustomCreation />} />
+          <Route path="history" element={<History />} />
           <Route path="settings" element={<Settings />} />
         </Route>
         <Route path="/admin" element={<AdminLayout />}>

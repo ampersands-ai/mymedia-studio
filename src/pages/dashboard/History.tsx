@@ -5,9 +5,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Trash2, Clock, Sparkles, Image as ImageIcon, Video, Music, FileText } from "lucide-react";
+import { Download, Trash2, Clock, Sparkles, Image as ImageIcon, Video, Music, FileText, RefreshCw, X } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Generation {
   id: string;
@@ -22,8 +23,9 @@ interface Generation {
 
 const History = () => {
   const { user } = useAuth();
+  const [previewGeneration, setPreviewGeneration] = useState<Generation | null>(null);
 
-  const { data: generations, refetch } = useQuery({
+  const { data: generations, refetch, isRefetching } = useQuery({
     queryKey: ["generations", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -60,6 +62,11 @@ const History = () => {
 
     toast.success("Generation deleted");
     refetch();
+  };
+
+  const handleRefresh = async () => {
+    await refetch();
+    toast.success('History refreshed!');
   };
 
   const handleDownload = async (url: string, type: string) => {
@@ -118,11 +125,22 @@ const History = () => {
   // No loading state - show empty state immediately or render data
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-black mb-2">GENERATION HISTORY</h1>
-        <p className="text-lg text-foreground/80 font-medium">
-          View and manage your AI creations
-        </p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-black mb-2">GENERATION HISTORY</h1>
+          <p className="text-lg text-foreground/80 font-medium">
+            View and manage your AI creations
+          </p>
+        </div>
+        <Button
+          onClick={handleRefresh}
+          variant="outline"
+          size="icon"
+          disabled={isRefetching}
+          className="brutal-card-sm"
+        >
+          <RefreshCw className={`h-5 w-5 ${isRefetching ? 'animate-spin' : ''}`} />
+        </Button>
       </div>
 
       {!generations || generations.length === 0 ? (
@@ -141,14 +159,18 @@ const History = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {generations.map((generation) => (
-            <Card key={generation.id} className="overflow-hidden">
+            <Card 
+              key={generation.id} 
+              className="overflow-hidden cursor-pointer hover-lift"
+              onClick={() => setPreviewGeneration(generation)}
+            >
               {generation.output_url && generation.status === "completed" && (
                 <div className="aspect-video relative overflow-hidden bg-muted">
                   {generation.type === "video" ? (
                     <video
                       src={generation.output_url}
                       className="w-full h-full object-cover"
-                      controls
+                      onClick={(e) => e.stopPropagation()}
                     />
                   ) : generation.type === "image" ? (
                     <img
@@ -181,32 +203,90 @@ const History = () => {
                   <span>{format(new Date(generation.created_at), "MMM d, yyyy")}</span>
                   <span>{generation.status === 'failed' ? '0' : generation.tokens_used} tokens</span>
                 </div>
-
-                <div className="flex gap-2">
-                  {generation.output_url && generation.status === "completed" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleDownload(generation.output_url!, generation.type)}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
-                  )}
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(generation.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      {/* Preview Dialog */}
+      <Dialog open={!!previewGeneration} onOpenChange={() => setPreviewGeneration(null)}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="font-black flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {previewGeneration && getTypeIcon(previewGeneration.type)}
+                <span className="capitalize">{previewGeneration?.type} Generation</span>
+              </div>
+              {previewGeneration && getStatusBadge(previewGeneration.status)}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {previewGeneration && (
+            <div className="space-y-4">
+              {previewGeneration.output_url && previewGeneration.status === "completed" && (
+                <div className="aspect-video relative overflow-hidden bg-muted rounded-lg">
+                  {previewGeneration.type === "video" ? (
+                    <video
+                      src={previewGeneration.output_url}
+                      className="w-full h-full object-contain"
+                      controls
+                    />
+                  ) : previewGeneration.type === "image" ? (
+                    <img
+                      src={previewGeneration.output_url}
+                      alt="Generated content"
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      {getTypeIcon(previewGeneration.type)}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <h4 className="font-bold text-sm">Prompt:</h4>
+                <p className="text-sm text-foreground/80">
+                  {previewGeneration.enhanced_prompt || previewGeneration.prompt}
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>{format(new Date(previewGeneration.created_at), "MMM d, yyyy 'at' h:mm a")}</span>
+                <span>{previewGeneration.status === 'failed' ? '0' : previewGeneration.tokens_used} tokens used</span>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                {previewGeneration.output_url && previewGeneration.status === "completed" && (
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownload(previewGeneration.output_url!, previewGeneration.type);
+                    }}
+                    className="flex-1"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                )}
+                <Button
+                  variant="destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(previewGeneration.id);
+                    setPreviewGeneration(null);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

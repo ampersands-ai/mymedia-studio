@@ -187,7 +187,7 @@ const Create = () => {
       // Start polling for status
       if (result?.id) {
         setPollingGenerationId(result.id);
-        toast.success("Generation started!");
+        toast.success("Processing your request... This may take a few minutes.");
       }
 
       // If immediate result, show it

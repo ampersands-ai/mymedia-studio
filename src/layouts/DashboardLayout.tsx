@@ -3,7 +3,7 @@ import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Sparkles, Settings, Menu, X, Coins } from "lucide-react";
+import { LogOut, Sparkles, Settings, Menu, X, Coins, History } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { Footer } from "@/components/Footer";
@@ -77,6 +77,18 @@ export const DashboardLayout = () => {
                   Custom Creation
                 </Button>
               </Link>
+              <Link to="/dashboard/history">
+                <Button
+                  variant={isActive("/dashboard/history") ? "default" : "ghost"}
+                  className={cn(
+                    "text-base px-6 py-5",
+                    isActive("/dashboard/history") && "bg-neon-purple hover:bg-neon-purple/90 text-black font-bold"
+                  )}
+                >
+                  <History className="h-5 w-5 mr-2" />
+                  History
+                </Button>
+              </Link>
               <Link to="/dashboard/settings">
                 <Button
                   variant={isActive("/dashboard/settings") ? "default" : "ghost"}
@@ -141,6 +153,19 @@ export const DashboardLayout = () => {
                     >
                       <Sparkles className="h-5 w-5" />
                       <span>Templates</span>
+                    </Link>
+                    <Link 
+                      to="/dashboard/history" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors",
+                        isActive("/dashboard/history") 
+                          ? "bg-neon-purple text-black" 
+                          : "hover:bg-accent"
+                      )}
+                    >
+                      <History className="h-5 w-5" />
+                      <span>History</span>
                     </Link>
                     <Link 
                       to="/dashboard/settings" 

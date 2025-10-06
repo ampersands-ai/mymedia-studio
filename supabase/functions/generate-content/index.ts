@@ -357,10 +357,10 @@ serve(async (req) => {
 
         console.log('Provider response received');
 
-        // Phase 3: Process storage upload asynchronously (fire-and-forget)
+        // Phase 3: Process storage upload asynchronously (fire-and-forget with improved error handling)
         const generationId = generation.id;
         
-        // Upload and update in background (don't await)
+        // Upload and update in background (don't await, but with proper error handling)
         (async () => {
           try {
             const storagePath = await uploadToStorage(
@@ -407,6 +407,16 @@ serve(async (req) => {
             console.log('Background processing completed');
           } catch (bgError) {
             console.error('Background processing error:', bgError);
+            
+            // Update to failed status if background task fails
+            const errorMessage = bgError instanceof Error ? bgError.message : 'Background processing failed';
+            await supabase
+              .from('generations')
+              .update({ 
+                status: 'failed', 
+                provider_response: { error: errorMessage } 
+              })
+              .eq('id', generationId);
           }
         })();
 

@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2 } from "lucide-react";
+import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2, Clock } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -184,6 +184,8 @@ const CustomCreation = () => {
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [modelParameters, setModelParameters] = useState<Record<string, any>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pollingGenerationId, setPollingGenerationId] = useState<string | null>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Filter models by selected group
   const filteredModels = allModels?.filter(model => {
@@ -227,6 +229,74 @@ const CustomCreation = () => {
       metaDescription.setAttribute('content', 'Create custom AI-generated content with advanced controls and fine-tuning options.');
     }
   }, []);
+
+  // Polling function to check generation status
+  const pollGenerationStatus = async (generationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('generations')
+        .select('status, output_url, type')
+        .eq('id', generationId)
+        .single();
+
+      if (error) throw error;
+
+      // Check if generation is complete or failed
+      if (data.status === 'completed' || data.status === 'failed') {
+        // Stop polling
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
+        }
+        setPollingGenerationId(null);
+        setLocalGenerating(false);
+
+        if (data.status === 'completed') {
+          setGeneratedOutput(data.output_url);
+          toast.success('Generation complete! Check your History for the result.');
+        } else {
+          toast.error('Generation failed. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Polling error:', error);
+    }
+  };
+
+  // Start polling after generation request
+  useEffect(() => {
+    if (pollingGenerationId) {
+      const startTime = Date.now();
+      const MAX_POLLING_DURATION = 20 * 60 * 1000; // 20 minutes
+
+      // Poll every 1 minute (60 seconds)
+      pollIntervalRef.current = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        
+        if (elapsed >= MAX_POLLING_DURATION) {
+          // Stop polling after 20 minutes
+          clearInterval(pollIntervalRef.current!);
+          pollIntervalRef.current = null;
+          setPollingGenerationId(null);
+          setLocalGenerating(false);
+          toast.info('Generation is taking longer than expected. Check History for updates.');
+          return;
+        }
+
+        pollGenerationStatus(pollingGenerationId);
+      }, 60000); // 60 seconds = 1 minute
+
+      // Initial check after 30 seconds
+      setTimeout(() => pollGenerationStatus(pollingGenerationId), 30000);
+
+      // Cleanup on unmount
+      return () => {
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+        }
+      };
+    }
+  }, [pollingGenerationId]);
 
   // Reset model selection when group changes
   useEffect(() => {
@@ -390,11 +460,16 @@ const CustomCreation = () => {
         custom_parameters: customParameters,
       });
 
+      // Start polling for status updates
+      if (result?.id) {
+        setPollingGenerationId(result.id);
+      }
+
       if (result?.output_url) {
         setGeneratedOutput(result.output_url);
       }
       
-      toast.success("Generation complete! Check your History.");
+      toast.success("Generation started! Check your History for updates.");
     } catch (error: any) {
       console.error('Generation error:', error);
       // Error already handled in useGeneration hook
@@ -757,6 +832,7 @@ const CustomCreation = () => {
             <div className="p-4 md:p-6">
               {(localGenerating || isGenerating) ? (
                 <div className="space-y-4">
+                  {/* Shimmer animation */}
                   <div className="relative aspect-square bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" 
                          style={{ backgroundSize: '1000px 100%' }} />
@@ -781,9 +857,32 @@ const CustomCreation = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Skeleton className="h-10 w-full animate-pulse" />
-                    <Skeleton className="h-10 w-full animate-pulse" style={{ animationDelay: '150ms' }} />
+                  
+                  {/* Informational banner */}
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <Clock className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="space-y-2">
+                        <p className="text-sm font-semibold text-blue-900">
+                          {selectedModel && filteredModels.find(m => m.id === selectedModel)?.content_type === 'video' 
+                            ? '⏱️ Video generation typically takes 3-5 minutes'
+                            : selectedModel && filteredModels.find(m => m.id === selectedModel)?.content_type === 'audio'
+                            ? '⏱️ Audio generation typically takes 1-2 minutes'
+                            : '⏱️ Creating your content...'}
+                        </p>
+                        <p className="text-xs text-blue-700">
+                          You can safely navigate away. Your generation will continue in the background and appear in your History.
+                        </p>
+                        <Button 
+                          variant="link" 
+                          size="sm"
+                          onClick={() => navigate("/dashboard/history")}
+                          className="text-blue-600 underline h-auto p-0"
+                        >
+                          View History →
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : generatedOutput ? (

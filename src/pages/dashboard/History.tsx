@@ -38,6 +38,13 @@ const History = () => {
     enabled: !!user,
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: (query) => {
+      // Auto-refetch every minute if there are pending/processing generations
+      const hasPending = query.state.data?.some(g => 
+        g.status === 'pending' || g.status === 'processing'
+      );
+      return hasPending ? 60000 : false; // 60 seconds
+    },
   });
 
   const handleDelete = async (id: string) => {
@@ -70,7 +77,13 @@ const History = () => {
       case "completed":
         return <Badge className="bg-green-500">Completed</Badge>;
       case "pending":
-        return <Badge className="bg-yellow-500">Pending</Badge>;
+      case "processing":
+        return (
+          <Badge className="bg-yellow-500 animate-pulse">
+            <Clock className="h-3 w-3 mr-1 inline" />
+            {status === 'processing' ? 'Processing...' : 'Pending'}
+          </Badge>
+        );
       case "failed":
         return <Badge className="bg-red-500">Failed</Badge>;
       default:

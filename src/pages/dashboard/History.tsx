@@ -71,6 +71,7 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
           onClick={async (e) => {
             e.stopPropagation();
             if (generation.storage_path) {
+              toast.loading('Preparing your download...', { id: 'video-download' });
               try {
                 const { data } = await supabase.storage
                   .from('generated-content')
@@ -86,10 +87,10 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
                   a.click();
                   window.URL.revokeObjectURL(blobUrl);
                   document.body.removeChild(a);
-                  toast.success('Download started!');
+                  toast.success('Download started successfully!', { id: 'video-download' });
                 }
               } catch (error) {
-                toast.error('Failed to download');
+                toast.error('Failed to download', { id: 'video-download' });
               }
             }
           }}
@@ -182,6 +183,9 @@ const History = () => {
   };
 
   const handleDownload = async (storagePath: string, type: string) => {
+    // Show instant feedback
+    toast.loading('Preparing your download...', { id: 'download-toast' });
+    
     try {
       // Create signed URL for download
       const { data, error } = await supabase.storage
@@ -189,7 +193,7 @@ const History = () => {
         .createSignedUrl(storagePath, 60); // 1 minute expiry
       
       if (error || !data?.signedUrl) {
-        toast.error('Failed to create download link');
+        toast.error('Failed to create download link', { id: 'download-toast' });
         return;
       }
 
@@ -204,10 +208,10 @@ const History = () => {
       a.click();
       window.URL.revokeObjectURL(blobUrl);
       document.body.removeChild(a);
-      toast.success('Download started!');
+      toast.success('Download started successfully!', { id: 'download-toast' });
     } catch (error) {
       console.error('Download error:', error);
-      toast.error('Failed to download file');
+      toast.error('Failed to download file', { id: 'download-toast' });
     }
   };
 

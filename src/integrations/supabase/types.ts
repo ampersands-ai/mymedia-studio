@@ -450,6 +450,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_tokens: {
+        Args: { amount: number; user_id_param: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

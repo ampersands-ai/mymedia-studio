@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.generate-content]
 verify_jwt = true
+
+[functions.cleanup-stuck-generations]
+verify_jwt = false

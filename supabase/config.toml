@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.kie-ai-webhook]
 verify_jwt = false
+
+[functions.fix-stuck-generation]
+verify_jwt = false

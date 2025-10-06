@@ -212,7 +212,7 @@ All colors MUST be HSL.
   }
   
   .partners-track {
-    animation: partners-scroll 60s linear infinite;
+    animation: partners-scroll 10s linear infinite;
     will-change: transform;
   }
   

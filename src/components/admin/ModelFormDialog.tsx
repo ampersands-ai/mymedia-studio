@@ -189,7 +189,14 @@ export function ModelFormDialog({
                 }
                 placeholder="kie_ai_flux_pro"
                 required
+                disabled={!!model}
+                className={model ? "opacity-60 cursor-not-allowed" : ""}
               />
+              {model && (
+                <p className="text-xs text-muted-foreground">
+                  Model ID cannot be changed after creation
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

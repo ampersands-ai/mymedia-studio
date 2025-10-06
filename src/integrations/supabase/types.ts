@@ -162,6 +162,7 @@ export type Database = {
           prompt: string
           provider_request: Json | null
           provider_response: Json | null
+          provider_task_id: string | null
           settings: Json | null
           status: string
           storage_path: string | null
@@ -183,6 +184,7 @@ export type Database = {
           prompt: string
           provider_request?: Json | null
           provider_response?: Json | null
+          provider_task_id?: string | null
           settings?: Json | null
           status?: string
           storage_path?: string | null
@@ -204,6 +206,7 @@ export type Database = {
           prompt?: string
           provider_request?: Json | null
           provider_response?: Json | null
+          provider_task_id?: string | null
           settings?: Json | null
           status?: string
           storage_path?: string | null

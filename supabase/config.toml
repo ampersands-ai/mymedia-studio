@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.cleanup-stuck-generations]
 verify_jwt = false
+
+[functions.kie-ai-webhook]
+verify_jwt = false

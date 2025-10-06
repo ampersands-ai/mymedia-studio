@@ -18,14 +18,15 @@ serve(async (req) => {
 
     console.log('Starting cleanup of stuck generations...');
 
-    // Find stuck generations (pending for more than 15 minutes)
-    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+    // Find stuck generations (pending for more than 30 minutes)
+    // Don't touch 'processing' generations as they're handled by webhooks
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
     
     const { data: stuckGenerations, error: findError } = await supabase
       .from('generations')
       .select('id, user_id, model_id, tokens_used, type')
       .eq('status', 'pending')
-      .lt('created_at', fifteenMinutesAgo.toISOString());
+      .lt('created_at', thirtyMinutesAgo.toISOString());
 
     if (findError) {
       throw findError;
@@ -47,13 +48,13 @@ serve(async (req) => {
       .update({
         status: 'failed',
         provider_response: {
-          error: 'Generation timed out after 15 minutes. This can happen when the AI service is overloaded. Your tokens have been refunded - please try again.',
+          error: 'Generation timed out after 30 minutes. This can happen when the AI service is overloaded. Your tokens have been refunded - please try again.',
           reason: 'timeout',
           auto_cleaned: true
         }
       })
       .eq('status', 'pending')
-      .lt('created_at', fifteenMinutesAgo.toISOString());
+      .lt('created_at', thirtyMinutesAgo.toISOString());
 
     if (updateError) {
       throw updateError;
@@ -82,7 +83,7 @@ serve(async (req) => {
         metadata: {
           model_id: gen.model_id,
           tokens_refunded: gen.tokens_used,
-          reason: 'timeout_15min',
+          reason: 'timeout_30min',
           content_type: gen.type
         }
       });

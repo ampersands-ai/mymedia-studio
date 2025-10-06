@@ -12,14 +12,20 @@ export async function callKieAI(request: ProviderRequest): Promise<ProviderRespo
   
   console.log('Calling Kie.ai API - Model:', request.model, 'Endpoint:', createTaskEndpoint);
 
-  // Build request payload according to Kie.ai's structure
+  // Build request payload with callback URL
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const callbackUrl = `${supabaseUrl}/functions/v1/kie-ai-webhook`;
+  
   const payload: any = {
     model: request.model,
+    callBackUrl: callbackUrl,
     input: {
       prompt: request.prompt,
       ...request.parameters
     }
   };
+  
+  console.log('Callback URL:', callbackUrl);
 
   console.log('Kie.ai payload input fields:', Object.keys(payload.input));
   console.log('Full payload:', JSON.stringify(payload, null, 2));
@@ -53,107 +59,20 @@ export async function callKieAI(request: ProviderRequest): Promise<ProviderRespo
 
     const taskId = createData.data.taskId;
     console.log('Task ID:', taskId);
+    console.log('Task created successfully. Webhook will handle completion.');
 
-    // Step 2: Poll for task completion
-    const maxRetries = 60; // 5 minutes (60 * 5 seconds)
-    const pollInterval = 5000; // 5 seconds
-    let retries = 0;
-    let taskComplete = false;
-    let resultData;
-
-    // Wait 2 seconds before first poll (task needs time to start)
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    while (!taskComplete && retries < maxRetries) {
-      console.log(`Polling task status (attempt ${retries + 1}/${maxRetries})...`);
-      
-      const pollResponse = await fetch(
-        `${baseUrl}/api/v1/jobs/recordInfo?taskId=${taskId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${KIE_AI_API_KEY}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (!pollResponse.ok) {
-        console.error('Polling error:', pollResponse.status);
-        throw new Error(`Failed to poll task status: ${pollResponse.status}`);
-      }
-
-      const pollData = await pollResponse.json();
-      console.log('Poll response:', pollData);
-
-      if (pollData.code !== 200) {
-        throw new Error(`Polling failed: ${pollData.message || 'Unknown error'}`);
-      }
-
-      const state = pollData.data?.state;
-      
-      if (state === 'success') {
-        taskComplete = true;
-        resultData = pollData.data;
-        console.log('Task completed successfully');
-      } else if (state === 'failed') {
-        const failMsg = pollData.data?.failMsg || 'Unknown failure';
-        console.error('Task failed:', failMsg);
-        throw new Error(`Generation failed: ${failMsg}`);
-      } else if (state === 'processing') {
-        console.log('Task still processing...');
-        retries++;
-        await new Promise(resolve => setTimeout(resolve, pollInterval));
-      } else {
-        console.warn('Unexpected state:', state);
-        retries++;
-        await new Promise(resolve => setTimeout(resolve, pollInterval));
-      }
-    }
-
-    if (!taskComplete) {
-      throw new Error('Generation timed out after 5 minutes');
-    }
-
-    // Step 3: Extract result URL
-    if (!resultData.resultJson) {
-      throw new Error('No result data returned from Kie.ai');
-    }
-
-    const resultJson = JSON.parse(resultData.resultJson);
-    console.log('Result JSON:', resultJson);
-
-    const resultUrl = resultJson.resultUrls?.[0];
-    if (!resultUrl) {
-      throw new Error('No result URL found in response');
-    }
-
-    console.log('Downloading result from:', resultUrl);
-
-    // Step 4: Download the generated content
-    const contentResponse = await fetch(resultUrl);
-    if (!contentResponse.ok) {
-      throw new Error(`Failed to download result: ${contentResponse.status}`);
-    }
-
-    const arrayBuffer = await contentResponse.arrayBuffer();
-    const output_data = new Uint8Array(arrayBuffer);
-    
-    // Determine file extension
-    const contentType = contentResponse.headers.get('content-type') || '';
-    const fileExtension = determineFileExtension(contentType, resultUrl);
-    
-    console.log('Downloaded successfully. Size:', output_data.length, 'Extension:', fileExtension);
+    // Return immediately - webhook will handle the rest
+    // We return empty data since the webhook will populate it later
 
     return {
-      output_data,
-      file_extension: fileExtension,
-      file_size: output_data.length,
+      output_data: new Uint8Array(), // Empty - webhook will handle
+      file_extension: 'pending',
+      file_size: 0,
       metadata: {
         model: request.model,
         task_id: taskId,
-        result_url: resultUrl,
-        content_type: contentType
+        status: 'processing',
+        callback_url: callbackUrl
       }
     };
 

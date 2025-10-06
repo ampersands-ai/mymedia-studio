@@ -285,7 +285,8 @@ serve(async (req) => {
         settings: parameters,
         tokens_used: tokenCost,
         actual_token_cost: tokenCost,
-        status: 'pending'
+        status: 'pending',
+        provider_task_id: null // Will be set after provider call
       })
       .select()
       .single();
@@ -356,6 +357,39 @@ serve(async (req) => {
         if (timeoutId) clearTimeout(timeoutId);
 
         console.log('Provider response received');
+
+        // Check if this is a webhook-based provider (Kie.ai)
+        const isWebhookProvider = model.provider === 'kie_ai' && providerResponse.metadata?.task_id;
+        
+        if (isWebhookProvider) {
+          // For webhook providers, update with task_id and mark as processing
+          const taskId = providerResponse.metadata.task_id;
+          console.log('Webhook-based provider. Task ID:', taskId);
+          
+          const { error: updateError } = await supabase
+            .from('generations')
+            .update({
+              provider_task_id: taskId,
+              status: 'processing',
+              provider_request: providerRequest,
+              provider_response: providerResponse.metadata
+            })
+            .eq('id', generation.id);
+
+          if (updateError) {
+            console.error('Failed to update generation with task ID:', updateError);
+          }
+          
+          // Return immediately - webhook will complete the generation
+          return new Response(
+            JSON.stringify({
+              generation_id: generation.id,
+              status: 'processing',
+              message: 'Generation started. Check back soon for results.'
+            }),
+            { status: 202, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
 
         // Phase 3: Process storage upload asynchronously (fire-and-forget with improved error handling)
         const generationId = generation.id;

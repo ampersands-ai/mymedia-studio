@@ -37,17 +37,17 @@ export const DashboardLayout = () => {
       {/* Header */}
       <header className="border-b-4 border-black bg-card sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 md:py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity">
+          <div className="flex items-center justify-between gap-2">
+            <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity flex-shrink-0">
               <img 
                 src={logo} 
                 alt="Artifio.ai logo" 
-                className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
+                className="h-7 w-7 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
               />
               <img 
                 src={textLogo} 
                 alt="Artifio" 
-                className="h-6 md:h-8"
+                className="hidden sm:block h-5 md:h-8"
               />
             </Link>
 
@@ -103,11 +103,11 @@ export const DashboardLayout = () => {
               </Link>
             </nav>
 
-            <div className="flex items-center gap-2 md:gap-3">
-              <div className="brutal-card-sm px-3 md:px-4 py-2 bg-neon-yellow">
-                <div className="flex items-center gap-2">
-                  <Coins className="h-4 w-4 md:h-5 md:w-5" />
-                  <span className="font-black text-sm md:text-base">{tokenData?.tokens_remaining || 0}</span>
+            <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
+              <div className="brutal-card-sm px-2 md:px-4 py-1.5 md:py-2 bg-neon-yellow">
+                <div className="flex items-center gap-1 md:gap-2">
+                  <Coins className="h-3.5 w-3.5 md:h-5 md:w-5" />
+                  <span className="font-black text-xs md:text-base whitespace-nowrap">{tokenData?.tokens_remaining || 0}</span>
                 </div>
               </div>
               <Button

@@ -11,6 +11,21 @@ import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 
+// Component to render image with signed URL
+const ImageWithSignedUrl = ({ generation, className }: { generation: Generation; className?: string }) => {
+  const { signedUrl, isLoading } = useSignedUrl(generation.storage_path);
+  
+  if (isLoading || !signedUrl) {
+    return (
+      <div className={`${className} flex items-center justify-center bg-muted`}>
+        <ImageIcon className="h-8 w-8 text-muted-foreground animate-pulse" />
+      </div>
+    );
+  }
+  
+  return <img src={signedUrl} alt="Generated content" className={className} />;
+};
+
 interface Generation {
   id: string;
   type: string;
@@ -30,11 +45,11 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
   showControls?: boolean;
   playOnHover?: boolean;
 }) => {
-  const { signedUrl } = useSignedUrl(generation.storage_path || generation.output_url);
+  const { signedUrl, isLoading } = useSignedUrl(generation.storage_path);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   
-  if (!signedUrl) {
+  if (isLoading || !signedUrl) {
     return (
       <div className={`${className} flex items-center justify-center bg-muted`}>
         <Video className="h-8 w-8 text-muted-foreground animate-pulse" />
@@ -121,14 +136,24 @@ const History = () => {
     toast.success('History refreshed!');
   };
 
-  const handleDownload = async (url: string, type: string) => {
+  const handleDownload = async (storagePath: string, type: string) => {
     try {
-      const response = await fetch(url);
+      // Create signed URL for download
+      const { data, error } = await supabase.storage
+        .from('generated-content')
+        .createSignedUrl(storagePath, 60); // 1 minute expiry
+      
+      if (error || !data?.signedUrl) {
+        toast.error('Failed to create download link');
+        return;
+      }
+
+      const response = await fetch(data.signedUrl);
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;
-      const extension = url.split('.').pop()?.split('?')[0] || type;
+      const extension = storagePath.split('.').pop() || type;
       a.download = `artifio-${type}-${Date.now()}.${extension}`;
       document.body.appendChild(a);
       a.click();
@@ -217,7 +242,7 @@ const History = () => {
               className="overflow-hidden cursor-pointer hover-lift"
               onClick={() => setPreviewGeneration(generation)}
             >
-              {generation.output_url && generation.status === "completed" && (
+              {generation.storage_path && generation.status === "completed" && (
                 <div className="aspect-square relative overflow-hidden bg-muted">
                   {generation.type === "video" ? (
                     <VideoPreview 
@@ -226,9 +251,8 @@ const History = () => {
                       playOnHover={true}
                     />
                   ) : generation.type === "image" ? (
-                    <img
-                      src={generation.output_url}
-                      alt="Generated content"
+                    <ImageWithSignedUrl 
+                      generation={generation}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -277,7 +301,7 @@ const History = () => {
           
           {previewGeneration && (
             <div className="space-y-4">
-              {previewGeneration.output_url && previewGeneration.status === "completed" && (
+              {previewGeneration.storage_path && previewGeneration.status === "completed" && (
                 <div className="aspect-video relative overflow-hidden bg-muted rounded-lg">
                   {previewGeneration.type === "video" ? (
                     <VideoPreview 
@@ -286,9 +310,8 @@ const History = () => {
                       showControls={true}
                     />
                   ) : previewGeneration.type === "image" ? (
-                    <img
-                      src={previewGeneration.output_url}
-                      alt="Generated content"
+                    <ImageWithSignedUrl 
+                      generation={previewGeneration}
                       className="w-full h-full object-contain"
                     />
                   ) : (
@@ -312,11 +335,11 @@ const History = () => {
               </div>
 
               <div className="flex gap-2 pt-4">
-                {previewGeneration.output_url && previewGeneration.status === "completed" && (
+                {previewGeneration.storage_path && previewGeneration.status === "completed" && (
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDownload(previewGeneration.output_url!, previewGeneration.type);
+                      handleDownload(previewGeneration.storage_path!, previewGeneration.type);
                     }}
                     className="flex-1"
                   >

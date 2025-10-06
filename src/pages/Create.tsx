@@ -12,6 +12,7 @@ import { useGeneration } from "@/hooks/useGeneration";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { formatEstimatedTime } from "@/lib/time-utils";
+import { GenerationPreview } from "@/components/generation/GenerationPreview";
 
 // Lazy load Carousel for code splitting
 const Carousel = lazy(() => import("@/components/ui/carousel").then(m => ({ default: m.Carousel })));
@@ -117,7 +118,7 @@ const Create = () => {
     try {
       const { data, error } = await supabase
         .from('generations')
-        .select('status, output_url, type')
+        .select('status, storage_path, type')
         .eq('id', generationId)
         .single();
 
@@ -131,7 +132,7 @@ const Create = () => {
         setPollingGenerationId(null);
 
         if (data.status === 'completed') {
-          setGeneratedOutput(data.output_url);
+          setGeneratedOutput(data.storage_path);
           toast.success('Generation complete!');
         } else {
           toast.error('Generation failed. Please try again.');
@@ -192,24 +193,32 @@ const Create = () => {
       }
 
       // If immediate result, show it
-      if (result?.output_url) {
-        setGeneratedOutput(result.output_url);
+      if (result?.storage_path) {
+        setGeneratedOutput(result.storage_path);
       }
     } catch (error) {
       // Error already handled in useGeneration hook
     }
   };
 
-  const handleDownload = async () => {
-    if (!generatedOutput) return;
-    
+  const handleDownload = async (storagePath: string) => {
     try {
-      const response = await fetch(generatedOutput);
+      // Create signed URL for download
+      const { data, error } = await supabase.storage
+        .from('generated-content')
+        .createSignedUrl(storagePath, 60); // 1 minute expiry
+      
+      if (error || !data?.signedUrl) {
+        toast.error('Failed to create download link');
+        return;
+      }
+
+      const response = await fetch(data.signedUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const extension = generatedOutput.split('.').pop()?.split('?')[0] || 'file';
+      const extension = storagePath.split('.').pop() || 'file';
       a.download = `generation-${Date.now()}.${extension}`;
       document.body.appendChild(a);
       a.click();
@@ -380,24 +389,16 @@ const Create = () => {
               {generatedOutput && (
                 <div className="space-y-4">
                   <div className="aspect-video relative overflow-hidden bg-muted rounded-lg">
-                    {selectedTemplate?.ai_models?.content_type === "video" ? (
-                      <video
-                        src={generatedOutput}
-                        className="w-full h-full object-contain"
-                        controls
-                      />
-                    ) : (
-                      <img
-                        src={generatedOutput}
-                        alt="Generated content"
-                        className="w-full h-full object-contain"
-                      />
-                    )}
+                    <GenerationPreview
+                      storagePath={generatedOutput}
+                      contentType={selectedTemplate?.ai_models?.content_type || "image"}
+                      className="w-full h-full object-contain"
+                    />
                   </div>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
-                      onClick={handleDownload}
+                      onClick={() => handleDownload(generatedOutput)}
                       className="flex-1"
                     >
                       <Download className="h-4 w-4 mr-2" />

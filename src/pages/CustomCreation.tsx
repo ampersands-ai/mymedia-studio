@@ -38,6 +38,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { ModelParameterForm } from "@/components/generation/ModelParameterForm";
 import { formatEstimatedTime } from "@/lib/time-utils";
+import { GenerationPreview } from "@/components/generation/GenerationPreview";
+import { useSignedUrl } from "@/hooks/useSignedUrl";
 
 // Group type definition
 type CreationGroup = "image_editing" | "prompt_to_image" | "prompt_to_video" | "image_to_video" | "prompt_to_audio";
@@ -236,7 +238,7 @@ const CustomCreation = () => {
     try {
       const { data, error } = await supabase
         .from('generations')
-        .select('status, output_url, type')
+        .select('status, storage_path, type')
         .eq('id', generationId)
         .single();
 
@@ -253,7 +255,7 @@ const CustomCreation = () => {
         setLocalGenerating(false);
 
         if (data.status === 'completed') {
-          setGeneratedOutput(data.output_url);
+          setGeneratedOutput(data.storage_path);
           toast.success('Generation complete! Check your History for the result.');
         } else {
           toast.error('Generation failed. Please try again.');
@@ -904,7 +906,11 @@ const CustomCreation = () => {
               ) : generatedOutput ? (
                 <div className="space-y-4">
                   <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
-                    <img src={generatedOutput} alt="Generated content" className="w-full h-full object-cover" />
+                    <GenerationPreview
+                      storagePath={generatedOutput}
+                      contentType={selectedModel && filteredModels.find(m => m.id === selectedModel)?.content_type || "image"}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div className="flex gap-2">
                     <Button 
@@ -912,18 +918,31 @@ const CustomCreation = () => {
                       className="flex-1"
                       onClick={async () => {
                         try {
-                          const response = await fetch(generatedOutput);
+                          // Create signed URL for download
+                          const { data, error } = await supabase.storage
+                            .from('generated-content')
+                            .createSignedUrl(generatedOutput, 60);
+                          
+                          if (error || !data?.signedUrl) {
+                            toast.error('Failed to create download link');
+                            return;
+                          }
+
+                          const response = await fetch(data.signedUrl);
                           const blob = await response.blob();
                           const url = window.URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
-                          a.download = `artifio-${Date.now()}.png`;
+                          const extension = generatedOutput.split('.').pop() || 'file';
+                          a.download = `artifio-${Date.now()}.${extension}`;
                           document.body.appendChild(a);
                           a.click();
                           window.URL.revokeObjectURL(url);
                           document.body.removeChild(a);
+                          toast.success('Download started!');
                         } catch (error) {
                           console.error('Download failed:', error);
+                          toast.error('Failed to download file');
                         }
                       }}
                     >

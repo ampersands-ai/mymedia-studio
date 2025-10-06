@@ -122,20 +122,11 @@ serve(async (req) => {
 
       console.log('Uploaded to storage:', storagePath);
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('generated-content')
-        .getPublicUrl(storagePath);
-
-      const publicUrl = urlData.publicUrl;
-      console.log('Public URL:', publicUrl);
-
-      // Update generation record to completed
+      // Update generation record to completed (no public URL needed, use storage_path for signed URLs)
       const { error: updateError } = await supabase
         .from('generations')
         .update({
           status: 'completed',
-          output_url: publicUrl,
           storage_path: storagePath,
           file_size_bytes: output_data.length,
           provider_response: payload

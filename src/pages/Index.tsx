@@ -275,17 +275,17 @@ const Index = () => {
             <h3 className="text-2xl md:text-3xl font-black text-center">TECHNOLOGY PARTNERS</h3>
           </div>
           <div className="relative w-full overflow-hidden">
-            <div className="flex gap-8 md:gap-12 partners-track">
+            <div className="flex gap-6 md:gap-8 partners-track">
               {/* First set of partners */}
               {partners.map((partner, index) => (
                 <div
                   key={`logo-${index}`}
-                  className="flex-shrink-0 w-32 md:w-40 h-12 md:h-16 flex items-center justify-center transition-all duration-300 hover:scale-110"
+                  className="flex-shrink-0 w-24 md:w-32 h-12 md:h-16 flex items-center justify-center"
                 >
                   <img
                     src={partner.logo}
                     alt={`${partner.name} logo`}
-                    className="max-h-full max-w-full object-contain"
+                    className="max-h-full max-w-full object-contain opacity-70 hover:opacity-100 transition-opacity"
                     loading="lazy"
                   />
                 </div>
@@ -294,13 +294,13 @@ const Index = () => {
               {partners.map((partner, index) => (
                 <div
                   key={`logo-duplicate-${index}`}
-                  className="flex-shrink-0 w-32 md:w-40 h-12 md:h-16 flex items-center justify-center transition-all duration-300 hover:scale-110"
+                  className="flex-shrink-0 w-24 md:w-32 h-12 md:h-16 flex items-center justify-center"
                   aria-hidden="true"
                 >
                   <img
                     src={partner.logo}
                     alt={`${partner.name} logo`}
-                    className="max-h-full max-w-full object-contain"
+                    className="max-h-full max-w-full object-contain opacity-70 hover:opacity-100 transition-opacity"
                     loading="lazy"
                   />
                 </div>

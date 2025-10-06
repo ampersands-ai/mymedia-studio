@@ -414,7 +414,7 @@ const Index = () => {
             <h3 className="text-2xl md:text-3xl font-black text-center">TECHNOLOGY PARTNERS</h3>
           </div>
           <div className="relative">
-            <div className="flex animate-[scroll_15s_linear_infinite] hover:pause">
+            <div className="flex animate-[scroll_10s_linear_infinite] hover:pause">
               {/* First set of logos */}
               {partners.map((partner, index) => (
                 <div

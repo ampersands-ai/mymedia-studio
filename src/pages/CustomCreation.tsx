@@ -395,27 +395,34 @@ const CustomCreation = () => {
     const multipliers = currentModel.cost_multipliers || {};
     
     // Apply multipliers based on modelParameters (schema-driven)
-    for (const [key, multiplierValue] of Object.entries(multipliers)) {
-      const paramValue = modelParameters[key];
+    for (const [multiplierKey, multiplierValue] of Object.entries(multipliers)) {
+      if (typeof multiplierValue !== 'number') continue;
+      
+      // Check if multiplierKey matches any parameter's VALUE (e.g., quality="HD" matches HD: 1.5)
+      const matchingParam = Object.entries(modelParameters).find(
+        ([_, value]) => value === multiplierKey
+      );
+      
+      if (matchingParam) {
+        tokens *= multiplierValue;
+        continue;
+      }
+      
+      // Otherwise check if it's a parameter NAME with specific types
+      const paramValue = modelParameters[multiplierKey];
       
       if (paramValue !== undefined && paramValue !== null && paramValue !== false) {
-        if (typeof multiplierValue === 'number') {
-          // Direct multiplier for matching values (e.g., quality: "HD" with HD: 1.5)
-          if (paramValue === key) {
-            tokens *= multiplierValue;
-          }
-          // Boolean multiplier
-          else if (typeof paramValue === 'boolean' && paramValue === true) {
-            tokens *= multiplierValue;
-          }
-          // Array length multiplier (e.g., uploaded images)
-          else if (Array.isArray(paramValue)) {
-            tokens += (multiplierValue * paramValue.length);
-          }
-          // Numeric additive cost
-          else if (typeof paramValue === 'number') {
-            tokens += (multiplierValue * paramValue);
-          }
+        // Boolean multiplier
+        if (typeof paramValue === 'boolean' && paramValue === true) {
+          tokens *= multiplierValue;
+        }
+        // Array length multiplier (e.g., uploaded images)
+        else if (Array.isArray(paramValue)) {
+          tokens += (multiplierValue * paramValue.length);
+        }
+        // Numeric additive cost
+        else if (typeof paramValue === 'number') {
+          tokens += (multiplierValue * paramValue);
         }
       }
     }

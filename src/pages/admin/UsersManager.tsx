@@ -90,13 +90,14 @@ export default function UsersManager() {
     }
 
     try {
-      const { error } = await supabase
-        .from("user_subscriptions")
-        .update({
-          tokens_remaining: (selectedUser.subscription?.tokens_remaining || 0) + amount,
-          tokens_total: (selectedUser.subscription?.tokens_remaining || 0) + amount,
-        })
-        .eq("user_id", selectedUser.id);
+      // Use edge function for secure token management with audit trail
+      const { data, error } = await supabase.functions.invoke('manage-user-tokens', {
+        body: {
+          user_id: selectedUser.id,
+          amount: amount,
+          action: 'add'
+        }
+      });
 
       if (error) throw error;
 
@@ -112,26 +113,18 @@ export default function UsersManager() {
 
   const handleToggleAdmin = async (userId: string, currentlyAdmin: boolean) => {
     try {
-      if (currentlyAdmin) {
-        // Remove admin role
-        const { error } = await supabase
-          .from("user_roles")
-          .delete()
-          .eq("user_id", userId)
-          .eq("role", "admin");
+      // Use edge function for secure role management with audit trail
+      const { data, error } = await supabase.functions.invoke('manage-user-role', {
+        body: {
+          user_id: userId,
+          role: 'admin',
+          action: currentlyAdmin ? 'revoke' : 'grant'
+        }
+      });
 
-        if (error) throw error;
-        toast.success("Admin role removed");
-      } else {
-        // Add admin role
-        const { error } = await supabase
-          .from("user_roles")
-          .insert({ user_id: userId, role: "admin" });
+      if (error) throw error;
 
-        if (error) throw error;
-        toast.success("Admin role granted");
-      }
-
+      toast.success(currentlyAdmin ? "Admin role removed" : "Admin role granted");
       fetchUsers();
     } catch (error) {
       console.error("Error toggling admin role:", error);

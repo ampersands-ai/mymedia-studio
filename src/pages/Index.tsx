@@ -267,28 +267,28 @@ const Index = () => {
   ];
 
   const partners = [
-    { name: "OpenAI", logo: openaiLogo },
-    { name: "ChatGPT", logo: chatgptLogo },
     { name: "Claude", logo: claudeLogo },
-    { name: "Google", logo: googleLogo },
-    { name: "Google AI", logo: googleAILogo },
-    { name: "Gemini", logo: geminiLogo },
-    { name: "Sora 2", logo: sora2Logo },
-    { name: "Veo 3", logo: veo3Logo },
-    { name: "Runway", logo: runwayLogo },
     { name: "Midjourney", logo: midjourneyLogo },
-    { name: "Black Forest Labs", logo: blackforestLogo },
-    { name: "Luma", logo: lumaLogo },
-    { name: "Kling", logo: klingLogo },
-    { name: "ByteDance", logo: bytedanceLogo },
-    { name: "Wan", logo: wanLogo },
-    { name: "Hailuo", logo: hailuoLogo },
+    { name: "Veo 3", logo: veo3Logo },
     { name: "Suno", logo: sunoLogo },
+    { name: "Gemini", logo: geminiLogo },
+    { name: "Black Forest Labs", logo: blackforestLogo },
+    { name: "Runway", logo: runwayLogo },
     { name: "ElevenLabs", logo: elevenlabsLogo },
+    { name: "Kling", logo: klingLogo },
+    { name: "ChatGPT", logo: chatgptLogo },
     { name: "Ideogram", logo: ideogramLogo },
+    { name: "Luma", logo: lumaLogo },
+    { name: "Sora 2", logo: sora2Logo },
     { name: "Recraft", logo: recraftLogo },
-    { name: "Seedance", logo: seedanceLogo },
+    { name: "ByteDance", logo: bytedanceLogo },
+    { name: "Google AI", logo: googleAILogo },
+    { name: "Hailuo", logo: hailuoLogo },
+    { name: "OpenAI", logo: openaiLogo },
     { name: "Topaz Labs", logo: topazLogo },
+    { name: "Wan", logo: wanLogo },
+    { name: "Seedance", logo: seedanceLogo },
+    { name: "Google", logo: googleLogo },
   ];
 
   return (
@@ -414,7 +414,7 @@ const Index = () => {
             <h3 className="text-2xl md:text-3xl font-black text-center">TECHNOLOGY PARTNERS</h3>
           </div>
           <div className="relative">
-            <div className="flex animate-[scroll_30s_linear_infinite] hover:pause">
+            <div className="flex animate-[scroll_15s_linear_infinite] hover:pause">
               {/* First set of logos */}
               {partners.map((partner, index) => (
                 <div

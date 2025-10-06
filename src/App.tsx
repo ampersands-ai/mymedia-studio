@@ -2,35 +2,44 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
-import { SplashCursor } from "./components/SplashCursor";
 import { Analytics } from "./components/Analytics";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Create from "./pages/Create";
-import CustomCreation from "./pages/CustomCreation";
-import Settings from "./pages/Settings";
-import Pricing from "./pages/Pricing";
-import Privacy from "./pages/Privacy";
-import Terms from "./pages/Terms";
-import NotFound from "./pages/NotFound";
-import { DashboardLayout } from "./layouts/DashboardLayout";
-import { AdminLayout } from "./layouts/AdminLayout";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AIModelsManager from "./pages/admin/AIModelsManager";
-import TemplatesManager from "./pages/admin/TemplatesManager";
-import UsersManager from "./pages/admin/UsersManager";
 
-const queryClient = new QueryClient();
+// Lazy load pages for better performance
+const Index = lazy(() => import("./pages/Index"));
+const Auth = lazy(() => import("./pages/Auth"));
+const Create = lazy(() => import("./pages/Create"));
+const CustomCreation = lazy(() => import("./pages/CustomCreation"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const DashboardLayout = lazy(() => import("./layouts/DashboardLayout").then(m => ({ default: m.DashboardLayout })));
+const AdminLayout = lazy(() => import("./layouts/AdminLayout").then(m => ({ default: m.AdminLayout })));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AIModelsManager = lazy(() => import("./pages/admin/AIModelsManager"));
+const TemplatesManager = lazy(() => import("./pages/admin/TemplatesManager"));
+const UsersManager = lazy(() => import("./pages/admin/UsersManager"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const AppContent = () => {
-  const location = useLocation();
-  const showCursor = !location.pathname.startsWith("/dashboard");
-
   return (
-    <>
-      {showCursor && <SplashCursor />}
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-foreground">Loading...</div>
+      </div>
+    }>
       <Analytics />
       <Routes>
         <Route path="/" element={<Index />} />
@@ -52,7 +61,7 @@ const AppContent = () => {
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </>
+    </Suspense>
   );
 };
 

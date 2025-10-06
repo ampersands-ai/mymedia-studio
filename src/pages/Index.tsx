@@ -275,12 +275,12 @@ const Index = () => {
             <h3 className="text-2xl md:text-3xl font-black text-center">TECHNOLOGY PARTNERS</h3>
           </div>
           <div className="relative w-full overflow-hidden">
-            <div className="flex gap-6 md:gap-8 partners-track">
+            <div className="flex gap-2 md:gap-8 partners-track">
               {/* First set of partners */}
               {partners.map((partner, index) => (
                 <div
                   key={`logo-${index}`}
-                  className="flex-shrink-0 w-24 md:w-32 h-12 md:h-16 flex items-center justify-center"
+                  className="flex-shrink-0 w-16 h-10 md:w-32 md:h-16 flex items-center justify-center"
                 >
                   <img
                     src={partner.logo}
@@ -294,7 +294,7 @@ const Index = () => {
               {partners.map((partner, index) => (
                 <div
                   key={`logo-duplicate-${index}`}
-                  className="flex-shrink-0 w-24 md:w-32 h-12 md:h-16 flex items-center justify-center"
+                  className="flex-shrink-0 w-16 h-10 md:w-32 md:h-16 flex items-center justify-center"
                   aria-hidden="true"
                 >
                   <img

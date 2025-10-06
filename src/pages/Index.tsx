@@ -414,7 +414,7 @@ const Index = () => {
             <h3 className="text-2xl md:text-3xl font-black text-center">TECHNOLOGY PARTNERS</h3>
           </div>
           <div className="relative w-full overflow-hidden">
-            <div className="flex gap-8 md:gap-12 animate-[scroll_40s_linear_infinite]">
+            <div className="flex gap-8 md:gap-12 animate-[scroll_5s_linear_infinite]">
               {/* Triple the logos for seamless continuous loop */}
               {[...partners, ...partners, ...partners].map((partner, index) => (
                 <div

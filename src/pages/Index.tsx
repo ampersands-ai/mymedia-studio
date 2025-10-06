@@ -414,17 +414,17 @@ const Index = () => {
             <h3 className="text-2xl md:text-3xl font-black text-center">TECHNOLOGY PARTNERS</h3>
           </div>
           <div className="relative">
-            <div className="flex animate-[scroll_10s_linear_infinite] hover:pause">
+            <div className="flex animate-[scroll_5s_linear_infinite] hover:pause">
               {/* First set of logos */}
               {partners.map((partner, index) => (
                 <div
                   key={`first-${index}`}
-                  className="flex-shrink-0 mx-6 md:mx-8 transition-all duration-300 hover:scale-110"
+                  className="flex-shrink-0 mx-6 md:mx-8 transition-all duration-300 hover:scale-110 w-32 md:w-40 h-12 md:h-16 flex items-center justify-center"
                 >
                   <img
                     src={partner.logo}
                     alt={`${partner.name} logo`}
-                    className="h-12 md:h-16 w-auto object-contain"
+                    className="max-h-full max-w-full object-contain"
                     loading="lazy"
                   />
                 </div>
@@ -433,12 +433,12 @@ const Index = () => {
               {partners.map((partner, index) => (
                 <div
                   key={`second-${index}`}
-                  className="flex-shrink-0 mx-6 md:mx-8 transition-all duration-300 hover:scale-110"
+                  className="flex-shrink-0 mx-6 md:mx-8 transition-all duration-300 hover:scale-110 w-32 md:w-40 h-12 md:h-16 flex items-center justify-center"
                 >
                   <img
                     src={partner.logo}
                     alt={`${partner.name} logo`}
-                    className="h-12 md:h-16 w-auto object-contain"
+                    className="max-h-full max-w-full object-contain"
                     loading="lazy"
                   />
                 </div>

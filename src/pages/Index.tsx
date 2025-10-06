@@ -15,6 +15,16 @@ import audioProcessing from "@/assets/audio-processing.jpg";
 import textGeneration from "@/assets/text-generation.jpg";
 import logo from "@/assets/logo.png";
 import textLogo from "@/assets/text-logo.png";
+import recraftLogo from "@/assets/partners/recraft.png";
+import lumaLogo from "@/assets/partners/luma.jpg";
+import klingLogo from "@/assets/partners/kling.png";
+import bytedanceLogo from "@/assets/partners/bytedance.png";
+import wanLogo from "@/assets/partners/wan.png";
+import sora2Logo from "@/assets/partners/sora2.jpg";
+import elevenlabsLogo from "@/assets/partners/elevenlabs.png";
+import veo3Logo from "@/assets/partners/veo3.png";
+import runwayLogo from "@/assets/partners/runway.png";
+import geminiLogo from "@/assets/partners/gemini.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -244,6 +254,19 @@ const Index = () => {
     "Family & Entertainment",
   ];
 
+  const partners = [
+    { name: "Gemini", logo: geminiLogo },
+    { name: "Sora 2", logo: sora2Logo },
+    { name: "Veo 3", logo: veo3Logo },
+    { name: "Runway", logo: runwayLogo },
+    { name: "Luma", logo: lumaLogo },
+    { name: "Kling", logo: klingLogo },
+    { name: "ByteDance", logo: bytedanceLogo },
+    { name: "Wan", logo: wanLogo },
+    { name: "ElevenLabs", logo: elevenlabsLogo },
+    { name: "Recraft", logo: recraftLogo },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
@@ -361,6 +384,44 @@ const Index = () => {
           </div>
         </section>
 
+        {/* Technology Partners */}
+        <section className="py-12 md:py-16 bg-card/30 overflow-hidden">
+          <div className="container mx-auto px-4 mb-8">
+            <h3 className="text-2xl md:text-3xl font-black text-center">TECHNOLOGY PARTNERS</h3>
+          </div>
+          <div className="relative">
+            <div className="flex animate-[scroll_30s_linear_infinite] hover:pause">
+              {/* First set of logos */}
+              {partners.map((partner, index) => (
+                <div
+                  key={`first-${index}`}
+                  className="flex-shrink-0 mx-6 md:mx-8 transition-all duration-300 hover:scale-110"
+                >
+                  <img
+                    src={partner.logo}
+                    alt={`${partner.name} logo`}
+                    className="h-12 md:h-16 w-auto object-contain"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+              {/* Duplicate set for seamless loop */}
+              {partners.map((partner, index) => (
+                <div
+                  key={`second-${index}`}
+                  className="flex-shrink-0 mx-6 md:mx-8 transition-all duration-300 hover:scale-110"
+                >
+                  <img
+                    src={partner.logo}
+                    alt={`${partner.name} logo`}
+                    className="h-12 md:h-16 w-auto object-contain"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* Use Cases Grid */}
         <section className="container mx-auto px-4 py-12 md:py-20">

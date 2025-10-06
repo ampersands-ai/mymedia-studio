@@ -1,5 +1,24 @@
 import { ProviderRequest, ProviderResponse } from "./index.ts";
 
+// Default parameters for flat-structure models
+const FLAT_MODEL_DEFAULTS: Record<string, any> = {
+  'veo3': {
+    watermark: "",
+    enableFallback: false,
+    enableTranslation: true
+  },
+  'sora-2-text-to-video': {
+    watermark: "",
+    enableFallback: false,
+    enableTranslation: true
+  },
+  'sora-2-image-to-video': {
+    watermark: "",
+    enableFallback: false,
+    enableTranslation: true
+  }
+};
+
 export async function callKieAI(request: ProviderRequest): Promise<ProviderResponse> {
   const KIE_AI_API_KEY = Deno.env.get('KIE_AI_API_KEY');
   
@@ -10,24 +29,40 @@ export async function callKieAI(request: ProviderRequest): Promise<ProviderRespo
   const baseUrl = 'https://api.kie.ai';
   const createTaskEndpoint = request.api_endpoint || '/api/v1/jobs/createTask';
   
-  console.log('Calling Kie.ai API - Model:', request.model, 'Endpoint:', createTaskEndpoint);
+  console.log('Calling Kie.ai API - Model:', request.model, 'Payload Structure:', request.payload_structure || 'wrapper', 'Endpoint:', createTaskEndpoint);
 
   // Build request payload with callback URL
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const callbackUrl = `${supabaseUrl}/functions/v1/kie-ai-webhook`;
   
-  const payload: any = {
-    model: request.model,
-    callBackUrl: callbackUrl,
-    input: {
+  const useFlatStructure = request.payload_structure === 'flat';
+  let payload: any;
+  
+  if (useFlatStructure) {
+    // Flat structure for veo3, sora-2-*, etc.
+    console.log('Using FLAT payload structure');
+    const modelDefaults = FLAT_MODEL_DEFAULTS[request.model] || {};
+    payload = {
+      model: request.model,
+      callBackUrl: callbackUrl,
+      ...modelDefaults, // Inject defaults first
       prompt: request.prompt,
-      ...request.parameters
-    }
-  };
+      ...request.parameters // User params can override if needed
+    };
+  } else {
+    // Standard nested input structure for other models
+    console.log('Using WRAPPER payload structure');
+    payload = {
+      model: request.model,
+      callBackUrl: callbackUrl,
+      input: {
+        prompt: request.prompt,
+        ...request.parameters
+      }
+    };
+  }
   
   console.log('Callback URL:', callbackUrl);
-
-  console.log('Kie.ai payload input fields:', Object.keys(payload.input));
   console.log('Full payload:', JSON.stringify(payload, null, 2));
 
   try {

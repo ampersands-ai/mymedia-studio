@@ -5,6 +5,7 @@ export interface ProviderRequest {
   prompt: string;
   parameters: Record<string, any>;
   api_endpoint?: string;
+  payload_structure?: string;
 }
 
 export interface ProviderResponse {

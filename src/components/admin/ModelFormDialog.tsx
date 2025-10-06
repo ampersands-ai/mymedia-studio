@@ -62,6 +62,7 @@ export function ModelFormDialog({
     model_name: "",
     content_type: "",
     base_token_cost: "",
+    payload_structure: "wrapper",
     cost_multipliers: "{}",
     input_schema: "{}",
     api_endpoint: "",
@@ -78,6 +79,7 @@ export function ModelFormDialog({
         model_name: model.model_name,
         content_type: model.content_type,
         base_token_cost: model.base_token_cost.toString(),
+        payload_structure: (model as any).payload_structure || "wrapper",
         cost_multipliers: JSON.stringify(model.cost_multipliers || {}, null, 2),
         input_schema: JSON.stringify(model.input_schema, null, 2),
         api_endpoint: model.api_endpoint || "",
@@ -91,6 +93,7 @@ export function ModelFormDialog({
         model_name: "",
         content_type: "",
         base_token_cost: "",
+        payload_structure: "wrapper",
         cost_multipliers: "{}",
         input_schema: "{}",
         api_endpoint: "",
@@ -131,6 +134,7 @@ export function ModelFormDialog({
         model_name: formData.model_name,
         content_type: formData.content_type,
         base_token_cost: parseInt(formData.base_token_cost),
+        payload_structure: formData.payload_structure,
         cost_multipliers: costMultipliers,
         input_schema: inputSchema,
         api_endpoint: formData.api_endpoint || null,
@@ -251,6 +255,28 @@ export function ModelFormDialog({
                   <SelectItem value="text">Text</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="payload_structure">Payload Structure *</Label>
+              <Select
+                value={formData.payload_structure}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, payload_structure: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select structure" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="wrapper">Wrapper (Standard)</SelectItem>
+                  <SelectItem value="flat">Flat (Veo3, Sora-2)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Wrapper: Uses <code className="bg-muted px-1 rounded">input</code> object. 
+                Flat: Top-level parameters only.
+              </p>
             </div>
 
             <div className="space-y-2">

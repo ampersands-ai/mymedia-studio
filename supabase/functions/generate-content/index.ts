@@ -344,7 +344,8 @@ serve(async (req) => {
           model: model.id,
           prompt: finalPrompt,
           parameters: validatedParameters,
-          api_endpoint: model.api_endpoint
+          api_endpoint: model.api_endpoint,
+          payload_structure: model.payload_structure || 'wrapper'
         };
 
         console.log('Provider request:', JSON.stringify(providerRequest));

@@ -27,6 +27,7 @@ export type Database = {
           input_schema: Json
           is_active: boolean | null
           model_name: string
+          payload_structure: string
           provider: string
           updated_at: string
         }
@@ -42,6 +43,7 @@ export type Database = {
           input_schema?: Json
           is_active?: boolean | null
           model_name: string
+          payload_structure?: string
           provider: string
           updated_at?: string
         }
@@ -57,6 +59,7 @@ export type Database = {
           input_schema?: Json
           is_active?: boolean | null
           model_name?: string
+          payload_structure?: string
           provider?: string
           updated_at?: string
         }

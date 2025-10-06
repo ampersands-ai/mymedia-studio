@@ -272,6 +272,7 @@ export default function AIModelsManager() {
                   <TableHead className="font-bold">Provider</TableHead>
                   <TableHead className="font-bold">Model Name</TableHead>
                   <TableHead className="font-bold">Type</TableHead>
+                  <TableHead className="font-bold">Structure</TableHead>
                   <TableHead className="font-bold">Groups</TableHead>
                   <TableHead className="font-bold">Base Cost</TableHead>
                   <TableHead className="font-bold">Status</TableHead>
@@ -290,6 +291,11 @@ export default function AIModelsManager() {
                     <TableCell>{model.model_name}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{model.content_type}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={(model as any).payload_structure === 'flat' ? 'secondary' : 'outline'}>
+                        {(model as any).payload_structure === 'flat' ? 'Flat' : 'Wrapper'}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">

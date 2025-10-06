@@ -463,6 +463,10 @@ export type Database = {
         Args: { amount: number; user_id_param: string }
         Returns: undefined
       }
+      sanitize_provider_data: {
+        Args: { data: Json }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

@@ -33,6 +33,10 @@ import seedanceLogo from "@/assets/partners/seedance.png";
 import googleLogo from "@/assets/partners/google.webp";
 import googleAILogo from "@/assets/partners/google-ai.png";
 import topazLogo from "@/assets/partners/topaz.webp";
+import blackforestLogo from "@/assets/partners/blackforest.svg";
+import claudeLogo from "@/assets/partners/claude.svg";
+import sunoLogo from "@/assets/partners/suno.svg";
+import ideogramLogo from "@/assets/partners/ideogram.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -265,6 +269,7 @@ const Index = () => {
   const partners = [
     { name: "OpenAI", logo: openaiLogo },
     { name: "ChatGPT", logo: chatgptLogo },
+    { name: "Claude", logo: claudeLogo },
     { name: "Google", logo: googleLogo },
     { name: "Google AI", logo: googleAILogo },
     { name: "Gemini", logo: geminiLogo },
@@ -272,12 +277,15 @@ const Index = () => {
     { name: "Veo 3", logo: veo3Logo },
     { name: "Runway", logo: runwayLogo },
     { name: "Midjourney", logo: midjourneyLogo },
+    { name: "Black Forest Labs", logo: blackforestLogo },
     { name: "Luma", logo: lumaLogo },
     { name: "Kling", logo: klingLogo },
     { name: "ByteDance", logo: bytedanceLogo },
     { name: "Wan", logo: wanLogo },
     { name: "Hailuo", logo: hailuoLogo },
+    { name: "Suno", logo: sunoLogo },
     { name: "ElevenLabs", logo: elevenlabsLogo },
+    { name: "Ideogram", logo: ideogramLogo },
     { name: "Recraft", logo: recraftLogo },
     { name: "Seedance", logo: seedanceLogo },
     { name: "Topaz Labs", logo: topazLogo },

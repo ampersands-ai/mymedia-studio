@@ -235,7 +235,7 @@ const Settings = () => {
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="subscription">Subscription</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
+            <TabsTrigger value="history">Generation Logs</TabsTrigger>
           </TabsList>
           
           <TabsContent value="profile" className="space-y-4 mt-6">
@@ -429,8 +429,8 @@ const Settings = () => {
           <TabsContent value="history" className="space-y-4 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Generation History</CardTitle>
-                <CardDescription>View your recent AI generations</CardDescription>
+                <CardTitle>Generation Logs</CardTitle>
+                <CardDescription>Track token usage across all your generations</CardDescription>
               </CardHeader>
               <CardContent>
                 {loadingGenerations ? (
@@ -439,7 +439,7 @@ const Settings = () => {
                   </div>
                 ) : generations.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">
-                    No generations yet. Start creating to see your history!
+                    No generations yet. Start creating to see your logs!
                   </p>
                 ) : (
                   <div className="space-y-3">
@@ -463,16 +463,6 @@ const Settings = () => {
                             {new Date(gen.created_at).toLocaleString()}
                           </p>
                         </div>
-                        {gen.status === "completed" && gen.output_url && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.open(gen.output_url, "_blank")}
-                            aria-label="Download generation"
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        )}
                       </div>
                     ))}
                   </div>

@@ -102,34 +102,35 @@ const History = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "completed":
-        return <Badge className="bg-green-500">Completed</Badge>;
+        return <Badge className="bg-green-500 text-white text-xs px-1.5 py-0">Done</Badge>;
       case "pending":
       case "processing":
         return (
-          <Badge className="bg-yellow-500 animate-pulse">
-            <Clock className="h-3 w-3 mr-1 inline" />
-            {status === 'processing' ? 'Processing...' : 'Pending'}
+          <Badge className="bg-yellow-500 animate-pulse text-white text-xs px-1.5 py-0">
+            <Clock className="h-2.5 w-2.5 mr-0.5 inline" />
+            {status === 'processing' ? 'Processing' : 'Pending'}
           </Badge>
         );
-      case "failed":
-        return <Badge className="bg-red-500">Failed</Badge>;
       default:
-        return <Badge>{status}</Badge>;
+        return null;
     }
   };
 
   useEffect(() => {
-    document.title = "History - Artifio.ai";
+    document.title = "My Creations - Artifio.ai";
   }, []);
+
+  // Filter out failed generations
+  const successfulGenerations = generations?.filter(g => g.status !== 'failed') || [];
 
   // No loading state - show empty state immediately or render data
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-black mb-2">GENERATION HISTORY</h1>
+          <h1 className="text-4xl font-black mb-2">MY CREATIONS</h1>
           <p className="text-lg text-foreground/80 font-medium">
-            View and manage your AI creations
+            Your successfully generated AI content
           </p>
         </div>
         <Button
@@ -143,13 +144,13 @@ const History = () => {
         </Button>
       </div>
 
-      {!generations || generations.length === 0 ? (
+      {!successfulGenerations || successfulGenerations.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-xl font-bold mb-2">No generations yet</h3>
+            <h3 className="text-xl font-bold mb-2">No creations yet</h3>
             <p className="text-muted-foreground mb-6">
-              Start creating to see your history here
+              Start creating to see your content here
             </p>
             <Button onClick={() => (window.location.href = "/dashboard/create")} className="bg-primary hover:bg-primary/90">
               Start Creating
@@ -157,15 +158,15 @@ const History = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {generations.map((generation) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          {successfulGenerations.map((generation) => (
             <Card 
               key={generation.id} 
               className="overflow-hidden cursor-pointer hover-lift"
               onClick={() => setPreviewGeneration(generation)}
             >
               {generation.output_url && generation.status === "completed" && (
-                <div className="aspect-video relative overflow-hidden bg-muted">
+                <div className="aspect-square relative overflow-hidden bg-muted">
                   {generation.type === "video" ? (
                     <video
                       src={generation.output_url}
@@ -186,22 +187,22 @@ const History = () => {
                 </div>
               )}
               
-              <CardContent className="p-4 space-y-3">
+              <CardContent className="p-2 space-y-1">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     {getTypeIcon(generation.type)}
-                    <span className="font-bold text-sm capitalize">{generation.type}</span>
+                    <span className="font-bold text-xs capitalize">{generation.type}</span>
                   </div>
                   {getStatusBadge(generation.status)}
                 </div>
 
-                <p className="text-sm text-foreground/80 line-clamp-2">
+                <p className="text-xs text-foreground/80 line-clamp-1">
                   {generation.enhanced_prompt || generation.prompt}
                 </p>
 
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{format(new Date(generation.created_at), "MMM d, yyyy")}</span>
-                  <span>{generation.status === 'failed' ? '0' : generation.tokens_used} tokens</span>
+                  <span>{format(new Date(generation.created_at), "MMM d")}</span>
+                  <span>{generation.tokens_used} tokens</span>
                 </div>
               </CardContent>
             </Card>

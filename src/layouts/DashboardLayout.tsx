@@ -86,7 +86,7 @@ export const DashboardLayout = () => {
                   )}
                 >
                   <History className="h-5 w-5 mr-2" />
-                  History
+                  My Creations
                 </Button>
               </Link>
               <Link to="/dashboard/settings">
@@ -165,7 +165,7 @@ export const DashboardLayout = () => {
                       )}
                     >
                       <History className="h-5 w-5" />
-                      <span>History</span>
+                      <span>My Creations</span>
                     </Link>
                     <Link 
                       to="/dashboard/settings" 

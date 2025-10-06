@@ -41,6 +41,9 @@ import ideogramLogo from "@/assets/partners/ideogram.png";
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  // Random starting position for logo carousel
+  const randomStart = useMemo(() => Math.random() * -100, []);
 
   // Memoize SEO schemas for performance
   const schemas = useMemo(() => {
@@ -414,8 +417,14 @@ const Index = () => {
             <h3 className="text-2xl md:text-3xl font-black text-center">TECHNOLOGY PARTNERS</h3>
           </div>
           <div className="relative w-full overflow-hidden">
-            <div className="flex gap-8 md:gap-12 animate-[scroll_5s_linear_infinite]">
-              {/* Two sets of logos for seamless loop (scroll animation moves -50%) */}
+            <div 
+              className="flex gap-8 md:gap-12"
+              style={{
+                animation: 'scroll 5s linear infinite',
+                transform: `translateX(${randomStart}%)`
+              }}
+            >
+              {/* Two sets needed for seamless infinite loop */}
               {[...partners, ...partners].map((partner, index) => (
                 <div
                   key={`logo-${index}`}

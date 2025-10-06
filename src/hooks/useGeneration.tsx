@@ -76,7 +76,8 @@ export const useGeneration = () => {
       }
 
       setResult(data);
-      toast.success("Content generated successfully!");
+      // Don't show success toast immediately for async generations
+      // Components will handle their own success messages
       return data;
     } catch (error: any) {
       console.error("Generation error:", error);

@@ -1,15 +1,16 @@
-import { useEffect, useState, useMemo, lazy, Suspense } from "react";
+import { useEffect, useState, useMemo, lazy, Suspense, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, Download, History as HistoryIcon, Image as ImageIcon, Video } from "lucide-react";
 import { TemplateCard } from "@/components/TemplateCard";
 import { useTemplatesByCategory } from "@/hooks/useTemplates";
 import { Textarea } from "@/components/ui/textarea";
 import { useGeneration } from "@/hooks/useGeneration";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 // Lazy load Carousel for code splitting
 const Carousel = lazy(() => import("@/components/ui/carousel").then(m => ({ default: m.Carousel })));
@@ -25,6 +26,9 @@ const Create = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [prompt, setPrompt] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [generatedOutput, setGeneratedOutput] = useState<string | null>(null);
+  const [pollingGenerationId, setPollingGenerationId] = useState<string | null>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Memoize SEO schemas for performance
   const schemas = useMemo(() => {
@@ -102,8 +106,71 @@ const Create = () => {
   const handleTemplateSelect = (template: any) => {
     setSelectedTemplate(template);
     setPrompt("");
+    setGeneratedOutput(null);
+    setPollingGenerationId(null);
     setDialogOpen(true);
   };
+
+  // Polling function to check generation status
+  const pollGenerationStatus = async (generationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('generations')
+        .select('status, output_url, type')
+        .eq('id', generationId)
+        .single();
+
+      if (error) throw error;
+
+      if (data.status === 'completed' || data.status === 'failed') {
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
+        }
+        setPollingGenerationId(null);
+
+        if (data.status === 'completed') {
+          setGeneratedOutput(data.output_url);
+          toast.success('Generation complete!');
+        } else {
+          toast.error('Generation failed. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Polling error:', error);
+    }
+  };
+
+  // Start polling when generation ID is set
+  useEffect(() => {
+    if (pollingGenerationId) {
+      const startTime = Date.now();
+      const MAX_POLLING_DURATION = 20 * 60 * 1000; // 20 minutes
+
+      pollIntervalRef.current = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        
+        if (elapsed >= MAX_POLLING_DURATION) {
+          clearInterval(pollIntervalRef.current!);
+          pollIntervalRef.current = null;
+          setPollingGenerationId(null);
+          toast.info('Generation is taking longer than expected. Check History for updates.');
+          return;
+        }
+
+        pollGenerationStatus(pollingGenerationId);
+      }, 60000); // Poll every 1 minute
+
+      // Initial check after 30 seconds
+      setTimeout(() => pollGenerationStatus(pollingGenerationId), 30000);
+
+      return () => {
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+        }
+      };
+    }
+  }, [pollingGenerationId]);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -117,12 +184,46 @@ const Create = () => {
         prompt: prompt.trim(),
       });
       
-      setDialogOpen(false);
-      toast.success("Generation complete! Check your History.");
-      navigate("/dashboard/history");
+      // Start polling for status
+      if (result?.id) {
+        setPollingGenerationId(result.id);
+        toast.success("Generation started!");
+      }
+
+      // If immediate result, show it
+      if (result?.output_url) {
+        setGeneratedOutput(result.output_url);
+      }
     } catch (error) {
       // Error already handled in useGeneration hook
     }
+  };
+
+  const handleDownload = async () => {
+    if (!generatedOutput) return;
+    
+    try {
+      const response = await fetch(generatedOutput);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const extension = generatedOutput.split('.').pop()?.split('?')[0] || 'file';
+      a.download = `generation-${Date.now()}.${extension}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Download started!');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download file');
+    }
+  };
+
+  const handleViewHistory = () => {
+    setDialogOpen(false);
+    navigate("/dashboard/history");
   };
 
   // Show empty state immediately if no templates
@@ -209,7 +310,7 @@ const Create = () => {
 
         {/* Generation Dialog */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle className="font-black">{selectedTemplate?.name}</DialogTitle>
               <DialogDescription>
@@ -217,43 +318,94 @@ const Create = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Prompt</label>
-                <Textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Describe what you want to create..."
-                  className="min-h-[100px] resize-none"
-                  disabled={isGenerating}
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setDialogOpen(false)}
-                  className="flex-1"
-                  disabled={isGenerating}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleGenerate}
-                  className="flex-1"
-                  disabled={isGenerating || !prompt.trim()}
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      Generate
-                    </>
-                  )}
-                </Button>
-              </div>
+              {!generatedOutput && !pollingGenerationId && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Prompt</label>
+                    <Textarea
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      placeholder="Describe what you want to create..."
+                      className="min-h-[100px] resize-none"
+                      disabled={isGenerating}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setDialogOpen(false)}
+                      className="flex-1"
+                      disabled={isGenerating}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleGenerate}
+                      className="flex-1"
+                      disabled={isGenerating || !prompt.trim()}
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Generate
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {pollingGenerationId && !generatedOutput && (
+                <div className="py-12 text-center space-y-4">
+                  <Loader2 className="h-12 w-12 mx-auto animate-spin text-primary" />
+                  <div>
+                    <h3 className="text-lg font-bold mb-2">Generating your content...</h3>
+                    <p className="text-sm text-muted-foreground">This may take a few minutes</p>
+                  </div>
+                </div>
+              )}
+
+              {generatedOutput && (
+                <div className="space-y-4">
+                  <div className="aspect-video relative overflow-hidden bg-muted rounded-lg">
+                    {selectedTemplate?.ai_models?.content_type === "video" ? (
+                      <video
+                        src={generatedOutput}
+                        className="w-full h-full object-contain"
+                        controls
+                      />
+                    ) : (
+                      <img
+                        src={generatedOutput}
+                        alt="Generated content"
+                        className="w-full h-full object-contain"
+                      />
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={handleDownload}
+                      className="flex-1"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                    <Button
+                      onClick={handleViewHistory}
+                      className="flex-1"
+                    >
+                      <HistoryIcon className="h-4 w-4 mr-2" />
+                      View in History
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>

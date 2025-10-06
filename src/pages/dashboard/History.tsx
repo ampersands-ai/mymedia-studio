@@ -62,6 +62,26 @@ const History = () => {
     refetch();
   };
 
+  const handleDownload = async (url: string, type: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      const extension = url.split('.').pop()?.split('?')[0] || type;
+      a.download = `artifio-${type}-${Date.now()}.${extension}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(blobUrl);
+      document.body.removeChild(a);
+      toast.success('Download started!');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download file');
+    }
+  };
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "image": return <ImageIcon className="h-4 w-4" />;
@@ -168,12 +188,10 @@ const History = () => {
                       variant="outline"
                       size="sm"
                       className="flex-1"
-                      asChild
+                      onClick={() => handleDownload(generation.output_url!, generation.type)}
                     >
-                      <a href={generation.output_url} download target="_blank" rel="noopener noreferrer">
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </a>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
                     </Button>
                   )}
                   <Button

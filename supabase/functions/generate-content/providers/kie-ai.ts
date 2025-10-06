@@ -21,6 +21,9 @@ export async function callKieAI(request: ProviderRequest): Promise<ProviderRespo
     }
   };
 
+  console.log('Kie.ai payload input fields:', Object.keys(payload.input));
+  console.log('Full payload:', JSON.stringify(payload, null, 2));
+
   try {
     // Step 1: Create the task
     console.log('Creating Kie.ai task:', JSON.stringify(payload));

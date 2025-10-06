@@ -202,11 +202,40 @@ serve(async (req) => {
       }
     }
 
-    // Calculate token cost
+    // Validate and filter parameters against schema
+    function validateAndFilterParameters(
+      parameters: Record<string, any>,
+      schema: any
+    ): Record<string, any> {
+      if (!schema?.properties) return parameters;
+      
+      const allowedKeys = Object.keys(schema.properties);
+      const filtered: Record<string, any> = {};
+      
+      for (const key of allowedKeys) {
+        if (parameters[key] !== undefined) {
+          filtered[key] = parameters[key];
+        }
+      }
+      
+      console.log('Parameters filtered from schema:', {
+        original: Object.keys(parameters),
+        filtered: Object.keys(filtered)
+      });
+      
+      return filtered;
+    }
+
+    const validatedParameters = validateAndFilterParameters(
+      parameters,
+      model.input_schema
+    );
+
+    // Calculate token cost with validated parameters
     const tokenCost = calculateTokenCost(
       model.base_token_cost,
       model.cost_multipliers || {},
-      parameters
+      validatedParameters
     );
 
     console.log('Token cost calculated:', tokenCost);
@@ -308,12 +337,12 @@ serve(async (req) => {
           }, TIMEOUT_MS) as unknown as number;
         });
 
-        console.log('Parameters being sent to provider:', JSON.stringify(parameters));
+        console.log('Parameters being sent to provider:', JSON.stringify(validatedParameters));
         
         const providerRequest = {
           model: model.id,
           prompt: finalPrompt,
-          parameters,
+          parameters: validatedParameters,
           api_endpoint: model.api_endpoint
         };
 

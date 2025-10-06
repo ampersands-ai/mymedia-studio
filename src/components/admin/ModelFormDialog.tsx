@@ -327,12 +327,12 @@ export function ModelFormDialog({
               onChange={(e) =>
                 setFormData({ ...formData, input_schema: e.target.value })
               }
-              placeholder='{"prompt": "string", "aspect_ratio": "string"}'
+              placeholder='{"type": "object", "required": ["prompt"], "properties": {"prompt": {"type": "string"}, "aspect_ratio": {"enum": ["Portrait", "Landscape"], "default": "Landscape"}}}'
               rows={6}
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              Define the parameters this model accepts
+              <strong>Only fields defined here will be sent to the provider API.</strong> Use JSON Schema format to define parameters.
             </p>
           </div>
 

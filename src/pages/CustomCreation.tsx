@@ -321,11 +321,9 @@ const CustomCreation = () => {
     setLocalGenerating(true);
     
     try {
-      // Merge model parameters with legacy resolution setting
+      // Use only schema-defined parameters
       const customParameters: Record<string, any> = {
-        ...modelParameters,
-        // Legacy fallback if image_size not set via form
-        ...(modelParameters.image_size ? {} : { image_size: resolution === "Native" ? "auto" : "hd" }),
+        ...modelParameters
       };
 
       // Upload images to storage if required

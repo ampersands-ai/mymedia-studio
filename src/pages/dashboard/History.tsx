@@ -9,17 +9,47 @@ import { Download, Trash2, Clock, Sparkles, Image as ImageIcon, Video, Music, Fi
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useSignedUrl } from "@/hooks/useSignedUrl";
 
 interface Generation {
   id: string;
   type: string;
   prompt: string;
   output_url: string | null;
+  storage_path: string | null;
   status: string;
   tokens_used: number;
   created_at: string;
   enhanced_prompt: string | null;
 }
+
+// Component to render video with signed URL
+const VideoPreview = ({ generation, className, showControls = false }: { 
+  generation: Generation; 
+  className?: string;
+  showControls?: boolean;
+}) => {
+  const { signedUrl } = useSignedUrl(generation.storage_path || generation.output_url);
+  
+  if (!signedUrl) {
+    return (
+      <div className={`${className} flex items-center justify-center bg-muted`}>
+        <Video className="h-8 w-8 text-muted-foreground animate-pulse" />
+      </div>
+    );
+  }
+
+  return (
+    <video
+      src={signedUrl}
+      className={className}
+      preload="metadata"
+      controls={showControls}
+      playsInline
+      muted={!showControls}
+    />
+  );
+};
 
 const History = () => {
   const { user } = useAuth();
@@ -168,12 +198,9 @@ const History = () => {
               {generation.output_url && generation.status === "completed" && (
                 <div className="aspect-square relative overflow-hidden bg-muted">
                   {generation.type === "video" ? (
-                    <video
-                      src={`${generation.output_url}#t=2`}
+                    <VideoPreview 
+                      generation={generation}
                       className="w-full h-full object-cover"
-                      preload="metadata"
-                      muted
-                      playsInline
                     />
                   ) : generation.type === "image" ? (
                     <img
@@ -230,12 +257,10 @@ const History = () => {
               {previewGeneration.output_url && previewGeneration.status === "completed" && (
                 <div className="aspect-video relative overflow-hidden bg-muted rounded-lg">
                   {previewGeneration.type === "video" ? (
-                    <video
-                      src={`${previewGeneration.output_url}#t=2`}
+                    <VideoPreview 
+                      generation={previewGeneration}
                       className="w-full h-full object-contain"
-                      preload="metadata"
-                      controls
-                      playsInline
+                      showControls={true}
                     />
                   ) : previewGeneration.type === "image" ? (
                     <img

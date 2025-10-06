@@ -415,8 +415,8 @@ const Index = () => {
           </div>
           <div className="relative w-full overflow-hidden">
             <div className="flex gap-8 md:gap-12 animate-[scroll_5s_linear_infinite]">
-              {/* Triple the logos for seamless continuous loop */}
-              {[...partners, ...partners, ...partners].map((partner, index) => (
+              {/* Two sets of logos for seamless loop (scroll animation moves -50%) */}
+              {[...partners, ...partners].map((partner, index) => (
                 <div
                   key={`logo-${index}`}
                   className="flex-shrink-0 w-32 md:w-40 h-12 md:h-16 flex items-center justify-center transition-all duration-300 hover:scale-110"

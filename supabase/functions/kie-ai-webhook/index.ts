@@ -28,6 +28,7 @@ serve(async (req) => {
     }
 
     const taskId = payload.data?.taskId;
+    const { state, resultJson, failMsg } = payload.data || {};
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -51,13 +52,13 @@ serve(async (req) => {
 
     console.log('Found generation:', generation.id);
 
-    // Check if this is a success or failure based on Kie.ai response structure
-    const isSuccess = payload.code === 200 || (payload.msg && payload.msg.toLowerCase().includes('success'));
-    const isFailed = payload.code === 400 || payload.code === 422 || (payload.msg && payload.msg.toLowerCase().includes('fail'));
+    // Support both old format (state field) and new format (code field)
+    const isSuccess = state === 'success' || payload.code === 200 || (payload.msg && payload.msg.toLowerCase().includes('success'));
+    const isFailed = state === 'failed' || payload.status === 400 || payload.code === 400 || payload.code === 422 || (payload.msg && payload.msg.toLowerCase().includes('fail'));
 
     // Handle failure
     if (isFailed) {
-      console.error('Generation failed:', payload.msg);
+      console.error('Generation failed:', failMsg || payload.msg);
       
       // Update generation to failed and refund tokens
       const { error: updateError } = await supabase
@@ -86,11 +87,19 @@ serve(async (req) => {
       );
     }
 
-    // Handle success
-    if (isSuccess && payload.data?.info) {
+    // Handle success (support both old and new formats)
+    if (isSuccess && (resultJson || payload.data?.info)) {
       console.log('Processing successful generation');
       
-      const resultUrl = payload.data.info.resultUrls?.[0] || payload.data.info.result_urls?.[0];
+      // Old format: parse resultJson
+      let resultUrl: string | undefined;
+      if (resultJson) {
+        const result = JSON.parse(resultJson);
+        resultUrl = result.resultUrls?.[0];
+      } else if (payload.data?.info) {
+        // New format: use data.info
+        resultUrl = payload.data.info.resultUrls?.[0] || payload.data.info.result_urls?.[0];
+      }
 
       if (!resultUrl) {
         throw new Error('No result URL found in response');

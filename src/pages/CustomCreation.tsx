@@ -394,10 +394,33 @@ const CustomCreation = () => {
     let tokens = currentModel.base_token_cost;
     const multipliers = currentModel.cost_multipliers || {};
     
-    if (resolution === "HD" && multipliers.hd) {
-      tokens *= multipliers.hd;
+    // Apply multipliers based on modelParameters (schema-driven)
+    for (const [key, multiplierValue] of Object.entries(multipliers)) {
+      const paramValue = modelParameters[key];
+      
+      if (paramValue !== undefined && paramValue !== null && paramValue !== false) {
+        if (typeof multiplierValue === 'number') {
+          // Direct multiplier for matching values (e.g., quality: "HD" with HD: 1.5)
+          if (paramValue === key) {
+            tokens *= multiplierValue;
+          }
+          // Boolean multiplier
+          else if (typeof paramValue === 'boolean' && paramValue === true) {
+            tokens *= multiplierValue;
+          }
+          // Array length multiplier (e.g., uploaded images)
+          else if (Array.isArray(paramValue)) {
+            tokens += (multiplierValue * paramValue.length);
+          }
+          // Numeric additive cost
+          else if (typeof paramValue === 'number') {
+            tokens += (multiplierValue * paramValue);
+          }
+        }
+      }
     }
     
+    // Legacy: Add cost for uploaded images if multiplier exists
     if (uploadedImages.length > 0 && multipliers.uploaded_image) {
       tokens += uploadedImages.length * multipliers.uploaded_image;
     }
@@ -407,7 +430,7 @@ const CustomCreation = () => {
 
   useEffect(() => {
     setEstimatedTokens(calculateTokens());
-  }, [selectedModel, resolution, uploadedImages, selectedGroup, filteredModels]);
+  }, [selectedModel, modelParameters, uploadedImages, selectedGroup, filteredModels]);
 
   const handleResetConfirm = () => {
     setPrompt("");

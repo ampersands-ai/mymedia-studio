@@ -172,8 +172,8 @@ const History = () => {
                       src={`${generation.output_url}#t=2`}
                       className="w-full h-full object-cover"
                       preload="metadata"
-                      onClick={(e) => e.stopPropagation()}
                       muted
+                      playsInline
                     />
                   ) : generation.type === "image" ? (
                     <img
@@ -231,10 +231,11 @@ const History = () => {
                 <div className="aspect-video relative overflow-hidden bg-muted rounded-lg">
                   {previewGeneration.type === "video" ? (
                     <video
-                      src={previewGeneration.output_url}
+                      src={`${previewGeneration.output_url}#t=2`}
                       className="w-full h-full object-contain"
                       preload="metadata"
                       controls
+                      playsInline
                     />
                   ) : previewGeneration.type === "image" ? (
                     <img

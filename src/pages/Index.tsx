@@ -41,9 +41,6 @@ import ideogramLogo from "@/assets/partners/ideogram.png";
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
-  // Random starting position for logo carousel
-  const randomStart = useMemo(() => Math.random() * -100, []);
 
   // Memoize SEO schemas for performance
   const schemas = useMemo(() => {
@@ -417,18 +414,27 @@ const Index = () => {
             <h3 className="text-2xl md:text-3xl font-black text-center">TECHNOLOGY PARTNERS</h3>
           </div>
           <div className="relative w-full overflow-hidden">
-            <div 
-              className="flex gap-8 md:gap-12"
-              style={{
-                animation: 'scroll 5s linear infinite',
-                transform: `translateX(${randomStart}%)`
-              }}
-            >
-              {/* Two sets needed for seamless infinite loop */}
-              {[...partners, ...partners].map((partner, index) => (
+            <div className="flex gap-8 md:gap-12 partners-track">
+              {/* First set of partners */}
+              {partners.map((partner, index) => (
                 <div
                   key={`logo-${index}`}
                   className="flex-shrink-0 w-32 md:w-40 h-12 md:h-16 flex items-center justify-center transition-all duration-300 hover:scale-110"
+                >
+                  <img
+                    src={partner.logo}
+                    alt={`${partner.name} logo`}
+                    className="max-h-full max-w-full object-contain"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+              {/* Second set for seamless loop */}
+              {partners.map((partner, index) => (
+                <div
+                  key={`logo-duplicate-${index}`}
+                  className="flex-shrink-0 w-32 md:w-40 h-12 md:h-16 flex items-center justify-center transition-all duration-300 hover:scale-110"
+                  aria-hidden="true"
                 >
                   <img
                     src={partner.logo}

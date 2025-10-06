@@ -200,4 +200,28 @@ All colors MUST be HSL.
   .hover-lift:not(:hover) {
     will-change: auto;
   }
+  
+  /* Technology Partners Marquee */
+  @keyframes partners-scroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+  
+  .partners-track {
+    animation: partners-scroll 60s linear infinite;
+    will-change: transform;
+  }
+  
+  /* Disable animation for users who prefer reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .partners-track {
+      animation: none;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+    }
+  }
 }

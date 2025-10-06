@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,13 +23,16 @@ interface Generation {
   enhanced_prompt: string | null;
 }
 
-// Component to render video with signed URL
-const VideoPreview = ({ generation, className, showControls = false }: { 
+// Component to render video with signed URL and hover-to-play
+const VideoPreview = ({ generation, className, showControls = false, playOnHover = false }: { 
   generation: Generation; 
   className?: string;
   showControls?: boolean;
+  playOnHover?: boolean;
 }) => {
   const { signedUrl } = useSignedUrl(generation.storage_path || generation.output_url);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   
   if (!signedUrl) {
     return (
@@ -39,14 +42,33 @@ const VideoPreview = ({ generation, className, showControls = false }: {
     );
   }
 
+  const handleMouseEnter = () => {
+    if (playOnHover && videoRef.current) {
+      videoRef.current.play().catch(() => {});
+      setIsPlaying(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (playOnHover && videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+      setIsPlaying(false);
+    }
+  };
+
   return (
     <video
+      ref={videoRef}
       src={signedUrl}
       className={className}
       preload="metadata"
       controls={showControls}
       playsInline
       muted={!showControls}
+      loop={playOnHover}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     />
   );
 };
@@ -201,6 +223,7 @@ const History = () => {
                     <VideoPreview 
                       generation={generation}
                       className="w-full h-full object-cover"
+                      playOnHover={true}
                     />
                   ) : generation.type === "image" ? (
                     <img

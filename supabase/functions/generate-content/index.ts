@@ -9,12 +9,32 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Phase 3: Request queuing and circuit breaker
+const CONCURRENT_LIMIT = 100;
+const activeRequests = new Map<string, Promise<any>>();
+
+const CIRCUIT_BREAKER = {
+  failures: 0,
+  threshold: 10,
+  timeout: 60000, // 1 minute
+  lastFailure: 0
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+
   try {
+    // Check request queue capacity
+    if (activeRequests.size >= CONCURRENT_LIMIT) {
+      return new Response(
+        JSON.stringify({ error: 'System at capacity. Please try again in a moment.' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -93,6 +113,59 @@ serve(async (req) => {
     }
 
     console.log('Using model:', model.id, 'Provider:', model.provider);
+
+    // Phase 4: Check generation rate limits
+    const { data: userSubscription } = await supabase
+      .from('user_subscriptions')
+      .select('plan')
+      .eq('user_id', user.id)
+      .single();
+
+    const userPlan = userSubscription?.plan || 'freemium';
+
+    // Check hourly generation limit
+    const hourAgo = new Date(Date.now() - 3600000);
+    const { count: hourlyCount } = await supabase
+      .from('generations')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', hourAgo.toISOString());
+
+    const { data: tierLimits } = await supabase
+      .from('rate_limit_tiers')
+      .select('*')
+      .eq('tier', userPlan)
+      .single();
+
+    if (tierLimits && hourlyCount !== null && hourlyCount >= tierLimits.max_generations_per_hour) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Hourly generation limit reached',
+          limit: tierLimits.max_generations_per_hour,
+          current: hourlyCount,
+          reset_in_seconds: 3600 - Math.floor((Date.now() - new Date(hourAgo).getTime()) / 1000)
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check concurrent generation limit
+    const { count: concurrentCount } = await supabase
+      .from('generations')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('status', 'pending');
+
+    if (tierLimits && concurrentCount !== null && concurrentCount >= tierLimits.max_concurrent_generations) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Concurrent generation limit reached',
+          limit: tierLimits.max_concurrent_generations,
+          current: concurrentCount
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Validate required fields based on model's input schema
     const inputSchema = model.input_schema || {};
@@ -199,151 +272,203 @@ serve(async (req) => {
 
     console.log('Generation record created:', generation.id);
 
-    // Call provider with timeout
-    const TIMEOUT_MS = 600000; // 600 seconds
-    let timeoutId: number | undefined;
-    
-    const timeoutPromise = new Promise((_, reject) => {
-      timeoutId = setTimeout(() => {
-        reject(new Error('Request timed out after 600 seconds'));
-      }, TIMEOUT_MS) as unknown as number;
-    });
+    // Check circuit breaker
+    if (CIRCUIT_BREAKER.failures >= CIRCUIT_BREAKER.threshold) {
+      const elapsed = Date.now() - CIRCUIT_BREAKER.lastFailure;
+      if (elapsed < CIRCUIT_BREAKER.timeout) {
+        // Refund tokens
+        await supabase
+          .from('user_subscriptions')
+          .update({ tokens_remaining: subscription.tokens_remaining })
+          .eq('user_id', user.id);
 
-    try {
-      console.log('Parameters being sent to provider:', JSON.stringify(parameters));
-      
-      const providerRequest = {
-        model: model.id, // Use model ID instead of display name for API calls
-        prompt: finalPrompt,
-        parameters,
-        api_endpoint: model.api_endpoint
-      };
-
-      console.log('Provider request:', JSON.stringify(providerRequest));
-
-      const providerResponse: any = await Promise.race([
-        callProvider(model.provider, providerRequest),
-        timeoutPromise
-      ]);
-
-      // Clear timeout if successful
-      if (timeoutId) clearTimeout(timeoutId);
-
-      console.log('Provider response received');
-
-      // Upload to storage
-      const storagePath = await uploadToStorage(
-        supabase,
-        user.id,
-        generation.id,
-        providerResponse.output_data,
-        providerResponse.file_extension,
-        model.content_type
-      );
-
-      console.log('Uploaded to storage:', storagePath);
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('generated-content')
-        .getPublicUrl(storagePath);
-
-      // Update generation record with success
-      const { error: updateError } = await supabase
-        .from('generations')
-        .update({
-          status: 'completed',
-          output_url: publicUrl,
-          storage_path: storagePath,
-          file_size_bytes: providerResponse.file_size,
-          provider_request: providerRequest,
-          provider_response: providerResponse.metadata
-        })
-        .eq('id', generation.id);
-
-      if (updateError) {
-        console.error('Failed to update generation:', updateError);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Provider temporarily unavailable. Please try again in a moment.',
+            retry_after_seconds: Math.ceil((CIRCUIT_BREAKER.timeout - elapsed) / 1000)
+          }),
+          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
+      CIRCUIT_BREAKER.failures = 0; // Reset after cooldown
+    }
 
-      // Audit log
-      await supabase.from('audit_logs').insert({
-        user_id: user.id,
-        action: 'generation_completed',
-        resource_type: 'generation',
-        resource_id: generation.id,
-        metadata: {
+    // Track request in queue
+    const requestId = generation.id;
+    const requestPromise = (async () => {
+      try {
+        // Call provider with timeout
+        const TIMEOUT_MS = 600000; // 600 seconds
+        let timeoutId: number | undefined;
+        
+        const timeoutPromise = new Promise((_, reject) => {
+          timeoutId = setTimeout(() => {
+            reject(new Error('Request timed out after 600 seconds'));
+          }, TIMEOUT_MS) as unknown as number;
+        });
+
+        console.log('Parameters being sent to provider:', JSON.stringify(parameters));
+        
+        const providerRequest = {
+          model: model.id,
+          prompt: finalPrompt,
+          parameters,
+          api_endpoint: model.api_endpoint
+        };
+
+        console.log('Provider request:', JSON.stringify(providerRequest));
+
+        const providerResponse: any = await Promise.race([
+          callProvider(model.provider, providerRequest),
+          timeoutPromise
+        ]);
+
+        if (timeoutId) clearTimeout(timeoutId);
+
+        console.log('Provider response received');
+
+        // Phase 3: Process storage upload asynchronously (fire-and-forget)
+        const generationId = generation.id;
+        
+        // Upload and update in background (don't await)
+        (async () => {
+          try {
+            const storagePath = await uploadToStorage(
+              supabase,
+              user.id,
+              generationId,
+              providerResponse.output_data,
+              providerResponse.file_extension,
+              model.content_type
+            );
+
+            console.log('Uploaded to storage:', storagePath);
+
+            const { data: { publicUrl } } = supabase.storage
+              .from('generated-content')
+              .getPublicUrl(storagePath);
+
+            await supabase
+              .from('generations')
+              .update({
+                status: 'completed',
+                output_url: publicUrl,
+                storage_path: storagePath,
+                file_size_bytes: providerResponse.file_size,
+                provider_request: providerRequest,
+                provider_response: providerResponse.metadata
+              })
+              .eq('id', generationId);
+
+            await supabase.from('audit_logs').insert({
+              user_id: user.id,
+              action: 'generation_completed',
+              resource_type: 'generation',
+              resource_id: generationId,
+              metadata: {
+                model_id: model.id,
+                template_id: template_id || null,
+                tokens_used: tokenCost,
+                content_type: model.content_type,
+                duration_ms: Date.now() - startTime
+              }
+            });
+
+            console.log('Background processing completed');
+          } catch (bgError) {
+            console.error('Background processing error:', bgError);
+          }
+        })();
+
+        // Reset circuit breaker on success
+        CIRCUIT_BREAKER.failures = 0;
+
+        // Phase 5: Performance logging
+        console.log(JSON.stringify({
+          metric: 'generation_success',
+          duration_ms: Date.now() - startTime,
           model_id: model.id,
-          template_id: template_id || null,
+          user_id: user.id,
           tokens_used: tokenCost,
           content_type: model.content_type
+        }));
+
+        console.log('Generation processing started');
+
+        return new Response(
+          JSON.stringify({
+            id: generation.id,
+            status: 'processing',
+            tokens_used: tokenCost,
+            content_type: model.content_type,
+            enhanced: enhance_prompt || !!enhancementInstruction
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+
+      } catch (providerError: any) {
+        console.error('Provider error:', providerError);
+
+        // Increment circuit breaker on failure
+        CIRCUIT_BREAKER.failures++;
+        CIRCUIT_BREAKER.lastFailure = Date.now();
+
+        const isTimeout = providerError.message?.includes('timed out');
+
+        await supabase
+          .from('generations')
+          .update({
+            status: 'failed',
+            tokens_used: 0,
+            provider_response: { error: providerError.message }
+          })
+          .eq('id', generation.id);
+
+        const { error: refundError } = await supabase
+          .from('user_subscriptions')
+          .update({ tokens_remaining: subscription.tokens_remaining })
+          .eq('user_id', user.id);
+
+        if (refundError) {
+          console.error('Failed to refund tokens:', refundError);
+        } else {
+          console.log(`Tokens refunded: ${tokenCost} tokens returned to user ${user.id} due to ${isTimeout ? 'timeout' : 'provider failure'}`);
         }
-      });
 
-      console.log('Generation completed successfully');
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'generation_failed',
+          resource_type: 'generation',
+          resource_id: generation.id,
+          metadata: {
+            error: providerError.message,
+            model_id: model.id,
+            tokens_refunded: tokenCost,
+            reason: isTimeout ? 'timeout' : 'provider_error',
+            duration_ms: Date.now() - startTime
+          }
+        });
 
-      return new Response(
-        JSON.stringify({
-          id: generation.id,
-          output_url: publicUrl,
-          tokens_used: tokenCost,
-          status: 'completed',
-          content_type: model.content_type,
-          enhanced: enhance_prompt || !!enhancementInstruction
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-
-    } catch (providerError: any) {
-      console.error('Provider error:', providerError);
-
-      const isTimeout = providerError.message?.includes('timed out');
-
-      // Update generation record with failure
-      await supabase
-        .from('generations')
-        .update({
-          status: 'failed',
-          tokens_used: 0, // Set to 0 for failed generations
-          provider_response: { error: providerError.message }
-        })
-        .eq('id', generation.id);
-
-      // Refund tokens due to provider failure or timeout
-      const { error: refundError } = await supabase
-        .from('user_subscriptions')
-        .update({ tokens_remaining: subscription.tokens_remaining })
-        .eq('user_id', user.id);
-
-      if (refundError) {
-        console.error('Failed to refund tokens:', refundError);
-      } else {
-        console.log(`Tokens refunded: ${tokenCost} tokens returned to user ${user.id} due to ${isTimeout ? 'timeout' : 'provider failure'}`);
-      }
-
-      // Audit log
-      await supabase.from('audit_logs').insert({
-        user_id: user.id,
-        action: 'generation_failed',
-        resource_type: 'generation',
-        resource_id: generation.id,
-        metadata: {
-          error: providerError.message,
+        // Phase 5: Performance logging
+        console.log(JSON.stringify({
+          metric: 'generation_failure',
+          duration_ms: Date.now() - startTime,
           model_id: model.id,
-          tokens_refunded: tokenCost,
-          reason: isTimeout ? 'timeout' : 'provider_error'
-        }
-      });
+          user_id: user.id,
+          error: providerError.message,
+          circuit_breaker_failures: CIRCUIT_BREAKER.failures
+        }));
 
-      return new Response(
-        JSON.stringify({ 
-          error: isTimeout 
-            ? 'Generation timed out after 10 minutes. Your tokens have been refunded.'
-            : 'Generation failed due to provider error. Your tokens have been refunded.',
-          details: providerError.message,
-          tokens_refunded: tokenCost
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        throw providerError;
+      }
+    })();
+
+    activeRequests.set(requestId, requestPromise);
+
+    try {
+      return await requestPromise;
+    } finally {
+      activeRequests.delete(requestId);
     }
 
   } catch (error: any) {

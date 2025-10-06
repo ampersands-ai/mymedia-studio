@@ -1,9 +1,37 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 export const useUserTokens = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Phase 2: Replace polling with real-time subscriptions
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('user-tokens-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'user_subscriptions',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Token update received:', payload.new);
+          queryClient.setQueryData(['user-tokens', user.id], payload.new);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, queryClient]);
 
   return useQuery({
     queryKey: ["user-tokens", user?.id],
@@ -20,8 +48,8 @@ export const useUserTokens = () => {
       return data;
     },
     enabled: !!user,
-    staleTime: 10 * 1000, // 10 seconds
+    staleTime: 5 * 60 * 1000, // 5 minutes (increased from 10s)
     gcTime: 60 * 1000, // 1 minute
-    refetchInterval: 30 * 1000, // Refetch every 30 seconds
+    // Removed refetchInterval - now using real-time subscriptions
   });
 };

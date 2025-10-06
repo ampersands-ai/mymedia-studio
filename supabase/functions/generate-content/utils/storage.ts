@@ -19,10 +19,12 @@ export async function uploadToStorage(
   // Determine MIME type
   const mimeType = getMimeType(fileExtension, contentType);
   
+  // Phase 7: Add cache control headers for CDN optimization
   const { error: uploadError } = await supabase.storage
     .from('generated-content')
     .upload(storagePath, fileData, {
       contentType: mimeType,
+      cacheControl: '3600', // 1 hour cache
       upsert: false
     });
 

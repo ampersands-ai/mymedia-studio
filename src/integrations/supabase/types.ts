@@ -272,6 +272,24 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_tiers: {
+        Row: {
+          max_concurrent_generations: number
+          max_generations_per_hour: number
+          tier: string
+        }
+        Insert: {
+          max_concurrent_generations: number
+          max_generations_per_hour: number
+          tier: string
+        }
+        Update: {
+          max_concurrent_generations?: number
+          max_generations_per_hour?: number
+          tier?: string
+        }
+        Relationships: []
+      }
       rate_limits: {
         Row: {
           action: string

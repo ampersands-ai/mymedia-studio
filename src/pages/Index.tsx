@@ -413,27 +413,13 @@ const Index = () => {
           <div className="container mx-auto px-4 mb-8">
             <h3 className="text-2xl md:text-3xl font-black text-center">TECHNOLOGY PARTNERS</h3>
           </div>
-          <div className="relative">
-            <div className="flex animate-[scroll_5s_linear_infinite] hover:pause">
-              {/* First set of logos */}
-              {partners.map((partner, index) => (
+          <div className="relative w-full overflow-hidden">
+            <div className="flex gap-8 md:gap-12 animate-[scroll_40s_linear_infinite]">
+              {/* Triple the logos for seamless continuous loop */}
+              {[...partners, ...partners, ...partners].map((partner, index) => (
                 <div
-                  key={`first-${index}`}
-                  className="flex-shrink-0 mx-6 md:mx-8 transition-all duration-300 hover:scale-110 w-32 md:w-40 h-12 md:h-16 flex items-center justify-center"
-                >
-                  <img
-                    src={partner.logo}
-                    alt={`${partner.name} logo`}
-                    className="max-h-full max-w-full object-contain"
-                    loading="lazy"
-                  />
-                </div>
-              ))}
-              {/* Duplicate set for seamless loop */}
-              {partners.map((partner, index) => (
-                <div
-                  key={`second-${index}`}
-                  className="flex-shrink-0 mx-6 md:mx-8 transition-all duration-300 hover:scale-110 w-32 md:w-40 h-12 md:h-16 flex items-center justify-center"
+                  key={`logo-${index}`}
+                  className="flex-shrink-0 w-32 md:w-40 h-12 md:h-16 flex items-center justify-center transition-all duration-300 hover:scale-110"
                 >
                   <img
                     src={partner.logo}

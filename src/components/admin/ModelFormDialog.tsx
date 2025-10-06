@@ -184,7 +184,6 @@ export function ModelFormDialog({
                 }
                 placeholder="kie_ai_flux_pro"
                 required
-                disabled={!!model}
               />
             </div>
 

@@ -1,23 +1,13 @@
 import { ProviderRequest, ProviderResponse } from "./index.ts";
 
 // Default parameters for flat-structure models
-const FLAT_MODEL_DEFAULTS: Record<string, any> = {
-  'veo3': {
-    watermark: "",
-    enableFallback: false,
-    enableTranslation: true
-  },
-  'sora-2-text-to-video': {
-    watermark: "",
-    enableFallback: false,
-    enableTranslation: true
-  },
-  'sora-2-image-to-video': {
-    watermark: "",
-    enableFallback: false,
-    enableTranslation: true
-  }
-};
+  const FLAT_MODEL_DEFAULTS: Record<string, any> = {
+    'veo3': {
+      watermark: "",
+      enableFallback: false,
+      enableTranslation: true
+    }
+  };
 
 export async function callKieAI(request: ProviderRequest): Promise<ProviderResponse> {
   const KIE_AI_API_KEY = Deno.env.get('KIE_AI_API_KEY');

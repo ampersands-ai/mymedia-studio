@@ -268,10 +268,10 @@ export function ModelFormDialog({
                 <SelectTrigger>
                   <SelectValue placeholder="Select structure" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="wrapper">Wrapper (Standard)</SelectItem>
-                  <SelectItem value="flat">Flat (Veo3, Sora-2)</SelectItem>
-                </SelectContent>
+          <SelectContent>
+            <SelectItem value="wrapper">Wrapper (Standard)</SelectItem>
+            <SelectItem value="flat">Flat</SelectItem>
+          </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
                 Wrapper: Uses <code className="bg-muted px-1 rounded">input</code> object. 

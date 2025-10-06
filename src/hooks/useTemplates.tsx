@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface AIModel {
+  record_id: string;
   id: string;
   provider: string;
   model_name: string;
@@ -13,6 +14,7 @@ export interface AIModel {
   is_active: boolean;
   groups?: string[];
   estimated_time_minutes?: number | null;
+  payload_structure?: string;
 }
 
 export interface ContentTemplate {

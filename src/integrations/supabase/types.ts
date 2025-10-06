@@ -29,6 +29,7 @@ export type Database = {
           model_name: string
           payload_structure: string
           provider: string
+          record_id: string
           updated_at: string
         }
         Insert: {
@@ -45,6 +46,7 @@ export type Database = {
           model_name: string
           payload_structure?: string
           provider: string
+          record_id?: string
           updated_at?: string
         }
         Update: {
@@ -61,6 +63,7 @@ export type Database = {
           model_name?: string
           payload_structure?: string
           provider?: string
+          record_id?: string
           updated_at?: string
         }
         Relationships: []
@@ -112,6 +115,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           model_id: string | null
+          model_record_id: string | null
           name: string
           preset_parameters: Json
           thumbnail_url: string | null
@@ -127,6 +131,7 @@ export type Database = {
           id: string
           is_active?: boolean | null
           model_id?: string | null
+          model_record_id?: string | null
           name: string
           preset_parameters?: Json
           thumbnail_url?: string | null
@@ -142,6 +147,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           model_id?: string | null
+          model_record_id?: string | null
           name?: string
           preset_parameters?: Json
           thumbnail_url?: string | null
@@ -149,11 +155,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "content_templates_model_id_fkey"
-            columns: ["model_id"]
+            foreignKeyName: "fk_content_templates_model_record"
+            columns: ["model_record_id"]
             isOneToOne: false
             referencedRelation: "ai_models"
-            referencedColumns: ["id"]
+            referencedColumns: ["record_id"]
           },
         ]
       }
@@ -166,6 +172,7 @@ export type Database = {
           file_size_bytes: number | null
           id: string
           model_id: string | null
+          model_record_id: string | null
           original_prompt: string | null
           output_url: string | null
           prompt: string
@@ -188,6 +195,7 @@ export type Database = {
           file_size_bytes?: number | null
           id?: string
           model_id?: string | null
+          model_record_id?: string | null
           original_prompt?: string | null
           output_url?: string | null
           prompt: string
@@ -210,6 +218,7 @@ export type Database = {
           file_size_bytes?: number | null
           id?: string
           model_id?: string | null
+          model_record_id?: string | null
           original_prompt?: string | null
           output_url?: string | null
           prompt?: string
@@ -226,11 +235,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "generations_model_id_fkey"
-            columns: ["model_id"]
+            foreignKeyName: "fk_generations_model_record"
+            columns: ["model_record_id"]
             isOneToOne: false
             referencedRelation: "ai_models"
-            referencedColumns: ["id"]
+            referencedColumns: ["record_id"]
           },
           {
             foreignKeyName: "generations_template_id_fkey"

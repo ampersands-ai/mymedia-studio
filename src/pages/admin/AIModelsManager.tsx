@@ -31,6 +31,7 @@ const CREATION_GROUPS = [
 ];
 
 interface AIModel {
+  record_id: string;
   id: string;
   provider: string;
   model_name: string;
@@ -41,6 +42,7 @@ interface AIModel {
   api_endpoint: string | null;
   is_active: boolean;
   groups?: any; // Json type from Supabase
+  payload_structure?: string;
 }
 
 export default function AIModelsManager() {
@@ -85,12 +87,12 @@ export default function AIModelsManager() {
     }
   };
 
-  const toggleModelStatus = async (modelId: string, currentStatus: boolean) => {
+  const toggleModelStatus = async (recordId: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
         .from("ai_models")
         .update({ is_active: !currentStatus })
-        .eq("id", modelId);
+        .eq("record_id", recordId);
 
       if (error) throw error;
       
@@ -102,7 +104,7 @@ export default function AIModelsManager() {
     }
   };
 
-  const handleDelete = async (modelId: string) => {
+  const handleDelete = async (recordId: string) => {
     if (!confirm("Are you sure you want to delete this model? This cannot be undone.")) {
       return;
     }
@@ -111,7 +113,7 @@ export default function AIModelsManager() {
       const { error } = await supabase
         .from("ai_models")
         .delete()
-        .eq("id", modelId);
+        .eq("record_id", recordId);
 
       if (error) throw error;
       
@@ -281,7 +283,7 @@ export default function AIModelsManager() {
               </TableHeader>
               <TableBody>
                 {sortedModels.map((model) => (
-                  <TableRow key={model.id}>
+                  <TableRow key={model.record_id}>
                     <TableCell className="font-mono text-sm">
                       {model.id}
                     </TableCell>
@@ -332,7 +334,7 @@ export default function AIModelsManager() {
                           variant="outline"
                           size="sm"
                           onClick={() =>
-                            toggleModelStatus(model.id, model.is_active)
+                            toggleModelStatus(model.record_id, model.is_active)
                           }
                         >
                           {model.is_active ? (
@@ -344,7 +346,7 @@ export default function AIModelsManager() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDelete(model.id)}
+                          onClick={() => handleDelete(model.record_id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

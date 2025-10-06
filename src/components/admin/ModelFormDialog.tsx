@@ -30,6 +30,7 @@ const AVAILABLE_GROUPS = [
 ];
 
 interface AIModel {
+  record_id: string;
   id: string;
   provider: string;
   model_name: string;
@@ -41,6 +42,7 @@ interface AIModel {
   is_active: boolean;
   groups?: string[];
   estimated_time_minutes?: number | null;
+  payload_structure?: string;
 }
 
 interface ModelFormDialogProps {
@@ -144,16 +146,16 @@ export function ModelFormDialog({
       };
 
       if (model) {
-        // Update existing model
+        // Update existing model - use record_id
         const { error } = await supabase
           .from("ai_models")
           .update(data)
-          .eq("id", model.id);
+          .eq("record_id", model.record_id);
 
         if (error) throw error;
         toast.success("Model updated successfully");
       } else {
-        // Create new model
+        // Create new model - record_id will be auto-generated
         const { error } = await supabase.from("ai_models").insert(data);
 
         if (error) throw error;
@@ -191,16 +193,12 @@ export function ModelFormDialog({
                 onChange={(e) =>
                   setFormData({ ...formData, id: e.target.value })
                 }
-                placeholder="kie_ai_flux_pro"
+                placeholder="veo3-fast"
                 required
-                disabled={!!model}
-                className={model ? "opacity-60 cursor-not-allowed" : ""}
               />
-              {model && (
-                <p className="text-xs text-muted-foreground">
-                  Model ID cannot be changed after creation
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground">
+                Model identifier (can be duplicated for different endpoints)
+              </p>
             </div>
 
             <div className="space-y-2">

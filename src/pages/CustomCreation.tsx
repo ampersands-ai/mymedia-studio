@@ -37,6 +37,7 @@ import { useModels } from "@/hooks/useModels";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { ModelParameterForm } from "@/components/generation/ModelParameterForm";
+import { formatEstimatedTime } from "@/lib/time-utils";
 
 // Group type definition
 type CreationGroup = "image_editing" | "prompt_to_image" | "prompt_to_video" | "image_to_video" | "prompt_to_audio";
@@ -437,11 +438,18 @@ const CustomCreation = () => {
             return;
           }
 
-          const { data } = supabase.storage
+          // Generate signed URL for secure access (valid for 1 hour)
+          const { data: signedData, error: signedError } = await supabase.storage
             .from('generated-content')
-            .getPublicUrl(filePath);
+            .createSignedUrl(filePath, 3600);
 
-          imageUrls.push(data.publicUrl);
+          if (signedError || !signedData) {
+            toast.error(`Failed to create secure URL for: ${file.name}`);
+            console.error('Signed URL error:', signedError);
+            return;
+          }
+
+          imageUrls.push(signedData.signedUrl);
         }
 
         customParameters.image_urls = imageUrls;
@@ -633,7 +641,7 @@ const CustomCreation = () => {
                                 {model.estimated_time_minutes && (
                                   <Badge variant="secondary" className="text-xs flex items-center gap-1">
                                     <Clock className="h-3 w-3" />
-                                    ~{model.estimated_time_minutes}m
+                                    ~{formatEstimatedTime(model.estimated_time_minutes)}
                                   </Badge>
                                 )}
                               </div>

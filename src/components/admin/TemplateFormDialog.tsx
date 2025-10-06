@@ -280,19 +280,26 @@ export function TemplateFormDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="estimated_time_minutes">Estimated Time (minutes)</Label>
-              <Input
-                id="estimated_time_minutes"
-                type="number"
-                value={formData.estimated_time_minutes}
-                onChange={(e) =>
-                  setFormData({ ...formData, estimated_time_minutes: e.target.value })
-                }
-                placeholder="5"
-                min="0"
-              />
+              <Label htmlFor="estimated_time_minutes">Estimated Time</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="estimated_time_minutes"
+                  type="number"
+                  value={formData.estimated_time_minutes}
+                  onChange={(e) =>
+                    setFormData({ ...formData, estimated_time_minutes: e.target.value })
+                  }
+                  placeholder="5"
+                  min="0"
+                  step="0.5"
+                  className="flex-1"
+                />
+                <span className="flex items-center text-sm text-muted-foreground whitespace-nowrap">
+                  minutes
+                </span>
+              </div>
               <p className="text-xs text-muted-foreground">
-                Approximate time for generation to complete
+                Approximate time for generation (supports decimals: 0.5 = 30 seconds)
               </p>
             </div>
 

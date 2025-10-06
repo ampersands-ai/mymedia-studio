@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useGeneration } from "@/hooks/useGeneration";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { formatEstimatedTime } from "@/lib/time-utils";
 
 // Lazy load Carousel for code splitting
 const Carousel = lazy(() => import("@/components/ui/carousel").then(m => ({ default: m.Carousel })));
@@ -319,7 +320,7 @@ const Create = () => {
               {selectedTemplate?.estimated_time_minutes && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
                   <Clock className="h-4 w-4" />
-                  <span>Estimated time: ~{selectedTemplate.estimated_time_minutes} minutes</span>
+                  <span>Estimated time: ~{formatEstimatedTime(selectedTemplate.estimated_time_minutes)}</span>
                 </div>
               )}
             </DialogHeader>

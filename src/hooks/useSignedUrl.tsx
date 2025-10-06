@@ -10,10 +10,12 @@ import { createSignedUrl } from '@/lib/storage-utils';
 export const useSignedUrl = (storagePath: string | null, bucket: string = 'generated-content') => {
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!storagePath) {
       setSignedUrl(null);
+      setError(false);
       return;
     }
 
@@ -37,11 +39,19 @@ export const useSignedUrl = (storagePath: string | null, bucket: string = 'gener
         }
 
         const url = await createSignedUrl(bucket, actualPath, 3600);
-        setSignedUrl(url);
+        
+        if (!url) {
+          console.warn('Failed to create signed URL for:', actualPath);
+          setError(true);
+          setSignedUrl(null);
+        } else {
+          setSignedUrl(url);
+          setError(false);
+        }
       } catch (error) {
         console.error('Error fetching signed URL:', error);
-        // Fallback to original URL if signed URL fails
-        setSignedUrl(storagePath);
+        setError(true);
+        setSignedUrl(null);
       } finally {
         setIsLoading(false);
       }
@@ -50,5 +60,5 @@ export const useSignedUrl = (storagePath: string | null, bucket: string = 'gener
     fetchSignedUrl();
   }, [storagePath, bucket]);
 
-  return { signedUrl, isLoading };
+  return { signedUrl, isLoading, error };
 };

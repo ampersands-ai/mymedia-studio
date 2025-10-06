@@ -157,9 +157,10 @@ serve(async (req) => {
       .eq('status', 'pending');
 
     if (tierLimits && concurrentCount !== null && concurrentCount >= tierLimits.max_concurrent_generations) {
+      console.error(`Concurrent limit exceeded: ${concurrentCount}/${tierLimits.max_concurrent_generations} for user ${user.id}`);
       return new Response(
         JSON.stringify({ 
-          error: 'Concurrent generation limit reached',
+          error: 'Concurrent generation limit reached. Please wait for your current generation to complete.',
           limit: tierLimits.max_concurrent_generations,
           current: concurrentCount
         }),

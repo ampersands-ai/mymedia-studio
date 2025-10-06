@@ -169,10 +169,11 @@ const History = () => {
                 <div className="aspect-square relative overflow-hidden bg-muted">
                   {generation.type === "video" ? (
                     <video
-                      src={generation.output_url}
+                      src={`${generation.output_url}#t=2`}
                       className="w-full h-full object-cover"
                       preload="metadata"
                       onClick={(e) => e.stopPropagation()}
+                      muted
                     />
                   ) : generation.type === "image" ? (
                     <img
@@ -213,7 +214,7 @@ const History = () => {
 
       {/* Preview Dialog */}
       <Dialog open={!!previewGeneration} onOpenChange={() => setPreviewGeneration(null)}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="sm:max-w-3xl" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="font-black flex items-center justify-between">
               <div className="flex items-center gap-2">

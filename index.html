@@ -7,7 +7,129 @@
     <link rel="canonical" href="https://artifio.ai/" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" as="font" type="font/woff2" href="https://fonts.gstatic.com/s/spacegrotesk/v16/V8mDoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj7oUXskPMBBSSJLm2E.woff2" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=optional" rel="stylesheet">
+    
+    <!-- Critical CSS for instant hero render -->
+    <style>
+      /* Inline critical CSS for LCP optimization */
+      body {
+        margin: 0;
+        font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        background: hsl(0 0% 98%);
+        color: hsl(0 0% 5%);
+      }
+      
+      .hero-container {
+        max-width: 80rem;
+        margin: 0 auto;
+        padding: 3rem 1rem;
+        text-align: center;
+      }
+      
+      .hero-content {
+        max-width: 64rem;
+        margin: 0 auto;
+      }
+      
+      .hero-badges {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+      }
+      
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 9999px;
+        border: 4px solid black;
+        font-size: 0.875rem;
+        font-weight: 900;
+        box-shadow: 4px 4px 0px hsl(0 0% 0%);
+      }
+      
+      .badge-yellow { background: hsl(60 100% 50%); }
+      .badge-green { background: hsl(142 76% 73%); }
+      .badge-primary { background: hsl(60 100% 50%); }
+      
+      .hero-title {
+        font-size: 3rem;
+        font-weight: 900;
+        line-height: 1.2;
+        margin: 1.5rem 0;
+      }
+      
+      .gradient-text {
+        background: linear-gradient(135deg, hsl(300 100% 50%) 0%, hsl(270 100% 60%) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      
+      .hero-subtitle {
+        font-size: 1.25rem;
+        line-height: 1.6;
+        color: hsl(0 0% 5% / 0.8);
+        max-width: 48rem;
+        margin: 1.5rem auto;
+        font-weight: 500;
+      }
+      
+      .hero-cta {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding-top: 1.5rem;
+      }
+      
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem 3rem;
+        font-size: 1.25rem;
+        font-weight: 900;
+        border-radius: 0.5rem;
+        border: 4px solid black;
+        box-shadow: 4px 4px 0px hsl(0 0% 0%);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        width: 100%;
+        max-width: 24rem;
+      }
+      
+      .btn-neon {
+        background: hsl(60 100% 50%);
+        color: hsl(0 0% 0%);
+      }
+      
+      .btn-pink {
+        background: hsl(328 100% 54%);
+        color: white;
+      }
+      
+      @media (min-width: 640px) {
+        .hero-container { padding: 5rem 1rem; }
+        .hero-title { font-size: 4rem; }
+        .hero-subtitle { font-size: 1.5rem; }
+        .hero-cta { flex-direction: row; }
+        .btn { width: auto; }
+      }
+      
+      @media (min-width: 1024px) {
+        .hero-title { font-size: 4.5rem; }
+        .hero-subtitle { font-size: 1.875rem; }
+      }
+    </style>
+    <link rel="modulepreload" href="/src/main.tsx">
     
     <!-- Primary Meta Tags -->
     <title>Artifio.ai - Create AI Videos, Images & Content in Seconds</title>
@@ -41,7 +163,37 @@
   </head>
 
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div id="root" style="opacity: 1;">
+      <!-- Static HTML Shell for instant LCP -->
+      <div class="hero-container">
+        <div class="hero-content">
+          <div class="hero-badges">
+            <div class="badge badge-yellow">
+              <span>⚡ POWERED BY ADVANCED AI</span>
+            </div>
+            <div class="badge badge-green">
+              <span>🎯 SAVE 50-80% VS COMPETITORS</span>
+            </div>
+            <div class="badge badge-primary">
+              <span>💎 ENTERPRISE POWER, FREELANCER PRICES</span>
+            </div>
+          </div>
+          <h1 class="hero-title">
+            <span class="gradient-text">An Affordable</span>
+            <br>
+            <span>AI Creation Platform</span>
+          </h1>
+          <p class="hero-subtitle">
+            Why pay $50-100/month elsewhere? Create stunning videos, images, music & text for a fraction of the cost—
+            <span style="font-weight: 900;" class="gradient-text"> starting at just $3.99/mo</span>
+          </p>
+          <div class="hero-cta">
+            <button class="btn btn-neon">START CREATING FOR FREE</button>
+            <button class="btn btn-pink">SEE HOW MUCH YOU'LL SAVE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx" fetchpriority="high"></script>
   </body>
 </html>

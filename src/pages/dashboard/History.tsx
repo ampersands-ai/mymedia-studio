@@ -68,27 +68,29 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
         <Button
           size="sm"
           variant="outline"
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
             if (generation.storage_path) {
-              // Trigger download directly
-              const handleDownload = async () => {
-                try {
-                  const { data } = await supabase.storage
-                    .from('generated-content')
-                    .createSignedUrl(generation.storage_path!, 60);
-                  if (data?.signedUrl) {
-                    const a = document.createElement('a');
-                    a.href = data.signedUrl;
-                    a.download = `video-${Date.now()}.mp4`;
-                    a.click();
-                    toast.success('Download started!');
-                  }
-                } catch (error) {
-                  toast.error('Failed to download');
+              try {
+                const { data } = await supabase.storage
+                  .from('generated-content')
+                  .createSignedUrl(generation.storage_path!, 60);
+                if (data?.signedUrl) {
+                  const response = await fetch(data.signedUrl);
+                  const blob = await response.blob();
+                  const blobUrl = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = blobUrl;
+                  a.download = `video-${Date.now()}.mp4`;
+                  document.body.appendChild(a);
+                  a.click();
+                  window.URL.revokeObjectURL(blobUrl);
+                  document.body.removeChild(a);
+                  toast.success('Download started!');
                 }
-              };
-              handleDownload();
+              } catch (error) {
+                toast.error('Failed to download');
+              }
             }
           }}
         >

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Sparkles, Loader2, Download, History as HistoryIcon, Image as ImageIcon, Video } from "lucide-react";
+import { Sparkles, Loader2, Download, History as HistoryIcon, Image as ImageIcon, Video, Clock } from "lucide-react";
 import { TemplateCard } from "@/components/TemplateCard";
 import { useTemplatesByCategory } from "@/hooks/useTemplates";
 import { Textarea } from "@/components/ui/textarea";
@@ -316,6 +316,12 @@ const Create = () => {
               <DialogDescription>
                 {selectedTemplate?.description || "Enter your prompt to generate content"}
               </DialogDescription>
+              {selectedTemplate?.estimated_time_minutes && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                  <Clock className="h-4 w-4" />
+                  <span>Estimated time: ~{selectedTemplate.estimated_time_minutes} minutes</span>
+                </div>
+              )}
             </DialogHeader>
             <div className="space-y-4">
               {!generatedOutput && !pollingGenerationId && (

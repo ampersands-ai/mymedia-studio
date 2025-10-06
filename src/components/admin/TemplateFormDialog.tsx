@@ -31,6 +31,7 @@ interface ContentTemplate {
   thumbnail_url: string | null;
   is_active: boolean;
   display_order: number;
+  estimated_time_minutes?: number | null;
 }
 
 interface TemplateFormDialogProps {
@@ -56,6 +57,7 @@ export function TemplateFormDialog({
     enhancement_instruction: "",
     thumbnail_url: "",
     display_order: "0",
+    estimated_time_minutes: "",
   });
   const [models, setModels] = useState<Array<{ id: string; model_name: string }>>([]);
   const [saving, setSaving] = useState(false);
@@ -78,6 +80,7 @@ export function TemplateFormDialog({
         enhancement_instruction: template.enhancement_instruction || "",
         thumbnail_url: template.thumbnail_url || "",
         display_order: template.display_order.toString(),
+        estimated_time_minutes: template.estimated_time_minutes?.toString() || "",
       });
     } else {
       setFormData({
@@ -90,6 +93,7 @@ export function TemplateFormDialog({
         enhancement_instruction: "",
         thumbnail_url: "",
         display_order: "0",
+        estimated_time_minutes: "",
       });
     }
   }, [template, open]);
@@ -136,6 +140,7 @@ export function TemplateFormDialog({
         thumbnail_url: formData.thumbnail_url || null,
         display_order: parseInt(formData.display_order),
         is_active: true,
+        estimated_time_minutes: formData.estimated_time_minutes ? parseInt(formData.estimated_time_minutes) : null,
       };
 
       if (template) {
@@ -272,6 +277,23 @@ export function TemplateFormDialog({
                 placeholder="0"
                 min="0"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="estimated_time_minutes">Estimated Time (minutes)</Label>
+              <Input
+                id="estimated_time_minutes"
+                type="number"
+                value={formData.estimated_time_minutes}
+                onChange={(e) =>
+                  setFormData({ ...formData, estimated_time_minutes: e.target.value })
+                }
+                placeholder="5"
+                min="0"
+              />
+              <p className="text-xs text-muted-foreground">
+                Approximate time for generation to complete
+              </p>
             </div>
 
             <div className="space-y-2 col-span-2">

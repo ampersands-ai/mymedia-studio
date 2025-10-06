@@ -12,6 +12,7 @@ export interface AIModel {
   api_endpoint: string | null;
   is_active: boolean;
   groups?: string[];
+  estimated_time_minutes?: number | null;
 }
 
 export interface ContentTemplate {
@@ -26,6 +27,7 @@ export interface ContentTemplate {
   display_order: number;
   is_active: boolean;
   ai_models?: AIModel;
+  estimated_time_minutes?: number | null;
 }
 
 export const useTemplates = () => {

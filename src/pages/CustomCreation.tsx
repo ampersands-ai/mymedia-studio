@@ -626,9 +626,17 @@ const CustomCreation = () => {
                           <div className="flex flex-col gap-1 w-full">
                             <div className="flex items-center justify-between w-full">
                               <span className="font-bold text-sm">{model.model_name}</span>
-                              <Badge variant="secondary" className="text-xs">
-                                {model.base_token_cost} tokens
-                              </Badge>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="text-xs">
+                                  {model.base_token_cost} tokens
+                                </Badge>
+                                {model.estimated_time_minutes && (
+                                  <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    ~{model.estimated_time_minutes}m
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                             {otherGroups.length > 0 && (
                               <span className={cn("text-xs", String(selectedModel) === String(model.id) ? "text-white/60" : "text-muted-foreground/60")}>

@@ -40,6 +40,7 @@ interface AIModel {
   api_endpoint: string | null;
   is_active: boolean;
   groups?: string[];
+  estimated_time_minutes?: number | null;
 }
 
 interface ModelFormDialogProps {
@@ -64,6 +65,7 @@ export function ModelFormDialog({
     cost_multipliers: "{}",
     input_schema: "{}",
     api_endpoint: "",
+    estimated_time_minutes: "",
   });
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -79,6 +81,7 @@ export function ModelFormDialog({
         cost_multipliers: JSON.stringify(model.cost_multipliers || {}, null, 2),
         input_schema: JSON.stringify(model.input_schema, null, 2),
         api_endpoint: model.api_endpoint || "",
+        estimated_time_minutes: model.estimated_time_minutes?.toString() || "",
       });
       setSelectedGroups(model.groups || []);
     } else {
@@ -91,6 +94,7 @@ export function ModelFormDialog({
         cost_multipliers: "{}",
         input_schema: "{}",
         api_endpoint: "",
+        estimated_time_minutes: "",
       });
       setSelectedGroups([]);
     }
@@ -132,6 +136,7 @@ export function ModelFormDialog({
         api_endpoint: formData.api_endpoint || null,
         groups: selectedGroups,
         is_active: true,
+        estimated_time_minutes: formData.estimated_time_minutes ? parseInt(formData.estimated_time_minutes) : null,
       };
 
       if (model) {
@@ -266,6 +271,23 @@ export function ModelFormDialog({
                 }
                 placeholder="/v1/generate"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="estimated_time_minutes">Estimated Time (minutes)</Label>
+              <Input
+                id="estimated_time_minutes"
+                type="number"
+                value={formData.estimated_time_minutes}
+                onChange={(e) =>
+                  setFormData({ ...formData, estimated_time_minutes: e.target.value })
+                }
+                placeholder="5"
+                min="0"
+              />
+              <p className="text-xs text-muted-foreground">
+                Approximate time for generation to complete
+              </p>
             </div>
           </div>
 

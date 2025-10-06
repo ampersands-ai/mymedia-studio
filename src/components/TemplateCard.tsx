@@ -82,6 +82,7 @@ export const TemplateCard = ({ image, video, alt, className }: TemplateCardProps
       <img
         src={image}
         alt={alt}
+        loading="lazy"
         className={cn(
           "w-full h-full object-cover transition-opacity duration-300",
           showVideo && video ? "opacity-0" : "opacity-100"

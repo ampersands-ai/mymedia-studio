@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Zap, Shield, Sparkles } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Footer } from "@/components/Footer";
 import portraitHeadshots from "@/assets/portrait-headshots.jpg";
@@ -37,8 +37,8 @@ const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Add structured data for SEO and AEO
-  useEffect(() => {
+  // Memoize SEO schemas for performance
+  const schemas = useMemo(() => {
     // Main WebApplication schema
     const webAppSchema = {
       "@context": "https://schema.org",
@@ -165,8 +165,11 @@ const Index = () => {
       ]
     };
 
-    // Add all schemas to page
-    const schemas = [webAppSchema, faqSchema, orgSchema, breadcrumbSchema];
+    return [webAppSchema, faqSchema, orgSchema, breadcrumbSchema];
+  }, []);
+
+  // Add structured data for SEO and AEO
+  useEffect(() => {
     const scriptElements: HTMLScriptElement[] = [];
 
     schemas.forEach(schema => {
@@ -292,11 +295,13 @@ const Index = () => {
                   src={logo} 
                   alt="Artifio.ai logo symbol" 
                   className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
+                  loading="eager"
                 />
                 <img 
                   src={textLogo} 
                   alt="Artifio" 
                   className="h-6 md:h-8"
+                  loading="eager"
                 />
               </Link>
               <div className="flex items-center gap-2 md:gap-3">

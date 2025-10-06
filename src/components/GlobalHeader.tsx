@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Settings, Coins, LogOut, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
+import { useUserTokens } from "@/hooks/useUserTokens";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import textLogo from "@/assets/text-logo.png";
@@ -15,44 +15,8 @@ export const GlobalHeader = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
-  const [tokenBalance, setTokenBalance] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (user) {
-      fetchTokenBalance();
-    }
-  }, [user]);
-
-  const fetchTokenBalance = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("user_subscriptions")
-        .select("tokens_remaining")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching token balance:", error);
-        toast.error("Failed to load token balance");
-        setTokenBalance(0);
-        return;
-      }
-      
-      if (!data) {
-        console.warn("No subscription data found for user");
-        setTokenBalance(0);
-        return;
-      }
-      
-      setTokenBalance(data.tokens_remaining ?? 0);
-    } catch (error) {
-      console.error("Error fetching token balance:", error);
-      toast.error("An error occurred while fetching your balance");
-      setTokenBalance(0);
-    }
-  };
+  const { data: tokenData } = useUserTokens();
+  const tokenBalance = tokenData?.tokens_remaining ?? null;
 
   const handleSignOut = async () => {
     try {
@@ -85,11 +49,13 @@ export const GlobalHeader = () => {
                 src={logo} 
                 alt="Artifio.ai logo" 
                 className="h-10 w-10 md:h-12 md:w-12 rounded-xl border-3 border-black brutal-shadow"
+                loading="eager"
               />
               <img 
                 src={textLogo} 
                 alt="Artifio" 
                 className="h-8 md:h-10"
+                loading="eager"
               />
             </Link>
 

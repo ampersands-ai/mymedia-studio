@@ -124,11 +124,13 @@ All colors MUST be HSL.
   .brutal-card {
     @apply bg-card border-4 border-black rounded-2xl;
     box-shadow: var(--shadow-brutal-lg);
+    contain: layout style paint;
   }
   
   .brutal-card-sm {
     @apply bg-card border-3 border-black rounded-xl;
     box-shadow: var(--shadow-brutal);
+    contain: layout style paint;
   }
   
   .brutal-border {
@@ -187,10 +189,15 @@ All colors MUST be HSL.
   /* Hover lift effect */
   .hover-lift {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    will-change: transform, box-shadow;
   }
   
   .hover-lift:hover {
     transform: translate(-2px, -2px);
     box-shadow: 8px 8px 0px hsl(0 0% 0%);
+  }
+  
+  .hover-lift:not(:hover) {
+    will-change: auto;
   }
 }

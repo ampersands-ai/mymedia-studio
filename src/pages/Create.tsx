@@ -1,22 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Sparkles, Loader2 } from "lucide-react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
 import { TemplateCard } from "@/components/TemplateCard";
 import { useTemplatesByCategory } from "@/hooks/useTemplates";
 import { Textarea } from "@/components/ui/textarea";
 import { useGeneration } from "@/hooks/useGeneration";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
+// Lazy load Carousel for code splitting
+const Carousel = lazy(() => import("@/components/ui/carousel").then(m => ({ default: m.Carousel })));
+const CarouselContent = lazy(() => import("@/components/ui/carousel").then(m => ({ default: m.CarouselContent })));
+const CarouselItem = lazy(() => import("@/components/ui/carousel").then(m => ({ default: m.CarouselItem })));
+const CarouselNext = lazy(() => import("@/components/ui/carousel").then(m => ({ default: m.CarouselNext })));
+const CarouselPrevious = lazy(() => import("@/components/ui/carousel").then(m => ({ default: m.CarouselPrevious })));
 
 const Create = () => {
   const navigate = useNavigate();
@@ -26,8 +26,8 @@ const Create = () => {
   const [prompt, setPrompt] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Add structured data for Create page
-  useEffect(() => {
+  // Memoize SEO schemas for performance
+  const schemas = useMemo(() => {
     const webAppSchema = {
       "@context": "https://schema.org",
       "@type": "WebApplication",
@@ -69,7 +69,11 @@ const Create = () => {
       ]
     };
 
-    const schemas = [webAppSchema, breadcrumbSchema];
+    return [webAppSchema, breadcrumbSchema];
+  }, []);
+
+  // Add structured data for Create page
+  useEffect(() => {
     const scriptElements: HTMLScriptElement[] = [];
 
     schemas.forEach(schema => {
@@ -157,14 +161,15 @@ const Create = () => {
                 </Badge>
               </div>
               
-              <Carousel 
-                className="w-full"
-                opts={{
-                  align: "start",
-                  loop: false,
-                }}
-              >
-                <CarouselContent className="-ml-2">
+              <Suspense fallback={<div className="h-48 animate-pulse bg-muted rounded-xl" />}>
+                <Carousel 
+                  className="w-full"
+                  opts={{
+                    align: "start",
+                    loop: false,
+                  }}
+                >
+                  <CarouselContent className="-ml-2">
                   {categoryTemplates.map((template) => (
                     <CarouselItem key={template.id} className="pl-2 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6">
                       <Card 
@@ -193,10 +198,11 @@ const Create = () => {
                       </Card>
                     </CarouselItem>
                   ))}
-                </CarouselContent>
-                <CarouselPrevious className="hidden sm:flex brutal-shadow -left-4" />
-                <CarouselNext className="hidden sm:flex brutal-shadow -right-4" />
-              </Carousel>
+                  </CarouselContent>
+                  <CarouselPrevious className="hidden sm:flex brutal-shadow -left-4" />
+                  <CarouselNext className="hidden sm:flex brutal-shadow -right-4" />
+                </Carousel>
+              </Suspense>
             </div>
           ))}
         </div>

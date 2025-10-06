@@ -203,9 +203,9 @@ const CustomCreation = () => {
   const isImageRequiredBySchema = schemaRequired.includes('image_urls');
   const isPromptRequiredBySchema = schemaRequired.includes('prompt');
 
-  // Fallback to group-based logic if no schema requirements
-  const isImageRequired = isImageRequiredBySchema || selectedGroup === "image_editing" || selectedGroup === "image_to_video";
-  const isPromptRequired = isPromptRequiredBySchema || selectedGroup !== "image_editing";
+  // Use only schema-based requirements
+  const isImageRequired = isImageRequiredBySchema;
+  const isPromptRequired = isPromptRequiredBySchema || true; // Prompt is always required unless schema says otherwise
 
   const surprisePrompts = [
     "A majestic dragon soaring over a cyberpunk city at sunset",
@@ -575,42 +575,45 @@ const CustomCreation = () => {
                 />
               </div>
 
-              {/* Image Upload */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Images {isImageRequired && <span className="text-destructive">*</span>}
-                  {!isImageRequired && <span className="text-muted-foreground text-xs ml-1">(Optional)</span>}
-                </label>
 
-                {uploadedImages.map((file, index) => (
-                  <div key={index} className="flex items-center gap-2 p-2 md:p-3 border rounded-lg bg-muted/30">
-                    <div className="w-16 h-16 md:w-20 md:h-20 border rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                      <img src={URL.createObjectURL(file)} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
+              {/* Image Upload - Only show if required by schema */}
+              {isImageRequired && (
+                <div className="space-y-3">
+                  <label className="text-sm font-medium">
+                    Images <span className="text-destructive">*</span>
+                  </label>
+
+                  {uploadedImages.map((file, index) => (
+                    <div key={index} className="flex items-center gap-2 p-2 md:p-3 border rounded-lg bg-muted/30">
+                      <div className="w-16 h-16 md:w-20 md:h-20 border rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                        <img src={URL.createObjectURL(file)} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-xs md:text-sm flex-1 truncate">File {index + 1}</span>
+                      <Button variant="ghost" size="sm" onClick={() => removeImage(index)} className="h-8 text-xs">
+                        Remove
+                      </Button>
                     </div>
-                    <span className="text-xs md:text-sm flex-1 truncate">File {index + 1}</span>
-                    <Button variant="ghost" size="sm" onClick={() => removeImage(index)} className="h-8 text-xs">
-                      Remove
-                    </Button>
-                  </div>
-                ))}
+                  ))}
 
-                <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileUpload} className="hidden" />
-                <Button
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadedImages.length >= 10}
-                  className="w-full border-dashed h-11 md:h-10"
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Add Images ({uploadedImages.length}/10)
-                </Button>
-                
-                {isImageRequired && uploadedImages.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {selectedGroup === "image_editing" ? "Upload an image to edit" : "Upload an image to animate"}
-                  </p>
-                )}
-              </div>
+                  <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileUpload} className="hidden" />
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadedImages.length >= 10}
+                    className="w-full border-dashed h-11 md:h-10"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Add Images ({uploadedImages.length}/10)
+                  </Button>
+                  
+                  {uploadedImages.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      This model requires at least one image
+                    </p>
+                  )}
+                </div>
+              )}
+
 
               {/* Collapsible Advanced Options */}
               <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>

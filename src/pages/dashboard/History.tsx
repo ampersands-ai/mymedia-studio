@@ -171,6 +171,7 @@ const History = () => {
                     <video
                       src={generation.output_url}
                       className="w-full h-full object-cover"
+                      preload="metadata"
                       onClick={(e) => e.stopPropagation()}
                     />
                   ) : generation.type === "image" ? (
@@ -231,6 +232,7 @@ const History = () => {
                     <video
                       src={previewGeneration.output_url}
                       className="w-full h-full object-contain"
+                      preload="metadata"
                       controls
                     />
                   ) : previewGeneration.type === "image" ? (

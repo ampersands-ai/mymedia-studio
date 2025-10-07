@@ -388,22 +388,22 @@ const Settings = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 bg-neon-yellow/20 rounded-lg border-2 border-neon-yellow/40">
+                      <div className="p-4 bg-card rounded-lg border-2 border-primary">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-muted-foreground">Tokens Remaining</p>
-                            <p className="text-3xl font-black">{subscription.tokens_remaining}</p>
+                            <p className="text-3xl font-black text-primary">{subscription.tokens_remaining}</p>
                           </div>
-                          <Coins className="h-8 w-8" />
+                          <Coins className="h-8 w-8 text-primary" />
                         </div>
                       </div>
-                      <div className="p-4 bg-neon-blue/20 rounded-lg border-2 border-neon-blue/40">
+                      <div className="p-4 bg-card rounded-lg border-2 border-secondary">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-muted-foreground">Total Tokens</p>
-                            <p className="text-3xl font-black">{subscription.tokens_total}</p>
+                            <p className="text-3xl font-black text-secondary">{subscription.tokens_total}</p>
                           </div>
-                          <Sparkles className="h-8 w-8" />
+                          <Sparkles className="h-8 w-8 text-secondary" />
                         </div>
                       </div>
                     </div>
@@ -418,7 +418,7 @@ const Settings = () => {
                 )}
                 
                 <Link to="/pricing">
-                  <Button className="w-full bg-neon-green hover:bg-neon-green/90 text-black font-bold" aria-label="View all pricing plans">
+                  <Button className="w-full bg-secondary hover:bg-secondary/90 text-black font-bold" aria-label="View all pricing plans">
                     Upgrade Plan
                   </Button>
                 </Link>

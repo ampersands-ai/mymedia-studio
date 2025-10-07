@@ -145,21 +145,25 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-brutal-lg);
   }
   
-  /* Neon backgrounds */
+  /* Neon backgrounds with proper contrast */
   .bg-neon-yellow {
     background-color: hsl(var(--neon-yellow));
+    color: hsl(0 0% 0%);
   }
   
   .bg-neon-pink {
     background-color: hsl(var(--neon-pink));
+    color: hsl(0 0% 100%);
   }
   
   .bg-neon-blue {
     background-color: hsl(var(--neon-blue));
+    color: hsl(0 0% 0%);
   }
   
   .bg-neon-red {
     background-color: hsl(var(--neon-red));
+    color: hsl(0 0% 100%);
   }
   
   .text-neon-yellow {

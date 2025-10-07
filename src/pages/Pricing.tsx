@@ -334,7 +334,7 @@ const Pricing = () => {
                 onClick={() => setIsAnnual(false)}
                 className={`inline-flex items-center px-4 py-2 rounded-full font-black transition-all ${
                   !isAnnual
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-black"
                     : "text-foreground/60 hover:text-foreground"
                 }`}
               >
@@ -344,12 +344,12 @@ const Pricing = () => {
                 onClick={() => setIsAnnual(true)}
                 className={`inline-flex items-center px-4 py-2 rounded-full font-black transition-all ${
                   isAnnual
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-black"
                     : "text-foreground/60 hover:text-foreground"
                 }`}
               >
                 ANNUAL
-                <span className="ml-2 inline-flex items-center leading-none h-6 text-xs px-2 py-0.5 bg-accent text-accent-foreground rounded-full">
+                <span className="ml-2 inline-flex items-center leading-none h-6 text-xs px-2 py-0.5 bg-secondary text-black rounded-full">
                   SAVE 25%
                 </span>
               </button>
@@ -364,7 +364,7 @@ const Pricing = () => {
               className={`relative hover-lift ${plan.popular ? "ring-4 ring-primary" : ""}`}
             >
               {plan.badge && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 rounded-full text-xs font-black text-white">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 rounded-full text-xs font-black text-black">
                   {plan.badge}
                 </div>
               )}

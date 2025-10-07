@@ -231,8 +231,8 @@ const Playground = () => {
             <div className="flex items-center gap-4">
               <div className="brutal-card-sm px-4 py-2 bg-neon-yellow">
                 <div className="flex items-center gap-2">
-                  <Coins className="h-5 w-5" />
-                  <span className="font-black">{tokensRemaining} tokens</span>
+                  <Coins className="h-5 w-5 text-black" />
+                  <span className="font-black text-black">{tokensRemaining} tokens</span>
                 </div>
               </div>
               <Button

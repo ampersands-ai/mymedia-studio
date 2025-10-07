@@ -281,7 +281,7 @@ const Create = () => {
             <div key={category} className="space-y-3">
               <div className="flex items-center gap-2">
                 <h3 className="text-lg md:text-xl font-black capitalize">{category}</h3>
-                <Badge className="bg-neon-yellow text-foreground border-2 border-black text-xs">
+                <Badge className="bg-neon-yellow text-black border-2 border-black text-xs">
                   {categoryTemplates.length} templates
                 </Badge>
               </div>
@@ -314,7 +314,7 @@ const Create = () => {
                         <CardContent className="p-2">
                           <p className="text-xs font-bold mb-1 truncate">{template.name}</p>
                           <Button 
-                            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-black text-xs h-8"
+                            className="w-full bg-primary hover:bg-primary/90 text-black font-black text-xs h-8"
                             size="sm"
                           >
                             Use Template

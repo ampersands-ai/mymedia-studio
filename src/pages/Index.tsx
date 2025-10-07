@@ -213,11 +213,11 @@ const Index = () => {
           <div className="max-w-5xl mx-auto text-center space-y-6 md:space-y-8">
             <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 mb-2 md:mb-4">
               <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-neon-yellow border-3 md:border-4 border-black brutal-shadow">
-                <Sparkles className="h-4 w-4 md:h-5 md:w-5" aria-hidden="true" />
-                <span className="text-xs md:text-sm font-black">POWERED BY ADVANCED AI</span>
+                <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-black" aria-hidden="true" />
+                <span className="text-xs md:text-sm font-black text-black">POWERED BY ADVANCED AI</span>
               </div>
-              <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-neon-green border-3 md:border-4 border-black brutal-shadow">
-                <span className="text-xs md:text-sm font-black">🎯 SAVE 50-80% VS COMPETITORS</span>
+              <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-secondary border-3 md:border-4 border-black brutal-shadow">
+                <span className="text-xs md:text-sm font-black text-black">🎯 SAVE 50-80% VS COMPETITORS</span>
               </div>
               <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-primary border-3 md:border-4 border-black brutal-shadow">
                 <span className="text-xs md:text-sm font-black text-primary-foreground">💎 ENTERPRISE POWER, FREELANCER PRICES</span>
@@ -252,8 +252,8 @@ const Index = () => {
             </div>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-8 pt-6 md:pt-8">
               <div className="brutal-card-sm px-6 md:px-8 py-3 md:py-4 bg-neon-blue">
-                <div className="text-2xl md:text-3xl font-black">500</div>
-                <div className="text-xs md:text-sm font-bold">FREE TOKENS</div>
+                <div className="text-2xl md:text-3xl font-black text-black">500</div>
+                <div className="text-xs md:text-sm font-bold text-black">FREE TOKENS</div>
               </div>
               <div className="brutal-card-sm px-6 md:px-8 py-3 md:py-4 bg-neon-pink">
                 <div className="text-2xl md:text-3xl font-black text-white">NO CC</div>
@@ -331,7 +331,7 @@ const Index = () => {
                       width="400"
                       height="300"
                     />
-                    <div className="absolute top-2 md:top-3 right-2 md:right-3 bg-neon-yellow px-2 md:px-3 py-1 rounded-full border-2 border-black text-xs font-black">
+                    <div className="absolute top-2 md:top-3 right-2 md:right-3 bg-neon-yellow px-2 md:px-3 py-1 rounded-full border-2 border-black text-xs font-black text-black">
                       {useCase.category}
                     </div>
                   </div>
@@ -383,7 +383,7 @@ const Index = () => {
                 <CardContent className="p-6 space-y-4">
                   <div className="text-center">
                     <p className="text-sm font-bold text-foreground/60">vs Midjourney</p>
-                    <p className="text-3xl md:text-4xl font-black text-primary mt-2">Save 85%</p>
+                    <p className="text-3xl md:text-4xl font-black text-foreground mt-2">Save 85%</p>
                     <p className="text-sm font-medium mt-2">They charge $10-60/mo</p>
                     <p className="text-lg font-black gradient-text mt-1">We start at $3.99/mo</p>
                   </div>
@@ -394,7 +394,7 @@ const Index = () => {
                 <CardContent className="p-6 space-y-4">
                   <div className="text-center">
                     <p className="text-sm font-bold text-foreground/60">vs Runway</p>
-                    <p className="text-3xl md:text-4xl font-black text-primary mt-2">Save 75%</p>
+                    <p className="text-3xl md:text-4xl font-black text-foreground mt-2">Save 75%</p>
                     <p className="text-sm font-medium mt-2">They charge $15-95/mo</p>
                     <p className="text-lg font-black gradient-text mt-1">We start at $3.99/mo</p>
                   </div>

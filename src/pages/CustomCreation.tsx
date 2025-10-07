@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2, Clock } from "lucide-react";
 import {
@@ -629,50 +630,52 @@ const CustomCreation = () => {
               {filteredModels.length > 0 && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">AI Model</label>
-                  <div className="grid grid-cols-1 gap-2">
-                    {filteredModels.map((model) => {
-                      const modelGroups = (model.groups as string[]) || [];
-                      const otherGroups = modelGroups.filter(g => g !== selectedGroup);
-                      
-                      return (
-                        <Button
-                          key={String(model.record_id)}
-                          variant="outline"
-                          onClick={() => setSelectedModel(String(model.record_id))}
-                          className={cn(
-                            "h-auto py-3 px-4 justify-start text-left border-2 transition-all",
-                            String(selectedModel) === String(model.record_id) 
-                              ? "bg-red-500 hover:bg-red-600 text-white font-bold border-black" 
-                              : "hover:bg-muted border-border"
-                          )}
-                        >
-                          <div className="flex flex-col gap-1 w-full">
-                            <div className="flex items-center justify-between w-full">
-                              <span className="font-bold text-sm">{model.model_name}</span>
+                  <Select
+                    value={selectedModel || undefined}
+                    onValueChange={(value) => setSelectedModel(value)}
+                  >
+                    <SelectTrigger className="w-full bg-background">
+                      <SelectValue placeholder="Select a model..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      {filteredModels.map((model) => {
+                        const modelGroups = (model.groups as string[]) || [];
+                        const otherGroups = modelGroups.filter(g => g !== selectedGroup);
+                        
+                        return (
+                          <SelectItem
+                            key={String(model.record_id)}
+                            value={String(model.record_id)}
+                            className="cursor-pointer"
+                          >
+                            <div className="flex items-center justify-between w-full gap-4">
+                              <div className="flex flex-col gap-1 flex-1">
+                                <span className="font-medium text-sm">{model.model_name}</span>
+                                {otherGroups.length > 0 && (
+                                  <span className="text-xs text-muted-foreground">
+                                    Also in: {otherGroups.map(g => 
+                                      CREATION_GROUPS.find(cg => cg.id === g)?.label
+                                    ).join(", ")}
+                                  </span>
+                                )}
+                              </div>
                               <div className="flex items-center gap-2">
-                                <Badge variant="secondary" className="text-xs">
+                                <Badge variant="secondary" className="text-xs whitespace-nowrap">
                                   {model.base_token_cost} tokens
                                 </Badge>
                                 {model.estimated_time_minutes && (
-                                  <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                                  <Badge variant="secondary" className="text-xs flex items-center gap-1 whitespace-nowrap">
                                     <Clock className="h-3 w-3" />
                                     ~{formatEstimatedTime(model.estimated_time_minutes)}
                                   </Badge>
                                 )}
                               </div>
                             </div>
-                            {otherGroups.length > 0 && (
-                              <span className={cn("text-xs", String(selectedModel) === String(model.record_id) ? "text-white/60" : "text-muted-foreground/60")}>
-                                Also in: {otherGroups.map(g => 
-                                  CREATION_GROUPS.find(cg => cg.id === g)?.label
-                                ).join(", ")}
-                              </span>
-                            )}
-                          </div>
-                        </Button>
-                      );
-                    })}
-                  </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 

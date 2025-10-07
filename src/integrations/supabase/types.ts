@@ -104,6 +104,72 @@ export type Database = {
         }
         Relationships: []
       }
+      community_creations: {
+        Row: {
+          content_type: string
+          created_at: string | null
+          generation_id: string
+          id: string
+          is_featured: boolean | null
+          likes_count: number | null
+          model_id: string
+          model_record_id: string | null
+          output_url: string | null
+          parameters: Json
+          prompt: string
+          shared_at: string | null
+          user_id: string
+          views_count: number | null
+        }
+        Insert: {
+          content_type: string
+          created_at?: string | null
+          generation_id: string
+          id?: string
+          is_featured?: boolean | null
+          likes_count?: number | null
+          model_id: string
+          model_record_id?: string | null
+          output_url?: string | null
+          parameters?: Json
+          prompt: string
+          shared_at?: string | null
+          user_id: string
+          views_count?: number | null
+        }
+        Update: {
+          content_type?: string
+          created_at?: string | null
+          generation_id?: string
+          id?: string
+          is_featured?: boolean | null
+          likes_count?: number | null
+          model_id?: string
+          model_record_id?: string | null
+          output_url?: string | null
+          parameters?: Json
+          prompt?: string
+          shared_at?: string | null
+          user_id?: string
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_creations_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: true
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_creations_model_record_id_fkey"
+            columns: ["model_record_id"]
+            isOneToOne: false
+            referencedRelation: "ai_models"
+            referencedColumns: ["record_id"]
+          },
+        ]
+      }
       content_templates: {
         Row: {
           category: string

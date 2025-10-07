@@ -24,6 +24,7 @@ const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AIModelsManager = lazy(() => import("./pages/admin/AIModelsManager"));
 const TemplatesManager = lazy(() => import("./pages/admin/TemplatesManager"));
 const UsersManager = lazy(() => import("./pages/admin/UsersManager"));
+const AllGenerations = lazy(() => import("./pages/admin/AllGenerations"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -56,6 +57,7 @@ const AppContent = () => {
           <Route path="models" element={<AIModelsManager />} />
           <Route path="templates" element={<TemplatesManager />} />
           <Route path="users" element={<UsersManager />} />
+          <Route path="generations" element={<AllGenerations />} />
         </Route>
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/privacy" element={<Privacy />} />

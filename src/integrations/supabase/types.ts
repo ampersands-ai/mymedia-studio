@@ -112,14 +112,17 @@ export type Database = {
           display_order: number | null
           enhancement_instruction: string | null
           estimated_time_minutes: number | null
+          hidden_field_defaults: Json | null
           id: string
           is_active: boolean | null
+          is_custom_model: boolean | null
           model_id: string | null
           model_record_id: string | null
           name: string
           preset_parameters: Json
           thumbnail_url: string | null
           updated_at: string
+          user_editable_fields: Json | null
         }
         Insert: {
           category: string
@@ -128,14 +131,17 @@ export type Database = {
           display_order?: number | null
           enhancement_instruction?: string | null
           estimated_time_minutes?: number | null
+          hidden_field_defaults?: Json | null
           id: string
           is_active?: boolean | null
+          is_custom_model?: boolean | null
           model_id?: string | null
           model_record_id?: string | null
           name: string
           preset_parameters?: Json
           thumbnail_url?: string | null
           updated_at?: string
+          user_editable_fields?: Json | null
         }
         Update: {
           category?: string
@@ -144,14 +150,17 @@ export type Database = {
           display_order?: number | null
           enhancement_instruction?: string | null
           estimated_time_minutes?: number | null
+          hidden_field_defaults?: Json | null
           id?: string
           is_active?: boolean | null
+          is_custom_model?: boolean | null
           model_id?: string | null
           model_record_id?: string | null
           name?: string
           preset_parameters?: Json
           thumbnail_url?: string | null
           updated_at?: string
+          user_editable_fields?: Json | null
         }
         Relationships: [
           {

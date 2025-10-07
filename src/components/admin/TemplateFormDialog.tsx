@@ -18,7 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { toast } from "sonner";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ParameterConfigurator } from "./ParameterConfigurator";
 
 interface ContentTemplate {
   id: string;
@@ -27,11 +36,21 @@ interface ContentTemplate {
   description: string | null;
   model_id: string | null;
   preset_parameters: Record<string, any>;
+  user_editable_fields?: string[];
+  hidden_field_defaults?: Record<string, any>;
+  is_custom_model?: boolean;
   enhancement_instruction: string | null;
   thumbnail_url: string | null;
   is_active: boolean;
   display_order: number;
   estimated_time_minutes?: number | null;
+}
+
+interface AIModel {
+  id: string;
+  model_name: string;
+  input_schema: any;
+  record_id: string;
 }
 
 interface TemplateFormDialogProps {
@@ -58,9 +77,18 @@ export function TemplateFormDialog({
     thumbnail_url: "",
     display_order: "0",
     estimated_time_minutes: "",
+    is_custom_model: false,
+    custom_model_id: "",
+    custom_input_schema: "{}",
   });
-  const [models, setModels] = useState<Array<{ id: string; model_name: string }>>([]);
+  const [models, setModels] = useState<AIModel[]>([]);
+  const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
+  const [userEditableFields, setUserEditableFields] = useState<string[]>([]);
+  const [hiddenFieldDefaults, setHiddenFieldDefaults] = useState<Record<string, any>>({});
+  const [presetValues, setPresetValues] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
+  const [basicInfoOpen, setBasicInfoOpen] = useState(true);
+  const [paramConfigOpen, setParamConfigOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -70,6 +98,7 @@ export function TemplateFormDialog({
 
   useEffect(() => {
     if (template) {
+      const isCustom = template.is_custom_model || false;
       setFormData({
         id: template.id,
         category: template.category,
@@ -81,7 +110,17 @@ export function TemplateFormDialog({
         thumbnail_url: template.thumbnail_url || "",
         display_order: template.display_order.toString(),
         estimated_time_minutes: template.estimated_time_minutes?.toString() || "",
+        is_custom_model: isCustom,
+        custom_model_id: isCustom ? template.model_id || "" : "",
+        custom_input_schema: "{}",
       });
+      setUserEditableFields(template.user_editable_fields || []);
+      setHiddenFieldDefaults(template.hidden_field_defaults || {});
+      setPresetValues(template.preset_parameters || {});
+      
+      if (template.model_id && !isCustom) {
+        fetchModelDetails(template.model_id);
+      }
     } else {
       setFormData({
         id: "",
@@ -94,7 +133,14 @@ export function TemplateFormDialog({
         thumbnail_url: "",
         display_order: "0",
         estimated_time_minutes: "",
+        is_custom_model: false,
+        custom_model_id: "",
+        custom_input_schema: "{}",
       });
+      setUserEditableFields([]);
+      setHiddenFieldDefaults({});
+      setPresetValues({});
+      setSelectedModel(null);
     }
   }, [template, open]);
 
@@ -102,7 +148,7 @@ export function TemplateFormDialog({
     try {
       const { data, error } = await supabase
         .from("ai_models")
-        .select("id, model_name")
+        .select("id, model_name, input_schema, record_id")
         .eq("is_active", true)
         .order("model_name");
 
@@ -114,19 +160,68 @@ export function TemplateFormDialog({
     }
   };
 
+  const fetchModelDetails = async (modelId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("ai_models")
+        .select("*")
+        .eq("id", modelId)
+        .single();
+
+      if (error) throw error;
+      setSelectedModel(data);
+    } catch (error) {
+      console.error("Error fetching model details:", error);
+    }
+  };
+
+  const handleModelChange = (modelId: string) => {
+    setFormData({ ...formData, model_id: modelId });
+    const model = models.find(m => m.id === modelId);
+    if (model) {
+      setSelectedModel(model);
+      setParamConfigOpen(true);
+    }
+  };
+
+  const handleCustomModelToggle = (enabled: boolean) => {
+    setFormData({ 
+      ...formData, 
+      is_custom_model: enabled,
+      model_id: enabled ? formData.custom_model_id : "",
+    });
+    if (!enabled) {
+      setSelectedModel(null);
+      setUserEditableFields([]);
+      setHiddenFieldDefaults({});
+      setPresetValues({});
+    }
+  };
+
+  const handleParameterConfigChange = (config: {
+    userEditableFields: string[];
+    hiddenFieldDefaults: Record<string, any>;
+    presetValues: Record<string, any>;
+  }) => {
+    setUserEditableFields(config.userEditableFields);
+    setHiddenFieldDefaults(config.hiddenFieldDefaults);
+    setPresetValues(config.presetValues);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
     try {
-      // Validate JSON field
-      let presetParameters;
-      try {
-        presetParameters = JSON.parse(formData.preset_parameters);
-      } catch {
-        toast.error("Invalid JSON in Preset Parameters");
-        setSaving(false);
-        return;
+      let customSchema = null;
+      if (formData.is_custom_model) {
+        try {
+          customSchema = JSON.parse(formData.custom_input_schema);
+        } catch {
+          toast.error("Invalid JSON in Custom Input Schema");
+          setSaving(false);
+          return;
+        }
       }
 
       const data = {
@@ -134,8 +229,11 @@ export function TemplateFormDialog({
         category: formData.category,
         name: formData.name,
         description: formData.description || null,
-        model_id: formData.model_id || null,
-        preset_parameters: presetParameters,
+        model_id: formData.is_custom_model ? formData.custom_model_id : formData.model_id || null,
+        preset_parameters: presetValues,
+        user_editable_fields: userEditableFields,
+        hidden_field_defaults: hiddenFieldDefaults,
+        is_custom_model: formData.is_custom_model,
         enhancement_instruction: formData.enhancement_instruction || null,
         thumbnail_url: formData.thumbnail_url || null,
         display_order: parseInt(formData.display_order),
@@ -144,7 +242,6 @@ export function TemplateFormDialog({
       };
 
       if (template) {
-        // Update existing template
         const { error } = await supabase
           .from("content_templates")
           .update(data)
@@ -153,7 +250,6 @@ export function TemplateFormDialog({
         if (error) throw error;
         toast.success("Template updated successfully");
       } else {
-        // Create new template
         const { error } = await supabase.from("content_templates").insert(data);
 
         if (error) throw error;
@@ -169,192 +265,223 @@ export function TemplateFormDialog({
     }
   };
 
+  const getInputSchema = () => {
+    if (formData.is_custom_model) {
+      try {
+        return JSON.parse(formData.custom_input_schema);
+      } catch {
+        return null;
+      }
+    }
+    return selectedModel?.input_schema || null;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-black">
             {template ? "Edit Template" : "Add New Template"}
           </DialogTitle>
           <DialogDescription>
-            Configure content template with preset parameters
+            Configure content template and control which parameters users can edit
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="id">Template ID *</Label>
-              <Input
-                id="id"
-                value={formData.id}
-                onChange={(e) =>
-                  setFormData({ ...formData, id: e.target.value })
-                }
-                placeholder="IMG-001"
-                required
-                disabled={!!template}
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Collapsible open={basicInfoOpen} onOpenChange={setBasicInfoOpen}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-4 bg-muted/50 rounded-lg hover:bg-muted">
+              <h3 className="text-lg font-semibold">Basic Information</h3>
+              <ChevronDown className={cn("h-5 w-5 transition-transform", basicInfoOpen && "rotate-180")} />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="id">Template ID *</Label>
+                  <Input
+                    id="id"
+                    value={formData.id}
+                    onChange={(e) => setFormData({ ...formData, id: e.target.value })}
+                    placeholder="IMG-001"
+                    required
+                    disabled={!!template}
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="category">Category *</Label>
-              <Select
-                value={formData.category}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, category: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Image Creation">Image Creation</SelectItem>
-                  <SelectItem value="Photo Editing">Photo Editing</SelectItem>
-                  <SelectItem value="Video Creation">Video Creation</SelectItem>
-                  <SelectItem value="Audio Processing">Audio Processing</SelectItem>
-                  <SelectItem value="Text Generation">Text Generation</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category *</Label>
+                  <Select
+                    value={formData.category}
+                    onValueChange={(value) => setFormData({ ...formData, category: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Image Creation">Image Creation</SelectItem>
+                      <SelectItem value="Photo Editing">Photo Editing</SelectItem>
+                      <SelectItem value="Video Creation">Video Creation</SelectItem>
+                      <SelectItem value="Audio Processing">Audio Processing</SelectItem>
+                      <SelectItem value="Text Generation">Text Generation</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="space-y-2 col-span-2">
-              <Label htmlFor="name">Template Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder="Portrait Headshots"
-                required
-              />
-            </div>
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="name">Template Name *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Portrait Headshots"
+                    required
+                  />
+                </div>
 
-            <div className="space-y-2 col-span-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                placeholder="Professional headshot generation with studio lighting"
-                rows={2}
-              />
-            </div>
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Professional headshot generation with studio lighting"
+                    rows={2}
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="model_id">AI Model *</Label>
-              <Select
-                value={formData.model_id}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, model_id: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {models.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      {model.model_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="display_order">Display Order</Label>
+                  <Input
+                    id="display_order"
+                    type="number"
+                    value={formData.display_order}
+                    onChange={(e) => setFormData({ ...formData, display_order: e.target.value })}
+                    placeholder="0"
+                    min="0"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="display_order">Display Order</Label>
-              <Input
-                id="display_order"
-                type="number"
-                value={formData.display_order}
-                onChange={(e) =>
-                  setFormData({ ...formData, display_order: e.target.value })
-                }
-                placeholder="0"
-                min="0"
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="estimated_time_minutes">Estimated Time</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="estimated_time_minutes"
+                      type="number"
+                      value={formData.estimated_time_minutes}
+                      onChange={(e) => setFormData({ ...formData, estimated_time_minutes: e.target.value })}
+                      placeholder="5"
+                      min="0"
+                      step="0.5"
+                      className="flex-1"
+                    />
+                    <span className="flex items-center text-sm text-muted-foreground whitespace-nowrap">
+                      minutes
+                    </span>
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="estimated_time_minutes">Estimated Time</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="estimated_time_minutes"
-                  type="number"
-                  value={formData.estimated_time_minutes}
-                  onChange={(e) =>
-                    setFormData({ ...formData, estimated_time_minutes: e.target.value })
-                  }
-                  placeholder="5"
-                  min="0"
-                  step="0.5"
-                  className="flex-1"
-                />
-                <span className="flex items-center text-sm text-muted-foreground whitespace-nowrap">
-                  minutes
-                </span>
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="thumbnail_url">Thumbnail URL</Label>
+                  <Input
+                    id="thumbnail_url"
+                    value={formData.thumbnail_url}
+                    onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
+                    placeholder="https://example.com/thumbnail.jpg"
+                  />
+                </div>
+
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="enhancement_instruction">Prompt Enhancement Instruction</Label>
+                  <Textarea
+                    id="enhancement_instruction"
+                    value={formData.enhancement_instruction}
+                    onChange={(e) => setFormData({ ...formData, enhancement_instruction: e.target.value })}
+                    placeholder="Transform this into a professional portrait headshot prompt..."
+                    rows={3}
+                  />
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Approximate time for generation (supports decimals: 0.5 = 30 seconds)
-              </p>
-            </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-            <div className="space-y-2 col-span-2">
-              <Label htmlFor="thumbnail_url">Thumbnail URL</Label>
-              <Input
-                id="thumbnail_url"
-                value={formData.thumbnail_url}
-                onChange={(e) =>
-                  setFormData({ ...formData, thumbnail_url: e.target.value })
-                }
-                placeholder="https://example.com/thumbnail.jpg"
-              />
-            </div>
-          </div>
+          <Collapsible open={paramConfigOpen} onOpenChange={setParamConfigOpen}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-4 bg-muted/50 rounded-lg hover:bg-muted">
+              <h3 className="text-lg font-semibold">Model & Parameter Configuration</h3>
+              <ChevronDown className={cn("h-5 w-5 transition-transform", paramConfigOpen && "rotate-180")} />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-4 space-y-4">
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <div className="space-y-1">
+                  <Label htmlFor="custom_model_toggle" className="text-sm font-semibold">
+                    Use Custom Model
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Enable to use a model not in the predefined list
+                  </p>
+                </div>
+                <Switch
+                  id="custom_model_toggle"
+                  checked={formData.is_custom_model}
+                  onCheckedChange={handleCustomModelToggle}
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="preset_parameters">
-              Preset Parameters (JSON) *
-            </Label>
-            <Textarea
-              id="preset_parameters"
-              value={formData.preset_parameters}
-              onChange={(e) =>
-                setFormData({ ...formData, preset_parameters: e.target.value })
-              }
-              placeholder='{"aspect_ratio": "3:4", "style_preset": "photographic"}'
-              rows={6}
-              className="font-mono text-sm"
-            />
-            <p className="text-xs text-muted-foreground">
-              Pre-configured parameters that will be sent to the AI model
-            </p>
-          </div>
+              {formData.is_custom_model ? (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="custom_model_id">Custom Model ID *</Label>
+                    <Input
+                      id="custom_model_id"
+                      value={formData.custom_model_id}
+                      onChange={(e) => setFormData({ ...formData, custom_model_id: e.target.value, model_id: e.target.value })}
+                      placeholder="custom-model-id"
+                      required={formData.is_custom_model}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="custom_input_schema">Custom Input Schema (JSON) *</Label>
+                    <Textarea
+                      id="custom_input_schema"
+                      value={formData.custom_input_schema}
+                      onChange={(e) => setFormData({ ...formData, custom_input_schema: e.target.value })}
+                      placeholder='{"type": "object", "properties": {...}, "required": [...]}'
+                      rows={8}
+                      className="font-mono text-xs"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Define the input schema in JSON Schema format
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="model_id">AI Model *</Label>
+                  <Select value={formData.model_id} onValueChange={handleModelChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {models.map((model) => (
+                        <SelectItem key={model.id} value={model.id}>
+                          {model.model_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-          <div className="space-y-2">
-            <Label htmlFor="enhancement_instruction">
-              Prompt Enhancement Instruction
-            </Label>
-            <Textarea
-              id="enhancement_instruction"
-              value={formData.enhancement_instruction}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  enhancement_instruction: e.target.value,
-                })
-              }
-              placeholder="Transform this into a professional portrait headshot prompt..."
-              rows={4}
-            />
-            <p className="text-xs text-muted-foreground">
-              Instructions for enhancing user prompts for this template
-            </p>
-          </div>
+              {getInputSchema() && (
+                <ParameterConfigurator
+                  inputSchema={getInputSchema()}
+                  userEditableFields={userEditableFields}
+                  hiddenFieldDefaults={hiddenFieldDefaults}
+                  presetValues={presetValues}
+                  onConfigChange={handleParameterConfigChange}
+                />
+              )}
+            </CollapsibleContent>
+          </Collapsible>
 
           <div className="flex justify-end gap-3 pt-4">
             <Button

@@ -25,6 +25,9 @@ export interface ContentTemplate {
   thumbnail_url: string | null;
   model_id: string | null;
   preset_parameters: any;
+  user_editable_fields?: string[];
+  hidden_field_defaults?: Record<string, any>;
+  is_custom_model?: boolean;
   enhancement_instruction: string | null;
   display_order: number;
   is_active: boolean;

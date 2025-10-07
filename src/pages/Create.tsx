@@ -181,9 +181,23 @@ const Create = () => {
     }
 
     try {
+      // Build custom parameters from template configuration
+      const customParameters: Record<string, any> = {};
+      
+      // Merge hidden field defaults if available
+      if (selectedTemplate?.hidden_field_defaults) {
+        Object.assign(customParameters, selectedTemplate.hidden_field_defaults);
+      }
+      
+      // Merge preset values if available
+      if (selectedTemplate?.preset_parameters) {
+        Object.assign(customParameters, selectedTemplate.preset_parameters);
+      }
+
       const result = await generate({
         template_id: selectedTemplate.id,
         prompt: prompt.trim(),
+        custom_parameters: Object.keys(customParameters).length > 0 ? customParameters : undefined,
       });
       
       // Start polling for status

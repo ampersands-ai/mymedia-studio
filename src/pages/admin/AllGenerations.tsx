@@ -70,6 +70,7 @@ export default function AllGenerations() {
             phone_number
           )
         `)
+        .eq('status', 'completed')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -174,12 +175,12 @@ export default function AllGenerations() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Preview</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>User Details</TableHead>
                   <TableHead>Model</TableHead>
                   <TableHead>Prompt</TableHead>
                   <TableHead>Parameters</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Tokens</TableHead>
                   <TableHead>Actions</TableHead>
@@ -188,6 +189,27 @@ export default function AllGenerations() {
               <TableBody>
                 {generations?.map((gen) => (
                   <TableRow key={gen.id}>
+                    <TableCell>
+                      {gen.output_url && (
+                        <a href={gen.output_url} target="_blank" rel="noopener noreferrer">
+                          {gen.type === 'image' ? (
+                            <img 
+                              src={gen.output_url} 
+                              alt="Preview" 
+                              className="w-16 h-16 object-cover rounded border hover:opacity-80 transition-opacity"
+                            />
+                          ) : gen.type === 'video' ? (
+                            <video 
+                              src={gen.output_url} 
+                              className="w-16 h-16 object-cover rounded border"
+                              muted
+                            />
+                          ) : (
+                            <Button size="sm" variant="outline">View</Button>
+                          )}
+                        </a>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getContentIcon(gen.type)}
@@ -232,19 +254,6 @@ export default function AllGenerations() {
                         </pre>
                       </details>
                     </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          gen.status === 'completed'
-                            ? 'default'
-                            : gen.status === 'failed'
-                            ? 'destructive'
-                            : 'secondary'
-                        }
-                      >
-                        {gen.status}
-                      </Badge>
-                    </TableCell>
                     <TableCell className="text-xs">
                       {format(new Date(gen.created_at), 'MMM d, yyyy HH:mm')}
                     </TableCell>
@@ -252,30 +261,26 @@ export default function AllGenerations() {
                       {gen.tokens_used.toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      {gen.status === 'completed' && (
-                        <>
-                          {gen.is_shared ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => unshareFromCommunity.mutate(gen.id)}
-                              disabled={unshareFromCommunity.isPending}
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1 text-green-500" />
-                              Shared
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => shareToCommunity.mutate(gen)}
-                              disabled={shareToCommunity.isPending}
-                            >
-                              <Share2 className="h-4 w-4 mr-1" />
-                              Share
-                            </Button>
-                          )}
-                        </>
+                      {gen.is_shared ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => unshareFromCommunity.mutate(gen.id)}
+                          disabled={unshareFromCommunity.isPending}
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1 text-green-500" />
+                          Shared
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => shareToCommunity.mutate(gen)}
+                          disabled={shareToCommunity.isPending}
+                        >
+                          <Share2 className="h-4 w-4 mr-1" />
+                          Share
+                        </Button>
                       )}
                     </TableCell>
                   </TableRow>

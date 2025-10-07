@@ -14,6 +14,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 
@@ -55,7 +61,7 @@ const getContentIcon = (type: string) => {
   }
 };
 
-const PreviewCell = ({ gen }: { gen: Generation }) => {
+const PreviewCell = ({ gen, onClick }: { gen: Generation; onClick: () => void }) => {
   const { signedUrl, isLoading } = useSignedUrl(gen.storage_path);
 
   if (!gen.output_url && !gen.storage_path) {
@@ -69,30 +75,51 @@ const PreviewCell = ({ gen }: { gen: Generation }) => {
   }
 
   return (
-    <a href={displayUrl || '#'} target="_blank" rel="noopener noreferrer">
+    <button onClick={onClick} className="focus:outline-none focus:ring-2 focus:ring-primary rounded">
       {gen.type === 'image' ? (
         <img 
           src={displayUrl || ''} 
           alt="Preview" 
-          className="w-16 h-16 object-cover rounded border hover:opacity-80 transition-opacity"
+          className="w-16 h-16 object-cover rounded border hover:opacity-80 transition-opacity cursor-pointer"
         />
       ) : gen.type === 'video' ? (
         <video 
           src={displayUrl || ''} 
-          className="w-16 h-16 object-cover rounded border"
+          className="w-16 h-16 object-cover rounded border cursor-pointer"
           muted
           preload="metadata"
         />
       ) : (
         <Button size="sm" variant="outline">View</Button>
       )}
-    </a>
+    </button>
   );
+};
+
+const PreviewContent = ({ gen }: { gen: Generation }) => {
+  const { signedUrl, isLoading } = useSignedUrl(gen.storage_path);
+  
+  if (isLoading) {
+    return <Loader2 className="h-8 w-8 animate-spin" />;
+  }
+
+  const displayUrl = signedUrl || gen.output_url;
+
+  if (gen.type === 'image') {
+    return <img src={displayUrl || ''} alt="Generation" className="max-w-full max-h-[60vh] object-contain" />;
+  }
+  
+  if (gen.type === 'video') {
+    return <video src={displayUrl || ''} controls className="max-w-full max-h-[60vh]" />;
+  }
+
+  return <p className="text-muted-foreground">Preview not available</p>;
 };
 
 export default function AllGenerations() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedGeneration, setSelectedGeneration] = useState<Generation | null>(null);
 
   const { data: generations, isLoading } = useQuery({
     queryKey: ['admin-all-generations'],
@@ -203,6 +230,29 @@ export default function AllGenerations() {
         </p>
       </div>
 
+      <Dialog open={!!selectedGeneration} onOpenChange={() => setSelectedGeneration(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Generation Preview</DialogTitle>
+          </DialogHeader>
+          {selectedGeneration && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-center bg-muted rounded-lg p-4">
+                <PreviewContent gen={selectedGeneration} />
+              </div>
+              <div className="space-y-2 text-sm">
+                <p><strong>Type:</strong> {selectedGeneration.type}</p>
+                <p><strong>Model:</strong> <code className="bg-muted px-2 py-1 rounded">{selectedGeneration.model_id}</code></p>
+                <p><strong>Prompt:</strong> {selectedGeneration.prompt}</p>
+                {selectedGeneration.profiles?.email && (
+                  <p><strong>User:</strong> {selectedGeneration.profiles.email}</p>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Card>
         <CardHeader>
           <CardTitle>Total Generations: {generations?.length || 0}</CardTitle>
@@ -227,7 +277,7 @@ export default function AllGenerations() {
                 {generations?.map((gen) => (
                   <TableRow key={gen.id}>
                     <TableCell>
-                      <PreviewCell gen={gen} />
+                      <PreviewCell gen={gen} onClick={() => setSelectedGeneration(gen)} />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">

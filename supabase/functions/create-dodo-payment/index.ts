@@ -7,23 +7,22 @@ const corsHeaders = {
 };
 
 // Map plan names to Dodo Payments product IDs
-// TODO: Replace these with actual product IDs from your Dodo Payments dashboard
 const PLAN_PRODUCT_IDS = {
   'explorer': {
-    monthly: 'EXPLORER_MONTHLY_PRODUCT_ID',
-    annual: 'EXPLORER_ANNUAL_PRODUCT_ID',
+    monthly: 'pdt_smP6lzsTrv6N6h5aKJgNz',
+    annual: 'pdt_56VKzwfWGgt3Zl3EWYCmr',
   },
   'professional': {
-    monthly: 'PROFESSIONAL_MONTHLY_PRODUCT_ID',
-    annual: 'PROFESSIONAL_ANNUAL_PRODUCT_ID',
+    monthly: 'pdt_F9RnZnQKETGMy0JJTkIP1',
+    annual: 'pdt_ipED8gfRHFqVPd8rcZsTA',
   },
   'ultimate': {
-    monthly: 'ULTIMATE_MONTHLY_PRODUCT_ID',
-    annual: 'ULTIMATE_ANNUAL_PRODUCT_ID',
+    monthly: 'pdt_BmL2oa1VvG5Bb2tcKpdMl',
+    annual: 'pdt_nuHrRbwokBupBkfom1omC',
   },
   'veo_connoisseur': {
-    monthly: 'VEO_MONTHLY_PRODUCT_ID',
-    annual: 'VEO_ANNUAL_PRODUCT_ID',
+    monthly: 'pdt_6AqDfYSYJIxNTdUAQZdHg',
+    annual: 'pdt_mMehtoBVDiGzSbEx1xFM1',
   },
 };
 

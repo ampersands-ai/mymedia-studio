@@ -689,7 +689,7 @@ const CustomCreation = () => {
                                   </span>
                                 )}
                               </div>
-                              <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                              <div className="flex items-center gap-2 flex-shrink-0">
                                 <Badge variant="secondary" className="text-xs">
                                   {model.base_token_cost} tokens
                                 </Badge>

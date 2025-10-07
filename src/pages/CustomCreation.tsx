@@ -380,6 +380,12 @@ const CustomCreation = () => {
       return;
     }
     
+    // Validate prompt length
+    if (prompt.trim().length > 5000) {
+      toast.error("Prompt must be less than 5000 characters");
+      return;
+    }
+    
     // Validate image requirement
     if (isImageRequired && uploadedImages.length === 0) {
       toast.error("Please upload at least one image for this creation type");
@@ -716,6 +722,14 @@ const CustomCreation = () => {
                   disabled={localGenerating || isGenerating}
                   required={isPromptRequired}
                 />
+                <div className="flex justify-end">
+                  <span className={cn(
+                    "text-xs",
+                    prompt.length > 5000 ? "text-destructive font-medium" : "text-muted-foreground"
+                  )}>
+                    {prompt.length} / 5000 characters
+                  </span>
+                </div>
               </div>
 
 

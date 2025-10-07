@@ -26,44 +26,66 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify webhook signature if secret is configured
-    if (webhookSecret) {
-      const signature = req.headers.get('x-dodo-signature');
-      const timestamp = req.headers.get('x-dodo-timestamp');
-      
-      if (!signature || !timestamp) {
-        console.error('Missing webhook signature or timestamp');
-        return new Response(JSON.stringify({ error: 'Invalid webhook' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      // Verify signature (implement actual verification based on Dodo Payments docs)
-      // This is a placeholder - update with actual signature verification
-      const payload = await req.text();
-      const event = JSON.parse(payload);
-      
-      console.log('Webhook received:', event.type, event);
-
-      await handleWebhookEvent(supabase, event);
-
-      return new Response(JSON.stringify({ received: true }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } else {
-      // No webhook secret configured yet - accept all webhooks for initial setup
-      const event = await req.json();
-      console.log('Webhook received (no verification):', event.type, event);
-
-      await handleWebhookEvent(supabase, event);
-
-      return new Response(JSON.stringify({ received: true }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // SECURITY: Webhook secret is required
+    if (!webhookSecret) {
+      console.error('CRITICAL SECURITY ERROR: DODO_WEBHOOK_KEY not configured');
+      return new Response(
+        JSON.stringify({ error: 'Webhook secret not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    // Get signature from headers (check both possible header names)
+    const signature = req.headers.get('x-dodo-signature') || req.headers.get('dodo-signature');
+    
+    if (!signature) {
+      console.error('Security: Rejected unsigned webhook request');
+      return new Response(
+        JSON.stringify({ error: 'Missing webhook signature' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Read the body once
+    const bodyText = await req.text();
+    
+    // SECURITY: Verify HMAC signature
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(webhookSecret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    const signatureBuffer = await crypto.subtle.sign(
+      'HMAC',
+      key,
+      encoder.encode(bodyText)
+    );
+    
+    const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    if (signature !== expectedSignature) {
+      console.error('Security: Invalid webhook signature');
+      return new Response(
+        JSON.stringify({ error: 'Invalid signature' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const event = JSON.parse(bodyText);
+    console.log('Security: Valid webhook received:', event.type);
+
+    await handleWebhookEvent(supabase, event);
+
+    return new Response(JSON.stringify({ received: true }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('Error processing webhook:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';

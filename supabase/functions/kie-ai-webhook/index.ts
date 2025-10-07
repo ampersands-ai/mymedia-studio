@@ -35,7 +35,8 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Find the generation record by provider_task_id
+    // SECURITY: Verify the task exists in our database before processing
+    // This prevents malicious actors from sending fake webhook payloads
     const { data: generation, error: findError } = await supabase
       .from('generations')
       .select('*')
@@ -43,14 +44,23 @@ serve(async (req) => {
       .single();
 
     if (findError || !generation) {
-      console.error('Generation not found for taskId:', taskId);
+      console.error('Security: Rejected webhook for unknown task:', taskId, findError);
       return new Response(
-        JSON.stringify({ error: 'Generation not found' }),
+        JSON.stringify({ error: 'Invalid task ID' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Found generation:', generation.id);
+    // Additional security: Only accept webhooks for pending/processing generations
+    if (generation.status !== 'pending' && generation.status !== 'processing') {
+      console.error('Security: Rejected webhook for already processed task:', taskId, 'Status:', generation.status);
+      return new Response(
+        JSON.stringify({ error: 'Generation already processed' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Security: Valid webhook for generation:', generation.id);
 
     // Support both old format (state field) and new format (code field)
     const isSuccess = state === 'success' || payload.code === 200 || (payload.msg && payload.msg.toLowerCase().includes('success'));

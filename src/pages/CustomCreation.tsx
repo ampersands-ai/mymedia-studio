@@ -194,7 +194,7 @@ const CustomCreation = () => {
   const filteredModels = allModels?.filter(model => {
     const groups = model.groups as string[] || [];
     return groups.includes(selectedGroup);
-  }) || [];
+  }).sort((a, b) => a.base_token_cost - b.base_token_cost) || [];
 
   // Helper function to get required fields from model schema
   const getSchemaRequiredFields = (): string[] => {

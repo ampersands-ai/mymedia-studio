@@ -267,7 +267,7 @@ export default function AllGenerations() {
                   <TableHead>User Details</TableHead>
                   <TableHead>Model</TableHead>
                   <TableHead>Prompt</TableHead>
-                  <TableHead>Parameters</TableHead>
+                  <TableHead>Creation Type</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Tokens</TableHead>
                   <TableHead>Actions</TableHead>
@@ -314,14 +314,9 @@ export default function AllGenerations() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <details className="cursor-pointer">
-                        <summary className="text-xs text-muted-foreground">
-                          View params
-                        </summary>
-                        <pre className="text-xs mt-2 bg-muted p-2 rounded max-w-xs overflow-auto">
-                          {JSON.stringify(gen.settings, null, 2)}
-                        </pre>
-                      </details>
+                      <span className="text-sm capitalize">
+                        Prompt to {gen.type}
+                      </span>
                     </TableCell>
                     <TableCell className="text-xs">
                       {format(new Date(gen.created_at), 'MMM d, yyyy HH:mm')}

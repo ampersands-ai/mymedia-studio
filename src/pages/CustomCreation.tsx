@@ -675,31 +675,31 @@ const CustomCreation = () => {
                                 : "hover:bg-muted border-border"
                             )}
                           >
-                            <div className="flex flex-col gap-1 w-full">
-                              <div className="flex items-center justify-between w-full">
+                            <div className="flex items-start justify-between w-full gap-4">
+                              <div className="flex flex-col gap-1 flex-1 min-w-0">
                                 <span className="font-bold text-sm">{model.model_name}</span>
-                                <div className="flex items-center gap-2 ml-4">
-                                  <Badge variant="secondary" className="text-xs">
-                                    {model.base_token_cost} tokens
-                                  </Badge>
-                                  {model.estimated_time_minutes && (
-                                    <Badge variant="secondary" className="text-xs flex items-center gap-1">
-                                      <Clock className="h-3 w-3" />
-                                      ~{formatEstimatedTime(model.estimated_time_minutes)}
-                                    </Badge>
-                                  )}
-                                </div>
+                                {otherGroups.length > 0 && (
+                                  <span className={cn(
+                                    "text-xs",
+                                    isSelected ? "text-white/60" : "text-muted-foreground/60"
+                                  )}>
+                                    Also in: {otherGroups.map(g => 
+                                      CREATION_GROUPS.find(cg => cg.id === g)?.label
+                                    ).join(", ")}
+                                  </span>
+                                )}
                               </div>
-                              {otherGroups.length > 0 && (
-                                <span className={cn(
-                                  "text-xs",
-                                  isSelected ? "text-white/60" : "text-muted-foreground/60"
-                                )}>
-                                  Also in: {otherGroups.map(g => 
-                                    CREATION_GROUPS.find(cg => cg.id === g)?.label
-                                  ).join(", ")}
-                                </span>
-                              )}
+                              <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                <Badge variant="secondary" className="text-xs">
+                                  {model.base_token_cost} tokens
+                                </Badge>
+                                {model.estimated_time_minutes && (
+                                  <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    ~{formatEstimatedTime(model.estimated_time_minutes)}
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </SelectItem>
                         );

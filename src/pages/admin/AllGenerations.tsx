@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from "date-fns";
+import { useSignedUrl } from "@/hooks/useSignedUrl";
 
 interface Generation {
   id: string;
@@ -26,6 +27,7 @@ interface Generation {
   original_prompt: string | null;
   status: string;
   output_url: string | null;
+  storage_path: string | null;
   settings: any;
   created_at: string;
   tokens_used: number;
@@ -51,6 +53,41 @@ const getContentIcon = (type: string) => {
     default:
       return null;
   }
+};
+
+const PreviewCell = ({ gen }: { gen: Generation }) => {
+  const { signedUrl, isLoading } = useSignedUrl(gen.storage_path);
+
+  if (!gen.output_url && !gen.storage_path) {
+    return <div className="w-16 h-16 bg-muted rounded flex items-center justify-center text-xs">No preview</div>;
+  }
+
+  const displayUrl = signedUrl || gen.output_url;
+
+  if (isLoading) {
+    return <div className="w-16 h-16 bg-muted rounded flex items-center justify-center"><Loader2 className="h-4 w-4 animate-spin" /></div>;
+  }
+
+  return (
+    <a href={displayUrl || '#'} target="_blank" rel="noopener noreferrer">
+      {gen.type === 'image' ? (
+        <img 
+          src={displayUrl || ''} 
+          alt="Preview" 
+          className="w-16 h-16 object-cover rounded border hover:opacity-80 transition-opacity"
+        />
+      ) : gen.type === 'video' ? (
+        <video 
+          src={displayUrl || ''} 
+          className="w-16 h-16 object-cover rounded border"
+          muted
+          preload="metadata"
+        />
+      ) : (
+        <Button size="sm" variant="outline">View</Button>
+      )}
+    </a>
+  );
 };
 
 export default function AllGenerations() {
@@ -190,25 +227,7 @@ export default function AllGenerations() {
                 {generations?.map((gen) => (
                   <TableRow key={gen.id}>
                     <TableCell>
-                      {gen.output_url && (
-                        <a href={gen.output_url} target="_blank" rel="noopener noreferrer">
-                          {gen.type === 'image' ? (
-                            <img 
-                              src={gen.output_url} 
-                              alt="Preview" 
-                              className="w-16 h-16 object-cover rounded border hover:opacity-80 transition-opacity"
-                            />
-                          ) : gen.type === 'video' ? (
-                            <video 
-                              src={gen.output_url} 
-                              className="w-16 h-16 object-cover rounded border"
-                              muted
-                            />
-                          ) : (
-                            <Button size="sm" variant="outline">View</Button>
-                          )}
-                        </a>
-                      )}
+                      <PreviewCell gen={gen} />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -224,7 +243,7 @@ export default function AllGenerations() {
                         {gen.profiles?.email && (
                           <a 
                             href={`mailto:${gen.profiles.email}`}
-                            className="text-xs text-primary hover:underline"
+                            className="text-xs text-foreground hover:underline"
                           >
                             {gen.profiles.email}
                           </a>

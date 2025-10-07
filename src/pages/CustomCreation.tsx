@@ -634,42 +634,72 @@ const CustomCreation = () => {
                     value={selectedModel || undefined}
                     onValueChange={(value) => setSelectedModel(value)}
                   >
-                    <SelectTrigger className="w-full bg-background">
-                      <SelectValue placeholder="Select a model..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      {filteredModels.map((model) => {
-                        const modelGroups = (model.groups as string[]) || [];
-                        const otherGroups = modelGroups.filter(g => g !== selectedGroup);
-                        
-                        return (
-                          <SelectItem
-                            key={String(model.record_id)}
-                            value={String(model.record_id)}
-                            className="cursor-pointer"
-                          >
-                            <div className="flex items-center justify-between w-full gap-4">
-                              <div className="flex flex-col gap-1 flex-1">
-                                <span className="font-medium text-sm">{model.model_name}</span>
-                                {otherGroups.length > 0 && (
-                                  <span className="text-xs text-muted-foreground">
-                                    Also in: {otherGroups.map(g => 
-                                      CREATION_GROUPS.find(cg => cg.id === g)?.label
-                                    ).join(", ")}
-                                  </span>
-                                )}
-                              </div>
+                    <SelectTrigger className="w-full h-auto py-3 px-4 bg-background border-2 border-black font-bold">
+                      <SelectValue placeholder="Select a model...">
+                        {selectedModel && (() => {
+                          const model = filteredModels.find(m => String(m.record_id) === selectedModel);
+                          if (!model) return null;
+                          return (
+                            <div className="flex items-center justify-between w-full">
+                              <span className="font-bold text-sm">{model.model_name}</span>
                               <div className="flex items-center gap-2">
-                                <Badge variant="secondary" className="text-xs whitespace-nowrap">
+                                <Badge variant="secondary" className="text-xs">
                                   {model.base_token_cost} tokens
                                 </Badge>
                                 {model.estimated_time_minutes && (
-                                  <Badge variant="secondary" className="text-xs flex items-center gap-1 whitespace-nowrap">
+                                  <Badge variant="secondary" className="text-xs flex items-center gap-1">
                                     <Clock className="h-3 w-3" />
                                     ~{formatEstimatedTime(model.estimated_time_minutes)}
                                   </Badge>
                                 )}
                               </div>
+                            </div>
+                          );
+                        })()}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border-2 border-black z-50">
+                      {filteredModels.map((model) => {
+                        const modelGroups = (model.groups as string[]) || [];
+                        const otherGroups = modelGroups.filter(g => g !== selectedGroup);
+                        const isSelected = String(selectedModel) === String(model.record_id);
+                        
+                        return (
+                          <SelectItem
+                            key={String(model.record_id)}
+                            value={String(model.record_id)}
+                            className={cn(
+                              "cursor-pointer py-3 px-4 border-2 my-1 mx-1 rounded transition-all",
+                              isSelected
+                                ? "bg-red-500 hover:bg-red-600 text-white font-bold border-black"
+                                : "hover:bg-muted border-border"
+                            )}
+                          >
+                            <div className="flex flex-col gap-1 w-full">
+                              <div className="flex items-center justify-between w-full">
+                                <span className="font-bold text-sm">{model.model_name}</span>
+                                <div className="flex items-center gap-2 ml-4">
+                                  <Badge variant="secondary" className="text-xs">
+                                    {model.base_token_cost} tokens
+                                  </Badge>
+                                  {model.estimated_time_minutes && (
+                                    <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                                      <Clock className="h-3 w-3" />
+                                      ~{formatEstimatedTime(model.estimated_time_minutes)}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              {otherGroups.length > 0 && (
+                                <span className={cn(
+                                  "text-xs",
+                                  isSelected ? "text-white/60" : "text-muted-foreground/60"
+                                )}>
+                                  Also in: {otherGroups.map(g => 
+                                    CREATION_GROUPS.find(cg => cg.id === g)?.label
+                                  ).join(", ")}
+                                </span>
+                              )}
                             </div>
                           </SelectItem>
                         );

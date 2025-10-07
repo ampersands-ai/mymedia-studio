@@ -31,6 +31,11 @@ interface Generation {
   tokens_used: number;
   file_size_bytes: number | null;
   is_shared?: boolean;
+  profiles?: {
+    email: string | null;
+    full_name: string | null;
+    phone_number: string | null;
+  };
 }
 
 const getContentIcon = (type: string) => {
@@ -57,7 +62,14 @@ export default function AllGenerations() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('generations')
-        .select('*')
+        .select(`
+          *,
+          profiles:user_id (
+            email,
+            full_name,
+            phone_number
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -163,7 +175,7 @@ export default function AllGenerations() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Type</TableHead>
-                  <TableHead>User ID</TableHead>
+                  <TableHead>User Details</TableHead>
                   <TableHead>Model</TableHead>
                   <TableHead>Prompt</TableHead>
                   <TableHead>Parameters</TableHead>
@@ -182,8 +194,23 @@ export default function AllGenerations() {
                         <span className="capitalize">{gen.type}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {gen.user_id.slice(0, 8)}...
+                    <TableCell>
+                      <div className="space-y-1">
+                        {gen.profiles?.full_name && (
+                          <div className="font-medium">{gen.profiles.full_name}</div>
+                        )}
+                        {gen.profiles?.email && (
+                          <a 
+                            href={`mailto:${gen.profiles.email}`}
+                            className="text-xs text-primary hover:underline"
+                          >
+                            {gen.profiles.email}
+                          </a>
+                        )}
+                        <div className="font-mono text-xs text-muted-foreground">
+                          ID: {gen.user_id.slice(0, 8)}...
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <code className="text-xs bg-muted px-2 py-1 rounded">

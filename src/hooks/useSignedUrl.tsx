@@ -38,13 +38,14 @@ export const useSignedUrl = (storagePath: string | null, bucket: string = 'gener
           }
         }
 
-        const url = await createSignedUrl(bucket, actualPath, 3600);
+        const url = await createSignedUrl(bucket, actualPath, 14400);
         
         if (!url) {
           console.warn('Failed to create signed URL for:', actualPath);
           setError(true);
           setSignedUrl(null);
         } else {
+          console.log('Signed URL created successfully for:', actualPath);
           setSignedUrl(url);
           setError(false);
         }

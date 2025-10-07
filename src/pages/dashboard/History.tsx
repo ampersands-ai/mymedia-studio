@@ -127,9 +127,14 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
       playsInline
       muted={!showControls}
       loop={playOnHover}
+      crossOrigin="anonymous"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onError={() => setVideoError(true)}
+      onError={() => {
+        console.error('Video playback error for:', generation.storage_path);
+        setVideoError(true);
+      }}
+      onLoadedMetadata={() => console.log('Video loaded successfully:', generation.storage_path)}
     />
   );
 };

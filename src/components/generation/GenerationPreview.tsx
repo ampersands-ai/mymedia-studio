@@ -76,7 +76,14 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
         className={className}
         controls
         preload="metadata"
-        onError={() => setVideoError(true)}
+        playsInline
+        muted
+        crossOrigin="anonymous"
+        onError={() => {
+          console.error('Video playback error for:', storagePath);
+          setVideoError(true);
+        }}
+        onLoadedMetadata={() => console.log('Video loaded successfully:', storagePath)}
       />
     );
   }

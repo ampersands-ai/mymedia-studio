@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 export async function createSignedUrl(
   bucket: string,
   filePath: string,
-  expiresIn: number = 3600
+  expiresIn: number = 14400 // 4 hours for better video streaming
 ): Promise<string | null> {
   try {
     const { data, error } = await supabase.storage
@@ -39,7 +39,7 @@ export async function createSignedUrl(
 export async function createSignedUrls(
   bucket: string,
   filePaths: string[],
-  expiresIn: number = 3600
+  expiresIn: number = 14400 // 4 hours for better video streaming
 ): Promise<string[]> {
   const signedUrls = await Promise.all(
     filePaths.map(path => createSignedUrl(bucket, path, expiresIn))

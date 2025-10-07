@@ -24,6 +24,7 @@ const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AIModelsManager = lazy(() => import("./pages/admin/AIModelsManager"));
 const TemplatesManager = lazy(() => import("./pages/admin/TemplatesManager"));
 const UsersManager = lazy(() => import("./pages/admin/UsersManager"));
+const VideoTest = lazy(() => import("./pages/VideoTest"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,6 +61,7 @@ const AppContent = () => {
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/video-test" element={<VideoTest />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

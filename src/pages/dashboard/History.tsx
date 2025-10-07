@@ -50,17 +50,9 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoError, setVideoError] = useState(false);
   
-  // Show fallback if loading
-  if (isLoading) {
-    return (
-      <div className={`${className} flex items-center justify-center bg-muted`}>
-        <Video className="h-8 w-8 text-muted-foreground animate-pulse" />
-      </div>
-    );
-  }
 
-  // Show download fallback if error or no URL
-  if (error || !signedUrl || videoError) {
+  // Show download fallback if we encounter playback error or no path
+  if (!generation.storage_path || videoError) {
     return (
       <div className={`${className} flex flex-col items-center justify-center bg-muted gap-2 p-4`}>
         <Video className="h-8 w-8 text-muted-foreground" />

@@ -28,8 +28,8 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
     );
   }
 
-  // Show download fallback for videos that fail
-  if (contentType === "video" && (error || !signedUrl || videoError)) {
+  // Show download fallback for videos only when playback fails
+  if (contentType === "video" && (videoError || !storagePath)) {
     return (
       <div className={`${className} flex flex-col items-center justify-center bg-muted gap-3`}>
         <Video className="h-12 w-12 text-muted-foreground" />
@@ -42,10 +42,16 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
                 .from('generated-content')
                 .createSignedUrl(storagePath, 60);
               if (data?.signedUrl) {
+                const response = await fetch(data.signedUrl);
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = data.signedUrl;
+                a.href = blobUrl;
                 a.download = `video-${Date.now()}.mp4`;
+                document.body.appendChild(a);
                 a.click();
+                window.URL.revokeObjectURL(blobUrl);
+                document.body.removeChild(a);
                 toast.success('Download started!');
               }
             } catch (error) {

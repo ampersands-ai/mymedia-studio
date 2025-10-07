@@ -199,7 +199,7 @@ const CustomCreation = () => {
   // Helper function to get required fields from model schema
   const getSchemaRequiredFields = (): string[] => {
     if (!selectedModel) return [];
-    const currentModel = filteredModels.find(m => m.id === selectedModel);
+    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
     return currentModel?.input_schema?.required || [];
   };
 
@@ -309,14 +309,14 @@ const CustomCreation = () => {
   // Auto-select first model when filtered models change
   useEffect(() => {
     if (filteredModels.length > 0 && !selectedModel) {
-      setSelectedModel(String(filteredModels[0].id));
+      setSelectedModel(String(filteredModels[0].record_id));
     }
   }, [filteredModels, selectedModel]);
 
   // Initialize schema defaults into modelParameters when model changes
   useEffect(() => {
     if (!selectedModel) return;
-    const currentModel = filteredModels.find(m => m.id === selectedModel);
+    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
     const props = currentModel?.input_schema?.properties;
     if (!props) return;
 
@@ -386,7 +386,7 @@ const CustomCreation = () => {
     }
 
     // Validate required fields from model schema (advanced options)
-    const currentModel = filteredModels.find(m => m.id === selectedModel);
+    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
     if (currentModel?.input_schema) {
       const requiredFields = currentModel.input_schema.required || [];
       const schemaProperties = currentModel.input_schema.properties || {};
@@ -459,13 +459,13 @@ const CustomCreation = () => {
       }
 
       console.log('Generation payload:', {
-        model_id: selectedModel,
+        model_record_id: selectedModel,
         prompt: prompt.trim(),
         custom_parameters: customParameters
       });
 
       const result = await generate({
-        model_id: selectedModel,
+        model_record_id: selectedModel,
         prompt: prompt.trim(),
         custom_parameters: customParameters,
       });
@@ -491,7 +491,7 @@ const CustomCreation = () => {
   const calculateTokens = () => {
     if (!selectedModel || !filteredModels) return 50;
 
-    const currentModel = filteredModels.find(m => m.id === selectedModel);
+    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
     if (!currentModel) return 50;
 
     let tokens = currentModel.base_token_cost;
@@ -623,12 +623,12 @@ const CustomCreation = () => {
                       
                       return (
                         <Button
-                          key={String(model.id)}
+                          key={String(model.record_id)}
                           variant="outline"
-                          onClick={() => setSelectedModel(String(model.id))}
+                          onClick={() => setSelectedModel(String(model.record_id))}
                           className={cn(
                             "h-auto py-3 px-4 justify-start text-left border-2 transition-all",
-                            String(selectedModel) === String(model.id) 
+                            String(selectedModel) === String(model.record_id) 
                               ? "bg-red-500 hover:bg-red-600 text-white font-bold border-black" 
                               : "hover:bg-muted border-border"
                           )}
@@ -649,7 +649,7 @@ const CustomCreation = () => {
                               </div>
                             </div>
                             {otherGroups.length > 0 && (
-                              <span className={cn("text-xs", String(selectedModel) === String(model.id) ? "text-white/60" : "text-muted-foreground/60")}>
+                              <span className={cn("text-xs", String(selectedModel) === String(model.record_id) ? "text-white/60" : "text-muted-foreground/60")}>
                                 Also in: {otherGroups.map(g => 
                                   CREATION_GROUPS.find(cg => cg.id === g)?.label
                                 ).join(", ")}
@@ -762,7 +762,7 @@ const CustomCreation = () => {
                 <CollapsibleContent className="space-y-4 mt-4">
                   {/* Dynamic Model Parameters */}
                   {selectedModel && filteredModels && (() => {
-                    const currentModel = filteredModels.find(m => m.id === selectedModel);
+                    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
                     return currentModel?.input_schema ? (
                       <ModelParameterForm
                         modelSchema={currentModel.input_schema}

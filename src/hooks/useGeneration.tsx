@@ -5,6 +5,7 @@ import { toast } from "sonner";
 interface GenerationParams {
   template_id?: string;
   model_id?: string;
+  model_record_id?: string;
   prompt: string;
   custom_parameters?: Record<string, any>;
   enhance_prompt?: boolean;

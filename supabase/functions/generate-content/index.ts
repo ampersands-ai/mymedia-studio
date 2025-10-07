@@ -55,17 +55,18 @@ serve(async (req) => {
     const { 
       template_id, 
       model_id, 
+      model_record_id,
       prompt, 
       custom_parameters = {},
       enhance_prompt = false,
       enhancement_provider = 'lovable_ai'
     } = await req.json();
 
-    console.log('Generation request:', { user_id: user.id, template_id, model_id, enhance_prompt });
+    console.log('Generation request:', { user_id: user.id, template_id, model_id, model_record_id, enhance_prompt });
 
-    // Validate: template_id XOR model_id
-    if ((!template_id && !model_id) || (template_id && model_id)) {
-      throw new Error('Must provide either template_id or model_id, not both');
+    // Validate: template_id XOR (model_id or model_record_id)
+    if ((!template_id && !model_id && !model_record_id) || (template_id && (model_id || model_record_id))) {
+      throw new Error('Must provide either template_id or model_id/model_record_id, not both');
     }
 
     if (!prompt || prompt.length < 3 || prompt.length > 2000) {
@@ -96,13 +97,20 @@ serve(async (req) => {
       parameters = { ...templateData.preset_parameters, ...custom_parameters };
       enhancementInstruction = templateData.enhancement_instruction;
     } else {
-      // Custom mode
-      const { data: modelData, error: modelError } = await supabase
+      // Custom mode - support both legacy model_id and new model_record_id
+      const query = supabase
         .from('ai_models')
         .select('*')
-        .eq('id', model_id)
-        .eq('is_active', true)
-        .single();
+        .eq('is_active', true);
+      
+      // Prefer model_record_id if provided, fallback to model_id
+      if (model_record_id) {
+        query.eq('record_id', model_record_id);
+      } else {
+        query.eq('id', model_id);
+      }
+      
+      const { data: modelData, error: modelError } = await query.single();
 
       if (modelError || !modelData) {
         throw new Error('Model not found or inactive');
@@ -276,6 +284,7 @@ serve(async (req) => {
       .insert({
         user_id: user.id,
         model_id: model.id,
+        model_record_id: model.record_id,
         template_id: template_id || null,
         type: model.content_type,
         prompt: finalPrompt,

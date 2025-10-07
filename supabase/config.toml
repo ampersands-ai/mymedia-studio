@@ -1,5 +1,8 @@
 project_id = "gzlwkvmivbfcvczoqphq"
 
+[functions.session-manager]
+verify_jwt = true
+
 [functions.deduct-tokens]
 verify_jwt = true
 

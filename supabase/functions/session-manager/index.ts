@@ -48,17 +48,8 @@ Deno.serve(async (req) => {
 
     const { action, session_id }: SessionRequest = await req.json();
 
-    // Use service role for session management
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    // Use the authenticated client instead of service role
+    // This ensures RLS policies are enforced
 
     const ip_address = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
     const user_agent = req.headers.get('user-agent') || 'unknown';
@@ -69,7 +60,7 @@ Deno.serve(async (req) => {
         const sessionId = crypto.randomUUID();
         const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
-        const { error: insertError } = await supabaseAdmin
+        const { error: insertError } = await supabaseClient
           .from('user_sessions')
           .insert({
             user_id: user.id,
@@ -85,7 +76,7 @@ Deno.serve(async (req) => {
         }
 
         // Log session creation to audit logs
-        await supabaseAdmin.from('audit_logs').insert({
+        await supabaseClient.from('audit_logs').insert({
           user_id: user.id,
           action: 'session_created',
           resource_type: 'session',
@@ -103,7 +94,7 @@ Deno.serve(async (req) => {
 
       case 'list': {
         // List all active sessions for the user
-        const { data: sessions, error: listError } = await supabaseAdmin
+        const { data: sessions, error: listError } = await supabaseClient
           .from('user_sessions')
           .select('*')
           .eq('user_id', user.id)
@@ -130,7 +121,7 @@ Deno.serve(async (req) => {
         }
 
         // Revoke specific session
-        const { error: revokeError } = await supabaseAdmin
+        const { error: revokeError } = await supabaseClient
           .from('user_sessions')
           .update({ is_active: false })
           .eq('session_id', session_id)
@@ -142,7 +133,7 @@ Deno.serve(async (req) => {
         }
 
         // Log the revocation
-        await supabaseAdmin.from('audit_logs').insert({
+        await supabaseClient.from('audit_logs').insert({
           user_id: user.id,
           action: 'session_revoked',
           resource_type: 'session',
@@ -167,7 +158,7 @@ Deno.serve(async (req) => {
         }
 
         // Update last activity timestamp
-        const { error: updateError } = await supabaseAdmin
+        const { error: updateError } = await supabaseClient
           .from('user_sessions')
           .update({ last_activity_at: new Date().toISOString() })
           .eq('session_id', session_id)

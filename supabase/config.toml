@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.fix-stuck-generation]
 verify_jwt = false
+
+[functions.create-dodo-payment]
+verify_jwt = true
+
+[functions.dodo-payments-webhook]
+verify_jwt = false

@@ -415,7 +415,11 @@ export type Database = {
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
+          dodo_customer_id: string | null
+          dodo_subscription_id: string | null
           id: string
+          last_webhook_at: string | null
+          last_webhook_event: string | null
           plan: Database["public"]["Enums"]["subscription_plan"]
           status: string
           stripe_subscription_id: string | null
@@ -428,7 +432,11 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          dodo_customer_id?: string | null
+          dodo_subscription_id?: string | null
           id?: string
+          last_webhook_at?: string | null
+          last_webhook_event?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           status?: string
           stripe_subscription_id?: string | null
@@ -441,7 +449,11 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          dodo_customer_id?: string | null
+          dodo_subscription_id?: string | null
           id?: string
+          last_webhook_at?: string | null
+          last_webhook_event?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           status?: string
           stripe_subscription_id?: string | null

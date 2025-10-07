@@ -5,6 +5,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Footer } from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import textLogo from "@/assets/text-logo.png";
 
@@ -118,6 +120,42 @@ const Pricing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isAnnual, setIsAnnual] = useState(true);
+  const [isCreatingPayment, setIsCreatingPayment] = useState<string | null>(null);
+
+  const handleSubscribe = async (planName: string) => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+
+    if (planName === "Freemium") {
+      navigate("/dashboard/create");
+      return;
+    }
+
+    setIsCreatingPayment(planName);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-dodo-payment', {
+        body: {
+          plan: planName,
+          isAnnual,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      toast.error('Failed to create payment session. Please try again.');
+      setIsCreatingPayment(null);
+    }
+  };
 
   // Add structured data for SEO
   useEffect(() => {
@@ -373,9 +411,14 @@ const Pricing = () => {
                   <Button
                     className="w-full font-bold"
                     variant={plan.popular ? "default" : "outline"}
-                    onClick={() => navigate("/auth")}
+                    onClick={() => handleSubscribe(plan.name)}
+                    disabled={isCreatingPayment === plan.name}
                   >
-                    {plan.monthlyPrice === "FREE" ? "START FREE" : "GET STARTED"}
+                    {isCreatingPayment === plan.name
+                      ? "Loading..."
+                      : plan.monthlyPrice === "FREE"
+                      ? "START FREE"
+                      : "GET STARTED"}
                   </Button>
                 </CardContent>
               </Card>

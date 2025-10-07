@@ -72,7 +72,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
   if (contentType === "video") {
     return (
       <video
-        src={signedUrl}
+        src={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stream-content?bucket=generated-content&path=${encodeURIComponent(storagePath)}`}
         className={className}
         controls
         preload="metadata"

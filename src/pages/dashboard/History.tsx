@@ -120,7 +120,7 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
   return (
     <video
       ref={videoRef}
-      src={signedUrl}
+      src={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stream-content?bucket=generated-content&path=${encodeURIComponent(generation.storage_path || '')}`}
       className={className}
       preload="metadata"
       controls={showControls}

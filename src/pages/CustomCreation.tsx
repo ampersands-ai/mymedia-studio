@@ -669,7 +669,7 @@ const CustomCreation = () => {
                             key={String(model.record_id)}
                             value={String(model.record_id)}
                             className={cn(
-                              "cursor-pointer py-3 px-4 border-2 my-1 mx-1 rounded transition-all",
+                              "cursor-pointer py-3 px-4 border-2 my-1 mx-1 rounded transition-all !pl-3 !pr-3 [&>span.absolute.left-2]:hidden",
                               isSelected
                                 ? "bg-red-500 hover:bg-red-600 text-white font-bold border-black"
                                 : "hover:bg-muted border-border"
@@ -678,7 +678,7 @@ const CustomCreation = () => {
                             <div className="w-full">
                               <div className="flex items-center justify-between w-full gap-4">
                                 <span className="font-bold text-sm flex-shrink-0">{model.model_name}</span>
-                                <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+                                <div className="flex items-center gap-2 flex-shrink-0">
                                   <Badge variant="secondary" className="text-xs">
                                     {model.base_token_cost} tokens
                                   </Badge>

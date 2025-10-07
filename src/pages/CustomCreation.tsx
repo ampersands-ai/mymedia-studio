@@ -334,8 +334,15 @@ const CustomCreation = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     
-    if (uploadedImages.length + files.length > 10) {
-      toast.error("Maximum 10 images allowed");
+    // Check if current model is Google Nano Banana
+    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
+    const isNanoBanana = currentModel?.model_name?.toLowerCase().includes('nano') || 
+                         currentModel?.model_name?.toLowerCase().includes('banana') ||
+                         currentModel?.id === 'google/gemini-2.5-flash-image-preview';
+    
+    // Apply 10 image limit only for Nano Banana model
+    if (isNanoBanana && uploadedImages.length + files.length > 10) {
+      toast.error("Maximum 10 images allowed for Google Nano Banana");
       return;
     }
     

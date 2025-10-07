@@ -6,22 +6,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const PLAN_PRICES = {
+// Map plan names to Dodo Payments product IDs
+// TODO: Replace these with actual product IDs from your Dodo Payments dashboard
+const PLAN_PRODUCT_IDS = {
   'explorer': {
-    monthly: 9.99,
-    annual: 95.88, // $7.99/mo * 12
+    monthly: 'EXPLORER_MONTHLY_PRODUCT_ID',
+    annual: 'EXPLORER_ANNUAL_PRODUCT_ID',
   },
   'professional': {
-    monthly: 24.99,
-    annual: 239.88, // $19.99/mo * 12
+    monthly: 'PROFESSIONAL_MONTHLY_PRODUCT_ID',
+    annual: 'PROFESSIONAL_ANNUAL_PRODUCT_ID',
   },
   'ultimate': {
-    monthly: 49.99,
-    annual: 479.88, // $39.99/mo * 12
+    monthly: 'ULTIMATE_MONTHLY_PRODUCT_ID',
+    annual: 'ULTIMATE_ANNUAL_PRODUCT_ID',
   },
   'veo_connoisseur': {
-    monthly: 119.99,
-    annual: 1079.88, // $89.99/mo * 12
+    monthly: 'VEO_MONTHLY_PRODUCT_ID',
+    annual: 'VEO_ANNUAL_PRODUCT_ID',
   },
 };
 
@@ -57,13 +59,19 @@ serve(async (req) => {
     const { plan, isAnnual } = await req.json();
 
     // Validate plan
-    const planKey = plan.toLowerCase().replace(' ', '_') as keyof typeof PLAN_PRICES;
-    if (!PLAN_PRICES[planKey]) {
+    const planKey = plan.toLowerCase().replace(' ', '_') as keyof typeof PLAN_PRODUCT_IDS;
+    if (!PLAN_PRODUCT_IDS[planKey]) {
       throw new Error('Invalid plan selected');
     }
 
     const billingPeriod: 'monthly' | 'annual' = isAnnual ? 'annual' : 'monthly';
-    const amount = PLAN_PRICES[planKey][billingPeriod];
+    const productId = PLAN_PRODUCT_IDS[planKey][billingPeriod];
+
+    // Check if product ID is configured
+    if (productId.includes('PRODUCT_ID')) {
+      console.error('Product IDs not configured. Please create products in Dodo Payments dashboard.');
+      throw new Error('Payment system not fully configured. Please contact support.');
+    }
     
     // Get user profile for email
     const { data: profile } = await supabase
@@ -72,44 +80,62 @@ serve(async (req) => {
       .eq('id', user.id)
       .single();
 
+    console.log('Creating Dodo checkout for:', {
+      user_id: user.id,
+      plan: planKey,
+      billing_period: billingPeriod,
+      product_id: productId,
+    });
+
     // Create Dodo Payments checkout session
-    // NOTE: This is a placeholder - adjust based on actual Dodo Payments API
-    const dodoResponse = await fetch('https://api.dodopayments.com/v1/checkout/sessions', {
+    // Use test environment - change to 'live' for production
+    const dodoBaseUrl = 'https://test.dodopayments.com';
+    const dodoResponse = await fetch(`${dodoBaseUrl}/checkouts`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${dodoApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        amount: amount * 100, // Convert to cents
-        currency: 'USD',
-        customer_email: profile?.email || user.email,
-        customer_name: profile?.full_name || '',
-        description: `${plan} Plan - ${billingPeriod}`,
+        product_cart: [
+          {
+            product_id: productId,
+            quantity: 1,
+          }
+        ],
+        payment_link_settings: {
+          success_url: `${req.headers.get('origin')}/dashboard/create?payment=success`,
+          cancel_url: `${req.headers.get('origin')}/pricing?payment=cancelled`,
+        },
+        customer: {
+          email: profile?.email || user.email,
+          name: profile?.full_name || '',
+        },
         metadata: {
           user_id: user.id,
           plan: planKey,
           billing_period: billingPeriod,
         },
-        success_url: `${req.headers.get('origin')}/dashboard/create?payment=success`,
-        cancel_url: `${req.headers.get('origin')}/pricing?payment=cancelled`,
-        payment_method_types: ['card'],
       }),
     });
 
     if (!dodoResponse.ok) {
       const errorText = await dodoResponse.text();
-      console.error('Dodo Payments API error:', errorText);
-      throw new Error(`Failed to create payment session: ${errorText}`);
+      console.error('Dodo Payments API error:', {
+        status: dodoResponse.status,
+        statusText: dodoResponse.statusText,
+        body: errorText,
+      });
+      throw new Error(`Dodo Payments API returned ${dodoResponse.status}: ${errorText}`);
     }
 
     const dodoData = await dodoResponse.json();
 
-    console.log('Payment session created:', {
+    console.log('Payment session created successfully:', {
       user_id: user.id,
       plan: planKey,
-      amount,
-      session_id: dodoData.id || dodoData.session_id,
+      session_id: dodoData.session_id,
+      checkout_url: dodoData.checkout_url,
     });
 
     // Log to audit trail
@@ -120,15 +146,15 @@ serve(async (req) => {
       metadata: {
         plan: planKey,
         billing_period: billingPeriod,
-        amount,
-        session_id: dodoData.id || dodoData.session_id,
+        product_id: productId,
+        session_id: dodoData.session_id,
       },
     });
 
     return new Response(
       JSON.stringify({
-        checkout_url: dodoData.url || dodoData.checkout_url,
-        session_id: dodoData.id || dodoData.session_id,
+        checkout_url: dodoData.checkout_url,
+        session_id: dodoData.session_id,
       }),
       {
         status: 200,

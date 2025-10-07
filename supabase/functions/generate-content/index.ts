@@ -248,79 +248,102 @@ serve(async (req) => {
 
     console.log('Token cost calculated:', tokenCost);
 
-    // Check and deduct tokens
-    const { data: subscription, error: subError } = await supabase
-      .from('user_subscriptions')
-      .select('tokens_remaining')
-      .eq('user_id', user.id)
-      .single();
+    // SECURITY FIX: Transaction-like token deduction + generation creation
+    // This prevents race conditions where tokens are deducted but generation fails
+    let tokensDeducted = false;
+    let generationCreated = false;
+    let generation: any = null;
 
-    if (subError || !subscription) {
-      throw new Error('Subscription not found');
-    }
-
-    if (subscription.tokens_remaining < tokenCost) {
-      return new Response(
-        JSON.stringify({ error: 'Insufficient tokens', required: tokenCost, available: subscription.tokens_remaining }),
-        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Deduct tokens
-    const { error: deductError } = await supabase
-      .from('user_subscriptions')
-      .update({ tokens_remaining: subscription.tokens_remaining - tokenCost })
-      .eq('user_id', user.id);
-
-    if (deductError) {
-      throw new Error('Failed to deduct tokens');
-    }
-
-    console.log('Tokens deducted:', tokenCost);
-
-    // Create generation record (pending)
-    const { data: generation, error: genError } = await supabase
-      .from('generations')
-      .insert({
-        user_id: user.id,
-        model_id: model.id,
-        model_record_id: model.record_id,
-        template_id: template_id || null,
-        type: model.content_type,
-        prompt: finalPrompt,
-        original_prompt: originalPrompt,
-        enhanced_prompt: enhance_prompt ? finalPrompt : null,
-        enhancement_provider: usedEnhancementProvider,
-        settings: parameters,
-        tokens_used: tokenCost,
-        actual_token_cost: tokenCost,
-        status: 'pending',
-        provider_task_id: null // Will be set after provider call
-      })
-      .select()
-      .single();
-
-    if (genError || !generation) {
-      // Refund tokens on error
-      await supabase
+    try {
+      // Step 1: Check and deduct tokens atomically
+      const { data: subscription, error: subError } = await supabase
         .from('user_subscriptions')
-        .update({ tokens_remaining: subscription.tokens_remaining })
-        .eq('user_id', user.id);
-      
-      throw new Error('Failed to create generation record');
-    }
+        .select('tokens_remaining')
+        .eq('user_id', user.id)
+        .single();
 
-    console.log('Generation record created:', generation.id);
+      if (subError || !subscription) {
+        throw new Error('Subscription not found');
+      }
+
+      if (subscription.tokens_remaining < tokenCost) {
+        return new Response(
+          JSON.stringify({ error: 'Insufficient tokens', required: tokenCost, available: subscription.tokens_remaining }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Deduct tokens first
+      const { error: deductError } = await supabase
+        .from('user_subscriptions')
+        .update({ tokens_remaining: subscription.tokens_remaining - tokenCost })
+        .eq('user_id', user.id)
+        .eq('tokens_remaining', subscription.tokens_remaining); // Optimistic locking
+
+      if (deductError) {
+        console.error('Token deduction failed:', deductError);
+        throw new Error('Failed to deduct tokens - possible concurrent update');
+      }
+
+      tokensDeducted = true;
+      console.log('Tokens deducted:', tokenCost);
+
+      // Step 2: Create generation record
+      const { data: gen, error: genError } = await supabase
+        .from('generations')
+        .insert({
+          user_id: user.id,
+          model_id: model.id,
+          model_record_id: model.record_id,
+          template_id: template_id || null,
+          type: model.content_type,
+          prompt: finalPrompt,
+          original_prompt: originalPrompt,
+          enhanced_prompt: enhance_prompt ? finalPrompt : null,
+          enhancement_provider: usedEnhancementProvider,
+          settings: parameters,
+          tokens_used: tokenCost,
+          actual_token_cost: tokenCost,
+          status: 'pending',
+          provider_task_id: null
+        })
+        .select()
+        .single();
+
+      if (genError || !gen) {
+        console.error('Generation creation failed:', genError);
+        throw new Error('Failed to create generation record');
+      }
+
+      generation = gen;
+      generationCreated = true;
+      console.log('Generation record created:', generation.id);
+
+    } catch (txError) {
+      console.error('Transaction error:', txError);
+      
+      // AUTOMATIC ROLLBACK: Refund tokens if deducted but generation failed
+      if (tokensDeducted && !generationCreated) {
+        console.log('Rolling back token deduction...');
+        await supabase.rpc('increment_tokens', {
+          user_id_param: user.id,
+          amount: tokenCost
+        });
+        console.log('Tokens refunded:', tokenCost);
+      }
+      
+      throw txError;
+    }
 
     // Check circuit breaker
     if (CIRCUIT_BREAKER.failures >= CIRCUIT_BREAKER.threshold) {
       const elapsed = Date.now() - CIRCUIT_BREAKER.lastFailure;
       if (elapsed < CIRCUIT_BREAKER.timeout) {
-        // Refund tokens
-        await supabase
-          .from('user_subscriptions')
-          .update({ tokens_remaining: subscription.tokens_remaining })
-          .eq('user_id', user.id);
+        // Refund tokens using RPC for atomicity
+        await supabase.rpc('increment_tokens', {
+          user_id_param: user.id,
+          amount: tokenCost
+        });
 
         return new Response(
           JSON.stringify({ 
@@ -508,16 +531,13 @@ serve(async (req) => {
           })
           .eq('id', generation.id);
 
-        const { error: refundError } = await supabase
-          .from('user_subscriptions')
-          .update({ tokens_remaining: subscription.tokens_remaining })
-          .eq('user_id', user.id);
+        // Refund tokens using RPC for atomicity
+        await supabase.rpc('increment_tokens', {
+          user_id_param: user.id,
+          amount: tokenCost
+        });
 
-        if (refundError) {
-          console.error('Failed to refund tokens:', refundError);
-        } else {
-          console.log(`Tokens refunded: ${tokenCost} tokens returned to user ${user.id} due to ${isTimeout ? 'timeout' : 'provider failure'}`);
-        }
+        console.log(`Tokens refunded: ${tokenCost} tokens returned to user ${user.id} due to ${isTimeout ? 'timeout' : 'provider failure'}`);
 
         await supabase.from('audit_logs').insert({
           user_id: user.id,

@@ -12,11 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    const { generation_id, result_url } = await req.json();
+    const { generation_id, result_url, action } = await req.json();
     
-    if (!generation_id || !result_url) {
+    if (!generation_id) {
       return new Response(
-        JSON.stringify({ error: 'Missing generation_id or result_url' }),
+        JSON.stringify({ error: 'Missing generation_id' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -30,10 +30,47 @@ serve(async (req) => {
       .from('generations')
       .select('*')
       .eq('id', generation_id)
-      .single();
+      .maybeSingle();
 
     if (getError || !generation) {
       throw new Error('Generation not found');
+    }
+
+    // If action is 'fail', just mark as failed and refund
+    if (action === 'fail' || !result_url) {
+      console.log('Marking generation as failed and refunding tokens:', generation_id);
+      
+      const { error: updateError } = await supabase
+        .from('generations')
+        .update({
+          status: 'failed',
+          provider_response: {
+            error: 'Webhook processing failed. Tokens have been refunded.',
+            fixed_at: new Date().toISOString()
+          }
+        })
+        .eq('id', generation_id);
+
+      if (updateError) {
+        throw new Error(`Failed to update generation: ${updateError.message}`);
+      }
+
+      // Refund tokens
+      await supabase.rpc('increment_tokens', {
+        user_id_param: generation.user_id,
+        amount: generation.tokens_used
+      });
+
+      console.log('Tokens refunded:', generation.tokens_used);
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Generation marked as failed and tokens refunded',
+          tokens_refunded: generation.tokens_used
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('Downloading video from:', result_url);

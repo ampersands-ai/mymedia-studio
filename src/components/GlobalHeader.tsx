@@ -72,7 +72,7 @@ export const GlobalHeader = () => {
                 <Button
                   variant="ghost"
                   size="default"
-                  onClick={() => navigate("/dashboard/create")}
+                  onClick={() => navigate("/dashboard/custom-creation")}
                   className="hidden sm:inline-flex font-black text-base"
                 >
                   Dashboard
@@ -114,7 +114,7 @@ export const GlobalHeader = () => {
                 <Button
                   variant="ghost"
                   size="default"
-                  onClick={() => navigate("/dashboard/create")}
+                  onClick={() => navigate("/dashboard/custom-creation")}
                   className="hidden sm:inline-flex font-black text-base"
                 >
                   Dashboard
@@ -169,7 +169,7 @@ export const GlobalHeader = () => {
                 <Button
                   variant="outline"
                   size="default"
-                  onClick={() => navigate("/dashboard/create")}
+                  onClick={() => navigate("/dashboard/custom-creation")}
                   className="brutal-card-sm font-black hidden sm:flex"
                 >
                   Dashboard

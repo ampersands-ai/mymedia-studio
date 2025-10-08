@@ -197,7 +197,7 @@ const Index = () => {
                   <Button
                     variant="neon"
                     size="sm"
-                    onClick={() => navigate("/dashboard/create")}
+                    onClick={() => navigate("/dashboard/custom-creation")}
                     className="md:text-base"
                   >
                     Go to Dashboard

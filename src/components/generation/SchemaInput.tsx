@@ -28,8 +28,20 @@ export const SchemaInput = ({ name, schema, value, onChange, required }: SchemaI
     word.charAt(0).toUpperCase() + word.slice(1)
   ).join(' ');
 
-  // Check if this is an image field (any field containing "image" in the name)
-  const isImageUrlField = name.toLowerCase().includes('image');
+  // Detect image URL fields across various schema conventions
+  const nameLower = name.toLowerCase();
+  const titleLower = (schema?.title || '').toLowerCase();
+  const descLower = (schema?.description || '').toLowerCase();
+  const contentType = schema?.contentMediaType || schema?.contentType || schema?.mimeType;
+  const format = schema?.format;
+  const isImageUrlField =
+    nameLower.includes('image') ||
+    nameLower.includes('img') ||
+    titleLower.includes('image') ||
+    descLower.includes('image') ||
+    (typeof contentType === 'string' && contentType.startsWith('image/')) ||
+    (format === 'uri' && (titleLower.includes('image') || descLower.includes('image'))) ||
+    schema?.meta?.inputType === 'image';
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -206,7 +218,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required }: SchemaI
   }
 
   // Handle image URL fields with upload option
-  if (isImageUrlField && schema.type === "string") {
+  if (isImageUrlField && (schema.type === "string" || schema.type === undefined)) {
     return (
       <div className="space-y-2">
         <Label>

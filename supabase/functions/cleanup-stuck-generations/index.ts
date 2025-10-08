@@ -18,14 +18,13 @@ serve(async (req) => {
 
     console.log('Starting cleanup of stuck generations...');
 
-    // Find stuck generations (pending for more than 30 minutes)
-    // Don't touch 'processing' generations as they're handled by webhooks
+    // Find stuck generations (pending or processing for more than 30 minutes)
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
     
     const { data: stuckGenerations, error: findError } = await supabase
       .from('generations')
       .select('id, user_id, model_id, tokens_used, type')
-      .eq('status', 'pending')
+      .in('status', ['pending', 'processing'])
       .lt('created_at', thirtyMinutesAgo.toISOString());
 
     if (findError) {
@@ -53,7 +52,7 @@ serve(async (req) => {
           auto_cleaned: true
         }
       })
-      .eq('status', 'pending')
+      .in('status', ['pending', 'processing'])
       .lt('created_at', thirtyMinutesAgo.toISOString());
 
     if (updateError) {

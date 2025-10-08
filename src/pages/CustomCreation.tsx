@@ -191,42 +191,12 @@ const CustomCreation = () => {
   const [pollingGenerationId, setPollingGenerationId] = useState<string | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-// (moved) Advanced Options auto-open effect is defined after filteredModels
-
-// Filter models by selected group
+  // Filter models by selected group
   const filteredModels = allModels?.filter(model => {
     const groups = model.groups as string[] || [];
     return groups.includes(selectedGroup);
   }).sort((a, b) => a.base_token_cost - b.base_token_cost) || [];
 
-  // Auto-open Advanced Options when there's an optional image-like field (e.g., imageUrl)
-  useEffect(() => {
-    if (!selectedModel || !filteredModels) return;
-    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-    const schema = currentModel?.input_schema;
-    if (!schema?.properties) return;
-
-    const requiredFields: string[] = schema.required || [];
-    const hasOptionalImageField = Object.entries(schema.properties).some(([key, prop]: [string, any]) => {
-      const keyLower = key.toLowerCase();
-      const titleLower = (prop?.title || '').toLowerCase();
-      const descLower = (prop?.description || '').toLowerCase();
-      const contentType = (prop as any)?.contentMediaType || (prop as any)?.contentType || (prop as any)?.mimeType;
-      const format = (prop as any)?.format;
-      const isImageLike =
-        keyLower.includes('image') ||
-        keyLower.includes('img') ||
-        titleLower.includes('image') ||
-        descLower.includes('image') ||
-        (typeof contentType === 'string' && contentType.startsWith('image/')) ||
-        (format === 'uri' && (titleLower.includes('image') || descLower.includes('image'))) ||
-        (prop as any)?.meta?.inputType === 'image';
-
-      return !requiredFields.includes(key) && isImageLike;
-    });
-
-    setAdvancedOpen(prev => hasOptionalImageField || prev);
-  }, [selectedModel, filteredModels]);
   // Helper function to get required fields from model schema
   const getSchemaRequiredFields = (): string[] => {
     if (!selectedModel) return [];
@@ -837,73 +807,50 @@ const CustomCreation = () => {
               )}
 
 
-              {/* Required Parameters (outside collapsible) */}
-              {selectedModel && filteredModels && (() => {
-                const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-                const schema = currentModel?.input_schema;
-                if (!schema?.properties) return null;
-                
-                const requiredFields = schema.required || [];
-                const requiredProperties = Object.entries(schema.properties).filter(
-                  ([key]) => requiredFields.includes(key) && !['prompt', 'image_urls', 'model'].includes(key)
-                );
-                
-                if (requiredProperties.length === 0) return null;
-                
-                return (
-                  <div className="space-y-4">
-                    {requiredProperties.map(([key, propSchema]: [string, any]) => (
-                      <div key={key}>
-                        <ModelParameterForm
-                          modelSchema={{
-                            properties: { [key]: propSchema },
-                            required: [key]
-                          }}
-                          onChange={(params) => setModelParameters(prev => ({ ...prev, ...params }))}
-                          currentValues={modelParameters}
-                          excludeFields={[]}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-
-              {/* Collapsible Advanced Options (Optional Parameters Only) */}
-              {selectedModel && filteredModels && (() => {
-                const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-                const schema = currentModel?.input_schema;
-                if (!schema?.properties) return null;
-                
-                const requiredFields = schema.required || [];
-                const optionalProperties = Object.entries(schema.properties).filter(
-                  ([key]) => !requiredFields.includes(key) && !['prompt', 'image_urls', 'model'].includes(key)
-                );
-                
-                if (optionalProperties.length === 0) return null;
-                
-                return (
-                  <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-                    <CollapsibleTrigger asChild>
-                      <Button variant="outline" className="w-full h-11 md:h-10">
-                        Advanced Options
-                        <ChevronRight className={`h-4 w-4 ml-2 transition-transform ${advancedOpen ? 'rotate-90' : ''}`} />
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-4 mt-4">
+              {/* Collapsible Advanced Options */}
+              <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full h-11 md:h-10">
+                    Advanced Options
+                    <ChevronRight className={`h-4 w-4 ml-2 transition-transform ${advancedOpen ? 'rotate-90' : ''}`} />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4 mt-4">
+                  {/* Dynamic Model Parameters */}
+                  {selectedModel && filteredModels && (() => {
+                    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
+                    return currentModel?.input_schema ? (
                       <ModelParameterForm
-                        modelSchema={{
-                          properties: Object.fromEntries(optionalProperties),
-                          required: []
-                        }}
-                        onChange={(params) => setModelParameters(prev => ({ ...prev, ...params }))}
+                        modelSchema={currentModel.input_schema}
+                        onChange={setModelParameters}
                         currentValues={modelParameters}
-                        excludeFields={[]}
+                        excludeFields={['prompt', 'image_urls']}
                       />
-                    </CollapsibleContent>
-                  </Collapsible>
-                );
-              })()}
+                    ) : (
+                      // Legacy Resolution fallback if no schema
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Resolution</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant={resolution === "Native" ? "default" : "outline"}
+                            onClick={() => setResolution("Native")}
+                            className="h-11 md:h-10"
+                          >
+                            Native
+                          </Button>
+                          <Button
+                            variant={resolution === "HD" ? "default" : "outline"}
+                            onClick={() => setResolution("HD")}
+                            className="h-11 md:h-10"
+                          >
+                            HD
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-2">

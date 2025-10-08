@@ -145,7 +145,7 @@ export function ModelFormDialog({
         estimated_time_minutes: formData.estimated_time_minutes ? parseInt(formData.estimated_time_minutes) : null,
       };
 
-      if (model && model.record_id) {
+      if (model) {
         // Update existing model - use record_id
         const { error } = await supabase
           .from("ai_models")
@@ -176,7 +176,7 @@ export function ModelFormDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-black">
-            {model && model.record_id ? "Edit Model" : "Add New Model"}
+            {model ? "Edit Model" : "Add New Model"}
           </DialogTitle>
           <DialogDescription>
             Configure AI model settings, token costs, and parameters
@@ -195,7 +195,6 @@ export function ModelFormDialog({
                 }
                 placeholder="veo3-fast"
                 required
-                disabled={!!(model && model.record_id)}
               />
               <p className="text-xs text-muted-foreground">
                 Model identifier (can be duplicated for different endpoints)
@@ -406,7 +405,7 @@ export function ModelFormDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? "Saving..." : (model && model.record_id) ? "Update Model" : "Create Model"}
+              {saving ? "Saving..." : model ? "Update Model" : "Create Model"}
             </Button>
           </div>
         </form>

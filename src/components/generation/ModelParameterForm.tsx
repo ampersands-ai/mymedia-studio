@@ -31,7 +31,6 @@ export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, 
   const handleParameterChange = (key: string, value: any) => {
     const updated = { ...parameters, [key]: value };
     setParameters(updated);
-    // Call onChange immediately to trigger token recalculation
     onChange(updated);
   };
 

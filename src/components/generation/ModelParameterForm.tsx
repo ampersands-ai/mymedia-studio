@@ -28,8 +28,50 @@ export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, 
     onChange(defaults);
   }, [modelSchema]);
 
+  // Get filtered enum based on field dependencies
+  const getFilteredEnum = (fieldName: string, schema: any): any[] | undefined => {
+    if (!modelSchema?.fieldDependencies || !schema.enum) return undefined;
+    
+    const dependencies = modelSchema.fieldDependencies[fieldName];
+    if (!dependencies) return undefined;
+    
+    // Check each dependency rule
+    for (const [dependentField, rules] of Object.entries(dependencies)) {
+      const currentValue = parameters[dependentField];
+      if (currentValue !== undefined && rules[currentValue]) {
+        return rules[currentValue];
+      }
+    }
+    
+    return undefined;
+  };
+
+  // Auto-correct invalid combinations based on dependencies
+  const autoCorrectDependencies = (changedField: string, newValue: any, updatedParams: Record<string, any>) => {
+    if (!modelSchema?.fieldDependencies) return updatedParams;
+    
+    const corrected = { ...updatedParams };
+    
+    // Check all other fields to see if they need correction
+    Object.entries(modelSchema.properties).forEach(([fieldName, schema]: [string, any]) => {
+      if (fieldName === changedField || !schema.enum) return;
+      
+      const filteredEnum = getFilteredEnum(fieldName, schema);
+      if (filteredEnum && !filteredEnum.includes(corrected[fieldName])) {
+        // Current value is invalid, set to first valid option
+        corrected[fieldName] = filteredEnum[0];
+      }
+    });
+    
+    return corrected;
+  };
+
   const handleParameterChange = (key: string, value: any) => {
-    const updated = { ...parameters, [key]: value };
+    let updated = { ...parameters, [key]: value };
+    
+    // Auto-correct dependent fields
+    updated = autoCorrectDependencies(key, value, updated);
+    
     setParameters(updated);
     onChange(updated);
   };
@@ -56,6 +98,8 @@ export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, 
           value={parameters[key]}
           onChange={(value) => handleParameterChange(key, value)}
           required={required.includes(key)}
+          filteredEnum={getFilteredEnum(key, schema)}
+          allValues={parameters}
         />
       ))}
     </div>

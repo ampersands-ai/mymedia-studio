@@ -10,15 +10,19 @@ interface SchemaInputProps {
   value: any;
   onChange: (value: any) => void;
   required?: boolean;
+  filteredEnum?: any[];
+  allValues?: Record<string, any>;
 }
 
-export const SchemaInput = ({ name, schema, value, onChange, required }: SchemaInputProps) => {
+export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues }: SchemaInputProps) => {
   const displayName = schema.title || name.split('_').map((word: string) => 
     word.charAt(0).toUpperCase() + word.slice(1)
   ).join(' ');
 
   // Handle enum types (dropdown)
   if (schema.enum && Array.isArray(schema.enum)) {
+    const enumOptions = filteredEnum ?? schema.enum;
+    
     return (
       <div className="space-y-2">
         <Label>
@@ -33,7 +37,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required }: SchemaI
             <SelectValue placeholder={`Select ${displayName.toLowerCase()}`} />
           </SelectTrigger>
           <SelectContent>
-            {schema.enum.map((option: any) => (
+            {enumOptions.map((option: any) => (
               <SelectItem key={option} value={option.toString()}>
                 {option.toString()}
               </SelectItem>

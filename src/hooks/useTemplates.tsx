@@ -15,6 +15,7 @@ export interface AIModel {
   groups?: string[];
   estimated_time_minutes?: number | null;
   payload_structure?: string;
+  max_images?: number | null;
 }
 
 export interface ContentTemplate {

@@ -204,13 +204,42 @@ const CustomCreation = () => {
     return currentModel?.input_schema?.required || [];
   };
 
+  // Dynamically detect image field from schema
+  const getImageFieldInfo = (): { fieldName: string | null; isRequired: boolean; isArray: boolean; maxImages: number | null } => {
+    if (!selectedModel) return { fieldName: null, isRequired: false, isArray: false, maxImages: null };
+    
+    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
+    if (!currentModel?.input_schema?.properties) return { fieldName: null, isRequired: false, isArray: false, maxImages: null };
+    
+    const properties = currentModel.input_schema.properties;
+    const required = currentModel.input_schema.required || [];
+    
+    // Look for image-like fields
+    const imageFieldNames = ['image_urls', 'imageUrl', 'image_url', 'image', 'images'];
+    for (const fieldName of imageFieldNames) {
+      if (properties[fieldName]) {
+        const schema = properties[fieldName];
+        const isArray = schema.type === 'array';
+        const isRequired = required.includes(fieldName);
+        const maxImages = currentModel.max_images ?? null;
+        return { fieldName, isRequired, isArray, maxImages };
+      }
+    }
+    
+    return { fieldName: null, isRequired: false, isArray: false, maxImages: null };
+  };
+
+  const imageFieldInfo = getImageFieldInfo();
+  const isImageRequired = imageFieldInfo.isRequired;
+  const imageFieldName = imageFieldInfo.fieldName;
+  const isImageArray = imageFieldInfo.isArray;
+  const maxImages = imageFieldInfo.maxImages;
+
   // Check schema requirements for main form fields
   const schemaRequired = getSchemaRequiredFields();
-  const isImageRequiredBySchema = schemaRequired.includes('image_urls');
   const isPromptRequiredBySchema = schemaRequired.includes('prompt');
 
   // Use only schema-based requirements
-  const isImageRequired = isImageRequiredBySchema;
   const isPromptRequired = isPromptRequiredBySchema || true; // Prompt is always required unless schema says otherwise
 
   const surprisePrompts = [
@@ -335,16 +364,28 @@ const CustomCreation = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     
-    // Check if current model is Google Nano Banana
+    // Get current model's max_images limit
     const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-    const isNanoBanana = currentModel?.model_name?.toLowerCase().includes('nano') || 
-                         currentModel?.model_name?.toLowerCase().includes('banana') ||
-                         currentModel?.id === 'google/gemini-2.5-flash-image-preview';
+    const modelMaxImages = currentModel?.max_images;
     
-    // Apply 10 image limit only for Nano Banana model
-    if (isNanoBanana && uploadedImages.length + files.length > 10) {
-      toast.error("Maximum 10 images allowed for Google Nano Banana");
-      return;
+    // Determine effective max images
+    let effectiveMax = modelMaxImages ?? 10; // Default to 10 if unlimited
+    
+    // For single image fields, max is 1
+    if (!isImageArray && imageFieldName) {
+      effectiveMax = 1;
+    }
+    
+    // Check if adding files would exceed limit
+    if (uploadedImages.length + files.length > effectiveMax) {
+      if (effectiveMax === 1) {
+        // Single image: replace existing
+        toast.info("Replacing existing image");
+        setUploadedImages([]); // Clear existing
+      } else {
+        toast.error(`Maximum ${effectiveMax} image(s) allowed for this model`);
+        return;
+      }
     }
     
     const validFiles: File[] = [];
@@ -365,7 +406,12 @@ const CustomCreation = () => {
     }
     
     if (validFiles.length > 0) {
-      setUploadedImages([...uploadedImages, ...validFiles]);
+      // For single image, replace; for array, append
+      if (effectiveMax === 1) {
+        setUploadedImages(validFiles.slice(0, 1));
+      } else {
+        setUploadedImages([...uploadedImages, ...validFiles]);
+      }
       toast.success(`${validFiles.length} image(s) uploaded successfully`);
     }
   };
@@ -399,12 +445,12 @@ const CustomCreation = () => {
       return;
     }
 
-    // Validate required fields from model schema (advanced options)
+      // Validate required fields from model schema (advanced options)
     const currentModel = filteredModels.find(m => m.record_id === selectedModel);
     if (currentModel?.input_schema) {
       const requiredFields = currentModel.input_schema.required || [];
       const schemaProperties = currentModel.input_schema.properties || {};
-      const excludeFields = ['prompt', 'image_urls']; // Already validated above
+      const excludeFields = ['prompt', 'image_urls', 'imageUrl', 'image_url', 'image', 'images']; // Already validated above
 
       for (const field of requiredFields) {
         if (excludeFields.includes(field)) continue;
@@ -432,7 +478,7 @@ const CustomCreation = () => {
       };
 
       // Upload images to storage if required
-      if (isImageRequired && uploadedImages.length > 0) {
+      if (imageFieldName && uploadedImages.length > 0) {
         const timestamp = Date.now();
         const imageUrls: string[] = [];
 
@@ -468,8 +514,13 @@ const CustomCreation = () => {
           imageUrls.push(signedData.signedUrl);
         }
 
-        customParameters.image_urls = imageUrls;
-        console.log('Uploaded images:', imageUrls);
+        // Set parameter based on field type (single string or array)
+        if (isImageArray) {
+          customParameters[imageFieldName] = imageUrls;
+        } else {
+          customParameters[imageFieldName] = imageUrls[0]; // Single image
+        }
+        console.log(`Uploaded images to ${imageFieldName}:`, isImageArray ? imageUrls : imageUrls[0]);
       }
 
       console.log('Generation payload:', {
@@ -768,11 +819,11 @@ const CustomCreation = () => {
               </div>
 
 
-              {/* Image Upload - Only show if required by schema */}
-              {isImageRequired && (
+              {/* Image Upload - Only show if image field exists in schema */}
+              {imageFieldName && (
                 <div className="space-y-3">
                   <label className="text-sm font-medium">
-                    Images <span className="text-destructive">*</span>
+                    {maxImages === 1 ? 'Image' : 'Images'} {isImageRequired && <span className="text-destructive">*</span>}
                   </label>
 
                   {uploadedImages.map((file, index) => (
@@ -787,15 +838,20 @@ const CustomCreation = () => {
                     </div>
                   ))}
 
-                  <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileUpload} className="hidden" />
+                  <input ref={fileInputRef} type="file" accept="image/*" multiple={maxImages !== 1} onChange={handleFileUpload} className="hidden" />
                   <Button
                     variant="outline"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadedImages.length >= 10}
+                    disabled={maxImages ? uploadedImages.length >= maxImages : false}
                     className="w-full border-dashed h-11 md:h-10"
                   >
                     <Upload className="h-4 w-4 mr-2" />
-                    Add Images ({uploadedImages.length}/10)
+                    {maxImages === 1 
+                      ? `Upload Image ${uploadedImages.length > 0 ? '(Replace)' : ''}` 
+                      : maxImages 
+                        ? `Add Images (${uploadedImages.length}/${maxImages})` 
+                        : `Add Images (${uploadedImages.length})`
+                    }
                   </Button>
                   
                   {uploadedImages.length === 0 && (
@@ -824,7 +880,7 @@ const CustomCreation = () => {
                         modelSchema={currentModel.input_schema}
                         onChange={setModelParameters}
                         currentValues={modelParameters}
-                        excludeFields={['prompt', 'image_urls']}
+                        excludeFields={['prompt', 'image_urls', 'imageUrl', 'image_url', 'image', 'images']}
                       />
                     ) : (
                       // Legacy Resolution fallback if no schema

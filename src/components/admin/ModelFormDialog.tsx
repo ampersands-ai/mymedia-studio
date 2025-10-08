@@ -43,6 +43,7 @@ interface AIModel {
   groups?: string[];
   estimated_time_minutes?: number | null;
   payload_structure?: string;
+  max_images?: number | null;
 }
 
 interface ModelFormDialogProps {
@@ -69,6 +70,7 @@ export function ModelFormDialog({
     input_schema: "{}",
     api_endpoint: "",
     estimated_time_minutes: "",
+    max_images: "",
   });
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -86,6 +88,7 @@ export function ModelFormDialog({
         input_schema: JSON.stringify(model.input_schema, null, 2),
         api_endpoint: model.api_endpoint || "",
         estimated_time_minutes: model.estimated_time_minutes?.toString() || "",
+        max_images: model.max_images?.toString() || "",
       });
       setSelectedGroups(model.groups || []);
     } else {
@@ -100,6 +103,7 @@ export function ModelFormDialog({
         input_schema: "{}",
         api_endpoint: "",
         estimated_time_minutes: "",
+        max_images: "",
       });
       setSelectedGroups([]);
     }
@@ -143,6 +147,7 @@ export function ModelFormDialog({
         groups: selectedGroups,
         is_active: true,
         estimated_time_minutes: formData.estimated_time_minutes ? parseInt(formData.estimated_time_minutes) : null,
+        max_images: formData.max_images ? parseInt(formData.max_images) : null,
       };
 
       if (model && model.record_id) {
@@ -325,6 +330,23 @@ export function ModelFormDialog({
               </div>
               <p className="text-xs text-muted-foreground">
                 Approximate time for generation (supports decimals: 0.5 = 30 seconds)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="max_images">Max Images</Label>
+              <Input
+                id="max_images"
+                type="number"
+                value={formData.max_images}
+                onChange={(e) =>
+                  setFormData({ ...formData, max_images: e.target.value })
+                }
+                placeholder="Leave empty for unlimited"
+                min="1"
+              />
+              <p className="text-xs text-muted-foreground">
+                Maximum number of images users can upload (leave empty for unlimited)
               </p>
             </div>
           </div>

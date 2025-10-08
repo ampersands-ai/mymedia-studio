@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown } from "lucide-react";
+import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { ModelFormDialog } from "@/components/admin/ModelFormDialog";
 import {
@@ -128,6 +128,19 @@ export default function AIModelsManager() {
   const handleEdit = (model: AIModel) => {
     setEditingModel(model);
     setDialogOpen(true);
+  };
+
+  const handleDuplicate = (model: AIModel) => {
+    // Create a copy with modified ID and name
+    const duplicatedModel: AIModel = {
+      ...model,
+      record_id: "", // Will be auto-generated
+      id: `${model.id}-copy`,
+      model_name: `${model.model_name} (Copy)`,
+    };
+    setEditingModel(duplicatedModel);
+    setDialogOpen(true);
+    toast.info("Duplicating model - modify ID and name before saving");
   };
 
   const handleAdd = () => {
@@ -327,8 +340,17 @@ export default function AIModelsManager() {
                           variant="outline" 
                           size="sm"
                           onClick={() => handleEdit(model)}
+                          title="Edit model"
                         >
                           <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDuplicate(model)}
+                          title="Duplicate model"
+                        >
+                          <Copy className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="outline"
@@ -336,6 +358,7 @@ export default function AIModelsManager() {
                           onClick={() =>
                             toggleModelStatus(model.record_id, model.is_active)
                           }
+                          title={model.is_active ? "Disable model" : "Enable model"}
                         >
                           {model.is_active ? (
                             <PowerOff className="h-4 w-4" />
@@ -347,6 +370,7 @@ export default function AIModelsManager() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDelete(model.record_id)}
+                          title="Delete model"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

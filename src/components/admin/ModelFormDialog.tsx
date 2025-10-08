@@ -145,7 +145,7 @@ export function ModelFormDialog({
         estimated_time_minutes: formData.estimated_time_minutes ? parseInt(formData.estimated_time_minutes) : null,
       };
 
-      if (model) {
+      if (model && model.record_id) {
         // Update existing model - use record_id
         const { error } = await supabase
           .from("ai_models")

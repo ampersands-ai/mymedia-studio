@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown } from "lucide-react";
+import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { ModelFormDialog } from "@/components/admin/ModelFormDialog";
 import {
@@ -132,6 +132,18 @@ export default function AIModelsManager() {
 
   const handleAdd = () => {
     setEditingModel(null);
+    setDialogOpen(true);
+  };
+
+  const handleDuplicate = (model: AIModel) => {
+    // Create a copy without the record_id to create a new model
+    const duplicateModel = {
+      ...model,
+      record_id: '', // Clear to force creation of new model
+      id: `${model.id}-copy`, // Suggest a new ID
+      model_name: `${model.model_name} (Copy)`,
+    } as AIModel;
+    setEditingModel(duplicateModel);
     setDialogOpen(true);
   };
 
@@ -329,6 +341,14 @@ export default function AIModelsManager() {
                           onClick={() => handleEdit(model)}
                         >
                           <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDuplicate(model)}
+                          title="Duplicate model"
+                        >
+                          <Copy className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="outline"

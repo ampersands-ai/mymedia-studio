@@ -191,12 +191,42 @@ const CustomCreation = () => {
   const [pollingGenerationId, setPollingGenerationId] = useState<string | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Filter models by selected group
+// (moved) Advanced Options auto-open effect is defined after filteredModels
+
+// Filter models by selected group
   const filteredModels = allModels?.filter(model => {
     const groups = model.groups as string[] || [];
     return groups.includes(selectedGroup);
   }).sort((a, b) => a.base_token_cost - b.base_token_cost) || [];
 
+  // Auto-open Advanced Options when there's an optional image-like field (e.g., imageUrl)
+  useEffect(() => {
+    if (!selectedModel || !filteredModels) return;
+    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
+    const schema = currentModel?.input_schema;
+    if (!schema?.properties) return;
+
+    const requiredFields: string[] = schema.required || [];
+    const hasOptionalImageField = Object.entries(schema.properties).some(([key, prop]: [string, any]) => {
+      const keyLower = key.toLowerCase();
+      const titleLower = (prop?.title || '').toLowerCase();
+      const descLower = (prop?.description || '').toLowerCase();
+      const contentType = (prop as any)?.contentMediaType || (prop as any)?.contentType || (prop as any)?.mimeType;
+      const format = (prop as any)?.format;
+      const isImageLike =
+        keyLower.includes('image') ||
+        keyLower.includes('img') ||
+        titleLower.includes('image') ||
+        descLower.includes('image') ||
+        (typeof contentType === 'string' && contentType.startsWith('image/')) ||
+        (format === 'uri' && (titleLower.includes('image') || descLower.includes('image'))) ||
+        (prop as any)?.meta?.inputType === 'image';
+
+      return !requiredFields.includes(key) && isImageLike;
+    });
+
+    setAdvancedOpen(prev => hasOptionalImageField || prev);
+  }, [selectedModel, filteredModels]);
   // Helper function to get required fields from model schema
   const getSchemaRequiredFields = (): string[] => {
     if (!selectedModel) return [];

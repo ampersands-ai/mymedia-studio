@@ -28,8 +28,8 @@ export const SchemaInput = ({ name, schema, value, onChange, required }: SchemaI
     word.charAt(0).toUpperCase() + word.slice(1)
   ).join(' ');
 
-  // Check if this is an imageUrl field
-  const isImageUrlField = name === 'imageUrl' || name === 'image_url';
+  // Check if this is an imageUrl field (case-insensitive)
+  const isImageUrlField = name.toLowerCase() === 'imageurl' || name.toLowerCase() === 'image_url';
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

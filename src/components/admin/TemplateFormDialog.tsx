@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +26,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ParameterConfigurator } from "./ParameterConfigurator";
 
@@ -66,6 +67,8 @@ export function TemplateFormDialog({
   template,
   onSuccess,
 }: TemplateFormDialogProps) {
+  const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     id: "",
     category: "",
@@ -89,6 +92,8 @@ export function TemplateFormDialog({
   const [saving, setSaving] = useState(false);
   const [basicInfoOpen, setBasicInfoOpen] = useState(true);
   const [paramConfigOpen, setParamConfigOpen] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
 
   useEffect(() => {
     if (open) {
@@ -116,6 +121,8 @@ export function TemplateFormDialog({
       });
       setUserEditableFields(template.user_editable_fields || []);
       setHiddenFieldDefaults(template.hidden_field_defaults || {});
+      setUploadedImage(null);
+      setImagePreview(template.thumbnail_url || "");
       setPresetValues(template.preset_parameters || {});
       
       if (template.model_id && !isCustom) {
@@ -139,6 +146,8 @@ export function TemplateFormDialog({
       });
       setUserEditableFields([]);
       setHiddenFieldDefaults({});
+      setUploadedImage(null);
+      setImagePreview("");
       setPresetValues({});
       setSelectedModel(null);
     }
@@ -208,11 +217,69 @@ export function TemplateFormDialog({
     setPresetValues(config.presetValues);
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Only JPEG, PNG, and WebP images are allowed");
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+
+    setUploadedImage(file);
+    setImagePreview(URL.createObjectURL(file));
+    toast.success("Image selected");
+  };
+
+  const removeImage = () => {
+    setUploadedImage(null);
+    setImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
     try {
+      // Upload thumbnail image if a new one was selected
+      let thumbnailUrl = formData.thumbnail_url;
+      if (uploadedImage && user?.id) {
+        const timestamp = Date.now();
+        const fileExt = uploadedImage.name.split('.').pop();
+        const filePath = `templates/thumbnails/${timestamp}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('generated-content')
+          .upload(filePath, uploadedImage, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          toast.error("Failed to upload thumbnail image");
+          console.error('Upload error:', uploadError);
+          setSaving(false);
+          return;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('generated-content')
+          .getPublicUrl(filePath);
+
+        thumbnailUrl = publicUrl;
+      }
       let customSchema = null;
       if (formData.is_custom_model) {
         try {
@@ -235,7 +302,7 @@ export function TemplateFormDialog({
         hidden_field_defaults: hiddenFieldDefaults,
         is_custom_model: formData.is_custom_model,
         enhancement_instruction: formData.enhancement_instruction || null,
-        thumbnail_url: formData.thumbnail_url || null,
+        thumbnail_url: thumbnailUrl || null,
         display_order: parseInt(formData.display_order),
         is_active: true,
         estimated_time_minutes: formData.estimated_time_minutes ? parseInt(formData.estimated_time_minutes) : null,
@@ -381,13 +448,48 @@ export function TemplateFormDialog({
                 </div>
 
                 <div className="space-y-2 col-span-2">
-                  <Label htmlFor="thumbnail_url">Thumbnail URL</Label>
-                  <Input
-                    id="thumbnail_url"
-                    value={formData.thumbnail_url}
-                    onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
-                    placeholder="https://example.com/thumbnail.jpg"
+                  <Label>Thumbnail Image</Label>
+                  
+                  {imagePreview && (
+                    <div className="relative inline-block">
+                      <img 
+                        src={imagePreview} 
+                        alt="Thumbnail preview" 
+                        className="w-32 h-32 object-cover rounded-lg border-2 border-border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                        onClick={removeImage}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                  
+                  <input 
+                    ref={fileInputRef}
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleImageUpload} 
+                    className="hidden" 
                   />
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {imagePreview ? "Change Image" : "Upload Image"}
+                  </Button>
+                  
+                  <p className="text-xs text-muted-foreground">
+                    Recommended: Square image, max 5MB (JPEG, PNG, WebP)
+                  </p>
                 </div>
 
                 <div className="space-y-2 col-span-2">

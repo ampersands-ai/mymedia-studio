@@ -658,7 +658,7 @@ const CustomCreation = () => {
                         })()}
                       </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="bg-background border-2 border-black z-50">
+                    <SelectContent className="bg-background border-2 border-black z-50 max-w-[calc(100vw-2rem)]">
                       {filteredModels.map((model) => {
                         const modelGroups = (model.groups as string[]) || [];
                         const otherGroups = modelGroups.filter(g => g !== selectedGroup);
@@ -669,22 +669,22 @@ const CustomCreation = () => {
                             key={String(model.record_id)}
                             value={String(model.record_id)}
                             className={cn(
-                              "cursor-pointer py-3 px-4 border-2 my-1 mx-1 rounded transition-all !pl-3 !pr-3 [&>span.absolute.left-2]:hidden",
+                              "cursor-pointer py-3 px-2 md:px-4 border-2 my-1 mx-1 rounded transition-all !pl-2 md:!pl-3 !pr-2 md:!pr-3 [&>span.absolute.left-2]:hidden",
                               isSelected
                                 ? "bg-red-500 hover:bg-red-600 text-white font-bold border-black"
                                 : "hover:bg-muted border-border"
                             )}
                           >
-                            <div className="w-full">
-                              <div className="flex items-center justify-between w-full gap-4">
-                                <span className="font-bold text-sm flex-shrink-0">{model.model_name}</span>
-                                <div className="flex items-center gap-2 flex-shrink-0">
-                                  <Badge variant="secondary" className="text-xs">
+                            <div className="w-full min-w-0">
+                              <div className="flex items-center justify-between w-full gap-2 md:gap-4">
+                                <span className="font-bold text-xs md:text-sm flex-shrink min-w-0 truncate">{model.model_name}</span>
+                                <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+                                  <Badge variant="secondary" className="text-[10px] md:text-xs whitespace-nowrap">
                                     {model.base_token_cost} tokens
                                   </Badge>
                                   {model.estimated_time_minutes && (
-                                    <Badge variant="secondary" className="text-xs flex items-center gap-1">
-                                      <Clock className="h-3 w-3" />
+                                    <Badge variant="secondary" className="text-[10px] md:text-xs flex items-center gap-0.5 md:gap-1 whitespace-nowrap">
+                                      <Clock className="h-2.5 md:h-3 w-2.5 md:w-3" />
                                       ~{formatEstimatedTime(model.estimated_time_minutes)}
                                     </Badge>
                                   )}
@@ -693,7 +693,7 @@ const CustomCreation = () => {
                               {otherGroups.length > 0 && (
                                 <div className="mt-1">
                                   <span className={cn(
-                                    "text-xs",
+                                    "text-[10px] md:text-xs",
                                     isSelected ? "text-white/60" : "text-muted-foreground/60"
                                   )}>
                                     Also in: {otherGroups.map(g => 
@@ -872,12 +872,12 @@ const CustomCreation = () => {
                       Generating...
                     </>
                   ) : (
-                    <div className="flex items-center justify-center gap-3 w-full relative">
+                    <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 w-full md:relative">
                       <div className="flex items-center">
                         <Sparkles className="mr-2 h-5 w-5" />
                         Generate
                       </div>
-                      <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded absolute right-2">
+                      <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded md:absolute md:right-2">
                         <Coins className="h-4 w-4" />
                         <span className="text-sm font-bold">-{estimatedTokens} tokens</span>
                       </div>

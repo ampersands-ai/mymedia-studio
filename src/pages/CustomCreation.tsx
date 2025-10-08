@@ -172,7 +172,15 @@ const communityCreations = [
 const CustomCreation = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [selectedGroup, setSelectedGroup] = useState<CreationGroup>("prompt_to_image");
+  const [selectedGroup, setSelectedGroup] = useState<CreationGroup>(() => {
+    const saved = localStorage.getItem('customCreation_selectedGroup');
+    return (saved as CreationGroup) || "prompt_to_image";
+  });
+
+  useEffect(() => {
+    localStorage.setItem('customCreation_selectedGroup', selectedGroup);
+  }, [selectedGroup]);
+
   const { data: allModels, isLoading: modelsLoading } = useModels();
   const { generate, isGenerating } = useGeneration();
   const [prompt, setPrompt] = useState("");

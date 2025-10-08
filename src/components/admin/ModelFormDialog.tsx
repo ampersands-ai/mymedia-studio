@@ -147,7 +147,7 @@ export function ModelFormDialog({
         groups: selectedGroups,
         is_active: true,
         estimated_time_minutes: formData.estimated_time_minutes ? parseInt(formData.estimated_time_minutes) : null,
-        max_images: formData.max_images ? parseInt(formData.max_images) : null,
+        max_images: formData.max_images ? parseInt(formData.max_images) : 0,
       };
 
       if (model && model.record_id) {
@@ -342,11 +342,11 @@ export function ModelFormDialog({
                 onChange={(e) =>
                   setFormData({ ...formData, max_images: e.target.value })
                 }
-                placeholder="Leave empty for unlimited"
-                min="1"
+                placeholder="0 (no images needed)"
+                min="0"
               />
               <p className="text-xs text-muted-foreground">
-                Maximum number of images users can upload (leave empty for unlimited)
+                Maximum number of images users can upload (0 = no images needed, leave empty = 0)
               </p>
             </div>
           </div>

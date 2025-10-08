@@ -205,11 +205,11 @@ const CustomCreation = () => {
   };
 
   // Dynamically detect image field from schema
-  const getImageFieldInfo = (): { fieldName: string | null; isRequired: boolean; isArray: boolean; maxImages: number | null } => {
-    if (!selectedModel) return { fieldName: null, isRequired: false, isArray: false, maxImages: null };
+  const getImageFieldInfo = (): { fieldName: string | null; isRequired: boolean; isArray: boolean; maxImages: number } => {
+    if (!selectedModel) return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
     
     const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-    if (!currentModel?.input_schema?.properties) return { fieldName: null, isRequired: false, isArray: false, maxImages: null };
+    if (!currentModel?.input_schema?.properties) return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
     
     const properties = currentModel.input_schema.properties;
     const required = currentModel.input_schema.required || [];
@@ -221,12 +221,12 @@ const CustomCreation = () => {
         const schema = properties[fieldName];
         const isArray = schema.type === 'array';
         const isRequired = required.includes(fieldName);
-        const maxImages = currentModel.max_images ?? null;
+        const maxImages = currentModel.max_images ?? 0;
         return { fieldName, isRequired, isArray, maxImages };
       }
     }
     
-    return { fieldName: null, isRequired: false, isArray: false, maxImages: null };
+    return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
   };
 
   const imageFieldInfo = getImageFieldInfo();
@@ -366,10 +366,16 @@ const CustomCreation = () => {
     
     // Get current model's max_images limit
     const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-    const modelMaxImages = currentModel?.max_images;
+    const modelMaxImages = currentModel?.max_images ?? 0;
+    
+    // If max_images is 0, don't allow uploads
+    if (modelMaxImages === 0) {
+      toast.error("This model does not accept image uploads");
+      return;
+    }
     
     // Determine effective max images
-    let effectiveMax = modelMaxImages ?? 10; // Default to 10 if unlimited
+    let effectiveMax = modelMaxImages;
     
     // For single image fields, max is 1
     if (!isImageArray && imageFieldName) {
@@ -819,8 +825,8 @@ const CustomCreation = () => {
               </div>
 
 
-              {/* Image Upload - Only show if image field exists in schema */}
-              {imageFieldName && (
+              {/* Image Upload - Only show if image field exists in schema AND maxImages > 0 */}
+              {imageFieldName && maxImages > 0 && (
                 <div className="space-y-3">
                   <label className="text-sm font-medium">
                     {maxImages === 1 ? 'Image' : 'Images'} {isImageRequired && <span className="text-destructive">*</span>}

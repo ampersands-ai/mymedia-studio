@@ -329,10 +329,12 @@ export default function AIModelsManager() {
                       {model.base_token_cost} tokens
                     </TableCell>
                     <TableCell>
-                      {model.max_images ? (
+                      {model.max_images === 0 ? (
+                        <span className="text-xs text-muted-foreground">None</span>
+                      ) : model.max_images ? (
                         <Badge variant="outline">{model.max_images} max</Badge>
                       ) : (
-                        <span className="text-xs text-muted-foreground">Unlimited</span>
+                        <span className="text-xs text-muted-foreground">None</span>
                       )}
                     </TableCell>
                     <TableCell>

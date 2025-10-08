@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { supabase } from "@/integrations/supabase/client";
 import { formatEstimatedTime } from "@/lib/time-utils";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
+import { ModelParameterForm } from "@/components/generation/ModelParameterForm";
 
 // Lazy load Carousel for code splitting
 const Carousel = lazy(() => import("@/components/ui/carousel").then(m => ({ default: m.Carousel })));
@@ -31,6 +32,7 @@ const Create = () => {
   const [generatedOutput, setGeneratedOutput] = useState<string | null>(null);
   const [pollingGenerationId, setPollingGenerationId] = useState<string | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [modelParameters, setModelParameters] = useState<Record<string, any>>({});
 
   // Memoize SEO schemas for performance
   const schemas = useMemo(() => {
@@ -104,6 +106,20 @@ const Create = () => {
       });
     };
   }, []);
+
+  // Initialize model parameter defaults from schema and preset when template changes
+  useEffect(() => {
+    const schema = selectedTemplate?.ai_models?.input_schema;
+    if (!schema?.properties) {
+      setModelParameters({});
+      return;
+    }
+    const defaults: Record<string, any> = {};
+    Object.entries<any>(schema.properties).forEach(([key, prop]) => {
+      if (prop?.default !== undefined) defaults[key] = prop.default;
+    });
+    setModelParameters(prev => ({ ...defaults, ...(selectedTemplate?.preset_parameters || {}), ...prev }));
+  }, [selectedTemplate]);
 
   const handleTemplateSelect = (template: any) => {
     setSelectedTemplate(template);
@@ -193,6 +209,9 @@ const Create = () => {
       if (selectedTemplate?.preset_parameters) {
         Object.assign(customParameters, selectedTemplate.preset_parameters);
       }
+
+      // Merge user-provided parameters from the form
+      Object.assign(customParameters, modelParameters);
 
       const result = await generate({
         template_id: selectedTemplate.id,
@@ -360,6 +379,27 @@ const Create = () => {
                       disabled={isGenerating}
                     />
                   </div>
+                  {/* Template Options */}
+                  {selectedTemplate?.ai_models?.input_schema?.properties && (() => {
+                    const schema = selectedTemplate.ai_models.input_schema;
+                    const userEditable = selectedTemplate.user_editable_fields as string[] | undefined;
+                    const entries = Object.entries(schema.properties).filter(([key]) => {
+                      if (userEditable && userEditable.length > 0) return userEditable.includes(key as string);
+                      return !['prompt','model'].includes(key as string);
+                    });
+                    if (entries.length === 0) return null;
+                    return (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Options</label>
+                        <ModelParameterForm
+                          modelSchema={{ properties: Object.fromEntries(entries), required: schema.required || [] }}
+                          onChange={(params) => setModelParameters(prev => ({ ...prev, ...params }))}
+                          currentValues={modelParameters}
+                          excludeFields={[]}
+                        />
+                      </div>
+                    );
+                  })()}
                   <div className="flex gap-2">
                     <Button
                       variant="outline"

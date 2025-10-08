@@ -807,50 +807,73 @@ const CustomCreation = () => {
               )}
 
 
-              {/* Collapsible Advanced Options */}
-              <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-                <CollapsibleTrigger asChild>
-                  <Button variant="outline" className="w-full h-11 md:h-10">
-                    Advanced Options
-                    <ChevronRight className={`h-4 w-4 ml-2 transition-transform ${advancedOpen ? 'rotate-90' : ''}`} />
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-4 mt-4">
-                  {/* Dynamic Model Parameters */}
-                  {selectedModel && filteredModels && (() => {
-                    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-                    return currentModel?.input_schema ? (
-                      <ModelParameterForm
-                        modelSchema={currentModel.input_schema}
-                        onChange={setModelParameters}
-                        currentValues={modelParameters}
-                        excludeFields={['prompt', 'image_urls']}
-                      />
-                    ) : (
-                      // Legacy Resolution fallback if no schema
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Resolution</label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
-                            variant={resolution === "Native" ? "default" : "outline"}
-                            onClick={() => setResolution("Native")}
-                            className="h-11 md:h-10"
-                          >
-                            Native
-                          </Button>
-                          <Button
-                            variant={resolution === "HD" ? "default" : "outline"}
-                            onClick={() => setResolution("HD")}
-                            className="h-11 md:h-10"
-                          >
-                            HD
-                          </Button>
-                        </div>
+              {/* Required Parameters (outside collapsible) */}
+              {selectedModel && filteredModels && (() => {
+                const currentModel = filteredModels.find(m => m.record_id === selectedModel);
+                const schema = currentModel?.input_schema;
+                if (!schema?.properties) return null;
+                
+                const requiredFields = schema.required || [];
+                const requiredProperties = Object.entries(schema.properties).filter(
+                  ([key]) => requiredFields.includes(key) && !['prompt', 'image_urls', 'model'].includes(key)
+                );
+                
+                if (requiredProperties.length === 0) return null;
+                
+                return (
+                  <div className="space-y-4">
+                    {requiredProperties.map(([key, propSchema]: [string, any]) => (
+                      <div key={key}>
+                        <ModelParameterForm
+                          modelSchema={{
+                            properties: { [key]: propSchema },
+                            required: [key]
+                          }}
+                          onChange={(params) => setModelParameters(prev => ({ ...prev, ...params }))}
+                          currentValues={modelParameters}
+                          excludeFields={[]}
+                        />
                       </div>
-                    );
-                  })()}
-                </CollapsibleContent>
-              </Collapsible>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {/* Collapsible Advanced Options (Optional Parameters Only) */}
+              {selectedModel && filteredModels && (() => {
+                const currentModel = filteredModels.find(m => m.record_id === selectedModel);
+                const schema = currentModel?.input_schema;
+                if (!schema?.properties) return null;
+                
+                const requiredFields = schema.required || [];
+                const optionalProperties = Object.entries(schema.properties).filter(
+                  ([key]) => !requiredFields.includes(key) && !['prompt', 'image_urls', 'model'].includes(key)
+                );
+                
+                if (optionalProperties.length === 0) return null;
+                
+                return (
+                  <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="outline" className="w-full h-11 md:h-10">
+                        Advanced Options
+                        <ChevronRight className={`h-4 w-4 ml-2 transition-transform ${advancedOpen ? 'rotate-90' : ''}`} />
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="space-y-4 mt-4">
+                      <ModelParameterForm
+                        modelSchema={{
+                          properties: Object.fromEntries(optionalProperties),
+                          required: []
+                        }}
+                        onChange={(params) => setModelParameters(prev => ({ ...prev, ...params }))}
+                        currentValues={modelParameters}
+                        excludeFields={[]}
+                      />
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })()}
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-2">

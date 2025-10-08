@@ -19,6 +19,9 @@ export const SchemaInput = ({ name, schema, value, onChange, required }: SchemaI
 
   // Handle enum types (dropdown)
   if (schema.enum && Array.isArray(schema.enum)) {
+    const currentValue = value?.toString() || schema.default?.toString();
+    const defaultText = schema.default ? ` (default: ${schema.default})` : '';
+    
     return (
       <div className="space-y-2">
         <Label>
@@ -26,9 +29,9 @@ export const SchemaInput = ({ name, schema, value, onChange, required }: SchemaI
           {required && <span className="text-destructive ml-1">*</span>}
         </Label>
         {schema.description && (
-          <p className="text-xs text-muted-foreground">{schema.description}</p>
+          <p className="text-xs text-muted-foreground">{schema.description}{defaultText}</p>
         )}
-        <Select value={value?.toString()} onValueChange={onChange}>
+        <Select value={currentValue} onValueChange={onChange}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder={`Select ${displayName.toLowerCase()}`} />
           </SelectTrigger>

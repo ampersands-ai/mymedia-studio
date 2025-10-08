@@ -18,17 +18,17 @@ serve(async (req) => {
     const payload = await req.json();
     console.log('Webhook payload:', JSON.stringify(payload));
 
-    // Validate payload structure
-    if (!payload.data?.taskId) {
-      console.error('Invalid payload: missing taskId');
+    // Validate payload structure - support both camelCase and snake_case
+    const taskId = payload.data?.taskId || payload.data?.task_id;
+    if (!taskId) {
+      console.error('Invalid payload: missing taskId/task_id');
       return new Response(
         JSON.stringify({ error: 'Missing taskId in payload' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const taskId = payload.data?.taskId;
-    const { state, resultJson, failMsg } = payload.data || {};
+    const { state, resultJson, failMsg, video_url } = payload.data || {};
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -97,13 +97,17 @@ serve(async (req) => {
       );
     }
 
-    // Handle success (support both old and new formats)
-    if (isSuccess && (resultJson || payload.data?.info)) {
+    // Handle success (support multiple formats)
+    if (isSuccess && (resultJson || payload.data?.info || video_url)) {
       console.log('Processing successful generation');
       
-      // Old format: parse resultJson
+      // Support multiple URL formats
       let resultUrl: string | undefined;
-      if (resultJson) {
+      if (video_url) {
+        // Direct video_url field
+        resultUrl = video_url;
+      } else if (resultJson) {
+        // Old format: parse resultJson
         const result = JSON.parse(resultJson);
         resultUrl = result.resultUrls?.[0];
       } else if (payload.data?.info) {

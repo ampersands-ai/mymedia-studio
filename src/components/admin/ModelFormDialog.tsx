@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SchemaBuilder } from "./SchemaBuilder";
 
 const AVAILABLE_GROUPS = [
   { id: "image_editing", label: "Image Editing" },
@@ -402,19 +403,21 @@ export function ModelFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="input_schema">Input Schema (JSON) *</Label>
-            <Textarea
-              id="input_schema"
-              value={formData.input_schema}
-              onChange={(e) =>
-                setFormData({ ...formData, input_schema: e.target.value })
+            <Label>Input Schema *</Label>
+            <SchemaBuilder
+              schema={typeof formData.input_schema === 'string' 
+                ? JSON.parse(formData.input_schema || '{}')
+                : formData.input_schema
               }
-              placeholder='{"type": "object", "required": ["prompt"], "properties": {"prompt": {"type": "string"}, "aspect_ratio": {"enum": ["Portrait", "Landscape"], "default": "Landscape"}}}'
-              rows={6}
-              className="font-mono text-sm"
+              onChange={(newSchema) => {
+                setFormData({ 
+                  ...formData, 
+                  input_schema: JSON.stringify(newSchema, null, 2) 
+                });
+              }}
             />
             <p className="text-xs text-muted-foreground">
-              <strong>Only fields defined here will be sent to the provider API.</strong> Use JSON Schema format to define parameters.
+              <strong>Only fields defined here will be sent to the provider API.</strong>
             </p>
           </div>
 

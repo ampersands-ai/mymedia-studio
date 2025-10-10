@@ -192,6 +192,7 @@ export function ParameterDialog({
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault())}
               placeholder="What does this parameter control?"
               rows={2}
             />
@@ -445,10 +446,10 @@ export function ParameterDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>
+          <Button type="button" onClick={handleSave}>
             {parameter ? 'Update' : 'Add'} Parameter
           </Button>
         </DialogFooter>

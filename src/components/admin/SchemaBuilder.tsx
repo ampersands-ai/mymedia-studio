@@ -68,7 +68,7 @@ export function SchemaBuilder({ schema, onChange }: SchemaBuilderProps) {
         <p className="text-sm text-muted-foreground">
           {parameters.length} parameter{parameters.length !== 1 ? 's' : ''} defined
         </p>
-        <Button onClick={handleAddParameter} size="sm">
+        <Button type="button" onClick={handleAddParameter} size="sm">
           <Plus className="h-4 w-4 mr-2" />
           Add Parameter
         </Button>
@@ -137,6 +137,7 @@ export function SchemaBuilder({ schema, onChange }: SchemaBuilderProps) {
                 
                 <div className="flex gap-1 ml-4">
                   <Button 
+                    type="button"
                     size="sm" 
                     variant="ghost" 
                     onClick={() => handleEditParameter(param)}
@@ -144,6 +145,7 @@ export function SchemaBuilder({ schema, onChange }: SchemaBuilderProps) {
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button 
+                    type="button"
                     size="sm" 
                     variant="ghost" 
                     onClick={() => handleDeleteParameter(param.name)}
@@ -159,7 +161,7 @@ export function SchemaBuilder({ schema, onChange }: SchemaBuilderProps) {
 
       <Collapsible open={showJson} onOpenChange={setShowJson}>
         <CollapsibleTrigger asChild>
-          <Button variant="outline" size="sm" className="w-full">
+          <Button type="button" variant="outline" size="sm" className="w-full">
             {showJson ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
             {showJson ? 'Hide' : 'Show'} Generated JSON
           </Button>

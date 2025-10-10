@@ -163,6 +163,7 @@ export function ParameterDialog({
               id="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_') })}
+              onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
               placeholder="e.g., image_size, prompt, aspect_ratio"
               disabled={!!parameter}
             />
@@ -177,6 +178,7 @@ export function ParameterDialog({
               id="label"
               value={formData.label}
               onChange={(e) => setFormData({ ...formData, label: e.target.value })}
+              onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
               placeholder={`Auto: ${formatLabel(formData.name || 'parameter name')}`}
             />
             <p className="text-xs text-muted-foreground">
@@ -257,6 +259,7 @@ export function ParameterDialog({
                     // Invalid JSON
                   }
                 }}
+                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
               />
             ) : (
               <Input
@@ -269,6 +272,7 @@ export function ParameterDialog({
                   if (formData.type === 'integer') value = parseInt(value);
                   setFormData({ ...formData, default: value });
                 }}
+                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
                 placeholder="Leave blank for no default"
               />
             )}
@@ -319,6 +323,7 @@ export function ParameterDialog({
                     ...formData, 
                     minimum: e.target.value ? parseFloat(e.target.value) : undefined 
                   })}
+                  onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
                   placeholder="No minimum"
                 />
               </div>
@@ -332,6 +337,7 @@ export function ParameterDialog({
                     ...formData, 
                     maximum: e.target.value ? parseFloat(e.target.value) : undefined 
                   })}
+                  onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
                   placeholder="No maximum"
                 />
               </div>
@@ -351,6 +357,7 @@ export function ParameterDialog({
                       ...formData, 
                       minLength: e.target.value ? parseInt(e.target.value) : undefined 
                     })}
+                    onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
                     placeholder="No minimum"
                   />
                 </div>
@@ -364,6 +371,7 @@ export function ParameterDialog({
                       ...formData, 
                       maxLength: e.target.value ? parseInt(e.target.value) : undefined 
                     })}
+                    onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
                     placeholder="No maximum"
                   />
                 </div>

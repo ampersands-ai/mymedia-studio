@@ -165,33 +165,23 @@
 
   <body>
     <div id="root" style="opacity: 1;">
-      <!-- Static HTML Shell for instant LCP -->
-      <div class="hero-container">
-        <div class="hero-content">
-          <div class="hero-badges">
-            <div class="badge badge-yellow">
-              <span>⚡ POWERED BY ADVANCED AI</span>
+      <!-- Static HTML Shell matching React output for zero re-render -->
+      <div class="min-h-screen bg-background">
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5"></div>
+        <div class="relative z-10">
+          <section class="container mx-auto px-4 py-12 md:py-20">
+            <div class="max-w-5xl mx-auto text-center space-y-6 md:space-y-8">
+              <h2 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight px-4">
+                <span class="gradient-text">An Affordable</span>
+                <br>
+                <span class="block mt-2">AI Creation Platform</span>
+              </h2>
+              <p class="text-base sm:text-lg md:text-xl lg:text-2xl text-foreground/80 max-w-3xl mx-auto font-medium px-4">
+                Why pay $50-100/month elsewhere? Create stunning videos, images, music & text for a fraction of the cost—
+                <span class="font-black gradient-text"> starting at just $3.99/mo</span>
+              </p>
             </div>
-            <div class="badge badge-green">
-              <span>🎯 SAVE 50-80% VS COMPETITORS</span>
-            </div>
-            <div class="badge badge-primary">
-              <span>💎 ENTERPRISE POWER, FREELANCER PRICES</span>
-            </div>
-          </div>
-          <h1 class="hero-title">
-            <span class="gradient-text">An Affordable</span>
-            <br>
-            <span>AI Creation Platform</span>
-          </h1>
-          <p class="hero-subtitle">
-            Why pay $50-100/month elsewhere? Create stunning videos, images, music & text for a fraction of the cost—
-            <span style="font-weight: 900;" class="gradient-text"> starting at just $3.99/mo</span>
-          </p>
-          <div class="hero-cta">
-            <button class="btn btn-neon">START CREATING FOR FREE</button>
-            <button class="btn btn-pink">SEE HOW MUCH YOU'LL SAVE</button>
-          </div>
+          </section>
         </div>
       </div>
     </div>

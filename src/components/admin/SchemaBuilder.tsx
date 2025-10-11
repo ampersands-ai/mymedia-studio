@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Edit, Trash2, ChevronDown, ChevronUp, ArrowUp, ArrowDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ParameterDialog } from "./ParameterDialog";
 import { parseSchema, generateSchema, type Parameter } from "@/lib/schema-utils";
@@ -60,6 +60,22 @@ export function SchemaBuilder({ schema, onChange }: SchemaBuilderProps) {
     setDialogOpen(false);
   };
 
+  const handleMoveUp = (index: number) => {
+    if (index === 0) return;
+    const updated = [...parameters];
+    [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
+    setParameters(updated);
+    onChange(generateSchema(updated));
+  };
+
+  const handleMoveDown = (index: number) => {
+    if (index === parameters.length - 1) return;
+    const updated = [...parameters];
+    [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
+    setParameters(updated);
+    onChange(generateSchema(updated));
+  };
+
   const generatedJson = JSON.stringify(generateSchema(parameters), null, 2);
 
   return (
@@ -80,9 +96,34 @@ export function SchemaBuilder({ schema, onChange }: SchemaBuilderProps) {
             No parameters defined. Click "Add Parameter" to get started.
           </Card>
         ) : (
-          parameters.map((param) => (
+          parameters.map((param, index) => (
             <Card key={param.name} className="p-4">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-1">
+                  <Button 
+                    type="button"
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={() => handleMoveUp(index)}
+                    disabled={index === 0}
+                    className="h-8 w-8 p-0"
+                    title="Move up"
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    type="button"
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={() => handleMoveDown(index)}
+                    disabled={index === parameters.length - 1}
+                    className="h-8 w-8 p-0"
+                    title="Move down"
+                  >
+                    <ArrowDown className="h-4 w-4" />
+                  </Button>
+                </div>
+
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-mono font-semibold">{param.name}</span>
@@ -135,7 +176,7 @@ export function SchemaBuilder({ schema, onChange }: SchemaBuilderProps) {
                   </div>
                 </div>
                 
-                <div className="flex gap-1 ml-4">
+                <div className="flex gap-1">
                   <Button 
                     type="button"
                     size="sm" 

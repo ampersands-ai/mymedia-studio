@@ -247,8 +247,12 @@ const CustomCreation = () => {
   const schemaRequired = getSchemaRequiredFields();
   const isPromptRequiredBySchema = schemaRequired.includes('prompt');
 
+  // Get current model schema
+  const currentModelForSchema = filteredModels.find(m => m.record_id === selectedModel);
+  const modelSchema = currentModelForSchema?.input_schema;
+
   // Use only schema-based requirements
-  const isPromptRequired = isPromptRequiredBySchema || true; // Prompt is always required unless schema says otherwise
+  const isPromptRequired = isPromptRequiredBySchema;
 
   const surprisePrompts = [
     "A majestic dragon soaring over a cyberpunk city at sunset",
@@ -782,55 +786,57 @@ const CustomCreation = () => {
                 </div>
               )}
 
-              {/* Prompt */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">
-                    Prompt {isPromptRequired && <span className="text-destructive">*</span>}
-                  </label>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleSurpriseMe}
-                      className="h-8 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white font-bold border-2 border-black hover:opacity-90"
-                      disabled={localGenerating || isGenerating}
-                    >
-                      <Sparkles className="h-3 w-3 mr-1" />
-                      Surprise Me
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEnhancePrompt(!enhancePrompt)}
-                      className={cn(
-                        "h-8 transition-all font-bold border-2 border-black",
-                        enhancePrompt 
-                          ? "bg-green-500 text-white hover:bg-green-600" 
-                          : "bg-white text-black hover:bg-gray-100"
-                      )}
-                    >
-                      {enhancePrompt ? "✓ " : ""}Enhance
-                    </Button>
+              {/* Prompt - Only show if prompt field exists in schema */}
+              {modelSchema?.properties?.prompt && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">
+                      Prompt {isPromptRequired && <span className="text-destructive">*</span>}
+                    </label>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSurpriseMe}
+                        className="h-8 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white font-bold border-2 border-black hover:opacity-90"
+                        disabled={localGenerating || isGenerating}
+                      >
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        Surprise Me
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEnhancePrompt(!enhancePrompt)}
+                        className={cn(
+                          "h-8 transition-all font-bold border-2 border-black",
+                          enhancePrompt 
+                            ? "bg-green-500 text-white hover:bg-green-600" 
+                            : "bg-white text-black hover:bg-gray-100"
+                        )}
+                      >
+                        {enhancePrompt ? "✓ " : ""}Enhance
+                      </Button>
+                    </div>
+                  </div>
+                  <Textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Describe what you want to create..."
+                    className="min-h-[100px] md:min-h-[120px] resize-none text-sm md:text-base"
+                    disabled={localGenerating || isGenerating}
+                    required={isPromptRequired}
+                  />
+                  <div className="flex justify-end">
+                    <span className={cn(
+                      "text-xs",
+                      prompt.length > 5000 ? "text-destructive font-medium" : "text-muted-foreground"
+                    )}>
+                      {prompt.length} / 5000 characters
+                    </span>
                   </div>
                 </div>
-                <Textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Describe what you want to create..."
-                  className="min-h-[100px] md:min-h-[120px] resize-none text-sm md:text-base"
-                  disabled={localGenerating || isGenerating}
-                  required={isPromptRequired}
-                />
-                <div className="flex justify-end">
-                  <span className={cn(
-                    "text-xs",
-                    prompt.length > 5000 ? "text-destructive font-medium" : "text-muted-foreground"
-                  )}>
-                    {prompt.length} / 5000 characters
-                  </span>
-                </div>
-              </div>
+              )}
 
 
               {/* Image Upload - Only show if image field exists in schema AND maxImages > 0 */}

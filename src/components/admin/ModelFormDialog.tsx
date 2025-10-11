@@ -430,7 +430,7 @@ export function ModelFormDialog({
     ? JSON.parse(formData.input_schema || '{}')
     : formData.input_schema;
   const properties = (schema as any).properties || {};
-  const propertyKeys = Object.keys(properties).slice(0, 2);
+  const propertyKeys = Object.keys(properties);
   
   return `curl -X POST '${formData.api_endpoint || '/v1/generate'}' \\
   -H 'Content-Type: application/json' \\

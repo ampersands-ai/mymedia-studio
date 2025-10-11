@@ -82,6 +82,55 @@
         font-weight: 500;
       }
       
+      /* Critical CSS for LCP element - matches Tailwind classes in static shell */
+      .text-foreground\/80 {
+        color: hsl(0 0% 5% / 0.8);
+      }
+      
+      .max-w-3xl {
+        max-width: 48rem;
+      }
+      
+      .mx-auto {
+        margin-left: auto;
+        margin-right: auto;
+      }
+      
+      .font-medium {
+        font-weight: 500;
+      }
+      
+      .px-4 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+      
+      .text-base {
+        font-size: 1rem;
+        line-height: 1.5rem;
+      }
+      
+      @media (min-width: 640px) {
+        .sm\:text-lg {
+          font-size: 1.125rem;
+          line-height: 1.75rem;
+        }
+      }
+      
+      @media (min-width: 768px) {
+        .md\:text-xl {
+          font-size: 1.25rem;
+          line-height: 1.75rem;
+        }
+      }
+      
+      @media (min-width: 1024px) {
+        .lg\:text-2xl {
+          font-size: 1.5rem;
+          line-height: 2rem;
+        }
+      }
+      
       .hero-cta {
         display: flex;
         flex-direction: column;

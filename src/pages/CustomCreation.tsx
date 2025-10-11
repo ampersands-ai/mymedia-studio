@@ -223,7 +223,7 @@ const CustomCreation = () => {
     const required = currentModel.input_schema.required || [];
     
     // Look for image-like fields
-    const imageFieldNames = ['image_urls', 'imageUrl', 'image_url', 'image', 'images'];
+    const imageFieldNames = ['image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'filesURL', 'file_urls'];
     for (const fieldName of imageFieldNames) {
       if (properties[fieldName]) {
         const schema = properties[fieldName];

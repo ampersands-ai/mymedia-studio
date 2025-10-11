@@ -436,8 +436,7 @@ export function ModelFormDialog({
   -H 'Content-Type: application/json' \\
   -H 'Authorization: Bearer YOUR_API_KEY' \\
   -d '{
-  "model": "${formData.id || 'model-id'}",
-  "prompt": "Your prompt here"${formData.payload_structure === 'flat' ? `,
+  "model": "${formData.id || 'model-id'}"${formData.payload_structure === 'flat' ? `,
   ${propertyKeys.map(key => `"${key}": "value"`).join(',\n  ')}` : `,
   "input": {
     ${propertyKeys.map(key => `"${key}": "value"`).join(',\n    ')}

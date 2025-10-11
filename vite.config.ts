@@ -28,9 +28,7 @@ export default defineConfig(({ mode }) => ({
           'radix-toast': ['@radix-ui/react-toast'],
           'radix-sheet': ['@radix-ui/react-sheet'],
           'radix-accordion': ['@radix-ui/react-accordion'],
-          'radix-table': ['@radix-ui/react-table'],
           'admin-vendor': [
-            '@radix-ui/react-form',
             '@radix-ui/react-slider',
           ],
         },

@@ -13,6 +13,7 @@ import { Menu, Home, Wand2, Settings, LogOut, Coins, Shield } from "lucide-react
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MobileMenuProps {
   tokenBalance?: number;
@@ -24,6 +25,10 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
+
+  // Only render on mobile devices for better performance
+  if (!isMobile) return null;
 
   const handleSignOut = async () => {
     try {

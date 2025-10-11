@@ -21,11 +21,17 @@ export default defineConfig(({ mode }) => ({
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'query-vendor': ['@tanstack/react-query'],
-          'ui-vendor': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-select',
-            '@radix-ui/react-tabs',
+          'radix-dialog': ['@radix-ui/react-dialog'],
+          'radix-dropdown': ['@radix-ui/react-dropdown-menu'],
+          'radix-select': ['@radix-ui/react-select'],
+          'radix-tabs': ['@radix-ui/react-tabs'],
+          'radix-toast': ['@radix-ui/react-toast'],
+          'radix-sheet': ['@radix-ui/react-sheet'],
+          'radix-accordion': ['@radix-ui/react-accordion'],
+          'radix-table': ['@radix-ui/react-table'],
+          'admin-vendor': [
+            '@radix-ui/react-form',
+            '@radix-ui/react-slider',
           ],
         },
       },

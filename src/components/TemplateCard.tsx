@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import { cn } from "@/lib/utils";
 
 interface TemplateCardProps {
@@ -8,7 +8,7 @@ interface TemplateCardProps {
   className?: string;
 }
 
-export const TemplateCard = ({ image, video, alt, className }: TemplateCardProps) => {
+const TemplateCardComponent = ({ image, video, alt, className }: TemplateCardProps) => {
   const [isHovering, setIsHovering] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -83,6 +83,9 @@ export const TemplateCard = ({ image, video, alt, className }: TemplateCardProps
         src={image}
         alt={alt}
         loading="lazy"
+        decoding="async"
+        width="400"
+        height="300"
         className={cn(
           "w-full h-full object-cover transition-opacity duration-300",
           showVideo && video ? "opacity-0" : "opacity-100"
@@ -124,3 +127,6 @@ export const TemplateCard = ({ image, video, alt, className }: TemplateCardProps
     </div>
   );
 };
+
+// Memoize component to prevent unnecessary re-renders
+export const TemplateCard = memo(TemplateCardComponent);

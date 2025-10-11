@@ -43,10 +43,9 @@ const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Defer SEO schema injection for better LCP performance
+  // Defer SEO schema injection using requestIdleCallback for better LCP performance
   useEffect(() => {
-    // Defer schema injection to after initial render
-    const timer = setTimeout(() => {
+    const injectSEO = () => {
       const schemas = generateSchemas();
       injectSchemas(schemas);
       
@@ -57,12 +56,20 @@ const Index = () => {
           'Professional AI-powered platform for creating videos, images, music, and more. Generate portrait headshots, cinematic videos, product photography, and social media content instantly. Start free with 500 tokens.'
         );
       }
-    }, 100);
+    };
     
-    return () => clearTimeout(timer);
+    // Use requestIdleCallback to defer non-critical SEO operations
+    if ('requestIdleCallback' in window) {
+      const handle = requestIdleCallback(injectSEO, { timeout: 5000 });
+      return () => cancelIdleCallback(handle);
+    } else {
+      const timer = setTimeout(injectSEO, 2000);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
-  const useCases = [
+  // Memoize expensive arrays to prevent re-renders
+  const useCases = useMemo(() => [
     {
       title: "Portrait Headshots",
       description: "Professional AI-generated headshots for business profiles and portfolios",
@@ -111,9 +118,9 @@ const Index = () => {
       image: textGeneration,
       category: "Text Processing",
     },
-  ];
+  ], []);
 
-  const capabilities = [
+  const capabilities = useMemo(() => [
     "Remove Backgrounds",
     "Photo Enhancing",
     "Product Videos",
@@ -125,9 +132,9 @@ const Index = () => {
     "Location & Travel",
     "Branding & Identity",
     "Family & Entertainment",
-  ];
+  ], []);
 
-  const partners = [
+  const partners = useMemo(() => [
     { name: "Claude", logo: claudeLogo },
     { name: "Midjourney", logo: midjourneyLogo },
     { name: "Veo 3", logo: veo3Logo },
@@ -150,7 +157,7 @@ const Index = () => {
     { name: "Wan", logo: wanLogo },
     { name: "Seedance", logo: seedanceLogo },
     { name: "Google", logo: googleLogo },
-  ];
+  ], []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -286,7 +293,10 @@ const Index = () => {
                     src={partner.logo}
                     alt={`${partner.name} logo`}
                     className="max-h-full max-w-full object-contain opacity-70 hover:opacity-100 transition-opacity"
-                    loading="lazy"
+                    loading={index < 8 ? "eager" : "lazy"}
+                    decoding="async"
+                    width={index < 8 ? "64" : "128"}
+                    height={index < 8 ? "40" : "64"}
                   />
                 </div>
               ))}
@@ -302,6 +312,9 @@ const Index = () => {
                     alt={`${partner.name} logo`}
                     className="max-h-full max-w-full object-contain opacity-70 hover:opacity-100 transition-opacity"
                     loading="lazy"
+                    decoding="async"
+                    width="128"
+                    height="64"
                   />
                 </div>
               ))}
@@ -310,7 +323,7 @@ const Index = () => {
         </section>
 
         {/* Use Cases Grid */}
-        <section className="container mx-auto px-4 py-12 md:py-20">
+        <section className="container mx-auto px-4 py-12 md:py-20 use-cases-section">
           <div className="text-center mb-8 md:mb-16">
             <h3 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 md:mb-4 px-4">WHAT YOU CAN CREATE</h3>
             <p className="text-base md:text-xl text-foreground/80 font-medium max-w-3xl mx-auto px-4">
@@ -328,6 +341,7 @@ const Index = () => {
                       alt={`${useCase.title} - ${useCase.description}`}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       loading="lazy"
+                      decoding="async"
                       width="400"
                       height="300"
                     />
@@ -346,7 +360,7 @@ const Index = () => {
         </section>
 
         {/* More Capabilities */}
-        <section className="container mx-auto px-4 py-12 md:py-20">
+        <section className="container mx-auto px-4 py-12 md:py-20 capabilities-section">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8 md:mb-12">
               <h3 className="text-3xl md:text-4xl font-black mb-3 md:mb-4 px-4">AND SO MUCH MORE</h3>
@@ -369,7 +383,7 @@ const Index = () => {
         </section>
 
         {/* Savings Comparison */}
-        <section className="container mx-auto px-4 py-12 md:py-20 bg-card/30">
+        <section className="container mx-auto px-4 py-12 md:py-20 bg-card/30 pricing-comparison">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-8 md:mb-12">
               <h3 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 px-4">COMPARE & SAVE</h3>

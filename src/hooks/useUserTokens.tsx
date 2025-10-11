@@ -1,35 +1,57 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export const useUserTokens = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Phase 2: Replace polling with real-time subscriptions
+  const [isConnected, setIsConnected] = useState(false);
+
+  // Phase 2: Replace polling with real-time subscriptions (with lazy connection)
   useEffect(() => {
     if (!user?.id) return;
 
-    const channel = supabase
-      .channel('user-tokens-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'user_subscriptions',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          console.log('Token update received:', payload.new);
-          queryClient.setQueryData(['user-tokens', user.id], payload.new);
-        }
-      )
-      .subscribe();
+    // Delay realtime connection by 1 second after authentication for faster initial load
+    const connectTimer = setTimeout(() => {
+      const channel = supabase
+        .channel('user-tokens-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'user_subscriptions',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('Token update received:', payload.new);
+            queryClient.setQueryData(['user-tokens', user.id], payload.new);
+          }
+        )
+        .on('system', {}, (payload) => {
+          if (payload.status === 'CHANNEL_ERROR') {
+            console.error('Channel error, reconnecting...', payload);
+            setIsConnected(false);
+          }
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            setIsConnected(true);
+            console.log('Connected to user tokens realtime');
+          }
+        });
+
+      return () => {
+        setIsConnected(false);
+        channel.unsubscribe();
+        supabase.removeChannel(channel);
+      };
+    }, 1000);
 
     return () => {
-      supabase.removeChannel(channel);
+      clearTimeout(connectTimer);
     };
   }, [user?.id, queryClient]);
 

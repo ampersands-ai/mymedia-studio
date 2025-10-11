@@ -8,26 +8,35 @@ export const Analytics = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Initialize Google Analytics
+    // Defer Google Analytics initialization to improve initial load performance
     if (typeof window !== 'undefined') {
-      // Load GA script
-      const script = document.createElement('script');
-      script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
-      script.async = true;
-      document.head.appendChild(script);
+      const loadAnalytics = () => {
+        // Load GA script
+        const script = document.createElement('script');
+        script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+        script.async = true;
+        document.head.appendChild(script);
 
-      // Initialize dataLayer
-      window.dataLayer = window.dataLayer || [];
-      function gtag(...args: any[]) {
-        window.dataLayer.push(args);
+        // Initialize dataLayer
+        window.dataLayer = window.dataLayer || [];
+        function gtag(...args: any[]) {
+          window.dataLayer.push(args);
+        }
+        gtag('js', new Date());
+        gtag('config', GA_MEASUREMENT_ID, {
+          send_page_view: false // We'll send page views manually
+        });
+
+        // Store gtag in window for later use
+        (window as any).gtag = gtag;
+      };
+
+      // Use requestIdleCallback or setTimeout to defer loading until browser is idle
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(loadAnalytics, { timeout: 3000 });
+      } else {
+        setTimeout(loadAnalytics, 3000);
       }
-      gtag('js', new Date());
-      gtag('config', GA_MEASUREMENT_ID, {
-        send_page_view: false // We'll send page views manually
-      });
-
-      // Store gtag in window for later use
-      (window as any).gtag = gtag;
     }
   }, []);
 

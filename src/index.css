@@ -82,6 +82,12 @@ All colors MUST be HSL.
     font-size: 16px;
   }
   
+  /* Mobile-specific optimizations for better touch performance */
+  button, a, [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
   /* Mobile-first base font sizes */
   @media (max-width: 768px) {
     body {
@@ -216,16 +222,40 @@ All colors MUST be HSL.
   }
   
   .partners-track {
-    animation: partners-scroll 3s linear infinite;
+    animation: partners-scroll 30s linear infinite;
     will-change: transform;
   }
   
-  /* Disable animation for users who prefer reduced motion */
+  .partners-track:not(:hover) {
+    will-change: auto;
+  }
+  
+  /* Content visibility for off-screen sections */
+  .use-cases-section,
+  .capabilities-section,
+  .pricing-comparison {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 500px;
+  }
+  
+  /* Disable animations and improve accessibility for reduced motion */
   @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    
     .partners-track {
-      animation: none;
+      animation: none !important;
       overflow-x: auto;
       scroll-behavior: smooth;
+    }
+    
+    .hover-lift {
+      transition: none;
     }
   }
 }

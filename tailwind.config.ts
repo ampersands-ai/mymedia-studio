@@ -146,6 +146,11 @@ export default {
         "spin-slow": "spin-slow 3s linear infinite",
         "bounce-subtle": "bounce-subtle 2s infinite",
       },
+      willChange: {
+        transform: 'transform',
+        opacity: 'opacity',
+        auto: 'auto',
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

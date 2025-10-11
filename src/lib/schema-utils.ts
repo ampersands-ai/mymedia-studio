@@ -109,8 +109,8 @@ function formatLabel(name: string): string {
  */
 export function validateParameterName(name: string, existingNames: string[]): string | null {
   if (!name) return "Parameter name is required";
-  if (!/^[a-z_][a-z0-9_]*$/.test(name)) {
-    return "Parameter name must be lowercase, start with a letter, and contain only letters, numbers, and underscores";
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
+    return "Parameter name must start with a letter or underscore, and contain only letters, numbers, and underscores";
   }
   if (existingNames.includes(name)) {
     return "Parameter name must be unique";

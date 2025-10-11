@@ -25,11 +25,11 @@ export default defineConfig(({ mode }) => ({
           'radix-dropdown': ['@radix-ui/react-dropdown-menu'],
           'radix-select': ['@radix-ui/react-select'],
           'radix-tabs': ['@radix-ui/react-tabs'],
-          'radix-toast': ['@radix-ui/react-toast'],
-          'radix-sheet': ['@radix-ui/react-sheet'],
           'radix-accordion': ['@radix-ui/react-accordion'],
+          'radix-toast': ['@radix-ui/react-toast'],
           'admin-vendor': [
             '@radix-ui/react-slider',
+            '@radix-ui/react-popover',
           ],
         },
       },

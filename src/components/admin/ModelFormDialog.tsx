@@ -419,6 +419,39 @@ export function ModelFormDialog({
             <p className="text-xs text-muted-foreground">
               <strong>Only fields defined here will be sent to the provider API.</strong>
             </p>
+            
+            {/* CURL Sample */}
+            <div className="mt-4 space-y-2">
+              <Label className="text-sm font-semibold">Sample CURL Request</Label>
+              <div className="relative">
+                <pre className="bg-muted p-3 rounded-md text-xs overflow-x-auto font-mono">
+{(() => {
+  const schema = typeof formData.input_schema === 'string' 
+    ? JSON.parse(formData.input_schema || '{}')
+    : formData.input_schema;
+  const properties = (schema as any).properties || {};
+  const propertyKeys = Object.keys(properties).slice(0, 2);
+  
+  return `curl -X POST '${formData.api_endpoint || '/v1/generate'}' \\
+  -H 'Content-Type: application/json' \\
+  -H 'Authorization: Bearer YOUR_API_KEY' \\
+  -d '{
+  "model": "${formData.id || 'model-id'}",
+  "prompt": "Your prompt here"${formData.payload_structure === 'flat' ? `,
+  ${propertyKeys.map(key => `"${key}": "value"`).join(',\n  ')}` : `,
+  "input": {
+    ${propertyKeys.map(key => `"${key}": "value"`).join(',\n    ')}
+  }`}
+}'`;
+})()}
+                </pre>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {formData.payload_structure === 'flat' 
+                  ? 'Flat structure: parameters at top level' 
+                  : 'Wrapper structure: parameters inside "input" object'}
+              </p>
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

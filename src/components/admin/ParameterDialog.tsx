@@ -165,7 +165,6 @@ export function ParameterDialog({
               onChange={(e) => setFormData({ ...formData, name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_') })}
               onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
               placeholder="e.g., image_size, prompt, aspect_ratio"
-              disabled={!!parameter}
             />
             <p className="text-xs text-muted-foreground">
               Lowercase, alphanumeric, underscores only. This is the JSON key.

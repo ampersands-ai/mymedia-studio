@@ -1,0 +1,127 @@
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { isNativePlatform, isIOS, triggerHaptic } from '@/utils/capacitor-utils';
+import { toast } from 'sonner';
+
+export interface UseNativeDownloadResult {
+  downloadFile: (url: string, filename?: string) => Promise<void>;
+  isNative: boolean;
+}
+
+/**
+ * Hook for native file downloads on mobile devices
+ * Falls back to browser download on web
+ */
+export const useNativeDownload = (): UseNativeDownloadResult => {
+  const isNative = isNativePlatform();
+
+  /**
+   * Determine MIME type from URL or filename
+   */
+  const getMimeType = (url: string): string => {
+    const extension = url.split('.').pop()?.toLowerCase();
+    
+    const mimeTypes: Record<string, string> = {
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      gif: 'image/gif',
+      webp: 'image/webp',
+      mp4: 'video/mp4',
+      webm: 'video/webm',
+      mov: 'video/quicktime',
+      mp3: 'audio/mpeg',
+      wav: 'audio/wav',
+      pdf: 'application/pdf',
+    };
+
+    return mimeTypes[extension || ''] || 'application/octet-stream';
+  };
+
+  /**
+   * Download file to device
+   */
+  const downloadFile = async (url: string, filename?: string): Promise<void> => {
+    const name = filename || `download_${Date.now()}.${url.split('.').pop()}`;
+    
+    if (!isNative) {
+      // Web fallback: use anchor download
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+        
+        toast.success('Download started!');
+      } catch (error) {
+        console.error('Download error:', error);
+        toast.error('Failed to download file');
+      }
+      return;
+    }
+
+    // Native download
+    try {
+      toast.info('Downloading...');
+      
+      // Fetch the file
+      const response = await fetch(url);
+      const blob = await response.blob();
+      
+      // Convert blob to base64
+      const reader = new FileReader();
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => {
+          const base64 = (reader.result as string).split(',')[1];
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+
+      // Determine directory based on file type
+      const mimeType = getMimeType(url);
+      const isImage = mimeType.startsWith('image/');
+      const isVideo = mimeType.startsWith('video/');
+      
+      // On iOS, save to Documents (can't directly save to Photos without plugin)
+      // On Android, save to Downloads
+      const directory = isIOS() ? Directory.Documents : Directory.Documents;
+
+      // Write file
+      const result = await Filesystem.writeFile({
+        path: name,
+        data: base64Data,
+        directory,
+      });
+
+      await triggerHaptic('medium');
+      
+      if (isIOS()) {
+        toast.success(`Saved to Files app!`, {
+          description: 'Open Files app to view your download',
+        });
+      } else {
+        toast.success(`Saved to ${isImage ? 'Gallery' : isVideo ? 'Videos' : 'Downloads'}!`);
+      }
+      
+      console.log('File saved:', result.uri);
+    } catch (error) {
+      console.error('Native download error:', error);
+      toast.error('Failed to download file', {
+        description: 'Please check app permissions',
+      });
+    }
+  };
+
+  return {
+    downloadFile,
+    isNative,
+  };
+};

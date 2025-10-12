@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2, Clock, Info } from "lucide-react";
+import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2, Clock, Info, Camera } from "lucide-react";
+import { useNativeCamera } from "@/hooks/useNativeCamera";
+import { triggerHaptic } from "@/utils/capacitor-utils";
 import {
   Carousel,
   CarouselContent,
@@ -69,6 +71,7 @@ interface CommunityCreation {
 const CustomCreation = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { pickImage, pickMultipleImages, isLoading: cameraLoading, isNative } = useNativeCamera();
   const [selectedGroup, setSelectedGroup] = useState<CreationGroup>(() => {
     const saved = localStorage.getItem('customCreation_selectedGroup');
     return (saved as CreationGroup) || "prompt_to_image";
@@ -818,7 +821,7 @@ const CustomCreation = () => {
               )}
 
 
-              {/* Image Upload - Only show if image field exists in schema AND maxImages > 0 */}
+              {/* Image Upload - Native camera support on mobile */}
               {imageFieldName && maxImages > 0 && (
                 <div className="space-y-3">
                   <label className="text-sm font-medium">
@@ -837,21 +840,67 @@ const CustomCreation = () => {
                     </div>
                   ))}
 
-                  <input ref={fileInputRef} type="file" accept="image/*" multiple={maxImages !== 1} onChange={handleFileUpload} className="hidden" />
-                  <Button
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={maxImages ? uploadedImages.length >= maxImages : false}
-                    className="w-full border-dashed h-11 md:h-10"
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    {maxImages === 1 
-                      ? `Upload Image ${uploadedImages.length > 0 ? '(Replace)' : ''}` 
-                      : maxImages 
-                        ? `Add Images (${uploadedImages.length}/${maxImages})` 
-                        : `Add Images (${uploadedImages.length})`
-                    }
-                  </Button>
+                  {/* Native camera buttons (mobile) or file input (web) */}
+                  {isNative ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={async () => {
+                          const file = await pickImage('camera');
+                          if (file) {
+                            handleFileUpload({ target: { files: [file] } } as any);
+                            await triggerHaptic('light');
+                          }
+                        }}
+                        disabled={cameraLoading || (maxImages ? uploadedImages.length >= maxImages : false)}
+                        className="w-full border-dashed h-11"
+                      >
+                        <Camera className="h-4 w-4 mr-2" />
+                        Camera
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={async () => {
+                          if (maxImages === 1) {
+                            const file = await pickImage('gallery');
+                            if (file) {
+                              handleFileUpload({ target: { files: [file] } } as any);
+                              await triggerHaptic('light');
+                            }
+                          } else {
+                            const files = await pickMultipleImages(maxImages - uploadedImages.length);
+                            if (files.length > 0) {
+                              handleFileUpload({ target: { files } } as any);
+                              await triggerHaptic('light');
+                            }
+                          }
+                        }}
+                        disabled={cameraLoading || (maxImages ? uploadedImages.length >= maxImages : false)}
+                        className="w-full border-dashed h-11"
+                      >
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        Gallery
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <input ref={fileInputRef} type="file" accept="image/*" multiple={maxImages !== 1} onChange={handleFileUpload} className="hidden" />
+                      <Button
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={maxImages ? uploadedImages.length >= maxImages : false}
+                        className="w-full border-dashed h-11 md:h-10"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        {maxImages === 1 
+                          ? `Upload Image ${uploadedImages.length > 0 ? '(Replace)' : ''}` 
+                          : maxImages 
+                            ? `Add Images (${uploadedImages.length}/${maxImages})` 
+                            : `Add Images (${uploadedImages.length})`
+                        }
+                      </Button>
+                    </>
+                  )}
                   
                   {isImageRequired && uploadedImages.length === 0 && (
                     <p className="text-sm text-muted-foreground">

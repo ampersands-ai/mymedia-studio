@@ -8,6 +8,12 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    /* Safe area insets for notched devices (iOS, modern Android) */
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    
     --background: 0 0% 98%;
     --foreground: 0 0% 5%;
 
@@ -236,6 +242,30 @@ All colors MUST be HSL.
   .pricing-comparison {
     content-visibility: auto;
     contain-intrinsic-size: 0 500px;
+  }
+  
+  /* Safe area container for mobile devices with notches */
+  .safe-area-container {
+    padding-top: var(--sat);
+    padding-bottom: var(--sab);
+    padding-left: var(--sal);
+    padding-right: var(--sar);
+  }
+  
+  .safe-area-top {
+    padding-top: var(--sat);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: var(--sab);
+  }
+  
+  .safe-area-left {
+    padding-left: var(--sal);
+  }
+  
+  .safe-area-right {
+    padding-right: var(--sar);
   }
   
   /* Disable animations and improve accessibility for reduced motion */

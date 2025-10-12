@@ -3,9 +3,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Analytics } from "./components/Analytics";
+import { App as CapacitorApp } from '@capacitor/app';
+import { setStatusBarStyle, isNativePlatform } from "@/utils/capacitor-utils";
 
 // Lazy load pages for better performance
 const Index = lazy(() => import("./pages/Index"));
@@ -38,38 +40,62 @@ const queryClient = new QueryClient({
 });
 
 const AppContent = () => {
+  // Initialize mobile app features
+  useEffect(() => {
+    if (!isNativePlatform()) return;
+
+    // Set status bar style for mobile
+    setStatusBarStyle('dark');
+
+    // Listen for app state changes
+    let appStateListener: any;
+    CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+      console.log('App state changed. Is active:', isActive);
+    }).then(listener => {
+      appStateListener = listener;
+    });
+
+    return () => {
+      if (appStateListener) {
+        appStateListener.remove();
+      }
+    };
+  }, []);
+
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-foreground">Loading...</div>
-      </div>
-    }>
-      <Analytics />
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route path="create" element={<Create />} />
-          <Route path="custom-creation" element={<CustomCreation />} />
-          <Route path="history" element={<History />} />
-          <Route path="settings" element={<Settings />} />
-        </Route>
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="models" element={<AIModelsManager />} />
-          <Route path="templates" element={<TemplatesManager />} />
-          <Route path="users" element={<UsersManager />} />
-          <Route path="generations" element={<AllGenerations />} />
-          <Route path="disputes" element={<TokenDisputes />} />
-        </Route>
-        <Route path="/pricing" element={<Pricing />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/community" element={<Community />} />
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
+    <div className="safe-area-container">
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="animate-pulse text-foreground">Loading...</div>
+        </div>
+      }>
+        <Analytics />
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route path="create" element={<Create />} />
+            <Route path="custom-creation" element={<CustomCreation />} />
+            <Route path="history" element={<History />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="models" element={<AIModelsManager />} />
+            <Route path="templates" element={<TemplatesManager />} />
+            <Route path="users" element={<UsersManager />} />
+            <Route path="generations" element={<AllGenerations />} />
+            <Route path="disputes" element={<TokenDisputes />} />
+          </Route>
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/community" element={<Community />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </div>
   );
 };
 

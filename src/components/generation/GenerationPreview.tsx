@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
-import { ImageIcon, Video, Download } from "lucide-react";
+import { ImageIcon, Video, Download, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useNativeShare } from "@/hooks/useNativeShare";
+import { useNativeDownload } from "@/hooks/useNativeDownload";
+import { triggerHaptic } from "@/utils/capacitor-utils";
 
 interface GenerationPreviewProps {
   storagePath: string;
@@ -14,8 +17,22 @@ interface GenerationPreviewProps {
 
 export const GenerationPreview = ({ storagePath, contentType, className }: GenerationPreviewProps) => {
   const { signedUrl, isLoading, error } = useSignedUrl(storagePath);
+  const { shareFile, canShare } = useNativeShare();
+  const { downloadFile, isNative } = useNativeDownload();
   const [videoError, setVideoError] = useState(false);
   const [imageError, setImageError] = useState(false);
+
+  const handleShare = async () => {
+    if (!signedUrl) return;
+    await shareFile(signedUrl, 'Check out my AI creation!');
+    await triggerHaptic('light');
+  };
+
+  const handleDownload = async () => {
+    if (!signedUrl) return;
+    await downloadFile(signedUrl, `creation-${Date.now()}.${contentType === 'video' ? 'mp4' : 'png'}`);
+    await triggerHaptic('medium');
+  };
 
   if (isLoading) {
     return (
@@ -78,29 +95,75 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
 
   if (contentType === "video") {
     return (
-      <video
-        src={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stream-content?bucket=generated-content&path=${encodeURIComponent(storagePath)}`}
-        className={cn(className, "animate-fade-in")}
-        controls
-        preload="metadata"
-        playsInline
-        muted
-        crossOrigin="anonymous"
-        onError={() => {
-          console.error('Video playback error for:', storagePath);
-          setVideoError(true);
-        }}
-        onLoadedMetadata={() => console.log('Video loaded successfully:', storagePath)}
-      />
+      <div className="relative group">
+        <video
+          src={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stream-content?bucket=generated-content&path=${encodeURIComponent(storagePath)}`}
+          className={cn(className, "animate-fade-in")}
+          controls
+          preload="metadata"
+          playsInline
+          muted
+          crossOrigin="anonymous"
+          onError={() => {
+            console.error('Video playback error for:', storagePath);
+            setVideoError(true);
+          }}
+          onLoadedMetadata={() => console.log('Video loaded successfully:', storagePath)}
+        />
+        {/* Action buttons overlay */}
+        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {canShare && (
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={handleShare}
+              className="h-8 w-8"
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+          )}
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={handleDownload}
+            className="h-8 w-8"
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <img 
-      src={signedUrl} 
-      alt="Generated content" 
-      className={cn(className, "animate-fade-in")}
-      onError={() => setImageError(true)}
-    />
+    <div className="relative group">
+      <img 
+        src={signedUrl} 
+        alt="Generated content" 
+        className={cn(className, "animate-fade-in")}
+        onError={() => setImageError(true)}
+      />
+      {/* Action buttons overlay */}
+      <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        {canShare && (
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={handleShare}
+            className="h-8 w-8"
+          >
+            <Share2 className="h-4 w-4" />
+          </Button>
+        )}
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={handleDownload}
+          className="h-8 w-8"
+        >
+          <Download className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 };

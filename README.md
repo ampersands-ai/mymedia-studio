@@ -59,6 +59,32 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Capacitor (for native iOS & Android apps)
+
+## 📱 Mobile App Development
+
+This project is configured for native iOS and Android development using Capacitor!
+
+**Features:**
+- 📸 Native camera & gallery access
+- 🔗 Native share sheets
+- 💾 Native file downloads
+- 📱 Safe area support for notched devices
+- ⚡ Hot reload during development
+
+**Get Started:**
+See [MOBILE_SETUP.md](./MOBILE_SETUP.md) for complete setup instructions.
+
+**Quick Start:**
+```bash
+npm install
+npx cap add ios      # For iOS
+npx cap add android  # For Android
+npm run build
+npx cap sync
+npx cap open ios     # Open in Xcode
+npx cap open android # Open in Android Studio
+```
 
 ## How can I deploy this project?
 

@@ -1,7 +1,7 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
 import { GenerationPreview } from "./GenerationPreview";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,85 +79,69 @@ export const OutputLightbox = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-[95vw] max-h-[95vh] p-0 bg-background/95 backdrop-blur-sm border-2"
+        className="max-w-2xl max-h-[90vh] overflow-y-auto"
       >
-        {/* Header Controls Bar */}
-        <div className="absolute top-0 left-0 right-0 z-50 p-3 md:p-4 flex justify-between items-center bg-gradient-to-b from-background/80 to-transparent">
-          {/* Back Button */}
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={() => onOpenChange(false)}
-            className="h-9 w-9 shadow-lg"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <ImageIcon className="h-4 w-4" />
+            {contentType === "image" ? "Image" : contentType === "video" ? "Video" : "Output"} Generation
+            {outputs.length > 1 && (
+              <Badge variant="secondary" className="ml-auto">
+                {selectedIndex + 1} of {outputs.length}
+              </Badge>
+            )}
+          </DialogTitle>
+        </DialogHeader>
 
-          {/* Output Indicator */}
-          <Badge 
-            variant="secondary" 
-            className="bg-background/90 backdrop-blur-sm shadow-lg px-3 py-1"
-          >
-            Output {selectedIndex + 1} of {outputs.length}
-          </Badge>
-
-          {/* Download Button */}
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={handleDownload}
-            className="h-9 w-9 shadow-lg"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
+        {/* Image Preview - Centered, reasonable size */}
+        <div className="flex items-center justify-center bg-muted/30 rounded-lg p-4 my-4">
+          <GenerationPreview
+            storagePath={currentOutput.storage_path}
+            contentType={contentType}
+            className="max-w-full max-h-[400px] object-contain rounded-lg"
+          />
         </div>
 
-        {/* Navigation Arrows (only if multiple outputs) */}
+        {/* Navigation Controls (only if multiple outputs) */}
         {outputs.length > 1 && (
-          <>
-            {/* Previous Button */}
+          <div className="flex items-center justify-center gap-2 mb-4">
             <Button
-              variant="secondary"
-              size="icon"
-              className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 z-50 h-10 w-10 shadow-lg"
+              variant="outline"
+              size="sm"
               onClick={() => onNavigate('prev')}
               disabled={selectedIndex === 0}
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
             </Button>
-
-            {/* Next Button */}
             <Button
-              variant="secondary"
-              size="icon"
-              className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 z-50 h-10 w-10 shadow-lg"
+              variant="outline"
+              size="sm"
               onClick={() => onNavigate('next')}
               disabled={selectedIndex === outputs.length - 1}
             >
-              <ChevronRight className="h-5 w-5" />
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
-          </>
+          </div>
         )}
 
-        {/* Image Display - FIT TO WINDOW (key requirement) */}
-        <div className="flex items-center justify-center w-full h-[95vh] p-16 md:p-20">
-          <div className="relative w-full h-full flex items-center justify-center">
-            <GenerationPreview
-              storagePath={currentOutput.storage_path}
-              contentType={contentType}
-              className="max-w-full max-h-full object-contain rounded-lg"
-            />
-          </div>
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t">
+          <Button
+            onClick={handleDownload}
+            className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-black font-bold"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download
+          </Button>
         </div>
 
         {/* Keyboard Shortcuts Hint */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-50">
-          <Badge 
-            variant="outline" 
-            className="bg-background/70 backdrop-blur-sm text-xs opacity-60 hover:opacity-100 transition-opacity"
-          >
-            ← → Navigate • ESC Close • D Download
-          </Badge>
+        <div className="text-center mt-2">
+          <p className="text-xs text-muted-foreground">
+            Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">←</kbd> <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">→</kbd> to navigate • <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">ESC</kbd> to close
+          </p>
         </div>
       </DialogContent>
     </Dialog>

@@ -5,11 +5,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Trash2, Clock, Sparkles, Image as ImageIcon, Video, Music, FileText, RefreshCw, X } from "lucide-react";
+import { Download, Trash2, Clock, Sparkles, Image as ImageIcon, Video, Music, FileText, RefreshCw, X, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Component to render image with signed URL
 const ImageWithSignedUrl = ({ generation, className }: { generation: Generation; className?: string }) => {
@@ -36,6 +37,11 @@ interface Generation {
   tokens_used: number;
   created_at: string;
   enhanced_prompt: string | null;
+  provider_response?: {
+    data?: {
+      failMsg?: string;
+    };
+  };
 }
 
 // Component to render video with signed URL and hover-to-play
@@ -134,6 +140,7 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
 const History = () => {
   const { user } = useAuth();
   const [previewGeneration, setPreviewGeneration] = useState<Generation | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'failed'>('all');
 
   const { data: generations, refetch, isRefetching } = useQuery({
     queryKey: ["generations", user?.id],
@@ -226,6 +233,8 @@ const History = () => {
     switch (status) {
       case "completed":
         return <Badge className="bg-green-500 text-white text-xs px-1.5 py-0">Done</Badge>;
+      case "failed":
+        return <Badge className="bg-red-500 text-white text-xs px-1.5 py-0">Failed</Badge>;
       case "pending":
       case "processing":
         return (
@@ -243,8 +252,12 @@ const History = () => {
     document.title = "My Creations - Artifio.ai";
   }, []);
 
-  // Filter out failed generations
-  const successfulGenerations = generations?.filter(g => g.status !== 'failed') || [];
+  // Filter generations based on status filter
+  const filteredGenerations = generations?.filter(g => {
+    if (statusFilter === 'completed') return g.status === 'completed';
+    if (statusFilter === 'failed') return g.status === 'failed';
+    return true; // 'all'
+  }) || [];
 
   // No loading state - show empty state immediately or render data
   return (
@@ -253,7 +266,7 @@ const History = () => {
         <div>
           <h1 className="text-4xl font-black mb-2">MY CREATIONS</h1>
           <p className="text-lg text-foreground/80 font-medium">
-            Your successfully generated AI content
+            Your generated AI content
           </p>
         </div>
         <Button
@@ -267,47 +280,90 @@ const History = () => {
         </Button>
       </div>
 
-      {!successfulGenerations || successfulGenerations.length === 0 ? (
+      <div className="mb-6">
+        <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+          <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="completed">Successful</TabsTrigger>
+            <TabsTrigger value="failed">Failed</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {!filteredGenerations || filteredGenerations.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-xl font-bold mb-2">No creations yet</h3>
-            <p className="text-muted-foreground mb-6">
-              Start creating to see your content here
-            </p>
-            <Button onClick={() => (window.location.href = "/dashboard/create")} className="bg-primary hover:bg-primary/90">
-              Start Creating
-            </Button>
+            {statusFilter === 'all' && (
+              <>
+                <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-xl font-bold mb-2">No creations yet</h3>
+                <p className="text-muted-foreground mb-6">
+                  Start creating to see your content here
+                </p>
+                <Button onClick={() => (window.location.href = "/dashboard/create")} className="bg-primary hover:bg-primary/90">
+                  Start Creating
+                </Button>
+              </>
+            )}
+            {statusFilter === 'completed' && (
+              <>
+                <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-xl font-bold mb-2">No successful generations yet</h3>
+                <p className="text-muted-foreground">
+                  Your completed creations will appear here
+                </p>
+              </>
+            )}
+            {statusFilter === 'failed' && (
+              <>
+                <Sparkles className="h-12 w-12 mx-auto mb-4 text-green-500" />
+                <h3 className="text-xl font-bold mb-2">No failed generations!</h3>
+                <p className="text-muted-foreground">
+                  All your generations have been successful
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-          {successfulGenerations.map((generation) => (
+          {filteredGenerations.map((generation) => (
             <Card 
               key={generation.id} 
               className="overflow-hidden cursor-pointer hover-lift"
               onClick={() => setPreviewGeneration(generation)}
             >
-              {generation.storage_path && generation.status === "completed" && (
-                <div className="aspect-square relative overflow-hidden bg-muted">
-                  {generation.type === "video" ? (
-                    <VideoPreview 
-                      generation={generation}
-                      className="w-full h-full object-cover"
-                      playOnHover={true}
-                    />
-                  ) : generation.type === "image" ? (
-                    <ImageWithSignedUrl 
-                      generation={generation}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      {getTypeIcon(generation.type)}
-                    </div>
-                  )}
-                </div>
-              )}
+              <div className="aspect-square relative overflow-hidden bg-muted">
+                {generation.status === "failed" ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-red-500/10">
+                    <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
+                    <span className="text-xs text-red-500 font-medium">Generation Failed</span>
+                  </div>
+                ) : generation.storage_path && generation.status === "completed" ? (
+                  <>
+                    {generation.type === "video" ? (
+                      <VideoPreview 
+                        generation={generation}
+                        className="w-full h-full object-cover"
+                        playOnHover={true}
+                      />
+                    ) : generation.type === "image" ? (
+                      <ImageWithSignedUrl 
+                        generation={generation}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        {getTypeIcon(generation.type)}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    {getTypeIcon(generation.type)}
+                  </div>
+                )}
+              </div>
               
               <CardContent className="p-2 space-y-1">
                 <div className="flex items-center justify-between">
@@ -347,7 +403,23 @@ const History = () => {
           
           {previewGeneration && (
             <div className="space-y-4">
-              {previewGeneration.storage_path && previewGeneration.status === "completed" && (
+              {previewGeneration.status === "failed" ? (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6">
+                  <div className="flex items-start gap-3 mb-4">
+                    <AlertCircle className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-bold text-red-500 mb-2">Generation Failed</h4>
+                      <p className="text-sm text-foreground/80 mb-3">
+                        {previewGeneration.provider_response?.data?.failMsg || 
+                         "An error occurred while generating your content. Please try again with different parameters."}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {previewGeneration.tokens_used} tokens were deducted for this generation attempt.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : previewGeneration.storage_path && previewGeneration.status === "completed" ? (
                 <div className="aspect-video relative overflow-hidden bg-muted rounded-lg">
                   {previewGeneration.type === "video" ? (
                     <VideoPreview 
@@ -366,7 +438,7 @@ const History = () => {
                     </div>
                   )}
                 </div>
-              )}
+              ) : null}
 
               <div className="space-y-2">
                 <h4 className="font-bold text-sm">Prompt:</h4>
@@ -377,7 +449,7 @@ const History = () => {
 
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <span>{format(new Date(previewGeneration.created_at), "MMM d, yyyy 'at' h:mm a")}</span>
-                <span>{previewGeneration.status === 'failed' ? '0' : previewGeneration.tokens_used} tokens used</span>
+                <span>{previewGeneration.tokens_used} tokens used</span>
               </div>
 
               <div className="flex gap-2 pt-4">

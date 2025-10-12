@@ -25,7 +25,15 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
   ).join(' ');
 
   // Check if this is an image upload field (by explicit format or specific field name)
-  const isImageUpload = (schema.format === "base64" || schema.format === "binary" || schema.format === "data-url") || name === "image_url";
+  const isImageUpload = 
+    (schema.format === "base64" || schema.format === "binary" || schema.format === "data-url") ||
+    name === "inputImage" || // FLUX.1 Kontext Pro
+    name === "image_url" || // Qwen, Ideogram Remix
+    name === "image" || // Google Image Upscale
+    name === "filesUrl" || // ChatGPT 4o
+    name === "image_urls" || // Midjourney
+    schema.title?.toLowerCase().includes("upload") || // Catch any field with "upload" in title
+    schema.description?.toLowerCase().includes("choose file"); // Catch descriptive hints
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

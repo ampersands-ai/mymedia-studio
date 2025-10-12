@@ -824,13 +824,13 @@ const CustomCreation = () => {
                       Prompt {isPromptRequired && <span className="text-destructive">*</span>}
                     </label>
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleSurpriseMe}
-                        className="h-8 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white font-bold border-2 border-black hover:opacity-90"
-                        disabled={localGenerating || isGenerating || generatingSurprise}
-                      >
+                       <Button
+                         variant="outline"
+                         size="sm"
+                         onClick={handleSurpriseMe}
+                         className="h-8 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white font-bold border-2 border-black hover:opacity-90"
+                         disabled={localGenerating || isGenerating || generatingSurprise || !!pollingGenerationId}
+                       >
                         {generatingSurprise ? (
                           <>
                             <Loader2 className="h-3 w-3 mr-1 animate-spin" />
@@ -858,14 +858,14 @@ const CustomCreation = () => {
                       </Button>
                     </div>
                   </div>
-                  <Textarea
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Describe what you want to create..."
-                    className="min-h-[100px] md:min-h-[120px] resize-none text-sm md:text-base"
-                    disabled={localGenerating || isGenerating}
-                    required={isPromptRequired}
-                  />
+                   <Textarea
+                     value={prompt}
+                     onChange={(e) => setPrompt(e.target.value)}
+                     placeholder="Describe what you want to create..."
+                     className="min-h-[100px] md:min-h-[120px] resize-none text-sm md:text-base"
+                     disabled={localGenerating || isGenerating || !!pollingGenerationId}
+                     required={isPromptRequired}
+                   />
                   <div className="flex justify-end">
                     <span className={cn(
                       "text-xs",
@@ -967,39 +967,46 @@ const CustomCreation = () => {
                 </CollapsibleContent>
               </Collapsible>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col gap-2">
-                <Button 
-                  onClick={handleGenerate} 
-                  disabled={
-                    localGenerating || 
-                    isGenerating || 
-                    !selectedModel || 
-                    (isPromptRequired && !prompt.trim()) || 
-                    (isImageRequired && uploadedImages.length === 0)
-                  }
-                  size="lg"
-                  className="w-full h-12 md:h-11 text-base font-bold bg-[#FFFF00] hover:bg-[#FFEB00] text-black border-2 border-black shadow-lg"
-                >
-                  {(localGenerating || isGenerating) ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 w-full md:relative">
-                      <div className="flex items-center">
-                        <Sparkles className="mr-2 h-5 w-5" />
-                        Generate
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded md:absolute md:right-2">
-                        <Coins className="h-4 w-4" />
-                        <span className="text-sm font-bold">-{estimatedTokens} tokens</span>
-                      </div>
-                    </div>
-                  )}
-                </Button>
-                <Button 
+               {/* Action Buttons */}
+               <div className="flex flex-col gap-2">
+                 <Button 
+                   onClick={handleGenerate} 
+                   disabled={
+                     localGenerating || 
+                     isGenerating || 
+                     !!pollingGenerationId ||
+                     !selectedModel || 
+                     (isPromptRequired && !prompt.trim()) || 
+                     (isImageRequired && uploadedImages.length === 0)
+                   }
+                   size="lg"
+                   className="w-full h-12 md:h-11 text-base font-bold bg-[#FFFF00] hover:bg-[#FFEB00] text-black border-2 border-black shadow-lg"
+                   title={pollingGenerationId ? "Generation in progress - please wait for it to complete" : ""}
+                 >
+                   {(localGenerating || isGenerating || pollingGenerationId) ? (
+                     <>
+                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                       {pollingGenerationId ? 'Processing...' : 'Generating...'}
+                     </>
+                   ) : (
+                     <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 w-full md:relative">
+                       <div className="flex items-center">
+                         <Sparkles className="mr-2 h-5 w-5" />
+                         Generate
+                       </div>
+                       <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded md:absolute md:right-2">
+                         <Coins className="h-4 w-4" />
+                         <span className="text-sm font-bold">-{estimatedTokens} tokens</span>
+                       </div>
+                     </div>
+                   )}
+                 </Button>
+                 {pollingGenerationId && (
+                   <p className="text-xs text-muted-foreground text-center">
+                     Please wait for the current generation to complete before starting a new one
+                   </p>
+                 )}
+                 <Button
                   onClick={() => setShowResetDialog(true)} 
                   variant="outline" 
                   size="lg" 

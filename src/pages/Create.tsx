@@ -386,7 +386,7 @@ const Create = () => {
                       onChange={(e) => setPrompt(e.target.value)}
                       placeholder="Describe what you want to create..."
                       className="min-h-[100px] resize-none"
-                      disabled={isGenerating}
+                      disabled={isGenerating || !!pollingGenerationId}
                     />
                   </div>
                   <div className="flex gap-2">
@@ -394,19 +394,20 @@ const Create = () => {
                       variant="outline"
                       onClick={() => setDialogOpen(false)}
                       className="flex-1"
-                      disabled={isGenerating}
+                      disabled={isGenerating || !!pollingGenerationId}
                     >
                       Cancel
                     </Button>
                     <Button
                       onClick={handleGenerate}
                       className="flex-1"
-                      disabled={isGenerating || !prompt.trim()}
+                      disabled={isGenerating || !!pollingGenerationId || !prompt.trim()}
+                      title={pollingGenerationId ? "Generation in progress - please wait for it to complete" : ""}
                     >
-                      {isGenerating ? (
+                      {(isGenerating || pollingGenerationId) ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Generating...
+                          {pollingGenerationId ? 'Processing...' : 'Generating...'}
                         </>
                       ) : (
                         <>
@@ -416,6 +417,11 @@ const Create = () => {
                       )}
                     </Button>
                   </div>
+                  {pollingGenerationId && (
+                    <p className="text-xs text-muted-foreground text-center">
+                      Please wait for the current generation to complete before starting a new one
+                    </p>
+                  )}
                 </>
               )}
 

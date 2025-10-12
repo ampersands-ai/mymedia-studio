@@ -977,18 +977,18 @@ const CustomCreation = () => {
                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                        {pollingGenerationId ? 'Processing...' : 'Generating...'}
                      </>
-                   ) : (
-                     <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 w-full md:relative">
-                       <div className="flex items-center">
-                         <Sparkles className="mr-2 h-5 w-5" />
-                         Generate
-                       </div>
-                        <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded md:absolute md:right-2">
-                          <Coins className="h-4 w-4" />
-                          <span className="text-sm font-bold">(-{estimatedTokens}<span className="hidden md:inline"> tokens</span>)</span>
+                    ) : (
+                      <div className="flex flex-row items-center justify-center gap-2 md:gap-3 w-full md:relative">
+                        <div className="flex items-center">
+                          <Sparkles className="mr-2 h-5 w-5" />
+                          Generate
                         </div>
-                     </div>
-                   )}
+                         <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded md:absolute md:right-2">
+                           <Coins className="h-4 w-4" />
+                           <span className="text-sm font-bold">(-{estimatedTokens}<span className="hidden md:inline"> tokens</span>)</span>
+                         </div>
+                      </div>
+                    )}
                  </Button>
                  {pollingGenerationId && (
                    <p className="text-xs text-muted-foreground text-center">

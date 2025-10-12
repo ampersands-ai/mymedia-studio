@@ -994,10 +994,10 @@ const CustomCreation = () => {
                          <Sparkles className="mr-2 h-5 w-5" />
                          Generate
                        </div>
-                       <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded md:absolute md:right-2">
-                         <Coins className="h-4 w-4" />
-                         <span className="text-sm font-bold">-{estimatedTokens} tokens</span>
-                       </div>
+                        <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded md:absolute md:right-2">
+                          <Coins className="h-4 w-4" />
+                          <span className="text-sm font-bold">(-{estimatedTokens}<span className="hidden md:inline"> tokens</span>)</span>
+                        </div>
                      </div>
                    )}
                  </Button>

@@ -556,8 +556,6 @@ const CustomCreation = () => {
       const genId = result?.id || result?.generation_id;
       if (genId) {
         setPollingGenerationId(genId);
-        // Show loading feedback instead of "check history" message
-        toast.loading('Processing your creation...', { id: 'generation-progress' });
       }
 
       if (result?.output_url) {

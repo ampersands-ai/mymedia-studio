@@ -302,7 +302,7 @@ const CustomCreation = () => {
         if (data.status === 'completed') {
           setGeneratedOutput(data.storage_path);
           setGenerationCompleteTime(Date.now());
-          toast.success('Generation complete! Check your History for the result.');
+          toast.success('Generation complete!');
         } else {
           // Generation failed - handled via dialog/error state (no top toast)
         }
@@ -991,7 +991,7 @@ const CustomCreation = () => {
             </div>
 
             <div className="p-4 md:p-6">
-              {(localGenerating || isGenerating || pollingGenerationId) && generationStartTimeRef.current ? (
+              {(localGenerating || isGenerating || pollingGenerationId || generatedOutput) && generationStartTimeRef.current ? (
                 <div className="space-y-4">
                   <Card className="border-2 border-primary/20 bg-muted/50">
                     <CardContent className="p-4 space-y-4">

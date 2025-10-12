@@ -119,7 +119,7 @@ export const TokenDisputes = () => {
         .from('token_dispute_reports')
         .select(`
           *,
-          generation:generations!inner(
+          generation:generations!generation_id(
             type,
             prompt,
             output_url,
@@ -130,7 +130,7 @@ export const TokenDisputes = () => {
             settings,
             provider_response
           ),
-          profiles!token_dispute_reports_user_id_fkey(email, full_name)
+          profiles!user_id(email, full_name)
         `)
         .order('created_at', { ascending: false });
 
@@ -139,7 +139,10 @@ export const TokenDisputes = () => {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching disputes:', error);
+        throw error;
+      }
       return data as unknown as TokenDispute[];
     },
   });

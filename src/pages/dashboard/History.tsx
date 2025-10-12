@@ -209,19 +209,64 @@ const History = () => {
   };
 
   const reportTokenIssueMutation = useMutation({
-    mutationFn: async ({ generationId, reason }: { generationId: string; reason: string }) => {
-      const { error } = await supabase
-        .from("token_dispute_reports")
-        .insert({
-          generation_id: generationId,
-          user_id: user!.id,
-          reason: reason,
+    mutationFn: async ({ generationId, reason, generation }: { generationId: string; reason: string; generation: Generation }) => {
+      // Check if this is a failed generation - auto-refund tokens
+      if (generation.status === 'failed') {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error('No session');
+
+        // Refund tokens automatically
+        const refundResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-user-tokens`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            user_id: user!.id,
+            amount: generation.tokens_used,
+            action: 'add'
+          }),
         });
 
-      if (error) throw error;
+        if (!refundResponse.ok) {
+          throw new Error('Failed to refund tokens');
+        }
+
+        // Create dispute record as auto-resolved
+        const errorMsg = generation.provider_response?.data?.failMsg || 'Generation failed';
+        const { error } = await supabase
+          .from("token_dispute_reports")
+          .insert({
+            generation_id: generationId,
+            user_id: user!.id,
+            reason: reason,
+            status: 'resolved',
+            auto_resolved: true,
+            refund_amount: generation.tokens_used,
+            admin_notes: `Auto-resolved on ${new Date().toISOString()}\nReason: Failed generation detected\nAction: Refunded ${generation.tokens_used} tokens automatically\nGeneration ID: ${generationId}\nError: ${errorMsg}`,
+          });
+
+        if (error) throw error;
+      } else {
+        // Normal dispute flow for non-failed generations
+        const { error } = await supabase
+          .from("token_dispute_reports")
+          .insert({
+            generation_id: generationId,
+            user_id: user!.id,
+            reason: reason,
+          });
+
+        if (error) throw error;
+      }
     },
-    onSuccess: () => {
-      toast.success("Token issue reported successfully. We'll review it shortly.");
+    onSuccess: (_data, variables) => {
+      if (variables.generation.status === 'failed') {
+        toast.success(`Tokens automatically refunded! ${variables.generation.tokens_used} tokens returned to your account.`);
+      } else {
+        toast.success("Token issue reported successfully. We'll review it shortly.");
+      }
       setShowReportDialog(false);
       setReportReason("");
       setReportingGeneration(null);
@@ -260,6 +305,7 @@ const History = () => {
     reportTokenIssueMutation.mutate({
       generationId: reportingGeneration.id,
       reason: reportReason,
+      generation: reportingGeneration,
     });
   };
 

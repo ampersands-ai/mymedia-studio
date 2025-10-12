@@ -5,11 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { AlertCircle, CheckCircle, Clock, XCircle, Image as ImageIcon, Video, Music, FileText } from "lucide-react";
+import { AlertCircle, CheckCircle, Clock, XCircle, Image as ImageIcon, Video, Music, FileText, Bot, User } from "lucide-react";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -23,6 +25,8 @@ interface TokenDispute {
   reviewed_at: string | null;
   reviewed_by: string | null;
   admin_notes: string | null;
+  auto_resolved?: boolean;
+  refund_amount?: number | null;
   generation: {
     type: string;
     prompt: string;
@@ -110,6 +114,7 @@ export const TokenDisputes = () => {
   const [adminNotes, setAdminNotes] = useState("");
   const [newStatus, setNewStatus] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedDisputeIds, setSelectedDisputeIds] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
   const { data: disputes, isLoading } = useQuery({
@@ -199,6 +204,76 @@ export const TokenDisputes = () => {
     },
   });
 
+  const bulkUpdateDisputesMutation = useMutation({
+    mutationFn: async ({ 
+      disputeIds, 
+      status, 
+      shouldRefund 
+    }: { 
+      disputeIds: string[]; 
+      status: string; 
+      shouldRefund: boolean;
+    }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      // Get dispute details for refunding
+      const { data: disputes } = await supabase
+        .from('token_dispute_reports')
+        .select('user_id, generation:generations(tokens_used)')
+        .in('id', disputeIds);
+
+      // Update all disputes
+      const { error: updateError } = await supabase
+        .from('token_dispute_reports')
+        .update({ 
+          status: status as 'pending' | 'reviewed' | 'resolved' | 'rejected',
+          admin_notes: `Bulk ${status} on ${format(new Date(), 'PPpp')}`,
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: session.user.id
+        })
+        .in('id', disputeIds);
+
+      if (updateError) throw updateError;
+
+      // Refund tokens if requested
+      if (shouldRefund && disputes) {
+        for (const dispute of disputes) {
+          const tokens = (dispute.generation as any)?.tokens_used || 0;
+          if (tokens > 0) {
+            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-user-tokens`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({
+                user_id: dispute.user_id,
+                amount: tokens,
+                action: 'add'
+              }),
+            });
+          }
+        }
+      }
+
+      return { count: disputeIds.length, refunded: shouldRefund ? disputes?.length || 0 : 0 };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['token-disputes'] });
+      setSelectedDisputeIds([]);
+      if (data.refunded > 0) {
+        toast.success(`${data.count} disputes resolved, ${data.refunded} users refunded`);
+      } else {
+        toast.success(`${data.count} disputes updated`);
+      }
+    },
+    onError: (error) => {
+      toast.error(`Failed to process bulk action: ${error.message}`);
+      console.error(error);
+    },
+  });
+
   const handleUpdateDispute = () => {
     if (!selectedDispute || !newStatus) {
       toast.error('Please select a status');
@@ -220,6 +295,44 @@ export const TokenDisputes = () => {
         amount: selectedDispute.generation.tokens_used,
       });
     }
+  };
+
+  const handleBulkAction = (action: 'resolve-refund' | 'resolve-no-refund' | 'reject') => {
+    if (selectedDisputeIds.length === 0) {
+      toast.error('Please select at least one dispute');
+      return;
+    }
+
+    const status = action === 'reject' ? 'rejected' : 'resolved';
+    const shouldRefund = action === 'resolve-refund';
+    
+    const confirmMsg = shouldRefund 
+      ? `Resolve ${selectedDisputeIds.length} disputes and refund tokens to users?`
+      : action === 'reject'
+      ? `Reject ${selectedDisputeIds.length} disputes without refund?`
+      : `Resolve ${selectedDisputeIds.length} disputes without refund?`;
+
+    if (confirm(confirmMsg)) {
+      bulkUpdateDisputesMutation.mutate({
+        disputeIds: selectedDisputeIds,
+        status,
+        shouldRefund,
+      });
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedDisputeIds.length === disputes?.length) {
+      setSelectedDisputeIds([]);
+    } else {
+      setSelectedDisputeIds(disputes?.map(d => d.id) || []);
+    }
+  };
+
+  const toggleSelectDispute = (id: string) => {
+    setSelectedDisputeIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
   };
 
   if (isLoading) {
@@ -247,6 +360,48 @@ export const TokenDisputes = () => {
         </Select>
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedDisputeIds.length > 0 && (
+        <Card className="border-primary">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">
+                {selectedDisputeIds.length} dispute{selectedDisputeIds.length > 1 ? 's' : ''} selected
+              </span>
+              <div className="flex gap-2">
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={() => handleBulkAction('resolve-refund')}
+                  disabled={bulkUpdateDisputesMutation.isPending}
+                >
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  Resolve & Refund
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleBulkAction('resolve-no-refund')}
+                  disabled={bulkUpdateDisputesMutation.isPending}
+                >
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  Resolve Only
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={() => handleBulkAction('reject')}
+                  disabled={bulkUpdateDisputesMutation.isPending}
+                >
+                  <XCircle className="h-4 w-4 mr-1" />
+                  Reject All
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {disputes?.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -268,6 +423,12 @@ export const TokenDisputes = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedDisputeIds.length === disputes?.length && disputes.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>User</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Tokens</TableHead>
@@ -283,9 +444,18 @@ export const TokenDisputes = () => {
                   return (
                     <TableRow key={dispute.id}>
                       <TableCell>
-                        <div>
-                          <div className="font-medium">{dispute.profile.full_name || 'Unknown'}</div>
-                          <div className="text-xs text-muted-foreground">{dispute.profile.email}</div>
+                        <Checkbox
+                          checked={selectedDisputeIds.includes(dispute.id)}
+                          onCheckedChange={() => toggleSelectDispute(dispute.id)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          <div>
+                            <div className="font-medium">{dispute.profile.full_name || 'Unknown'}</div>
+                            <div className="text-xs text-muted-foreground">{dispute.profile.email}</div>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -297,7 +467,26 @@ export const TokenDisputes = () => {
                       <TableCell>
                         <Badge variant="outline">{dispute.generation.tokens_used} tokens</Badge>
                       </TableCell>
-                      <TableCell>{getStatusBadge(dispute.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(dispute.status)}
+                          {dispute.auto_resolved && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Badge variant="outline" className="text-xs">
+                                    <Bot className="h-3 w-3 mr-1" />
+                                    Auto
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Automatically resolved for failed generation</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge variant={dispute.generation.status === 'completed' ? 'default' : 'destructive'}>
                           {dispute.generation.status}

@@ -422,10 +422,12 @@ export type Database = {
       token_dispute_reports: {
         Row: {
           admin_notes: string | null
+          auto_resolved: boolean | null
           created_at: string
           generation_id: string
           id: string
           reason: string
+          refund_amount: number | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: Database["public"]["Enums"]["dispute_status"]
@@ -433,10 +435,12 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          auto_resolved?: boolean | null
           created_at?: string
           generation_id: string
           id?: string
           reason: string
+          refund_amount?: number | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["dispute_status"]
@@ -444,10 +448,12 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          auto_resolved?: boolean | null
           created_at?: string
           generation_id?: string
           id?: string
           reason?: string
+          refund_amount?: number | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["dispute_status"]

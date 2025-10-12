@@ -24,9 +24,8 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     word.charAt(0).toUpperCase() + word.slice(1)
   ).join(' ');
 
-  // Check if this is an image upload field
-  const isImageUpload = (schema.format === "base64" || schema.format === "binary" || schema.format === "data-url") ||
-    (schema.type === "string" && (name.toLowerCase().includes("image") || name.toLowerCase().includes("img")));
+  // Check if this is an image upload field (only by explicit format)
+  const isImageUpload = schema.format === "base64" || schema.format === "binary" || schema.format === "data-url";
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

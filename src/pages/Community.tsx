@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, Heart, User, Calendar, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { GlobalHeader } from "@/components/GlobalHeader";
 
 interface CommunityCreation {
   id: string;
@@ -104,6 +105,7 @@ const Community = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <GlobalHeader />
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
       <div className="relative z-10 container mx-auto px-4 py-8">

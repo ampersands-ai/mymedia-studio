@@ -147,7 +147,7 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
 const History = () => {
   const { user } = useAuth();
   const [previewGeneration, setPreviewGeneration] = useState<Generation | null>(null);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'failed'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'failed'>('completed');
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportingGeneration, setReportingGeneration] = useState<Generation | null>(null);

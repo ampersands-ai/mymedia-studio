@@ -28,7 +28,7 @@ export function parseSchema(schema: Record<string, any>): Parameter[] {
     
     parameters.push({
       name,
-      label: formatLabel(name),
+      label: prop.title || formatLabel(name), // Use title from schema if available
       description: prop.description || '',
       type: prop.type,
       required: required.includes(name),
@@ -61,6 +61,11 @@ export function generateSchema(parameters: Parameter[]): Record<string, any> {
     const property: any = {
       type: param.type,
     };
+
+    // Save label as title in schema
+    if (param.label && param.label !== formatLabel(param.name)) {
+      property.title = param.label;
+    }
 
     if (param.description) {
       property.description = param.description;

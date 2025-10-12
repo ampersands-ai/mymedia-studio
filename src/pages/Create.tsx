@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Sparkles, Loader2, Download, History as HistoryIcon, Image as ImageIcon, Video, Clock } from "lucide-react";
+import { Sparkles, Loader2, Download, History as HistoryIcon, Image as ImageIcon, Video, Clock, Info } from "lucide-react";
 import { TemplateCard } from "@/components/TemplateCard";
 import { useTemplatesByCategory } from "@/hooks/useTemplates";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { supabase } from "@/integrations/supabase/client";
 import { formatEstimatedTime } from "@/lib/time-utils";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
+import { GenerationProgress } from "@/components/generation/GenerationProgress";
 
 // Lazy load Carousel for code splitting
 const Carousel = lazy(() => import("@/components/ui/carousel").then(m => ({ default: m.Carousel })));
@@ -31,6 +32,8 @@ const Create = () => {
   const [generatedOutput, setGeneratedOutput] = useState<string | null>(null);
   const [pollingGenerationId, setPollingGenerationId] = useState<string | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const generationStartTimeRef = useRef<number | null>(null);
+  const [generationCompleteTime, setGenerationCompleteTime] = useState<number | null>(null);
 
   // Memoize SEO schemas for performance
   const schemas = useMemo(() => {
@@ -110,6 +113,8 @@ const Create = () => {
     setPrompt("");
     setGeneratedOutput(null);
     setPollingGenerationId(null);
+    generationStartTimeRef.current = null;
+    setGenerationCompleteTime(null);
     setDialogOpen(true);
   };
 
@@ -133,6 +138,7 @@ const Create = () => {
 
         if (data.status === 'completed') {
           setGeneratedOutput(data.storage_path);
+          setGenerationCompleteTime(Date.now());
           toast.success('Generation complete!');
         } else {
           // Generation failed - handled elsewhere (no top toast)
@@ -181,6 +187,11 @@ const Create = () => {
     }
 
     try {
+      // Reset generation tracking
+      generationStartTimeRef.current = Date.now();
+      setGenerationCompleteTime(null);
+      setGeneratedOutput(null);
+      
       // Build custom parameters from template configuration
       const customParameters: Record<string, any> = {};
       
@@ -209,9 +220,11 @@ const Create = () => {
       // If immediate result, show it
       if (result?.storage_path) {
         setGeneratedOutput(result.storage_path);
+        setGenerationCompleteTime(Date.now());
       }
     } catch (error) {
       // Error already handled in useGeneration hook
+      generationStartTimeRef.current = null;
     }
   };
 
@@ -390,43 +403,55 @@ const Create = () => {
                 </>
               )}
 
-              {pollingGenerationId && !generatedOutput && (
-                <div className="py-12 text-center space-y-4">
-                  <Loader2 className="h-12 w-12 mx-auto animate-spin text-primary" />
-                  <div>
-                    <h3 className="text-lg font-bold mb-2">Generating your content...</h3>
-                    <p className="text-sm text-muted-foreground">This may take a few minutes</p>
-                  </div>
-                </div>
-              )}
+              {/* Output Console */}
+              {(pollingGenerationId || generatedOutput) && generationStartTimeRef.current && (
+                <Card className="border-2 border-primary/20 bg-muted/50">
+                  <CardContent className="p-4 space-y-4">
+                    <div className="flex items-start gap-2">
+                      <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-muted-foreground">
+                        Feel free to navigate away - your generation will be saved in History
+                      </p>
+                    </div>
 
-              {generatedOutput && (
-                <div className="space-y-4">
-                  <div className="aspect-video relative overflow-hidden bg-muted rounded-lg">
-                    <GenerationPreview
-                      storagePath={generatedOutput}
-                      contentType={selectedTemplate?.ai_models?.content_type || "image"}
-                      className="w-full h-full object-contain"
+                    <GenerationProgress
+                      startTime={generationStartTimeRef.current}
+                      isComplete={!!generatedOutput}
+                      completedAt={generationCompleteTime || undefined}
                     />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => handleDownload(generatedOutput)}
-                      className="flex-1"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
-                    <Button
-                      onClick={handleViewHistory}
-                      className="flex-1"
-                    >
-                      <HistoryIcon className="h-4 w-4 mr-2" />
-                      View in History
-                    </Button>
-                  </div>
-                </div>
+
+                    {generatedOutput && (
+                      <div className="space-y-3 pt-2">
+                        <div className="aspect-video relative overflow-hidden bg-background rounded-lg border">
+                          <GenerationPreview
+                            storagePath={generatedOutput}
+                            contentType={selectedTemplate?.ai_models?.content_type || "image"}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => handleDownload(generatedOutput)}
+                            className="flex-1"
+                            size="sm"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download
+                          </Button>
+                          <Button
+                            onClick={handleViewHistory}
+                            className="flex-1"
+                            size="sm"
+                          >
+                            <HistoryIcon className="h-4 w-4 mr-2" />
+                            View in History
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               )}
             </div>
           </DialogContent>

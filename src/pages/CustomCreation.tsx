@@ -3,12 +3,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2, Clock } from "lucide-react";
+import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2, Clock, Info } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 import { ModelParameterForm } from "@/components/generation/ModelParameterForm";
 import { formatEstimatedTime } from "@/lib/time-utils";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
+import { GenerationProgress } from "@/components/generation/GenerationProgress";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 
 // Group type definition
@@ -198,6 +199,8 @@ const CustomCreation = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pollingGenerationId, setPollingGenerationId] = useState<string | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const generationStartTimeRef = useRef<number | null>(null);
+  const [generationCompleteTime, setGenerationCompleteTime] = useState<number | null>(null);
 
   // Filter models by selected group
   const filteredModels = allModels?.filter(model => {
@@ -298,6 +301,7 @@ const CustomCreation = () => {
 
         if (data.status === 'completed') {
           setGeneratedOutput(data.storage_path);
+          setGenerationCompleteTime(Date.now());
           toast.success('Generation complete! Check your History for the result.');
         } else {
           // Generation failed - handled via dialog/error state (no top toast)
@@ -487,6 +491,11 @@ const CustomCreation = () => {
       return;
     }
     
+    // Reset generation tracking
+    generationStartTimeRef.current = Date.now();
+    setGenerationCompleteTime(null);
+    setGeneratedOutput(null);
+    
     setLocalGenerating(true);
     
     try {
@@ -560,11 +569,13 @@ const CustomCreation = () => {
 
       if (result?.output_url) {
         setGeneratedOutput(result.output_url);
+        setGenerationCompleteTime(Date.now());
       }
       
       toast.success("Generation started! Check your History for updates.");
     } catch (error: any) {
       console.error('Generation error:', error);
+      generationStartTimeRef.current = null;
       // Error already handled in useGeneration hook
     } finally {
       setLocalGenerating(false);
@@ -980,116 +991,77 @@ const CustomCreation = () => {
             </div>
 
             <div className="p-4 md:p-6">
-              {(localGenerating || isGenerating) ? (
+              {(localGenerating || isGenerating || pollingGenerationId) && generationStartTimeRef.current ? (
                 <div className="space-y-4">
-                  {/* Shimmer animation */}
-                  <div className="relative aspect-square bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" 
-                         style={{ backgroundSize: '1000px 100%' }} />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-purple-500 rounded-full blur-xl opacity-50 animate-glow-pulse" />
-                        <Sparkles className="h-16 w-16 text-purple-600 animate-float relative z-10" />
-                      </div>
-                      <div className="mt-8 space-y-4 text-center">
-                        <p className="text-lg font-bold text-purple-900 animate-bounce-subtle">
-                          Creating your masterpiece...
+                  <Card className="border-2 border-primary/20 bg-muted/50">
+                    <CardContent className="p-4 space-y-4">
+                      <div className="flex items-start gap-2">
+                        <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-muted-foreground">
+                          Feel free to navigate away - your generation will be saved in History
                         </p>
-                        <div className="flex gap-2 justify-center">
-                          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-                          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 animate-bounce" style={{ animationDelay: '150ms' }} />
-                          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 animate-bounce" style={{ animationDelay: '300ms' }} />
-                        </div>
-                        <div className="relative h-2 w-48 mx-auto bg-purple-200 rounded-full overflow-hidden">
-                          <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 animate-shimmer" 
-                               style={{ backgroundSize: '200% 100%' }} />
-                        </div>
                       </div>
-                    </div>
-                  </div>
-                  
-                  {/* Informational banner */}
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 space-y-3">
-                    <div className="flex items-start gap-3">
-                      <Clock className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <div className="space-y-2">
-                        <p className="text-sm font-semibold text-blue-900">
-                          {selectedModel && filteredModels.find(m => m.id === selectedModel)?.content_type === 'video' 
-                            ? '⏱️ Video generation typically takes 3-5 minutes'
-                            : selectedModel && filteredModels.find(m => m.id === selectedModel)?.content_type === 'audio'
-                            ? '⏱️ Audio generation typically takes 1-2 minutes'
-                            : '⏱️ Creating your content...'}
-                        </p>
-                        <p className="text-xs text-blue-700">
-                          You can safely navigate away. Your generation will continue in the background and appear in your History.
-                        </p>
-                        <Button 
-                          variant="link" 
-                          size="sm"
-                          onClick={() => navigate("/dashboard/history")}
-                          className="text-blue-600 underline h-auto p-0"
-                        >
-                          View History →
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : generatedOutput ? (
-                <div className="space-y-4">
-                  <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
-                    <GenerationPreview
-                      storagePath={generatedOutput}
-                      contentType={selectedModel && filteredModels.find(m => m.id === selectedModel)?.content_type || "image"}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={async () => {
-                        try {
-                          // Create signed URL for download
-                          const { data, error } = await supabase.storage
-                            .from('generated-content')
-                            .createSignedUrl(generatedOutput, 60);
-                          
-                          if (error || !data?.signedUrl) {
-                            toast.error('Failed to create download link');
-                            return;
-                          }
 
-                          const response = await fetch(data.signedUrl);
-                          const blob = await response.blob();
-                          const url = window.URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          const extension = generatedOutput.split('.').pop() || 'file';
-                          a.download = `artifio-${Date.now()}.${extension}`;
-                          document.body.appendChild(a);
-                          a.click();
-                          window.URL.revokeObjectURL(url);
-                          document.body.removeChild(a);
-                          toast.success('Download started!');
-                        } catch (error) {
-                          console.error('Download failed:', error);
-                          toast.error('Failed to download file');
-                        }
-                      }}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="flex-1" 
-                      onClick={() => navigate("/dashboard/history")}
-                    >
-                      <History className="h-4 w-4 mr-2" />
-                      History
-                    </Button>
-                  </div>
+                      <GenerationProgress
+                        startTime={generationStartTimeRef.current}
+                        isComplete={!!generatedOutput}
+                        completedAt={generationCompleteTime || undefined}
+                      />
+
+                      {generatedOutput && (
+                        <div className="space-y-3 pt-2">
+                          <div className="relative aspect-square bg-background rounded-lg overflow-hidden border">
+                            <GenerationPreview
+                              storagePath={generatedOutput}
+                              contentType={selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type || "image"}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={async () => {
+                                try {
+                                  const { data } = await supabase.storage
+                                    .from('generated-content')
+                                    .createSignedUrl(generatedOutput, 60);
+                                  if (data?.signedUrl) {
+                                    const response = await fetch(data.signedUrl);
+                                    const blob = await response.blob();
+                                    const url = window.URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    const extension = generatedOutput.split('.').pop() || 'file';
+                                    a.download = `generation-${Date.now()}.${extension}`;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    window.URL.revokeObjectURL(url);
+                                    document.body.removeChild(a);
+                                    toast.success('Download started!');
+                                  }
+                                } catch (error) {
+                                  toast.error('Failed to download');
+                                }
+                              }}
+                              className="flex-1"
+                              size="sm"
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              Download
+                            </Button>
+                            <Button
+                              onClick={() => navigate("/dashboard/history")}
+                              className="flex-1"
+                              size="sm"
+                            >
+                              <History className="h-4 w-4 mr-2" />
+                              View in History
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
               ) : (
                 <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">

@@ -4,6 +4,7 @@ import { ImageIcon, Video, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface GenerationPreviewProps {
   storagePath: string;
@@ -79,7 +80,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
     return (
       <video
         src={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stream-content?bucket=generated-content&path=${encodeURIComponent(storagePath)}`}
-        className={className}
+        className={cn(className, "animate-fade-in")}
         controls
         preload="metadata"
         playsInline
@@ -98,7 +99,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
     <img 
       src={signedUrl} 
       alt="Generated content" 
-      className={className}
+      className={cn(className, "animate-fade-in")}
       onError={() => setImageError(true)}
     />
   );

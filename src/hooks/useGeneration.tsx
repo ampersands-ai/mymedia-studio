@@ -23,10 +23,12 @@ interface GenerationResult {
 export const useGeneration = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<GenerationResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const generate = async (params: GenerationParams) => {
     setIsGenerating(true);
     setResult(null);
+    setError(null);
 
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -82,16 +84,24 @@ export const useGeneration = () => {
       return data;
     } catch (error: any) {
       console.error("Generation error:", error);
-      toast.error(error.message || "Failed to generate content");
+      const errorMessage = error.message || "Failed to generate content";
+      setError(errorMessage);
+      toast.error(errorMessage);
       throw error;
     } finally {
       setIsGenerating(false);
     }
   };
 
+  const clearError = () => {
+    setError(null);
+  };
+
   return {
     generate,
     isGenerating,
     result,
+    error,
+    clearError,
   };
 };

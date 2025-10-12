@@ -182,7 +182,7 @@ const CustomCreation = () => {
   }, [selectedGroup]);
 
   const { data: allModels, isLoading: modelsLoading } = useModels();
-  const { generate, isGenerating } = useGeneration();
+  const { generate, isGenerating, error, clearError } = useGeneration();
   const [prompt, setPrompt] = useState("");
   const [contentType, setContentType] = useState<"image" | "video" | "music" | "text">("image");
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
@@ -1207,6 +1207,23 @@ const CustomCreation = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleResetConfirm}>Reset</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Error Dialog */}
+      <AlertDialog open={error !== null} onOpenChange={(open) => !open && clearError()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Generation Failed</AlertDialogTitle>
+            <AlertDialogDescription>
+              {error}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={clearError} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Close
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

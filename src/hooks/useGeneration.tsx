@@ -68,6 +68,11 @@ export const useGeneration = () => {
         throw new Error(data.error);
       }
 
+      // Normalize the response: ensure 'id' is always present
+      if (data.generation_id && !data.id) {
+        data.id = data.generation_id;
+      }
+
       setResult(data);
       // Don't show success toast immediately for async generations
       // Components will handle their own success messages

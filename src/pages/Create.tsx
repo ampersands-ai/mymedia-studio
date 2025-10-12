@@ -155,24 +155,40 @@ const Create = () => {
       const startTime = Date.now();
       const MAX_POLLING_DURATION = 20 * 60 * 1000; // 20 minutes
 
-      pollIntervalRef.current = setInterval(() => {
+      // Immediate poll at 5 seconds
+      const poll5s = setTimeout(() => pollGenerationStatus(pollingGenerationId), 5000);
+      
+      // Then every 10 seconds for the first minute
+      const poll10s = setInterval(() => {
         const elapsed = Date.now() - startTime;
-        
-        if (elapsed >= MAX_POLLING_DURATION) {
-          clearInterval(pollIntervalRef.current!);
-          pollIntervalRef.current = null;
-          setPollingGenerationId(null);
-          toast.info('Generation is taking longer than expected. Check History for updates.');
-          return;
+        if (elapsed >= 60000) {
+          clearInterval(poll10s);
+        } else {
+          pollGenerationStatus(pollingGenerationId);
         }
+      }, 10000);
+      
+      // Then every 30 seconds after the first minute
+      const poll30s = setTimeout(() => {
+        pollIntervalRef.current = setInterval(() => {
+          const elapsed = Date.now() - startTime;
+          
+          if (elapsed >= MAX_POLLING_DURATION) {
+            clearInterval(pollIntervalRef.current!);
+            pollIntervalRef.current = null;
+            setPollingGenerationId(null);
+            toast.info('Generation is taking longer than expected. Check History for updates.');
+            return;
+          }
 
-        pollGenerationStatus(pollingGenerationId);
-      }, 60000); // Poll every 1 minute
-
-      // Initial check after 30 seconds
-      setTimeout(() => pollGenerationStatus(pollingGenerationId), 30000);
+          pollGenerationStatus(pollingGenerationId);
+        }, 30000);
+      }, 60000);
 
       return () => {
+        clearTimeout(poll5s);
+        clearInterval(poll10s);
+        clearTimeout(poll30s);
         if (pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current);
         }
@@ -211,10 +227,10 @@ const Create = () => {
         custom_parameters: Object.keys(customParameters).length > 0 ? customParameters : undefined,
       });
       
-      // Start polling for status
-      if (result?.id) {
-        setPollingGenerationId(result.id);
-        toast.success("Processing your request... This may take a few minutes.");
+      // Start polling using normalized ID
+      const genId = result?.id || result?.generation_id;
+      if (genId) {
+        setPollingGenerationId(genId);
       }
 
       // If immediate result, show it

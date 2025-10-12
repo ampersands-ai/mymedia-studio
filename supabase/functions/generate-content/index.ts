@@ -491,6 +491,7 @@ let validatedParameters = validateAndFilterParameters(
           // Return immediately - webhook will complete the generation
           return new Response(
             JSON.stringify({
+              id: generation.id,
               generation_id: generation.id,
               status: 'processing',
               message: 'Generation started. Check back soon for results.'

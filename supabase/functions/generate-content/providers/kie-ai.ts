@@ -36,9 +36,12 @@ export async function callKieAI(request: ProviderRequest): Promise<ProviderRespo
       model: request.model,
       callBackUrl: callbackUrl,
       ...modelDefaults, // Inject defaults first
-      prompt: request.prompt,
       ...request.parameters // User params can override if needed
     };
+    // Only include prompt if provided
+    if (request.prompt) {
+      payload.prompt = request.prompt;
+    }
   } else {
     // Standard nested input structure for other models
     console.log('Using WRAPPER payload structure');
@@ -46,10 +49,13 @@ export async function callKieAI(request: ProviderRequest): Promise<ProviderRespo
       model: request.model,
       callBackUrl: callbackUrl,
       input: {
-        prompt: request.prompt,
         ...request.parameters
       }
     };
+    // Only include prompt if provided
+    if (request.prompt) {
+      payload.input.prompt = request.prompt;
+    }
   }
   
   console.log('Callback URL:', callbackUrl);

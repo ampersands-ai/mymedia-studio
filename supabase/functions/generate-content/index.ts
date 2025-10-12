@@ -69,10 +69,6 @@ serve(async (req) => {
       throw new Error('Must provide either template_id or model_id/model_record_id, not both');
     }
 
-    if (!prompt || prompt.length < 3 || prompt.length > 2000) {
-      throw new Error('Prompt must be between 3 and 2000 characters');
-    }
-
     let model: any;
     let template: any = null;
     let parameters: any = {};
@@ -121,6 +117,12 @@ serve(async (req) => {
     }
 
     console.log('Using model:', model.id, 'Provider:', model.provider);
+
+    // Check if model has prompt field in schema
+    const hasPromptField = Boolean(model.input_schema?.properties?.prompt);
+    const promptRequired = hasPromptField && 
+      Array.isArray(model.input_schema?.required) && 
+      model.input_schema.required.includes('prompt');
 
     // Phase 4: Check generation rate limits
     const { data: userSubscription } = await supabase
@@ -187,12 +189,12 @@ serve(async (req) => {
       }
     }
 
-    // Enhance prompt if requested
-    let finalPrompt = prompt;
-    let originalPrompt = prompt;
+    // Enhance prompt if requested and model has prompt field
+    let finalPrompt = prompt || "";
+    let originalPrompt = prompt || "";
     let usedEnhancementProvider = null;
 
-    if (enhance_prompt || enhancementInstruction) {
+    if (hasPromptField && prompt && (enhance_prompt || enhancementInstruction)) {
       console.log('Enhancing prompt...');
       try {
         const enhancementResult = await enhancePrompt(
@@ -319,11 +321,55 @@ serve(async (req) => {
       generationCreated = true;
       console.log('Generation record created:', generation.id);
 
+      // Validate prompt only if model has prompt field
+      if (hasPromptField) {
+        if (promptRequired && (!prompt || prompt.trim() === '')) {
+          throw new Error('Prompt is required for this model');
+        }
+        if (prompt && (prompt.length < 3 || prompt.length > 2000)) {
+          throw new Error('Prompt must be between 3 and 2000 characters');
+        }
+      }
+
+      // Validate all required parameters from schema
+      if (model.input_schema?.required) {
+        for (const requiredParam of model.input_schema.required) {
+          if (requiredParam === 'prompt') continue; // already handled above
+          if (!validatedParameters[requiredParam]) {
+            throw new Error(`Missing required parameter: ${requiredParam}`);
+          }
+        }
+      }
+
     } catch (txError) {
       console.error('Transaction error:', txError);
       
-      // AUTOMATIC ROLLBACK: Refund tokens if deducted but generation failed
-      if (tokensDeducted && !generationCreated) {
+      // If generation was created but validation failed, update status to failed
+      if (generationCreated && generation) {
+        await supabase
+          .from('generations')
+          .update({
+            status: 'failed',
+            provider_response: { error: txError instanceof Error ? txError.message : 'Validation failed' }
+          })
+          .eq('id', generation.id);
+        
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'generation_failed',
+          resource_type: 'generation',
+          resource_id: generation.id,
+          metadata: {
+            error: txError instanceof Error ? txError.message : 'Validation failed',
+            model_id: model.id,
+            tokens_refunded: tokenCost,
+            reason: 'validation_error'
+          }
+        });
+      }
+      
+      // AUTOMATIC ROLLBACK: Refund tokens if deducted
+      if (tokensDeducted) {
         console.log('Rolling back token deduction...');
         await supabase.rpc('increment_tokens', {
           user_id_param: user.id,
@@ -372,13 +418,17 @@ serve(async (req) => {
 
         console.log('Parameters being sent to provider:', JSON.stringify(validatedParameters));
         
-        const providerRequest = {
+        const providerRequest: any = {
           model: model.id,
-          prompt: finalPrompt,
           parameters: validatedParameters,
           api_endpoint: model.api_endpoint,
           payload_structure: model.payload_structure || 'wrapper'
         };
+        
+        // Only include prompt if model has prompt field
+        if (hasPromptField && finalPrompt) {
+          providerRequest.prompt = finalPrompt;
+        }
 
         console.log('Provider request:', JSON.stringify(providerRequest));
 

@@ -86,7 +86,6 @@ export const useGeneration = () => {
       console.error("Generation error:", error);
       const errorMessage = error.message || "Failed to generate content";
       setError(errorMessage);
-      toast.error(errorMessage);
       throw error;
     } finally {
       setIsGenerating(false);

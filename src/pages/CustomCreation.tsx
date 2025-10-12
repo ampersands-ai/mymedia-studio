@@ -256,19 +256,7 @@ const CustomCreation = () => {
 
   // Use only schema-based requirements
   const isPromptRequired = isPromptRequiredBySchema;
-
-  const surprisePrompts = [
-    "A majestic dragon soaring over a cyberpunk city at sunset",
-    "An underwater palace made of coral and bioluminescent creatures",
-    "A steampunk robot gardener tending to a garden of mechanical flowers",
-    "A cosmic library floating in space with books made of stardust",
-    "An ancient tree with doors to different magical realms in its trunk",
-    "A futuristic marketplace on Mars with diverse alien species",
-    "A mystical forest where the trees are made of crystalline ice",
-    "A floating island city powered by giant wind turbines and solar panels",
-    "An enchanted bakery where pastries come to life at midnight",
-    "A retrofuturistic train traveling through a neon-lit tunnel",
-  ];
+  const [generatingSurprise, setGeneratingSurprise] = useState(false);
 
   useEffect(() => {
     document.title = "Custom Creation Studio - Artifio.ai";
@@ -655,10 +643,27 @@ const CustomCreation = () => {
     toast.success("Reset complete");
   };
 
-  const handleSurpriseMe = () => {
-    const randomPrompt = surprisePrompts[Math.floor(Math.random() * surprisePrompts.length)];
-    setPrompt(randomPrompt);
-    toast.success("Random prompt generated!");
+  const handleSurpriseMe = async () => {
+    setGeneratingSurprise(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-random-prompt', {
+        body: { contentType: contentType }
+      });
+
+      if (error) throw error;
+
+      if (data?.prompt) {
+        setPrompt(data.prompt);
+        toast.success("Unique prompt generated!");
+      } else {
+        throw new Error("No prompt returned");
+      }
+    } catch (error) {
+      console.error('Surprise me error:', error);
+      toast.error("Failed to generate prompt. Please try again.");
+    } finally {
+      setGeneratingSurprise(false);
+    }
   };
 
   // Show empty state immediately if no models
@@ -824,10 +829,19 @@ const CustomCreation = () => {
                         size="sm"
                         onClick={handleSurpriseMe}
                         className="h-8 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white font-bold border-2 border-black hover:opacity-90"
-                        disabled={localGenerating || isGenerating}
+                        disabled={localGenerating || isGenerating || generatingSurprise}
                       >
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        Surprise Me
+                        {generatingSurprise ? (
+                          <>
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            Surprise Me
+                          </>
+                        )}
                       </Button>
                       <Button
                         variant="outline"

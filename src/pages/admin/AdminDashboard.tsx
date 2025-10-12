@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Database, FileText, Zap, TrendingUp } from "lucide-react";
+import { Database, FileText, Zap, TrendingUp, Users } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -12,6 +15,9 @@ export default function AdminDashboard() {
     todayGenerations: 0,
     totalGenerations: 0,
   });
+  
+  const [communityEnabled, setCommunityEnabled] = useState(false);
+  const [loadingCommunityToggle, setLoadingCommunityToggle] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -47,6 +53,13 @@ export default function AdminDashboard() {
           .select("*", { count: "exact", head: true })
           .gte("created_at", today);
 
+        // Fetch community settings
+        const { data: communitySettings } = await supabase
+          .from("app_settings")
+          .select("setting_value")
+          .eq("setting_key", "community_enabled")
+          .single();
+
         setStats({
           totalModels: totalModels || 0,
           activeModels: activeModels || 0,
@@ -55,6 +68,10 @@ export default function AdminDashboard() {
           todayGenerations: todayGenerations || 0,
           totalGenerations: totalGenerations || 0,
         });
+        
+        if (communitySettings && typeof communitySettings.setting_value === 'object' && communitySettings.setting_value !== null) {
+          setCommunityEnabled((communitySettings.setting_value as { enabled: boolean }).enabled === true);
+        }
       } catch (error) {
         console.error("Error fetching stats:", error);
       }
@@ -62,6 +79,29 @@ export default function AdminDashboard() {
 
     fetchStats();
   }, []);
+
+  const handleCommunityToggle = async (checked: boolean) => {
+    setLoadingCommunityToggle(true);
+    try {
+      const { error } = await supabase
+        .from("app_settings")
+        .update({ 
+          setting_value: { enabled: checked },
+          updated_at: new Date().toISOString()
+        })
+        .eq("setting_key", "community_enabled");
+
+      if (error) throw error;
+
+      setCommunityEnabled(checked);
+      toast.success(`Community ${checked ? 'enabled' : 'disabled'} successfully`);
+    } catch (error) {
+      console.error("Error updating community setting:", error);
+      toast.error("Failed to update community setting");
+    } finally {
+      setLoadingCommunityToggle(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -122,30 +162,59 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      <Card className="border-3 border-black brutal-shadow">
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-muted-foreground">
-            Use the sidebar to navigate to different admin sections:
-          </p>
-          <ul className="list-disc list-inside space-y-2 text-sm">
-            <li>
-              <strong>AI Models:</strong> Add, edit, or disable AI models and
-              configure their token costs
-            </li>
-            <li>
-              <strong>Templates:</strong> Create and manage content templates
-              with preset parameters
-            </li>
-            <li>
-              <strong>Users:</strong> View users, manage subscriptions, and
-              grant admin roles
-            </li>
-          </ul>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="border-3 border-black brutal-shadow">
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              Use the sidebar to navigate to different admin sections:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-sm">
+              <li>
+                <strong>AI Models:</strong> Add, edit, or disable AI models and
+                configure their token costs
+              </li>
+              <li>
+                <strong>Templates:</strong> Create and manage content templates
+                with preset parameters
+              </li>
+              <li>
+                <strong>Users:</strong> View users, manage subscriptions, and
+                grant admin roles
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card className="border-3 border-black brutal-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Community Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label htmlFor="community-toggle" className="font-bold">
+                  Enable Community Creations
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Allow users to view shared creations from the community
+                </p>
+              </div>
+              <Switch
+                id="community-toggle"
+                checked={communityEnabled}
+                onCheckedChange={handleCommunityToggle}
+                disabled={loadingCommunityToggle}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

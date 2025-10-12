@@ -29,6 +29,7 @@ const Community = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "image" | "video" | "audio">("all");
   const [sort, setSort] = useState<"recent" | "popular">("recent");
+  const [communityEnabled, setCommunityEnabled] = useState(true);
 
   useEffect(() => {
     document.title = "Community Creations - Artifio.ai | Explore AI Art";
@@ -39,6 +40,19 @@ const Community = () => {
   }, []);
 
   useEffect(() => {
+    const checkCommunityEnabled = async () => {
+      const { data } = await supabase
+        .from("app_settings")
+        .select("setting_value")
+        .eq("setting_key", "community_enabled")
+        .single();
+      
+      if (data && typeof data.setting_value === 'object' && data.setting_value !== null) {
+        setCommunityEnabled((data.setting_value as { enabled: boolean }).enabled === true);
+      }
+    };
+    
+    checkCommunityEnabled();
     fetchCommunityCreations();
   }, [filter, sort]);
 
@@ -109,15 +123,26 @@ const Community = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
       <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-black mb-4 gradient-text">
-            Community Creations
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Explore amazing AI-generated content from our creative community
-          </p>
-        </div>
+        {!communityEnabled ? (
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="text-center space-y-4">
+              <h1 className="text-4xl font-black">Community Currently Unavailable</h1>
+              <p className="text-muted-foreground text-lg">
+                Community creations are temporarily disabled. Check back soon!
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Header */}
+            <div className="text-center mb-12">
+              <h1 className="text-4xl md:text-6xl font-black mb-4 gradient-text">
+                Community Creations
+              </h1>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+                Explore amazing AI-generated content from our creative community
+              </p>
+            </div>
 
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-8">
@@ -249,6 +274,8 @@ const Community = () => {
               </Card>
             ))}
           </div>
+        )}
+          </>
         )}
       </div>
     </div>

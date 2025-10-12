@@ -220,9 +220,10 @@ const CustomCreation = () => {
         if (data.status === 'completed') {
           setGeneratedOutput(data.storage_path);
           setGenerationCompleteTime(Date.now());
-          toast.success('Generation complete!');
+          toast.success('Generation complete!', { id: 'generation-progress' });
         } else {
-          // Generation failed - handled via dialog/error state (no top toast)
+          // Generation failed - dismiss loading toast
+          toast.dismiss('generation-progress');
         }
       }
     } catch (error) {
@@ -260,7 +261,7 @@ const CustomCreation = () => {
             pollIntervalRef.current = null;
             setPollingGenerationId(null);
             setLocalGenerating(false);
-            toast.info('Generation is taking longer than expected. Check History for updates.');
+            toast.info('Generation is taking longer than expected. Check History for updates.', { id: 'generation-progress' });
             return;
           }
 
@@ -499,11 +500,14 @@ const CustomCreation = () => {
       const genId = result?.id || result?.generation_id;
       if (genId) {
         setPollingGenerationId(genId);
+        // Show loading feedback instead of "check history" message
+        toast.loading('Processing your creation...', { id: 'generation-progress' });
       }
 
       if (result?.output_url) {
         setGeneratedOutput(result.output_url);
         setGenerationCompleteTime(Date.now());
+        toast.success('Generation complete!', { id: 'generation-progress' });
       }
     } catch (error: any) {
       console.error('Generation error:', error);

@@ -61,15 +61,6 @@ const CREATION_GROUPS = [
   { id: "prompt_to_audio" as CreationGroup, label: "Prompt to Audio", icon: "🎵", description: "Generate audio from text" },
 ];
 
-interface CommunityCreation {
-  id: string;
-  prompt: string;
-  output_url: string | null;
-  storage_path: string | null;
-  content_type: string;
-  likes_count: number;
-  views_count: number;
-}
 
 const CustomCreation = () => {
   const { user } = useAuth();
@@ -110,8 +101,6 @@ const CustomCreation = () => {
   const [showLightbox, setShowLightbox] = useState(false);
   const generationStartTimeRef = useRef<number | null>(null);
   const [generationCompleteTime, setGenerationCompleteTime] = useState<number | null>(null);
-  const [communityCreations, setCommunityCreations] = useState<CommunityCreation[]>([]);
-  const [loadingCommunity, setLoadingCommunity] = useState(false);
 
   // Filter models by selected group
   const filteredModels = allModels?.filter(model => {
@@ -175,44 +164,8 @@ const CustomCreation = () => {
     if (metaDescription) {
       metaDescription.setAttribute('content', 'Create custom AI-generated content with advanced controls and fine-tuning options.');
     }
-
-    // Fetch community creations
-    fetchCommunityCreations();
   }, []);
 
-  const fetchCommunityCreations = async () => {
-    try {
-      setLoadingCommunity(true);
-      const { data, error } = await supabase
-        .from("community_creations")
-        .select(`
-          *,
-          generations!inner(storage_path)
-        `)
-        .order("shared_at", { ascending: false })
-        .limit(12);
-
-      if (error) throw error;
-
-      // Fetch signed URLs for all creations using storage_path from generations
-      const creationsWithUrls = await Promise.all(
-        (data || []).map(async (creation: any) => {
-          const storagePath = creation.generations?.storage_path;
-          if (storagePath) {
-            const signedUrl = await createSignedUrl("generated-content", storagePath);
-            return { ...creation, storage_path: storagePath, output_url: signedUrl };
-          }
-          return { ...creation, storage_path: null, output_url: null };
-        })
-      );
-
-      setCommunityCreations(creationsWithUrls);
-    } catch (error) {
-      console.error("Error fetching community creations:", error);
-    } finally {
-      setLoadingCommunity(false);
-    }
-  };
 
   // Polling function to check generation status
   const pollGenerationStatus = async (generationId: string) => {
@@ -1188,93 +1141,6 @@ const CustomCreation = () => {
           </Card>
         </div>
 
-        {/* Community Creations Section */}
-        <div className="mb-8 md:mb-12">
-          <div className="flex items-center justify-between mb-4 md:mb-6">
-            <h2 className="text-xl md:text-2xl font-black">COMMUNITY CREATIONS</h2>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-8 md:h-9"
-              onClick={() => navigate("/community")}
-            >
-              View All
-            </Button>
-          </div>
-
-          {loadingCommunity ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {[...Array(8)].map((_, i) => (
-                <Card key={i} className="overflow-hidden">
-                  <Skeleton className="aspect-square w-full" />
-                  <div className="p-3 space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-3 w-2/3" />
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : communityCreations.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">No community creations yet. Be the first to share!</p>
-            </Card>
-          ) : (
-            <Carousel opts={{ align: "start", loop: true }} className="w-full">
-              <CarouselContent className="-ml-2 md:-ml-4">
-                {communityCreations.map((creation) => (
-                  <CarouselItem key={creation.id} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
-                    <Card className="overflow-hidden border-2 hover:border-primary transition-colors group">
-                      <div className="relative aspect-square bg-muted">
-                        {creation.output_url && (
-                          <>
-                            {creation.content_type === "image" && (
-                              <img 
-                                src={creation.output_url} 
-                                alt={creation.prompt.substring(0, 50)} 
-                                className="w-full h-full object-cover" 
-                                loading="lazy"
-                              />
-                            )}
-                            {creation.content_type === "video" && (
-                              <video
-                                src={creation.output_url}
-                                className="w-full h-full object-cover"
-                                loop
-                                muted
-                                playsInline
-                                onMouseEnter={(e) => e.currentTarget.play()}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.pause();
-                                  e.currentTarget.currentTime = 0;
-                                }}
-                              />
-                            )}
-                          </>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        {creation.content_type === "video" && (
-                          <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
-                            <Play className="h-3 w-3" />
-                            Video
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-3">
-                        <p className="text-xs line-clamp-2 mb-2">{creation.prompt}</p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium capitalize">{creation.content_type}</span>
-                          <span className="text-xs text-muted-foreground">❤️ {creation.likes_count}</span>
-                        </div>
-                      </div>
-                    </Card>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="hidden md:flex" />
-              <CarouselNext className="hidden md:flex" />
-            </Carousel>
-          )}
-        </div>
 
         {/* Best Practices Section */}
         <Card className="bg-card border">

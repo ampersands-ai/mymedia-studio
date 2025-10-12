@@ -3,6 +3,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import { Upload, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 interface SchemaInputProps {
   name: string;
@@ -15,9 +18,86 @@ interface SchemaInputProps {
 }
 
 export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues }: SchemaInputProps) => {
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
   const displayName = schema.title || name.split('_').map((word: string) => 
     word.charAt(0).toUpperCase() + word.slice(1)
   ).join(' ');
+
+  // Check if this is an image upload field
+  const isImageUpload = (schema.format === "base64" || schema.format === "binary" || schema.format === "data-url") ||
+    (schema.type === "string" && (name.toLowerCase().includes("image") || name.toLowerCase().includes("img")));
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      setImagePreview(base64String);
+      onChange(base64String);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearImage = () => {
+    setImagePreview(null);
+    onChange(null);
+  };
+
+  // Handle image upload fields
+  if (isImageUpload) {
+    return (
+      <div className="space-y-2">
+        <Label>
+          {displayName}
+          {required && <span className="text-destructive ml-1">*</span>}
+        </Label>
+        {schema.description && (
+          <p className="text-xs text-muted-foreground">{schema.description}</p>
+        )}
+        <div className="space-y-2">
+          {(imagePreview || value) && (
+            <div className="relative inline-block">
+              <img 
+                src={imagePreview || value} 
+                alt="Preview" 
+                className="max-w-full h-auto max-h-48 rounded-lg border"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute top-2 right-2 h-6 w-6"
+                onClick={clearImage}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+              id={`image-upload-${name}`}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => document.getElementById(`image-upload-${name}`)?.click()}
+              className="w-full"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {(imagePreview || value) ? "Change Image" : "Upload Image"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Handle enum types (dropdown)
   if (schema.enum && Array.isArray(schema.enum)) {

@@ -110,6 +110,24 @@ export function ModelFormDialog({
     }
   }, [model, open]);
 
+  const handleSchemaSave = async (newSchema: Record<string, any>) => {
+    if (!model?.record_id) return;
+    
+    try {
+      const { error } = await supabase
+        .from("ai_models")
+        .update({ input_schema: newSchema })
+        .eq("record_id", model.record_id);
+
+      if (error) throw error;
+      toast.success("Parameter order saved");
+    } catch (error: any) {
+      console.error("Error saving parameter order:", error);
+      toast.error("Failed to save parameter order");
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -415,6 +433,8 @@ export function ModelFormDialog({
                   input_schema: JSON.stringify(newSchema, null, 2) 
                 });
               }}
+              modelRecordId={model?.record_id}
+              onSave={handleSchemaSave}
             />
             <p className="text-xs text-muted-foreground">
               <strong>Only fields defined here will be sent to the provider API.</strong>

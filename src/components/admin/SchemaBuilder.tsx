@@ -10,13 +10,16 @@ import { parseSchema, generateSchema, type Parameter } from "@/lib/schema-utils"
 interface SchemaBuilderProps {
   schema: Record<string, any>;
   onChange: (schema: Record<string, any>) => void;
+  modelRecordId?: string;
+  onSave?: (schema: Record<string, any>) => Promise<void>;
 }
 
-export function SchemaBuilder({ schema, onChange }: SchemaBuilderProps) {
+export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: SchemaBuilderProps) {
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [editingParameter, setEditingParameter] = useState<Parameter | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [showJson, setShowJson] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
 
   useEffect(() => {
     try {
@@ -60,20 +63,42 @@ export function SchemaBuilder({ schema, onChange }: SchemaBuilderProps) {
     setDialogOpen(false);
   };
 
-  const handleMoveUp = (index: number) => {
+  const handleMoveUp = async (index: number) => {
     if (index === 0) return;
     const updated = [...parameters];
     [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
     setParameters(updated);
-    onChange(generateSchema(updated));
+    const newSchema = generateSchema(updated);
+    onChange(newSchema);
+    
+    // Auto-save if modelRecordId and onSave are provided
+    if (modelRecordId && onSave) {
+      setSavingOrder(true);
+      try {
+        await onSave(newSchema);
+      } finally {
+        setSavingOrder(false);
+      }
+    }
   };
 
-  const handleMoveDown = (index: number) => {
+  const handleMoveDown = async (index: number) => {
     if (index === parameters.length - 1) return;
     const updated = [...parameters];
     [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
     setParameters(updated);
-    onChange(generateSchema(updated));
+    const newSchema = generateSchema(updated);
+    onChange(newSchema);
+    
+    // Auto-save if modelRecordId and onSave are provided
+    if (modelRecordId && onSave) {
+      setSavingOrder(true);
+      try {
+        await onSave(newSchema);
+      } finally {
+        setSavingOrder(false);
+      }
+    }
   };
 
   const generatedJson = JSON.stringify(generateSchema(parameters), null, 2);
@@ -105,7 +130,7 @@ export function SchemaBuilder({ schema, onChange }: SchemaBuilderProps) {
                     size="sm" 
                     variant="ghost" 
                     onClick={() => handleMoveUp(index)}
-                    disabled={index === 0}
+                    disabled={index === 0 || savingOrder}
                     className="h-8 w-8 p-0"
                     title="Move up"
                   >
@@ -116,7 +141,7 @@ export function SchemaBuilder({ schema, onChange }: SchemaBuilderProps) {
                     size="sm" 
                     variant="ghost" 
                     onClick={() => handleMoveDown(index)}
-                    disabled={index === parameters.length - 1}
+                    disabled={index === parameters.length - 1 || savingOrder}
                     className="h-8 w-8 p-0"
                     title="Move down"
                   >

@@ -45,6 +45,9 @@ import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { createSignedUrl } from "@/lib/storage-utils";
+import { OutputGrid } from "@/components/generation/OutputGrid";
+import { OutputLightbox } from "@/components/generation/OutputLightbox";
+import { downloadMultipleOutputs } from "@/lib/download-utils";
 
 // Group type definition
 type CreationGroup = "image_editing" | "prompt_to_image" | "prompt_to_video" | "image_to_video" | "prompt_to_audio";
@@ -98,6 +101,13 @@ const CustomCreation = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pollingGenerationId, setPollingGenerationId] = useState<string | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [generatedOutputs, setGeneratedOutputs] = useState<Array<{
+    id: string;
+    storage_path: string;
+    output_index: number;
+  }>>([]);
+  const [selectedOutputIndex, setSelectedOutputIndex] = useState<number>(0);
+  const [showLightbox, setShowLightbox] = useState(false);
   const generationStartTimeRef = useRef<number | null>(null);
   const [generationCompleteTime, setGenerationCompleteTime] = useState<number | null>(null);
   const [communityCreations, setCommunityCreations] = useState<CommunityCreation[]>([]);
@@ -207,16 +217,17 @@ const CustomCreation = () => {
   // Polling function to check generation status
   const pollGenerationStatus = async (generationId: string) => {
     try {
-      const { data, error } = await supabase
+      // Fetch parent generation
+      const { data: parentData, error: parentError } = await supabase
         .from('generations')
-        .select('status, storage_path, type')
+        .select('id, status, storage_path, type, output_index, is_batch_output')
         .eq('id', generationId)
         .single();
 
-      if (error) throw error;
+      if (parentError) throw parentError;
 
       // Check if generation is complete or failed
-      if (data.status === 'completed' || data.status === 'failed') {
+      if (parentData.status === 'completed' || parentData.status === 'failed') {
         // Stop polling
         if (pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current);
@@ -225,10 +236,30 @@ const CustomCreation = () => {
         setPollingGenerationId(null);
         setLocalGenerating(false);
 
-        if (data.status === 'completed') {
-          setGeneratedOutput(data.storage_path);
+        if (parentData.status === 'completed') {
+          // Fetch all child outputs (if any)
+          const { data: childrenData } = await supabase
+            .from('generations')
+            .select('id, storage_path, output_index')
+            .eq('parent_generation_id', generationId)
+            .order('output_index', { ascending: true });
+
+          // Combine parent + children
+          const allOutputs = [
+            {
+              id: parentData.id,
+              storage_path: parentData.storage_path,
+              output_index: 0
+            },
+            ...(childrenData || [])
+          ];
+
+          setGeneratedOutputs(allOutputs);
+          setGeneratedOutput(parentData.storage_path); // For backward compat
           setGenerationCompleteTime(Date.now());
-          toast.success('Generation complete!', { id: 'generation-progress' });
+          toast.success(`Generation complete! ${allOutputs.length} output${allOutputs.length > 1 ? 's' : ''} created.`, { 
+            id: 'generation-progress' 
+          });
         } else {
           // Generation failed - dismiss loading toast
           toast.dismiss('generation-progress');
@@ -239,51 +270,67 @@ const CustomCreation = () => {
     }
   };
 
-  // Start polling after generation request
+  // Start polling after generation request with optimized intervals
   useEffect(() => {
     if (pollingGenerationId) {
       const startTime = Date.now();
       const MAX_POLLING_DURATION = 20 * 60 * 1000; // 20 minutes
-
-      // Poll every 1 minute (60 seconds)
-      // Immediate poll at 5 seconds
-      const poll5s = setTimeout(() => pollGenerationStatus(pollingGenerationId), 5000);
       
-      // Then every 10 seconds for the first minute
-      const poll10s = setInterval(() => {
+      let currentInterval = 5000; // Start with 5s
+      
+      const pollWithDynamicInterval = () => {
         const elapsed = Date.now() - startTime;
-        if (elapsed >= 60000) {
-          clearInterval(poll10s);
-        } else {
-          pollGenerationStatus(pollingGenerationId);
-        }
-      }, 10000);
-      
-      // Then every 30 seconds after the first minute
-      const poll30s = setTimeout(() => {
-        pollIntervalRef.current = setInterval(() => {
-          const elapsed = Date.now() - startTime;
-          
-          if (elapsed >= MAX_POLLING_DURATION) {
-            clearInterval(pollIntervalRef.current!);
+        
+        // Stop if exceeded max duration
+        if (elapsed >= MAX_POLLING_DURATION) {
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
             pollIntervalRef.current = null;
-            setPollingGenerationId(null);
-            setLocalGenerating(false);
-            toast.info('Generation is taking longer than expected. Check History for updates.', { id: 'generation-progress' });
-            return;
           }
-
-          pollGenerationStatus(pollingGenerationId);
-        }, 30000);
-      }, 60000);
-
+          setPollingGenerationId(null);
+          setLocalGenerating(false);
+          toast.info('Generation is taking longer than expected. Check History for updates.', { 
+            id: 'generation-progress' 
+          });
+          return;
+        }
+        
+        // Adjust interval based on elapsed time
+        let newInterval = currentInterval;
+        if (elapsed < 2 * 60 * 1000) {
+          // First 2 minutes: 5s interval
+          newInterval = 5000;
+        } else if (elapsed < 5 * 60 * 1000) {
+          // 2-5 minutes: 15s interval
+          newInterval = 15000;
+        } else {
+          // After 5 minutes: 30s interval
+          newInterval = 30000;
+        }
+        
+        // If interval changed, restart with new interval
+        if (newInterval !== currentInterval) {
+          currentInterval = newInterval;
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = setInterval(pollWithDynamicInterval, currentInterval);
+          }
+        }
+        
+        pollGenerationStatus(pollingGenerationId);
+      };
+      
+      // Initial immediate poll
+      pollGenerationStatus(pollingGenerationId);
+      
+      // Set up interval
+      pollIntervalRef.current = setInterval(pollWithDynamicInterval, currentInterval);
+      
       // Cleanup on unmount
       return () => {
-        clearTimeout(poll5s);
-        clearInterval(poll10s);
-        clearTimeout(poll30s);
         if (pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
         }
       };
     }
@@ -1032,7 +1079,49 @@ const CustomCreation = () => {
                         completedAt={generationCompleteTime || undefined}
                       />
 
-                      {generatedOutput && (
+                      {generatedOutputs.length > 0 ? (
+                        <div className="space-y-3 pt-2">
+                          <OutputGrid
+                            outputs={generatedOutputs}
+                            contentType={selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type || "image"}
+                            onSelectOutput={(index) => {
+                              setSelectedOutputIndex(index);
+                              setShowLightbox(true);
+                            }}
+                            onDownloadAll={async () => {
+                              await downloadMultipleOutputs(
+                                generatedOutputs,
+                                selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type || "image"
+                              );
+                            }}
+                          />
+
+                          <OutputLightbox
+                            outputs={generatedOutputs}
+                            selectedIndex={selectedOutputIndex}
+                            contentType={selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type || "image"}
+                            open={showLightbox}
+                            onOpenChange={setShowLightbox}
+                            onNavigate={(direction) => {
+                              if (direction === 'prev' && selectedOutputIndex > 0) {
+                                setSelectedOutputIndex(selectedOutputIndex - 1);
+                              } else if (direction === 'next' && selectedOutputIndex < generatedOutputs.length - 1) {
+                                setSelectedOutputIndex(selectedOutputIndex + 1);
+                              }
+                            }}
+                          />
+
+                          <Button
+                            onClick={() => navigate("/dashboard/history")}
+                            variant="outline"
+                            className="w-full"
+                            size="sm"
+                          >
+                            <History className="h-4 w-4 mr-2" />
+                            View All in History
+                          </Button>
+                        </div>
+                      ) : generatedOutput ? (
                         <div className="space-y-3 pt-2">
                           <div className="relative aspect-square bg-background rounded-lg overflow-hidden border">
                             <GenerationPreview
@@ -1083,7 +1172,7 @@ const CustomCreation = () => {
                             </Button>
                           </div>
                         </div>
-                      )}
+                      ) : null}
                     </CardContent>
                   </Card>
                 </div>

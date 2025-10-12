@@ -13,6 +13,7 @@ interface CommunityCreation {
   id: string;
   prompt: string;
   output_url: string | null;
+  storage_path: string | null;
   content_type: string;
   model_id: string;
   likes_count: number;
@@ -46,7 +47,10 @@ const Community = () => {
       
       let query = supabase
         .from("community_creations")
-        .select("*");
+        .select(`
+          *,
+          generations!inner(storage_path)
+        `);
 
       // Apply filter
       if (filter !== "all") {
@@ -64,14 +68,15 @@ const Community = () => {
 
       if (error) throw error;
 
-      // Fetch signed URLs for all creations
+      // Fetch signed URLs for all creations using storage_path from generations
       const creationsWithUrls = await Promise.all(
-        (data || []).map(async (creation) => {
-          if (creation.output_url) {
-            const signedUrl = await createSignedUrl("generated-content", creation.output_url);
-            return { ...creation, output_url: signedUrl };
+        (data || []).map(async (creation: any) => {
+          const storagePath = creation.generations?.storage_path;
+          if (storagePath) {
+            const signedUrl = await createSignedUrl("generated-content", storagePath);
+            return { ...creation, storage_path: storagePath, output_url: signedUrl };
           }
-          return creation;
+          return { ...creation, storage_path: null, output_url: null };
         })
       );
 

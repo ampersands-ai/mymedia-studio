@@ -60,6 +60,7 @@ interface CommunityCreation {
   id: string;
   prompt: string;
   output_url: string | null;
+  storage_path: string | null;
   content_type: string;
   likes_count: number;
   views_count: number;
@@ -87,7 +88,7 @@ const CustomCreation = () => {
   const [generatedOutput, setGeneratedOutput] = useState<string | null>(null);
   const [estimatedTokens, setEstimatedTokens] = useState(50);
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [enhancePrompt, setEnhancePrompt] = useState(true);
+  const [enhancePrompt, setEnhancePrompt] = useState(false);
   const [localGenerating, setLocalGenerating] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [modelParameters, setModelParameters] = useState<Record<string, any>>({});
@@ -171,20 +172,24 @@ const CustomCreation = () => {
       setLoadingCommunity(true);
       const { data, error } = await supabase
         .from("community_creations")
-        .select("*")
+        .select(`
+          *,
+          generations!inner(storage_path)
+        `)
         .order("shared_at", { ascending: false })
         .limit(12);
 
       if (error) throw error;
 
-      // Fetch signed URLs for all creations
+      // Fetch signed URLs for all creations using storage_path from generations
       const creationsWithUrls = await Promise.all(
-        (data || []).map(async (creation) => {
-          if (creation.output_url) {
-            const signedUrl = await createSignedUrl("generated-content", creation.output_url);
-            return { ...creation, output_url: signedUrl };
+        (data || []).map(async (creation: any) => {
+          const storagePath = creation.generations?.storage_path;
+          if (storagePath) {
+            const signedUrl = await createSignedUrl("generated-content", storagePath);
+            return { ...creation, storage_path: storagePath, output_url: signedUrl };
           }
-          return creation;
+          return { ...creation, storage_path: null, output_url: null };
         })
       );
 
@@ -494,6 +499,7 @@ const CustomCreation = () => {
         model_record_id: selectedModel,
         prompt: prompt.trim(),
         custom_parameters: customParameters,
+        enhance_prompt: enhancePrompt,
       });
 
       // Start polling using normalized ID

@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.585fed1dfb404817a3fe86d08fb9a96c',
+  appId: 'com.lovable.artifio',
   appName: 'Artifio Create',
   webDir: 'dist',
   server: {

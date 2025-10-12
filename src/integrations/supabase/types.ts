@@ -249,10 +249,13 @@ export type Database = {
           enhancement_provider: string | null
           file_size_bytes: number | null
           id: string
+          is_batch_output: boolean | null
           model_id: string | null
           model_record_id: string | null
           original_prompt: string | null
+          output_index: number | null
           output_url: string | null
+          parent_generation_id: string | null
           prompt: string
           provider_request: Json | null
           provider_response: Json | null
@@ -272,10 +275,13 @@ export type Database = {
           enhancement_provider?: string | null
           file_size_bytes?: number | null
           id?: string
+          is_batch_output?: boolean | null
           model_id?: string | null
           model_record_id?: string | null
           original_prompt?: string | null
+          output_index?: number | null
           output_url?: string | null
+          parent_generation_id?: string | null
           prompt: string
           provider_request?: Json | null
           provider_response?: Json | null
@@ -295,10 +301,13 @@ export type Database = {
           enhancement_provider?: string | null
           file_size_bytes?: number | null
           id?: string
+          is_batch_output?: boolean | null
           model_id?: string | null
           model_record_id?: string | null
           original_prompt?: string | null
+          output_index?: number | null
           output_url?: string | null
+          parent_generation_id?: string | null
           prompt?: string
           provider_request?: Json | null
           provider_response?: Json | null
@@ -318,6 +327,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "ai_models"
             referencedColumns: ["record_id"]
+          },
+          {
+            foreignKeyName: "generations_parent_generation_id_fkey"
+            columns: ["parent_generation_id"]
+            isOneToOne: false
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "generations_template_id_fkey"

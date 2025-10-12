@@ -46,6 +46,9 @@ interface Generation {
   };
   has_dispute?: boolean;
   dispute_status?: string;
+  parent_generation_id?: string | null;
+  output_index?: number;
+  is_batch_output?: boolean;
 }
 
 // Component to render video with signed URL and hover-to-play
@@ -153,12 +156,13 @@ const History = () => {
   const { data: generations, refetch, isRefetching } = useQuery({
     queryKey: ["generations", user?.id],
     queryFn: async () => {
-      // First get generations
+      // First get generations (including batch output fields)
       const { data: genData, error: genError } = await supabase
         .from("generations")
         .select("*")
         .eq("user_id", user!.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .order("output_index", { ascending: true });
 
       if (genError) throw genError;
 
@@ -462,6 +466,13 @@ const History = () => {
               onClick={() => setPreviewGeneration(generation)}
             >
               <div className="aspect-square relative overflow-hidden bg-muted">
+                {generation.is_batch_output && generation.output_index !== undefined && (
+                  <div className="absolute top-1 right-1 z-10">
+                    <Badge className="bg-primary/90 text-white text-[10px] px-1.5 py-0 backdrop-blur-sm">
+                      #{generation.output_index + 1}
+                    </Badge>
+                  </div>
+                )}
                 {generation.status === "failed" ? (
                   <div className="w-full h-full flex flex-col items-center justify-center bg-red-500/10">
                     <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
@@ -508,7 +519,11 @@ const History = () => {
 
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>{format(new Date(generation.created_at), "MMM d")}</span>
-                  <span>{generation.tokens_used} tokens</span>
+                  {generation.is_batch_output && generation.tokens_used === 0 ? (
+                    <span className="text-primary font-medium">Batch output</span>
+                  ) : (
+                    <span>{generation.tokens_used} tokens</span>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -524,6 +539,11 @@ const History = () => {
               <div className="flex items-center gap-2">
                 {previewGeneration && getTypeIcon(previewGeneration.type)}
                 <span className="capitalize">{previewGeneration?.type} Generation</span>
+                {previewGeneration?.is_batch_output && previewGeneration.output_index !== undefined && (
+                  <Badge variant="outline" className="text-xs">
+                    Output #{previewGeneration.output_index + 1}
+                  </Badge>
+                )}
               </div>
               {previewGeneration && getStatusBadge(previewGeneration.status)}
             </DialogTitle>
@@ -577,7 +597,11 @@ const History = () => {
 
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <span>{format(new Date(previewGeneration.created_at), "MMM d, yyyy 'at' h:mm a")}</span>
-                <span>{previewGeneration.tokens_used} tokens used</span>
+                {previewGeneration.is_batch_output && previewGeneration.tokens_used === 0 ? (
+                  <span className="text-primary font-medium">Part of batch generation</span>
+                ) : (
+                  <span>{previewGeneration.tokens_used} tokens used</span>
+                )}
               </div>
 
               <div className="flex gap-2 pt-4">

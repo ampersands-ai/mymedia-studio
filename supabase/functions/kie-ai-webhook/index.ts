@@ -107,27 +107,30 @@ serve(async (req) => {
       console.log('Processing successful generation');
       
       // Support multiple URL formats
-      let resultUrl: string | undefined;
+      let resultUrls: string[] = [];
       if (video_url) {
         // Direct video_url field
-        resultUrl = video_url;
+        resultUrls = [video_url];
       } else if (resultJson) {
         // Old format: parse resultJson
         const result = JSON.parse(resultJson);
-        resultUrl = result.resultUrls?.[0];
+        resultUrls = result.resultUrls || [result.resultUrl].filter(Boolean);
       } else if (payload.data?.info) {
         // New format: use data.info
-        resultUrl = payload.data.info.resultUrls?.[0] || payload.data.info.result_urls?.[0];
+        resultUrls = payload.data.info.resultUrls || payload.data.info.result_urls || [];
       }
 
-      if (!resultUrl) {
-        throw new Error('No result URL found in response');
+      if (resultUrls.length === 0) {
+        throw new Error('No result URLs found in response');
       }
 
-      console.log('Downloading result from:', resultUrl);
+      console.log(`Found ${resultUrls.length} output(s) to process`);
 
-      // Download the generated content
-      const contentResponse = await fetch(resultUrl);
+      // Process first output (update parent generation)
+      const firstUrl = resultUrls[0];
+      console.log('Downloading first result from:', firstUrl);
+
+      const contentResponse = await fetch(firstUrl);
       if (!contentResponse.ok) {
         throw new Error(`Failed to download result: ${contentResponse.status}`);
       }
@@ -137,7 +140,7 @@ serve(async (req) => {
       
       // Determine file extension
       const contentType = contentResponse.headers.get('content-type') || '';
-      const fileExtension = determineFileExtension(contentType, resultUrl);
+      const fileExtension = determineFileExtension(contentType, firstUrl);
       
       console.log('Downloaded successfully. Size:', output_data.length, 'Extension:', fileExtension);
 
@@ -153,14 +156,16 @@ serve(async (req) => {
 
       console.log('Uploaded to storage:', storagePath);
 
-      // Update generation record to completed (no public URL needed, use storage_path for signed URLs)
+      // Update generation record to completed
       const { error: updateError } = await supabase
         .from('generations')
         .update({
           status: 'completed',
           storage_path: storagePath,
           file_size_bytes: output_data.length,
-          provider_response: payload
+          provider_response: payload,
+          output_index: 0,
+          is_batch_output: resultUrls.length > 1
         })
         .eq('id', generation.id);
 
@@ -170,6 +175,78 @@ serve(async (req) => {
       }
 
       console.log('Generation completed successfully:', generation.id);
+
+      // Process additional outputs (2nd, 3rd, etc.)
+      if (resultUrls.length > 1) {
+        console.log(`Processing ${resultUrls.length - 1} additional output(s)`);
+        
+        for (let i = 1; i < resultUrls.length; i++) {
+          try {
+            const url = resultUrls[i];
+            console.log(`Downloading output ${i + 1} from:`, url);
+
+            const response = await fetch(url);
+            if (!response.ok) {
+              console.error(`Failed to download output ${i + 1}:`, response.status);
+              continue;
+            }
+
+            const buffer = await response.arrayBuffer();
+            const data = new Uint8Array(buffer);
+            const type = response.headers.get('content-type') || '';
+            const ext = determineFileExtension(type, url);
+
+            // Create a unique ID for this child generation
+            const childId = crypto.randomUUID();
+
+            // Upload child output to storage
+            const childStoragePath = await uploadToStorage(
+              supabase,
+              generation.user_id,
+              childId,
+              data,
+              ext,
+              generation.type
+            );
+
+            console.log(`Uploaded output ${i + 1} to storage:`, childStoragePath);
+
+            // Create child generation record
+            const { error: insertError } = await supabase
+              .from('generations')
+              .insert({
+                id: childId,
+                user_id: generation.user_id,
+                type: generation.type,
+                prompt: generation.prompt,
+                enhanced_prompt: generation.enhanced_prompt,
+                original_prompt: generation.original_prompt,
+                model_id: generation.model_id,
+                model_record_id: generation.model_record_id,
+                template_id: generation.template_id,
+                settings: generation.settings,
+                tokens_used: 0, // Don't double-charge tokens
+                status: 'completed',
+                storage_path: childStoragePath,
+                file_size_bytes: data.length,
+                provider_task_id: generation.provider_task_id,
+                provider_request: generation.provider_request,
+                provider_response: payload,
+                parent_generation_id: generation.id,
+                output_index: i,
+                is_batch_output: true
+              });
+
+            if (insertError) {
+              console.error(`Failed to create child generation ${i + 1}:`, insertError);
+            } else {
+              console.log(`Child generation ${i + 1} created successfully:`, childId);
+            }
+          } catch (childError: any) {
+            console.error(`Error processing output ${i + 1}:`, childError.message);
+          }
+        }
+      }
 
       // Log audit
       await supabase.from('audit_logs').insert({
@@ -181,12 +258,17 @@ serve(async (req) => {
           model_id: generation.model_id,
           tokens_used: generation.tokens_used,
           file_size: output_data.length,
+          total_outputs: resultUrls.length,
           webhook_callback: true
         }
       });
 
       return new Response(
-        JSON.stringify({ success: true, message: 'Generation completed' }),
+        JSON.stringify({ 
+          success: true, 
+          message: 'Generation completed',
+          outputs_processed: resultUrls.length
+        }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

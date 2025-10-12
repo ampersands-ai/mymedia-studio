@@ -69,13 +69,18 @@ serve(async (req) => {
     // Handle failure
     if (isFailed) {
       console.error('Generation failed:', failMsg || payload.msg);
+      console.error('Full Kie.ai error response:', JSON.stringify(payload, null, 2));
       
       // Update generation to failed and refund tokens
       const { error: updateError } = await supabase
         .from('generations')
         .update({
           status: 'failed',
-          provider_response: payload
+          provider_response: {
+            error: failMsg || payload.msg || 'Generation failed',
+            full_response: payload,
+            timestamp: new Date().toISOString()
+          }
         })
         .eq('id', generation.id);
 

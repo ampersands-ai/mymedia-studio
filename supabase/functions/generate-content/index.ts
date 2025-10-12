@@ -375,7 +375,11 @@ let validatedParameters = validateAndFilterParameters(
           .from('generations')
           .update({
             status: 'failed',
-            provider_response: { error: txError instanceof Error ? txError.message : 'Validation failed' }
+            provider_response: { 
+              error: txError instanceof Error ? txError.message : 'Validation failed',
+              full_error: txError instanceof Error ? txError.toString() : String(txError),
+              timestamp: new Date().toISOString()
+            }
           })
           .eq('id', generation.id);
         
@@ -430,6 +434,8 @@ let validatedParameters = validateAndFilterParameters(
     // Track request in queue
     const requestId = generation.id;
     const requestPromise = (async () => {
+      let providerRequest: any = null; // Declare outside try block for error handling access
+      
       try {
         // Call provider with timeout
         const TIMEOUT_MS = 600000; // 600 seconds
@@ -443,7 +449,7 @@ let validatedParameters = validateAndFilterParameters(
 
         console.log('Parameters being sent to provider:', JSON.stringify(validatedParameters));
         
-        const providerRequest: any = {
+        providerRequest = {
           model: model.id,
           parameters: validatedParameters,
           api_endpoint: model.api_endpoint,
@@ -556,8 +562,13 @@ let validatedParameters = validateAndFilterParameters(
             await supabase
               .from('generations')
               .update({ 
-                status: 'failed', 
-                provider_response: { error: errorMessage } 
+                status: 'failed',
+                provider_request: providerRequest,
+                provider_response: { 
+                  error: errorMessage,
+                  full_error: bgError instanceof Error ? bgError.toString() : String(bgError),
+                  timestamp: new Date().toISOString()
+                } 
               })
               .eq('id', generationId);
           }
@@ -603,7 +614,12 @@ let validatedParameters = validateAndFilterParameters(
           .update({
             status: 'failed',
             tokens_used: 0,
-            provider_response: { error: providerError.message }
+            provider_request: providerRequest,
+            provider_response: { 
+              error: providerError.message,
+              full_error: providerError.toString(),
+              timestamp: new Date().toISOString()
+            }
           })
           .eq('id', generation.id);
 

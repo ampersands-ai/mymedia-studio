@@ -38,7 +38,7 @@ interface TokenDispute {
       };
     };
   };
-  profiles: {
+  profile: {
     email: string;
     full_name: string | null;
   };
@@ -119,18 +119,8 @@ export const TokenDisputes = () => {
         .from('token_dispute_reports')
         .select(`
           *,
-          generation:generations!generation_id(
-            type,
-            prompt,
-            output_url,
-            storage_path,
-            status,
-            tokens_used,
-            model_id,
-            settings,
-            provider_response
-          ),
-          profiles!user_id(email, full_name)
+          generation:generations(*),
+          profile:profiles(email, full_name)
         `)
         .order('created_at', { ascending: false });
 
@@ -248,8 +238,8 @@ export const TokenDisputes = () => {
                     <TableRow key={dispute.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{dispute.profiles.full_name || 'Unknown'}</div>
-                          <div className="text-xs text-muted-foreground">{dispute.profiles.email}</div>
+                          <div className="font-medium">{dispute.profile.full_name || 'Unknown'}</div>
+                          <div className="text-xs text-muted-foreground">{dispute.profile.email}</div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -306,8 +296,8 @@ export const TokenDisputes = () => {
                   <CardTitle className="text-sm">User Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <div><strong>Name:</strong> {selectedDispute.profiles.full_name || 'N/A'}</div>
-                  <div><strong>Email:</strong> {selectedDispute.profiles.email}</div>
+                  <div><strong>Name:</strong> {selectedDispute.profile.full_name || 'N/A'}</div>
+                  <div><strong>Email:</strong> {selectedDispute.profile.email}</div>
                   <div><strong>Reported:</strong> {format(new Date(selectedDispute.created_at), 'PPpp')}</div>
                 </CardContent>
               </Card>

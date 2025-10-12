@@ -461,6 +461,13 @@ export type Database = {
             referencedRelation: "generations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "token_dispute_reports_user_fk"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {

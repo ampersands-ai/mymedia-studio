@@ -137,7 +137,7 @@ const CustomCreation = () => {
     const required = currentModel.input_schema.required || [];
     
     // Look for image-like fields
-    const imageFieldNames = ['image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'filesURL', 'file_urls', 'fileUrls'];
+    const imageFieldNames = ['inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'filesURL', 'file_urls', 'fileUrls'];
     for (const fieldName of imageFieldNames) {
       if (properties[fieldName]) {
         const schema = properties[fieldName];
@@ -973,7 +973,7 @@ const CustomCreation = () => {
                         modelSchema={currentModel.input_schema}
                         onChange={setModelParameters}
                         currentValues={modelParameters}
-                        excludeFields={['prompt', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls']}
+                        excludeFields={['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls']}
                       />
                     ) : (
                       // Legacy Resolution fallback if no schema

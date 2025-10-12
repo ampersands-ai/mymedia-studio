@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -518,60 +520,75 @@ export const TokenDisputes = () => {
 
       {/* Dispute Detail Dialog */}
       <Dialog open={!!selectedDispute} onOpenChange={(open) => !open && setSelectedDispute(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Token Dispute Details</DialogTitle>
           </DialogHeader>
 
           {selectedDispute && (
-            <div className="space-y-6">
-              {/* User Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">User Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div><strong>Name:</strong> {selectedDispute.profile.full_name || 'N/A'}</div>
-                  <div><strong>Email:</strong> {selectedDispute.profile.email}</div>
-                  <div><strong>Reported:</strong> {format(new Date(selectedDispute.created_at), 'PPpp')}</div>
-                </CardContent>
-              </Card>
+            <div className="space-y-4">
+              {/* Compact Info Grid */}
+              <div className="grid grid-cols-2 gap-3 p-4 bg-muted/50 rounded-lg text-sm">
+                <div>
+                  <div className="text-muted-foreground text-xs">User</div>
+                  <div className="font-medium">{selectedDispute.profile.full_name || 'N/A'}</div>
+                  <div className="text-xs text-muted-foreground">{selectedDispute.profile.email}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground text-xs">Type</div>
+                  <div className="font-medium capitalize">{selectedDispute.generation.type}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground text-xs">Status</div>
+                  <Badge variant={selectedDispute.generation.status === 'completed' ? 'default' : 'destructive'} className="text-xs">
+                    {selectedDispute.generation.status}
+                  </Badge>
+                </div>
+                <div>
+                  <div className="text-muted-foreground text-xs">Tokens</div>
+                  <Badge className="bg-orange-500 text-white text-xs">
+                    {selectedDispute.generation.tokens_used} tokens
+                  </Badge>
+                </div>
+                <div className="col-span-2">
+                  <div className="text-muted-foreground text-xs">Reported</div>
+                  <div className="text-xs">{format(new Date(selectedDispute.created_at), 'MMM d, yyyy • h:mm a')}</div>
+                </div>
+              </div>
 
-              {/* Generation Details */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Generation Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <strong>Type:</strong> {selectedDispute.generation.type}
-                    </div>
-                    <div>
-                      <strong>Status:</strong>{' '}
-                      <Badge variant={selectedDispute.generation.status === 'completed' ? 'default' : 'destructive'}>
-                        {selectedDispute.generation.status}
-                      </Badge>
-                    </div>
-                    <div>
-                      <strong>Model:</strong> {selectedDispute.generation.model_id || 'N/A'}
-                    </div>
-                    <div>
-                      <strong>Tokens Used:</strong>{' '}
-                      <Badge className="bg-orange-500 text-white">
-                        {selectedDispute.generation.tokens_used} tokens
-                      </Badge>
-                    </div>
+              {/* Prompt */}
+              <div>
+                <label className="text-sm font-medium">Prompt</label>
+                <p className="mt-1 p-3 bg-muted rounded-lg text-sm">{selectedDispute.generation.prompt}</p>
+              </div>
+
+              {/* Preview */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">Output Preview</label>
+                <GenerationPreview generation={selectedDispute.generation} />
+              </div>
+
+              {/* User's Report */}
+              <div>
+                <label className="text-sm font-medium">User's Report</label>
+                <p className="mt-1 p-3 bg-muted rounded-lg text-sm">{selectedDispute.reason}</p>
+              </div>
+
+              {/* Technical Details - Collapsible */}
+              <Collapsible>
+                <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium hover:underline">
+                  <ChevronDown className="h-4 w-4" />
+                  View Technical Details
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2 space-y-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Model</label>
+                    <p className="text-sm">{selectedDispute.generation.model_id || 'N/A'}</p>
                   </div>
                   
-                  <div>
-                    <strong>Prompt:</strong>
-                    <p className="mt-1 p-3 bg-muted rounded-lg text-sm">{selectedDispute.generation.prompt}</p>
-                  </div>
-
                   {selectedDispute.generation.settings && (
                     <div>
-                      <strong>Parameters:</strong>
+                      <label className="text-xs text-muted-foreground">Parameters</label>
                       <pre className="mt-1 p-3 bg-muted rounded-lg text-xs overflow-x-auto">
                         {JSON.stringify(selectedDispute.generation.settings, null, 2)}
                       </pre>
@@ -580,97 +597,75 @@ export const TokenDisputes = () => {
 
                   {selectedDispute.generation.status === 'failed' && 
                    selectedDispute.generation.provider_response?.data?.failMsg && (
-                    <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 p-4 rounded-lg">
+                    <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 p-3 rounded-lg">
                       <div className="flex items-start gap-2">
-                        <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                        <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
                         <div>
-                          <strong className="text-red-700 dark:text-red-400">Error Message:</strong>
-                          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                          <div className="text-xs font-medium text-red-700 dark:text-red-400">Error Message</div>
+                          <p className="mt-1 text-xs text-red-600 dark:text-red-400">
                             {selectedDispute.generation.provider_response.data.failMsg}
                           </p>
                         </div>
                       </div>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </CollapsibleContent>
+              </Collapsible>
 
-              {/* Preview */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Output Preview</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <GenerationPreview generation={selectedDispute.generation} />
-                </CardContent>
-              </Card>
-
-              {/* User's Report */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">User's Report</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="p-3 bg-muted rounded-lg">{selectedDispute.reason}</p>
-                </CardContent>
-              </Card>
 
               {/* Admin Review */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Admin Review</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Update Status</label>
-                    <Select value={newStatus} onValueChange={setNewStatus}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="reviewed">Reviewed</SelectItem>
-                        <SelectItem value="resolved">Resolved</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+              <div className="border-t pt-4 space-y-4">
+                <h3 className="text-sm font-semibold">Admin Review</h3>
+                
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Update Status</label>
+                  <Select value={newStatus} onValueChange={setNewStatus}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="reviewed">Reviewed</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Admin Notes</label>
-                    <Textarea
-                      value={adminNotes}
-                      onChange={(e) => setAdminNotes(e.target.value)}
-                      placeholder="Add notes about your decision..."
-                      rows={4}
-                    />
-                  </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Admin Notes</label>
+                  <Textarea
+                    value={adminNotes}
+                    onChange={(e) => setAdminNotes(e.target.value)}
+                    placeholder="Add notes about your decision..."
+                    rows={3}
+                  />
+                </div>
 
-                  {selectedDispute.reviewed_at && (
-                    <div className="text-sm text-muted-foreground">
-                      Last reviewed: {format(new Date(selectedDispute.reviewed_at), 'PPpp')}
-                    </div>
-                  )}
-
-                  <div className="flex gap-2">
-                    <Button 
-                      onClick={handleRefundTokens}
-                      disabled={refundTokensMutation.isPending}
-                      variant="outline"
-                      className="flex-1"
-                    >
-                      {refundTokensMutation.isPending ? 'Refunding...' : `Refund ${selectedDispute.generation.tokens_used} Tokens`}
-                    </Button>
-                    <Button 
-                      onClick={handleUpdateDispute}
-                      disabled={updateDisputeMutation.isPending}
-                      className="flex-1"
-                    >
-                      {updateDisputeMutation.isPending ? 'Updating...' : 'Update Dispute'}
-                    </Button>
+                {selectedDispute.reviewed_at && (
+                  <div className="text-xs text-muted-foreground">
+                    Last reviewed: {format(new Date(selectedDispute.reviewed_at), 'PPpp')}
                   </div>
-                </CardContent>
-              </Card>
+                )}
+
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    onClick={handleRefundTokens}
+                    disabled={refundTokensMutation.isPending}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    {refundTokensMutation.isPending ? 'Refunding...' : `Refund ${selectedDispute.generation.tokens_used} Tokens`}
+                  </Button>
+                  <Button 
+                    onClick={handleUpdateDispute}
+                    disabled={updateDisputeMutation.isPending}
+                    className="flex-1"
+                  >
+                    {updateDisputeMutation.isPending ? 'Updating...' : 'Update Dispute'}
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
         </DialogContent>

@@ -11,7 +11,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown, Copy } from "lucide-react";
+import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown, Copy, Filter, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ModelFormDialog } from "@/components/admin/ModelFormDialog";
 import {
@@ -52,6 +54,15 @@ export default function AIModelsManager() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingModel, setEditingModel] = useState<AIModel | null>(null);
   const [sortBy, setSortBy] = useState<string>("cost");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    search: "",
+    provider: "all",
+    contentType: "all",
+    structure: "all",
+    status: "all",
+    group: "all"
+  });
 
   useEffect(() => {
     fetchModels();
@@ -188,7 +199,47 @@ export default function AIModelsManager() {
     }
   };
 
-  const sortedModels = [...models].sort((a, b) => {
+  // Filter models
+  const filteredModels = models.filter((model) => {
+    // Search filter (model ID, name, provider)
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      const matchesSearch = 
+        model.id.toLowerCase().includes(searchLower) ||
+        model.model_name.toLowerCase().includes(searchLower) ||
+        model.provider.toLowerCase().includes(searchLower);
+      if (!matchesSearch) return false;
+    }
+    
+    // Provider filter
+    if (filters.provider !== "all" && model.provider !== filters.provider) {
+      return false;
+    }
+    
+    // Content type filter
+    if (filters.contentType !== "all" && model.content_type !== filters.contentType) {
+      return false;
+    }
+    
+    // Structure filter
+    if (filters.structure !== "all" && model.payload_structure !== filters.structure) {
+      return false;
+    }
+    
+    // Status filter
+    if (filters.status === "active" && !model.is_active) return false;
+    if (filters.status === "inactive" && model.is_active) return false;
+    
+    // Group filter
+    if (filters.group !== "all") {
+      const modelGroups = Array.isArray(model.groups) ? model.groups : [];
+      if (!modelGroups.includes(filters.group)) return false;
+    }
+    
+    return true;
+  });
+
+  const sortedModels = [...filteredModels].sort((a, b) => {
     switch (sortBy) {
       case "name":
         return a.model_name.localeCompare(b.model_name);
@@ -205,6 +256,31 @@ export default function AIModelsManager() {
         return 0; // Already sorted by created_at from query
     }
   });
+
+  const clearFilters = () => {
+    setFilters({
+      search: "",
+      provider: "all",
+      contentType: "all",
+      structure: "all",
+      status: "all",
+      group: "all"
+    });
+  };
+
+  const hasActiveFilters = 
+    filters.search !== "" ||
+    filters.provider !== "all" ||
+    filters.contentType !== "all" ||
+    filters.structure !== "all" ||
+    filters.status !== "all" ||
+    filters.group !== "all";
+
+  // Get unique values for filter dropdowns
+  const uniqueProviders = [...new Set(models.map(m => m.provider))];
+  const uniqueContentTypes = [...new Set(models.map(m => m.content_type))];
+  const uniqueStructures = [...new Set(models.map(m => m.payload_structure || 'wrapper'))];
+  const allGroups = [...new Set(models.flatMap(m => Array.isArray(m.groups) ? m.groups : []))];
 
   // No loading state - render immediately
   return (
@@ -228,8 +304,24 @@ export default function AIModelsManager() {
       <Card className="border-3 border-black brutal-shadow">
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle>All Models ({models.length})</CardTitle>
+            <CardTitle>
+              All Models ({filteredModels.length}{filteredModels.length !== models.length && ` of ${models.length}`})
+            </CardTitle>
             <div className="flex gap-2 items-center">
+              <Button
+                variant={showFilters ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="border-2"
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Filters
+                {hasActiveFilters && (
+                  <Badge className="ml-2 bg-primary text-primary-foreground">
+                    {Object.values(filters).filter(v => v !== "" && v !== "all").length}
+                  </Badge>
+                )}
+              </Button>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-[180px]">
                   <ArrowUpDown className="h-4 w-4 mr-2" />
@@ -264,20 +356,170 @@ export default function AIModelsManager() {
               </Button>
             </div>
           </div>
+          
+          {showFilters && (
+            <div className="mt-6 p-4 bg-muted/50 rounded-lg border-2 border-border space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-sm font-bold">Filter Models</Label>
+                {hasActiveFilters && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="h-auto py-1 px-2 text-xs"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Clear All
+                  </Button>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Search */}
+                <div className="space-y-2">
+                  <Label htmlFor="search" className="text-xs">Search</Label>
+                  <Input
+                    id="search"
+                    placeholder="Model ID, name, or provider..."
+                    value={filters.search}
+                    onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                    className="h-9"
+                  />
+                </div>
+
+                {/* Provider */}
+                <div className="space-y-2">
+                  <Label htmlFor="provider" className="text-xs">Provider</Label>
+                  <Select
+                    value={filters.provider}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, provider: value }))}
+                  >
+                    <SelectTrigger id="provider" className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Providers</SelectItem>
+                      {uniqueProviders.map(provider => (
+                        <SelectItem key={provider} value={provider}>{provider}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Content Type */}
+                <div className="space-y-2">
+                  <Label htmlFor="contentType" className="text-xs">Content Type</Label>
+                  <Select
+                    value={filters.contentType}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, contentType: value }))}
+                  >
+                    <SelectTrigger id="contentType" className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      {uniqueContentTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Structure */}
+                <div className="space-y-2">
+                  <Label htmlFor="structure" className="text-xs">Structure</Label>
+                  <Select
+                    value={filters.structure}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, structure: value }))}
+                  >
+                    <SelectTrigger id="structure" className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Structures</SelectItem>
+                      {uniqueStructures.map(structure => (
+                        <SelectItem key={structure} value={structure}>
+                          {structure === 'flat' ? 'Flat' : 'Wrapper'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Status */}
+                <div className="space-y-2">
+                  <Label htmlFor="status" className="text-xs">Status</Label>
+                  <Select
+                    value={filters.status}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+                  >
+                    <SelectTrigger id="status" className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Group */}
+                <div className="space-y-2">
+                  <Label htmlFor="group" className="text-xs">Group</Label>
+                  <Select
+                    value={filters.group}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, group: value }))}
+                  >
+                    <SelectTrigger id="group" className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Groups</SelectItem>
+                      {allGroups.map(group => (
+                        <SelectItem key={group} value={group}>
+                          {CREATION_GROUPS.find(g => g.id === group)?.label || group}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
-          {models.length === 0 ? (
+          {filteredModels.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">
-                No AI models configured yet
-              </p>
-              <Button
-                onClick={handleAdd}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold border-3 border-black brutal-shadow"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Your First Model
-              </Button>
+              {hasActiveFilters ? (
+                <>
+                  <Filter className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground mb-4">
+                    No models match your filters
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={clearFilters}
+                    className="border-2"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Clear Filters
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="text-muted-foreground mb-4">
+                    No AI models configured yet
+                  </p>
+                  <Button
+                    onClick={handleAdd}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold border-3 border-black brutal-shadow"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Your First Model
+                  </Button>
+                </>
+              )}
             </div>
           ) : (
             <Table>

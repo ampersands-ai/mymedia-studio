@@ -53,46 +53,66 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
           {displayName}
           {required && <span className="text-destructive ml-1">*</span>}
         </Label>
-        {schema.description && (
-          <p className="text-xs text-muted-foreground">{schema.description}</p>
-        )}
         <div className="space-y-2">
-          {(imagePreview || value) && (
-            <div className="relative inline-block">
-              <img 
-                src={imagePreview || value} 
-                alt="Preview" 
-                className="max-w-full h-auto max-h-48 rounded-lg border"
+          {(imagePreview || value) ? (
+            <div className="space-y-2">
+              <div className="relative inline-block">
+                <img 
+                  src={imagePreview || value} 
+                  alt="Preview" 
+                  className="max-w-full h-auto max-h-48 rounded-lg border"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-6 w-6"
+                  onClick={clearImage}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                id={`image-upload-${name}`}
               />
               <Button
                 type="button"
-                variant="destructive"
-                size="icon"
-                className="absolute top-2 right-2 h-6 w-6"
-                onClick={clearImage}
+                variant="outline"
+                onClick={() => document.getElementById(`image-upload-${name}`)?.click()}
+                className="w-full"
               >
-                <X className="h-4 w-4" />
+                <Upload className="h-4 w-4 mr-2" />
+                Change Image
               </Button>
             </div>
+          ) : (
+            <>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                id={`image-upload-${name}`}
+              />
+              <button
+                type="button"
+                onClick={() => document.getElementById(`image-upload-${name}`)?.click()}
+                className="w-full border-2 border-dashed border-border rounded-lg p-8 hover:border-primary/50 transition-colors bg-background"
+              >
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                  <span className="text-sm font-medium">Upload Image</span>
+                </div>
+              </button>
+              {schema.description && (
+                <p className="text-xs text-muted-foreground">{schema.description}</p>
+              )}
+            </>
           )}
-          <div className="flex items-center gap-2">
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-              id={`image-upload-${name}`}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => document.getElementById(`image-upload-${name}`)?.click()}
-              className="w-full"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              {(imagePreview || value) ? "Change Image" : "Upload Image"}
-            </Button>
-          </div>
         </div>
       </div>
     );

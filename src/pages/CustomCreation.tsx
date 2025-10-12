@@ -853,7 +853,7 @@ const CustomCreation = () => {
                     }
                   </Button>
                   
-                  {uploadedImages.length === 0 && (
+                  {isImageRequired && uploadedImages.length === 0 && (
                     <p className="text-sm text-muted-foreground">
                       This model requires at least one image
                     </p>

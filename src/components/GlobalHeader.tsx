@@ -72,18 +72,18 @@ export const GlobalHeader = () => {
                 <Button
                   variant="ghost"
                   size="default"
-                  onClick={() => navigate("/dashboard/custom-creation")}
+                  onClick={() => navigate("/community")}
                   className="hidden sm:inline-flex font-black text-base"
                 >
-                  Dashboard
+                  Community
                 </Button>
                 <Button
                   variant="ghost"
                   size="default"
-                  onClick={() => navigate("/video-test")}
+                  onClick={() => navigate("/dashboard/custom-creation")}
                   className="hidden sm:inline-flex font-black text-base"
                 >
-                  Video Test
+                  Dashboard
                 </Button>
                 <Button
                   variant="outline"

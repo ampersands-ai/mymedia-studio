@@ -42,6 +42,7 @@ import { formatEstimatedTime } from "@/lib/time-utils";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
+import { createSignedUrl } from "@/lib/storage-utils";
 
 // Group type definition
 type CreationGroup = "image_editing" | "prompt_to_image" | "prompt_to_video" | "image_to_video" | "prompt_to_audio";
@@ -55,120 +56,14 @@ const CREATION_GROUPS = [
   { id: "prompt_to_audio" as CreationGroup, label: "Prompt to Audio", icon: "🎵", description: "Generate audio from text" },
 ];
 
-// Community creations data
-const communityCreations = [
-  {
-    id: "CC-001",
-    image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=400&fit=crop",
-    contentType: "image",
-    resolution: "HD",
-    theme: "abstract",
-    author: "Alex M.",
-    likes: 342
-  },
-  {
-    id: "CC-002",
-    image: "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=400&h=400&fit=crop",
-    contentType: "image",
-    resolution: "HD",
-    theme: "cyberpunk",
-    author: "Sarah K.",
-    likes: 567
-  },
-  {
-    id: "CC-003",
-    image: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=400&h=400&fit=crop",
-    contentType: "image",
-    resolution: "Native",
-    theme: "fantasy",
-    author: "Jordan P.",
-    likes: 289
-  },
-  {
-    id: "CC-004",
-    image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&h=400&fit=crop",
-    contentType: "image",
-    resolution: "HD",
-    theme: "anime",
-    author: "Chris L.",
-    likes: 891
-  },
-  {
-    id: "CC-005",
-    image: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=400&h=400&fit=crop",
-    contentType: "image",
-    resolution: "Native",
-    theme: "realistic",
-    author: "Emily R.",
-    likes: 423
-  },
-  {
-    id: "CC-006",
-    image: "https://images.unsplash.com/photo-1577083552431-6e5fd01988ec?w=400&h=400&fit=crop",
-    contentType: "image",
-    resolution: "Native",
-    theme: "artistic",
-    author: "Mike D.",
-    likes: 678
-  },
-  {
-    id: "CC-007",
-    image: "https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?w=400&h=400&fit=crop",
-    video: "https://videos.pexels.com/video-files/3129671/3129671-uhd_2560_1440_25fps.mp4",
-    contentType: "video",
-    resolution: "HD",
-    theme: "abstract",
-    author: "Taylor B.",
-    likes: 534
-  },
-  {
-    id: "CC-008",
-    image: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=400&fit=crop",
-    video: "https://videos.pexels.com/video-files/6985001/6985001-uhd_2560_1440_25fps.mp4",
-    contentType: "video",
-    resolution: "HD",
-    theme: "realistic",
-    author: "Nina S.",
-    likes: 756
-  },
-  {
-    id: "CC-009",
-    image: "https://images.unsplash.com/photo-1524712245354-2c4e5e7121c0?w=400&h=400&fit=crop",
-    video: "https://videos.pexels.com/video-files/3141211/3141211-uhd_2560_1440_25fps.mp4",
-    contentType: "video",
-    resolution: "HD",
-    theme: "fantasy",
-    author: "David H.",
-    likes: 412
-  },
-  {
-    id: "CC-010",
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
-    contentType: "image",
-    resolution: "HD",
-    theme: "realistic",
-    author: "Lisa W.",
-    likes: 623
-  },
-  {
-    id: "CC-011",
-    image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&h=400&fit=crop",
-    contentType: "image",
-    resolution: "HD",
-    theme: "realistic",
-    author: "Mark J.",
-    likes: 489
-  },
-  {
-    id: "CC-012",
-    image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=400&fit=crop",
-    contentType: "image",
-    resolution: "Native",
-    theme: "artistic",
-    author: "Sophia T.",
-    likes: 701
-  },
-];
+interface CommunityCreation {
+  id: string;
+  prompt: string;
+  output_url: string | null;
+  content_type: string;
+  likes_count: number;
+  views_count: number;
+}
 
 const CustomCreation = () => {
   const { user } = useAuth();
@@ -201,6 +96,8 @@ const CustomCreation = () => {
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const generationStartTimeRef = useRef<number | null>(null);
   const [generationCompleteTime, setGenerationCompleteTime] = useState<number | null>(null);
+  const [communityCreations, setCommunityCreations] = useState<CommunityCreation[]>([]);
+  const [loadingCommunity, setLoadingCommunity] = useState(false);
 
   // Filter models by selected group
   const filteredModels = allModels?.filter(model => {
@@ -264,7 +161,40 @@ const CustomCreation = () => {
     if (metaDescription) {
       metaDescription.setAttribute('content', 'Create custom AI-generated content with advanced controls and fine-tuning options.');
     }
+
+    // Fetch community creations
+    fetchCommunityCreations();
   }, []);
+
+  const fetchCommunityCreations = async () => {
+    try {
+      setLoadingCommunity(true);
+      const { data, error } = await supabase
+        .from("community_creations")
+        .select("*")
+        .order("shared_at", { ascending: false })
+        .limit(12);
+
+      if (error) throw error;
+
+      // Fetch signed URLs for all creations
+      const creationsWithUrls = await Promise.all(
+        (data || []).map(async (creation) => {
+          if (creation.output_url) {
+            const signedUrl = await createSignedUrl("generated-content", creation.output_url);
+            return { ...creation, output_url: signedUrl };
+          }
+          return creation;
+        })
+      );
+
+      setCommunityCreations(creationsWithUrls);
+    } catch (error) {
+      console.error("Error fetching community creations:", error);
+    } finally {
+      setLoadingCommunity(false);
+    }
+  };
 
   // Polling function to check generation status
   const pollGenerationStatus = async (generationId: string) => {
@@ -1116,60 +1046,88 @@ const CustomCreation = () => {
         <div className="mb-8 md:mb-12">
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <h2 className="text-xl md:text-2xl font-black">COMMUNITY CREATIONS</h2>
-            <Button variant="outline" size="sm" className="h-8 md:h-9">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-8 md:h-9"
+              onClick={() => navigate("/community")}
+            >
               View All
             </Button>
           </div>
 
-          <Carousel opts={{ align: "start", loop: true }} className="w-full">
-            <CarouselContent className="-ml-2 md:-ml-4">
-              {communityCreations.map((creation) => (
-                <CarouselItem key={creation.id} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
-                  <Card className="overflow-hidden border-2 hover:border-primary transition-colors group">
-                    <div className="relative aspect-square bg-muted">
-                      {creation.video ? (
-                        <video
-                          src={creation.video}
-                          className="w-full h-full object-cover"
-                          loop
-                          muted
-                          playsInline
-                          onMouseEnter={(e) => e.currentTarget.play()}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.pause();
-                            e.currentTarget.currentTime = 0;
-                          }}
-                        />
-                      ) : (
-                        <img src={creation.image} alt={creation.theme} className="w-full h-full object-cover" />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      {creation.video && (
-                        <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
-                          <Play className="h-3 w-3" />
-                          Video
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <Badge variant="secondary" className="text-xs capitalize">
-                          {creation.theme}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">{creation.resolution}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium">{creation.author}</span>
-                        <span className="text-xs text-muted-foreground">❤️ {creation.likes}</span>
-                      </div>
-                    </div>
-                  </Card>
-                </CarouselItem>
+          {loadingCommunity ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[...Array(8)].map((_, i) => (
+                <Card key={i} className="overflow-hidden">
+                  <Skeleton className="aspect-square w-full" />
+                  <div className="p-3 space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-3 w-2/3" />
+                  </div>
+                </Card>
               ))}
-            </CarouselContent>
-            <CarouselPrevious className="hidden md:flex" />
-            <CarouselNext className="hidden md:flex" />
-          </Carousel>
+            </div>
+          ) : communityCreations.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No community creations yet. Be the first to share!</p>
+            </Card>
+          ) : (
+            <Carousel opts={{ align: "start", loop: true }} className="w-full">
+              <CarouselContent className="-ml-2 md:-ml-4">
+                {communityCreations.map((creation) => (
+                  <CarouselItem key={creation.id} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
+                    <Card className="overflow-hidden border-2 hover:border-primary transition-colors group">
+                      <div className="relative aspect-square bg-muted">
+                        {creation.output_url && (
+                          <>
+                            {creation.content_type === "image" && (
+                              <img 
+                                src={creation.output_url} 
+                                alt={creation.prompt.substring(0, 50)} 
+                                className="w-full h-full object-cover" 
+                                loading="lazy"
+                              />
+                            )}
+                            {creation.content_type === "video" && (
+                              <video
+                                src={creation.output_url}
+                                className="w-full h-full object-cover"
+                                loop
+                                muted
+                                playsInline
+                                onMouseEnter={(e) => e.currentTarget.play()}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.pause();
+                                  e.currentTarget.currentTime = 0;
+                                }}
+                              />
+                            )}
+                          </>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        {creation.content_type === "video" && (
+                          <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                            <Play className="h-3 w-3" />
+                            Video
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <p className="text-xs line-clamp-2 mb-2">{creation.prompt}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium capitalize">{creation.content_type}</span>
+                          <span className="text-xs text-muted-foreground">❤️ {creation.likes_count}</span>
+                        </div>
+                      </div>
+                    </Card>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="hidden md:flex" />
+              <CarouselNext className="hidden md:flex" />
+            </Carousel>
+          )}
         </div>
 
         {/* Best Practices Section */}

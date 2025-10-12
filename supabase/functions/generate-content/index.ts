@@ -236,10 +236,35 @@ serve(async (req) => {
       return filtered;
     }
 
-    const validatedParameters = validateAndFilterParameters(
+let validatedParameters = validateAndFilterParameters(
       parameters,
       model.input_schema
     );
+
+    // Coerce parameter types based on schema (e.g., "true" -> true for booleans)
+    function coerceParametersBySchema(params: Record<string, any>, schema: any) {
+      if (!schema?.properties) return params;
+      const coerced: Record<string, any> = {};
+      for (const [key, val] of Object.entries(params)) {
+        const prop: any = schema.properties[key];
+        if (!prop) { coerced[key] = val; continue; }
+        const t = prop.type;
+        if (t === 'boolean') {
+          coerced[key] = typeof val === 'boolean' ? val : String(val) === 'true';
+        } else if (t === 'integer') {
+          const n = typeof val === 'number' ? val : parseInt(String(val), 10);
+          coerced[key] = Number.isNaN(n) ? val : n;
+        } else if (t === 'number') {
+          const n = typeof val === 'number' ? val : parseFloat(String(val));
+          coerced[key] = Number.isNaN(n) ? val : n;
+        } else {
+          coerced[key] = val;
+        }
+      }
+      return coerced;
+    }
+
+    validatedParameters = coerceParametersBySchema(validatedParameters, model.input_schema);
 
     // Calculate token cost with validated parameters
     const tokenCost = calculateTokenCost(

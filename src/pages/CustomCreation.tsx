@@ -300,7 +300,7 @@ const CustomCreation = () => {
           setGeneratedOutput(data.storage_path);
           toast.success('Generation complete! Check your History for the result.');
         } else {
-          toast.error('Generation failed. Please try again.');
+          // Generation failed - handled via dialog/error state (no top toast)
         }
       }
     } catch (error) {

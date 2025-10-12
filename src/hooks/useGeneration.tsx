@@ -45,23 +45,19 @@ export const useGeneration = () => {
         
         // Handle specific error codes
         if (error.message?.includes("402") || error.message?.toLowerCase().includes("insufficient tokens")) {
-          toast.error("Insufficient tokens. Please upgrade your plan or purchase more tokens.");
           throw new Error("Insufficient tokens");
         }
         
         if (error.message?.includes("429")) {
-          toast.error("Rate limited. Please try again later.");
           throw new Error("Rate limited");
         }
         
         if (error.message?.includes("400")) {
-          toast.error("Invalid parameters: " + (error.message || "Missing required fields"));
-          throw new Error("Invalid parameters");
+          throw new Error("Invalid parameters: " + (error.message || "Missing required fields"));
         }
         
         // Generic error for non-2xx responses
         if (error.message?.toLowerCase().includes("non-2xx status code")) {
-          toast.error("Generation failed. Please check your token balance and try again.");
           throw new Error("Generation failed");
         }
         
@@ -69,12 +65,6 @@ export const useGeneration = () => {
       }
 
       if (data.error) {
-        // Check if tokens were refunded
-        if (data.tokens_refunded) {
-          toast.error(`${data.error} ${data.tokens_refunded} tokens have been refunded.`);
-        } else {
-          toast.error(data.error);
-        }
         throw new Error(data.error);
       }
 

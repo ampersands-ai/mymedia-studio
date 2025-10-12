@@ -135,7 +135,7 @@ const Create = () => {
           setGeneratedOutput(data.storage_path);
           toast.success('Generation complete!');
         } else {
-          toast.error('Generation failed. Please try again.');
+          // Generation failed - handled elsewhere (no top toast)
         }
       }
     } catch (error) {

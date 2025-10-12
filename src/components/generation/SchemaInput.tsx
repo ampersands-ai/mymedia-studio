@@ -32,7 +32,19 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
         {schema.description && (
           <p className="text-xs text-muted-foreground">{schema.description}</p>
         )}
-        <Select value={value?.toString()} onValueChange={onChange}>
+        <Select value={value?.toString()} onValueChange={(val) => {
+          let newVal: any = val;
+          if (schema.type === "boolean") {
+            newVal = val === "true";
+          } else if (schema.type === "integer") {
+            const n = parseInt(val, 10);
+            newVal = isNaN(n) ? val : n;
+          } else if (schema.type === "number") {
+            const n = parseFloat(val);
+            newVal = isNaN(n) ? val : n;
+          }
+          onChange(newVal);
+        }}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder={`Select ${displayName.toLowerCase()}`} />
           </SelectTrigger>
@@ -54,8 +66,8 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
       <div className="flex items-center space-x-2">
         <Checkbox
           id={name}
-          checked={value || false}
-          onCheckedChange={onChange}
+          checked={!!value}
+          onCheckedChange={(checked) => onChange(!!checked)}
         />
         <Label htmlFor={name} className="cursor-pointer">
           {displayName}

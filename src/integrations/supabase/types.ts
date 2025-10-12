@@ -419,6 +419,50 @@ export type Database = {
         }
         Relationships: []
       }
+      token_dispute_reports: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          generation_id: string
+          id: string
+          reason: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["dispute_status"]
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          generation_id: string
+          id?: string
+          reason: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["dispute_status"]
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          generation_id?: string
+          id?: string
+          reason?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["dispute_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "token_dispute_reports_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           granted_at: string
@@ -572,6 +616,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      dispute_status: "pending" | "reviewed" | "resolved" | "rejected"
       subscription_plan:
         | "freemium"
         | "explorer"
@@ -706,6 +751,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      dispute_status: ["pending", "reviewed", "resolved", "rejected"],
       subscription_plan: [
         "freemium",
         "explorer",

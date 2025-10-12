@@ -5,12 +5,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Trash2, Clock, Sparkles, Image as ImageIcon, Video, Music, FileText, RefreshCw, X, AlertCircle } from "lucide-react";
+import { Download, Trash2, Clock, Sparkles, Image as ImageIcon, Video, Music, FileText, RefreshCw, X, AlertCircle, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Component to render image with signed URL
 const ImageWithSignedUrl = ({ generation, className }: { generation: Generation; className?: string }) => {
@@ -141,6 +143,10 @@ const History = () => {
   const { user } = useAuth();
   const [previewGeneration, setPreviewGeneration] = useState<Generation | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'failed'>('all');
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportingGeneration, setReportingGeneration] = useState<Generation | null>(null);
+  const queryClient = useQueryClient();
 
   const { data: generations, refetch, isRefetching } = useQuery({
     queryKey: ["generations", user?.id],
@@ -179,6 +185,50 @@ const History = () => {
 
     toast.success("Generation deleted");
     refetch();
+  };
+
+  const reportTokenIssueMutation = useMutation({
+    mutationFn: async ({ generationId, reason }: { generationId: string; reason: string }) => {
+      const { error } = await supabase
+        .from("token_dispute_reports")
+        .insert({
+          generation_id: generationId,
+          user_id: user!.id,
+          reason: reason,
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Token issue reported successfully. We'll review it shortly.");
+      setShowReportDialog(false);
+      setReportReason("");
+      setReportingGeneration(null);
+      queryClient.invalidateQueries({ queryKey: ["generations", user?.id] });
+    },
+    onError: (error) => {
+      toast.error("Failed to submit report. Please try again.");
+      console.error(error);
+    },
+  });
+
+  const handleReportTokenIssue = (generation: Generation) => {
+    setReportingGeneration(generation);
+    setShowReportDialog(true);
+    setPreviewGeneration(null); // Close preview dialog
+  };
+
+  const submitReport = () => {
+    if (!reportReason.trim()) {
+      toast.error("Please provide a reason for your report");
+      return;
+    }
+    if (!reportingGeneration) return;
+
+    reportTokenIssueMutation.mutate({
+      generationId: reportingGeneration.id,
+      reason: reportReason,
+    });
   };
 
   const handleRefresh = async () => {
@@ -466,6 +516,17 @@ const History = () => {
                   </Button>
                 )}
                 <Button
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleReportTokenIssue(previewGeneration);
+                  }}
+                  className="flex-1"
+                >
+                  <Flag className="h-4 w-4 mr-2" />
+                  Report Token Issue
+                </Button>
+                <Button
                   variant="destructive"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -479,6 +540,65 @@ const History = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Token Issue Dialog */}
+      <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-black flex items-center gap-2">
+              <Flag className="h-5 w-5" />
+              Report Token Issue
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="bg-muted p-3 rounded-lg text-sm">
+              <p className="font-medium mb-1">Generation Details:</p>
+              <p className="text-muted-foreground text-xs">
+                Type: {reportingGeneration?.type} | Tokens: {reportingGeneration?.tokens_used}
+              </p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                Why do you think the token cost was incorrect?
+              </label>
+              <Textarea
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                placeholder="Please explain why you believe the token consumption was incorrect. For example: 'Generation failed but tokens were still deducted' or 'Tokens charged don't match the model's cost'..."
+                rows={5}
+                className="resize-none"
+              />
+            </div>
+
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-3 rounded-lg text-xs text-muted-foreground">
+              <p>Our team will review your report and investigate the token consumption. If we find an error, we'll refund the tokens to your account.</p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowReportDialog(false);
+                  setReportReason("");
+                  setReportingGeneration(null);
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={submitReport}
+                disabled={reportTokenIssueMutation.isPending || !reportReason.trim()}
+                className="flex-1"
+              >
+                {reportTokenIssueMutation.isPending ? "Submitting..." : "Submit Report"}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

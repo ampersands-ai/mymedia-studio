@@ -77,7 +77,7 @@ const GenerationPreview = ({ generation }: { generation: TokenDispute['generatio
   }
 
   if (generation.type === 'image' && signedUrl) {
-    return <img src={signedUrl} alt="Generated content" className="w-full aspect-video object-cover rounded-lg border" />;
+    return <img src={signedUrl} alt="Generated content" className="w-full max-h-48 object-cover rounded-lg border" />;
   }
 
   if (generation.type === 'video' && signedUrl) {
@@ -85,21 +85,21 @@ const GenerationPreview = ({ generation }: { generation: TokenDispute['generatio
       <video 
         src={signedUrl} 
         controls 
-        className="w-full aspect-video object-cover rounded-lg border"
+        className="w-full max-h-48 object-cover rounded-lg border"
       />
     );
   }
 
   if (isLoading) {
     return (
-      <div className="w-full aspect-video flex items-center justify-center bg-muted rounded-lg">
+      <div className="w-full max-h-48 flex items-center justify-center bg-muted rounded-lg">
         <div className="animate-pulse text-muted-foreground">Loading preview...</div>
       </div>
     );
   }
 
   return (
-    <div className="w-full aspect-video flex items-center justify-center bg-muted rounded-lg">
+    <div className="w-full max-h-48 flex items-center justify-center bg-muted rounded-lg">
       <p className="text-muted-foreground">Preview not available</p>
     </div>
   );
@@ -164,6 +164,41 @@ export const TokenDisputes = () => {
     },
   });
 
+  const refundTokensMutation = useMutation({
+    mutationFn: async ({ userId, amount }: { userId: string; amount: number }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-user-tokens`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          amount: amount,
+          action: 'add'
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to refund tokens');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['token-disputes'] });
+      toast.success('Tokens refunded successfully');
+    },
+    onError: (error) => {
+      toast.error(`Failed to refund tokens: ${error.message}`);
+      console.error(error);
+    },
+  });
+
   const handleUpdateDispute = () => {
     if (!selectedDispute || !newStatus) {
       toast.error('Please select a status');
@@ -174,6 +209,17 @@ export const TokenDisputes = () => {
       status: newStatus,
       notes: adminNotes,
     });
+  };
+
+  const handleRefundTokens = () => {
+    if (!selectedDispute) return;
+    
+    if (confirm(`Refund ${selectedDispute.generation.tokens_used} tokens to ${selectedDispute.profile.email}?`)) {
+      refundTokensMutation.mutate({
+        userId: selectedDispute.user_id,
+        amount: selectedDispute.generation.tokens_used,
+      });
+    }
   };
 
   if (isLoading) {
@@ -283,7 +329,7 @@ export const TokenDisputes = () => {
 
       {/* Dispute Detail Dialog */}
       <Dialog open={!!selectedDispute} onOpenChange={(open) => !open && setSelectedDispute(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Token Dispute Details</DialogTitle>
           </DialogHeader>
@@ -417,13 +463,23 @@ export const TokenDisputes = () => {
                     </div>
                   )}
 
-                  <Button 
-                    onClick={handleUpdateDispute}
-                    disabled={updateDisputeMutation.isPending}
-                    className="w-full"
-                  >
-                    {updateDisputeMutation.isPending ? 'Updating...' : 'Update Dispute'}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={handleRefundTokens}
+                      disabled={refundTokensMutation.isPending}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      {refundTokensMutation.isPending ? 'Refunding...' : `Refund ${selectedDispute.generation.tokens_used} Tokens`}
+                    </Button>
+                    <Button 
+                      onClick={handleUpdateDispute}
+                      disabled={updateDisputeMutation.isPending}
+                      className="flex-1"
+                    >
+                      {updateDisputeMutation.isPending ? 'Updating...' : 'Update Dispute'}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>

@@ -23,7 +23,12 @@ export function parseSchema(schema: Record<string, any>): Parameter[] {
   const required = schema.required || [];
   const properties = schema.properties || {};
 
-  Object.keys(properties).forEach(name => {
+  // Use x-order if available, otherwise fall back to Object.keys
+  const order = Array.isArray(schema["x-order"]) 
+    ? schema["x-order"].filter((name: string) => properties[name])
+    : Object.keys(properties);
+
+  order.forEach(name => {
     const prop = properties[name];
     
     parameters.push({
@@ -54,7 +59,8 @@ export function generateSchema(parameters: Parameter[]): Record<string, any> {
   const schema: any = {
     type: "object",
     required: parameters.filter(p => p.required).map(p => p.name),
-    properties: {}
+    properties: {},
+    "x-order": parameters.map(p => p.name) // Explicit order preservation
   };
 
   parameters.forEach(param => {

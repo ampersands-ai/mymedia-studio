@@ -83,25 +83,33 @@ export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, 
   const properties = modelSchema.properties;
   const required = modelSchema.required || [];
 
-  // Filter out excluded fields
-  const filteredProperties = Object.entries(properties).filter(
-    ([key]) => !excludeFields.includes(key)
+  // Use x-order if available to maintain parameter order
+  const order = Array.isArray(modelSchema["x-order"]) 
+    ? modelSchema["x-order"] 
+    : Object.keys(properties);
+  
+  // Filter out excluded fields while preserving order
+  const filteredKeys = order.filter(
+    (key: string) => !excludeFields.includes(key) && properties[key]
   );
 
   return (
     <div className="space-y-4">
-      {filteredProperties.map(([key, schema]: [string, any]) => (
-        <SchemaInput
-          key={key}
-          name={key}
-          schema={schema}
-          value={parameters[key]}
-          onChange={(value) => handleParameterChange(key, value)}
-          required={required.includes(key)}
-          filteredEnum={getFilteredEnum(key, schema)}
-          allValues={parameters}
-        />
-      ))}
+      {filteredKeys.map((key: string) => {
+        const schema = properties[key];
+        return (
+          <SchemaInput
+            key={key}
+            name={key}
+            schema={schema}
+            value={parameters[key]}
+            onChange={(value) => handleParameterChange(key, value)}
+            required={required.includes(key)}
+            filteredEnum={getFilteredEnum(key, schema)}
+            allValues={parameters}
+          />
+        );
+      })}
     </div>
   );
 };

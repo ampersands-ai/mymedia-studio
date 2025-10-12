@@ -44,6 +44,8 @@ interface Generation {
       failMsg?: string;
     };
   };
+  has_dispute?: boolean;
+  dispute_status?: string;
 }
 
 // Component to render video with signed URL and hover-to-play
@@ -151,14 +153,33 @@ const History = () => {
   const { data: generations, refetch, isRefetching } = useQuery({
     queryKey: ["generations", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get generations
+      const { data: genData, error: genError } = await supabase
         .from("generations")
         .select("*")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data as Generation[];
+      if (genError) throw genError;
+
+      // Then get all disputes for this user
+      const { data: disputes, error: disputeError } = await supabase
+        .from("token_dispute_reports")
+        .select("generation_id, status")
+        .eq("user_id", user!.id);
+
+      if (disputeError) console.error("Error fetching disputes:", disputeError);
+
+      // Map disputes to generations
+      const disputeMap = new Map(disputes?.map(d => [d.generation_id, d.status]) || []);
+      
+      const enrichedGenerations = genData.map(gen => ({
+        ...gen,
+        has_dispute: disputeMap.has(gen.id),
+        dispute_status: disputeMap.get(gen.id),
+      }));
+
+      return enrichedGenerations as Generation[];
     },
     enabled: !!user,
     staleTime: 30 * 1000, // 30 seconds
@@ -213,6 +234,17 @@ const History = () => {
   });
 
   const handleReportTokenIssue = (generation: Generation) => {
+    // Check if dispute already exists
+    if (generation.has_dispute) {
+      const statusText = generation.dispute_status === 'pending' ? 'pending review' :
+                         generation.dispute_status === 'reviewed' ? 'under review' :
+                         generation.dispute_status === 'resolved' ? 'resolved' : 
+                         generation.dispute_status === 'rejected' ? 'rejected' : 'being processed';
+      
+      toast.error(`You've already reported this generation. Status: ${statusText}`);
+      return;
+    }
+    
     setReportingGeneration(generation);
     setShowReportDialog(true);
     setPreviewGeneration(null); // Close preview dialog
@@ -522,9 +554,12 @@ const History = () => {
                     handleReportTokenIssue(previewGeneration);
                   }}
                   className="flex-1"
+                  disabled={previewGeneration.has_dispute}
                 >
                   <Flag className="h-4 w-4 mr-2" />
-                  Report Token Issue
+                  {previewGeneration.has_dispute 
+                    ? `Reported (${previewGeneration.dispute_status})`
+                    : 'Report Token Issue'}
                 </Button>
                 <Button
                   variant="destructive"

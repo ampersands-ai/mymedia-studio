@@ -129,6 +129,8 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
   // Handle enum types (dropdown)
   if (schema.enum && Array.isArray(schema.enum)) {
     const enumOptions = filteredEnum ?? schema.enum;
+    // Treat empty string as missing value and fallback to default
+    const selected = (value === "" || value === undefined || value === null) ? schema.default : value;
     
     return (
       <div className="space-y-2">
@@ -139,7 +141,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
         {schema.description && (
           <p className="text-xs text-muted-foreground">{schema.description}</p>
         )}
-        <Select value={(value ?? schema.default)?.toString()} onValueChange={(val) => {
+        <Select value={selected?.toString()} onValueChange={(val) => {
           let newVal: any = val;
           if (schema.type === "boolean") {
             newVal = val === "true";
@@ -190,6 +192,10 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
   // Handle number types
   if (schema.type === "number" || schema.type === "integer") {
     const hasMinMax = schema.minimum !== undefined && schema.maximum !== undefined;
+    // Treat empty string as missing value and fallback to default
+    const numericValue = (value === "" || value === undefined || value === null) 
+      ? (schema.default ?? schema.minimum) 
+      : value;
     
     if (hasMinMax && schema.maximum - schema.minimum <= 100) {
       // Use slider for small ranges
@@ -200,13 +206,13 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
               {displayName}
               {required && <span className="text-destructive ml-1">*</span>}
             </Label>
-            <span className="text-sm text-muted-foreground">{value ?? schema.default ?? schema.minimum}</span>
+            <span className="text-sm text-muted-foreground">{numericValue ?? schema.minimum}</span>
           </div>
           {schema.description && (
             <p className="text-xs text-muted-foreground">{schema.description}</p>
           )}
           <Slider
-            value={[value ?? schema.default ?? schema.minimum]}
+            value={[numericValue ?? schema.minimum]}
             onValueChange={([val]) => onChange(val)}
             min={schema.minimum}
             max={schema.maximum}
@@ -229,7 +235,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
         )}
         <Input
           type="number"
-          value={value ?? schema.default ?? ""}
+          value={numericValue ?? ""}
           onChange={(e) => onChange(schema.type === "integer" ? parseInt(e.target.value) : parseFloat(e.target.value))}
           min={schema.minimum}
           max={schema.maximum}

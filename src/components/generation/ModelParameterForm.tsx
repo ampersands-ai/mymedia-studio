@@ -42,6 +42,24 @@ export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, 
     onChange(defaults);
   }, [modelSchema]);
 
+  // Re-hydrate display when parent clears values (e.g., Reset)
+  useEffect(() => {
+    if (!modelSchema?.properties) return;
+    
+    const rehydrated: Record<string, any> = {};
+    Object.entries(modelSchema.properties).forEach(([key, schema]: [string, any]) => {
+      const val = currentValues[key];
+      // If value is empty string, undefined, or null, use schema default
+      if ((val === "" || val === undefined || val === null) && schema.default !== undefined) {
+        rehydrated[key] = schema.default;
+      } else {
+        rehydrated[key] = val;
+      }
+    });
+    
+    setParameters(rehydrated);
+  }, [currentValues, modelSchema]);
+
   // Get filtered enum based on field dependencies
   const getFilteredEnum = (fieldName: string, schema: any): any[] | undefined => {
     if (!modelSchema?.fieldDependencies || !schema.enum) return undefined;

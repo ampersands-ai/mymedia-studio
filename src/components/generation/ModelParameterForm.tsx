@@ -12,6 +12,7 @@ export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, 
   const [parameters, setParameters] = useState<Record<string, any>>(currentValues);
 
   // Initialize with defaults from schema
+  // Note: Empty fields will fallback to schema defaults in the backend edge function
   useEffect(() => {
     if (!modelSchema?.properties) return;
 

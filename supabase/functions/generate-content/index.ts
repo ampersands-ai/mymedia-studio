@@ -212,7 +212,7 @@ serve(async (req) => {
       }
     }
 
-    // Validate and filter parameters against schema
+    // Validate and filter parameters against schema, applying defaults for missing values
     function validateAndFilterParameters(
       parameters: Record<string, any>,
       schema: any
@@ -221,16 +221,31 @@ serve(async (req) => {
       
       const allowedKeys = Object.keys(schema.properties);
       const filtered: Record<string, any> = {};
+      const appliedDefaults: string[] = [];
       
       for (const key of allowedKeys) {
-        if (parameters[key] !== undefined) {
-          filtered[key] = parameters[key];
+        const schemaProperty = schema.properties[key];
+        const providedValue = parameters[key];
+        
+        // Use provided value if it exists and is not empty
+        if (providedValue !== undefined && providedValue !== null && providedValue !== '') {
+          filtered[key] = providedValue;
+        } 
+        // Fall back to schema default if available
+        else if (schemaProperty?.default !== undefined) {
+          filtered[key] = schemaProperty.default;
+          appliedDefaults.push(`${key}=${JSON.stringify(schemaProperty.default)}`);
+        }
+        // Otherwise, include the provided value (might be undefined) only if explicitly provided
+        else if (providedValue !== undefined) {
+          filtered[key] = providedValue;
         }
       }
       
       console.log('Parameters filtered from schema:', {
         original: Object.keys(parameters),
-        filtered: Object.keys(filtered)
+        filtered: Object.keys(filtered),
+        appliedDefaults: appliedDefaults.length > 0 ? appliedDefaults : 'none'
       });
       
       return filtered;

@@ -9,10 +9,23 @@ interface ModelParameterFormProps {
 }
 
 export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, excludeFields = [] }: ModelParameterFormProps) => {
-  const [parameters, setParameters] = useState<Record<string, any>>(currentValues);
+  // Initialize with defaults immediately to avoid timing issues
+  const [parameters, setParameters] = useState<Record<string, any>>(() => {
+    if (!modelSchema?.properties) return currentValues;
+    
+    const defaults: Record<string, any> = {};
+    Object.entries(modelSchema.properties).forEach(([key, schema]: [string, any]) => {
+      if (currentValues[key] !== undefined) {
+        defaults[key] = currentValues[key];
+      } else if (schema.default !== undefined) {
+        defaults[key] = schema.default;
+      }
+    });
+    
+    return defaults;
+  });
 
-  // Initialize with defaults from schema
-  // Note: Empty fields will fallback to schema defaults in the backend edge function
+  // Update when model schema changes
   useEffect(() => {
     if (!modelSchema?.properties) return;
 

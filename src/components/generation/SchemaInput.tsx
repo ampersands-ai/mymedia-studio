@@ -173,7 +173,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
       <div className="flex items-center space-x-2">
         <Checkbox
           id={name}
-          checked={!!value}
+          checked={value ?? schema.default ?? false}
           onCheckedChange={(checked) => onChange(!!checked)}
         />
         <Label htmlFor={name} className="cursor-pointer">
@@ -200,13 +200,13 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
               {displayName}
               {required && <span className="text-destructive ml-1">*</span>}
             </Label>
-            <span className="text-sm text-muted-foreground">{value || schema.default || schema.minimum}</span>
+            <span className="text-sm text-muted-foreground">{value ?? schema.default ?? schema.minimum}</span>
           </div>
           {schema.description && (
             <p className="text-xs text-muted-foreground">{schema.description}</p>
           )}
           <Slider
-            value={[value || schema.default || schema.minimum]}
+            value={[value ?? schema.default ?? schema.minimum]}
             onValueChange={([val]) => onChange(val)}
             min={schema.minimum}
             max={schema.maximum}
@@ -229,7 +229,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
         )}
         <Input
           type="number"
-          value={value || schema.default || ""}
+          value={value ?? schema.default ?? ""}
           onChange={(e) => onChange(schema.type === "integer" ? parseInt(e.target.value) : parseFloat(e.target.value))}
           min={schema.minimum}
           max={schema.maximum}

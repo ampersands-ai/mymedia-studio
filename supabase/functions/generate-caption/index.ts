@@ -27,19 +27,24 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    const systemPrompt = `You are a social media expert specializing in AI-generated content. Generate a captivating caption and 20 popular hashtags for this content.
+    const systemPrompt = `You are a social media expert. Generate a captivating caption and 20 popular hashtags that describe the image content.
 
 Content Type: ${content_type}
-Model Used: ${model_name || 'AI Model'}
-Original Prompt: ${prompt}
+What the image shows: ${prompt}
 
-Make the caption engaging (2-3 sentences) that would work well on Instagram, Twitter, or other social media.
-Make the hashtags a mix of:
-- Popular general tags (high reach)
-- Niche-specific tags (targeted audience)
-- Trending AI/tech tags
+Create a caption (2-3 sentences) that:
+- Describes what's actually IN the image
+- Is engaging and works well on Instagram, Twitter, or other social media
+- Does NOT mention AI, models, or the generation process
+- Focuses on the visual content and subject matter
 
-IMPORTANT: Each hashtag MUST include the # symbol (e.g., #AIArt, #GenerativeAI).`;
+Make the hashtags relevant to:
+- The actual subject matter in the image
+- Popular related topics
+- Niche-specific content categories
+- Current trends related to the image content
+
+IMPORTANT: Each hashtag MUST include the # symbol (e.g., #Fashion, #Style).`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

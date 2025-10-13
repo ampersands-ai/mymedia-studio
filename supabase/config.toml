@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.generate-random-prompt]
 verify_jwt = false
+
+[functions.generate-caption]
+verify_jwt = true

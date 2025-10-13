@@ -86,6 +86,13 @@ const CustomCreation = () => {
   const [estimatedTokens, setEstimatedTokens] = useState(50);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [enhancePrompt, setEnhancePrompt] = useState(false);
+  const [generateCaption, setGenerateCaption] = useState(false);
+  const [captionData, setCaptionData] = useState<{
+    caption: string;
+    hashtags: string[];
+    generated_at: string;
+  } | null>(null);
+  const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
   const [localGenerating, setLocalGenerating] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [modelParameters, setModelParameters] = useState<Record<string, any>>({});
@@ -213,6 +220,39 @@ const CustomCreation = () => {
           toast.success(`Generation complete! ${allOutputs.length} output${allOutputs.length > 1 ? 's' : ''} created.`, { 
             id: 'generation-progress' 
           });
+
+          // Generate caption if checkbox was checked
+          if (generateCaption && allOutputs.length > 0) {
+            const firstOutput = allOutputs[0];
+            setIsGeneratingCaption(true);
+            
+            try {
+              const selectedModelData = filteredModels.find(m => m.record_id === selectedModel);
+              const { data: captionResult, error: captionError } = await supabase.functions.invoke('generate-caption', {
+                body: {
+                  generation_id: firstOutput.id,
+                  prompt: prompt,
+                  content_type: selectedModelData?.content_type || 'image',
+                  model_name: selectedModelData?.model_name || 'AI Model'
+                }
+              });
+              
+              if (captionError) throw captionError;
+              
+              setCaptionData({
+                caption: captionResult.caption,
+                hashtags: captionResult.hashtags,
+                generated_at: captionResult.generated_at
+              });
+              
+              toast.success("Caption and hashtags generated!");
+            } catch (err) {
+              console.error("Caption generation failed:", err);
+              toast.error("Failed to generate caption. Your content is ready though!");
+            } finally {
+              setIsGeneratingCaption(false);
+            }
+          }
         } else {
           // Generation failed - dismiss loading toast
           toast.dismiss('generation-progress');
@@ -571,8 +611,12 @@ const CustomCreation = () => {
   };
 
   useEffect(() => {
-    setEstimatedTokens(calculateTokens());
-  }, [selectedModel, modelParameters, uploadedImages, selectedGroup, filteredModels]);
+    let baseTokens = calculateTokens();
+    if (generateCaption) {
+      baseTokens += 8; // Add caption generation cost
+    }
+    setEstimatedTokens(baseTokens);
+  }, [selectedModel, modelParameters, uploadedImages, selectedGroup, filteredModels, generateCaption]);
 
   const handleResetConfirm = () => {
     setPrompt("");
@@ -580,6 +624,8 @@ const CustomCreation = () => {
     setGeneratedOutput(null);
     setResolution("Native");
     setModelParameters({});
+    setCaptionData(null);
+    setGenerateCaption(false);
     setShowResetDialog(false);
     toast.success("Reset complete");
   };
@@ -784,7 +830,7 @@ const CustomCreation = () => {
                           </>
                         )}
                       </Button>
-                      <Button
+                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setEnhancePrompt(!enhancePrompt)}
@@ -799,6 +845,24 @@ const CustomCreation = () => {
                       </Button>
                     </div>
                   </div>
+                  
+                  {/* Generate Caption Checkbox */}
+                  <div className="flex items-center space-x-2 pt-2">
+                    <Checkbox
+                      id="generate-caption"
+                      checked={generateCaption}
+                      onCheckedChange={(checked) => setGenerateCaption(checked as boolean)}
+                      disabled={localGenerating || isGenerating || !!pollingGenerationId}
+                    />
+                    <label 
+                      htmlFor="generate-caption" 
+                      className="text-sm font-medium cursor-pointer flex items-center gap-1"
+                    >
+                      Generate caption & 20 hashtags 
+                      <Badge variant="secondary" className="text-xs">+8 tokens</Badge>
+                    </label>
+                  </div>
+                  
                    <Textarea
                      value={prompt}
                      onChange={(e) => setPrompt(e.target.value)}
@@ -1061,6 +1125,133 @@ const CustomCreation = () => {
                               }
                             }}
                           />
+
+                          {/* Caption & Hashtags Display */}
+                          {captionData && (
+                            <Card className="bg-muted/50 border-2">
+                              <CardContent className="pt-6">
+                                <Collapsible defaultOpen>
+                                  <CollapsibleTrigger className="flex items-center justify-between w-full group">
+                                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                                      <Sparkles className="h-5 w-5 text-primary" />
+                                      Caption & Hashtags
+                                    </h3>
+                                    <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]:rotate-90" />
+                                  </CollapsibleTrigger>
+                                  
+                                  <CollapsibleContent className="mt-4 space-y-4">
+                                    {/* Caption Section */}
+                                    <div>
+                                      <div className="flex items-center justify-between mb-2">
+                                        <label className="text-sm font-medium">Caption</label>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(captionData.caption);
+                                            toast.success("Caption copied!");
+                                          }}
+                                        >
+                                          Copy
+                                        </Button>
+                                      </div>
+                                      <p className="text-sm bg-background p-3 rounded-md border">
+                                        {captionData.caption}
+                                      </p>
+                                    </div>
+                                    
+                                    {/* Hashtags Section */}
+                                    <div>
+                                      <div className="flex items-center justify-between mb-2">
+                                        <label className="text-sm font-medium">
+                                          Hashtags ({captionData.hashtags.length})
+                                        </label>
+                                        <div className="flex gap-2">
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                              const hashtagText = captionData.hashtags.join(' ');
+                                              navigator.clipboard.writeText(hashtagText);
+                                              toast.success("All hashtags copied!");
+                                            }}
+                                          >
+                                            Copy All
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={async () => {
+                                              setIsGeneratingCaption(true);
+                                              try {
+                                                const selectedModelData = filteredModels.find(m => m.record_id === selectedModel);
+                                                const { data: captionResult, error: captionError } = await supabase.functions.invoke('generate-caption', {
+                                                  body: {
+                                                    generation_id: generatedOutputs[0].id,
+                                                    prompt: prompt,
+                                                    content_type: selectedModelData?.content_type || 'image',
+                                                    model_name: selectedModelData?.model_name || 'AI Model'
+                                                  }
+                                                });
+                                                
+                                                if (captionError) throw captionError;
+                                                
+                                                setCaptionData({
+                                                  caption: captionResult.caption,
+                                                  hashtags: captionResult.hashtags,
+                                                  generated_at: captionResult.generated_at
+                                                });
+                                                
+                                                toast.success("Caption regenerated!");
+                                              } catch (err) {
+                                                console.error("Caption regeneration failed:", err);
+                                                toast.error("Failed to regenerate caption");
+                                              } finally {
+                                                setIsGeneratingCaption(false);
+                                              }
+                                            }}
+                                            disabled={isGeneratingCaption}
+                                          >
+                                            {isGeneratingCaption ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : null}
+                                            Regenerate
+                                          </Button>
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="bg-background p-3 rounded-md border">
+                                        <div className="flex flex-wrap gap-2">
+                                          {captionData.hashtags.map((tag, idx) => (
+                                            <Badge
+                                              key={idx}
+                                              variant="secondary"
+                                              className="cursor-pointer hover:bg-primary/20 transition-colors"
+                                              onClick={() => {
+                                                navigator.clipboard.writeText(tag);
+                                                toast.success(`Copied ${tag}`);
+                                              }}
+                                            >
+                                              {tag}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                      
+                                      <p className="text-xs text-muted-foreground mt-2">
+                                        Generated {new Date(captionData.generated_at).toLocaleString()}
+                                      </p>
+                                    </div>
+                                  </CollapsibleContent>
+                                </Collapsible>
+                              </CardContent>
+                            </Card>
+                          )}
+
+                          {isGeneratingCaption && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Generating caption and hashtags...
+                            </div>
+                          )}
 
                           <Button
                             onClick={() => navigate("/dashboard/history")}

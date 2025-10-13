@@ -268,6 +268,9 @@ export type Database = {
       generations: {
         Row: {
           actual_token_cost: number | null
+          ai_caption: string | null
+          ai_hashtags: string[] | null
+          caption_generated_at: string | null
           created_at: string
           enhanced_prompt: string | null
           enhancement_provider: string | null
@@ -294,6 +297,9 @@ export type Database = {
         }
         Insert: {
           actual_token_cost?: number | null
+          ai_caption?: string | null
+          ai_hashtags?: string[] | null
+          caption_generated_at?: string | null
           created_at?: string
           enhanced_prompt?: string | null
           enhancement_provider?: string | null
@@ -320,6 +326,9 @@ export type Database = {
         }
         Update: {
           actual_token_cost?: number | null
+          ai_caption?: string | null
+          ai_hashtags?: string[] | null
+          caption_generated_at?: string | null
           created_at?: string
           enhanced_prompt?: string | null
           enhancement_provider?: string | null

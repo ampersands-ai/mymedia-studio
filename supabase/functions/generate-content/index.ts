@@ -212,15 +212,6 @@ serve(async (req) => {
       }
     }
 
-    // Normalize legacy image_size values
-    const IMAGE_SIZE_NORMALIZATION: Record<string, string> = {
-      'landscape_21_9': '21:9',
-      'landscape_16_9': '16:9',
-      'square_1_1': '1:1',
-      'portrait_9_16': '9:16',
-      'portrait_4_5': '4:5'
-    };
-
     // Validate and filter parameters against schema, applying defaults for missing values
     function validateAndFilterParameters(
       parameters: Record<string, any>,
@@ -234,29 +225,34 @@ serve(async (req) => {
       
       for (const key of allowedKeys) {
         const schemaProperty = schema.properties[key];
-        let candidateValue = parameters[key];
-        
-        // Normalize image_size if needed
-        if (key === 'image_size' && typeof candidateValue === 'string' && IMAGE_SIZE_NORMALIZATION[candidateValue]) {
-          candidateValue = IMAGE_SIZE_NORMALIZATION[candidateValue];
-          console.log(`Normalized image_size: ${parameters[key]} -> ${candidateValue}`);
-        }
+        const candidateValue = parameters[key];
         
         // Validate enum values
         if (schemaProperty?.enum && Array.isArray(schemaProperty.enum)) {
-          // If candidate is empty, undefined, null, or not in enum
-          if (candidateValue === "" || candidateValue === undefined || candidateValue === null || !schemaProperty.enum.includes(candidateValue)) {
+          // If candidate is empty, undefined, or null
+          if (candidateValue === "" || candidateValue === undefined || candidateValue === null) {
+            // Use default if available, otherwise omit parameter
+            if (schemaProperty.default !== undefined) {
+              filtered[key] = schemaProperty.default;
+              appliedDefaults.push(`${key}=${JSON.stringify(schemaProperty.default)} (was empty)`);
+            }
+            // Else: omit the parameter entirely - don't add to filtered
+          } 
+          // If value provided but not in enum
+          else if (!schemaProperty.enum.includes(candidateValue)) {
             // Use default if available
             if (schemaProperty.default !== undefined) {
               filtered[key] = schemaProperty.default;
               appliedDefaults.push(`${key}=${JSON.stringify(schemaProperty.default)} (invalid: ${JSON.stringify(candidateValue)})`);
             } else {
-              // No default available - this is an error
+              // No default - return clear 400 error
               const error = `Invalid parameter '${key}'. Value '${candidateValue}' is not in allowed values: ${schemaProperty.enum.join(', ')}`;
               console.error(error);
               throw new Error(error);
             }
-          } else {
+          } 
+          // Valid value - use as is
+          else {
             filtered[key] = candidateValue;
           }
         }

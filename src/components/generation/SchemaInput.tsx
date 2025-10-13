@@ -139,7 +139,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
         {schema.description && (
           <p className="text-xs text-muted-foreground">{schema.description}</p>
         )}
-        <Select value={value?.toString()} onValueChange={(val) => {
+        <Select value={(value ?? schema.default)?.toString()} onValueChange={(val) => {
           let newVal: any = val;
           if (schema.type === "boolean") {
             newVal = val === "true";
@@ -252,7 +252,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
       )}
       <Input
         type="text"
-        value={value || ""}
+        value={value ?? schema.default ?? ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={`Enter ${displayName.toLowerCase()}`}
       />

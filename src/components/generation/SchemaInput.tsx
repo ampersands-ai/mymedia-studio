@@ -129,8 +129,9 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
   // Handle enum types (dropdown)
   if (schema.enum && Array.isArray(schema.enum)) {
     const enumOptions = filteredEnum ?? schema.enum;
-    // Treat empty string as missing value and fallback to default
-    const selected = (value === "" || value === undefined || value === null) ? schema.default : value;
+    // Treat empty string, missing value, or invalid enum as requiring fallback to default
+    const isInvalidValue = value === "" || value === undefined || value === null || !enumOptions.includes(value);
+    const selected = isInvalidValue ? schema.default : value;
     
     return (
       <div className="space-y-2">

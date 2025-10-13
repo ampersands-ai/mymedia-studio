@@ -212,6 +212,15 @@ serve(async (req) => {
       }
     }
 
+    // Normalize legacy image_size values
+    const IMAGE_SIZE_NORMALIZATION: Record<string, string> = {
+      'landscape_21_9': '21:9',
+      'landscape_16_9': '16:9',
+      'square_1_1': '1:1',
+      'portrait_9_16': '9:16',
+      'portrait_4_5': '4:5'
+    };
+
     // Validate and filter parameters against schema, applying defaults for missing values
     function validateAndFilterParameters(
       parameters: Record<string, any>,
@@ -225,11 +234,35 @@ serve(async (req) => {
       
       for (const key of allowedKeys) {
         const schemaProperty = schema.properties[key];
-        const providedValue = parameters[key];
+        let candidateValue = parameters[key];
         
-        // Use provided value if it exists and is not empty
-        if (providedValue !== undefined && providedValue !== null && providedValue !== '') {
-          filtered[key] = providedValue;
+        // Normalize image_size if needed
+        if (key === 'image_size' && typeof candidateValue === 'string' && IMAGE_SIZE_NORMALIZATION[candidateValue]) {
+          candidateValue = IMAGE_SIZE_NORMALIZATION[candidateValue];
+          console.log(`Normalized image_size: ${parameters[key]} -> ${candidateValue}`);
+        }
+        
+        // Validate enum values
+        if (schemaProperty?.enum && Array.isArray(schemaProperty.enum)) {
+          // If candidate is empty, undefined, null, or not in enum
+          if (candidateValue === "" || candidateValue === undefined || candidateValue === null || !schemaProperty.enum.includes(candidateValue)) {
+            // Use default if available
+            if (schemaProperty.default !== undefined) {
+              filtered[key] = schemaProperty.default;
+              appliedDefaults.push(`${key}=${JSON.stringify(schemaProperty.default)} (invalid: ${JSON.stringify(candidateValue)})`);
+            } else {
+              // No default available - this is an error
+              const error = `Invalid parameter '${key}'. Value '${candidateValue}' is not in allowed values: ${schemaProperty.enum.join(', ')}`;
+              console.error(error);
+              throw new Error(error);
+            }
+          } else {
+            filtered[key] = candidateValue;
+          }
+        }
+        // Non-enum fields
+        else if (candidateValue !== undefined && candidateValue !== null && candidateValue !== '') {
+          filtered[key] = candidateValue;
         } 
         // Fall back to schema default if available
         else if (schemaProperty?.default !== undefined) {
@@ -237,8 +270,8 @@ serve(async (req) => {
           appliedDefaults.push(`${key}=${JSON.stringify(schemaProperty.default)}`);
         }
         // Otherwise, include the provided value (might be undefined) only if explicitly provided
-        else if (providedValue !== undefined) {
-          filtered[key] = providedValue;
+        else if (candidateValue !== undefined) {
+          filtered[key] = candidateValue;
         }
       }
       
@@ -422,7 +455,12 @@ let validatedParameters = validateAndFilterParameters(
         console.log('Tokens refunded:', tokenCost);
       }
       
-      throw txError;
+      // Return 400 with specific error message instead of throwing
+      const errorMessage = txError instanceof Error ? txError.message : 'Validation failed';
+      return new Response(
+        JSON.stringify({ error: errorMessage }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Check circuit breaker

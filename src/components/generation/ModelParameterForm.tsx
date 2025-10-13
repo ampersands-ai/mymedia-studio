@@ -80,18 +80,26 @@ export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, 
 
   // Auto-correct invalid combinations based on dependencies
   const autoCorrectDependencies = (changedField: string, newValue: any, updatedParams: Record<string, any>) => {
-    if (!modelSchema?.fieldDependencies) return updatedParams;
+    if (!modelSchema?.properties) return updatedParams;
     
     const corrected = { ...updatedParams };
     
-    // Check all other fields to see if they need correction
+    // Check all fields to enforce enum validity
     Object.entries(modelSchema.properties).forEach(([fieldName, schema]: [string, any]) => {
-      if (fieldName === changedField || !schema.enum) return;
+      if (!schema.enum) return;
       
-      const filteredEnum = getFilteredEnum(fieldName, schema);
-      if (filteredEnum && !filteredEnum.includes(corrected[fieldName])) {
-        // Current value is invalid, set to first valid option
-        corrected[fieldName] = filteredEnum[0];
+      // Get valid options (filtered by dependencies or all enum values)
+      const filteredEnum = modelSchema?.fieldDependencies 
+        ? getFilteredEnum(fieldName, schema) 
+        : null;
+      const validOptions = filteredEnum ?? schema.enum;
+      
+      const currentValue = corrected[fieldName];
+      
+      // If value is empty, undefined, null, or not in valid options
+      if (currentValue === "" || currentValue === undefined || currentValue === null || !validOptions.includes(currentValue)) {
+        // Use default if available, otherwise first valid option
+        corrected[fieldName] = schema.default ?? validOptions[0];
       }
     });
     

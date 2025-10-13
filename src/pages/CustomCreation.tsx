@@ -441,9 +441,35 @@ const CustomCreation = () => {
     setLocalGenerating(true);
     
     try {
-      // Use only schema-defined parameters
+      // Sanitize model parameters to ensure all enum values are valid
+      const sanitizedParameters: Record<string, any> = {};
+      if (currentModelForSchema?.input_schema?.properties) {
+        for (const [key, schema] of Object.entries<any>(currentModelForSchema.input_schema.properties)) {
+          const value = modelParameters[key];
+          
+          // Handle enum fields - ensure value is valid
+          if (schema.enum && Array.isArray(schema.enum)) {
+            if (value === "" || value === undefined || value === null || !schema.enum.includes(value)) {
+              // Use default if available, otherwise first enum value
+              sanitizedParameters[key] = schema.default ?? schema.enum[0];
+            } else {
+              sanitizedParameters[key] = value;
+            }
+          }
+          // For non-enum fields, use value as-is (including undefined for optional fields)
+          else if (value !== undefined) {
+            sanitizedParameters[key] = value;
+          }
+          // Apply defaults for missing values
+          else if (schema.default !== undefined) {
+            sanitizedParameters[key] = schema.default;
+          }
+        }
+      }
+      
+      // Use sanitized parameters
       const customParameters: Record<string, any> = {
-        ...modelParameters
+        ...sanitizedParameters
       };
 
       // Upload images to storage if required

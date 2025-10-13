@@ -53,12 +53,9 @@ export const useGeneration = () => {
         }
         
         if (error.message?.includes("400")) {
-          throw new Error("Invalid parameters: " + (error.message || "Missing required fields"));
-        }
-        
-        // Generic error for non-2xx responses
-        if (error.message?.toLowerCase().includes("non-2xx status code")) {
-          throw new Error("Generation failed");
+          // Extract specific error message from server response
+          const errorMsg = error.message || "Invalid request";
+          throw new Error(errorMsg);
         }
         
         throw error;

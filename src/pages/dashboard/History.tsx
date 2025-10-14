@@ -29,6 +29,96 @@ const ImageWithSignedUrl = ({ generation, className }: { generation: Generation;
   return <img src={signedUrl} alt="Generated content" className={className} />;
 };
 
+// Component to render audio with signed URL
+const AudioWithSignedUrl = ({ generation, className, showControls = false }: { 
+  generation: Generation; 
+  className?: string;
+  showControls?: boolean;
+}) => {
+  const { signedUrl, isLoading, error } = useSignedUrl(generation.storage_path);
+  const [audioError, setAudioError] = useState(false);
+
+  // Show download fallback if we encounter error or no path
+  if (!generation.storage_path || audioError || error) {
+    return (
+      <div className={`${className} flex flex-col items-center justify-center bg-muted gap-2 p-4`}>
+        <Music className="h-8 w-8 text-muted-foreground" />
+        <p className="text-xs text-muted-foreground text-center">Audio Preview Unavailable</p>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={async (e) => {
+            e.stopPropagation();
+            if (generation.storage_path) {
+              toast.loading('Preparing your download...', { id: 'audio-download' });
+              try {
+                const { data } = await supabase.storage
+                  .from('generated-content')
+                  .createSignedUrl(generation.storage_path!, 60);
+                if (data?.signedUrl) {
+                  const response = await fetch(data.signedUrl);
+                  const blob = await response.blob();
+                  const blobUrl = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = blobUrl;
+                  a.download = `audio-${Date.now()}.mp3`;
+                  document.body.appendChild(a);
+                  a.click();
+                  window.URL.revokeObjectURL(blobUrl);
+                  document.body.removeChild(a);
+                  toast.success('Download started successfully!', { id: 'audio-download' });
+                }
+              } catch (error) {
+                toast.error('Failed to download', { id: 'audio-download' });
+              }
+            }
+          }}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Download Audio
+        </Button>
+      </div>
+    );
+  }
+
+  if (isLoading || !signedUrl) {
+    return (
+      <div className={`${className} flex items-center justify-center bg-muted`}>
+        <Music className="h-8 w-8 text-muted-foreground animate-pulse" />
+      </div>
+    );
+  }
+
+  if (showControls) {
+    return (
+      <div className="flex flex-col gap-4 p-6 bg-gradient-to-br from-background to-muted/30 rounded-lg">
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+            <Music className="h-6 w-6 text-primary" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium">Audio File</p>
+            <p className="text-xs text-muted-foreground">Generated audio content</p>
+          </div>
+        </div>
+        <audio
+          src={signedUrl}
+          className="w-full"
+          controls
+          preload="metadata"
+          onError={() => setAudioError(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${className} flex items-center justify-center bg-gradient-to-br from-background to-muted/30`}>
+      <Music className="h-8 w-8 text-primary" />
+    </div>
+  );
+};
+
 interface Generation {
   id: string;
   type: string;
@@ -491,6 +581,11 @@ const History = () => {
                         generation={generation}
                         className="w-full h-full object-cover"
                       />
+                    ) : generation.type === "audio" ? (
+                      <AudioWithSignedUrl 
+                        generation={generation}
+                        className="w-full h-full"
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         {getTypeIcon(generation.type)}
@@ -579,6 +674,12 @@ const History = () => {
                     <ImageWithSignedUrl 
                       generation={previewGeneration}
                       className="w-full h-full object-contain"
+                    />
+                  ) : previewGeneration.type === "audio" ? (
+                    <AudioWithSignedUrl 
+                      generation={previewGeneration}
+                      className="w-full h-full"
+                      showControls={true}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">

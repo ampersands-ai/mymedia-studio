@@ -38,10 +38,22 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     return true;
   };
   
+  // Check if this field is conditionally required
+  const isConditionallyRequired = () => {
+    if (!modelSchema?.conditionalFields?.[name]) return required;
+    
+    const fieldConfig = modelSchema.conditionalFields[name];
+    if (!shouldShowField()) return false; // Hidden fields can't be required
+    
+    return fieldConfig.required !== undefined ? fieldConfig.required : required;
+  };
+  
   // Don't render if conditions not met
   if (!shouldShowField()) {
     return null;
   }
+  
+  const isRequired = isConditionallyRequired();
   
   const displayName = schema.title || name.split('_').map((word: string) => 
     word.charAt(0).toUpperCase() + word.slice(1)
@@ -82,7 +94,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
       <div className="space-y-2">
         <Label>
           {displayName}
-          {required && <span className="text-destructive ml-1">*</span>}
+          {isRequired && <span className="text-destructive ml-1">*</span>}
         </Label>
         <div className="space-y-2">
           {(imagePreview || value) ? (
@@ -159,7 +171,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
       <div className="space-y-2">
         <Label>
           {displayName}
-          {required && <span className="text-destructive ml-1">*</span>}
+          {isRequired && <span className="text-destructive ml-1">*</span>}
         </Label>
         {schema.description && (
           <p className="text-xs text-muted-foreground">{schema.description}</p>
@@ -203,7 +215,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
         />
         <Label htmlFor={name} className="cursor-pointer">
           {displayName}
-          {required && <span className="text-destructive ml-1">*</span>}
+          {isRequired && <span className="text-destructive ml-1">*</span>}
         </Label>
         {schema.description && (
           <p className="text-xs text-muted-foreground ml-2">{schema.description}</p>
@@ -227,7 +239,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
           <div className="flex items-center justify-between">
             <Label>
               {displayName}
-              {required && <span className="text-destructive ml-1">*</span>}
+              {isRequired && <span className="text-destructive ml-1">*</span>}
             </Label>
             <span className="text-sm text-muted-foreground">{numericValue ?? schema.minimum}</span>
           </div>
@@ -251,7 +263,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
       <div className="space-y-2">
         <Label>
           {displayName}
-          {required && <span className="text-destructive ml-1">*</span>}
+          {isRequired && <span className="text-destructive ml-1">*</span>}
         </Label>
         {schema.description && (
           <p className="text-xs text-muted-foreground">{schema.description}</p>
@@ -274,7 +286,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     <div className="space-y-2">
       <Label>
         {displayName}
-        {required && <span className="text-destructive ml-1">*</span>}
+        {isRequired && <span className="text-destructive ml-1">*</span>}
       </Label>
       {schema.description && (
         <p className="text-xs text-muted-foreground">{schema.description}</p>

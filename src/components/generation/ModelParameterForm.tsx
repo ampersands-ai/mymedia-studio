@@ -126,6 +126,7 @@ export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, 
             required={required.includes(key)}
             filteredEnum={getFilteredEnum(key, schema)}
             allValues={parameters}
+            modelSchema={modelSchema}
           />
         );
       })}

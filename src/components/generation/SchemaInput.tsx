@@ -15,10 +15,33 @@ interface SchemaInputProps {
   required?: boolean;
   filteredEnum?: any[];
   allValues?: Record<string, any>;
+  modelSchema?: any;
 }
 
-export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues }: SchemaInputProps) => {
+export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema }: SchemaInputProps) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  // Check if this field should be visible based on conditional dependencies
+  const shouldShowField = () => {
+    if (!modelSchema?.conditionalFields?.[name]) return true;
+    
+    const dependency = modelSchema.conditionalFields[name].dependsOn;
+    if (!dependency) return true;
+    
+    // Check if all dependency conditions are met
+    for (const [depField, depValue] of Object.entries(dependency)) {
+      if (allValues?.[depField] !== depValue) {
+        return false;
+      }
+    }
+    
+    return true;
+  };
+  
+  // Don't render if conditions not met
+  if (!shouldShowField()) {
+    return null;
+  }
   
   const displayName = schema.title || name.split('_').map((word: string) => 
     word.charAt(0).toUpperCase() + word.slice(1)

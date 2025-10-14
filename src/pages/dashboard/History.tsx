@@ -705,14 +705,14 @@ const History = () => {
                 )}
               </div>
 
-              <div className="flex gap-2 pt-4">
+              <div className="flex flex-col sm:flex-row gap-2 pt-4">
                 {previewGeneration.storage_path && previewGeneration.status === "completed" && (
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDownload(previewGeneration.storage_path!, previewGeneration.type);
                     }}
-                    className="flex-1"
+                    className="w-full sm:flex-1"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Download
@@ -724,7 +724,7 @@ const History = () => {
                     e.stopPropagation();
                     handleReportTokenIssue(previewGeneration);
                   }}
-                  className="flex-1"
+                  className="w-full sm:flex-1"
                   disabled={previewGeneration.has_dispute}
                 >
                   <Flag className="h-4 w-4 mr-2" />
@@ -739,6 +739,7 @@ const History = () => {
                     handleDelete(previewGeneration.id);
                     setPreviewGeneration(null);
                   }}
+                  className="w-full sm:w-auto"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete

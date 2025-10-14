@@ -62,6 +62,12 @@ serve(async (req) => {
 
     console.log('Security: Valid webhook for generation:', generation.id);
 
+    // Extract Kie.ai callback type and items array
+    const callbackType = payload.data?.callbackType || payload.data?.callback_type;
+    const items = payload.data?.data || [];
+    
+    console.log('Callback type:', callbackType, 'Items count:', items.length);
+
     // Support both old format (state field) and new format (code field)
     const isSuccess = state === 'success' || payload.code === 200 || (payload.msg && payload.msg.toLowerCase().includes('success'));
     const isFailed = state === 'failed' || payload.status === 400 || payload.code === 400 || payload.code === 422 || (payload.msg && payload.msg.toLowerCase().includes('fail'));
@@ -102,12 +108,31 @@ serve(async (req) => {
       );
     }
 
-    // Handle success (support multiple formats)
-    if (isSuccess && (resultJson || payload.data?.info || video_url)) {
+    // Handle partial callbacks (first, text) - update to processing but don't upload
+    if (callbackType && callbackType.toLowerCase() !== 'complete') {
+      console.log(`Received partial callback: ${callbackType} - updating to processing`);
+      
+      await supabase
+        .from('generations')
+        .update({ 
+          status: 'processing', 
+          provider_response: payload 
+        })
+        .eq('id', generation.id);
+
+      return new Response(
+        JSON.stringify({ success: true, message: `Partial webhook (${callbackType}) acknowledged` }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Handle success (support multiple formats including Kie.ai items-based format)
+    if (isSuccess && (resultJson || payload.data?.info || video_url || (Array.isArray(items) && items.length > 0))) {
       console.log('Processing successful generation');
       
       // Support multiple URL formats
       let resultUrls: string[] = [];
+      
       if (video_url) {
         // Direct video_url field
         resultUrls = [video_url];
@@ -118,9 +143,34 @@ serve(async (req) => {
       } else if (payload.data?.info) {
         // New format: use data.info
         resultUrls = payload.data.info.resultUrls || payload.data.info.result_urls || [];
+      } else if (Array.isArray(items) && items.length > 0) {
+        // Kie.ai items-based format - extract URLs based on generation type
+        console.log('Processing Kie.ai items-based format for type:', generation.type);
+        
+        if (generation.type === 'audio') {
+          // For audio: prefer audio_url, fallback to source_audio_url, then stream_audio_url
+          resultUrls = items
+            .map((item: any) => item?.audio_url || item?.source_audio_url || item?.stream_audio_url)
+            .filter(Boolean);
+          console.log('Extracted audio URLs:', resultUrls);
+        } else if (generation.type === 'image') {
+          // For images: prefer image_url, fallback to source_image_url
+          resultUrls = items
+            .map((item: any) => item?.image_url || item?.source_image_url)
+            .filter(Boolean);
+          console.log('Extracted image URLs:', resultUrls);
+        } else {
+          // For video/other: try multiple fields
+          resultUrls = items
+            .map((item: any) => item?.video_url || item?.source_video_url || item?.url)
+            .filter(Boolean);
+          console.log('Extracted video/other URLs:', resultUrls);
+        }
       }
 
       if (resultUrls.length === 0) {
+        console.error('No result URLs found. Payload keys:', Object.keys(payload.data || {}));
+        console.error('Items sample:', items[0] ? Object.keys(items[0]) : 'No items');
         throw new Error('No result URLs found in response');
       }
 

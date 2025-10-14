@@ -858,7 +858,7 @@ const CustomCreation = () => {
                       htmlFor="generate-caption" 
                       className="text-sm font-medium cursor-pointer flex items-center gap-1"
                     >
-                      Generate caption & 20 hashtags 
+                      Generate caption & hashtags 
                       <Badge variant="secondary" className="text-xs">+8 tokens</Badge>
                     </label>
                   </div>

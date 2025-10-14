@@ -165,6 +165,36 @@ const CustomCreation = () => {
   const isPromptRequired = isPromptRequiredBySchema;
   const [generatingSurprise, setGeneratingSurprise] = useState(false);
 
+  // Determine max prompt length based on model and customMode
+  const getMaxPromptLength = (): number => {
+    if (!selectedModel) return 5000;
+    
+    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
+    if (!currentModel) return 5000;
+    
+    // Check if this is a Kie.ai audio model with customMode false
+    const isKieAiAudio = currentModel.provider === 'kie_ai' && currentModel.content_type === 'audio';
+    const customMode = modelParameters.customMode;
+    
+    // Kie.ai audio in non-custom mode has 500 char limit
+    if (isKieAiAudio && customMode === false) {
+      return 500;
+    }
+    
+    // Default limit for all other cases
+    return 5000;
+  };
+
+  const maxPromptLength = getMaxPromptLength();
+
+  // Truncate prompt if it exceeds the new limit when model/parameters change
+  useEffect(() => {
+    if (prompt.length > maxPromptLength) {
+      setPrompt(prompt.slice(0, maxPromptLength));
+      toast.info(`Prompt truncated to ${maxPromptLength} characters for this model configuration`);
+    }
+  }, [maxPromptLength]); // Only depend on maxPromptLength, not prompt
+
   useEffect(() => {
     document.title = "Custom Creation Studio - Artifio.ai";
     const metaDescription = document.querySelector('meta[name="description"]');
@@ -432,8 +462,8 @@ const CustomCreation = () => {
     }
     
     // Validate prompt length
-    if (prompt.trim().length > 5000) {
-      toast.error("Prompt must be less than 5000 characters");
+    if (prompt.trim().length > maxPromptLength) {
+      toast.error(`Prompt must be less than ${maxPromptLength} characters`);
       return;
     }
     
@@ -900,13 +930,20 @@ const CustomCreation = () => {
                      className="min-h-[100px] md:min-h-[120px] resize-none text-sm md:text-base"
                      disabled={localGenerating || isGenerating || !!pollingGenerationId}
                      required={isPromptRequired}
+                     maxLength={maxPromptLength}
                    />
-                  <div className="flex justify-end">
+                  <div className="flex justify-between items-center">
+                    {maxPromptLength === 500 && (
+                      <div className="flex items-center gap-1.5 text-xs text-orange-600 dark:text-orange-400">
+                        <Info className="h-3.5 w-3.5" />
+                        <span className="font-medium">Non-custom mode limit</span>
+                      </div>
+                    )}
                     <span className={cn(
-                      "text-xs",
-                      prompt.length > 5000 ? "text-destructive font-medium" : "text-muted-foreground"
+                      "text-xs ml-auto",
+                      prompt.length > maxPromptLength ? "text-destructive font-medium" : "text-muted-foreground"
                     )}>
-                      {prompt.length} / 5000 characters
+                      {prompt.length} / {maxPromptLength} characters
                     </span>
                   </div>
                 </div>

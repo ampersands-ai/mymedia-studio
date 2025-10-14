@@ -201,7 +201,9 @@ serve(async (req) => {
           prompt,
           enhancementInstruction,
           enhancement_provider,
-          model.content_type
+          model.content_type,
+          model.provider,
+          parameters.customMode
         );
         finalPrompt = enhancementResult.enhanced;
         usedEnhancementProvider = enhancementResult.provider;
@@ -729,7 +731,9 @@ async function enhancePrompt(
   prompt: string,
   instruction: string | null,
   provider: string,
-  contentType: string
+  contentType: string,
+  modelProvider: string,
+  customMode: boolean | undefined
 ): Promise<{ enhanced: string; provider: string }> {
   const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
@@ -737,7 +741,20 @@ async function enhancePrompt(
     throw new Error('LOVABLE_API_KEY not configured');
   }
 
-  const systemPrompt = instruction || `You are a prompt enhancement AI. Transform the user's prompt into a detailed, optimized prompt for ${contentType} generation. Keep the core intent but add professional details, style descriptions, and technical parameters that will improve the output quality. Return ONLY the enhanced prompt, no explanations.`;
+  let systemPrompt = instruction;
+
+  if (!systemPrompt) {
+    // For Kie.ai audio non-custom mode, enforce strict 500 character limit
+    if (modelProvider === 'kie_ai' && contentType === 'audio' && customMode === false) {
+      systemPrompt = `You are a prompt enhancement AI for audio generation. Transform the user's prompt into an optimized prompt for better audio output.
+
+CRITICAL CONSTRAINT: Your response MUST be MAXIMUM 480 characters (leaving room for any trailing spaces).
+
+Keep the core intent, add key musical/audio details (genre, mood, instruments, tempo), but stay extremely concise. Use abbreviations where appropriate. Return ONLY the enhanced prompt under 480 characters, no explanations or quotation marks.`;
+    } else {
+      systemPrompt = `You are a prompt enhancement AI. Transform the user's prompt into a detailed, optimized prompt for ${contentType} generation. Keep the core intent but add professional details, style descriptions, and technical parameters that will improve the output quality. Return ONLY the enhanced prompt, no explanations.`;
+    }
+  }
 
   const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
     method: 'POST',
@@ -759,7 +776,15 @@ async function enhancePrompt(
   }
 
   const data = await response.json();
-  const enhanced = data.choices[0].message.content.trim();
+  let enhanced = data.choices[0].message.content.trim();
+
+  // Safety net: Force truncate if enhancement still exceeds limit for Kie.ai non-custom mode
+  if (modelProvider === 'kie_ai' && contentType === 'audio' && customMode === false) {
+    if (enhanced.length > 500) {
+      console.warn(`Enhanced prompt exceeded 500 chars (${enhanced.length}), truncating...`);
+      enhanced = enhanced.slice(0, 497) + '...';
+    }
+  }
 
   return { enhanced, provider: 'lovable_ai' };
 }

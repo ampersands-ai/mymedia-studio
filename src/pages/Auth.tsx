@@ -9,10 +9,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Sparkles, Check, ChevronsUpDown, AlertCircle } from "lucide-react";
+import { Check, ChevronsUpDown, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signupSchema, loginSchema } from "@/lib/validation-schemas";
 import { Footer } from "@/components/Footer";
+import logo from "@/assets/logo.png";
+import textLogo from "@/assets/text-logo.png";
 
 
 const countryCodes = [
@@ -342,10 +344,18 @@ const Auth = () => {
         <nav className="container mx-auto px-4 py-3 md:py-4" aria-label="Main navigation">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity">
-              <div className="h-8 w-8 md:h-10 md:w-10 rounded-xl bg-gradient-primary border-3 border-black brutal-shadow flex items-center justify-center">
-                <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-white" aria-hidden="true" />
-              </div>
-              <h1 className="text-xl md:text-3xl font-black gradient-text">ARTIFIO.AI</h1>
+              <img 
+                src={logo} 
+                alt="Artifio.ai logo symbol" 
+                className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
+                loading="eager"
+              />
+              <img 
+                src={textLogo} 
+                alt="Artifio" 
+                className="h-6 md:h-8"
+                loading="eager"
+              />
             </Link>
             <div className="flex items-center gap-2 md:gap-3">
               <Button variant="ghost" onClick={() => navigate("/pricing")} className="text-sm md:text-base px-2 md:px-4">
@@ -674,7 +684,7 @@ const Auth = () => {
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-primary hover:text-primary/80 transition-colors font-bold underline"
+              className="text-foreground hover:text-foreground/80 transition-colors font-bold underline"
             >
               {isLogin
                 ? "Don't have an account? Sign up"

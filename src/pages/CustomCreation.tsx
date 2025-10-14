@@ -486,6 +486,14 @@ const CustomCreation = () => {
         ...modelParameters
       };
 
+      // Ensure required boolean flags have explicit defaults when undefined (server expects presence)
+      // Example: Suno audio model requires `customMode` even when false
+      const currentModel = filteredModels.find(m => m.record_id === selectedModel);
+      const props = (currentModel as any)?.input_schema?.properties as Record<string, any> | undefined;
+      if (props?.customMode !== undefined && customParameters.customMode === undefined) {
+        customParameters.customMode = false;
+      }
+
       // Upload images to storage if required
       if (imageFieldName && uploadedImages.length > 0) {
         const timestamp = Date.now();

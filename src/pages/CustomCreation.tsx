@@ -481,18 +481,40 @@ const CustomCreation = () => {
     setLocalGenerating(true);
     
     try {
-      // Use model parameters exactly as selected by user
-      const customParameters: Record<string, any> = {
-        ...modelParameters
-      };
-
-      // Ensure required boolean flags have explicit defaults when undefined (server expects presence)
-      // Example: Suno audio model requires `customMode` even when false
+      // Build customParameters, filtering out conditional fields whose dependencies aren't met
+      const customParameters: Record<string, any> = {};
       const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-      const props = (currentModel as any)?.input_schema?.properties as Record<string, any> | undefined;
-      if (props?.customMode !== undefined && customParameters.customMode === undefined) {
+      const inputSchema = (currentModel as any)?.input_schema;
+      const conditionalFields = inputSchema?.conditionalFields || {};
+
+      // Add all parameters from modelParameters, but exclude conditional ones whose deps aren't satisfied
+      for (const [key, value] of Object.entries(modelParameters)) {
+        const fieldConfig = conditionalFields[key];
+        
+        // If field has dependencies, check if they're satisfied
+        if (fieldConfig?.dependsOn) {
+          let shouldInclude = true;
+          for (const [depKey, depValue] of Object.entries(fieldConfig.dependsOn)) {
+            if (modelParameters[depKey] !== depValue) {
+              shouldInclude = false;
+              break;
+            }
+          }
+          if (!shouldInclude) {
+            console.log(`Excluding conditional parameter '${key}' because dependencies not met:`, fieldConfig.dependsOn);
+            continue; // Skip this parameter
+          }
+        }
+        
+        customParameters[key] = value;
+      }
+
+      // Ensure customMode has explicit default if undefined
+      if (inputSchema?.properties?.customMode && customParameters.customMode === undefined) {
         customParameters.customMode = false;
       }
+
+      console.log('Final custom parameters after filtering:', customParameters);
 
       // Upload images to storage if required
       if (imageFieldName && uploadedImages.length > 0) {

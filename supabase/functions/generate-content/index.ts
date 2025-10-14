@@ -404,7 +404,7 @@ let validatedParameters = validateAndFilterParameters(
       if (model.input_schema?.required) {
         for (const requiredParam of model.input_schema.required) {
           if (requiredParam === 'prompt') continue; // already handled above
-          if (!validatedParameters[requiredParam]) {
+          if (validatedParameters[requiredParam] === undefined) {
             throw new Error(`Missing required parameter: ${requiredParam}`);
           }
         }

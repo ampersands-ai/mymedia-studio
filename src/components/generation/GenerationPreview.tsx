@@ -42,7 +42,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
         {contentType === "video" ? (
           <Video className="h-8 w-8 text-muted-foreground animate-pulse" />
         ) : contentType === "audio" ? (
-          <Music className="h-8 w-8 text-muted-foreground animate-pulse" />
+          <Music className="h-8 w-8 text-gray-600 dark:text-gray-400 animate-pulse" />
         ) : (
           <ImageIcon className="h-8 w-8 text-muted-foreground animate-pulse" />
         )}
@@ -102,7 +102,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
     if (audioError || !signedUrl) {
       return (
         <div className={`${className} flex flex-col items-center justify-center bg-muted gap-3`}>
-          <Music className="h-12 w-12 text-muted-foreground" />
+          <Music className="h-12 w-12 text-gray-600 dark:text-gray-400" />
           <p className="text-sm text-muted-foreground">Audio Preview Unavailable</p>
           <Button
             variant="outline"
@@ -140,8 +140,8 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
       <div className="relative group">
         <div className="flex flex-col gap-4 p-6 bg-gradient-to-br from-background to-muted/30 rounded-lg border">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Music className="h-6 w-6 text-primary" />
+            <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <Music className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium">Audio File</p>

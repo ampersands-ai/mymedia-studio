@@ -169,8 +169,13 @@ serve(async (req) => {
       cancel_url: cancelUrl,
     });
 
-    // Create Dodo Payments checkout session with retry logic
-    const dodoBaseUrl = 'https://api.dodopayments.com';
+    // Determine environment based on API key prefix
+    const isTestMode = dodoApiKey.startsWith('test_');
+    const dodoBaseUrl = isTestMode 
+      ? 'https://test.dodopayments.com' 
+      : 'https://live.dodopayments.com';
+    
+    console.log(`Using Dodo Payments ${isTestMode ? 'test' : 'live'} environment: ${dodoBaseUrl}`);
     
     let dodoData;
     try {

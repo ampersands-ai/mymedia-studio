@@ -6,9 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Retry helper with exponential backoff
+// Retry helper with exponential backoff and IP fallback
 async function fetchWithRetry(url: string, options: RequestInit, maxAttempts = 3): Promise<Response> {
   const delays = [400, 800, 1600]; // exponential backoff in ms
+  
+  // Parse the URL to extract hostname
+  const urlObj = new URL(url);
+  const hostname = urlObj.hostname;
   
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
@@ -21,11 +25,52 @@ async function fetchWithRetry(url: string, options: RequestInit, maxAttempts = 3
       
       console.error(`Attempt ${attempt + 1} failed: ${errorMessage}`);
       
-      if (isLastAttempt) {
-        // Check if it's a DNS error
-        if (errorMessage.includes('dns error') || errorMessage.includes('lookup address')) {
+      // If it's a DNS error and not the last attempt, try IP fallback
+      if ((errorMessage.includes('dns error') || errorMessage.includes('lookup address')) && isLastAttempt) {
+        console.log('DNS resolution failed, attempting IP fallback');
+        
+        try {
+          // Use Cloudflare DNS over HTTPS to resolve the domain
+          const dnsResponse = await fetch(
+            `https://cloudflare-dns.com/dns-query?name=${hostname}&type=A`,
+            {
+              headers: { 'Accept': 'application/dns-json' }
+            }
+          );
+          
+          const dnsData = await dnsResponse.json();
+          
+          if (dnsData.Answer && dnsData.Answer.length > 0) {
+            const ipAddress = dnsData.Answer[0].data;
+            console.log(`Resolved ${hostname} to IP: ${ipAddress}`);
+            
+            // Replace hostname with IP in URL
+            const ipUrl = url.replace(hostname, ipAddress);
+            console.log(`Attempting request with IP: ${ipUrl}`);
+            
+            // Add Host header to ensure correct virtual host routing
+            const ipOptions = {
+              ...options,
+              headers: {
+                ...options.headers,
+                'Host': hostname,
+              }
+            };
+            
+            const ipResponse = await fetch(ipUrl, ipOptions);
+            console.log('IP fallback successful');
+            return ipResponse;
+          } else {
+            console.error('No DNS records found');
+            throw new Error('DNS_ERROR');
+          }
+        } catch (ipError) {
+          console.error('IP fallback also failed:', ipError);
           throw new Error('DNS_ERROR');
         }
+      }
+      
+      if (isLastAttempt) {
         throw error;
       }
       

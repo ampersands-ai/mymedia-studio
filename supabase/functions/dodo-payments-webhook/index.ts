@@ -35,28 +35,41 @@ serve(async (req) => {
       );
     }
 
-    // Get signature from headers (check both possible header names)
-    const signature = req.headers.get('x-dodo-signature') || req.headers.get('dodo-signature');
-    
     // Read the body once
     const bodyText = await req.text();
     
-    if (!signature) {
-      // TEMPORARY DEBUG: Log all headers and body preview to diagnose signature issues
-      console.error('Security: Rejected unsigned webhook request');
-      console.log('=== WEBHOOK DEBUG START ===');
-      console.log('All request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
-      console.log('Body preview (first 300 chars):', bodyText.substring(0, 300));
-      console.log('Body length:', bodyText.length);
-      console.log('Content-Type:', req.headers.get('content-type'));
-      console.log('=== WEBHOOK DEBUG END ===');
+    // Get Svix signature headers (Dodo Payments uses Svix for webhook delivery)
+    const svixSignature = req.headers.get('webhook-signature');
+    const svixId = req.headers.get('webhook-id');
+    const svixTimestamp = req.headers.get('webhook-timestamp');
+    
+    if (!svixSignature || !svixId || !svixTimestamp) {
+      console.error('Security: Missing Svix webhook headers');
+      console.log('webhook-signature:', svixSignature);
+      console.log('webhook-id:', svixId);
+      console.log('webhook-timestamp:', svixTimestamp);
       return new Response(
-        JSON.stringify({ error: 'Missing webhook signature' }),
+        JSON.stringify({ error: 'Missing webhook signature headers' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
-    // SECURITY: Verify HMAC signature
+    // SECURITY: Verify Svix HMAC signature
+    // Svix signature format: "v1,<base64_signature>" - extract the signature part
+    const signatureParts = svixSignature.split(',');
+    if (signatureParts.length !== 2 || signatureParts[0] !== 'v1') {
+      console.error('Security: Invalid Svix signature format');
+      return new Response(
+        JSON.stringify({ error: 'Invalid signature format' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const receivedSignature = signatureParts[1];
+    
+    // Svix signature is HMAC-SHA256 of: "${webhook_id}.${webhook_timestamp}.${body}"
+    const signedContent = `${svixId}.${svixTimestamp}.${bodyText}`;
+    
     const encoder = new TextEncoder();
     const key = await crypto.subtle.importKey(
       'raw',
@@ -69,23 +82,16 @@ serve(async (req) => {
     const signatureBuffer = await crypto.subtle.sign(
       'HMAC',
       key,
-      encoder.encode(bodyText)
+      encoder.encode(signedContent)
     );
     
-    const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+    // Convert to base64 for comparison
+    const expectedSignature = btoa(String.fromCharCode(...new Uint8Array(signatureBuffer)));
 
-    if (signature !== expectedSignature) {
-      // TEMPORARY DEBUG: Log signature comparison details
+    if (receivedSignature !== expectedSignature) {
       console.error('Security: Invalid webhook signature');
-      console.log('=== SIGNATURE MISMATCH DEBUG ===');
-      console.log('Received signature:', signature);
-      console.log('Expected signature:', expectedSignature);
-      console.log('Signature length - Received:', signature.length, 'Expected:', expectedSignature.length);
-      console.log('Body used for verification (first 200 chars):', bodyText.substring(0, 200));
-      console.log('Webhook secret configured:', webhookSecret ? 'Yes (length: ' + webhookSecret.length + ')' : 'No');
-      console.log('=== SIGNATURE MISMATCH DEBUG END ===');
+      console.log('Received:', receivedSignature);
+      console.log('Expected:', expectedSignature);
       return new Response(
         JSON.stringify({ error: 'Invalid signature' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -129,6 +129,9 @@ interface Generation {
   tokens_used: number;
   created_at: string;
   enhanced_prompt: string | null;
+  ai_caption: string | null;
+  ai_hashtags: string[] | null;
+  caption_generated_at: string | null;
   provider_response?: {
     data?: {
       failMsg?: string;
@@ -614,6 +617,9 @@ const History = () => {
                   <div className="flex items-center gap-1">
                     {getTypeIcon(generation.type)}
                     <span className="font-bold text-xs capitalize">{generation.type}</span>
+                    {generation.ai_caption && (
+                      <Sparkles className="h-3 w-3 text-primary" />
+                    )}
                   </div>
                   {getStatusBadge(generation.status, generation.created_at)}
                 </div>
@@ -705,6 +711,55 @@ const History = () => {
                   {previewGeneration.enhanced_prompt || previewGeneration.prompt}
                 </p>
               </div>
+
+              {previewGeneration.ai_caption && (
+                <div className="space-y-2">
+                  <h4 className="font-bold text-sm flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    AI Caption:
+                  </h4>
+                  <p className="text-sm text-foreground/80 bg-muted/50 p-3 rounded-lg border">
+                    {previewGeneration.ai_caption}
+                  </p>
+                </div>
+              )}
+
+              {previewGeneration.ai_hashtags && previewGeneration.ai_hashtags.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-sm flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      AI Hashtags:
+                    </h4>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        navigator.clipboard.writeText(previewGeneration.ai_hashtags!.join(' '));
+                        toast.success('Hashtags copied to clipboard!');
+                      }}
+                      className="h-7 text-xs"
+                    >
+                      Copy All
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 bg-muted/50 p-3 rounded-lg border">
+                    {previewGeneration.ai_hashtags.map((tag, idx) => (
+                      <Badge 
+                        key={idx} 
+                        variant="secondary" 
+                        className="text-xs cursor-pointer hover:bg-primary/20"
+                        onClick={() => {
+                          navigator.clipboard.writeText(tag);
+                          toast.success(`Copied: ${tag}`);
+                        }}
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <span>{format(new Date(previewGeneration.created_at), "MMM d, yyyy 'at' h:mm a")}</span>

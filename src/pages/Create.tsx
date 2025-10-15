@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatEstimatedTime } from "@/lib/time-utils";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
+import { useDraftPersistence } from "@/hooks/useDraftPersistence";
+import { SessionWarning } from "@/components/SessionWarning";
 
 // Lazy load Carousel for code splitting
 const Carousel = lazy(() => import("@/components/ui/carousel").then(m => ({ default: m.Carousel })));
@@ -34,6 +36,8 @@ const Create = () => {
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const generationStartTimeRef = useRef<number | null>(null);
   const [generationCompleteTime, setGenerationCompleteTime] = useState<number | null>(null);
+  const { saveDraft, loadDraft, clearDraft } = useDraftPersistence('create');
+  const [draftRestored, setDraftRestored] = useState(false);
 
   // Memoize SEO schemas for performance
   const schemas = useMemo(() => {
@@ -107,6 +111,43 @@ const Create = () => {
       });
     };
   }, []);
+
+  // Restore draft on mount
+  useEffect(() => {
+    if (draftRestored) return;
+    
+    const draft = loadDraft();
+    if (draft) {
+      setPrompt(draft.prompt);
+      if (draft.additionalData?.templateId && templates) {
+        const template = templates.find(t => t.id === draft.additionalData.templateId);
+        if (template) {
+          setSelectedTemplate(template);
+          setDialogOpen(true);
+        }
+      }
+      setDraftRestored(true);
+      toast.info("Draft restored", {
+        description: "Your previous work has been restored"
+      });
+    }
+  }, [templates, draftRestored, loadDraft]);
+
+  // Auto-save on prompt change
+  useEffect(() => {
+    if (!prompt.trim()) return;
+    
+    const timeoutId = setTimeout(() => {
+      saveDraft({
+        prompt,
+        additionalData: {
+          templateId: selectedTemplate?.id
+        }
+      });
+    }, 1000); // Debounce 1 second
+
+    return () => clearTimeout(timeoutId);
+  }, [prompt, selectedTemplate, saveDraft]);
 
   const handleTemplateSelect = (template: any) => {
     setSelectedTemplate(template);
@@ -228,6 +269,9 @@ const Create = () => {
         custom_parameters: Object.keys(customParameters).length > 0 ? customParameters : undefined,
       });
       
+      // Clear draft on successful generation
+      clearDraft();
+      
       // Start polling using normalized ID
       const genId = result?.id || result?.generation_id;
       if (genId) {
@@ -240,8 +284,20 @@ const Create = () => {
         setGenerationCompleteTime(Date.now());
         toast.success('Generation complete!', { id: 'generation-progress' });
       }
-    } catch (error) {
-      // Error already handled in useGeneration hook
+    } catch (error: any) {
+      // Handle SESSION_EXPIRED error specifically
+      if (error.message === "SESSION_EXPIRED") {
+        toast.error("Session expired", {
+          description: "Please log in again. Your work has been saved.",
+          duration: 5000
+        });
+        setTimeout(() => {
+          navigate("/auth");
+        }, 2000);
+        return;
+      }
+      
+      // Other errors handled by useGeneration hook
       generationStartTimeRef.current = null;
     }
   };
@@ -298,6 +354,8 @@ const Create = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
       <div className="relative z-10 container mx-auto px-4 py-8">
+        <SessionWarning />
+        
         {/* Header */}
         <div className="mb-8 space-y-1">
           <h2 className="text-4xl md:text-5xl font-black">WHAT YOU CAN CREATE</h2>

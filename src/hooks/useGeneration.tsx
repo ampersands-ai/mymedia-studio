@@ -31,11 +31,26 @@ export const useGeneration = () => {
     setError(null);
 
     try {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session.session) {
-        throw new Error("Not authenticated");
+      // STEP 1: Try to refresh the session to get a fresh token
+      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
+
+      if (sessionError || !session) {
+        console.error("Session refresh failed:", sessionError);
+        
+        // Save the generation attempt data before forcing logout
+        const draftKey = 'pending_generation';
+        localStorage.setItem(draftKey, JSON.stringify({
+          params,
+          timestamp: Date.now(),
+          reason: 'session_expired'
+        }));
+        
+        // Force logout and throw error to be caught by component
+        await supabase.auth.signOut();
+        throw new Error("SESSION_EXPIRED");
       }
 
+      // STEP 2: Proceed with generation using refreshed session
       const { data, error } = await supabase.functions.invoke("generate-content", {
         body: params,
       });
@@ -43,7 +58,18 @@ export const useGeneration = () => {
       if (error) {
         console.error("Edge function error:", error);
         
-        // Handle specific error codes
+        // Handle 401 specifically (shouldn't happen after refresh, but defensive)
+        if (error.message?.includes("401") || error.message?.toLowerCase().includes("unauthorized")) {
+          localStorage.setItem('pending_generation', JSON.stringify({
+            params,
+            timestamp: Date.now(),
+            reason: 'unauthorized'
+          }));
+          await supabase.auth.signOut();
+          throw new Error("SESSION_EXPIRED");
+        }
+        
+        // Handle other specific error codes
         if (error.message?.includes("402") || error.message?.toLowerCase().includes("insufficient tokens")) {
           throw new Error("Insufficient tokens");
         }

@@ -862,7 +862,7 @@ const CustomCreation = () => {
                                 <Badge variant="secondary" className="text-xs">
                                   {model.base_token_cost} tokens
                                 </Badge>
-                                {model.estimated_time_seconds != null && model.estimated_time_seconds !== 0 && (
+                                {model.estimated_time_seconds !== null && model.estimated_time_seconds !== undefined && (
                                   <Badge variant="secondary" className="text-xs flex items-center gap-1">
                                     <Clock className="h-3 w-3" />
                                     ~{formatEstimatedTime(model.estimated_time_seconds)}
@@ -898,7 +898,7 @@ const CustomCreation = () => {
                                   <Badge variant="secondary" className="text-[10px] md:text-xs whitespace-nowrap">
                                     {model.base_token_cost} tokens
                                   </Badge>
-                                  {model.estimated_time_seconds != null && model.estimated_time_seconds !== 0 && (
+                                  {model.estimated_time_seconds !== null && model.estimated_time_seconds !== undefined && (
                                     <Badge variant="secondary" className="text-[10px] md:text-xs flex items-center gap-0.5 md:gap-1 whitespace-nowrap">
                                       <Clock className="h-2.5 md:h-3 w-2.5 md:w-3" />
                                       ~{formatEstimatedTime(model.estimated_time_seconds)}

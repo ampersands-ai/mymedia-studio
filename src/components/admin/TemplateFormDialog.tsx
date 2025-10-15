@@ -43,7 +43,7 @@ interface ContentTemplate {
   thumbnail_url: string | null;
   is_active: boolean;
   display_order: number;
-  estimated_time_minutes?: number | null;
+  estimated_time_seconds?: number | null;
 }
 
 interface AIModel {
@@ -76,7 +76,7 @@ export function TemplateFormDialog({
     enhancement_instruction: "",
     thumbnail_url: "",
     display_order: "0",
-    estimated_time_minutes: "",
+    estimated_time_seconds: "",
     is_custom_model: false,
     custom_model_id: "",
     custom_input_schema: "{}",
@@ -109,7 +109,7 @@ export function TemplateFormDialog({
         enhancement_instruction: template.enhancement_instruction || "",
         thumbnail_url: template.thumbnail_url || "",
         display_order: template.display_order.toString(),
-        estimated_time_minutes: template.estimated_time_minutes?.toString() || "",
+        estimated_time_seconds: (template as any).estimated_time_seconds?.toString() || "",
         is_custom_model: isCustom,
         custom_model_id: isCustom ? template.model_id || "" : "",
         custom_input_schema: "{}",
@@ -132,7 +132,7 @@ export function TemplateFormDialog({
         enhancement_instruction: "",
         thumbnail_url: "",
         display_order: "0",
-        estimated_time_minutes: "",
+        estimated_time_seconds: "",
         is_custom_model: false,
         custom_model_id: "",
         custom_input_schema: "{}",
@@ -238,7 +238,7 @@ export function TemplateFormDialog({
         thumbnail_url: formData.thumbnail_url || null,
         display_order: parseInt(formData.display_order),
         is_active: true,
-        estimated_time_minutes: formData.estimated_time_minutes ? parseInt(formData.estimated_time_minutes) : null,
+        estimated_time_seconds: formData.estimated_time_seconds ? parseInt(formData.estimated_time_seconds) : null,
       };
 
       if (template) {
@@ -362,22 +362,22 @@ export function TemplateFormDialog({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="estimated_time_minutes">Estimated Time</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="estimated_time_minutes"
-                      type="number"
-                      value={formData.estimated_time_minutes}
-                      onChange={(e) => setFormData({ ...formData, estimated_time_minutes: e.target.value })}
-                      placeholder="5"
-                      min="0"
-                      step="0.5"
-                      className="flex-1"
-                    />
-                    <span className="flex items-center text-sm text-muted-foreground whitespace-nowrap">
-                      minutes
-                    </span>
-                  </div>
+                  <Label htmlFor="estimated_time_seconds">Estimated Time (seconds)</Label>
+                  <Input
+                    id="estimated_time_seconds"
+                    type="number"
+                    value={formData.estimated_time_seconds}
+                    onChange={(e) => setFormData({ ...formData, estimated_time_seconds: e.target.value })}
+                    placeholder="90"
+                    min="0"
+                    step="1"
+                    className="flex-1"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formData.estimated_time_seconds
+                      ? `${formData.estimated_time_seconds}s`
+                      : 'Enter time in seconds'}
+                  </p>
                 </div>
 
                 <div className="space-y-2 col-span-2">

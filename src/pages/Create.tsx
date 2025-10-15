@@ -429,10 +429,10 @@ const Create = () => {
               <DialogDescription>
                 {selectedTemplate?.description || "Enter your prompt to generate content"}
               </DialogDescription>
-              {selectedTemplate?.estimated_time_minutes && (
+              {selectedTemplate?.estimated_time_seconds != null && selectedTemplate.estimated_time_seconds !== 0 && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
                   <Clock className="h-4 w-4" />
-                  <span>Estimated time: ~{formatEstimatedTime(selectedTemplate.estimated_time_minutes)}</span>
+                  <span>Estimated time: ~{formatEstimatedTime(selectedTemplate.estimated_time_seconds)}</span>
                 </div>
               )}
             </DialogHeader>

@@ -72,9 +72,14 @@ serve(async (req) => {
     const signedContent = `${svixId}.${svixTimestamp}.${bodyText}`;
     
     const encoder = new TextEncoder();
+    // Strip the 'whsec_' prefix from Svix signing secret
+    const actualSecret = webhookSecret.startsWith('whsec_') 
+      ? webhookSecret.slice(7) // Remove 'whsec_' prefix
+      : webhookSecret;
+
     const key = await crypto.subtle.importKey(
       'raw',
-      encoder.encode(webhookSecret),
+      encoder.encode(actualSecret),
       { name: 'HMAC', hash: 'SHA-256' },
       false,
       ['sign']

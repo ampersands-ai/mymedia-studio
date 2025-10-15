@@ -38,16 +38,23 @@ serve(async (req) => {
     // Get signature from headers (check both possible header names)
     const signature = req.headers.get('x-dodo-signature') || req.headers.get('dodo-signature');
     
+    // Read the body once
+    const bodyText = await req.text();
+    
     if (!signature) {
+      // TEMPORARY DEBUG: Log all headers and body preview to diagnose signature issues
       console.error('Security: Rejected unsigned webhook request');
+      console.log('=== WEBHOOK DEBUG START ===');
+      console.log('All request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
+      console.log('Body preview (first 300 chars):', bodyText.substring(0, 300));
+      console.log('Body length:', bodyText.length);
+      console.log('Content-Type:', req.headers.get('content-type'));
+      console.log('=== WEBHOOK DEBUG END ===');
       return new Response(
         JSON.stringify({ error: 'Missing webhook signature' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // Read the body once
-    const bodyText = await req.text();
     
     // SECURITY: Verify HMAC signature
     const encoder = new TextEncoder();
@@ -70,7 +77,15 @@ serve(async (req) => {
       .join('');
 
     if (signature !== expectedSignature) {
+      // TEMPORARY DEBUG: Log signature comparison details
       console.error('Security: Invalid webhook signature');
+      console.log('=== SIGNATURE MISMATCH DEBUG ===');
+      console.log('Received signature:', signature);
+      console.log('Expected signature:', expectedSignature);
+      console.log('Signature length - Received:', signature.length, 'Expected:', expectedSignature.length);
+      console.log('Body used for verification (first 200 chars):', bodyText.substring(0, 200));
+      console.log('Webhook secret configured:', webhookSecret ? 'Yes (length: ' + webhookSecret.length + ')' : 'No');
+      console.log('=== SIGNATURE MISMATCH DEBUG END ===');
       return new Response(
         JSON.stringify({ error: 'Invalid signature' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

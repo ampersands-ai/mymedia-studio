@@ -1,7 +1,9 @@
-// Dodo Payments Webhook Handler - Updated 2025-10-15 (Svix Verification)
+// Dodo Payments Webhook Handler - v2.0 - Enhanced Diagnostics
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Webhook } from "https://esm.sh/svix@1";
+
+const WEBHOOK_VERSION = "2.0-svix-dual-headers";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,6 +17,10 @@ const PLAN_TOKENS = {
   'ultimate': 75000,
   'veo_connoisseur': 200000,
 };
+
+// Log deployment on boot
+console.log(`🚀 Dodo Payments Webhook ${WEBHOOK_VERSION} deployed and ready`);
+console.log(`📋 Supports both svix-* and webhook-* header formats`);
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -46,7 +52,10 @@ serve(async (req) => {
     const svixSignature = req.headers.get('svix-signature') || req.headers.get('webhook-signature');
     
     const headerSet = req.headers.get('svix-id') ? 'svix-*' : 'webhook-*';
-    console.log(`Using header set: ${headerSet}`);
+    console.log(`📨 Webhook v${WEBHOOK_VERSION} - Using header set: ${headerSet}`);
+    console.log(`   svix-id: ${svixId ? 'present' : 'missing'}`);
+    console.log(`   svix-timestamp: ${svixTimestamp ? 'present' : 'missing'}`);
+    console.log(`   svix-signature: ${svixSignature ? 'present' : 'missing'}`);
     
     if (!svixSignature || !svixId || !svixTimestamp) {
       console.error('Security: Missing Svix webhook headers');
@@ -72,7 +81,7 @@ serve(async (req) => {
       
       // Verify the webhook payload using Svix library
       const event = wh.verify(bodyText, headersNormalized);
-      console.log('Security: Valid webhook received:', event.type || event.event_type);
+      console.log(`✅ Security: Valid webhook verified via Svix (${headerSet})`, event.type || event.event_type);
 
       await handleWebhookEvent(supabase, event);
 
@@ -81,8 +90,10 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (verifyError) {
-      console.error('Svix verification failed:', verifyError);
+      console.error(`❌ Svix verification failed (using ${headerSet} headers):`, verifyError);
       console.error('Verification error details:', verifyError instanceof Error ? verifyError.message : String(verifyError));
+      console.error('Body length:', bodyText.length);
+      console.error('Timestamp:', svixTimestamp);
       return new Response(
         JSON.stringify({ error: 'Invalid signature' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

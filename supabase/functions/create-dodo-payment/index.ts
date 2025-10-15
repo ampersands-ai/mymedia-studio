@@ -9,20 +9,20 @@ const corsHeaders = {
 // Map plan names to Dodo Payments product IDs
 const PLAN_PRODUCT_IDS = {
   'explorer': {
-    monthly: 'pdt_smP6lzsTrv6N6h5aKJgNz',
-    annual: 'pdt_56VKzwfWGgt3Zl3EWYCmr',
+    monthly: 'pdt_sWvSDyXU1PVSQRmLMS73c',
+    annual: 'pdt_puVmR1qtPto0GFsEg37X6',
   },
   'professional': {
-    monthly: 'pdt_F9RnZnQKETGMy0JJTkIP1',
-    annual: 'pdt_ipED8gfRHFqVPd8rcZsTA',
+    monthly: 'pdt_SdYFUQLtaFIXIYLZONFDy',
+    annual: 'pdt_37iTzseOiYUKtj01FIk3L',
   },
   'ultimate': {
-    monthly: 'pdt_BmL2oa1VvG5Bb2tcKpdMl',
-    annual: 'pdt_nuHrRbwokBupBkfom1omC',
+    monthly: 'pdt_9Yeryv7tq4tXneVFJt5my',
+    annual: 'pdt_dgOCQNEbwmqnCcRVCWFms',
   },
   'veo_connoisseur': {
-    monthly: 'pdt_6AqDfYSYJIxNTdUAQZdHg',
-    annual: 'pdt_mMehtoBVDiGzSbEx1xFM1',
+    monthly: 'pdt_Hxf2vEkGfRUAL0irgjsDV',
+    annual: 'pdt_6DvfNg7cAMlACiyJ01dFk',
   },
 };
 

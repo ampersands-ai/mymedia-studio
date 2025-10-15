@@ -87,8 +87,7 @@ serve(async (req) => {
     });
 
     // Create Dodo Payments checkout session
-    // Use test environment - change to 'live' for production
-    const dodoBaseUrl = 'https://test.dodopayments.com';
+    const dodoBaseUrl = 'https://api.dodopayments.com';
     const dodoResponse = await fetch(`${dodoBaseUrl}/checkouts`, {
       method: 'POST',
       headers: {

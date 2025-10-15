@@ -216,13 +216,26 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
 
   console.log(`Payment succeeded for user ${userId}, plan ${planName}`);
 
-  // Update subscription
+  // Get current tokens
+  const { data: currentSub } = await supabase
+    .from('user_subscriptions')
+    .select('tokens_remaining, tokens_total')
+    .eq('user_id', userId)
+    .single();
+
+  // Add new tokens to existing balance
+  const newTokensRemaining = (currentSub?.tokens_remaining || 0) + tokens;
+  const newTokensTotal = (currentSub?.tokens_total || 0) + tokens;
+
+  console.log(`Adding ${tokens} tokens. Current: ${currentSub?.tokens_remaining}, New: ${newTokensRemaining}`);
+
+  // Update subscription with added tokens
   const { error } = await supabase
     .from('user_subscriptions')
     .update({
       plan: planKey,
-      tokens_remaining: tokens,
-      tokens_total: tokens,
+      tokens_remaining: newTokensRemaining,
+      tokens_total: newTokensTotal,
       status: 'active',
       dodo_subscription_id: data.subscription_id,
       dodo_customer_id: data.customer_id,

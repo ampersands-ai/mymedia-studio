@@ -537,7 +537,7 @@ const CustomCreation = () => {
     if (currentModel?.input_schema) {
       const requiredFields = currentModel.input_schema.required || [];
       const schemaProperties = currentModel.input_schema.properties || {};
-      const excludeFields = ['prompt', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls']; // Already validated above
+      const excludeFields = ['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls']; // Already validated above
 
       for (const field of requiredFields) {
         if (excludeFields.includes(field)) continue;

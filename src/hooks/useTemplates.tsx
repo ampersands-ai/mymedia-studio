@@ -13,7 +13,7 @@ export interface AIModel {
   api_endpoint: string | null;
   is_active: boolean;
   groups?: string[];
-  estimated_time_minutes?: number | null;
+  estimated_time_seconds?: number | null;
   payload_structure?: string;
   max_images?: number | null;
 }
@@ -33,7 +33,7 @@ export interface ContentTemplate {
   display_order: number;
   is_active: boolean;
   ai_models?: AIModel;
-  estimated_time_minutes?: number | null;
+  estimated_time_seconds?: number | null;
 }
 
 export const useTemplates = () => {

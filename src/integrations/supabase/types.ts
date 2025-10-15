@@ -21,7 +21,7 @@ export type Database = {
           content_type: string
           cost_multipliers: Json | null
           created_at: string
-          estimated_time_minutes: number | null
+          estimated_time_seconds: number | null
           groups: Json | null
           id: string
           input_schema: Json
@@ -39,7 +39,7 @@ export type Database = {
           content_type: string
           cost_multipliers?: Json | null
           created_at?: string
-          estimated_time_minutes?: number | null
+          estimated_time_seconds?: number | null
           groups?: Json | null
           id: string
           input_schema?: Json
@@ -57,7 +57,7 @@ export type Database = {
           content_type?: string
           cost_multipliers?: Json | null
           created_at?: string
-          estimated_time_minutes?: number | null
+          estimated_time_seconds?: number | null
           groups?: Json | null
           id?: string
           input_schema?: Json
@@ -204,7 +204,7 @@ export type Database = {
           description: string | null
           display_order: number | null
           enhancement_instruction: string | null
-          estimated_time_minutes: number | null
+          estimated_time_seconds: number | null
           hidden_field_defaults: Json | null
           id: string
           is_active: boolean | null
@@ -223,7 +223,7 @@ export type Database = {
           description?: string | null
           display_order?: number | null
           enhancement_instruction?: string | null
-          estimated_time_minutes?: number | null
+          estimated_time_seconds?: number | null
           hidden_field_defaults?: Json | null
           id: string
           is_active?: boolean | null
@@ -242,7 +242,7 @@ export type Database = {
           description?: string | null
           display_order?: number | null
           enhancement_instruction?: string | null
-          estimated_time_minutes?: number | null
+          estimated_time_seconds?: number | null
           hidden_field_defaults?: Json | null
           id?: string
           is_active?: boolean | null

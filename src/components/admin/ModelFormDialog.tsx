@@ -42,7 +42,7 @@ interface AIModel {
   api_endpoint: string | null;
   is_active: boolean;
   groups?: string[];
-  estimated_time_minutes?: number | null;
+  estimated_time_seconds?: number | null;
   payload_structure?: string;
   max_images?: number | null;
 }
@@ -70,7 +70,7 @@ export function ModelFormDialog({
     cost_multipliers: "{}",
     input_schema: "{}",
     api_endpoint: "",
-    estimated_time_minutes: "",
+    estimated_time_seconds: "",
     max_images: "",
   });
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
@@ -88,7 +88,7 @@ export function ModelFormDialog({
         cost_multipliers: JSON.stringify(model.cost_multipliers || {}, null, 2),
         input_schema: JSON.stringify(model.input_schema, null, 2),
         api_endpoint: model.api_endpoint || "",
-        estimated_time_minutes: model.estimated_time_minutes?.toString() || "",
+        estimated_time_seconds: model.estimated_time_seconds?.toString() || "",
         max_images: model.max_images?.toString() || "",
       });
       setSelectedGroups(model.groups || []);
@@ -103,7 +103,7 @@ export function ModelFormDialog({
         cost_multipliers: "{}",
         input_schema: "{}",
         api_endpoint: "",
-        estimated_time_minutes: "",
+        estimated_time_seconds: "",
         max_images: "",
       });
       setSelectedGroups([]);
@@ -165,8 +165,8 @@ export function ModelFormDialog({
         api_endpoint: formData.api_endpoint || null,
         groups: selectedGroups,
         is_active: true,
-        estimated_time_minutes: formData.estimated_time_minutes 
-          ? Math.floor(parseInt(formData.estimated_time_minutes) / 60)
+        estimated_time_seconds: formData.estimated_time_seconds 
+          ? parseInt(formData.estimated_time_seconds)
           : null,
         max_images: formData.max_images ? parseInt(formData.max_images) : 0,
       };
@@ -331,23 +331,20 @@ export function ModelFormDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="estimated_time_minutes">Estimated Time (seconds)</Label>
+              <Label htmlFor="estimated_time_seconds">Estimated Time (seconds)</Label>
               <Input
-                id="estimated_time_minutes"
+                id="estimated_time_seconds"
                 type="number"
-                value={formData.estimated_time_minutes}
-                onChange={(e) => {
-                  const seconds = e.target.value;
-                  setFormData({ ...formData, estimated_time_minutes: seconds });
-                }}
+                value={formData.estimated_time_seconds}
+                onChange={(e) => setFormData({ ...formData, estimated_time_seconds: e.target.value })}
                 placeholder="90"
                 min="0"
                 step="1"
               />
               <p className="text-xs text-muted-foreground">
-                {formData.estimated_time_minutes && parseInt(formData.estimated_time_minutes) >= 60
-                  ? `≈ ${Math.floor(parseInt(formData.estimated_time_minutes) / 60)} minute${Math.floor(parseInt(formData.estimated_time_minutes) / 60) !== 1 ? 's' : ''}`
-                  : 'Enter time in seconds (auto-converts to minutes if ≥60)'}
+                {formData.estimated_time_seconds && parseInt(formData.estimated_time_seconds) >= 60
+                  ? `${formData.estimated_time_seconds}s (≈ ${Math.floor(parseInt(formData.estimated_time_seconds) / 60)}m ${parseInt(formData.estimated_time_seconds) % 60}s)`
+                  : formData.estimated_time_seconds ? `${formData.estimated_time_seconds}s` : 'Enter time in seconds'}
               </p>
             </div>
 

@@ -165,7 +165,9 @@ export function ModelFormDialog({
         api_endpoint: formData.api_endpoint || null,
         groups: selectedGroups,
         is_active: true,
-        estimated_time_minutes: formData.estimated_time_minutes ? parseInt(formData.estimated_time_minutes) : null,
+        estimated_time_minutes: formData.estimated_time_minutes 
+          ? Math.floor(parseInt(formData.estimated_time_minutes) / 60)
+          : null,
         max_images: formData.max_images ? parseInt(formData.max_images) : 0,
       };
 
@@ -329,26 +331,23 @@ export function ModelFormDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="estimated_time_minutes">Estimated Time</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="estimated_time_minutes"
-                  type="number"
-                  value={formData.estimated_time_minutes}
-                  onChange={(e) =>
-                    setFormData({ ...formData, estimated_time_minutes: e.target.value })
-                  }
-                  placeholder="5"
-                  min="0"
-                  step="0.5"
-                  className="flex-1"
-                />
-                <span className="flex items-center text-sm text-muted-foreground whitespace-nowrap">
-                  minutes
-                </span>
-              </div>
+              <Label htmlFor="estimated_time_minutes">Estimated Time (seconds)</Label>
+              <Input
+                id="estimated_time_minutes"
+                type="number"
+                value={formData.estimated_time_minutes}
+                onChange={(e) => {
+                  const seconds = e.target.value;
+                  setFormData({ ...formData, estimated_time_minutes: seconds });
+                }}
+                placeholder="90"
+                min="0"
+                step="1"
+              />
               <p className="text-xs text-muted-foreground">
-                Approximate time for generation (supports decimals: 0.5 = 30 seconds)
+                {formData.estimated_time_minutes && parseInt(formData.estimated_time_minutes) >= 60
+                  ? `≈ ${Math.floor(parseInt(formData.estimated_time_minutes) / 60)} minute${Math.floor(parseInt(formData.estimated_time_minutes) / 60) !== 1 ? 's' : ''}`
+                  : 'Enter time in seconds (auto-converts to minutes if ≥60)'}
               </p>
             </div>
 

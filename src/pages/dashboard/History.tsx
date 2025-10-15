@@ -42,7 +42,7 @@ const AudioWithSignedUrl = ({ generation, className, showControls = false }: {
   if (!generation.storage_path || audioError || error) {
     return (
       <div className={`${className} flex flex-col items-center justify-center bg-muted gap-2 p-4`}>
-        <Music className="h-8 w-8 text-muted-foreground" />
+        <Music className="h-8 w-8 text-gray-600 dark:text-gray-400" />
         <p className="text-xs text-muted-foreground text-center">Audio Preview Unavailable</p>
         <Button
           size="sm"
@@ -84,7 +84,7 @@ const AudioWithSignedUrl = ({ generation, className, showControls = false }: {
   if (isLoading || !signedUrl) {
     return (
       <div className={`${className} flex items-center justify-center bg-muted`}>
-        <Music className="h-8 w-8 text-muted-foreground animate-pulse" />
+        <Music className="h-8 w-8 text-gray-600 dark:text-gray-400 animate-pulse" />
       </div>
     );
   }
@@ -93,8 +93,8 @@ const AudioWithSignedUrl = ({ generation, className, showControls = false }: {
     return (
       <div className="flex flex-col gap-4 p-6 bg-gradient-to-br from-background to-muted/30 rounded-lg">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-            <Music className="h-6 w-6 text-primary" />
+          <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+            <Music className="h-6 w-6 text-green-600 dark:text-green-400" />
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium">Audio File</p>
@@ -114,7 +114,7 @@ const AudioWithSignedUrl = ({ generation, className, showControls = false }: {
 
   return (
     <div className={`${className} flex items-center justify-center bg-gradient-to-br from-background to-muted/30`}>
-      <Music className="h-8 w-8 text-primary" />
+      <Music className="h-8 w-8 text-green-600 dark:text-green-400" />
     </div>
   );
 };
@@ -615,7 +615,7 @@ const History = () => {
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>{format(new Date(generation.created_at), "MMM d")}</span>
                   {generation.is_batch_output && generation.tokens_used === 0 ? (
-                    <span className="text-primary font-medium">Batch output</span>
+                    <span className="text-green-600 dark:text-green-400 font-medium">Batch output</span>
                   ) : (
                     <span>{generation.tokens_used} tokens</span>
                   )}

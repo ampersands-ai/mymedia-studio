@@ -80,7 +80,7 @@ serve(async (req) => {
       };
       
       // Verify the webhook payload using Svix library
-      const event = wh.verify(bodyText, headersNormalized);
+      const event = wh.verify(bodyText, headersNormalized) as any;
       console.log(`✅ Security: Valid webhook verified via Svix (${headerSet})`, event.type || event.event_type);
 
       await handleWebhookEvent(supabase, event);
@@ -221,7 +221,7 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
     .from('user_subscriptions')
     .select('tokens_remaining, tokens_total')
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
 
   // Add new tokens to existing balance
   const newTokensRemaining = (currentSub?.tokens_remaining || 0) + tokens;

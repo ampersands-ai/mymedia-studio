@@ -28,6 +28,11 @@ export async function callKieAI(request: ProviderRequest): Promise<ProviderRespo
   const useFlatStructure = request.payload_structure === 'flat';
   let payload: any;
   
+  // Handle reference_image_urls - ensure it's an array if it's a string
+  if (request.parameters.reference_image_urls && typeof request.parameters.reference_image_urls === 'string') {
+    request.parameters.reference_image_urls = [request.parameters.reference_image_urls];
+  }
+  
   if (useFlatStructure) {
     // Flat structure for veo3, sora-2-*, etc.
     console.log('Using FLAT payload structure');

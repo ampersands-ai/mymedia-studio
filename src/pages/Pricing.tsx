@@ -140,10 +140,24 @@ const Pricing = () => {
         body: {
           plan: planName,
           isAnnual,
+          appOrigin: window.location.origin,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Payment creation error:', error);
+        
+        // Check if it's a 503 service unavailable error
+        if (error.message?.includes('SERVICE_UNAVAILABLE') || 
+            error.message?.includes('temporarily unavailable')) {
+          toast.error('Payment service is temporarily unavailable. Please try again in a few seconds.');
+        } else {
+          toast.error('Failed to create payment session. Please try again.');
+        }
+        
+        setIsCreatingPayment(null);
+        return;
+      }
 
       if (data.checkout_url) {
         window.location.href = data.checkout_url;

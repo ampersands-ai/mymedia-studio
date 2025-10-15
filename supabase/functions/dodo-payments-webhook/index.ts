@@ -104,12 +104,31 @@ async function handleWebhookEvent(supabase: any, event: any) {
 
   // Extract metadata (user_id, plan, etc.)
   const metadata = eventData.metadata || {};
-  const userId = metadata.user_id;
+  let userId = metadata.user_id;
   const planName = metadata.plan || 'freemium';
 
-  if (!userId && eventType !== 'payment.succeeded') {
-    console.warn('No user_id in webhook metadata for event:', eventType);
-    return;
+  // Fallback: If user_id is missing from metadata, try to find user by email
+  if (!userId && eventData.customer?.email) {
+    console.log('metadata.user_id missing, attempting to find user by email:', eventData.customer.email);
+    
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', eventData.customer.email)
+      .single();
+    
+    if (profile && !profileError) {
+      userId = profile.id;
+      console.log('Found user by email fallback:', userId);
+    } else {
+      console.error('Could not find user by email:', profileError);
+      throw new Error(`User not found for email: ${eventData.customer.email}`);
+    }
+  }
+
+  if (!userId) {
+    console.error('No user_id in metadata and no customer email to lookup');
+    throw new Error('No user_id in metadata and no customer email to lookup');
   }
 
   // Update last webhook event

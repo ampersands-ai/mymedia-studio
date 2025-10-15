@@ -6,6 +6,37 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Retry helper with exponential backoff
+async function fetchWithRetry(url: string, options: RequestInit, maxAttempts = 3): Promise<Response> {
+  const delays = [400, 800, 1600]; // exponential backoff in ms
+  
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      console.log(`Attempt ${attempt + 1} of ${maxAttempts} to ${url}`);
+      const response = await fetch(url, options);
+      return response;
+    } catch (error) {
+      const isLastAttempt = attempt === maxAttempts - 1;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      console.error(`Attempt ${attempt + 1} failed: ${errorMessage}`);
+      
+      if (isLastAttempt) {
+        // Check if it's a DNS error
+        if (errorMessage.includes('dns error') || errorMessage.includes('lookup address')) {
+          throw new Error('DNS_ERROR');
+        }
+        throw error;
+      }
+      
+      // Wait before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, delays[attempt]));
+    }
+  }
+  
+  throw new Error('Max retry attempts reached');
+}
+
 // Map plan names to Dodo Payments product IDs
 const PLAN_PRODUCT_IDS = {
   'explorer': {
@@ -55,7 +86,7 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { plan, isAnnual } = await req.json();
+    const { plan, isAnnual, appOrigin } = await req.json();
 
     // Validate plan
     const planKey = plan.toLowerCase().replace(' ', '_') as keyof typeof PLAN_PRODUCT_IDS;
@@ -79,55 +110,86 @@ serve(async (req) => {
       .eq('id', user.id)
       .single();
 
+    // Get the app origin from request, fallback to header, then default
+    const baseUrl = appOrigin || req.headers.get('origin') || 'https://artifio-create-flow.lovable.app';
+    const successUrl = `${baseUrl}/dashboard/create?payment=success`;
+    const cancelUrl = `${baseUrl}/pricing?payment=cancelled`;
+
     console.log('Creating Dodo checkout for:', {
       user_id: user.id,
       plan: planKey,
       billing_period: billingPeriod,
       product_id: productId,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
     });
 
-    // Create Dodo Payments checkout session
+    // Create Dodo Payments checkout session with retry logic
     const dodoBaseUrl = 'https://api.dodopayments.com';
-    const dodoResponse = await fetch(`${dodoBaseUrl}/checkouts`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${dodoApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        product_cart: [
-          {
-            product_id: productId,
-            quantity: 1,
-          }
-        ],
-        payment_link_settings: {
-          success_url: `${req.headers.get('origin')}/dashboard/create?payment=success`,
-          cancel_url: `${req.headers.get('origin')}/pricing?payment=cancelled`,
+    
+    let dodoData;
+    try {
+      const dodoResponse = await fetchWithRetry(`${dodoBaseUrl}/checkouts`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${dodoApiKey}`,
+          'Content-Type': 'application/json',
         },
-        customer: {
-          email: profile?.email || user.email,
-          name: profile?.full_name || '',
-        },
-        metadata: {
-          user_id: user.id,
-          plan: planKey,
-          billing_period: billingPeriod,
-        },
-      }),
-    });
-
-    if (!dodoResponse.ok) {
-      const errorText = await dodoResponse.text();
-      console.error('Dodo Payments API error:', {
-        status: dodoResponse.status,
-        statusText: dodoResponse.statusText,
-        body: errorText,
+        body: JSON.stringify({
+          product_cart: [
+            {
+              product_id: productId,
+              quantity: 1,
+            }
+          ],
+          payment_link_settings: {
+            success_url: successUrl,
+            cancel_url: cancelUrl,
+          },
+          customer: {
+            email: profile?.email || user.email,
+            name: profile?.full_name || '',
+          },
+          metadata: {
+            user_id: user.id,
+            plan: planKey,
+            billing_period: billingPeriod,
+          },
+        }),
       });
-      throw new Error(`Dodo Payments API returned ${dodoResponse.status}: ${errorText}`);
-    }
 
-    const dodoData = await dodoResponse.json();
+      if (!dodoResponse.ok) {
+        const errorText = await dodoResponse.text();
+        console.error('Dodo Payments API error:', {
+          status: dodoResponse.status,
+          statusText: dodoResponse.statusText,
+          body: errorText,
+        });
+        throw new Error(`Dodo Payments API returned ${dodoResponse.status}: ${errorText}`);
+      }
+
+      dodoData = await dodoResponse.json();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Handle DNS errors specifically
+      if (errorMessage === 'DNS_ERROR') {
+        console.error('DNS resolution failed after retries');
+        return new Response(
+          JSON.stringify({ 
+            error: 'Payment service temporarily unavailable. Please retry in a few seconds.',
+            code: 'SERVICE_UNAVAILABLE'
+          }),
+          { 
+            status: 503, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      // Re-throw other errors to be caught by outer catch block
+      throw error;
+    }
 
     console.log('Payment session created successfully:', {
       user_id: user.id,

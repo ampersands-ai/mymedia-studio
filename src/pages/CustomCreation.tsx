@@ -279,7 +279,25 @@ const CustomCreation = () => {
         setPollingGenerationId(null);
         setLocalGenerating(false);
 
-        if (parentData.status === 'completed') {
+        if (parentData.status === 'failed') {
+          // Fetch the full generation to get error details
+          const { data: fullGenData } = await supabase
+            .from('generations')
+            .select('provider_response')
+            .eq('id', generationId)
+            .single();
+          
+          const providerResponse = fullGenData?.provider_response as any;
+          const errorMessage = providerResponse?.error || 
+                               providerResponse?.full_response?.data?.failMsg ||
+                               'Generation failed. Please try again.';
+          
+          toast.error('Generation failed', {
+            description: errorMessage,
+            id: 'generation-progress',
+            duration: 8000
+          });
+        } else if (parentData.status === 'completed') {
           // Fetch all child outputs (if any)
           const { data: childrenData } = await supabase
             .from('generations')

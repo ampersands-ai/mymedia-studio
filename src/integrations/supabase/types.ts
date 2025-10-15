@@ -468,6 +468,60 @@ export type Database = {
         }
         Relationships: []
       }
+      token_dispute_history: {
+        Row: {
+          admin_notes: string | null
+          archived_at: string
+          auto_resolved: boolean | null
+          created_at: string
+          dispute_id: string
+          generation_id: string
+          generation_snapshot: Json
+          id: string
+          profile_snapshot: Json
+          reason: string
+          refund_amount: number | null
+          reviewed_at: string
+          reviewed_by: string
+          status: Database["public"]["Enums"]["dispute_status"]
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          archived_at?: string
+          auto_resolved?: boolean | null
+          created_at: string
+          dispute_id: string
+          generation_id: string
+          generation_snapshot: Json
+          id?: string
+          profile_snapshot: Json
+          reason: string
+          refund_amount?: number | null
+          reviewed_at: string
+          reviewed_by: string
+          status: Database["public"]["Enums"]["dispute_status"]
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          archived_at?: string
+          auto_resolved?: boolean | null
+          created_at?: string
+          dispute_id?: string
+          generation_id?: string
+          generation_snapshot?: Json
+          id?: string
+          profile_snapshot?: Json
+          reason?: string
+          refund_amount?: number | null
+          reviewed_at?: string
+          reviewed_by?: string
+          status?: Database["public"]["Enums"]["dispute_status"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       token_dispute_reports: {
         Row: {
           admin_notes: string | null

@@ -117,30 +117,49 @@ export const TokenDisputes = () => {
   const [newStatus, setNewStatus] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedDisputeIds, setSelectedDisputeIds] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'active' | 'history'>('active');
   const queryClient = useQueryClient();
 
   const { data: disputes, isLoading } = useQuery({
-    queryKey: ['token-disputes', statusFilter],
+    queryKey: ['token-disputes', statusFilter, viewMode],
     queryFn: async () => {
-      let query = supabase
-        .from('token_dispute_reports')
-        .select(`
-          *,
-          generation:generations(*),
-          profile:profiles(email, full_name)
-        `)
-        .order('created_at', { ascending: false });
+      if (viewMode === 'history') {
+        // Query history table
+        let query = supabase
+          .from('token_dispute_history')
+          .select('*')
+          .order('archived_at', { ascending: false });
 
-      if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter as 'pending' | 'reviewed' | 'resolved' | 'rejected');
-      }
+        if (statusFilter !== 'all') {
+          query = query.eq('status', statusFilter as 'resolved' | 'rejected');
+        }
 
-      const { data, error } = await query;
-      if (error) {
-        console.error('Error fetching disputes:', error);
-        throw error;
+        const { data, error } = await query;
+        if (error) throw error;
+        return data as unknown as TokenDispute[];
+      } else {
+        // Query active disputes (only pending/reviewed)
+        let query = supabase
+          .from('token_dispute_reports')
+          .select(`
+            *,
+            generation:generations(*),
+            profile:profiles(email, full_name)
+          `)
+          .in('status', ['pending', 'reviewed'])
+          .order('created_at', { ascending: false });
+
+        if (statusFilter !== 'all') {
+          query = query.eq('status', statusFilter as 'pending' | 'reviewed');
+        }
+
+        const { data, error } = await query;
+        if (error) {
+          console.error('Error fetching disputes:', error);
+          throw error;
+        }
+        return data as unknown as TokenDispute[];
       }
-      return data as unknown as TokenDispute[];
     },
   });
 
@@ -172,7 +191,7 @@ export const TokenDisputes = () => {
   });
 
   const refundTokensMutation = useMutation({
-    mutationFn: async ({ userId, amount }: { userId: string; amount: number }) => {
+    mutationFn: async ({ userId, amount, disputeId }: { userId: string; amount: number; disputeId: string }) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No session');
 
@@ -190,15 +209,29 @@ export const TokenDisputes = () => {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || 'Failed to refund tokens');
+        throw new Error('Failed to refund tokens');
       }
+
+      // Update dispute with refund amount and mark as resolved
+      const { error: updateError } = await supabase
+        .from('token_dispute_reports')
+        .update({ 
+          refund_amount: amount,
+          status: 'resolved',
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: session.user.id,
+          admin_notes: `Refunded ${amount} tokens`
+        })
+        .eq('id', disputeId);
+
+      if (updateError) throw updateError;
 
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['token-disputes'] });
-      toast.success('Tokens refunded successfully');
+      toast.success('Tokens refunded and dispute resolved');
+      setSelectedDispute(null);
     },
     onError: (error) => {
       toast.error(`Failed to refund tokens: ${error.message}`);
@@ -222,23 +255,11 @@ export const TokenDisputes = () => {
       // Get dispute details for refunding
       const { data: disputes } = await supabase
         .from('token_dispute_reports')
-        .select('user_id, generation:generations(tokens_used)')
+        .select('id, user_id, generation:generations(tokens_used)')
         .in('id', disputeIds);
-
-      // Update all disputes
-      const { error: updateError } = await supabase
-        .from('token_dispute_reports')
-        .update({ 
-          status: status as 'pending' | 'reviewed' | 'resolved' | 'rejected',
-          admin_notes: `Bulk ${status} on ${format(new Date(), 'PPpp')}`,
-          reviewed_at: new Date().toISOString(),
-          reviewed_by: session.user.id
-        })
-        .in('id', disputeIds);
-
-      if (updateError) throw updateError;
 
       // Refund tokens if requested
+      let refundedCount = 0;
       if (shouldRefund && disputes) {
         for (const dispute of disputes) {
           const tokens = (dispute.generation as any)?.tokens_used || 0;
@@ -255,11 +276,28 @@ export const TokenDisputes = () => {
                 action: 'add'
               }),
             });
+            refundedCount++;
           }
         }
       }
 
-      return { count: disputeIds.length, refunded: shouldRefund ? disputes?.length || 0 : 0 };
+      // Update all disputes with refund amount tracking
+      const { error: updateError } = await supabase
+        .from('token_dispute_reports')
+        .update({ 
+          status: status as 'resolved' | 'rejected',
+          admin_notes: shouldRefund 
+            ? `Bulk resolved with refund on ${format(new Date(), 'PPpp')}`
+            : `Bulk ${status} on ${format(new Date(), 'PPpp')}`,
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: session.user.id,
+          refund_amount: shouldRefund ? disputes?.[0]?.generation?.tokens_used : null
+        })
+        .in('id', disputeIds);
+
+      if (updateError) throw updateError;
+
+      return { count: disputeIds.length, refunded: refundedCount };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['token-disputes'] });
@@ -281,6 +319,19 @@ export const TokenDisputes = () => {
       toast.error('Please select a status');
       return;
     }
+
+    // Prevent updates in history view
+    if (viewMode === 'history') {
+      toast.error('Cannot modify archived disputes');
+      return;
+    }
+
+    // Prevent re-resolving
+    if (selectedDispute.status === 'resolved' || selectedDispute.status === 'rejected') {
+      toast.error('This dispute has already been processed and cannot be modified');
+      return;
+    }
+
     updateDisputeMutation.mutate({
       id: selectedDispute.id,
       status: newStatus,
@@ -290,11 +341,24 @@ export const TokenDisputes = () => {
 
   const handleRefundTokens = () => {
     if (!selectedDispute) return;
+
+    // Prevent refunds in history view
+    if (viewMode === 'history') {
+      toast.error('Cannot refund archived disputes');
+      return;
+    }
+
+    // Check if already refunded
+    if (selectedDispute.refund_amount && selectedDispute.refund_amount > 0) {
+      toast.error(`Tokens already refunded: ${selectedDispute.refund_amount} tokens were previously refunded`);
+      return;
+    }
     
     if (confirm(`Refund ${selectedDispute.generation.tokens_used} tokens to ${selectedDispute.profile.email}?`)) {
       refundTokensMutation.mutate({
         userId: selectedDispute.user_id,
         amount: selectedDispute.generation.tokens_used,
+        disputeId: selectedDispute.id,
       });
     }
   };
@@ -305,18 +369,35 @@ export const TokenDisputes = () => {
       return;
     }
 
+    // Filter out any resolved/rejected disputes and already-refunded disputes
+    const validDisputes = disputes?.filter(d => 
+      selectedDisputeIds.includes(d.id) && 
+      d.status !== 'resolved' && 
+      d.status !== 'rejected' &&
+      (!d.refund_amount || d.refund_amount === 0)
+    ) || [];
+    
+    if (validDisputes.length === 0) {
+      toast.error('No valid disputes to process');
+      return;
+    }
+    
+    if (validDisputes.length < selectedDisputeIds.length) {
+      toast.warning(`Skipping ${selectedDisputeIds.length - validDisputes.length} already-processed dispute(s)`);
+    }
+
     const status = action === 'reject' ? 'rejected' : 'resolved';
     const shouldRefund = action === 'resolve-refund';
     
     const confirmMsg = shouldRefund 
-      ? `Resolve ${selectedDisputeIds.length} disputes and refund tokens to users?`
+      ? `Resolve ${validDisputes.length} disputes and refund tokens?`
       : action === 'reject'
-      ? `Reject ${selectedDisputeIds.length} disputes without refund?`
-      : `Resolve ${selectedDisputeIds.length} disputes without refund?`;
+      ? `Reject ${validDisputes.length} disputes?`
+      : `Resolve ${validDisputes.length} disputes without refund?`;
 
     if (confirm(confirmMsg)) {
       bulkUpdateDisputesMutation.mutate({
-        disputeIds: selectedDisputeIds,
+        disputeIds: validDisputes.map(d => d.id),
         status,
         shouldRefund,
       });
@@ -344,26 +425,64 @@ export const TokenDisputes = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-black">TOKEN DISPUTES</h1>
-          <p className="text-muted-foreground">Review and manage user-reported token issues</p>
+        <div className="flex items-center gap-6">
+          <div>
+            <h1 className="text-3xl font-black">TOKEN DISPUTES</h1>
+            <p className="text-muted-foreground">Review and manage user-reported token issues</p>
+          </div>
+          
+          {/* View Mode Tabs */}
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === 'active' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => {
+                setViewMode('active');
+                setStatusFilter('all');
+                setSelectedDisputeIds([]);
+              }}
+            >
+              <Clock className="h-4 w-4 mr-2" />
+              Active Disputes
+            </Button>
+            <Button
+              variant={viewMode === 'history' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => {
+                setViewMode('history');
+                setStatusFilter('all');
+                setSelectedDisputeIds([]);
+              }}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              History
+            </Button>
+          </div>
         </div>
+        
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Disputes</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="reviewed">Reviewed</SelectItem>
-            <SelectItem value="resolved">Resolved</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="all">All</SelectItem>
+            {viewMode === 'active' ? (
+              <>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="reviewed">Reviewed</SelectItem>
+              </>
+            ) : (
+              <>
+                <SelectItem value="resolved">Resolved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </>
+            )}
           </SelectContent>
         </Select>
       </div>
 
-      {/* Bulk Action Bar */}
-      {selectedDisputeIds.length > 0 && (
+      {/* Bulk Action Bar - Only show in active view */}
+      {selectedDisputeIds.length > 0 && viewMode === 'active' && (
         <Card className="border-primary">
           <CardContent className="py-4">
             <div className="flex items-center justify-between">
@@ -425,32 +544,41 @@ export const TokenDisputes = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={selectedDisputeIds.length === disputes?.length && disputes.length > 0}
-                      onCheckedChange={toggleSelectAll}
-                    />
-                  </TableHead>
+                  {viewMode === 'active' && (
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={selectedDisputeIds.length === disputes?.length && disputes.length > 0}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </TableHead>
+                  )}
                   <TableHead>User</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Tokens</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Generation Status</TableHead>
                   <TableHead>Date</TableHead>
+                  {viewMode === 'history' && <TableHead>Refund Info</TableHead>}
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {disputes?.map((dispute) => {
-                  const Icon = getContentIcon(dispute.generation.type);
+                  const Icon = getContentIcon(
+                    viewMode === 'history' 
+                      ? (dispute as any).generation_snapshot?.type 
+                      : dispute.generation.type
+                  );
                   return (
                     <TableRow key={dispute.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedDisputeIds.includes(dispute.id)}
-                          onCheckedChange={() => toggleSelectDispute(dispute.id)}
-                        />
-                      </TableCell>
+                      {viewMode === 'active' && (
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedDisputeIds.includes(dispute.id)}
+                            onCheckedChange={() => toggleSelectDispute(dispute.id)}
+                          />
+                        </TableCell>
+                      )}
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4" />
@@ -497,16 +625,24 @@ export const TokenDisputes = () => {
                       <TableCell className="text-sm text-muted-foreground">
                         {format(new Date(dispute.created_at), 'MMM d, yyyy')}
                       </TableCell>
+                      {viewMode === 'history' && (
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {dispute.refund_amount ? `Refunded ${dispute.refund_amount}` : 'No refund'}
+                          </Badge>
+                        </TableCell>
+                      )}
                       <TableCell>
                         <Button
                           size="sm"
+                          variant={viewMode === 'history' ? 'outline' : 'default'}
                           onClick={() => {
                             setSelectedDispute(dispute);
                             setNewStatus(dispute.status);
                             setAdminNotes(dispute.admin_notes || "");
                           }}
                         >
-                          Review
+                          {viewMode === 'history' ? 'View' : 'Review'}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -522,11 +658,30 @@ export const TokenDisputes = () => {
       <Dialog open={!!selectedDispute} onOpenChange={(open) => !open && setSelectedDispute(null)}>
         <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Token Dispute Details</DialogTitle>
+            <DialogTitle>
+              {viewMode === 'history' ? 'Dispute History Record' : 'Token Dispute Details'}
+            </DialogTitle>
           </DialogHeader>
 
           {selectedDispute && (
             <div className="space-y-4">
+              {/* Show archive info for history view */}
+              {viewMode === 'history' && (
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="font-medium">
+                      This dispute was {selectedDispute.status} on{' '}
+                      {format(new Date((selectedDispute as any).archived_at || selectedDispute.reviewed_at), 'PPpp')}
+                    </span>
+                  </div>
+                  {selectedDispute.refund_amount && (
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      Refunded: {selectedDispute.refund_amount} tokens
+                    </div>
+                  )}
+                </div>
+              )}
               {/* Compact Info Grid */}
               <div className="grid grid-cols-2 gap-3 p-4 bg-muted/50 rounded-lg text-sm">
                 <div>
@@ -613,59 +768,65 @@ export const TokenDisputes = () => {
               </Collapsible>
 
 
-              {/* Admin Review */}
-              <div className="border-t pt-4 space-y-4">
-                <h3 className="text-sm font-semibold">Admin Review</h3>
-                
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Update Status</label>
-                  <Select value={newStatus} onValueChange={setNewStatus}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="reviewed">Reviewed</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Admin Notes</label>
-                  <Textarea
-                    value={adminNotes}
-                    onChange={(e) => setAdminNotes(e.target.value)}
-                    placeholder="Add notes about your decision..."
-                    rows={3}
-                  />
-                </div>
-
-                {selectedDispute.reviewed_at && (
-                  <div className="text-xs text-muted-foreground">
-                    Last reviewed: {format(new Date(selectedDispute.reviewed_at), 'PPpp')}
+              {/* Admin Review - Only show in active view */}
+              {viewMode === 'active' && (
+                <div className="border-t pt-4 space-y-4">
+                  <h3 className="text-sm font-semibold">Admin Review</h3>
+                  
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Update Status</label>
+                    <Select value={newStatus} onValueChange={setNewStatus}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="reviewed">Reviewed</SelectItem>
+                        <SelectItem value="resolved">Resolved</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                )}
 
-                <div className="flex gap-2 pt-2">
-                  <Button 
-                    onClick={handleRefundTokens}
-                    disabled={refundTokensMutation.isPending}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    {refundTokensMutation.isPending ? 'Refunding...' : `Refund ${selectedDispute.generation.tokens_used} Tokens`}
-                  </Button>
-                  <Button 
-                    onClick={handleUpdateDispute}
-                    disabled={updateDisputeMutation.isPending}
-                    className="flex-1"
-                  >
-                    {updateDisputeMutation.isPending ? 'Updating...' : 'Update Dispute'}
-                  </Button>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Admin Notes</label>
+                    <Textarea
+                      value={adminNotes}
+                      onChange={(e) => setAdminNotes(e.target.value)}
+                      placeholder="Add notes about your decision..."
+                      rows={3}
+                    />
+                  </div>
+
+                  {selectedDispute.reviewed_at && (
+                    <div className="text-xs text-muted-foreground">
+                      Last reviewed: {format(new Date(selectedDispute.reviewed_at), 'PPpp')}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-2">
+                    <Button 
+                      onClick={handleRefundTokens}
+                      disabled={refundTokensMutation.isPending || !!selectedDispute.refund_amount}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      {refundTokensMutation.isPending 
+                        ? 'Refunding...' 
+                        : selectedDispute.refund_amount
+                        ? 'Already Refunded'
+                        : `Refund ${selectedDispute.generation.tokens_used} Tokens`}
+                    </Button>
+                    <Button 
+                      onClick={handleUpdateDispute}
+                      disabled={updateDisputeMutation.isPending}
+                      className="flex-1"
+                    >
+                      {updateDisputeMutation.isPending ? 'Updating...' : 'Update Dispute'}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </DialogContent>

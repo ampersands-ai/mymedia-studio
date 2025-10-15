@@ -137,7 +137,7 @@ const CustomCreation = () => {
     const required = currentModel.input_schema.required || [];
     
     // Look for image-like fields
-    const imageFieldNames = ['inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'filesURL', 'file_urls', 'fileUrls'];
+    const imageFieldNames = ['inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'filesURL', 'file_urls', 'fileUrls', 'reference_image_urls'];
     for (const fieldName of imageFieldNames) {
       if (properties[fieldName]) {
         const schema = properties[fieldName];
@@ -537,7 +537,7 @@ const CustomCreation = () => {
     if (currentModel?.input_schema) {
       const requiredFields = currentModel.input_schema.required || [];
       const schemaProperties = currentModel.input_schema.properties || {};
-      const excludeFields = ['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls']; // Already validated above
+      const excludeFields = ['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls']; // Already validated above
 
       for (const field of requiredFields) {
         if (excludeFields.includes(field)) continue;
@@ -1127,7 +1127,7 @@ const CustomCreation = () => {
                         modelSchema={currentModel.input_schema}
                         onChange={setModelParameters}
                         currentValues={modelParameters}
-                        excludeFields={['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls']}
+                        excludeFields={['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls']}
                       />
                     ) : (
                       // Legacy Resolution fallback if no schema

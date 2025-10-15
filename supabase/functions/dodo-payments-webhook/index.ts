@@ -1,6 +1,7 @@
-// Dodo Payments Webhook Handler - Updated 2025-10-15 (Secret Key Refreshed)
+// Dodo Payments Webhook Handler - Updated 2025-10-15 (Svix Verification)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Webhook } from "https://esm.sh/svix@1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -39,83 +40,54 @@ serve(async (req) => {
     // Read the body once
     const bodyText = await req.text();
     
-    // Get Svix signature headers (Dodo Payments uses Svix for webhook delivery)
-    const svixSignature = req.headers.get('webhook-signature');
-    const svixId = req.headers.get('webhook-id');
-    const svixTimestamp = req.headers.get('webhook-timestamp');
+    // Normalize headers: support both svix-* and webhook-* prefixes
+    const svixId = req.headers.get('svix-id') || req.headers.get('webhook-id');
+    const svixTimestamp = req.headers.get('svix-timestamp') || req.headers.get('webhook-timestamp');
+    const svixSignature = req.headers.get('svix-signature') || req.headers.get('webhook-signature');
+    
+    const headerSet = req.headers.get('svix-id') ? 'svix-*' : 'webhook-*';
+    console.log(`Using header set: ${headerSet}`);
     
     if (!svixSignature || !svixId || !svixTimestamp) {
       console.error('Security: Missing Svix webhook headers');
-      console.log('webhook-signature:', svixSignature);
-      console.log('webhook-id:', svixId);
-      console.log('webhook-timestamp:', svixTimestamp);
+      console.log('svix-id:', svixId);
+      console.log('svix-timestamp:', svixTimestamp);
+      console.log('svix-signature:', svixSignature ? 'present' : 'missing');
       return new Response(
         JSON.stringify({ error: 'Missing webhook signature headers' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
-    // SECURITY: Verify Svix HMAC signature
-    // Svix signature format: "v1,<base64_signature>" - extract the signature part
-    const signatureParts = svixSignature.split(',');
-    if (signatureParts.length !== 2 || signatureParts[0] !== 'v1') {
-      console.error('Security: Invalid Svix signature format');
-      return new Response(
-        JSON.stringify({ error: 'Invalid signature format' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    const receivedSignature = signatureParts[1];
-    
-    // Svix signature is HMAC-SHA256 of: "${webhook_id}.${webhook_timestamp}.${body}"
-    const signedContent = `${svixId}.${svixTimestamp}.${bodyText}`;
-    
-    const encoder = new TextEncoder();
-    // Strip the 'whsec_' prefix from Svix signing secret and base64 decode it
-    const secretWithoutPrefix = webhookSecret.startsWith('whsec_') 
-      ? webhookSecret.slice(7) // Remove 'whsec_' prefix
-      : webhookSecret;
-    
-    // Svix secrets are base64-encoded, so decode them
-    const secretBytes = Uint8Array.from(atob(secretWithoutPrefix), c => c.charCodeAt(0));
+    // SECURITY: Verify webhook using Svix library
+    try {
+      const wh = new Webhook(webhookSecret);
+      
+      // Prepare normalized headers for Svix verification
+      const headersNormalized = {
+        "svix-id": svixId,
+        "svix-timestamp": svixTimestamp,
+        "svix-signature": svixSignature,
+      };
+      
+      // Verify the webhook payload using Svix library
+      const event = wh.verify(bodyText, headersNormalized);
+      console.log('Security: Valid webhook received:', event.type || event.event_type);
 
-    const key = await crypto.subtle.importKey(
-      'raw',
-      secretBytes,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
-    
-    const signatureBuffer = await crypto.subtle.sign(
-      'HMAC',
-      key,
-      encoder.encode(signedContent)
-    );
-    
-    // Convert to base64 for comparison
-    const expectedSignature = btoa(String.fromCharCode(...new Uint8Array(signatureBuffer)));
+      await handleWebhookEvent(supabase, event);
 
-    if (receivedSignature !== expectedSignature) {
-      console.error('Security: Invalid webhook signature');
-      console.log('Received:', receivedSignature);
-      console.log('Expected:', expectedSignature);
+      return new Response(JSON.stringify({ received: true }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (verifyError) {
+      console.error('Svix verification failed:', verifyError);
+      console.error('Verification error details:', verifyError instanceof Error ? verifyError.message : String(verifyError));
       return new Response(
         JSON.stringify({ error: 'Invalid signature' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    const event = JSON.parse(bodyText);
-    console.log('Security: Valid webhook received:', event.type);
-
-    await handleWebhookEvent(supabase, event);
-
-    return new Response(JSON.stringify({ received: true }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
   } catch (error) {
     console.error('Error processing webhook:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';

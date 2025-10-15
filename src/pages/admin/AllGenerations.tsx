@@ -134,7 +134,7 @@ export default function AllGenerations() {
             phone_number
           )
         `)
-        .eq('status', 'completed')
+        .in('status', ['completed', 'processing', 'pending'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -207,6 +207,30 @@ export default function AllGenerations() {
     onError: (error: any) => {
       toast({
         title: "Failed to remove",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const pollStatus = useMutation({
+    mutationFn: async (generationId: string) => {
+      const { data, error } = await supabase.functions.invoke('poll-kie-status', {
+        body: { generation_id: generationId }
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Status checked",
+        description: "Generation status updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['admin-all-generations'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to check status",
         description: error.message,
         variant: "destructive",
       });
@@ -325,27 +349,41 @@ export default function AllGenerations() {
                       {gen.tokens_used.toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      {gen.is_shared ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => unshareFromCommunity.mutate(gen.id)}
-                          disabled={unshareFromCommunity.isPending}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1 text-green-500" />
-                          Shared
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => shareToCommunity.mutate(gen)}
-                          disabled={shareToCommunity.isPending}
-                        >
-                          <Share2 className="h-4 w-4 mr-1" />
-                          Share
-                        </Button>
-                      )}
+                      <div className="flex gap-2">
+                        {gen.status === 'completed' && (
+                          gen.is_shared ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => unshareFromCommunity.mutate(gen.id)}
+                              disabled={unshareFromCommunity.isPending}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1 text-green-500" />
+                              Shared
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => shareToCommunity.mutate(gen)}
+                              disabled={shareToCommunity.isPending}
+                            >
+                              <Share2 className="h-4 w-4 mr-1" />
+                              Share
+                            </Button>
+                          )
+                        )}
+                        {(gen.status === 'processing' || gen.status === 'pending') && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => pollStatus.mutate(gen.id)}
+                            disabled={pollStatus.isPending}
+                          >
+                            {pollStatus.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Check Status'}
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

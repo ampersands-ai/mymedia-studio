@@ -73,28 +73,50 @@ serve(async (req) => {
       );
     }
 
-    console.log('Downloading video from:', result_url);
+    console.log('Downloading content from:', result_url);
 
-    // Download the video
-    const videoResponse = await fetch(result_url);
-    if (!videoResponse.ok) {
-      throw new Error(`Failed to download video: ${videoResponse.status}`);
+    // Download the content
+    const contentResponse = await fetch(result_url);
+    if (!contentResponse.ok) {
+      throw new Error(`Failed to download content: ${contentResponse.status}`);
     }
 
-    const arrayBuffer = await videoResponse.arrayBuffer();
-    const videoData = new Uint8Array(arrayBuffer);
+    const arrayBuffer = await contentResponse.arrayBuffer();
+    const contentData = new Uint8Array(arrayBuffer);
     
-    console.log('Downloaded. Size:', videoData.length, 'bytes');
+    console.log('Downloaded. Size:', contentData.length, 'bytes');
+
+    // Determine file extension and content type from URL and generation type
+    const urlExt = result_url.match(/\.([a-z0-9]+)(?:\?|$)/i)?.[1] || '';
+    
+    const typeToMime: Record<string, string> = {
+      'image': 'image/jpeg',
+      'video': 'video/mp4',
+      'audio': 'audio/mpeg',
+      'text': 'text/plain'
+    };
+    
+    const typeToExt: Record<string, string> = {
+      'image': urlExt || 'jpg',
+      'video': urlExt || 'mp4',
+      'audio': urlExt || 'mp3',
+      'text': urlExt || 'txt'
+    };
+    
+    const contentType = typeToMime[generation.type] || 'application/octet-stream';
+    const fileExtension = typeToExt[generation.type] || urlExt || 'bin';
+    
+    console.log('Detected type:', generation.type, 'Extension:', fileExtension, 'MIME:', contentType);
 
     // Upload to storage
     const date = new Date();
     const dateFolder = date.toISOString().split('T')[0];
-    const storagePath = `${generation.user_id}/${dateFolder}/${generation.id}.mp4`;
+    const storagePath = `${generation.user_id}/${dateFolder}/${generation.id}.${fileExtension}`;
     
     const { error: uploadError } = await supabase.storage
       .from('generated-content')
-      .upload(storagePath, videoData, {
-        contentType: 'video/mp4',
+      .upload(storagePath, contentData, {
+        contentType: contentType,
         cacheControl: '3600',
         upsert: false
       });
@@ -111,7 +133,7 @@ serve(async (req) => {
       .update({
         status: 'completed',
         storage_path: storagePath,
-        file_size_bytes: videoData.length
+        file_size_bytes: contentData.length
       })
       .eq('id', generation_id);
 

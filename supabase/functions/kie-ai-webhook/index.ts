@@ -7,8 +7,16 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Log ALL incoming requests for debugging webhook delivery issues
+  console.log('=== WEBHOOK REQUEST RECEIVED ===');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+  console.log('Headers:', JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2));
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('CORS preflight - responding with headers');
     return new Response(null, { headers: corsHeaders });
   }
 

@@ -90,11 +90,36 @@ export async function callKieAI(request: ProviderRequest): Promise<ProviderRespo
 
     const taskId = createData.data.taskId;
     console.log('Task ID:', taskId);
-    console.log('Task created successfully. Webhook will handle completion.');
+    console.log('Task created successfully. Webhook URL:', callbackUrl);
+
+    // Immediate status check to catch fast completions
+    try {
+      console.log('Checking immediate task status...');
+      const statusResponse = await fetch('https://api.kie.ai/api/v1/jobs/queryTask', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${KIE_AI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ taskId })
+      });
+
+      if (statusResponse.ok) {
+        const statusData = await statusResponse.json();
+        console.log('Immediate status:', statusData.data?.status);
+        
+        // If already completed, we could process it here instead of waiting for webhook
+        // But for now, we'll let the webhook handler deal with it
+        if (statusData.data?.status === 'completed') {
+          console.log('⚠️ Task completed immediately! Webhook should arrive soon.');
+        }
+      }
+    } catch (statusError) {
+      console.warn('Could not check immediate status (non-critical):', statusError);
+    }
 
     // Return immediately - webhook will handle the rest
     // We return empty data since the webhook will populate it later
-
     return {
       output_data: new Uint8Array(), // Empty - webhook will handle
       file_extension: 'pending',

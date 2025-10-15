@@ -451,7 +451,7 @@ const History = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, createdAt?: string) => {
     switch (status) {
       case "completed":
         return <Badge className="bg-green-500 text-white text-xs px-1.5 py-0">Done</Badge>;
@@ -459,6 +459,16 @@ const History = () => {
         return <Badge className="bg-red-500 text-white text-xs px-1.5 py-0">Failed</Badge>;
       case "pending":
       case "processing":
+        // Calculate time since creation for better status messages
+        if (createdAt) {
+          const minutesAgo = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
+          if (minutesAgo > 30) {
+            return <Badge className="bg-red-500 text-white text-xs px-1.5 py-0">Stuck</Badge>;
+          }
+          if (minutesAgo > 15) {
+            return <Badge className="bg-orange-500 text-white text-xs px-1.5 py-0">Long wait...</Badge>;
+          }
+        }
         return (
           <Badge className="bg-yellow-500 animate-pulse text-white text-xs px-1.5 py-0">
             <Clock className="h-2.5 w-2.5 mr-0.5 inline" />
@@ -605,7 +615,7 @@ const History = () => {
                     {getTypeIcon(generation.type)}
                     <span className="font-bold text-xs capitalize">{generation.type}</span>
                   </div>
-                  {getStatusBadge(generation.status)}
+                  {getStatusBadge(generation.status, generation.created_at)}
                 </div>
 
                 <p className="text-xs text-foreground/80 line-clamp-1">
@@ -640,7 +650,7 @@ const History = () => {
                   </Badge>
                 )}
               </div>
-              {previewGeneration && getStatusBadge(previewGeneration.status)}
+              {previewGeneration && getStatusBadge(previewGeneration.status, previewGeneration.created_at)}
             </DialogTitle>
           </DialogHeader>
           

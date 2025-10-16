@@ -1,4 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { createErrorResponse } from "../_shared/error-handler.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,7 +19,23 @@ const RATE_LIMITS = {
     windowMinutes: 60,
     blockMinutes: 60,
   },
+  generation: {
+    maxAttempts: 100,
+    windowMinutes: 60,
+    blockMinutes: 10,
+  },
+  api_call: {
+    maxAttempts: 200,
+    windowMinutes: 60,
+    blockMinutes: 5,
+  },
 };
+
+const rateLimitSchema = z.object({
+  identifier: z.string().min(1).max(255),
+  action: z.enum(['login', 'signup', 'generation', 'api_call']),
+  user_id: z.string().uuid().optional(),
+});
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -25,23 +43,18 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let body: any;
+
   try {
-    const { identifier, action } = await req.json();
+    body = await req.json();
+    const { identifier, action, user_id } = rateLimitSchema.parse(body);
+    
+    // Use composite key for authenticated requests (better tracking)
+    const rateLimitKey = user_id 
+      ? `user:${user_id}:${action}` 
+      : `ip:${identifier}:${action}`;
 
-    if (!identifier || !action) {
-      return new Response(
-        JSON.stringify({ error: 'Missing identifier or action' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const config = RATE_LIMITS[action as keyof typeof RATE_LIMITS];
-    if (!config) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid action type' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const config = RATE_LIMITS[action];
 
     // Initialize Supabase with service role (bypasses RLS)
     const supabaseAdmin = createClient(
@@ -59,12 +72,12 @@ Deno.serve(async (req) => {
     const { data: rateLimit, error: fetchError } = await supabaseAdmin
       .from('rate_limits')
       .select('*')
-      .eq('identifier', identifier)
+      .eq('identifier', rateLimitKey)
       .eq('action', action)
       .maybeSingle();
 
     if (fetchError) {
-      console.error('Error fetching rate limit:', fetchError);
+      console.error('[rate-limiter] Error fetching rate limit:', fetchError);
       throw fetchError;
     }
 
@@ -91,7 +104,7 @@ Deno.serve(async (req) => {
       const { error: insertError } = await supabaseAdmin
         .from('rate_limits')
         .insert({
-          identifier,
+          identifier: rateLimitKey,
           action,
           attempt_count: 1,
           first_attempt_at: now.toISOString(),
@@ -99,7 +112,7 @@ Deno.serve(async (req) => {
         });
 
       if (insertError) {
-        console.error('Error creating rate limit:', insertError);
+        console.error('[rate-limiter] Error creating rate limit:', insertError);
         throw insertError;
       }
 
@@ -123,11 +136,11 @@ Deno.serve(async (req) => {
           last_attempt_at: now.toISOString(),
           blocked_until: null,
         })
-        .eq('identifier', identifier)
+        .eq('identifier', rateLimitKey)
         .eq('action', action);
 
       if (resetError) {
-        console.error('Error resetting rate limit:', resetError);
+        console.error('[rate-limiter] Error resetting rate limit:', resetError);
         throw resetError;
       }
 
@@ -154,21 +167,21 @@ Deno.serve(async (req) => {
     const { error: updateError } = await supabaseAdmin
       .from('rate_limits')
       .update(updateData)
-      .eq('identifier', identifier)
+      .eq('identifier', rateLimitKey)
       .eq('action', action);
 
     if (updateError) {
-      console.error('Error updating rate limit:', updateError);
+      console.error('[rate-limiter] Error updating rate limit:', updateError);
       throw updateError;
     }
 
     if (isBlocked) {
       // Log rate limit block to audit logs
       await supabaseAdmin.from('audit_logs').insert({
-        user_id: null,
+        user_id: user_id || null,
         action: 'rate_limit_blocked',
         resource_type: 'rate_limit',
-        resource_id: identifier,
+        resource_id: rateLimitKey,
         ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
         user_agent: req.headers.get('user-agent') || 'unknown',
         metadata: { 
@@ -181,7 +194,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           allowed: false, 
-          error: `Too many attempts. Please try again in ${config.blockMinutes} minute(s).`,
+          error: `Too many attempts. Please try again later.`,
           blockedUntil: updateData.blocked_until,
         }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -194,10 +207,9 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in rate-limiter function:', error);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createErrorResponse(error, corsHeaders, 'rate-limiter', {
+      identifier: body?.identifier,
+      action: body?.action,
+    });
   }
 });

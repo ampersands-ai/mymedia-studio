@@ -69,3 +69,35 @@ export const profileUpdateSchema = z.object({
   phoneNumber: phoneSchema,
   zipcode: zipcodeSchema,
 });
+
+// Edge function validation schemas
+export const generationRequestSchema = z.object({
+  template_id: z.string().max(100).optional(),
+  model_id: z.string().max(100).optional(),
+  model_record_id: z.string().uuid().optional(),
+  prompt: z.string().min(1, { message: "Prompt is required" }).max(5000, { message: "Prompt must be less than 5000 characters" }),
+  custom_parameters: z.record(z.any()).optional(),
+  enhance_prompt: z.boolean().optional(),
+}).refine(
+  data => (data.template_id && !data.model_id && !data.model_record_id) ||
+          (!data.template_id && (data.model_id || data.model_record_id)),
+  { message: "Must provide either template_id or model_id/model_record_id, not both" }
+);
+
+export const tokenOperationSchema = z.object({
+  user_id: z.string().uuid(),
+  amount: z.number().int().min(-100000).max(100000),
+  reason: z.string().max(500).optional(),
+});
+
+export const rateLimitSchema = z.object({
+  identifier: z.string().min(1).max(255),
+  action: z.enum(['login', 'signup', 'generation', 'api_call']),
+  user_id: z.string().uuid().optional(),
+});
+
+export const roleManagementSchema = z.object({
+  user_id: z.string().uuid(),
+  role: z.enum(['admin', 'moderator', 'user']),
+  action: z.enum(['grant', 'revoke']),
+});

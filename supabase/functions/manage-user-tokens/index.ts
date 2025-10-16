@@ -1,29 +1,31 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { createErrorResponse } from "../_shared/error-handler.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface TokenRequest {
-  user_id: string;
-  amount: number;
-  action: 'add' | 'deduct';
-}
+const tokenManagementSchema = z.object({
+  user_id: z.string().uuid(),
+  amount: z.number().int().min(-100000).max(100000),
+  action: z.enum(['add', 'deduct']),
+});
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let body: any;
+  let user: any;
+
   try {
     // Authenticate the requesting user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      throw new Error('Missing authorization header');
     }
 
     const supabaseClient = createClient(
@@ -32,13 +34,12 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    const { data: { user: authUser }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !authUser) {
+      throw new Error('Unauthorized');
     }
+
+    user = authUser;
 
     // Verify admin role using service role client
     const supabaseAdmin = createClient(
@@ -54,21 +55,16 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (roleError || !roleData) {
-      return new Response(
-        JSON.stringify({ error: 'Admin access required' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      throw new Error('Forbidden: Admin access required');
     }
 
-    // Parse request body
-    const body: TokenRequest = await req.json();
-    const { user_id, amount, action } = body;
+    // Validate and parse request body
+    body = await req.json();
+    const { user_id, amount, action } = tokenManagementSchema.parse(body);
 
-    if (!user_id || !amount || amount <= 0) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid request parameters' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Ensure amount is positive
+    if (amount <= 0) {
+      throw new Error('Amount must be greater than 0');
     }
 
     // Get current subscription
@@ -78,11 +74,8 @@ Deno.serve(async (req) => {
       .eq('user_id', user_id)
       .single();
 
-    if (subError) {
-      return new Response(
-        JSON.stringify({ error: 'User subscription not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (subError || !subscription) {
+      throw new Error('User subscription not found');
     }
 
     // Calculate new token amounts
@@ -122,6 +115,8 @@ Deno.serve(async (req) => {
       }
     });
 
+    console.log(`[SUCCESS] Tokens ${action} completed: ${amount} for user ${user_id}`);
+
     return new Response(
       JSON.stringify({ 
         success: true,
@@ -131,11 +126,11 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error managing tokens:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createErrorResponse(error, corsHeaders, 'manage-user-tokens', {
+      admin_user_id: user?.id,
+      target_user_id: body?.user_id,
+      amount: body?.amount,
+      action: body?.action,
+    });
   }
 });

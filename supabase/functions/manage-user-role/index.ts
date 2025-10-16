@@ -1,29 +1,31 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { createErrorResponse } from "../_shared/error-handler.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface RoleRequest {
-  user_id: string;
-  role: 'admin' | 'moderator' | 'user';
-  action: 'grant' | 'revoke';
-}
+const roleManagementSchema = z.object({
+  user_id: z.string().uuid(),
+  role: z.enum(['admin', 'moderator', 'user']),
+  action: z.enum(['grant', 'revoke']),
+});
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let body: any;
+  let user: any;
+
   try {
     // Authenticate the requesting user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      throw new Error('Missing authorization header');
     }
 
     const supabaseClient = createClient(
@@ -32,13 +34,12 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    const { data: { user: authUser }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !authUser) {
+      throw new Error('Unauthorized');
     }
+
+    user = authUser;
 
     // Verify admin role using service role client
     const supabaseAdmin = createClient(
@@ -54,29 +55,16 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (roleError || !roleData) {
-      return new Response(
-        JSON.stringify({ error: 'Admin access required' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      throw new Error('Forbidden: Admin access required');
     }
 
-    // Parse request body
-    const body: RoleRequest = await req.json();
-    const { user_id, role, action } = body;
-
-    if (!user_id || !role || !action) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid request parameters' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Validate and parse request body
+    body = await req.json();
+    const { user_id, role, action } = roleManagementSchema.parse(body);
 
     // Prevent self-modification
     if (user_id === user.id) {
-      return new Response(
-        JSON.stringify({ error: 'Cannot modify your own role' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      throw new Error('Cannot modify your own role');
     }
 
     if (action === 'grant') {
@@ -129,16 +117,18 @@ Deno.serve(async (req) => {
       });
     }
 
+    console.log(`[SUCCESS] Role ${action} completed: ${role} for user ${user_id}`);
+
     return new Response(
       JSON.stringify({ success: true }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error managing role:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createErrorResponse(error, corsHeaders, 'manage-user-role', {
+      admin_user_id: user?.id,
+      target_user_id: body?.user_id,
+      role: body?.role,
+      action: body?.action,
+    });
   }
 });

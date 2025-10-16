@@ -5,19 +5,19 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 touch-manipulation",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-secondary-500/20 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 touch-manipulation",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground border-4 border-black brutal-shadow hover-lift",
-        destructive: "bg-destructive text-destructive-foreground border-4 border-black brutal-shadow hover-lift",
-        outline: "border-4 border-black bg-background brutal-shadow hover-lift hover:bg-muted",
-        secondary: "bg-secondary text-secondary-foreground border-4 border-black brutal-shadow hover-lift",
-        ghost: "hover:bg-muted hover:text-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        neon: "bg-neon-yellow text-black border-4 border-black brutal-shadow hover-lift font-black",
-        pink: "bg-neon-pink text-white border-4 border-black brutal-shadow hover-lift font-black",
-        blue: "bg-neon-blue text-white border-4 border-black brutal-shadow hover-lift font-black",
+        default: "bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-neutral-900 font-semibold border-2 border-primary-600 shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200",
+        secondary: "bg-white hover:bg-secondary-50 active:bg-secondary-100 text-secondary-600 hover:text-secondary-700 font-semibold border-2 border-secondary-600 hover:border-secondary-700 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200",
+        outline: "bg-white hover:bg-neutral-50 text-neutral-700 hover:text-neutral-900 font-medium border-2 border-neutral-300 hover:border-neutral-400 transition-all duration-200",
+        ghost: "bg-transparent hover:bg-secondary-50 text-secondary-600 hover:text-secondary-700 font-medium transition-colors duration-200",
+        destructive: "bg-error hover:bg-error/90 text-white font-semibold border-2 border-error shadow-md hover:shadow-lg transition-all",
+        link: "text-secondary-600 hover:text-secondary-700 underline-offset-4 hover:underline transition-colors",
+        neon: "bg-primary-500 hover:bg-primary-600 text-neutral-900 font-bold border-2 border-primary-600 shadow-lg shadow-primary-500/30 hover:shadow-xl transition-all",
+        pink: "bg-secondary-600 hover:bg-secondary-700 text-white font-bold border-2 border-secondary-700 shadow-md transition-all",
+        blue: "bg-accent-500 hover:bg-accent-600 text-white font-bold border-2 border-accent-600 shadow-md transition-all",
       },
       size: {
         default: "h-11 px-6 py-2",

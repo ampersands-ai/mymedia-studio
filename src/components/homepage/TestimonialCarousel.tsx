@@ -54,22 +54,22 @@ export const TestimonialCarousel = () => {
     <div className="relative max-w-4xl mx-auto">
       <div className="brutalist-card p-8 md:p-12">
         <div className="space-y-6">
-          <div className="flex gap-1 text-neon-yellow text-2xl">
+          <div className="flex gap-1 text-primary-500 text-2xl">
             {[...Array(5)].map((_, i) => (
               <span key={i}>⭐</span>
             ))}
           </div>
-          <blockquote className="text-xl md:text-2xl font-medium text-foreground leading-relaxed">
+          <blockquote className="text-xl md:text-2xl font-medium text-neutral-900 leading-relaxed">
             "{testimonials[current].quote}"
           </blockquote>
           <div className="space-y-2">
-            <div className="font-black text-lg text-foreground">
+            <div className="font-black text-lg text-neutral-900">
               {testimonials[current].author}
             </div>
-            <div className="text-muted-foreground">
+            <div className="text-neutral-600">
               {testimonials[current].handle}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-neutral-500">
               {testimonials[current].role}
             </div>
           </div>
@@ -92,7 +92,7 @@ export const TestimonialCarousel = () => {
               key={idx}
               onClick={() => setCurrent(idx)}
               className={`w-3 h-3 rounded-full border-2 border-black transition-all ${
-                idx === current ? "bg-primary" : "bg-background"
+                idx === current ? "bg-primary-500" : "bg-background"
               }`}
               aria-label={`Go to testimonial ${idx + 1}`}
             />

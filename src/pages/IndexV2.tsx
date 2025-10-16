@@ -42,25 +42,25 @@ const IndexV2 = () => {
       {/* Header/Navigation */}
       <header className="sticky top-0 z-50 bg-background border-b-4 border-black">
         <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3">
+          <nav className="flex items-center justify-between gap-4">
+            <Link to="/" className="flex items-center gap-2">
               <img src={logoImage} alt="Artifio.ai" className="h-10 w-10" />
-              <img src={textLogo} alt="Artifio.ai" className="h-8" />
+              <img src={textLogo} alt="Artifio.ai" className="h-8 hidden sm:block" />
             </Link>
             <div className="hidden md:flex items-center gap-6">
-              <Link to="/dashboard/create" className="font-bold hover:text-primary">
+              <Link to="/dashboard/create" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">
                 Templates
               </Link>
-              <Link to="/pricing" className="font-bold hover:text-primary">
+              <Link to="/pricing" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">
                 Pricing
               </Link>
-              <Link to="/community" className="font-bold hover:text-primary">
+              <Link to="/community" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">
                 Community
               </Link>
             </div>
             <div className="flex items-center gap-3">
               {user ? (
-                <Button asChild variant="neon">
+                <Button asChild variant="default">
                   <Link to="/dashboard/create">Go to Dashboard</Link>
                 </Button>
               ) : (
@@ -68,7 +68,7 @@ const IndexV2 = () => {
                   <Button asChild variant="ghost">
                     <Link to="/auth">Login</Link>
                   </Button>
-                  <Button asChild variant="neon">
+                  <Button asChild variant="default">
                     <Link to="/auth">Sign Up</Link>
                   </Button>
                 </>
@@ -81,30 +81,30 @@ const IndexV2 = () => {
       {/* Section 1: Hero */}
       <section className="container mx-auto px-4 py-16 md:py-24">
         <div className="max-w-6xl mx-auto text-center space-y-8">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black leading-tight">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black leading-tight text-neutral-900">
             Create Professional Videos, Images & Music
             <br />
-            <span className="text-primary">In Minutes—Not Hours</span>
+            <span className="text-primary-600">In Minutes—Not Hours</span>
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-xl md:text-2xl text-neutral-600 max-w-3xl mx-auto">
             One platform. 22+ AI models. 200+ ready-to-use templates.
             Everything creators need at 1/5th the cost.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button asChild variant="neon" size="lg" className="text-lg">
-              <Link to="/auth">Start Creating Free →</Link>
+            <Button asChild variant="default" size="lg" className="text-lg">
+              <Link to="/auth">START CREATING FOR FREE</Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="text-lg">
-              <Link to="/pricing">See Pricing</Link>
+            <Button asChild variant="secondary" size="lg" className="text-lg">
+              <Link to="/pricing">SEE PRICING</Link>
             </Button>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center text-sm text-muted-foreground">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center text-sm text-neutral-500">
             <span className="flex items-center gap-2">
-              <Check className="w-4 h-4 text-primary" />
+              <Check className="w-4 h-4 text-success" />
               500 Free Tokens • No Credit Card
             </span>
             <span className="flex items-center gap-2">
-              <Check className="w-4 h-4 text-primary" />
+              <Check className="w-4 h-4 text-success" />
               10,000+ Creators Worldwide
             </span>
           </div>
@@ -112,7 +112,7 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 2: Social Proof Bar */}
-      <section className="border-y-4 border-black bg-secondary/20 py-12">
+      <section className="border-y-4 border-black bg-neutral-50 py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <StatCounter end={10000} suffix="+" label="Creators" />
@@ -173,7 +173,7 @@ const IndexV2 = () => {
                 <span>No more breaking the bank</span>
               </div>
             </div>
-            <Button asChild variant="neon" size="lg">
+            <Button asChild variant="default" size="lg">
               <Link to="/auth">Start Creating Free</Link>
             </Button>
           </div>
@@ -181,7 +181,7 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 4: Template Gallery */}
-      <section className="bg-secondary/20 py-16 md:py-24">
+      <section className="bg-neutral-50 py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-8">
             <div className="text-center space-y-4">
@@ -284,7 +284,7 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 6: Feature Showcase */}
-      <section className="bg-secondary/20 py-16 md:py-24">
+      <section className="bg-neutral-50 py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-24">
             <FeatureShowcase
@@ -376,7 +376,7 @@ const IndexV2 = () => {
           </h2>
           <ComparisonTable />
           <div className="text-center">
-            <Button asChild variant="neon" size="lg">
+            <Button asChild variant="default" size="lg">
               <Link to="/pricing">Start Saving Now →</Link>
             </Button>
           </div>
@@ -384,7 +384,7 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 8: Testimonials */}
-      <section className="bg-secondary/20 py-16 md:py-24">
+      <section className="bg-neutral-50 py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-12">
             <h2 className="text-3xl md:text-5xl font-black text-center">
@@ -423,7 +423,7 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 10: Model Marketplace */}
-      <section className="bg-secondary/20 py-16 md:py-24">
+      <section className="bg-neutral-50 py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-12">
             <div className="text-center space-y-4">
@@ -513,20 +513,20 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 12: Final CTA */}
-      <section className="bg-primary py-16 md:py-24 border-y-4 border-black">
+      <section className="bg-primary-500 py-16 md:py-24 border-y-4 border-black">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center space-y-8">
-            <h2 className="text-3xl md:text-5xl font-black text-primary-foreground">
+            <h2 className="text-3xl md:text-5xl font-black text-neutral-900">
               Ready to Start Creating?
             </h2>
-            <p className="text-xl text-primary-foreground/90 max-w-2xl mx-auto">
+            <p className="text-xl text-neutral-900/90 max-w-2xl mx-auto">
               Join 10,000+ creators making professional content with AI—no expensive
               subscriptions, no technical skills required.
             </p>
-            <Button asChild variant="neon" size="lg" className="text-xl px-12">
-              <Link to="/auth">Start Free - Get 500 Tokens</Link>
+            <Button asChild size="lg" className="text-xl px-12 bg-white hover:bg-neutral-50 text-neutral-900 border-2 border-neutral-900 shadow-xl">
+              <Link to="/auth">START FREE - GET 500 TOKENS</Link>
             </Button>
-            <div className="flex flex-col gap-2 text-primary-foreground/90">
+            <div className="flex flex-col gap-2 text-neutral-900/90">
               <span className="flex items-center justify-center gap-2">
                 <Check className="w-5 h-5" />
                 No credit card required

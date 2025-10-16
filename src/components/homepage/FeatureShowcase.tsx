@@ -41,7 +41,7 @@ export const FeatureShowcase = ({
             </li>
           ))}
         </ul>
-        <Button asChild variant="neon" size="lg">
+        <Button asChild variant="default" size="lg">
           <a href={ctaLink}>{ctaText}</a>
         </Button>
       </div>

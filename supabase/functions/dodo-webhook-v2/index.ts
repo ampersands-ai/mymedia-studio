@@ -70,6 +70,24 @@ serve(async (req) => {
     
     // SECURITY: Verify webhook using Svix library
     try {
+      // Step 1: Validate timestamp freshness (prevent replay attacks)
+      const timestamp = parseInt(svixTimestamp);
+      const now = Math.floor(Date.now() / 1000);
+      const MAX_TIMESTAMP_AGE = 5 * 60; // 5 minutes
+      
+      if (isNaN(timestamp) || Math.abs(now - timestamp) > MAX_TIMESTAMP_AGE) {
+        console.error('❌ Webhook timestamp validation failed:', { 
+          timestamp, 
+          now, 
+          diff: now - timestamp,
+          reason: isNaN(timestamp) ? 'invalid_timestamp' : 'timestamp_expired'
+        });
+        return new Response(
+          JSON.stringify({ error: 'Webhook timestamp expired or invalid' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
       const wh = new Webhook(webhookSecret);
       
       // Prepare normalized headers for Svix verification
@@ -79,11 +97,37 @@ serve(async (req) => {
         "svix-signature": svixSignature,
       };
       
-      // Verify the webhook payload using Svix library
+      // Step 2: Verify the webhook payload using Svix library
       const event = wh.verify(bodyText, headersNormalized) as any;
       console.log(`✅ Security: Valid webhook verified via Svix (${headerSet})`, event.type || event.event_type);
 
+      // Step 3: Check for duplicate webhook using idempotency
+      const eventData = event.data || event;
+      const idempotencyKey = eventData.payment_id || eventData.subscription_id || svixId;
+      
+      const { data: existingEvent } = await supabase
+        .from('webhook_events')
+        .select('id')
+        .eq('idempotency_key', idempotencyKey)
+        .maybeSingle();
+      
+      if (existingEvent) {
+        console.log('⚠️ Duplicate webhook detected, ignoring:', idempotencyKey);
+        return new Response(JSON.stringify({ received: true, duplicate: true }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Step 4: Process the event
       await handleWebhookEvent(supabase, event);
+      
+      // Step 5: Record webhook event for idempotency
+      await supabase.from('webhook_events').insert({
+        idempotency_key: idempotencyKey,
+        event_type: event.type || event.event_type,
+        processed_at: new Date().toISOString()
+      });
 
       return new Response(JSON.stringify({ received: true }), {
         status: 200,

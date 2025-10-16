@@ -1,9 +1,38 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema with strict limits
+const auditLogSchema = z.object({
+  action: z.string()
+    .min(1, 'Action is required')
+    .max(100, 'Action too long')
+    .regex(/^[a-z_]+$/, 'Action must be lowercase with underscores only'),
+  resource_type: z.string()
+    .max(50, 'Resource type too long')
+    .optional(),
+  resource_id: z.string()
+    .uuid('Invalid resource ID format')
+    .optional(),
+  metadata: z.record(z.any())
+    .refine(
+      (data) => {
+        try {
+          const jsonStr = JSON.stringify(data);
+          return jsonStr.length <= 10000; // 10KB limit
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Metadata too large (max 10KB)' }
+    )
+    .optional()
+    .default({})
+});
 
 interface AuditLogRequest {
   action: string;
@@ -48,19 +77,38 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse request body
-    const { action, resource_type, resource_id, metadata }: AuditLogRequest = await req.json();
-
-    if (!action) {
+    // Parse and validate request body
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (parseError) {
       return new Response(
-        JSON.stringify({ error: 'Missing action field' }),
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Validate input using zod schema
+    let validatedData;
+    try {
+      validatedData = auditLogSchema.parse(requestBody);
+    } catch (validationError) {
+      if (validationError instanceof z.ZodError) {
+        console.error('Validation error:', validationError.errors);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Invalid input', 
+            details: validationError.errors.map(e => e.message).join(', ')
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      throw validationError;
+    }
+
     // Get client IP and user agent
-    const ip_address = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-    const user_agent = req.headers.get('user-agent') || 'unknown';
+    const ip_address = (req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown').substring(0, 45);
+    const user_agent = (req.headers.get('user-agent') || 'unknown').substring(0, 255);
 
     // Use service role to bypass RLS for inserting
     const supabaseAdmin = createClient(
@@ -74,25 +122,28 @@ Deno.serve(async (req) => {
       }
     );
 
-    // Insert audit log
+    // Insert audit log with validated data
     const { error: insertError } = await supabaseAdmin
       .from('audit_logs')
       .insert({
         user_id: user.id,
-        action,
-        resource_type,
-        resource_id,
+        action: validatedData.action,
+        resource_type: validatedData.resource_type || null,
+        resource_id: validatedData.resource_id || null,
         ip_address,
         user_agent,
-        metadata: metadata || {},
+        metadata: validatedData.metadata,
       });
 
     if (insertError) {
-      console.error('Error inserting audit log:', insertError);
-      throw insertError;
+      console.error('Database error in audit-log:', insertError.message);
+      return new Response(
+        JSON.stringify({ error: 'Failed to create audit log' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    console.log(`Audit log created: ${action} by user ${user.id}`);
+    console.log(`[AUDIT] ${validatedData.action} by user ${user.id}`);
 
     return new Response(
       JSON.stringify({ success: true }),
@@ -100,9 +151,15 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in audit-log function:', error);
+    // Log full error server-side for debugging
+    console.error('Error in audit-log function:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Return generic error to client (no sensitive details)
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: 'An error occurred while processing your request' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

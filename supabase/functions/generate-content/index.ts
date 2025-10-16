@@ -652,13 +652,22 @@ let validatedParameters = validateAndFilterParameters(
         );
 
       } catch (providerError: any) {
-        console.error('Provider error:', providerError);
+        // Log full error server-side for debugging
+        console.error('Provider error details:', {
+          message: providerError.message,
+          stack: providerError.stack,
+          generation_id: generation.id,
+          user_id: user.id
+        });
 
         // Increment circuit breaker on failure
         CIRCUIT_BREAKER.failures++;
         CIRCUIT_BREAKER.lastFailure = Date.now();
 
         const isTimeout = providerError.message?.includes('timed out');
+
+        // Sanitize error for database storage (remove sensitive details)
+        const sanitizedError = providerError.message?.substring(0, 200) || 'Generation failed';
 
         await supabase
           .from('generations')
@@ -667,8 +676,8 @@ let validatedParameters = validateAndFilterParameters(
             tokens_used: 0,
             provider_request: providerRequest,
             provider_response: { 
-              error: providerError.message,
-              full_error: providerError.toString(),
+              error: sanitizedError,
+              error_type: isTimeout ? 'timeout' : 'provider_error',
               timestamp: new Date().toISOString()
             }
           })

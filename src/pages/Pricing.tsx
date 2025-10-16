@@ -384,16 +384,13 @@ const Pricing = () => {
               key={plan.name}
               className={`relative hover-lift ${plan.popular ? "ring-4 ring-primary" : ""}`}
             >
-              {plan.badge && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 rounded-full text-xs font-black text-black">
-                  {plan.badge}
-                </div>
-              )}
+                {plan.badge && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-4 py-1.5 rounded-full text-sm font-black text-black shadow-lg border-2 border-black">
+                    {plan.badge}
+                  </div>
+                )}
               <CardHeader>
                 <CardTitle className="text-2xl font-black">{plan.name}</CardTitle>
-                <CardDescription className="text-sm">
-                  Global access
-                </CardDescription>
                   <div className="pt-3">
                     {isAnnual && plan.monthlyPrice !== "FREE" ? (
                       <div className="space-y-1">

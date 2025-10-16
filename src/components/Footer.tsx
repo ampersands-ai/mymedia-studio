@@ -15,7 +15,7 @@ export const Footer = () => {
                 alt="artifio.ai logo" 
                 className="h-10 w-10 rounded-xl border-3 border-black brutal-shadow"
               />
-              <span className="text-2xl font-bold text-black" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <span className="text-2xl font-bold text-black">
                 artifio.ai
               </span>
             </Link>
@@ -84,7 +84,7 @@ export const Footer = () => {
         {/* Copyright */}
         <div className="border-t-3 border-black mt-8 pt-8 text-center">
           <p className="text-sm text-foreground/70 font-medium">
-            © {new Date().getFullYear()} artifio.ai. All rights reserved.
+            © {new Date().getFullYear()} <span className="font-bold">artifio.ai</span>. All rights reserved.
           </p>
         </div>
       </div>

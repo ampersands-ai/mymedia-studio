@@ -60,7 +60,7 @@ export const GlobalHeader = () => {
                 className="h-10 w-10 md:h-12 md:w-12 rounded-xl border-3 border-black brutal-shadow"
                 loading="eager"
               />
-              <span className="text-2xl md:text-3xl font-bold text-black" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <span className="text-2xl md:text-3xl font-bold text-black">
                 artifio.ai
               </span>
             </Link>

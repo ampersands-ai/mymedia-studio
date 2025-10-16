@@ -350,7 +350,7 @@ const Auth = () => {
                 className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
                 loading="eager"
               />
-              <span className="text-xl md:text-2xl font-bold text-black" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <span className="text-xl md:text-2xl font-bold text-black">
                 artifio.ai
               </span>
             </Link>

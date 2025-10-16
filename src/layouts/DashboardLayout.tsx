@@ -44,7 +44,7 @@ export const DashboardLayout = () => {
                 alt="artifio.ai logo" 
                 className="h-7 w-7 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
               />
-              <span className="text-xl md:text-2xl font-bold text-black hidden sm:block" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <span className="text-xl md:text-2xl font-bold text-black hidden sm:block">
                 artifio.ai
               </span>
             </Link>

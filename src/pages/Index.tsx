@@ -175,7 +175,7 @@ const Index = () => {
                 className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
                 loading="eager"
               />
-              <span className="text-xl md:text-2xl font-bold text-black" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <span className="text-xl md:text-2xl font-bold text-black">
                 artifio.ai
               </span>
             </Link>
@@ -384,7 +384,7 @@ const Index = () => {
             <div className="text-center mb-8 md:mb-12">
               <h3 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 px-4">COMPARE & SAVE</h3>
               <p className="text-lg md:text-xl text-foreground/80 font-medium px-4">
-                See how much you save with artifio.ai vs leading competitors
+                See how much you save with <span className="font-bold">artifio.ai</span> vs leading competitors
               </p>
             </div>
             
@@ -435,7 +435,7 @@ const Index = () => {
         <section className="container mx-auto px-4 py-12 md:py-20">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8 md:mb-16">
-              <h3 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 px-4">WHY artifio.ai</h3>
+              <h3 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 px-4">WHY <span className="font-bold">artifio.ai</span></h3>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
@@ -520,7 +520,7 @@ const Index = () => {
             <div className="space-y-6 md:space-y-8">
               <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-neutral-900 px-4">STOP OVERPAYING. START CREATING.</h3>
               <p className="text-lg md:text-2xl text-neutral-900/90 font-medium px-4">
-                Join thousands who switched from overpriced AI tools to artifio.ai and saved hundreds per year
+                Join thousands who switched from overpriced AI tools to <span className="font-bold">artifio.ai</span> and saved hundreds per year
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 px-4">
                 <Button

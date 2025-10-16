@@ -136,7 +136,13 @@ export const TokenDisputes = () => {
 
         const { data, error } = await query;
         if (error) throw error;
-        return data as unknown as TokenDispute[];
+        
+        // Transform history data to match TokenDispute interface
+        return (data || []).map(item => ({
+          ...item,
+          generation: item.generation_snapshot,
+          profile: item.profile_snapshot,
+        })) as unknown as TokenDispute[];
       } else {
         // Query active disputes (only pending/reviewed)
         let query = supabase
@@ -564,11 +570,7 @@ export const TokenDisputes = () => {
               </TableHeader>
               <TableBody>
                 {disputes?.map((dispute) => {
-                  const Icon = getContentIcon(
-                    viewMode === 'history' 
-                      ? (dispute as any).generation_snapshot?.type 
-                      : dispute.generation.type
-                  );
+                  const Icon = getContentIcon(dispute.generation.type);
                   return (
                     <TableRow key={dispute.id}>
                       {viewMode === 'active' && (

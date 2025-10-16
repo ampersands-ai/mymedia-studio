@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { trackEvent, identifyUser, resetPostHog } from "@/lib/posthog";
 
 interface AuthContextType {
   user: User | null;
@@ -38,6 +39,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Track signup event
+        if (event === 'SIGNED_IN' && session?.user) {
+          const isNewUser = new Date(session.user.created_at).getTime() > Date.now() - 5000;
+          if (isNewUser) {
+            trackEvent('signup', {
+              user_id: session.user.id,
+              email: session.user.email,
+            });
+          }
+          identifyUser(session.user.id, {
+            email: session.user.email,
+            signup_date: session.user.created_at,
+          });
+        }
+        
+        // Reset PostHog on logout
+        if (event === 'SIGNED_OUT') {
+          resetPostHog();
+        }
+        
         // Avoid turning off loading on INITIAL_SESSION if we're about to exchange the code
         if (event !== "INITIAL_SESSION" || !hasCode) {
           setLoading(false);

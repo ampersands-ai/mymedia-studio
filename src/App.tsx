@@ -8,6 +8,8 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { Analytics } from "./components/Analytics";
 import { App as CapacitorApp } from '@capacitor/app';
 import { setStatusBarStyle, isNativePlatform } from "@/utils/capacitor-utils";
+import { initPostHog } from "@/lib/posthog";
+import { usePostHog } from "@/hooks/usePostHog";
 
 // Lazy load pages for better performance
 const Index = lazy(() => import("./pages/Index"));
@@ -30,6 +32,7 @@ const TemplatesManager = lazy(() => import("./pages/admin/TemplatesManager"));
 const UsersManager = lazy(() => import("./pages/admin/UsersManager"));
 const AllGenerations = lazy(() => import("./pages/admin/AllGenerations"));
 const TokenDisputes = lazy(() => import("./pages/admin/TokenDisputes").then(m => ({ default: m.TokenDisputes })));
+const AnalyticsDashboard = lazy(() => import("./pages/admin/Analytics"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,6 +44,14 @@ const queryClient = new QueryClient({
 });
 
 const AppContent = () => {
+  // Initialize PostHog
+  useEffect(() => {
+    initPostHog();
+  }, []);
+
+  // Use PostHog tracking
+  usePostHog();
+
   // Initialize mobile app features
   useEffect(() => {
     if (!isNativePlatform()) return;
@@ -88,6 +99,7 @@ const AppContent = () => {
             <Route path="users" element={<UsersManager />} />
             <Route path="generations" element={<AllGenerations />} />
             <Route path="disputes" element={<TokenDisputes />} />
+            <Route path="analytics" element={<AnalyticsDashboard />} />
           </Route>
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/privacy" element={<Privacy />} />

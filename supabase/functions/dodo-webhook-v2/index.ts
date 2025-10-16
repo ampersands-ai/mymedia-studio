@@ -216,6 +216,30 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
 
   console.log(`Payment succeeded for user ${userId}, plan ${planName}`);
 
+  // Track payment completed in PostHog
+  try {
+    const POSTHOG_KEY = Deno.env.get("VITE_POSTHOG_KEY");
+    if (POSTHOG_KEY) {
+      await fetch("https://app.posthog.com/capture/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          api_key: POSTHOG_KEY,
+          event: "payment_completed",
+          distinct_id: userId,
+          properties: {
+            plan_name: planName,
+            amount: data.amount,
+            currency: data.currency,
+            billing_period: metadata.billing_period || "monthly",
+          },
+        }),
+      });
+    }
+  } catch (error) {
+    console.error("PostHog tracking failed:", error);
+  }
+
   // Get current tokens
   const { data: currentSub } = await supabase
     .from('user_subscriptions')

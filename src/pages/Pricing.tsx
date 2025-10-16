@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import textLogo from "@/assets/text-logo.png";
+import { trackEvent } from "@/lib/posthog";
 
 const plans = [
   {
@@ -133,6 +134,12 @@ const Pricing = () => {
       return;
     }
 
+    // Track upgrade click
+    trackEvent('upgrade_clicked', {
+      plan_name: planName,
+      billing_period: isAnnual ? 'annual' : 'monthly',
+    });
+
     setIsCreatingPayment(planName);
 
     try {
@@ -160,6 +167,11 @@ const Pricing = () => {
       }
 
       if (data.checkout_url) {
+        // Track payment initiation
+        trackEvent('payment_initiated', {
+          plan_name: planName,
+          billing_period: isAnnual ? 'annual' : 'monthly',
+        });
         window.location.href = data.checkout_url;
       } else {
         throw new Error('No checkout URL returned');

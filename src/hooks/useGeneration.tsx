@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { trackEvent } from "@/lib/posthog";
 
 interface GenerationParams {
   template_id?: string;
@@ -95,6 +96,15 @@ export const useGeneration = () => {
       if (data.generation_id && !data.id) {
         data.id = data.generation_id;
       }
+
+      // Track generation created
+      trackEvent('generation_created', {
+        generation_id: data.id,
+        model_id: params.model_id,
+        template_id: params.template_id,
+        tokens_used: data.tokens_used,
+        content_type: data.content_type,
+      });
 
       setResult(data);
       // Don't show success toast immediately for async generations

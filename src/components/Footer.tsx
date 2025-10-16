@@ -28,6 +28,46 @@ export const Footer = () => {
             <p className="text-sm text-foreground/70 font-medium">
               All-in-one AI content platform for creators
             </p>
+            
+            {/* Social Media Links */}
+            <div className="flex justify-center md:justify-start gap-4 pt-2">
+              <a 
+                href="https://twitter.com/artifio" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-foreground/60 hover:text-primary transition-colors"
+                aria-label="Twitter"
+              >
+                <Twitter size={24} />
+              </a>
+              <a 
+                href="https://linkedin.com/company/artifio" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-foreground/60 hover:text-primary transition-colors"
+                aria-label="LinkedIn"
+              >
+                <Linkedin size={24} />
+              </a>
+              <a 
+                href="https://youtube.com/@artifio" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-foreground/60 hover:text-primary transition-colors"
+                aria-label="YouTube"
+              >
+                <Youtube size={24} />
+              </a>
+              <a 
+                href="https://discord.gg/artifio" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-foreground/60 hover:text-primary transition-colors"
+                aria-label="Discord"
+              >
+                <MessageSquare size={24} />
+              </a>
+            </div>
           </div>
 
           {/* Product */}
@@ -109,48 +149,6 @@ export const Footer = () => {
                 </a>
               </li>
             </ul>
-          </div>
-        </div>
-
-        {/* Social Media Links */}
-        <div className="mt-12 pt-8 border-t-3 border-black">
-          <div className="flex justify-center gap-6">
-            <a 
-              href="https://twitter.com/artifio" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-foreground/60 hover:text-primary transition-colors"
-              aria-label="Twitter"
-            >
-              <Twitter size={24} />
-            </a>
-            <a 
-              href="https://linkedin.com/company/artifio" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-foreground/60 hover:text-primary transition-colors"
-              aria-label="LinkedIn"
-            >
-              <Linkedin size={24} />
-            </a>
-            <a 
-              href="https://youtube.com/@artifio" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-foreground/60 hover:text-primary transition-colors"
-              aria-label="YouTube"
-            >
-              <Youtube size={24} />
-            </a>
-            <a 
-              href="https://discord.gg/artifio" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-foreground/60 hover:text-primary transition-colors"
-              aria-label="Discord"
-            >
-              <MessageSquare size={24} />
-            </a>
           </div>
         </div>
 

@@ -56,7 +56,7 @@ export const GlobalHeader = () => {
               <img 
                 src={logo} 
                 alt="artifio.ai logo" 
-                className="h-12 md:h-16 object-contain"
+                className="h-6 md:h-8 object-contain"
                 loading="eager"
               />
               <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>

@@ -43,7 +43,7 @@ const IndexV2 = () => {
         <div className="container mx-auto px-4 py-4">
           <nav className="flex items-center justify-between gap-4">
             <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <img src={logoImage} alt="artifio.ai logo" className="h-8 md:h-10 object-contain" />
+              <img src={logoImage} alt="artifio.ai logo" className="h-6 md:h-8 object-contain" />
               <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
             </Link>
             <div className="hidden md:flex items-center gap-6">

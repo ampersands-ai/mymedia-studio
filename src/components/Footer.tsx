@@ -18,10 +18,10 @@ export const Footer = () => {
           {/* Brand */}
           <div className="space-y-4 text-center md:text-left">
             <Link to="/" className="flex items-center gap-3 justify-center md:justify-start">
-              <img 
-                src={logo} 
-                alt="artifio.ai logo" 
-                className="h-8 md:h-10 object-contain"
+          <img 
+            src={logo} 
+            alt="artifio.ai logo" 
+            className="h-6 md:h-8 object-contain"
               />
               <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
             </Link>

@@ -38,10 +38,10 @@ export const DashboardLayout = () => {
         <div className="container mx-auto px-4 py-3 md:py-4">
           <div className="flex items-center justify-between gap-2">
             <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
-              <img 
-                src={logo} 
-                alt="artifio.ai logo" 
-                className="h-10 md:h-14 object-contain"
+            <img 
+              src={logo} 
+              alt="artifio.ai  logo" 
+              className="h-6 md:h-8 object-contain"
               />
               <span className="font-black text-lg md:text-xl text-foreground">artifio.ai</span>
             </Link>

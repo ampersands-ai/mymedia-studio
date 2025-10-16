@@ -21,7 +21,7 @@ export const Footer = () => {
               <img 
                 src={logo} 
                 alt="artifio.ai logo" 
-                className="h-12 md:h-16 object-contain"
+                className="h-8 md:h-10 object-contain"
               />
               <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
             </Link>

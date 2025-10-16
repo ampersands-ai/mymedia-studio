@@ -650,6 +650,24 @@ const History = () => {
                     <span>{generation.tokens_used} tokens</span>
                   )}
                 </div>
+
+                {/* Quick actions - Download without opening preview */}
+                {generation.storage_path && generation.status === "completed" && (
+                  <div className="flex gap-1 pt-1 border-t mt-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload(generation.storage_path!, generation.type);
+                      }}
+                      className="flex-1 h-7 text-xs"
+                    >
+                      <Download className="h-3 w-3 mr-1" />
+                      Download
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

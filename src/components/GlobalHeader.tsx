@@ -52,13 +52,14 @@ export const GlobalHeader = () => {
 
           {/* Left Side - Logo + Navigation */}
           <div className="flex items-center gap-3 md:gap-4">
-            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <img 
                 src={logo} 
                 alt="artifio.ai logo" 
                 className="h-12 md:h-16 object-contain"
                 loading="eager"
               />
+              <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
             </Link>
 
             {!isDashboardCreate && !isCustomCreation && !isSettingsPage && (

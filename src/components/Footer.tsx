@@ -14,6 +14,7 @@ export const Footer = () => {
                 alt="artifio.ai logo" 
                 className="h-16 object-contain"
               />
+              <span className="font-black text-2xl text-foreground">artifio.ai</span>
             </Link>
             <p className="text-sm text-foreground/70 font-medium">
               Professional AI content creation at student-friendly prices.

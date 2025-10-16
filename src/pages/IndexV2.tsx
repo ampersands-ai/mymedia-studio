@@ -42,8 +42,9 @@ const IndexV2 = () => {
       <header className="sticky top-0 z-50 bg-background border-b-4 border-black">
         <div className="container mx-auto px-4 py-4">
           <nav className="flex items-center justify-between gap-4">
-            <Link to="/" className="flex items-center">
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <img src={logoImage} alt="artifio.ai logo" className="h-12 md:h-16 object-contain" />
+              <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
             </Link>
             <div className="hidden md:flex items-center gap-6">
               <Link to="/dashboard/create" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">

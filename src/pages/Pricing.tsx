@@ -178,7 +178,7 @@ const Pricing = () => {
       "@context": "https://schema.org",
       "@type": "Product",
       "name": "Artifio.ai AI Content Creation Platform",
-      "description": "Affordable AI-powered content creation with plans from $3.99/mo. Create videos, images, music, and text.",
+      "description": "Affordable AI-powered content creation with plans from $7.99/mo. Create videos, images, music, and text.",
       "brand": {
         "@type": "Brand",
         "name": "Artifio.ai"
@@ -210,7 +210,7 @@ const Pricing = () => {
           "name": "How much cheaper is Artifio.ai compared to Midjourney?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Artifio.ai is 85% cheaper than Midjourney. While Midjourney charges $10-60/mo, Artifio.ai starts at just $3.99/mo with similar features."
+            "text": "Artifio.ai is 85% cheaper than Midjourney. While Midjourney charges $10-60/mo, Artifio.ai starts at just $7.99/mo with similar features."
           }
         },
         {
@@ -218,7 +218,7 @@ const Pricing = () => {
           "name": "What is the cheapest AI video creation plan?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Artifio.ai Explorer plan is the cheapest at $3.99/mo (annual billing) with 4,000 tokens, perfect for APAC and LATAM creators."
+            "text": "Artifio.ai Explorer plan is the cheapest at $7.99/mo (annual billing) with 4,000 tokens, perfect for APAC and LATAM creators."
           }
         },
         {
@@ -264,10 +264,10 @@ const Pricing = () => {
     });
 
     // Update meta tags
-    document.title = "Pricing - Artifio.ai | AI Content Creation from $3.99/mo";
+    document.title = "Pricing - Artifio.ai | AI Content Creation from $7.99/mo";
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Affordable AI content creation plans starting at $3.99/mo. 50-80% cheaper than Midjourney, Runway & Jasper. Free plan available with 500 tokens. Compare and save today.');
+      metaDescription.setAttribute('content', 'Affordable AI content creation plans starting at $7.99/mo. 50-80% cheaper than Midjourney, Runway & Jasper. Free plan available with 500 tokens. Compare and save today.');
     }
 
     return () => {
@@ -498,7 +498,7 @@ const Pricing = () => {
                     <tbody>
                       <tr className="border-b border-border">
                         <td className="py-3 px-4 font-medium">Starting Price</td>
-                        <td className="py-3 px-4 font-black text-primary">$3.99/mo</td>
+                        <td className="py-3 px-4 font-black text-primary">$7.99/mo</td>
                         <td className="py-3 px-4">$10/mo</td>
                         <td className="py-3 px-4">$15/mo</td>
                         <td className="py-3 px-4">$39/mo</td>

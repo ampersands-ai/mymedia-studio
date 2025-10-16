@@ -237,7 +237,7 @@ const Index = () => {
             </h2>
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-foreground/80 max-w-3xl mx-auto font-medium px-4">
               Why pay $50-100/month elsewhere? Create stunning videos, images, music & text for a fraction of the cost—
-              <span className="font-black gradient-text"> starting at just $3.99/mo</span>
+              <span className="font-black gradient-text"> starting at just $7.99/mo</span>
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 pt-4 px-4">
               <Button
@@ -399,7 +399,7 @@ const Index = () => {
                     <p className="text-sm font-bold text-foreground/60">vs Midjourney</p>
                     <p className="text-3xl md:text-4xl font-black text-foreground mt-2">Save 85%</p>
                     <p className="text-sm font-medium mt-2">They charge $10-60/mo</p>
-                    <p className="text-lg font-black gradient-text mt-1">We start at $3.99/mo</p>
+                    <p className="text-lg font-black gradient-text mt-1">We start at $7.99/mo</p>
                   </div>
                 </CardContent>
               </Card>
@@ -410,7 +410,7 @@ const Index = () => {
                     <p className="text-sm font-bold text-foreground/60">vs Runway</p>
                     <p className="text-3xl md:text-4xl font-black text-foreground mt-2">Save 75%</p>
                     <p className="text-sm font-medium mt-2">They charge $15-95/mo</p>
-                    <p className="text-lg font-black gradient-text mt-1">We start at $3.99/mo</p>
+                    <p className="text-lg font-black gradient-text mt-1">We start at $7.99/mo</p>
                   </div>
                 </CardContent>
               </Card>
@@ -421,7 +421,7 @@ const Index = () => {
                     <p className="text-sm font-bold text-foreground/60">vs Jasper.ai</p>
                     <p className="text-3xl md:text-4xl font-black text-primary mt-2">Save 90%</p>
                     <p className="text-sm font-medium mt-2">They charge $39-125/mo</p>
-                    <p className="text-lg font-black gradient-text mt-1">We start at $3.99/mo</p>
+                    <p className="text-lg font-black gradient-text mt-1">We start at $7.99/mo</p>
                   </div>
                 </CardContent>
               </Card>
@@ -449,7 +449,7 @@ const Index = () => {
                 </div>
                 <h4 className="text-2xl md:text-3xl font-black px-4">UNBEATABLE VALUE</h4>
                 <p className="text-foreground/80 font-medium text-base md:text-lg px-4">
-                  Starting at just $3.99/mo—less than a coffee. Get the same power as $50-100/mo tools for a fraction of the price
+                  Starting at just $7.99/mo—less than a coffee. Get the same power as $50-100/mo tools for a fraction of the price
                 </p>
               </article>
 

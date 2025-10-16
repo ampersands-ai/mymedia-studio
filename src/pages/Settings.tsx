@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 
 const Settings = () => {
   const { user } = useAuth();
+  const location = useLocation();
+  const defaultTab = (location.state as any)?.defaultTab || 'profile';
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState({
     full_name: "",
@@ -231,7 +233,7 @@ const Settings = () => {
       <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-4xl font-black gradient-text mb-8">Settings</h1>
         
-        <Tabs defaultValue="profile" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="subscription">Subscription</TabsTrigger>

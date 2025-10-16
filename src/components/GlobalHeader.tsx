@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Settings, Coins, LogOut, Shield } from "lucide-react";
+import { Sparkles, Settings, Coins, LogOut, Shield, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import textLogo from "@/assets/text-logo.png";
 import { MobileMenu } from "@/components/MobileMenu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export const GlobalHeader = () => {
   const navigate = useNavigate();
@@ -27,6 +28,14 @@ export const GlobalHeader = () => {
       toast.error("Error signing out");
       console.error("Sign out error:", error);
     }
+  };
+
+  const getTokenConversions = (balance: number) => {
+    return {
+      videos: Math.floor(balance / 100),
+      images: Math.floor(balance / 25),
+      audio: Math.floor(balance / 50),
+    };
   };
 
   const isDashboardCreate = location.pathname === "/dashboard/create";
@@ -184,10 +193,85 @@ export const GlobalHeader = () => {
             )}
 
             {tokenBalance !== null && (
-              <div className="brutal-card-sm px-4 py-2 bg-primary-500 border-2 border-primary-600 flex items-center gap-2">
-                <Coins className="h-5 w-5 text-neutral-900" />
-                <span className="font-black text-base text-neutral-900">{tokenBalance.toLocaleString()}</span>
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="brutal-card-sm px-4 py-2 bg-primary-500 border-2 border-primary-600 flex items-center gap-2 hover:bg-primary-600 transition-colors cursor-pointer">
+                    <Coins className="h-5 w-5 text-neutral-900" />
+                    <span className="font-black text-base text-neutral-900">
+                      {tokenBalance.toLocaleString()}
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent 
+                  className="w-80 bg-white border-2 border-secondary-600 shadow-lg p-4 animate-in fade-in-0 zoom-in-95 duration-200"
+                  align="end"
+                  sideOffset={8}
+                >
+                  <div className="space-y-4">
+                    {/* Token Balance Header */}
+                    <div className="border-b-2 border-neutral-200 pb-3">
+                      <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+                        Token Balance
+                      </p>
+                      <p className="text-3xl font-black text-neutral-900 mt-1">
+                        {tokenBalance.toLocaleString()}
+                      </p>
+                    </div>
+
+                    {/* Conversion Estimates */}
+                    <div className="space-y-3">
+                      <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+                        Approximate Creations
+                      </p>
+                      <div className="space-y-2">
+                        {(() => {
+                          const conversions = getTokenConversions(tokenBalance);
+                          return (
+                            <>
+                              <div className="flex items-center justify-between py-2 px-3 bg-neutral-50 rounded-lg border border-neutral-200">
+                                <span className="text-sm font-semibold text-neutral-700">
+                                  Videos
+                                </span>
+                                <span className="text-base font-black text-secondary-700">
+                                  ~{conversions.videos}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between py-2 px-3 bg-neutral-50 rounded-lg border border-neutral-200">
+                                <span className="text-sm font-semibold text-neutral-700">
+                                  Images
+                                </span>
+                                <span className="text-base font-black text-secondary-700">
+                                  ~{conversions.images}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between py-2 px-3 bg-neutral-50 rounded-lg border border-neutral-200">
+                                <span className="text-sm font-semibold text-neutral-700">
+                                  Audio
+                                </span>
+                                <span className="text-base font-black text-secondary-700">
+                                  ~{conversions.audio}
+                                </span>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Usage History Link */}
+                    <div className="pt-2 border-t-2 border-neutral-200">
+                      <Link 
+                        to="/dashboard/settings" 
+                        state={{ defaultTab: 'history' }}
+                        className="flex items-center justify-center gap-2 py-2 px-4 bg-secondary-600 hover:bg-secondary-700 text-white font-bold text-sm rounded-lg transition-colors duration-200"
+                      >
+                        <Clock className="h-4 w-4" />
+                        View Usage History
+                      </Link>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             )}
 
             {isAdmin && (

@@ -12,7 +12,6 @@ import { initPostHog } from "@/lib/posthog";
 import { usePostHog } from "@/hooks/usePostHog";
 
 // Lazy load pages for better performance
-const Index = lazy(() => import("./pages/Index"));
 const IndexV2 = lazy(() => import("./pages/IndexV2"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Create = lazy(() => import("./pages/Create"));
@@ -83,8 +82,7 @@ const AppContent = () => {
       }>
         <Analytics />
             <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/home-v2" element={<IndexV2 />} />
+              <Route path="/" element={<IndexV2 />} />
               <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route path="create" element={<Create />} />

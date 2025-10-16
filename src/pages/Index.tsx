@@ -168,20 +168,17 @@ const Index = () => {
         <header className="border-b-4 border-black bg-card">
           <nav className="container mx-auto px-4 py-3 md:py-4" aria-label="Main navigation">
             <div className="flex items-center justify-between">
-              <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity">
-                <img 
-                  src={logo} 
-                  alt="Artifio.ai logo symbol" 
-                  className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
-                  loading="eager"
-                />
-                <img 
-                  src={textLogo} 
-                  alt="Artifio" 
-                  className="h-6 md:h-8"
-                  loading="eager"
-                />
-              </Link>
+            <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity">
+              <img 
+                src={logo} 
+                alt="artifio.ai logo symbol" 
+                className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
+                loading="eager"
+              />
+              <span className="text-xl md:text-2xl font-bold text-black" style={{ fontFamily: 'Inter, sans-serif' }}>
+                artifio.ai
+              </span>
+            </Link>
               <div className="flex items-center gap-2 md:gap-3">
                 <Button variant="ghost" onClick={() => navigate("/pricing")} className="text-sm md:text-base px-2 md:px-4">
                   Pricing
@@ -219,15 +216,15 @@ const Index = () => {
         <section className="container mx-auto px-4 py-12 md:py-20">
           <div className="max-w-5xl mx-auto text-center space-y-6 md:space-y-8">
             <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 mb-2 md:mb-4">
-              <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-neon-yellow border-3 md:border-4 border-black brutal-shadow">
-                <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-black" aria-hidden="true" />
-                <span className="text-xs md:text-sm font-black text-black">POWERED BY ADVANCED AI</span>
+              <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-primary-500 border-3 md:border-4 border-black brutal-shadow">
+                <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-neutral-900" aria-hidden="true" />
+                <span className="text-xs md:text-sm font-black text-neutral-900">POWERED BY ADVANCED AI</span>
               </div>
-              <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-secondary border-3 md:border-4 border-black brutal-shadow">
-                <span className="text-xs md:text-sm font-black text-black">🎯 SAVE 50-80% VS COMPETITORS</span>
+              <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-secondary-500 border-3 md:border-4 border-black brutal-shadow">
+                <span className="text-xs md:text-sm font-black text-white">🎯 SAVE 50-80% VS COMPETITORS</span>
               </div>
-              <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-primary border-3 md:border-4 border-black brutal-shadow">
-                <span className="text-xs md:text-sm font-black text-primary-foreground">💎 ENTERPRISE POWER, FREELANCER PRICES</span>
+              <div className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full bg-primary-500 border-3 md:border-4 border-black brutal-shadow">
+                <span className="text-xs md:text-sm font-black text-neutral-900">💎 ENTERPRISE POWER, FREELANCER PRICES</span>
               </div>
             </div>
             <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight px-4">
@@ -241,15 +238,14 @@ const Index = () => {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 pt-4 px-4">
               <Button
-                variant="neon"
                 size="lg"
                 onClick={() => navigate("/auth")}
-                className="w-full sm:w-auto text-base md:text-xl px-8 md:px-12"
+                className="w-full sm:w-auto text-base md:text-xl px-8 md:px-12 bg-primary-500 hover:bg-primary-600 text-neutral-900 border-2 border-primary-600 shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40"
               >
                 START CREATING FOR FREE
               </Button>
               <Button
-                variant="pink"
+                variant="secondary"
                 size="lg"
                 onClick={() => navigate("/pricing")}
                 className="w-full sm:w-auto text-base md:text-xl px-8 md:px-12"
@@ -258,11 +254,11 @@ const Index = () => {
               </Button>
             </div>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-8 pt-6 md:pt-8">
-              <div className="brutal-card-sm px-6 md:px-8 py-3 md:py-4 bg-neon-blue">
-                <div className="text-2xl md:text-3xl font-black text-black">500</div>
-                <div className="text-xs md:text-sm font-bold text-black">FREE TOKENS</div>
+              <div className="brutal-card-sm px-6 md:px-8 py-3 md:py-4 bg-primary-500 border-2 border-primary-600">
+                <div className="text-2xl md:text-3xl font-black text-neutral-900">500</div>
+                <div className="text-xs md:text-sm font-bold text-neutral-900">FREE TOKENS</div>
               </div>
-              <div className="brutal-card-sm px-6 md:px-8 py-3 md:py-4 bg-neon-pink">
+              <div className="brutal-card-sm px-6 md:px-8 py-3 md:py-4 bg-secondary-500 border-2 border-secondary-600">
                 <div className="text-2xl md:text-3xl font-black text-white">NO CC</div>
                 <div className="text-xs md:text-sm font-bold text-white">REQUIRED</div>
               </div>
@@ -345,7 +341,7 @@ const Index = () => {
                       width="400"
                       height="300"
                     />
-                    <div className="absolute top-2 md:top-3 right-2 md:right-3 bg-neon-yellow px-2 md:px-3 py-1 rounded-full border-2 border-black text-xs font-black text-black">
+                    <div className="absolute top-2 md:top-3 right-2 md:right-3 bg-primary-500 px-2 md:px-3 py-1 rounded-full border-2 border-black text-xs font-black text-neutral-900">
                       {useCase.category}
                     </div>
                   </div>
@@ -388,7 +384,7 @@ const Index = () => {
             <div className="text-center mb-8 md:mb-12">
               <h3 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 px-4">COMPARE & SAVE</h3>
               <p className="text-lg md:text-xl text-foreground/80 font-medium px-4">
-                See how much you save with Artifio.ai vs leading competitors
+                See how much you save with artifio.ai vs leading competitors
               </p>
             </div>
             
@@ -439,7 +435,7 @@ const Index = () => {
         <section className="container mx-auto px-4 py-12 md:py-20">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8 md:mb-16">
-              <h3 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 px-4">WHY ARTIFIO</h3>
+              <h3 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 px-4">WHY artifio.ai</h3>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
@@ -454,8 +450,8 @@ const Index = () => {
               </article>
 
               <article className="text-center space-y-3 md:space-y-4">
-                <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-neon-yellow border-3 md:border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
-                  <Zap className="h-8 w-8 md:h-10 md:w-10 text-black" aria-hidden="true" />
+                <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-primary-500 border-3 md:border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
+                  <Zap className="h-8 w-8 md:h-10 md:w-10 text-neutral-900" aria-hidden="true" />
                 </div>
                 <h4 className="text-2xl md:text-3xl font-black px-4">INSTANT RESULTS</h4>
                 <p className="text-foreground/80 font-medium text-base md:text-lg px-4">
@@ -464,7 +460,7 @@ const Index = () => {
               </article>
               
               <article className="text-center space-y-3 md:space-y-4">
-                <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-neon-blue border-3 md:border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
+                <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-secondary-500 border-3 md:border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
                   <Shield className="h-8 w-8 md:h-10 md:w-10 text-white" aria-hidden="true" />
                 </div>
                 <h4 className="text-2xl md:text-3xl font-black px-4">ENTERPRISE GRADE</h4>
@@ -474,7 +470,7 @@ const Index = () => {
               </article>
               
               <article className="text-center space-y-3 md:space-y-4">
-                <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-neon-pink border-3 md:border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
+                <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-secondary-500 border-3 md:border-4 border-black flex items-center justify-center mx-auto brutal-shadow">
                   <Sparkles className="h-8 w-8 md:h-10 md:w-10 text-white" aria-hidden="true" />
                 </div>
                 <h4 className="text-2xl md:text-3xl font-black px-4">NO EXPERIENCE NEEDED</h4>
@@ -494,21 +490,21 @@ const Index = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="brutal-card bg-neon-yellow/10">
+              <Card className="brutal-card bg-primary-50">
                 <CardContent className="p-6 space-y-4">
-                  <p className="text-lg font-bold">"I cut my content costs by 90% switching to Artifio.ai"</p>
+                  <p className="text-lg font-bold">"I cut my content costs by 90% switching to artifio.ai"</p>
                   <p className="text-sm font-medium text-foreground/60">— Sarah M., Content Creator</p>
                 </CardContent>
               </Card>
               
-              <Card className="brutal-card bg-neon-blue/10">
+              <Card className="brutal-card bg-primary-50">
                 <CardContent className="p-6 space-y-4">
                   <p className="text-lg font-bold">"Same quality as premium tools, 1/10th the price"</p>
                   <p className="text-sm font-medium text-foreground/60">— Mike R., Marketing Agency</p>
                 </CardContent>
               </Card>
               
-              <Card className="brutal-card bg-neon-pink/10">
+              <Card className="brutal-card bg-primary-50">
                 <CardContent className="p-6 space-y-4">
                   <p className="text-lg font-bold">"Why pay $50/month when I get the same power for $7.99?"</p>
                   <p className="text-sm font-medium text-foreground/60">— Jessica L., Freelancer</p>
@@ -520,23 +516,22 @@ const Index = () => {
 
         {/* CTA Section */}
         <section className="container mx-auto px-4 py-12 md:py-20">
-          <Card className="p-8 md:p-16 text-center max-w-5xl mx-auto bg-gradient-primary hover-lift">
+          <Card className="p-8 md:p-16 text-center max-w-5xl mx-auto bg-primary-500 hover-lift border-4 border-black">
             <div className="space-y-6 md:space-y-8">
-              <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white px-4">STOP OVERPAYING. START CREATING.</h3>
-              <p className="text-lg md:text-2xl text-white/90 font-medium px-4">
-                Join thousands who switched from overpriced AI tools to Artifio.ai and saved hundreds per year
+              <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-neutral-900 px-4">STOP OVERPAYING. START CREATING.</h3>
+              <p className="text-lg md:text-2xl text-neutral-900/90 font-medium px-4">
+                Join thousands who switched from overpriced AI tools to artifio.ai and saved hundreds per year
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 px-4">
                 <Button
-                  variant="neon"
                   size="lg"
                   onClick={() => navigate("/auth")}
-                  className="w-full sm:w-auto text-base md:text-xl px-8 md:px-16"
+                  className="w-full sm:w-auto text-base md:text-xl px-8 md:px-16 bg-white hover:bg-neutral-50 text-neutral-900 border-2 border-neutral-900 shadow-xl"
                 >
                   GET 500 FREE TOKENS
                 </Button>
               </div>
-              <p className="text-white/80 font-medium text-sm md:text-base">
+              <p className="text-neutral-900/80 font-medium text-sm md:text-base">
                 No credit card required • No commitments • Start in 30 seconds
               </p>
             </div>

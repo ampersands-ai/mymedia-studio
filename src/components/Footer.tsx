@@ -12,14 +12,12 @@ export const Footer = () => {
             <Link to="/" className="flex items-center gap-3">
               <img 
                 src={logo} 
-                alt="Artifio.ai logo" 
+                alt="artifio.ai logo" 
                 className="h-10 w-10 rounded-xl border-3 border-black brutal-shadow"
               />
-              <img 
-                src={textLogo} 
-                alt="Artifio" 
-                className="h-8"
-              />
+              <span className="text-2xl font-bold text-black" style={{ fontFamily: 'Inter, sans-serif' }}>
+                artifio.ai
+              </span>
             </Link>
             <p className="text-sm text-foreground/70 font-medium">
               Professional AI content creation at student-friendly prices.
@@ -86,7 +84,7 @@ export const Footer = () => {
         {/* Copyright */}
         <div className="border-t-3 border-black mt-8 pt-8 text-center">
           <p className="text-sm text-foreground/70 font-medium">
-            © {new Date().getFullYear()} Artifio.ai. All rights reserved.
+            © {new Date().getFullYear()} artifio.ai. All rights reserved.
           </p>
         </div>
       </div>

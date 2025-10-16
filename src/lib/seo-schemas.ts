@@ -3,7 +3,7 @@ export const generateSchemas = () => {
   const webApplicationSchema = {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "Artifio.ai",
+    "name": "artifio.ai",
     "description": "Professional AI-powered platform for creating videos, images, music, and more. Generate portrait headshots, cinematic videos, product photography instantly.",
     "url": "https://artifio.ai",
     "applicationCategory": "DesignApplication",
@@ -30,23 +30,23 @@ export const generateSchemas = () => {
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "What is Artifio.ai?",
+        "name": "What is artifio.ai?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Artifio.ai is a professional AI-powered platform for creating videos, images, music, and more. It provides access to cutting-edge AI models at a fraction of competitor costs."
+          "text": "artifio.ai is a professional AI-powered platform for creating videos, images, music, and more. It provides access to cutting-edge AI models at a fraction of competitor costs."
         }
       },
       {
         "@type": "Question",
-        "name": "How much does Artifio.ai cost?",
+        "name": "How much does artifio.ai cost?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Artifio.ai offers plans starting at just $7.99/month, which is 50-80% less than competitors. You also get 500 free tokens to start with no credit card required."
+          "text": "artifio.ai offers plans starting at just $7.99/month, which is 50-80% less than competitors. You also get 500 free tokens to start with no credit card required."
         }
       },
       {
         "@type": "Question",
-        "name": "What can I create with Artifio.ai?",
+        "name": "What can I create with artifio.ai?",
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "You can create portrait headshots, cinematic videos, product photography, social media content, audio content including music and voiceovers, text generation, and much more using advanced AI models."
@@ -58,7 +58,7 @@ export const generateSchemas = () => {
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "Artifio.ai",
+    "name": "artifio.ai",
     "url": "https://artifio.ai",
     "logo": "https://artifio.ai/logo.png",
     "sameAs": [],

@@ -346,16 +346,13 @@ const Auth = () => {
             <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity">
               <img 
                 src={logo} 
-                alt="Artifio.ai logo symbol" 
+                alt="artifio.ai logo symbol" 
                 className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
                 loading="eager"
               />
-              <img 
-                src={textLogo} 
-                alt="Artifio" 
-                className="h-6 md:h-8"
-                loading="eager"
-              />
+              <span className="text-xl md:text-2xl font-bold text-black" style={{ fontFamily: 'Inter, sans-serif' }}>
+                artifio.ai
+              </span>
             </Link>
             <div className="flex items-center gap-2 md:gap-3">
               <Button variant="ghost" onClick={() => navigate("/pricing")} className="text-sm md:text-base px-2 md:px-4">

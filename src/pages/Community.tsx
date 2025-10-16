@@ -32,10 +32,10 @@ const Community = () => {
   const [communityEnabled, setCommunityEnabled] = useState(true);
 
   useEffect(() => {
-    document.title = "Community Creations - Artifio.ai | Explore AI Art";
+    document.title = "Community Creations - artifio.ai | Explore AI Art";
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Explore amazing AI-generated content from the Artifio.ai community. Discover inspiring images, videos, and audio created by talented creators.');
+      metaDescription.setAttribute('content', 'Explore amazing AI-generated content from the artifio.ai community. Discover inspiring images, videos, and audio created by talented creators.');
     }
   }, []);
 

@@ -47,16 +47,13 @@ export const GlobalHeader = () => {
             <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity">
               <img 
                 src={logo} 
-                alt="Artifio.ai logo" 
+                alt="artifio.ai logo" 
                 className="h-10 w-10 md:h-12 md:w-12 rounded-xl border-3 border-black brutal-shadow"
                 loading="eager"
               />
-              <img 
-                src={textLogo} 
-                alt="Artifio" 
-                className="h-8 md:h-10"
-                loading="eager"
-              />
+              <span className="text-2xl md:text-3xl font-bold text-black" style={{ fontFamily: 'Inter, sans-serif' }}>
+                artifio.ai
+              </span>
             </Link>
 
             {!isDashboardCreate && !isCustomCreation && !isSettingsPage && (
@@ -187,9 +184,9 @@ export const GlobalHeader = () => {
             )}
 
             {tokenBalance !== null && (
-              <div className="brutal-card-sm px-4 py-2 bg-neon-yellow flex items-center gap-2">
-                <Coins className="h-5 w-5" />
-                <span className="font-black text-base">{tokenBalance.toLocaleString()}</span>
+              <div className="brutal-card-sm px-4 py-2 bg-primary-500 border-2 border-primary-600 flex items-center gap-2">
+                <Coins className="h-5 w-5 text-neutral-900" />
+                <span className="font-black text-base text-neutral-900">{tokenBalance.toLocaleString()}</span>
               </div>
             )}
 
@@ -218,9 +215,9 @@ export const GlobalHeader = () => {
 
           {/* Mobile - Token Balance Only */}
           {tokenBalance !== null && (
-            <div className="md:hidden brutal-card-sm px-3 py-1.5 bg-neon-yellow flex items-center gap-1.5">
-              <Coins className="h-4 w-4" />
-              <span className="font-black text-sm">{tokenBalance.toLocaleString()}</span>
+            <div className="md:hidden brutal-card-sm px-3 py-1.5 bg-primary-500 border-2 border-primary-600 flex items-center gap-1.5">
+              <Coins className="h-4 w-4 text-neutral-900" />
+              <span className="font-black text-sm text-neutral-900">{tokenBalance.toLocaleString()}</span>
             </div>
           )}
         </div>

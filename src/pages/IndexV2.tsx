@@ -44,8 +44,10 @@ const IndexV2 = () => {
         <div className="container mx-auto px-4 py-4">
           <nav className="flex items-center justify-between gap-4">
             <Link to="/" className="flex items-center gap-2">
-              <img src={logoImage} alt="Artifio.ai" className="h-10 w-10" />
-              <img src={textLogo} alt="Artifio.ai" className="h-8 hidden sm:block" />
+              <img src={logoImage} alt="artifio.ai" className="h-10 w-10" />
+              <span className="text-2xl font-bold text-black hidden sm:block" style={{ fontFamily: 'Inter, sans-serif' }}>
+                artifio.ai
+              </span>
             </Link>
             <div className="hidden md:flex items-center gap-6">
               <Link to="/dashboard/create" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">
@@ -150,13 +152,13 @@ const IndexV2 = () => {
           
           <div className="text-center space-y-8 pt-8">
             <h2 className="text-3xl md:text-5xl font-black">
-              Artifio.ai Solves This
+              artifio.ai Solves This
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               One Platform. Every Tool. Affordable Pricing.
             </p>
             <p className="text-lg max-w-2xl mx-auto">
-              Artifio.ai brings all the AI models you need into one place,
+              artifio.ai brings all the AI models you need into one place,
               with templates that work and pricing that makes sense.
             </p>
             <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto text-left">

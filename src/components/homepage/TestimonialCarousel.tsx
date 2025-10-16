@@ -12,25 +12,25 @@ interface Testimonial {
 
 const testimonials: Testimonial[] = [
   {
-    quote: "I was spending $100/month on AI tools I could barely afford. Artifio.ai gives me everything I need for $8. I've created 200+ videos in the last month alone.",
+    quote: "I was spending $100/month on AI tools I could barely afford. artifio.ai gives me everything I need for $8. I've created 200+ videos in the last month alone.",
     author: "Maria Santos",
     handle: "@mariacreates",
     role: "Content Creator, Philippines",
   },
   {
-    quote: "Used to take me 3 hours to create a week's worth of content. Now it takes 30 minutes with Artifio's templates. Game changer for my productivity.",
+    quote: "Used to take me 3 hours to create a week's worth of content. Now it takes 30 minutes with artifio.ai templates. Game changer for my productivity.",
     author: "Jake Martinez",
     handle: "@jakemakes",
     role: "YouTuber, 75K subscribers",
   },
   {
-    quote: "I thought cheap = bad quality. I was wrong. My Instagram engagement is up 40% since using Artifio. My followers can't tell it's AI.",
+    quote: "I thought cheap = bad quality. I was wrong. My Instagram engagement is up 40% since using artifio.ai. My followers can't tell it's AI.",
     author: "Priya Sharma",
     handle: "@priyasocial",
     role: "Social Media Manager, India",
   },
   {
-    quote: "I run a small agency. We need videos, images, and audio. Artifio replaced 5 different subscriptions. Saved us $500/month.",
+    quote: "I run a small agency. We need videos, images, and audio. artifio.ai replaced 5 different subscriptions. Saved us $500/month.",
     author: "Alex Chen",
     handle: "@alexagency",
     role: "Agency Owner, Singapore",

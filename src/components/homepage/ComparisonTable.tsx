@@ -28,10 +28,10 @@ export const ComparisonTable = () => {
         </div>
       </div>
 
-      {/* Artifio */}
+      {/* artifio.ai */}
       <div className="brutalist-card p-8 bg-secondary-50 border-secondary-600 shadow-lg shadow-secondary-600/20">
         <h3 className="text-2xl font-black mb-6 text-neutral-900">
-          Artifio.ai All-in-One
+          artifio.ai All-in-One
         </h3>
         <div className="space-y-4 mb-6 h-[200px] flex flex-col justify-center">
           <div className="text-center space-y-3">

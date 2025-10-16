@@ -44,7 +44,7 @@ const Create = () => {
     const webAppSchema = {
       "@context": "https://schema.org",
       "@type": "WebApplication",
-      "name": "Artifio.ai Create",
+      "name": "artifio.ai Create",
       "applicationCategory": "MultimediaApplication",
       "description": "AI-powered creative studio for generating videos, images, music, and text content.",
       "url": "https://artifio.ai/dashboard/create",
@@ -97,10 +97,10 @@ const Create = () => {
       scriptElements.push(script);
     });
 
-    document.title = "Start Creating - Artifio.ai | AI Content Generator";
+    document.title = "Start Creating - artifio.ai | AI Content Generator";
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Create stunning AI-generated videos, images, music, and text in the Artifio.ai studio. Start creating with 500 free tokens.');
+      metaDescription.setAttribute('content', 'Create stunning AI-generated videos, images, music, and text in the artifio.ai studio. Start creating with 500 free tokens.');
     }
 
     return () => {

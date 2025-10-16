@@ -200,7 +200,7 @@ const CustomCreation = () => {
   }, [maxPromptLength]); // Only depend on maxPromptLength, not prompt
 
   useEffect(() => {
-    document.title = "Custom Creation Studio - Artifio.ai";
+    document.title = "Custom Creation Studio - artifio.ai";
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute('content', 'Create custom AI-generated content with advanced controls and fine-tuning options.');

@@ -41,14 +41,12 @@ export const DashboardLayout = () => {
             <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity flex-shrink-0">
               <img 
                 src={logo} 
-                alt="Artifio.ai logo" 
+                alt="artifio.ai logo" 
                 className="h-7 w-7 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
               />
-              <img 
-                src={textLogo} 
-                alt="Artifio" 
-                className="hidden sm:block h-5 md:h-8"
-              />
+              <span className="text-xl md:text-2xl font-bold text-black hidden sm:block" style={{ fontFamily: 'Inter, sans-serif' }}>
+                artifio.ai
+              </span>
             </Link>
 
             {/* Desktop Navigation */}

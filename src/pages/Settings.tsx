@@ -8,10 +8,12 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, Download, Clock, CheckCircle, XCircle, AlertCircle, Coins, Sparkles } from "lucide-react";
+import { Loader2, Download, Clock, CheckCircle, XCircle, AlertCircle, Coins, Sparkles, TrendingUp, Video, Image as ImageIcon, Music, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { profileUpdateSchema } from "@/lib/validation-schemas";
 import { cn } from "@/lib/utils";
+import { useTokenUsage } from "@/hooks/useTokenUsage";
+import { TokenUsageHistoryModal } from "@/components/TokenUsageHistoryModal";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -32,6 +34,15 @@ const Settings = () => {
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [loadingAuditLogs, setLoadingAuditLogs] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  
+  const { 
+    currentMonth, 
+    isLoadingCurrent, 
+    allTime, 
+    isLoadingAllTime, 
+    refetchAllTime 
+  } = useTokenUsage();
 
   useEffect(() => {
     document.title = "Settings - Artifio.ai";
@@ -234,9 +245,10 @@ const Settings = () => {
         <h1 className="text-4xl font-black gradient-text mb-8">Settings</h1>
         
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="subscription">Subscription</TabsTrigger>
+            <TabsTrigger value="usage">Token Usage</TabsTrigger>
             <TabsTrigger value="history">Generation Logs</TabsTrigger>
           </TabsList>
           
@@ -427,6 +439,144 @@ const Settings = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="usage" className="space-y-4 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Token Usage</CardTitle>
+                <CardDescription>Track your token consumption and creation statistics</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Current Balance */}
+                <div className="text-center p-8 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg border-2 border-primary/30">
+                  <p className="text-sm font-semibold text-primary uppercase tracking-wide mb-2">
+                    Current Token Balance
+                  </p>
+                  <p className="text-6xl font-black text-foreground mb-2">
+                    {subscription?.tokens_remaining?.toLocaleString() || 0}
+                  </p>
+                  <p className="text-sm text-primary flex items-center justify-center gap-1">
+                    <Sparkles className="h-4 w-4" />
+                    Tokens never expire
+                  </p>
+                </div>
+
+                {/* This Month's Statistics */}
+                <div>
+                  <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    This Month's Activity
+                  </h3>
+                  
+                  {isLoadingCurrent ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
+                  ) : currentMonth ? (
+                    <div className="space-y-4">
+                      {/* Summary Stats */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 bg-card rounded-lg border">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                            Total Creations
+                          </p>
+                          <p className="text-3xl font-black text-foreground mt-1">
+                            {currentMonth.totalCreations}
+                          </p>
+                        </div>
+                        <div className="p-4 bg-card rounded-lg border">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                            Tokens Used
+                          </p>
+                          <p className="text-3xl font-black text-foreground mt-1">
+                            {currentMonth.totalTokens.toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Breakdown by Type */}
+                      <div>
+                        <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                          Breakdown by Type
+                        </p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="p-3 bg-card rounded-lg border">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Video className="h-4 w-4 text-primary" />
+                              <span className="text-xs font-semibold">Videos</span>
+                            </div>
+                            <p className="text-xl font-black">{currentMonth.byType.video.count}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {currentMonth.byType.video.tokens} tokens
+                            </p>
+                          </div>
+                          <div className="p-3 bg-card rounded-lg border">
+                            <div className="flex items-center gap-2 mb-2">
+                              <ImageIcon className="h-4 w-4 text-secondary" />
+                              <span className="text-xs font-semibold">Images</span>
+                            </div>
+                            <p className="text-xl font-black">{currentMonth.byType.image.count}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {currentMonth.byType.image.tokens} tokens
+                            </p>
+                          </div>
+                          <div className="p-3 bg-card rounded-lg border">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Music className="h-4 w-4 text-accent" />
+                              <span className="text-xs font-semibold">Audio</span>
+                            </div>
+                            <p className="text-xl font-black">{currentMonth.byType.audio.count}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {currentMonth.byType.audio.tokens} tokens
+                            </p>
+                          </div>
+                          <div className="p-3 bg-card rounded-lg border">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-xs font-semibold">Text</span>
+                            </div>
+                            <p className="text-xl font-black">{currentMonth.byType.text.count}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {currentMonth.byType.text.tokens} tokens
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Most Used Model */}
+                      {currentMonth.mostUsedModel && (
+                        <div className="p-4 bg-accent/10 rounded-lg border border-accent">
+                          <p className="text-xs font-semibold text-accent-foreground uppercase tracking-wide mb-2">
+                            Most Used AI Model
+                          </p>
+                          <p className="text-lg font-bold">{currentMonth.mostUsedModel.model_id}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Used {currentMonth.mostUsedModel.count} time{currentMonth.mostUsedModel.count !== 1 ? 's' : ''} this month
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-center py-8">
+                      No usage data for this month yet. Start creating!
+                    </p>
+                  )}
+                </div>
+
+                {/* View Full History Button */}
+                <Button
+                  onClick={() => {
+                    refetchAllTime();
+                    setShowHistoryModal(true);
+                  }}
+                  className="w-full bg-secondary hover:bg-secondary/90 text-black font-bold"
+                  size="lg"
+                >
+                  View Full History
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
           
           <TabsContent value="history" className="space-y-4 mt-6">
             <Card>
@@ -474,6 +624,15 @@ const Settings = () => {
           </TabsContent>
           
         </Tabs>
+
+        {/* Token Usage History Modal */}
+        <TokenUsageHistoryModal
+          isOpen={showHistoryModal}
+          onClose={() => setShowHistoryModal(false)}
+          allTimeStats={allTime}
+          isLoading={isLoadingAllTime}
+          generations={generations}
+        />
       </div>
     </div>
   );

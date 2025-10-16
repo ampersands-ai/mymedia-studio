@@ -299,12 +299,13 @@ const Pricing = () => {
         <header className="border-b-4 border-black bg-card">
           <nav className="container mx-auto px-4 py-3 md:py-4" aria-label="Main navigation">
             <div className="flex items-center justify-between">
-              <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
+              <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <img 
                   src={logo} 
                   alt="artifio.ai logo" 
                   className="h-12 md:h-16 object-contain"
                 />
+                <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
               </Link>
               <div className="flex items-center gap-2 md:gap-3">
                 <Button variant="ghost" onClick={() => navigate("/pricing")} className="text-sm md:text-base px-2 md:px-4">

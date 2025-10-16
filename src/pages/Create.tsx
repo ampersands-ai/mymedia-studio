@@ -16,6 +16,14 @@ import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
 import { useDraftPersistence } from "@/hooks/useDraftPersistence";
 import { SessionWarning } from "@/components/SessionWarning";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { WelcomeModal } from "@/components/onboarding/WelcomeModal";
+import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
+import { TokenCostPreview } from "@/components/onboarding/TokenCostPreview";
+import { SuccessConfetti } from "@/components/onboarding/SuccessConfetti";
+import { getExamplePrompt } from "@/data/examplePrompts";
+import { useUserTokens } from "@/hooks/useUserTokens";
+import type { ContentTemplate } from "@/hooks/useTemplates";
 
 // Lazy load Carousel for code splitting
 const Carousel = lazy(() => import("@/components/ui/carousel").then(m => ({ default: m.Carousel })));
@@ -38,6 +46,11 @@ const Create = () => {
   const [generationCompleteTime, setGenerationCompleteTime] = useState<number | null>(null);
   const { saveDraft, loadDraft, clearDraft } = useDraftPersistence('create');
   const [draftRestored, setDraftRestored] = useState(false);
+  const { progress, updateProgress, markComplete, dismiss, setFirstGeneration, isLoading: onboardingLoading } = useOnboarding();
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const { data: userTokenData } = useUserTokens();
+  const userTokens = userTokenData?.tokens_remaining || 0;
 
   // Memoize SEO schemas for performance
   const schemas = useMemo(() => {
@@ -149,14 +162,37 @@ const Create = () => {
     return () => clearTimeout(timeoutId);
   }, [prompt, selectedTemplate, saveDraft]);
 
-  const handleTemplateSelect = (template: any) => {
+  // Show welcome modal for new users
+  useEffect(() => {
+    if (progress && !onboardingLoading && progress.isNewUser && !progress.dismissed && !showWelcome) {
+      setShowWelcome(true);
+      updateProgress({ viewedTemplates: true });
+    }
+  }, [progress, onboardingLoading]);
+
+  // Track prompt entry
+  useEffect(() => {
+    if (prompt.trim().length > 10 && progress && !progress.checklist.enteredPrompt) {
+      updateProgress({ enteredPrompt: true });
+    }
+  }, [prompt, progress]);
+
+  const handleTemplateSelect = (template: any, examplePrompt?: string) => {
     setSelectedTemplate(template);
-    setPrompt("");
+    setPrompt(examplePrompt || "");
     setGeneratedOutput(null);
     setPollingGenerationId(null);
     generationStartTimeRef.current = null;
     setGenerationCompleteTime(null);
     setDialogOpen(true);
+    
+    if (progress && !progress.checklist.selectedTemplate) {
+      updateProgress({ selectedTemplate: true });
+    }
+  };
+
+  const handleWelcomeSelectTemplate = (template: ContentTemplate, examplePrompt: string) => {
+    handleTemplateSelect(template, examplePrompt);
   };
 
   // Polling function to check generation status
@@ -181,6 +217,13 @@ const Create = () => {
           setGeneratedOutput(data.storage_path);
           setGenerationCompleteTime(Date.now());
           toast.success('Generation complete!', { id: 'generation-progress' });
+          
+          // Update onboarding progress
+          if (progress && !progress.checklist.completedFirstGeneration) {
+            updateProgress({ completedFirstGeneration: true });
+            setFirstGeneration(generationId);
+            setShowConfetti(true);
+          }
         } else {
           // Generation failed - dismiss loading toast
           toast.dismiss('generation-progress');
@@ -283,6 +326,14 @@ const Create = () => {
         setGeneratedOutput(result.storage_path);
         setGenerationCompleteTime(Date.now());
         toast.success('Generation complete!', { id: 'generation-progress' });
+        
+        // Update onboarding progress for immediate completion
+        if (progress && !progress.checklist.completedFirstGeneration) {
+          updateProgress({ completedFirstGeneration: true });
+          const genId = result?.id || result?.generation_id;
+          if (genId) setFirstGeneration(genId);
+          setShowConfetti(true);
+        }
       }
     } catch (error: any) {
       // Handle SESSION_EXPIRED error specifically
@@ -326,6 +377,11 @@ const Create = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast.success('Download started!');
+      
+      // Update onboarding progress
+      if (progress && !progress.checklist.downloadedResult) {
+        updateProgress({ downloadedResult: true });
+      }
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download file');
@@ -449,6 +505,21 @@ const Create = () => {
                       disabled={isGenerating || !!pollingGenerationId}
                     />
                   </div>
+                  
+                  {/* Token Cost Preview */}
+                  {selectedTemplate?.ai_models?.base_token_cost && (() => {
+                    // Track viewed token cost on render
+                    if (progress && !progress.checklist.viewedTokenCost) {
+                      setTimeout(() => updateProgress({ viewedTokenCost: true }), 1000);
+                    }
+                    return (
+                      <TokenCostPreview
+                        baseCost={selectedTemplate.ai_models.base_token_cost}
+                        totalCost={selectedTemplate.ai_models.base_token_cost}
+                        userTokens={userTokens}
+                      />
+                    );
+                  })()}
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
@@ -538,6 +609,29 @@ const Create = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Onboarding Components */}
+        <WelcomeModal
+          isOpen={showWelcome}
+          onClose={() => {
+            setShowWelcome(false);
+            dismiss();
+          }}
+          onSelectTemplate={handleWelcomeSelectTemplate}
+        />
+
+        {progress && !progress.isComplete && !progress.dismissed && (
+          <OnboardingChecklist
+            progress={progress}
+            onComplete={markComplete}
+            onDismiss={dismiss}
+          />
+        )}
+
+        <SuccessConfetti
+          trigger={showConfetti}
+          onComplete={() => setShowConfetti(false)}
+        />
       </div>
     </div>
   );

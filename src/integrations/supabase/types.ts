@@ -579,6 +579,71 @@ export type Database = {
           },
         ]
       }
+      user_onboarding_progress: {
+        Row: {
+          bonus_awarded: boolean | null
+          completed_at: string | null
+          completed_first_generation: boolean | null
+          created_at: string | null
+          dismissed: boolean | null
+          downloaded_result: boolean | null
+          entered_prompt: boolean | null
+          first_generation_id: string | null
+          id: string
+          is_complete: boolean | null
+          selected_template: boolean | null
+          updated_at: string | null
+          user_id: string
+          viewed_result: boolean | null
+          viewed_templates: boolean | null
+          viewed_token_cost: boolean | null
+        }
+        Insert: {
+          bonus_awarded?: boolean | null
+          completed_at?: string | null
+          completed_first_generation?: boolean | null
+          created_at?: string | null
+          dismissed?: boolean | null
+          downloaded_result?: boolean | null
+          entered_prompt?: boolean | null
+          first_generation_id?: string | null
+          id?: string
+          is_complete?: boolean | null
+          selected_template?: boolean | null
+          updated_at?: string | null
+          user_id: string
+          viewed_result?: boolean | null
+          viewed_templates?: boolean | null
+          viewed_token_cost?: boolean | null
+        }
+        Update: {
+          bonus_awarded?: boolean | null
+          completed_at?: string | null
+          completed_first_generation?: boolean | null
+          created_at?: string | null
+          dismissed?: boolean | null
+          downloaded_result?: boolean | null
+          entered_prompt?: boolean | null
+          first_generation_id?: string | null
+          id?: string
+          is_complete?: boolean | null
+          selected_template?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+          viewed_result?: boolean | null
+          viewed_templates?: boolean | null
+          viewed_token_cost?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_onboarding_progress_first_generation_id_fkey"
+            columns: ["first_generation_id"]
+            isOneToOne: false
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           granted_at: string

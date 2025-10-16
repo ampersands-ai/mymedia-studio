@@ -13,6 +13,9 @@ import { useNativeCamera } from "@/hooks/useNativeCamera";
 import { triggerHaptic } from "@/utils/capacitor-utils";
 import { useDraftPersistence } from "@/hooks/useDraftPersistence";
 import { SessionWarning } from "@/components/SessionWarning";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
+import { SuccessConfetti } from "@/components/onboarding/SuccessConfetti";
 import {
   Carousel,
   CarouselContent,
@@ -112,6 +115,8 @@ const CustomCreation = () => {
   const [generationCompleteTime, setGenerationCompleteTime] = useState<number | null>(null);
   const { saveDraft, loadDraft, clearDraft } = useDraftPersistence('custom_creation');
   const [draftRestored, setDraftRestored] = useState(false);
+  const { progress, updateProgress, markComplete, dismiss, setFirstGeneration } = useOnboarding();
+  const [showConfetti, setShowConfetti] = useState(false);
 
   // Filter models by selected group
   const filteredModels = allModels?.filter(model => {
@@ -304,6 +309,13 @@ const CustomCreation = () => {
             .select('id, storage_path, output_index')
             .eq('parent_generation_id', generationId)
             .order('output_index', { ascending: true });
+
+          // Update onboarding progress for first generation
+          if (progress && !progress.checklist.completedFirstGeneration) {
+            updateProgress({ completedFirstGeneration: true });
+            setFirstGeneration(generationId);
+            setShowConfetti(true);
+          }
 
           // Combine parent + children
           const allOutputs = [
@@ -1550,6 +1562,20 @@ const CustomCreation = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Onboarding Components */}
+      {progress && !progress.isComplete && !progress.dismissed && (
+        <OnboardingChecklist
+          progress={progress}
+          onComplete={markComplete}
+          onDismiss={dismiss}
+        />
+      )}
+
+      <SuccessConfetti
+        trigger={showConfetti}
+        onComplete={() => setShowConfetti(false)}
+      />
     </div>
   );
 };

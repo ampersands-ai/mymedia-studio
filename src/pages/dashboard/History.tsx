@@ -13,6 +13,7 @@ import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 // Component to render image with signed URL
 const ImageWithSignedUrl = ({ generation, className }: { generation: Generation; className?: string }) => {
@@ -245,6 +246,14 @@ const History = () => {
   const [reportReason, setReportReason] = useState("");
   const [reportingGeneration, setReportingGeneration] = useState<Generation | null>(null);
   const queryClient = useQueryClient();
+  const { progress, updateProgress } = useOnboarding();
+
+  // Track viewing result
+  useEffect(() => {
+    if (previewGeneration && progress && !progress.checklist.viewedResult) {
+      updateProgress({ viewedResult: true });
+    }
+  }, [previewGeneration, progress]);
 
   const { data: generations, refetch, isRefetching } = useQuery({
     queryKey: ["generations", user?.id],
@@ -414,6 +423,11 @@ const History = () => {
   const handleDownload = async (storagePath: string, type: string) => {
     // Show instant feedback
     toast.loading('Preparing your download...', { id: 'download-toast' });
+    
+    // Track download in onboarding
+    if (progress && !progress.checklist.downloadedResult) {
+      updateProgress({ downloadedResult: true });
+    }
     
     try {
       // Create signed URL for download

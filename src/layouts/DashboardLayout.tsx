@@ -57,8 +57,10 @@ export const DashboardLayout = () => {
                 <Button
                   variant={isActive("/dashboard/create") ? "default" : "ghost"}
                   className={cn(
-                    "text-base px-6 py-5",
-                    isActive("/dashboard/create") && "bg-neon-blue hover:bg-neon-blue/90 text-black font-bold"
+                    "text-base px-6 py-5 rounded-full",
+                    isActive("/dashboard/create") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                 >
                   <Sparkles className="h-5 w-5 mr-2" />
@@ -69,8 +71,10 @@ export const DashboardLayout = () => {
                 <Button
                   variant={isActive("/dashboard/custom-creation") ? "default" : "ghost"}
                   className={cn(
-                    "text-base px-6 py-5",
-                    isActive("/dashboard/custom-creation") && "bg-neon-green hover:bg-neon-green/90 text-black font-bold border-3 border-black"
+                    "text-base px-6 py-5 rounded-full",
+                    isActive("/dashboard/custom-creation") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                 >
                   <Sparkles className="h-5 w-5 mr-2" />
@@ -81,8 +85,10 @@ export const DashboardLayout = () => {
                 <Button
                   variant={isActive("/dashboard/history") ? "default" : "ghost"}
                   className={cn(
-                    "text-base px-6 py-5",
-                    isActive("/dashboard/history") && "bg-neon-purple hover:bg-neon-purple/90 text-black font-bold"
+                    "text-base px-6 py-5 rounded-full",
+                    isActive("/dashboard/history") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                 >
                   <History className="h-5 w-5 mr-2" />
@@ -93,8 +99,10 @@ export const DashboardLayout = () => {
                 <Button
                   variant={isActive("/dashboard/settings") ? "default" : "ghost"}
                   className={cn(
-                    "text-base px-6 py-5",
-                    isActive("/dashboard/settings") && "bg-foreground text-background"
+                    "text-base px-6 py-5 rounded-full",
+                    isActive("/dashboard/settings") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                 >
                   <Settings className="h-5 w-5 mr-2" />
@@ -104,7 +112,7 @@ export const DashboardLayout = () => {
             </nav>
 
             <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
-              <div className="brutal-card-sm px-2 md:px-4 py-1.5 md:py-2 bg-neon-yellow">
+              <div className="brutal-card-sm px-2 md:px-4 py-1.5 md:py-2 bg-primary-500 text-neutral-900 border-2 border-primary-600">
                 <div className="flex items-center gap-1 md:gap-2">
                   <Coins className="h-3.5 w-3.5 md:h-5 md:w-5" />
                   <span className="font-black text-xs md:text-base whitespace-nowrap">{tokenData?.tokens_remaining || 0}</span>
@@ -132,10 +140,10 @@ export const DashboardLayout = () => {
                       to="/dashboard/custom-creation" 
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors",
+                        "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
                         isActive("/dashboard/custom-creation") 
-                          ? "bg-neon-green text-black" 
-                          : "hover:bg-accent"
+                          ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                          : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                       )}
                     >
                       <Sparkles className="h-5 w-5" />
@@ -145,10 +153,10 @@ export const DashboardLayout = () => {
                       to="/dashboard/create" 
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors",
+                        "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
                         isActive("/dashboard/create") 
-                          ? "bg-neon-blue text-black" 
-                          : "hover:bg-accent"
+                          ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                          : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                       )}
                     >
                       <Sparkles className="h-5 w-5" />
@@ -158,10 +166,10 @@ export const DashboardLayout = () => {
                       to="/dashboard/history" 
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors",
+                        "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
                         isActive("/dashboard/history") 
-                          ? "bg-neon-purple text-black" 
-                          : "hover:bg-accent"
+                          ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                          : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                       )}
                     >
                       <History className="h-5 w-5" />
@@ -170,7 +178,12 @@ export const DashboardLayout = () => {
                     <Link 
                       to="/dashboard/settings" 
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors font-medium"
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                        isActive("/dashboard/settings") 
+                          ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                          : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      )}
                     >
                       <Settings className="h-5 w-5" />
                       <span>Settings</span>

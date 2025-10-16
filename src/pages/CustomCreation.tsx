@@ -824,7 +824,7 @@ const CustomCreation = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-8">
+    <div className="min-h-screen bg-background pb-32 md:pb-8">
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
       <div className="relative z-10 container mx-auto px-4 py-4 md:py-8">
@@ -904,7 +904,7 @@ const CustomCreation = () => {
                         })()}
                       </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="bg-background border-2 border-black z-50 max-w-[calc(100vw-2rem)]">
+                    <SelectContent className="bg-background border-2 border-black z-50 max-w-[calc(100vw-2rem)] max-h-[60vh] overflow-y-auto">
                       {filteredModels.map((model) => {
                         const modelGroups = (model.groups as string[]) || [];
                         const otherGroups = modelGroups.filter(g => g !== selectedGroup);
@@ -1232,6 +1232,40 @@ const CustomCreation = () => {
                   disabled={localGenerating || isGenerating}
                 >
                   Reset
+                </Button>
+              </div>
+              
+              {/* Mobile Sticky Generate Button */}
+              <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t-4 border-black z-40">
+                <Button 
+                  onClick={handleGenerate} 
+                  disabled={
+                    localGenerating || 
+                    isGenerating || 
+                    !!pollingGenerationId ||
+                    !selectedModel || 
+                    (isPromptRequired && !prompt.trim()) || 
+                    (isImageRequired && uploadedImages.length === 0)
+                  }
+                  size="lg"
+                  className="w-full h-14 text-base font-bold bg-primary-500 hover:bg-primary-600 text-neutral-900 border-2 border-primary-600 shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40"
+                  title={pollingGenerationId ? "Generation in progress - please wait for it to complete" : ""}
+                >
+                  {(localGenerating || isGenerating || pollingGenerationId) ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      {pollingGenerationId ? 'Processing...' : 'Generating...'}
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2 w-full">
+                      <Sparkles className="h-5 w-5" />
+                      <span>Generate</span>
+                      <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded">
+                        <Coins className="h-4 w-4" />
+                        <span className="text-sm font-bold">-{estimatedTokens}</span>
+                      </div>
+                    </div>
+                  )}
                 </Button>
               </div>
             </div>

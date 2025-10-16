@@ -69,7 +69,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                 <Coins className="h-5 w-5 text-primary" />
                 <div>
                   <div className="text-xs text-muted-foreground">Token Balance</div>
-                  <div className="text-xl font-black text-primary">{tokenBalance}</div>
+                  <div className="text-xl font-black text-primary">{tokenBalance.toLocaleString()}</div>
                 </div>
               </div>
             </div>

@@ -113,7 +113,7 @@ export const DashboardLayout = () => {
               <div className="brutal-card-sm px-2 md:px-4 py-1.5 md:py-2 bg-primary-500 text-neutral-900 border-2 border-primary-600">
                 <div className="flex items-center gap-1 md:gap-2">
                   <Coins className="h-3.5 w-3.5 md:h-5 md:w-5" />
-                  <span className="font-black text-xs md:text-base whitespace-nowrap">{tokenData?.tokens_remaining || 0}</span>
+                  <span className="font-black text-xs md:text-base whitespace-nowrap">{(tokenData?.tokens_remaining || 0).toLocaleString()}</span>
                 </div>
               </div>
               <Button

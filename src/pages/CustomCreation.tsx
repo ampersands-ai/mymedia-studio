@@ -837,8 +837,8 @@ const CustomCreation = () => {
                 className={cn(
                   "p-3 md:p-4 rounded-xl transition-all duration-200 flex items-center gap-3",
                   selectedGroup === group.id
-                    ? "bg-[#FFEB00] border-[4px] border-black text-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                    : "bg-gray-100 border-[4px] border-gray-300 text-gray-600 hover:bg-gray-200"
+                    ? "bg-primary-500 border-[4px] border-black text-neutral-900 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                    : "bg-neutral-100 border-[4px] border-neutral-300 text-neutral-600 hover:bg-neutral-200 hover:text-secondary-700 hover:border-secondary-300"
                 )}
               >
                 <span className="text-2xl md:text-3xl">{group.icon}</span>
@@ -905,7 +905,7 @@ const CustomCreation = () => {
                             className={cn(
                               "cursor-pointer py-3 px-2 md:px-4 border-2 my-1 mx-1 rounded transition-all !pl-2 md:!pl-3 !pr-2 md:!pr-3 [&>span.absolute.left-2]:hidden",
                               isSelected
-                                ? "bg-red-500 hover:bg-red-600 text-white font-bold border-black"
+                                ? "bg-primary-500 hover:bg-primary-600 text-neutral-900 font-bold border-black"
                                 : "hover:bg-muted border-border"
                             )}
                           >
@@ -985,8 +985,8 @@ const CustomCreation = () => {
                         className={cn(
                           "h-8 transition-all font-bold border-2 border-black",
                           enhancePrompt 
-                            ? "bg-green-500 text-white hover:bg-green-600" 
-                            : "bg-white text-black hover:bg-gray-100"
+                            ? "bg-primary-500 text-neutral-900 hover:bg-primary-600" 
+                            : "bg-white text-neutral-700 hover:bg-neutral-100"
                         )}
                       >
                         {enhancePrompt ? "✓ " : ""}Enhance
@@ -1186,7 +1186,7 @@ const CustomCreation = () => {
                      (isImageRequired && uploadedImages.length === 0)
                    }
                    size="lg"
-                   className="w-full h-12 md:h-11 text-base font-bold bg-[#FFFF00] hover:bg-[#FFEB00] text-black border-2 border-black shadow-lg"
+                   className="w-full h-12 md:h-11 text-base font-bold bg-primary-500 hover:bg-primary-600 text-neutral-900 border-2 border-primary-600 shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40"
                    title={pollingGenerationId ? "Generation in progress - please wait for it to complete" : ""}
                  >
                    {(localGenerating || isGenerating || pollingGenerationId) ? (

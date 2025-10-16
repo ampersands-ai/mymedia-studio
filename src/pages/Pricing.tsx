@@ -8,7 +8,6 @@ import { Footer } from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
-import textLogo from "@/assets/text-logo.png";
 import { trackEvent } from "@/lib/posthog";
 
 const plans = [
@@ -300,16 +299,11 @@ const Pricing = () => {
         <header className="border-b-4 border-black bg-card">
           <nav className="container mx-auto px-4 py-3 md:py-4" aria-label="Main navigation">
             <div className="flex items-center justify-between">
-              <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity">
+              <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
                 <img 
                   src={logo} 
-                  alt="Artifio.ai logo symbol" 
-                  className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
-                />
-                <img 
-                  src={textLogo} 
-                  alt="Artifio" 
-                  className="h-6 md:h-8"
+                  alt="artifio.ai logo" 
+                  className="h-12 md:h-16 object-contain"
                 />
               </Link>
               <div className="flex items-center gap-2 md:gap-3">

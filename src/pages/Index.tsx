@@ -15,7 +15,6 @@ import creativeDesign from "@/assets/creative-design.jpg";
 import audioProcessing from "@/assets/audio-processing.jpg";
 import textGeneration from "@/assets/text-generation.jpg";
 import logo from "@/assets/logo.png";
-import textLogo from "@/assets/text-logo.png";
 import recraftLogo from "@/assets/partners/recraft.png";
 import lumaLogo from "@/assets/partners/luma.jpg";
 import klingLogo from "@/assets/partners/kling.png";
@@ -168,16 +167,13 @@ const Index = () => {
         <header className="border-b-4 border-black bg-card">
           <nav className="container mx-auto px-4 py-3 md:py-4" aria-label="Main navigation">
             <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity">
+            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
               <img 
                 src={logo} 
-                alt="artifio.ai logo symbol" 
-                className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
+                alt="artifio.ai logo" 
+                className="h-12 md:h-16 object-contain"
                 loading="eager"
               />
-              <span className="text-xl md:text-2xl font-bold text-black">
-                artifio.ai
-              </span>
             </Link>
               <div className="flex items-center gap-2 md:gap-3">
                 <Button variant="ghost" onClick={() => navigate("/pricing")} className="text-sm md:text-base px-2 md:px-4">

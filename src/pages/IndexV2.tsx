@@ -14,7 +14,6 @@ import { Check, Frown, Clock, HelpCircle, DollarSign, Palette, Edit, Download, V
 
 // Import assets
 import logoImage from "@/assets/logo.png";
-import textLogo from "@/assets/text-logo.png";
 import midjourney from "@/assets/partners/midjourney-alt.webp";
 import openai from "@/assets/partners/openai.png";
 import claude from "@/assets/partners/claude.svg";
@@ -43,11 +42,8 @@ const IndexV2 = () => {
       <header className="sticky top-0 z-50 bg-background border-b-4 border-black">
         <div className="container mx-auto px-4 py-4">
           <nav className="flex items-center justify-between gap-4">
-            <Link to="/" className="flex items-center gap-2">
-              <img src={logoImage} alt="artifio.ai" className="h-10 w-10" />
-              <span className="text-2xl font-bold text-black hidden sm:block">
-                artifio.ai
-              </span>
+            <Link to="/" className="flex items-center">
+              <img src={logoImage} alt="artifio.ai logo" className="h-12 md:h-16 object-contain" />
             </Link>
             <div className="hidden md:flex items-center gap-6">
               <Link to="/dashboard/create" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">

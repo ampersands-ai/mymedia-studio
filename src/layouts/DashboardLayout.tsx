@@ -9,7 +9,6 @@ import { useUserTokens } from "@/hooks/useUserTokens";
 import { Footer } from "@/components/Footer";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
-import textLogo from "@/assets/text-logo.png";
 
 export const DashboardLayout = () => {
   const navigate = useNavigate();
@@ -38,15 +37,12 @@ export const DashboardLayout = () => {
       <header className="border-b-4 border-black bg-card sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 md:py-4">
           <div className="flex items-center justify-between gap-2">
-            <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity flex-shrink-0">
+            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0">
               <img 
                 src={logo} 
                 alt="artifio.ai logo" 
-                className="h-7 w-7 md:h-10 md:w-10 rounded-xl border-3 border-black brutal-shadow"
+                className="h-10 md:h-14 object-contain"
               />
-              <span className="text-xl md:text-2xl font-bold text-black hidden sm:block">
-                artifio.ai
-              </span>
             </Link>
 
             {/* Desktop Navigation */}

@@ -7,7 +7,6 @@ import { useAdminRole } from "@/hooks/useAdminRole";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
-import textLogo from "@/assets/text-logo.png";
 import { MobileMenu } from "@/components/MobileMenu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -53,16 +52,13 @@ export const GlobalHeader = () => {
 
           {/* Left Side - Logo + Navigation */}
           <div className="flex items-center gap-3 md:gap-4">
-            <Link to="/" className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity">
+            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
               <img 
                 src={logo} 
                 alt="artifio.ai logo" 
-                className="h-10 w-10 md:h-12 md:w-12 rounded-xl border-3 border-black brutal-shadow"
+                className="h-12 md:h-16 object-contain"
                 loading="eager"
               />
-              <span className="text-2xl md:text-3xl font-bold text-black">
-                artifio.ai
-              </span>
             </Link>
 
             {!isDashboardCreate && !isCustomCreation && !isSettingsPage && (

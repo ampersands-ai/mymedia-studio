@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
-import textLogo from "@/assets/text-logo.png";
 
 export const Footer = () => {
   return (
@@ -13,11 +12,8 @@ export const Footer = () => {
               <img 
                 src={logo} 
                 alt="artifio.ai logo" 
-                className="h-10 w-10 rounded-xl border-3 border-black brutal-shadow"
+                className="h-16 object-contain"
               />
-              <span className="text-2xl font-bold text-black">
-                artifio.ai
-              </span>
             </Link>
             <p className="text-sm text-foreground/70 font-medium">
               Professional AI content creation at student-friendly prices.

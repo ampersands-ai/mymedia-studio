@@ -28,10 +28,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.stream-content]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-random-prompt]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-caption]
 verify_jwt = true

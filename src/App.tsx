@@ -11,6 +11,7 @@ import { setStatusBarStyle, isNativePlatform } from "@/utils/capacitor-utils";
 
 // Lazy load pages for better performance
 const Index = lazy(() => import("./pages/Index"));
+const IndexV2 = lazy(() => import("./pages/IndexV2"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Create = lazy(() => import("./pages/Create"));
 const CustomCreation = lazy(() => import("./pages/CustomCreation"));
@@ -70,9 +71,10 @@ const AppContent = () => {
         </div>
       }>
         <Analytics />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/home-v2" element={<IndexV2 />} />
+              <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route path="create" element={<Create />} />
             <Route path="custom-creation" element={<CustomCreation />} />

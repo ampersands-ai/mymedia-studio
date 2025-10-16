@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2, Clock, Info, Camera } from "lucide-react";
 import { useNativeCamera } from "@/hooks/useNativeCamera";
 import { triggerHaptic } from "@/utils/capacitor-utils";
-import { useDraftPersistence } from "@/hooks/useDraftPersistence";
+
 import { SessionWarning } from "@/components/SessionWarning";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
@@ -113,8 +113,6 @@ const CustomCreation = () => {
   const [showLightbox, setShowLightbox] = useState(false);
   const generationStartTimeRef = useRef<number | null>(null);
   const [generationCompleteTime, setGenerationCompleteTime] = useState<number | null>(null);
-  const { saveDraft, loadDraft, clearDraft } = useDraftPersistence('custom_creation');
-  const [draftRestored, setDraftRestored] = useState(false);
   const { progress, updateProgress, markComplete, dismiss, setFirstGeneration } = useOnboarding();
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -212,54 +210,8 @@ const CustomCreation = () => {
     }
   }, []);
 
-  // Restore draft on mount
-  useEffect(() => {
-    if (draftRestored) return;
-    
-    const draft = loadDraft();
-    if (draft?.additionalData) {
-      setPrompt(draft.prompt);
-      setSelectedGroup(draft.additionalData.selectedGroup || "prompt_to_image");
-      setContentType(draft.additionalData.contentType || "image");
-      setSelectedModel(draft.additionalData.selectedModel);
-      setResolution(draft.additionalData.resolution || "Native");
-      setEnhancePrompt(draft.additionalData.enhancePrompt || false);
-      setModelParameters(draft.additionalData.modelParameters || {});
-      
-      if (draft.additionalData.uploadedImageCount > 0) {
-        toast.info("Draft restored", {
-          description: `Your prompt was saved, but please re-upload your ${draft.additionalData.uploadedImageCount} image(s)`,
-          duration: 6000
-        });
-      } else {
-        toast.info("Draft restored");
-      }
-      
-      setDraftRestored(true);
-    }
-  }, [loadDraft, draftRestored]);
 
   // Auto-save on state changes
-  useEffect(() => {
-    if (!prompt.trim() && uploadedImages.length === 0) return;
-    
-    const timeoutId = setTimeout(() => {
-      saveDraft({
-        prompt,
-        additionalData: {
-          selectedGroup,
-          contentType,
-          selectedModel,
-          resolution,
-          enhancePrompt,
-          modelParameters,
-          uploadedImageCount: uploadedImages.length,
-        }
-      });
-    }, 1000);
-
-    return () => clearTimeout(timeoutId);
-  }, [prompt, selectedGroup, contentType, selectedModel, resolution, enhancePrompt, modelParameters, uploadedImages, saveDraft]);
 
 
   // Polling function to check generation status
@@ -688,8 +640,6 @@ const CustomCreation = () => {
         enhance_prompt: enhancePrompt,
       });
 
-      // Clear draft on successful generation
-      clearDraft();
 
       // Start polling using normalized ID
       const genId = result?.id || result?.generation_id;

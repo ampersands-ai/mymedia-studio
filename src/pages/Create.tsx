@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatEstimatedTime } from "@/lib/time-utils";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
-import { useDraftPersistence } from "@/hooks/useDraftPersistence";
+
 import { SessionWarning } from "@/components/SessionWarning";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { WelcomeModal } from "@/components/onboarding/WelcomeModal";
@@ -44,8 +44,6 @@ const Create = () => {
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const generationStartTimeRef = useRef<number | null>(null);
   const [generationCompleteTime, setGenerationCompleteTime] = useState<number | null>(null);
-  const { saveDraft, loadDraft, clearDraft } = useDraftPersistence('create');
-  const [draftRestored, setDraftRestored] = useState(false);
   const { progress, updateProgress, markComplete, dismiss, setFirstGeneration, isLoading: onboardingLoading } = useOnboarding();
   const [showWelcome, setShowWelcome] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -125,42 +123,7 @@ const Create = () => {
     };
   }, []);
 
-  // Restore draft on mount
-  useEffect(() => {
-    if (draftRestored) return;
-    
-    const draft = loadDraft();
-    if (draft) {
-      setPrompt(draft.prompt);
-      if (draft.additionalData?.templateId && templates) {
-        const template = templates.find(t => t.id === draft.additionalData.templateId);
-        if (template) {
-          setSelectedTemplate(template);
-          setDialogOpen(true);
-        }
-      }
-      setDraftRestored(true);
-      toast.info("Draft restored", {
-        description: "Your previous work has been restored"
-      });
-    }
-  }, [templates, draftRestored, loadDraft]);
 
-  // Auto-save on prompt change
-  useEffect(() => {
-    if (!prompt.trim()) return;
-    
-    const timeoutId = setTimeout(() => {
-      saveDraft({
-        prompt,
-        additionalData: {
-          templateId: selectedTemplate?.id
-        }
-      });
-    }, 1000); // Debounce 1 second
-
-    return () => clearTimeout(timeoutId);
-  }, [prompt, selectedTemplate, saveDraft]);
 
   // Show welcome modal for new users
   useEffect(() => {
@@ -312,8 +275,6 @@ const Create = () => {
         custom_parameters: Object.keys(customParameters).length > 0 ? customParameters : undefined,
       });
       
-      // Clear draft on successful generation
-      clearDraft();
       
       // Start polling using normalized ID
       const genId = result?.id || result?.generation_id;

@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ImageIcon, X, Upload, Coins, LogOut, Sparkles, Download, History, Play } from "lucide-react";
-import { useDraftPersistence } from "@/hooks/useDraftPersistence";
+
 import { SessionWarning } from "@/components/SessionWarning";
 
 const Playground = () => {
@@ -28,8 +28,6 @@ const Playground = () => {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [estimatedTokens, setEstimatedTokens] = useState(50);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { saveDraft, loadDraft, clearDraft } = useDraftPersistence('playground');
-  const [draftRestored, setDraftRestored] = useState(false);
 
   useEffect(() => {
     if (!loading && !session) {
@@ -195,52 +193,7 @@ const Playground = () => {
     setEstimatedTokens(calculateTokens());
   }, [contentType, resolution, uploadedImages, applyBrand]);
 
-  // Restore draft on mount
-  useEffect(() => {
-    if (draftRestored) return;
-    
-    const draft = loadDraft();
-    if (draft?.additionalData) {
-      setPrompt(draft.prompt);
-      setContentType(draft.additionalData.contentType || "image");
-      setOutputFormat(draft.additionalData.outputFormat || "PNG");
-      setResolution(draft.additionalData.resolution || "Native");
-      setTheme(draft.additionalData.theme || "realistic");
-      setApplyBrand(draft.additionalData.applyBrand || false);
-      
-      if (draft.additionalData.uploadedImageCount > 0) {
-        toast.info("Draft restored", {
-          description: `Your prompt was saved, but please re-upload your ${draft.additionalData.uploadedImageCount} image(s)`,
-          duration: 6000
-        });
-      } else {
-        toast.info("Draft restored");
-      }
-      
-      setDraftRestored(true);
-    }
-  }, [loadDraft, draftRestored]);
 
-  // Auto-save on state changes
-  useEffect(() => {
-    if (!prompt.trim() && uploadedImages.length === 0) return;
-    
-    const timeoutId = setTimeout(() => {
-      saveDraft({
-        prompt,
-        additionalData: {
-          contentType,
-          outputFormat,
-          resolution,
-          theme,
-          applyBrand,
-          uploadedImageCount: uploadedImages.length,
-        }
-      });
-    }, 1000);
-
-    return () => clearTimeout(timeoutId);
-  }, [prompt, contentType, outputFormat, resolution, theme, applyBrand, uploadedImages, saveDraft]);
 
   const handleReset = () => {
     setPrompt("");
@@ -250,7 +203,7 @@ const Playground = () => {
     setResolution("Native");
     setTheme("realistic");
     setApplyBrand(false);
-    clearDraft();
+    
   };
 
   if (loading) {

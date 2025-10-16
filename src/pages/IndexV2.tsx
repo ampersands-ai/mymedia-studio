@@ -10,7 +10,7 @@ import { FAQAccordion } from "@/components/homepage/FAQAccordion";
 import { ComparisonTable } from "@/components/homepage/ComparisonTable";
 import { useTemplates } from "@/hooks/useTemplates";
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Frown, Clock, HelpCircle, DollarSign, Palette, Edit, Download, Video, Image, Music, FileText } from "lucide-react";
 
 // Import assets
 import logoImage from "@/assets/logo.png";
@@ -131,19 +131,19 @@ const IndexV2 = () => {
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <ProblemCard
-              emoji="😫"
+              icon={<Frown className="w-16 h-16" />}
               text="I'm paying $100+/month across 5 different AI subscriptions"
             />
             <ProblemCard
-              emoji="⏰"
+              icon={<Clock className="w-16 h-16" />}
               text="I spend 2 hours switching between tools just to create one piece of content"
             />
             <ProblemCard
-              emoji="🤔"
+              icon={<HelpCircle className="w-16 h-16" />}
               text="I don't know which AI model to use for what—it's overwhelming"
             />
             <ProblemCard
-              emoji="💸"
+              icon={<DollarSign className="w-16 h-16" />}
               text="Premium tools are too expensive for my creator budget"
             />
           </div>
@@ -255,25 +255,25 @@ const IndexV2 = () => {
             {[
               {
                 step: "1",
-                icon: "🎨",
+                icon: <Palette className="w-16 h-16" />,
                 title: "Pick a Template",
                 desc: "Browse 200+ templates for every platform (Or start from scratch in Custom Mode)",
               },
               {
                 step: "2",
-                icon: "✍️",
+                icon: <Edit className="w-16 h-16" />,
                 title: "Describe What You Want",
                 desc: "Enter your prompt or upload an image. Our AI does the rest",
               },
               {
                 step: "3",
-                icon: "⬇️",
+                icon: <Download className="w-16 h-16" />,
                 title: "Download & Share",
                 desc: "Get your creation in seconds. Use it anywhere you want",
               },
             ].map((item) => (
               <div key={item.step} className="text-center space-y-4">
-                <div className="text-6xl">{item.icon}</div>
+                <div className="flex justify-center text-secondary-600">{item.icon}</div>
                 <div className="text-5xl font-black text-primary">{item.step}</div>
                 <h3 className="text-2xl font-black">{item.title}</h3>
                 <p className="text-muted-foreground">{item.desc}</p>
@@ -437,7 +437,10 @@ const IndexV2 = () => {
 
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-4">
-                <h3 className="text-2xl font-black">🎬 VIDEO GENERATION</h3>
+                <h3 className="text-2xl font-black flex items-center gap-2">
+                  <Video className="w-6 h-6 text-secondary-600" />
+                  VIDEO GENERATION
+                </h3>
                 <div className="flex flex-wrap gap-4">
                   {[runway, pika].map((logo, i) => (
                     <img
@@ -451,7 +454,10 @@ const IndexV2 = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-2xl font-black">🎨 IMAGE GENERATION</h3>
+                <h3 className="text-2xl font-black flex items-center gap-2">
+                  <Image className="w-6 h-6 text-secondary-600" />
+                  IMAGE GENERATION
+                </h3>
                 <div className="flex flex-wrap gap-4">
                   {[midjourney, openai].map((logo, i) => (
                     <img
@@ -465,7 +471,10 @@ const IndexV2 = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-2xl font-black">🎵 AUDIO GENERATION</h3>
+                <h3 className="text-2xl font-black flex items-center gap-2">
+                  <Music className="w-6 h-6 text-secondary-600" />
+                  AUDIO GENERATION
+                </h3>
                 <div className="flex flex-wrap gap-4">
                   {[elevenlabs, suno].map((logo, i) => (
                     <img
@@ -479,7 +488,10 @@ const IndexV2 = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-2xl font-black">✍️ TEXT GENERATION</h3>
+                <h3 className="text-2xl font-black flex items-center gap-2">
+                  <FileText className="w-6 h-6 text-secondary-600" />
+                  TEXT GENERATION
+                </h3>
                 <div className="flex flex-wrap gap-4">
                   {[openai, claude, gemini].map((logo, i) => (
                     <img

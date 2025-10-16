@@ -1,12 +1,12 @@
 interface ProblemCardProps {
-  emoji: string;
+  icon: React.ReactNode;
   text: string;
 }
 
-export const ProblemCard = ({ emoji, text }: ProblemCardProps) => {
+export const ProblemCard = ({ icon, text }: ProblemCardProps) => {
   return (
     <div className="brutalist-card p-6 hover-lift hover:border-secondary-600 transition-colors">
-      <div className="text-4xl mb-4">{emoji}</div>
+      <div className="mb-4 text-secondary-600">{icon}</div>
       <p className="text-base md:text-lg font-medium text-neutral-700">{text}</p>
     </div>
   );

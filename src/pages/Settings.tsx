@@ -476,7 +476,7 @@ const Settings = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-semibold text-muted-foreground">Tokens Remaining</p>
-                            <p className="text-3xl font-black text-foreground">{subscription.tokens_remaining}</p>
+                            <p className="text-3xl font-black text-foreground">{subscription.tokens_remaining.toLocaleString()}</p>
                           </div>
                           <Coins className="h-8 w-8 text-primary" />
                         </div>
@@ -485,7 +485,7 @@ const Settings = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-semibold text-muted-foreground">Total Tokens</p>
-                            <p className="text-3xl font-black text-foreground">{subscription.tokens_total}</p>
+                            <p className="text-3xl font-black text-foreground">{subscription.tokens_total.toLocaleString()}</p>
                           </div>
                           <Sparkles className="h-8 w-8 text-secondary" />
                         </div>

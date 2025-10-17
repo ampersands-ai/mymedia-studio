@@ -55,7 +55,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[280px] sm:w-[320px] flex flex-col p-0 pb-safe">
+      <SheetContent side="right" className="w-[280px] sm:w-[320px] flex flex-col p-0 pb-safe">
         <SheetHeader className="px-6 pt-6 pb-4 border-b">
           <SheetTitle className="text-left font-black text-xl">Menu</SheetTitle>
         </SheetHeader>

@@ -286,6 +286,11 @@ const CustomCreation = () => {
             setShowConfetti(true);
           }
 
+          // Track onboarding: viewedResult
+          if (progress && !progress.checklist.viewedResult) {
+            updateProgress({ viewedResult: true });
+          }
+
           // Combine parent + children
           const allOutputs = [
             {
@@ -424,6 +429,27 @@ const CustomCreation = () => {
   useEffect(() => {
     setSelectedModel(null);
   }, [selectedGroup]);
+
+  // Track onboarding: selectedTemplate
+  useEffect(() => {
+    if (selectedModel && progress && !progress.checklist.selectedTemplate) {
+      updateProgress({ selectedTemplate: true });
+    }
+  }, [selectedModel, progress, updateProgress]);
+
+  // Track onboarding: enteredPrompt
+  useEffect(() => {
+    if (prompt.length > 10 && progress && !progress.checklist.enteredPrompt) {
+      updateProgress({ enteredPrompt: true });
+    }
+  }, [prompt, progress, updateProgress]);
+
+  // Track onboarding: viewedTokenCost
+  useEffect(() => {
+    if (estimatedTokens > 0 && progress && !progress.checklist.viewedTokenCost) {
+      updateProgress({ viewedTokenCost: true });
+    }
+  }, [estimatedTokens, progress, updateProgress]);
 
   // Auto-select first model when filtered models change
   useEffect(() => {
@@ -1288,7 +1314,12 @@ const CustomCreation = () => {
                             onDownloadAll={async () => {
                               await downloadMultipleOutputs(
                                 generatedOutputs,
-                                selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type || "image"
+                                selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type || "image",
+                                () => {
+                                  if (progress && !progress.checklist.downloadedResult) {
+                                    updateProgress({ downloadedResult: true });
+                                  }
+                                }
                               );
                             }}
                           />
@@ -1315,7 +1346,12 @@ const CustomCreation = () => {
                                 onClick={async () => {
                                   await downloadMultipleOutputs(
                                     generatedOutputs,
-                                    selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type || "image"
+                                    selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type || "image",
+                                    () => {
+                                      if (progress && !progress.checklist.downloadedResult) {
+                                        updateProgress({ downloadedResult: true });
+                                      }
+                                    }
                                   );
                                 }}
                                 className="w-full bg-primary-500 hover:bg-primary-600 text-neutral-900 font-bold border border-primary-600 shadow-sm hover:shadow-md transition-all"

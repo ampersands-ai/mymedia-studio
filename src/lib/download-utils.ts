@@ -4,7 +4,8 @@ import { toast } from 'sonner';
 
 export async function downloadMultipleOutputs(
   outputs: Array<{ id: string; storage_path: string; output_index: number }>,
-  contentType: string
+  contentType: string,
+  onDownloadSuccess?: () => void
 ) {
   // Single output - direct download
   if (outputs.length === 1) {
@@ -26,6 +27,7 @@ export async function downloadMultipleOutputs(
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
         toast.success('Download started!');
+        onDownloadSuccess?.();
       }
     } catch (error) {
       console.error('Download error:', error);
@@ -78,6 +80,7 @@ export async function downloadMultipleOutputs(
     document.body.removeChild(a);
     
     toast.success(`Successfully downloaded ${outputs.length} outputs!`, { id: toastId });
+    onDownloadSuccess?.();
   } catch (error) {
     console.error('Batch download error:', error);
     toast.error('Failed to download files. Try downloading individually from History.');

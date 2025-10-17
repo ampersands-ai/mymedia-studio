@@ -9,7 +9,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Menu, Home, Wand2, Settings, LogOut, Coins, Shield } from "lucide-react";
+import { 
+  Menu, Home, Wand2, Settings, LogOut, Coins, Shield,
+  Sparkles, Layout, DollarSign, Info, BookOpen, HelpCircle, Users
+} from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -95,6 +98,78 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
               Create
             </Button>
 
+            {/* Product Section */}
+            <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">PRODUCT</div>
+            
+            <Button
+              variant={isActive("/features") ? "default" : "ghost"}
+              className="justify-start h-12 text-base"
+              onClick={() => handleNavigation("/features")}
+            >
+              <Sparkles className="h-5 w-5 mr-3" />
+              Features
+            </Button>
+
+            <Button
+              variant={isActive("/templates") ? "default" : "ghost"}
+              className="justify-start h-12 text-base"
+              onClick={() => handleNavigation("/templates")}
+            >
+              <Layout className="h-5 w-5 mr-3" />
+              Templates
+            </Button>
+
+            <Button
+              variant={isActive("/pricing") ? "default" : "ghost"}
+              className="justify-start h-12 text-base"
+              onClick={() => handleNavigation("/pricing")}
+            >
+              <DollarSign className="h-5 w-5 mr-3" />
+              Pricing
+            </Button>
+
+            {/* Resources Section */}
+            <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">RESOURCES</div>
+            
+            <Button
+              variant={isActive("/about") ? "default" : "ghost"}
+              className="justify-start h-12 text-base"
+              onClick={() => handleNavigation("/about")}
+            >
+              <Info className="h-5 w-5 mr-3" />
+              About
+            </Button>
+
+            <Button
+              variant={isActive("/blog") ? "default" : "ghost"}
+              className="justify-start h-12 text-base"
+              onClick={() => handleNavigation("/blog")}
+            >
+              <BookOpen className="h-5 w-5 mr-3" />
+              Blog
+            </Button>
+
+            <Button
+              variant={isActive("/faq") ? "default" : "ghost"}
+              className="justify-start h-12 text-base"
+              onClick={() => handleNavigation("/faq")}
+            >
+              <HelpCircle className="h-5 w-5 mr-3" />
+              FAQ
+            </Button>
+
+            <Button
+              variant={isActive("/community") ? "default" : "ghost"}
+              className="justify-start h-12 text-base"
+              onClick={() => handleNavigation("/community")}
+            >
+              <Users className="h-5 w-5 mr-3" />
+              Community
+            </Button>
+
+            {/* Account Section */}
+            <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">ACCOUNT</div>
+            
             <Button
               variant={isActive("/dashboard/settings") ? "default" : "ghost"}
               className="justify-start h-12 text-base"

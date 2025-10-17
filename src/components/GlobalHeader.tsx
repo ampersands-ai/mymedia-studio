@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Settings, Coins, LogOut, Shield, Clock } from "lucide-react";
+import { Sparkles, Settings, Coins, LogOut, Shield, Clock, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -9,6 +9,12 @@ import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { MobileMenu } from "@/components/MobileMenu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const GlobalHeader = () => {
   const navigate = useNavigate();
@@ -64,14 +70,52 @@ export const GlobalHeader = () => {
 
             {!isDashboardCreate && !isCustomCreation && !isSettingsPage && (
               <>
-                <Button
-                  variant="ghost"
-                  size="default"
-                  onClick={() => navigate("/pricing")}
-                  className="hidden sm:inline-flex font-black text-base"
-                >
-                  Pricing
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="default"
+                      className="hidden sm:inline-flex font-black text-base"
+                    >
+                      Product <ChevronDown className="h-4 w-4 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-card border-2 border-secondary-600">
+                    <DropdownMenuItem onClick={() => navigate("/features")} className="font-bold cursor-pointer">
+                      Features
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/templates")} className="font-bold cursor-pointer">
+                      Templates
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/pricing")} className="font-bold cursor-pointer">
+                      Pricing
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="default"
+                      className="hidden sm:inline-flex font-black text-base"
+                    >
+                      Resources <ChevronDown className="h-4 w-4 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-card border-2 border-secondary-600">
+                    <DropdownMenuItem onClick={() => navigate("/about")} className="font-bold cursor-pointer">
+                      About
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/blog")} className="font-bold cursor-pointer">
+                      Blog
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/faq")} className="font-bold cursor-pointer">
+                      FAQ
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 <Button
                   variant="ghost"
                   size="default"

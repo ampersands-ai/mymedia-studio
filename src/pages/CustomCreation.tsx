@@ -1003,7 +1003,7 @@ const CustomCreation = () => {
                      value={prompt}
                      onChange={(e) => setPrompt(e.target.value)}
                      placeholder="Describe what you want to create..."
-                     className="min-h-[100px] md:min-h-[120px] resize-none text-sm md:text-base"
+                     className="min-h-[160px] md:min-h-[180px] resize-none text-sm md:text-base"
                      disabled={localGenerating || isGenerating || !!pollingGenerationId}
                      required={isPromptRequired}
                      maxLength={maxPromptLength}
@@ -1125,11 +1125,6 @@ const CustomCreation = () => {
                       className="w-full h-14 md:h-10 border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all"
                     >
                       <span className="font-semibold">Advanced Options</span>
-                      {Object.keys(modelParameters).length > 0 && (
-                        <Badge variant="secondary" className="ml-2 text-xs">
-                          {Object.keys(modelParameters).length}
-                        </Badge>
-                      )}
                       <ChevronRight className={`h-4 w-4 ml-auto transition-transform ${advancedOpen ? 'rotate-90' : ''}`} />
                     </Button>
                   </CollapsibleTrigger>
@@ -1315,7 +1310,7 @@ const CustomCreation = () => {
 
                           {/* Action Buttons Row */}
                           {generatedOutputs.length > 0 && (
-                            <div className="grid grid-cols-3 gap-2 md:gap-3 animate-fade-in">
+                            <div className="grid grid-cols-2 gap-2 md:gap-3 animate-fade-in">
                               <Button
                                 onClick={async () => {
                                   await downloadMultipleOutputs(
@@ -1340,16 +1335,6 @@ const CustomCreation = () => {
                               >
                                 <Share2 className="h-4 w-4 mr-2" />
                                 Share
-                              </Button>
-                              <Button
-                                onClick={handleGenerate}
-                                variant="outline"
-                                disabled={localGenerating || isGenerating || !!pollingGenerationId}
-                                className="w-full border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all"
-                                size="default"
-                              >
-                                <RefreshCw className="h-4 w-4 mr-2" />
-                                Regenerate
                               </Button>
                             </div>
                           )}
@@ -1377,32 +1362,30 @@ const CustomCreation = () => {
                                       Copy
                                     </Button>
                                   </div>
-                                  <div className="text-sm bg-background p-3 rounded-md border border-gray-200">
+                                  <div className="text-sm md:text-base bg-background p-4 rounded-md border border-gray-200 min-h-[120px]">
                                     {captionExpanded ? (
                                       <>
-                                        <p>{captionData.caption}</p>
-                                        {captionData.caption.split('\n').length > 2 && (
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setCaptionExpanded(false)}
-                                            className="mt-2 h-7 text-xs text-primary hover:text-primary/80"
-                                          >
-                                            Show less
-                                          </Button>
-                                        )}
+                                        <p className="whitespace-pre-wrap">{captionData.caption}</p>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => setCaptionExpanded(false)}
+                                          className="mt-2 h-9 px-4 text-xs text-primary hover:text-primary/80"
+                                        >
+                                          Show less
+                                        </Button>
                                       </>
                                     ) : (
                                       <>
-                                        <p className="line-clamp-2">{captionData.caption}</p>
-                                        {captionData.caption.split('\n').length > 2 && (
+                                        <p className="line-clamp-4 whitespace-pre-wrap">{captionData.caption}</p>
+                                        {captionData.caption.length > 150 && (
                                           <Button
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => setCaptionExpanded(true)}
-                                            className="mt-2 h-7 text-xs text-primary hover:text-primary/80"
+                                            className="mt-2 h-9 px-4 text-xs text-primary hover:text-primary/80"
                                           >
-                                            Read more
+                                            View full caption
                                           </Button>
                                         )}
                                       </>

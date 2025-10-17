@@ -68,81 +68,66 @@ export const GlobalHeader = () => {
               <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
             </Link>
 
-            {!isDashboardCreate && !isCustomCreation && !isSettingsPage && (
-              <>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="default"
-                      className="hidden sm:inline-flex font-black text-base"
-                    >
-                      Product <ChevronDown className="h-4 w-4 ml-1" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-card border-2 border-secondary-600">
-                    <DropdownMenuItem onClick={() => navigate("/features")} className="font-bold cursor-pointer">
-                      Features
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/templates")} className="font-bold cursor-pointer">
-                      Templates
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/pricing")} className="font-bold cursor-pointer">
-                      Pricing
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="default"
-                      className="hidden sm:inline-flex font-black text-base"
-                    >
-                      Resources <ChevronDown className="h-4 w-4 ml-1" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-card border-2 border-secondary-600">
-                    <DropdownMenuItem onClick={() => navigate("/about")} className="font-bold cursor-pointer">
-                      About
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/blog")} className="font-bold cursor-pointer">
-                      Blog
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/faq")} className="font-bold cursor-pointer">
-                      FAQ
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
+            {/* Always show Product and Resources navigation */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="default"
-                  onClick={() => navigate("/community")}
                   className="hidden sm:inline-flex font-black text-base"
                 >
-                  Community
+                  Product <ChevronDown className="h-4 w-4 ml-1" />
                 </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-card border-2 border-secondary-600">
+                <DropdownMenuItem onClick={() => navigate("/features")} className="font-bold cursor-pointer">
+                  Features
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/templates")} className="font-bold cursor-pointer">
+                  Templates
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/pricing")} className="font-bold cursor-pointer">
+                  Pricing
+                </DropdownMenuItem>
+                {user && (
+                  <DropdownMenuItem onClick={() => navigate("/dashboard/custom-creation")} className="font-bold cursor-pointer">
+                    Dashboard
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="default"
-                  onClick={() => navigate("/dashboard/custom-creation")}
                   className="hidden sm:inline-flex font-black text-base"
                 >
-                  Dashboard
+                  Resources <ChevronDown className="h-4 w-4 ml-1" />
                 </Button>
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={() => navigate("/dashboard/custom-creation")}
-                  className="brutal-card-sm font-black hidden sm:flex"
-                >
-                  <Sparkles className="h-5 w-5 mr-2" />
-                  Custom Creation
-                </Button>
-              </>
-            )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-card border-2 border-secondary-600">
+                <DropdownMenuItem onClick={() => navigate("/about")} className="font-bold cursor-pointer">
+                  About
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/blog")} className="font-bold cursor-pointer">
+                  Blog
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/faq")} className="font-bold cursor-pointer">
+                  FAQ
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button
+              variant="ghost"
+              size="default"
+              onClick={() => navigate("/community")}
+              className="hidden sm:inline-flex font-black text-base"
+            >
+              Community
+            </Button>
           </div>
 
           {/* Right Side - Desktop Only Navigation */}

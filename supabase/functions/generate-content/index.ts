@@ -10,7 +10,8 @@ const corsHeaders = {
 };
 
 // Phase 3: Request queuing and circuit breaker
-const CONCURRENT_LIMIT = 100;
+// Increased from 100 to 750 for better scalability under high load
+const CONCURRENT_LIMIT = 750;
 const activeRequests = new Map<string, Promise<any>>();
 
 const CIRCUIT_BREAKER = {

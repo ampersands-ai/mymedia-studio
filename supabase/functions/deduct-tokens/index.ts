@@ -50,40 +50,63 @@ serve(async (req) => {
     body = await req.json();
     const { tokens_to_deduct } = deductTokensSchema.parse(body);
 
-    // Get current token balance
-    const { data: subscription, error: fetchError } = await supabase
-      .from('user_subscriptions')
-      .select('tokens_remaining')
-      .eq('user_id', user.id)
-      .single();
+    // Deduct tokens using optimistic locking with retry logic
+    // This prevents race conditions under high concurrency
+    let updatedSubscriptionFinal: any;
+    let retries = 3;
+    
+    while (retries > 0) {
+      try {
+        // Get current token balance
+        const { data: subscription, error: fetchError } = await supabase
+          .from('user_subscriptions')
+          .select('tokens_remaining')
+          .eq('user_id', user.id)
+          .single();
 
-    if (fetchError) {
-      logError('deduct-tokens', fetchError, { user_id: user.id });
-      throw new Error('Failed to fetch token balance');
-    }
+        if (fetchError) {
+          logError('deduct-tokens', fetchError, { user_id: user.id });
+          throw new Error('Failed to fetch token balance');
+        }
 
-    if (!subscription) {
-      throw new Error('User subscription not found');
-    }
+        if (!subscription) {
+          throw new Error('User subscription not found');
+        }
 
-    // Check if user has enough tokens
-    if (subscription.tokens_remaining < tokens_to_deduct) {
-      throw new Error('Insufficient tokens');
-    }
+        // Check if user has enough tokens
+        if (subscription.tokens_remaining < tokens_to_deduct) {
+          throw new Error('Insufficient tokens');
+        }
 
-    // Deduct tokens
-    const { data: updatedSubscription, error: updateError } = await supabase
-      .from('user_subscriptions')
-      .update({ 
-        tokens_remaining: subscription.tokens_remaining - tokens_to_deduct 
-      })
-      .eq('user_id', user.id)
-      .select()
-      .single();
+        // Deduct tokens with optimistic locking (compare-and-swap)
+        const { data: updatedSubscription, error: updateError } = await supabase
+          .from('user_subscriptions')
+          .update({ 
+            tokens_remaining: subscription.tokens_remaining - tokens_to_deduct 
+          })
+          .eq('user_id', user.id)
+          .eq('tokens_remaining', subscription.tokens_remaining) // Optimistic lock: only update if value hasn't changed
+          .select()
+          .single();
 
-    if (updateError) {
-      logError('deduct-tokens', updateError, { user_id: user.id, tokens: tokens_to_deduct });
-      throw new Error('Failed to deduct tokens');
+        if (updateError || !updatedSubscription) {
+          // Race condition detected - retry
+          retries--;
+          if (retries === 0) {
+            throw new Error('Token deduction failed after retries - please try again');
+          }
+          console.log(`[RETRY] Token deduction retry ${3 - retries}/3 for user ${user.id}`);
+          await new Promise(resolve => setTimeout(resolve, 50)); // Small delay before retry
+          continue;
+        }
+
+        updatedSubscriptionFinal = updatedSubscription;
+        break; // Success
+      } catch (error) {
+        if (retries === 1) throw error;
+        retries--;
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
     }
 
     // Log token usage for security monitoring
@@ -93,7 +116,7 @@ serve(async (req) => {
         action: 'tokens_deducted',
         metadata: {
           tokens_deducted: tokens_to_deduct,
-          tokens_remaining: updatedSubscription.tokens_remaining,
+          tokens_remaining: updatedSubscriptionFinal.tokens_remaining,
         },
       });
     } catch (logErrorObj) {
@@ -105,7 +128,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        tokens_remaining: updatedSubscription.tokens_remaining,
+        tokens_remaining: updatedSubscriptionFinal.tokens_remaining,
         tokens_deducted: tokens_to_deduct
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

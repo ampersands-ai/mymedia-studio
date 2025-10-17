@@ -10,13 +10,19 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.cleanup-stuck-generations]
-verify_jwt = false
+verify_jwt = false  # Public cron job
 
 [functions.kie-ai-webhook]
-verify_jwt = false
+verify_jwt = false  # External webhook - validates signature
 
 [functions.fix-stuck-generation]
-verify_jwt = false
+verify_jwt = true  # SECURITY FIX: Admin-only function
+
+[functions.security-monitor]
+verify_jwt = true  # SECURITY FIX: Admin-only monitoring
+
+[functions.rate-limiter]
+verify_jwt = false  # Called internally before auth
 
 [functions.create-dodo-payment]
 verify_jwt = true

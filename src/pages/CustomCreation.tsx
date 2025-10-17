@@ -814,14 +814,14 @@ const CustomCreation = () => {
         </div>
 
         {/* Mobile-First Layout - Stacked vertically on mobile, side-by-side on desktop */}
-        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 md:gap-6 mb-8 md:mb-12">
+        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
           {/* Input Panel */}
-          <Card className="bg-card border order-1">
+          <Card className="bg-card border border-border shadow-sm order-1">
             <div className="border-b px-4 md:px-6 py-3 md:py-4 bg-muted/30">
               <h2 className="text-base md:text-lg font-bold">Input</h2>
             </div>
 
-            <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+            <div className="p-4 md:p-8 space-y-6">
               {/* Model Selection */}
               {filteredModels.length > 0 && (
                 <div className="space-y-2">

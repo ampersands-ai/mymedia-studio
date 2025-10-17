@@ -13,7 +13,7 @@ export const Footer = () => {
 
   return (
     <footer className="border-t-4 border-black bg-card mt-20">
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="space-y-4 text-center md:text-left">
@@ -29,43 +29,43 @@ export const Footer = () => {
               All-in-one AI content platform for creators
             </p>
             
-            {/* Social Media Links */}
-            <div className="flex justify-center md:justify-start gap-4 pt-2">
+            {/* Social Media Links - 44x44px tap targets */}
+            <div className="flex justify-center md:justify-start gap-2 pt-2">
               <a 
                 href="https://twitter.com/artifio" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-foreground/60 hover:text-primary transition-colors"
-                aria-label="Twitter"
+                className="p-2 text-foreground/60 hover:text-primary transition-colors rounded-lg hover:bg-muted"
+                aria-label="Follow us on Twitter"
               >
-                <Twitter size={24} />
+                <Twitter size={28} />
               </a>
               <a 
                 href="https://linkedin.com/company/artifio" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-foreground/60 hover:text-primary transition-colors"
-                aria-label="LinkedIn"
+                className="p-2 text-foreground/60 hover:text-primary transition-colors rounded-lg hover:bg-muted"
+                aria-label="Connect on LinkedIn"
               >
-                <Linkedin size={24} />
+                <Linkedin size={28} />
               </a>
               <a 
                 href="https://youtube.com/@artifio" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-foreground/60 hover:text-primary transition-colors"
-                aria-label="YouTube"
+                className="p-2 text-foreground/60 hover:text-primary transition-colors rounded-lg hover:bg-muted"
+                aria-label="Subscribe on YouTube"
               >
-                <Youtube size={24} />
+                <Youtube size={28} />
               </a>
               <a 
                 href="https://discord.gg/artifio" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-foreground/60 hover:text-primary transition-colors"
-                aria-label="Discord"
+                className="p-2 text-foreground/60 hover:text-primary transition-colors rounded-lg hover:bg-muted"
+                aria-label="Join our Discord"
               >
-                <MessageSquare size={24} />
+                <MessageSquare size={28} />
               </a>
             </div>
           </div>
@@ -73,7 +73,7 @@ export const Footer = () => {
           {/* Product */}
           <div className="text-center md:text-left">
             <h3 className="font-black text-sm mb-4">PRODUCT</h3>
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               <li>
                 <Link to="/features" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   Features
@@ -100,7 +100,7 @@ export const Footer = () => {
           {/* Company */}
           <div className="text-center md:text-left">
             <h3 className="font-black text-sm mb-4">COMPANY</h3>
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               <li>
                 <Link to="/about" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   About
@@ -127,7 +127,7 @@ export const Footer = () => {
           {/* Support */}
           <div className="text-center md:text-left">
             <h3 className="font-black text-sm mb-4">SUPPORT</h3>
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               <li>
                 <Link to="/faq" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   FAQ
@@ -153,7 +153,7 @@ export const Footer = () => {
         </div>
 
         {/* Newsletter Signup */}
-        <div className="mt-12 pt-8 border-t-3 border-black">
+        <div className="mt-16 pt-12 border-t-3 border-black">
           <div className="max-w-md mx-auto text-center">
             <h3 className="font-black text-sm mb-2">STAY UPDATED</h3>
             <p className="text-sm text-foreground/70 mb-4">Get AI tips & product updates</p>
@@ -172,7 +172,7 @@ export const Footer = () => {
         </div>
 
         {/* Copyright */}
-        <div className="border-t-3 border-black mt-12 pt-8 text-center">
+        <div className="border-t-3 border-black mt-16 pt-12 text-center">
           <p className="text-sm text-foreground/70 font-medium">
             © {new Date().getFullYear()} <span className="font-bold">artifio.ai</span>. All rights reserved.
           </p>

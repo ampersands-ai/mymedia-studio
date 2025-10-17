@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Sparkles, Settings, Menu, X, Coins, History } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { Footer } from "@/components/Footer";
 import { cn } from "@/lib/utils";
@@ -129,69 +130,78 @@ export const DashboardLayout = () => {
                     {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                   </Button>
                 </SheetTrigger>
-                <SheetContent>
-                  <nav className="flex flex-col gap-4 mt-8">
-                    <Link 
-                      to="/dashboard/custom-creation" 
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                        isActive("/dashboard/custom-creation") 
-                          ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                          : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
-                      )}
-                    >
-                      <Sparkles className="h-5 w-5" />
-                      <span>Custom Creation</span>
-                    </Link>
-                    <Link 
-                      to="/dashboard/create" 
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                        isActive("/dashboard/create") 
-                          ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                          : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
-                      )}
-                    >
-                      <Sparkles className="h-5 w-5" />
-                      <span>Templates</span>
-                    </Link>
-                    <Link 
-                      to="/dashboard/history" 
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                        isActive("/dashboard/history") 
-                          ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                          : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
-                      )}
-                    >
-                      <History className="h-5 w-5" />
-                      <span>My Creations</span>
-                    </Link>
-                    <Link 
-                      to="/dashboard/settings" 
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                        isActive("/dashboard/settings") 
-                          ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                          : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
-                      )}
-                    >
-                      <Settings className="h-5 w-5" />
-                      <span>Settings</span>
-                    </Link>
+                <SheetContent className="flex flex-col p-0 pb-safe">
+                  <div className="p-6 border-b">
+                    <h2 className="text-lg font-semibold">Navigation</h2>
+                  </div>
+                  
+                  <ScrollArea className="flex-1 px-6">
+                    <nav className="flex flex-col gap-4 py-6">
+                      <Link 
+                        to="/dashboard/custom-creation" 
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                          isActive("/dashboard/custom-creation") 
+                            ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                            : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                        )}
+                      >
+                        <Sparkles className="h-5 w-5" />
+                        <span>Custom Creation</span>
+                      </Link>
+                      <Link 
+                        to="/dashboard/create" 
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                          isActive("/dashboard/create") 
+                            ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                            : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                        )}
+                      >
+                        <Sparkles className="h-5 w-5" />
+                        <span>Templates</span>
+                      </Link>
+                      <Link 
+                        to="/dashboard/history" 
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                          isActive("/dashboard/history") 
+                            ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                            : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                        )}
+                      >
+                        <History className="h-5 w-5" />
+                        <span>My Creations</span>
+                      </Link>
+                      <Link 
+                        to="/dashboard/settings" 
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                          isActive("/dashboard/settings") 
+                            ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                            : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                        )}
+                      >
+                        <Settings className="h-5 w-5" />
+                        <span>Settings</span>
+                      </Link>
+                    </nav>
+                  </ScrollArea>
+                  
+                  <div className="p-6 pt-4 border-t">
                     <Button
                       variant="outline"
                       onClick={handleSignOut}
-                      className="justify-start"
+                      className="justify-start w-full"
                     >
                       <LogOut className="h-5 w-5 mr-3" />
                       Sign Out
                     </Button>
-                  </nav>
+                  </div>
                 </SheetContent>
               </Sheet>
             </div>

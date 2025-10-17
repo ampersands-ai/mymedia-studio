@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2, Clock, Info, Camera, Share2, RefreshCw, CheckCircle2 } from "lucide-react";
+import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2, Clock, Info, Camera, Share2, RefreshCw, CheckCircle2, Palette, ImagePlus, Video, Film, Music } from "lucide-react";
 import { useNativeCamera } from "@/hooks/useNativeCamera";
 import { triggerHaptic } from "@/utils/capacitor-utils";
 
@@ -61,11 +61,11 @@ type CreationGroup = "image_editing" | "prompt_to_image" | "prompt_to_video" | "
 
 // Group configuration
 const CREATION_GROUPS = [
-  { id: "image_editing" as CreationGroup, label: "Image Editing", icon: "🎨", description: "Modify existing images" },
-  { id: "prompt_to_image" as CreationGroup, label: "Prompt to Image", icon: "🖼️", description: "Generate images from text" },
-  { id: "prompt_to_video" as CreationGroup, label: "Prompt to Video", icon: "🎬", description: "Generate videos from text" },
-  { id: "image_to_video" as CreationGroup, label: "Image to Video", icon: "🎞️", description: "Animate images into videos" },
-  { id: "prompt_to_audio" as CreationGroup, label: "Prompt to Audio", icon: "🎵", description: "Generate audio from text" },
+  { id: "image_editing" as CreationGroup, label: "Image Editing", Icon: Palette, description: "Modify existing images" },
+  { id: "prompt_to_image" as CreationGroup, label: "Prompt to Image", Icon: ImagePlus, description: "Generate images from text" },
+  { id: "prompt_to_video" as CreationGroup, label: "Prompt to Video", Icon: Video, description: "Generate videos from text" },
+  { id: "image_to_video" as CreationGroup, label: "Image to Video", Icon: Film, description: "Animate images into videos" },
+  { id: "prompt_to_audio" as CreationGroup, label: "Prompt to Audio", Icon: Music, description: "Generate audio from text" },
 ];
 
 
@@ -903,7 +903,7 @@ const CustomCreation = () => {
                     : "bg-neutral-100 border border-gray-200 text-neutral-600 hover:bg-neutral-200 hover:text-secondary-700 hover:border-gray-300 shadow-sm hover:shadow-md"
                 )}
               >
-                <span className="text-2xl md:text-3xl">{group.icon}</span>
+                <group.Icon className="h-6 w-6 md:h-7 md:w-7" />
                 <div className="flex flex-col items-start">
                   <span className="font-semibold text-xs md:text-sm">{group.label}</span>
                   <span className="text-[10px] md:text-xs opacity-70 hidden md:block">{group.description}</span>

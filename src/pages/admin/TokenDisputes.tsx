@@ -345,7 +345,7 @@ export const TokenDisputes = () => {
     });
   };
 
-  const handleRefundTokens = () => {
+  const handleRefundTokens = async () => {
     if (!selectedDispute) return;
 
     // Prevent refunds in history view
@@ -359,6 +359,22 @@ export const TokenDisputes = () => {
       toast.error(`Tokens already refunded: ${selectedDispute.refund_amount} tokens were previously refunded`);
       return;
     }
+
+    // Check if this generation has a dispute in history (already resolved/refunded)
+    const { data: historyDispute } = await supabase
+      .from('token_dispute_history')
+      .select('refund_amount, status')
+      .eq('generation_id', selectedDispute.generation_id)
+      .maybeSingle();
+
+    if (historyDispute) {
+      if (historyDispute.refund_amount && historyDispute.refund_amount > 0) {
+        toast.error(`This generation was already refunded: ${historyDispute.refund_amount} tokens were previously refunded`);
+      } else {
+        toast.error(`This generation already has a ${historyDispute.status} dispute in history`);
+      }
+      return;
+    }
     
     if (confirm(`Refund ${selectedDispute.generation.tokens_used} tokens to ${selectedDispute.profile.email}?`)) {
       refundTokensMutation.mutate({
@@ -369,19 +385,40 @@ export const TokenDisputes = () => {
     }
   };
 
-  const handleBulkAction = (action: 'resolve-refund' | 'resolve-no-refund' | 'reject') => {
+  const handleBulkAction = async (action: 'resolve-refund' | 'resolve-no-refund' | 'reject') => {
     if (selectedDisputeIds.length === 0) {
       toast.error('Please select at least one dispute');
       return;
     }
 
     // Filter out any resolved/rejected disputes and already-refunded disputes
-    const validDisputes = disputes?.filter(d => 
+    let validDisputes = disputes?.filter(d => 
       selectedDisputeIds.includes(d.id) && 
       d.status !== 'resolved' && 
       d.status !== 'rejected' &&
       (!d.refund_amount || d.refund_amount === 0)
     ) || [];
+    
+    // Check history table for any already-refunded generations
+    if (validDisputes.length > 0) {
+      const { data: historyDisputes } = await supabase
+        .from('token_dispute_history')
+        .select('generation_id, refund_amount')
+        .in('generation_id', validDisputes.map(d => d.generation_id));
+
+      if (historyDisputes && historyDisputes.length > 0) {
+        const refundedGenIds = historyDisputes
+          .filter(h => h.refund_amount && h.refund_amount > 0)
+          .map(h => h.generation_id);
+        
+        // Filter out disputes with already-refunded generations
+        validDisputes = validDisputes.filter(d => !refundedGenIds.includes(d.generation_id));
+        
+        if (refundedGenIds.length > 0) {
+          toast.warning(`Skipping ${refundedGenIds.length} dispute(s) with already-refunded generations`);
+        }
+      }
+    }
     
     if (validDisputes.length === 0) {
       toast.error('No valid disputes to process');

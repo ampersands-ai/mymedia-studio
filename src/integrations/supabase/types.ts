@@ -566,7 +566,7 @@ export type Database = {
           {
             foreignKeyName: "token_dispute_reports_generation_id_fkey"
             columns: ["generation_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "generations"
             referencedColumns: ["id"]
           },
@@ -795,6 +795,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_existing_dispute: {
+        Args: { _generation_id: string }
+        Returns: boolean
+      }
       cleanup_expired_sessions: {
         Args: Record<PropertyKey, never>
         Returns: undefined

@@ -157,15 +157,6 @@ export const GlobalHeader = () => {
                   <Sparkles className="h-5 w-5 mr-2" />
                   Custom Creation
                 </Button>
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={() => navigate("/dashboard/settings")}
-                  className="brutal-card-sm font-black hidden sm:flex"
-                >
-                  <Settings className="h-5 w-5 mr-2" />
-                  Settings
-                </Button>
               </>
             )}
 
@@ -181,15 +172,6 @@ export const GlobalHeader = () => {
                   <Sparkles className="h-5 w-5 mr-2" />
                   Custom Creation
                 </Button>
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={() => navigate("/dashboard/settings")}
-                  className="brutal-card-sm font-black hidden sm:flex"
-                >
-                  <Settings className="h-5 w-5 mr-2" />
-                  Settings
-                </Button>
               </>
             )}
 
@@ -202,15 +184,6 @@ export const GlobalHeader = () => {
                   className="brutal-card-sm font-black hidden sm:flex"
                 >
                   Dashboard
-                </Button>
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={() => navigate("/dashboard/settings")}
-                  className="brutal-card-sm font-black hidden sm:flex"
-                >
-                  <Settings className="h-5 w-5 mr-2" />
-                  Settings
                 </Button>
               </>
             )}
@@ -308,16 +281,6 @@ export const GlobalHeader = () => {
                 Admin
               </Button>
             )}
-
-            <Button
-              variant="outline"
-              size="default"
-              onClick={handleSignOut}
-              className="brutal-card-sm font-black"
-            >
-              <LogOut className="h-5 w-5 mr-2" />
-              Logout
-            </Button>
           </div>
 
           {/* Mobile - Token Balance Only */}

@@ -91,20 +91,6 @@ export const DashboardLayout = () => {
                   My Creations
                 </Button>
               </Link>
-              <Link to="/dashboard/settings">
-                <Button
-                  variant={isActive("/dashboard/settings") ? "default" : "ghost"}
-                  className={cn(
-                    "text-base px-6 py-5 rounded-full",
-                    isActive("/dashboard/settings") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
-                  )}
-                >
-                  <Settings className="h-5 w-5 mr-2" />
-                  Settings
-                </Button>
-              </Link>
             </nav>
 
             <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
@@ -114,14 +100,6 @@ export const DashboardLayout = () => {
                   <span className="font-black text-xs md:text-base whitespace-nowrap">{(tokenData?.tokens_remaining || 0).toLocaleString()}</span>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleSignOut}
-                className="hidden md:flex"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
 
               {/* Mobile Menu */}
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>

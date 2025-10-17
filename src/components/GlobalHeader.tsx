@@ -51,13 +51,10 @@ export const GlobalHeader = () => {
     <header className="border-b-4 border-black bg-card sticky top-0 z-50">
       <nav className="container mx-auto px-4 py-4 md:py-6">
         <div className="flex items-center justify-between">
-          {/* Mobile Menu */}
-          <div className="lg:hidden">
-            <MobileMenu tokenBalance={tokenBalance ?? undefined} />
-          </div>
 
           {/* Left Side - Logo + Navigation */}
           <div className="flex items-center gap-3 md:gap-4">
+            <MobileMenu tokenBalance={tokenBalance ?? undefined} />
             <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <img 
                 src={logo} 

@@ -51,7 +51,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="lg:hidden">
+        <Button variant="outline" size="icon" title="Open menu" className="brutal-card-sm">
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>

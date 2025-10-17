@@ -53,6 +53,8 @@ import { createSignedUrl } from "@/lib/storage-utils";
 import { OutputGrid } from "@/components/generation/OutputGrid";
 import { OutputLightbox } from "@/components/generation/OutputLightbox";
 import { downloadMultipleOutputs } from "@/lib/download-utils";
+import { trackEvent } from "@/lib/posthog";
+import { useUserTokens } from "@/hooks/useUserTokens";
 
 // Group type definition
 type CreationGroup = "image_editing" | "prompt_to_image" | "prompt_to_video" | "image_to_video" | "prompt_to_audio";
@@ -78,6 +80,8 @@ const CustomCreation = () => {
 
   const { data: allModels, isLoading: modelsLoading } = useModels();
   const { generate, isGenerating, error, clearError } = useGeneration();
+  const { data: userTokens } = useUserTokens();
+  const tokenBalance = userTokens?.tokens_remaining || 0;
   const [prompt, setPrompt] = useState("");
   const [contentType, setContentType] = useState<"image" | "video" | "music" | "text">("image");
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
@@ -597,6 +601,20 @@ const CustomCreation = () => {
     
     setLocalGenerating(true);
     
+    // Preemptive token balance check
+    if (tokenBalance && estimatedTokens > tokenBalance) {
+      setLocalGenerating(false);
+      toast.error("Insufficient tokens", {
+        description: `This creation requires ${estimatedTokens} tokens, but you only have ${tokenBalance}. Upgrade to continue.`,
+        duration: 10000,
+        action: {
+          label: "View Plans",
+          onClick: () => navigate("/pricing")
+        }
+      });
+      return;
+    }
+    
     try {
       // Build customParameters, filtering out conditional fields whose dependencies aren't met
       const customParameters: Record<string, any> = {};
@@ -715,6 +733,36 @@ const CustomCreation = () => {
           navigate("/auth");
         }, 2000);
         return;
+      }
+      
+      // Handle INSUFFICIENT_TOKENS error
+      if (error.message?.includes("INSUFFICIENT_TOKENS")) {
+        let parsedError: any = {};
+        try {
+          parsedError = JSON.parse(error.message);
+        } catch (e) {
+          parsedError = { type: "INSUFFICIENT_TOKENS" };
+        }
+        
+        toast.error("Insufficient tokens", {
+          description: parsedError.required 
+            ? `You need ${parsedError.required} tokens but only have ${parsedError.available || 0}. Upgrade to continue creating.`
+            : "You don't have enough tokens. Upgrade your plan to continue creating amazing content.",
+          duration: 10000,
+          action: {
+            label: "View Plans",
+            onClick: () => navigate("/pricing")
+          }
+        });
+        
+        // Track insufficient tokens event for analytics
+        trackEvent('insufficient_tokens_error', {
+          required_tokens: parsedError.required,
+          available_tokens: parsedError.available,
+          model_id: selectedModel,
+        });
+        
+        return; // Don't show generic error
       }
       
       console.error('Generation error:', error);

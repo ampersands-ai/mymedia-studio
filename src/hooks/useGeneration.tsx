@@ -70,9 +70,25 @@ export const useGeneration = () => {
           throw new Error("SESSION_EXPIRED");
         }
         
-        // Handle other specific error codes
+        // Enhanced 402 handling with structured error
         if (error.message?.includes("402") || error.message?.toLowerCase().includes("insufficient tokens")) {
-          throw new Error("Insufficient tokens");
+          let tokenDetails: { required?: number; available?: number } = {};
+          try {
+            // Try to parse error context from edge function response
+            const errorMatch = error.message.match(/required[:\s]+(\d+)[,\s]+available[:\s]+(\d+)/i);
+            if (errorMatch) {
+              tokenDetails.required = parseInt(errorMatch[1]);
+              tokenDetails.available = parseInt(errorMatch[2]);
+            }
+          } catch (e) {
+            // If parsing fails, continue with basic error
+          }
+          
+          throw new Error(JSON.stringify({
+            type: "INSUFFICIENT_TOKENS",
+            message: "Insufficient tokens",
+            ...tokenDetails
+          }));
         }
         
         if (error.message?.includes("429")) {

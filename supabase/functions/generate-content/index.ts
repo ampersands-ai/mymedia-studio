@@ -342,7 +342,13 @@ let validatedParameters = validateAndFilterParameters(
 
       if (subscription.tokens_remaining < tokenCost) {
         return new Response(
-          JSON.stringify({ error: 'Insufficient tokens', required: tokenCost, available: subscription.tokens_remaining }),
+          JSON.stringify({ 
+            error: 'Insufficient tokens',
+            type: 'INSUFFICIENT_TOKENS',
+            required: tokenCost,
+            available: subscription.tokens_remaining,
+            message: `You need ${tokenCost} tokens but only have ${subscription.tokens_remaining} tokens available.`
+          }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }

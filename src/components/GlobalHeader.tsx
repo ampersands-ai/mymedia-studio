@@ -131,7 +131,7 @@ export const GlobalHeader = () => {
           </div>
 
           {/* Right Side - Desktop Only Navigation */}
-          <div className="hidden md:flex items-center gap-2 md:gap-3">
+          <div className="hidden lg:flex items-center gap-2 lg:gap-3">
             {/* Settings page navigation */}
             {isSettingsPage && (
               <>

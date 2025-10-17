@@ -75,12 +75,12 @@ export const Footer = () => {
             <h3 className="font-black text-sm mb-4">PRODUCT</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/create" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                <Link to="/features" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   Features
                 </Link>
               </li>
               <li>
-                <Link to="/create" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                <Link to="/templates" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   Templates
                 </Link>
               </li>

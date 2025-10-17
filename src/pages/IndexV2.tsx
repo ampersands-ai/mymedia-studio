@@ -64,7 +64,7 @@ const IndexV2 = () => {
                 </Button>
               ) : (
                 <>
-                  <Button asChild variant="ghost">
+                  <Button asChild variant="secondary" className="font-bold">
                     <Link to="/auth">Login</Link>
                   </Button>
                   <Button asChild variant="default">

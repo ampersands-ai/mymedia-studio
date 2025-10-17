@@ -52,7 +52,7 @@ export const GlobalHeader = () => {
       <nav className="container mx-auto px-4 py-4 md:py-6">
         <div className="flex items-center justify-between">
           {/* Mobile Menu */}
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <MobileMenu tokenBalance={tokenBalance ?? undefined} />
           </div>
 
@@ -74,7 +74,7 @@ export const GlobalHeader = () => {
                 <Button
                   variant="ghost"
                   size="default"
-                  className="hidden sm:inline-flex font-black text-base"
+                  className="hidden lg:inline-flex font-black text-base"
                 >
                   Product <ChevronDown className="h-4 w-4 ml-1" />
                 </Button>
@@ -102,7 +102,7 @@ export const GlobalHeader = () => {
                 <Button
                   variant="ghost"
                   size="default"
-                  className="hidden sm:inline-flex font-black text-base"
+                  className="hidden lg:inline-flex font-black text-base"
                 >
                   Resources <ChevronDown className="h-4 w-4 ml-1" />
                 </Button>
@@ -124,7 +124,7 @@ export const GlobalHeader = () => {
               variant="ghost"
               size="default"
               onClick={() => navigate("/community")}
-              className="hidden sm:inline-flex font-black text-base"
+              className="hidden lg:inline-flex font-black text-base"
             >
               Community
             </Button>

@@ -149,7 +149,7 @@ const Auth = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
-      navigate("/dashboard/create");
+      navigate("/dashboard/custom-creation");
     }
   }, [user, authLoading, navigate]);
 
@@ -255,7 +255,7 @@ const Auth = () => {
         }
         
         toast.success("Welcome back!");
-        navigate("/dashboard/create");
+        navigate("/dashboard/custom-creation");
       } else {
         const { error, data } = await supabase.auth.signUp({
           email,
@@ -268,7 +268,7 @@ const Auth = () => {
               phone_number: phoneNumber ? `${countryCode}${phoneNumber}` : null,
               zipcode: zipcode || null,
             },
-            emailRedirectTo: `${window.location.origin}/dashboard/create`,
+            emailRedirectTo: `${window.location.origin}/dashboard/custom-creation`,
           },
         });
         if (error) {
@@ -311,7 +311,7 @@ const Auth = () => {
         } else {
           toast.success("Account created! You've received 500 free tokens. Complete your profile for 100 bonus tokens!");
         }
-        navigate("/dashboard/create");
+        navigate("/dashboard/custom-creation");
       }
     } catch (error: any) {
       toast.error(error.message || "An error occurred");
@@ -325,7 +325,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/dashboard/create`,
+          redirectTo: `${window.location.origin}/dashboard/custom-creation`,
         },
       });
       if (error) throw error;

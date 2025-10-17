@@ -11,6 +11,8 @@ import { ComparisonTable } from "@/components/homepage/ComparisonTable";
 import { useTemplates } from "@/hooks/useTemplates";
 import { useState } from "react";
 import { Check, Frown, Clock, HelpCircle, DollarSign, Palette, Edit, Download, Video, Image, Music, FileText } from "lucide-react";
+import { MobileMenu } from "@/components/MobileMenu";
+import { useUserTokens } from "@/hooks/useUserTokens";
 
 // Import assets
 import logoImage from "@/assets/logo.png";
@@ -26,6 +28,8 @@ import pika from "@/assets/partners/hailuo.png";
 const IndexV2 = () => {
   const { user } = useAuth();
   const { data: templates } = useTemplates();
+  const { data: tokenData } = useUserTokens();
+  const tokenBalance = tokenData?.tokens_remaining ?? undefined;
   const [templateFilter, setTemplateFilter] = useState("all");
 
   const filteredTemplates = templates?.filter((template) => {
@@ -42,12 +46,25 @@ const IndexV2 = () => {
       <header className="sticky top-0 z-50 bg-background border-b-4 border-black">
         <div className="container mx-auto px-4 py-4">
           <nav className="flex items-center justify-between gap-4">
-            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <img src={logoImage} alt="artifio.ai logo" className="h-6 md:h-8 object-contain" />
-              <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
-            </Link>
+            {/* Mobile Menu - Left side */}
+            <div className="flex items-center gap-2">
+              <div className="md:hidden">
+                <MobileMenu tokenBalance={tokenBalance} />
+              </div>
+              
+              {/* Logo */}
+              <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <img src={logoImage} alt="artifio.ai logo" className="h-6 md:h-8 object-contain" />
+                <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
+              </Link>
+            </div>
+
+            {/* Desktop Navigation - Center/Right */}
             <div className="hidden md:flex items-center gap-6">
-              <Link to="/dashboard/create" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">
+              <Link to="/features" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">
+                Features
+              </Link>
+              <Link to="/templates" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">
                 Templates
               </Link>
               <Link to="/pricing" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">
@@ -57,17 +74,19 @@ const IndexV2 = () => {
                 Community
               </Link>
             </div>
+
+            {/* Auth Buttons - Right side */}
             <div className="flex items-center gap-3">
               {user ? (
                 <Button asChild variant="default">
-                  <Link to="/dashboard/create">Go to Dashboard</Link>
+                  <Link to="/dashboard/custom-creation">Go to Dashboard</Link>
                 </Button>
               ) : (
                 <>
                   <Button asChild variant="secondary" className="font-bold">
                     <Link to="/auth">Login</Link>
                   </Button>
-                  <Button asChild variant="default">
+                  <Button asChild variant="default" className="hidden sm:inline-flex">
                     <Link to="/auth">Sign Up</Link>
                   </Button>
                 </>

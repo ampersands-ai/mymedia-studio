@@ -813,8 +813,8 @@ const CustomCreation = () => {
                 className={cn(
                   "p-3 md:p-4 rounded-xl transition-all duration-200 flex items-center gap-3",
                   selectedGroup === group.id
-                    ? "bg-primary-500 border-[4px] border-black text-neutral-900 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                    : "bg-neutral-100 border-[4px] border-neutral-300 text-neutral-600 hover:bg-neutral-200 hover:text-secondary-700 hover:border-secondary-300"
+                    ? "bg-primary-500 border-2 border-primary/30 ring-2 ring-primary/20 shadow-sm text-neutral-900 font-bold"
+                    : "bg-neutral-100 border border-gray-200 text-neutral-600 hover:bg-neutral-200 hover:text-secondary-700 hover:border-gray-300 shadow-sm hover:shadow-md"
                 )}
               >
                 <span className="text-2xl md:text-3xl">{group.icon}</span>
@@ -844,7 +844,7 @@ const CustomCreation = () => {
                     value={selectedModel || undefined}
                     onValueChange={(value) => setSelectedModel(value)}
                   >
-                    <SelectTrigger className="w-full h-auto py-3 px-4 bg-background border-2 border-black font-bold">
+                    <SelectTrigger className="w-full h-auto py-3 px-4 bg-background border border-gray-200 hover:border-gray-300 shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/30 rounded-lg font-bold">
                       <SelectValue placeholder="Select a model...">
                         {selectedModel && (() => {
                           const model = filteredModels.find(m => String(m.record_id) === selectedModel);
@@ -868,7 +868,7 @@ const CustomCreation = () => {
                         })()}
                       </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="bg-background border-2 border-black z-50 max-w-[calc(100vw-2rem)] max-h-[60vh] overflow-y-auto">
+                    <SelectContent className="bg-background border border-gray-200 shadow-lg rounded-lg z-50 max-w-[calc(100vw-2rem)] max-h-[60vh] overflow-y-auto">
                       {filteredModels.map((model) => {
                         const modelGroups = (model.groups as string[]) || [];
                         const otherGroups = modelGroups.filter(g => g !== selectedGroup);
@@ -939,7 +939,7 @@ const CustomCreation = () => {
                          variant="outline"
                          size="sm"
                          onClick={handleSurpriseMe}
-                         className="h-8 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white font-bold border-2 border-black hover:opacity-90"
+                         className="h-10 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white font-bold border border-gray-200 shadow-sm hover:shadow-md hover:opacity-90 transition-all"
                          disabled={localGenerating || isGenerating || generatingSurprise || !!pollingGenerationId}
                        >
                         {generatingSurprise ? (
@@ -959,10 +959,10 @@ const CustomCreation = () => {
                         size="sm"
                         onClick={() => setEnhancePrompt(!enhancePrompt)}
                         className={cn(
-                          "h-8 transition-all font-bold border-2 border-black",
+                          "h-10 transition-all font-bold",
                           enhancePrompt 
-                            ? "bg-primary-500 text-neutral-900 hover:bg-primary-600" 
-                            : "bg-white text-neutral-700 hover:bg-neutral-100"
+                            ? "bg-primary-500 text-neutral-900 hover:bg-primary-600 ring-2 ring-primary/20 border border-primary/30" 
+                            : "bg-white text-neutral-700 hover:bg-neutral-100 border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300"
                         )}
                       >
                         {enhancePrompt ? "✓ " : ""}Enhance
@@ -1210,7 +1210,7 @@ const CustomCreation = () => {
               </div>
               
               {/* Mobile Sticky Generate Button */}
-              <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t-4 border-black z-40 safe-area-padding-bottom">
+              <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-40 safe-area-padding-bottom">
                 <Button 
                   onClick={handleGenerate} 
                   disabled={

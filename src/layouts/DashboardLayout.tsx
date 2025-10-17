@@ -126,7 +126,7 @@ export const DashboardLayout = () => {
               {/* Mobile Menu */}
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="outline" size="icon" className="md:hidden">
+                  <Button variant="outline" size="icon" title="Open menu">
                     {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                   </Button>
                 </SheetTrigger>

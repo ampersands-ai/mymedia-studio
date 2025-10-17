@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2, Clock, Info, Camera } from "lucide-react";
+import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2, Clock, Info, Camera, Share2, RefreshCw, CheckCircle2 } from "lucide-react";
 import { useNativeCamera } from "@/hooks/useNativeCamera";
 import { triggerHaptic } from "@/utils/capacitor-utils";
 
@@ -129,6 +129,9 @@ const CustomCreation = () => {
   const [generationCompleteTime, setGenerationCompleteTime] = useState<number | null>(null);
   const { progress, updateProgress, markComplete, dismiss, setFirstGeneration } = useOnboarding();
   const [showConfetti, setShowConfetti] = useState(false);
+  const outputSectionRef = useRef<HTMLDivElement>(null);
+  const [captionExpanded, setCaptionExpanded] = useState(false);
+  const [hashtagsExpanded, setHashtagsExpanded] = useState(false);
 
   // Filter models by selected group
   const filteredModels = allModels?.filter(model => {
@@ -296,8 +299,17 @@ const CustomCreation = () => {
           setGeneratedOutputs(allOutputs);
           setGeneratedOutput(parentData.storage_path); // For backward compat
           setGenerationCompleteTime(Date.now());
-          toast.success(`Generation complete! ${allOutputs.length} output${allOutputs.length > 1 ? 's' : ''} created.`, { 
-            id: 'generation-progress' 
+          
+          // Auto-scroll to output section on mobile
+          setTimeout(() => {
+            if (outputSectionRef.current && window.innerWidth < 1024) {
+              outputSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 300);
+          
+          toast.success('✨ Your creation is ready!', { 
+            id: 'generation-progress',
+            description: `${allOutputs.length} output${allOutputs.length > 1 ? 's' : ''} generated successfully`
           });
 
           // Generate caption if checkbox was checked
@@ -830,8 +842,8 @@ const CustomCreation = () => {
         {/* Mobile-First Layout - Stacked vertically on mobile, side-by-side on desktop */}
         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
           {/* Input Panel */}
-          <Card className="bg-card border border-border shadow-sm order-1">
-            <div className="border-b px-4 md:px-6 py-3 md:py-4 bg-muted/30">
+          <Card className="bg-card border border-gray-200 shadow-sm rounded-xl order-1">
+            <div className="border-b border-gray-200 px-4 md:px-6 py-3 md:py-4 bg-muted/30">
               <h2 className="text-base md:text-lg font-bold">Input</h2>
             </div>
 
@@ -1246,15 +1258,15 @@ const CustomCreation = () => {
           </Card>
 
           {/* Output Panel */}
-          <Card className="bg-card border order-2">
-            <div className="border-b px-4 md:px-6 py-3 md:py-4 bg-muted/30">
+          <Card ref={outputSectionRef} className="bg-card border border-gray-200 shadow-sm rounded-xl order-2">
+            <div className="border-b border-gray-200 px-4 md:px-6 py-3 md:py-4 bg-muted/30">
               <h2 className="text-base md:text-lg font-bold">Output</h2>
             </div>
 
             <div className="p-4 md:p-6">
               {(localGenerating || isGenerating || pollingGenerationId || generatedOutput) && generationStartTimeRef.current ? (
                 <div className="space-y-4">
-                  <Card className="border-2 border-primary/20 bg-muted/50">
+                  <Card className="border border-gray-200 shadow-sm bg-muted/50 rounded-xl">
                     <CardContent className="p-4 space-y-4">
                       <div className="flex items-start gap-2">
                         <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
@@ -1301,99 +1313,166 @@ const CustomCreation = () => {
                             }}
                           />
 
+                          {/* Action Buttons Row */}
+                          {generatedOutputs.length > 0 && (
+                            <div className="grid grid-cols-3 gap-2 md:gap-3 animate-fade-in">
+                              <Button
+                                onClick={async () => {
+                                  await downloadMultipleOutputs(
+                                    generatedOutputs,
+                                    selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type || "image"
+                                  );
+                                }}
+                                className="w-full bg-primary-500 hover:bg-primary-600 text-neutral-900 font-bold border border-primary-600 shadow-sm hover:shadow-md transition-all"
+                                size="default"
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                Download
+                              </Button>
+                              <Button
+                                onClick={() => {
+                                  // TODO: Implement share functionality
+                                  toast.info("Share feature coming soon!");
+                                }}
+                                variant="outline"
+                                className="w-full border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all"
+                                size="default"
+                              >
+                                <Share2 className="h-4 w-4 mr-2" />
+                                Share
+                              </Button>
+                              <Button
+                                onClick={handleGenerate}
+                                variant="outline"
+                                disabled={localGenerating || isGenerating || !!pollingGenerationId}
+                                className="w-full border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all"
+                                size="default"
+                              >
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                                Regenerate
+                              </Button>
+                            </div>
+                          )}
+
                           {/* Caption & Hashtags Display */}
                           {captionData && (
-                            <Card className="bg-muted/50 border-2">
+                            <Card className="bg-muted/50 border border-gray-200 shadow-sm animate-fade-in">
                               <CardContent className="pt-6">
-                                <Collapsible defaultOpen>
-                                  <CollapsibleTrigger className="flex items-center justify-between w-full group">
-                                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                                      <Sparkles className="h-5 w-5 text-primary" />
-                                      Caption & Hashtags
+                                {/* Caption Section */}
+                                <div className="mb-4">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h3 className="text-sm font-semibold flex items-center gap-2">
+                                      <Sparkles className="h-4 w-4 text-primary" />
+                                      Caption
                                     </h3>
-                                    <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]:rotate-90" />
-                                  </CollapsibleTrigger>
-                                  
-                                  <CollapsibleContent className="mt-4 space-y-4">
-                                    {/* Caption Section */}
-                                    <div>
-                                      <div className="flex items-center justify-between mb-2">
-                                        <label className="text-sm font-medium">Caption</label>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => {
-                                            navigator.clipboard.writeText(captionData.caption);
-                                            toast.success("Caption copied!");
-                                          }}
-                                        >
-                                          Copy
-                                        </Button>
-                                      </div>
-                                      <p className="text-sm bg-background p-3 rounded-md border">
-                                        {captionData.caption}
-                                      </p>
-                                    </div>
-                                    
-                                    {/* Hashtags Section */}
-                                    <div>
-                                      <div className="flex items-center justify-between mb-2">
-                                        <label className="text-sm font-medium">
-                                          Hashtags ({captionData.hashtags.length})
-                                        </label>
-                                        <div className="flex gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(captionData.caption);
+                                        toast.success("Caption copied!");
+                                      }}
+                                      className="h-8 text-xs"
+                                    >
+                                      Copy
+                                    </Button>
+                                  </div>
+                                  <div className="text-sm bg-background p-3 rounded-md border border-gray-200">
+                                    {captionExpanded ? (
+                                      <>
+                                        <p>{captionData.caption}</p>
+                                        {captionData.caption.split('\n').length > 2 && (
                                           <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => {
-                                              const hashtagText = captionData.hashtags.join(' ');
-                                              navigator.clipboard.writeText(hashtagText);
-                                              toast.success("All hashtags copied!");
-                                            }}
+                                            onClick={() => setCaptionExpanded(false)}
+                                            className="mt-2 h-7 text-xs text-primary hover:text-primary/80"
                                           >
-                                            Copy All
+                                            Show less
                                           </Button>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <>
+                                        <p className="line-clamp-2">{captionData.caption}</p>
+                                        {captionData.caption.split('\n').length > 2 && (
                                           <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={async () => {
-                                              setIsGeneratingCaption(true);
-                                              try {
-                                                const selectedModelData = filteredModels.find(m => m.record_id === selectedModel);
-                                                const { data: captionResult, error: captionError } = await supabase.functions.invoke('generate-caption', {
-                                                  body: {
-                                                    generation_id: generatedOutputs[0].id,
-                                                    prompt: prompt,
-                                                    content_type: selectedModelData?.content_type || 'image',
-                                                    model_name: selectedModelData?.model_name || 'AI Model'
-                                                  }
-                                                });
-                                                
-                                                if (captionError) throw captionError;
-                                                
-                                                setCaptionData({
-                                                  caption: captionResult.caption,
-                                                  hashtags: captionResult.hashtags,
-                                                  generated_at: captionResult.generated_at
-                                                });
-                                                
-                                                toast.success("Caption regenerated!");
-                                              } catch (err) {
-                                                console.error("Caption regeneration failed:", err);
-                                                toast.error("Failed to regenerate caption");
-                                              } finally {
-                                                setIsGeneratingCaption(false);
+                                            onClick={() => setCaptionExpanded(true)}
+                                            className="mt-2 h-7 text-xs text-primary hover:text-primary/80"
+                                          >
+                                            Read more
+                                          </Button>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                {/* Hashtags Section */}
+                                <div>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h3 className="text-sm font-semibold">
+                                      Hashtags ({captionData.hashtags.length})
+                                    </h3>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                          const hashtagText = captionData.hashtags.join(' ');
+                                          navigator.clipboard.writeText(hashtagText);
+                                          toast.success("All hashtags copied!");
+                                        }}
+                                        className="h-8 text-xs"
+                                      >
+                                        Copy All
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={async () => {
+                                          setIsGeneratingCaption(true);
+                                          try {
+                                            const selectedModelData = filteredModels.find(m => m.record_id === selectedModel);
+                                            const { data: captionResult, error: captionError } = await supabase.functions.invoke('generate-caption', {
+                                              body: {
+                                                generation_id: generatedOutputs[0].id,
+                                                prompt: prompt,
+                                                content_type: selectedModelData?.content_type || 'image',
+                                                model_name: selectedModelData?.model_name || 'AI Model'
                                               }
-                                            }}
-                                            disabled={isGeneratingCaption}
-                                          >
-                                            {isGeneratingCaption ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : null}
-                                            Regenerate
-                                          </Button>
-                                        </div>
-                                      </div>
-                                      
-                                      <div className="bg-background p-3 rounded-md border">
+                                            });
+                                            
+                                            if (captionError) throw captionError;
+                                            
+                                            setCaptionData({
+                                              caption: captionResult.caption,
+                                              hashtags: captionResult.hashtags,
+                                              generated_at: captionResult.generated_at
+                                            });
+                                            
+                                            toast.success("Caption regenerated!");
+                                          } catch (err) {
+                                            console.error("Caption regeneration failed:", err);
+                                            toast.error("Failed to regenerate caption");
+                                          } finally {
+                                            setIsGeneratingCaption(false);
+                                          }
+                                        }}
+                                        disabled={isGeneratingCaption}
+                                        className="h-8 text-xs"
+                                      >
+                                        {isGeneratingCaption ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : null}
+                                        Regenerate
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="bg-background p-3 rounded-md border border-gray-200">
+                                    {hashtagsExpanded ? (
+                                      <>
                                         <div className="flex flex-wrap gap-2">
                                           {captionData.hashtags.map((tag, idx) => (
                                             <Badge
@@ -1409,20 +1488,58 @@ const CustomCreation = () => {
                                             </Badge>
                                           ))}
                                         </div>
-                                      </div>
-                                      
-                                      <p className="text-xs text-muted-foreground mt-2">
-                                        Generated {new Date(captionData.generated_at).toLocaleString()}
-                                      </p>
-                                    </div>
-                                  </CollapsibleContent>
-                                </Collapsible>
+                                        {captionData.hashtags.length > 5 && (
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setHashtagsExpanded(false)}
+                                            className="mt-2 h-7 text-xs text-primary hover:text-primary/80"
+                                          >
+                                            Show less
+                                          </Button>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <>
+                                        <div className="flex flex-wrap gap-2">
+                                          {captionData.hashtags.slice(0, 5).map((tag, idx) => (
+                                            <Badge
+                                              key={idx}
+                                              variant="secondary"
+                                              className="cursor-pointer hover:bg-primary/20 transition-colors"
+                                              onClick={() => {
+                                                navigator.clipboard.writeText(tag);
+                                                toast.success(`Copied ${tag}`);
+                                              }}
+                                            >
+                                              {tag}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                        {captionData.hashtags.length > 5 && (
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setHashtagsExpanded(true)}
+                                            className="mt-2 h-7 text-xs text-primary hover:text-primary/80"
+                                          >
+                                            Show all {captionData.hashtags.length} hashtags
+                                          </Button>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                  
+                                  <p className="text-xs text-muted-foreground mt-2">
+                                    Generated {new Date(captionData.generated_at).toLocaleString()}
+                                  </p>
+                                </div>
                               </CardContent>
                             </Card>
                           )}
 
                           {isGeneratingCaption && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground animate-fade-in">
                               <Loader2 className="h-4 w-4 animate-spin" />
                               Generating caption and hashtags...
                             </div>
@@ -1431,7 +1548,7 @@ const CustomCreation = () => {
                           <Button
                             onClick={() => navigate("/dashboard/history")}
                             variant="outline"
-                            className="w-full"
+                            className="w-full border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all"
                             size="sm"
                           >
                             <History className="h-4 w-4 mr-2" />
@@ -1509,7 +1626,7 @@ const CustomCreation = () => {
 
 
         {/* Best Practices Section */}
-        <Card className="bg-card border">
+        <Card className="bg-card border border-gray-200 shadow-sm rounded-xl">
           <div className="p-4 md:p-6">
             <h3 className="text-lg md:text-xl font-black mb-4 flex items-center gap-2">
               <Sparkles className="h-5 w-5" />

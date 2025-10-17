@@ -76,10 +76,6 @@ const CustomCreation = () => {
     return (saved as CreationGroup) || "prompt_to_image";
   });
 
-  useEffect(() => {
-    localStorage.setItem('customCreation_selectedGroup', selectedGroup);
-  }, [selectedGroup]);
-
   const { data: allModels, isLoading: modelsLoading } = useModels();
   const { generate, isGenerating, error, clearError } = useGeneration();
   const [prompt, setPrompt] = useState("");
@@ -89,8 +85,26 @@ const CustomCreation = () => {
   const [resolution, setResolution] = useState<"Native" | "HD">("Native");
   const [generatedOutput, setGeneratedOutput] = useState<string | null>(null);
   const [estimatedTokens, setEstimatedTokens] = useState(50);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(() => {
+    const saved = localStorage.getItem('customCreation_advancedOpen');
+    return saved === 'true';
+  });
+  const advancedOptionsRef = useRef<HTMLDivElement>(null);
   const [enhancePrompt, setEnhancePrompt] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('customCreation_selectedGroup', selectedGroup);
+  }, [selectedGroup]);
+
+  useEffect(() => {
+    localStorage.setItem('customCreation_advancedOpen', advancedOpen.toString());
+    // Auto-scroll to Advanced Options when opened on mobile
+    if (advancedOpen && advancedOptionsRef.current && window.innerWidth < 768) {
+      setTimeout(() => {
+        advancedOptionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    }
+  }, [advancedOpen]);
   const [generateCaption, setGenerateCaption] = useState(false);
   const [captionData, setCaptionData] = useState<{
     caption: string;
@@ -821,7 +835,7 @@ const CustomCreation = () => {
               <h2 className="text-base md:text-lg font-bold">Input</h2>
             </div>
 
-            <div className="p-4 md:p-8 space-y-6">
+            <div className="p-4 md:p-8 space-y-6 pb-32 md:pb-8">
               {/* Model Selection */}
               {filteredModels.length > 0 && (
                 <div className="space-y-2">
@@ -1091,14 +1105,23 @@ const CustomCreation = () => {
 
 
               {/* Collapsible Advanced Options */}
-              <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-                <CollapsibleTrigger asChild>
-                  <Button variant="outline" className="w-full h-11 md:h-10">
-                    Advanced Options
-                    <ChevronRight className={`h-4 w-4 ml-2 transition-transform ${advancedOpen ? 'rotate-90' : ''}`} />
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-4 mt-4">
+              <div ref={advancedOptionsRef}>
+                <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full h-14 md:h-10 border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all"
+                    >
+                      <span className="font-semibold">Advanced Options</span>
+                      {Object.keys(modelParameters).length > 0 && (
+                        <Badge variant="secondary" className="ml-2 text-xs">
+                          {Object.keys(modelParameters).length}
+                        </Badge>
+                      )}
+                      <ChevronRight className={`h-4 w-4 ml-auto transition-transform ${advancedOpen ? 'rotate-90' : ''}`} />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-4 mt-4">
                   {/* Dynamic Model Parameters */}
                   {selectedModel && filteredModels && (() => {
                     const currentModel = filteredModels.find(m => m.record_id === selectedModel);
@@ -1134,6 +1157,7 @@ const CustomCreation = () => {
                   })()}
                 </CollapsibleContent>
               </Collapsible>
+              </div>
 
                {/* Action Buttons */}
                <div className="hidden md:flex flex-col gap-2">
@@ -1186,7 +1210,7 @@ const CustomCreation = () => {
               </div>
               
               {/* Mobile Sticky Generate Button */}
-              <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t-4 border-black z-40">
+              <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t-4 border-black z-40 safe-area-padding-bottom">
                 <Button 
                   onClick={handleGenerate} 
                   disabled={

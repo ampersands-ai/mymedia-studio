@@ -46,16 +46,11 @@ const IndexV2 = () => {
       <header className="sticky top-0 z-50 bg-background border-b-4 border-black">
         <div className="container mx-auto px-4 py-4">
           <nav className="flex items-center justify-between gap-4">
-            {/* Mobile Menu - Left side */}
-            <div className="flex items-center gap-2">
-              <MobileMenu tokenBalance={tokenBalance} />
-              
-              {/* Logo */}
-              <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            {/* Logo - Left side */}
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <img src={logoImage} alt="artifio.ai logo" className="h-6 md:h-8 object-contain" />
-                <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
-              </Link>
-            </div>
+              <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
+            </Link>
 
             {/* Desktop Navigation - Center/Right */}
             <div className="hidden md:flex items-center gap-6">
@@ -89,6 +84,7 @@ const IndexV2 = () => {
                   </Button>
                 </>
               )}
+              <MobileMenu tokenBalance={tokenBalance} />
             </div>
           </nav>
         </div>

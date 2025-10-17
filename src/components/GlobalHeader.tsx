@@ -54,7 +54,6 @@ export const GlobalHeader = () => {
 
           {/* Left Side - Logo + Navigation */}
           <div className="flex items-center gap-3 md:gap-4">
-            <MobileMenu tokenBalance={tokenBalance ?? undefined} />
             <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <img 
                 src={logo} 
@@ -281,6 +280,8 @@ export const GlobalHeader = () => {
                 Admin
               </Button>
             )}
+            
+            <MobileMenu tokenBalance={tokenBalance ?? undefined} />
           </div>
 
           {/* Mobile - Token Balance Only */}

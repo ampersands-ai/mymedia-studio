@@ -48,9 +48,7 @@ const IndexV2 = () => {
           <nav className="flex items-center justify-between gap-4">
             {/* Mobile Menu - Left side */}
             <div className="flex items-center gap-2">
-              <div className="md:hidden">
-                <MobileMenu tokenBalance={tokenBalance} />
-              </div>
+              <MobileMenu tokenBalance={tokenBalance} />
               
               {/* Logo */}
               <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">

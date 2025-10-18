@@ -1344,11 +1344,16 @@ const CustomCreation = () => {
                         </p>
                       </div>
 
-                      <GenerationProgress
-                        startTime={generationStartTimeRef.current}
-                        isComplete={!!generatedOutput}
-                        completedAt={generationCompleteTime || undefined}
-                      />
+              <GenerationProgress
+                startTime={generationStartTimeRef.current}
+                isComplete={!!generatedOutput}
+                completedAt={generationCompleteTime || undefined}
+                estimatedTimeSeconds={
+                  selectedModel 
+                    ? filteredModels.find(m => m.record_id === selectedModel)?.estimated_time_seconds 
+                    : null
+                }
+              />
 
                       {generatedOutputs.length > 0 ? (
                         <div className="space-y-3 pt-2">

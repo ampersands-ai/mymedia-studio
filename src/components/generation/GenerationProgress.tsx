@@ -8,13 +8,15 @@ interface GenerationProgressProps {
   isComplete: boolean;
   completedAt?: number;
   className?: string;
+  estimatedTimeSeconds?: number | null;
 }
 
 export const GenerationProgress = ({ 
   startTime, 
   isComplete, 
   completedAt,
-  className 
+  className,
+  estimatedTimeSeconds
 }: GenerationProgressProps) => {
   const [progress, setProgress] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -32,11 +34,14 @@ export const GenerationProgress = ({
       const elapsed = Date.now() - startTime;
       const elapsedSeconds = elapsed / 1000;
       
-      // Linear progression from 0% to 90% over 60 seconds
-      if (elapsedSeconds <= 60) {
-        setProgress(Math.floor((elapsedSeconds / 60) * 90));
+      // Calculate target time with minimum of 60 seconds
+      const targetTime = Math.max(estimatedTimeSeconds || 60, 60);
+      
+      // Linear progression from 0% to 90% over targetTime seconds
+      if (elapsedSeconds <= targetTime) {
+        setProgress(Math.floor((elapsedSeconds / targetTime) * 90));
       } else {
-        // Stay at 90% after 60 seconds
+        // Stay at 90% after targetTime seconds
         setProgress(90);
       }
       
@@ -44,7 +49,7 @@ export const GenerationProgress = ({
     }, 100); // Update every 100ms for smooth animation
 
     return () => clearInterval(interval);
-  }, [startTime, isComplete, completedAt]);
+  }, [startTime, isComplete, completedAt, estimatedTimeSeconds]);
 
   return (
     <div className={cn("space-y-3", className)}>

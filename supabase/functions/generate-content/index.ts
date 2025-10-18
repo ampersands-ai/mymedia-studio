@@ -60,7 +60,9 @@ serve(async (req) => {
       prompt, 
       custom_parameters = {},
       enhance_prompt = false,
-      enhancement_provider = 'lovable_ai'
+      enhancement_provider = 'lovable_ai',
+      workflow_execution_id,
+      workflow_step_number,
     } = await req.json();
 
     console.log('Generation request:', { user_id: user.id, template_id, model_id, model_record_id, enhance_prompt });
@@ -404,7 +406,9 @@ let validatedParameters = validateAndFilterParameters(
           tokens_used: tokenCost,
           actual_token_cost: tokenCost,
           status: 'pending',
-          provider_task_id: null
+          provider_task_id: null,
+          workflow_execution_id: workflow_execution_id || null,
+          workflow_step_number: workflow_step_number || null
         })
         .select()
         .single();

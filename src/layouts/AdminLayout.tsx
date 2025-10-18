@@ -41,9 +41,10 @@ export const AdminLayout = () => {
             {[
               { path: "/admin/dashboard", label: "Overview", icon: BarChart3 },
               { path: "/admin/analytics", label: "Analytics", icon: TrendingUp },
-              { path: "/admin/models", label: "AI Models", icon: Database },
-              { path: "/admin/templates", label: "Templates", icon: FileText },
-              { path: "/admin/users", label: "Users", icon: Users },
+            { path: "/admin/models", label: "AI Models", icon: Database },
+            { path: "/admin/templates", label: "Templates", icon: FileText },
+            { path: "/admin/workflows", label: "Workflows", icon: Sparkles },
+            { path: "/admin/users", label: "Users", icon: Users },
               { path: "/admin/generations", label: "All Generations", icon: Image },
               { path: "/admin/disputes", label: "Token Disputes", icon: Flag },
               { path: "/admin/threshold-breach", label: "Threshold Breach", icon: AlertTriangle },

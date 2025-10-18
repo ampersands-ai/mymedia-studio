@@ -33,6 +33,7 @@ const AdminLayout = lazy(() => import("./layouts/AdminLayout").then(m => ({ defa
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AIModelsManager = lazy(() => import("./pages/admin/AIModelsManager"));
 const TemplatesManager = lazy(() => import("./pages/admin/TemplatesManager"));
+const WorkflowTemplateManager = lazy(() => import("./pages/admin/WorkflowTemplateManager"));
 const UsersManager = lazy(() => import("./pages/admin/UsersManager"));
 const AllGenerations = lazy(() => import("./pages/admin/AllGenerations"));
 const TokenDisputes = lazy(() => import("./pages/admin/TokenDisputes").then(m => ({ default: m.TokenDisputes })));
@@ -100,6 +101,7 @@ const AppContent = () => {
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="models" element={<AIModelsManager />} />
             <Route path="templates" element={<TemplatesManager />} />
+            <Route path="workflows" element={<WorkflowTemplateManager />} />
             <Route path="users" element={<UsersManager />} />
             <Route path="generations" element={<AllGenerations />} />
             <Route path="disputes" element={<TokenDisputes />} />

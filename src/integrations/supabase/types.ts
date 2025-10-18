@@ -294,6 +294,8 @@ export type Database = {
           tokens_used: number
           type: string
           user_id: string
+          workflow_execution_id: string | null
+          workflow_step_number: number | null
         }
         Insert: {
           actual_token_cost?: number | null
@@ -323,6 +325,8 @@ export type Database = {
           tokens_used: number
           type: string
           user_id: string
+          workflow_execution_id?: string | null
+          workflow_step_number?: number | null
         }
         Update: {
           actual_token_cost?: number | null
@@ -352,6 +356,8 @@ export type Database = {
           tokens_used?: number
           type?: string
           user_id?: string
+          workflow_execution_id?: string | null
+          workflow_step_number?: number | null
         }
         Relationships: [
           {
@@ -380,6 +386,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generations_workflow_execution_id_fkey"
+            columns: ["workflow_execution_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_executions"
             referencedColumns: ["id"]
           },
         ]
@@ -849,6 +862,110 @@ export type Database = {
           id?: string
           idempotency_key?: string
           processed_at?: string
+        }
+        Relationships: []
+      }
+      workflow_executions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_step: number | null
+          error_message: string | null
+          final_output_url: string | null
+          generation_ids: string[] | null
+          id: string
+          status: string
+          step_outputs: Json | null
+          tokens_used: number | null
+          total_steps: number
+          user_id: string
+          user_inputs: Json
+          workflow_template_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_step?: number | null
+          error_message?: string | null
+          final_output_url?: string | null
+          generation_ids?: string[] | null
+          id?: string
+          status?: string
+          step_outputs?: Json | null
+          tokens_used?: number | null
+          total_steps: number
+          user_id: string
+          user_inputs: Json
+          workflow_template_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_step?: number | null
+          error_message?: string | null
+          final_output_url?: string | null
+          generation_ids?: string[] | null
+          id?: string
+          status?: string
+          step_outputs?: Json | null
+          tokens_used?: number | null
+          total_steps?: number
+          user_id?: string
+          user_inputs?: Json
+          workflow_template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_executions_workflow_template_id_fkey"
+            columns: ["workflow_template_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_templates: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          display_order: number | null
+          estimated_time_seconds: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          thumbnail_url: string | null
+          updated_at: string
+          user_input_fields: Json | null
+          workflow_steps: Json
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          estimated_time_seconds?: number | null
+          id: string
+          is_active?: boolean | null
+          name: string
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_input_fields?: Json | null
+          workflow_steps?: Json
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          estimated_time_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_input_fields?: Json | null
+          workflow_steps?: Json
         }
         Relationships: []
       }

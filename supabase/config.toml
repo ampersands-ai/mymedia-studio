@@ -41,3 +41,6 @@ verify_jwt = true
 
 [functions.generate-caption]
 verify_jwt = true
+
+[functions.workflow-executor]
+verify_jwt = true

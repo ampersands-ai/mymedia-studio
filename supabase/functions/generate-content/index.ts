@@ -313,6 +313,25 @@ let validatedParameters = validateAndFilterParameters(
 
     validatedParameters = coerceParametersBySchema(validatedParameters, model.input_schema);
 
+    // Inject MP4/H.264 defaults for video jobs to maximize mobile compatibility
+    if (model.content_type === 'video') {
+      const videoDefaults = {
+        output_format: 'mp4',
+        format: 'mp4',
+        container: 'mp4',
+        video_codec: 'h264',
+        audio_codec: 'aac'
+      };
+      
+      for (const [key, value] of Object.entries(videoDefaults)) {
+        if (validatedParameters[key] === undefined) {
+          validatedParameters[key] = value;
+        }
+      }
+      
+      console.log('Applied video format defaults for mobile compatibility');
+    }
+
     // Calculate token cost with validated parameters
     const tokenCost = calculateTokenCost(
       model.base_token_cost,

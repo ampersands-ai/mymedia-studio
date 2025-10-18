@@ -36,7 +36,7 @@ serve(async (req) => {
       );
     }
 
-    const { state, resultJson, failMsg, video_url } = payload.data || {};
+    const { state, resultJson, failMsg, video_url, consumeCredits, remainedCredits, costTime } = payload.data || {};
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -102,6 +102,8 @@ serve(async (req) => {
           provider_response: {
             error: sanitizedError,
             error_type: 'provider_failure',
+            kie_credits_consumed: consumeCredits || 0, // Should be 0 on failure
+            kie_credits_remaining: remainedCredits || null,
             timestamp: new Date().toISOString()
           }
         })
@@ -230,7 +232,15 @@ serve(async (req) => {
           status: 'completed',
           storage_path: storagePath,
           file_size_bytes: output_data.length,
-          provider_response: payload,
+          provider_response: {
+            ...payload,
+            // Extract key metrics for easy querying
+            kie_credits_consumed: consumeCredits || null,
+            kie_credits_remaining: remainedCredits || null,
+            kie_processing_time_seconds: costTime || null,
+            our_tokens_charged: generation.tokens_used, // For comparison
+            timestamp: new Date().toISOString()
+          },
           output_index: 0,
           is_batch_output: resultUrls.length > 1
         })
@@ -242,6 +252,16 @@ serve(async (req) => {
       }
 
       console.log('Generation completed successfully:', generation.id);
+
+      // Compare our token calculation with Kie's actual charges
+      if (consumeCredits !== undefined && consumeCredits !== generation.tokens_used) {
+        console.warn('Credit mismatch detected:', {
+          generation_id: generation.id,
+          our_tokens: generation.tokens_used,
+          kie_credits: consumeCredits,
+          difference: Math.abs(generation.tokens_used - consumeCredits)
+        });
+      }
 
       // Process additional outputs (2nd, 3rd, etc.)
       if (resultUrls.length > 1) {

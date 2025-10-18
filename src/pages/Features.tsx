@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -116,7 +117,7 @@ const Features = () => {
                             )}
                             
                             <Button asChild className="w-full mt-4" variant="outline">
-                              <a href="/dashboard/create">Try Now</a>
+                              <Link to="/dashboard/create">Try Now</Link>
                             </Button>
                           </div>
                         </CardContent>
@@ -172,7 +173,7 @@ const Features = () => {
                 Start exploring all our AI features today
               </p>
               <Button asChild size="lg" variant="neon">
-                <a href="/dashboard/create">Start Creating</a>
+                <Link to="/dashboard/create">Start Creating</Link>
               </Button>
               <p className="text-sm text-muted-foreground mt-4">
                 500 free tokens • No credit card required

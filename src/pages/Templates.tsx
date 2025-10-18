@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,7 +8,6 @@ import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
 import { useTemplatesByCategory } from "@/hooks/useTemplates";
 import { Sparkles, Image as ImageIcon, Video, Music, FileText } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 const Templates = () => {
   const { templatesByCategory, templates, isLoading } = useTemplatesByCategory();
@@ -160,10 +160,10 @@ const Templates = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" variant="neon">
-                  <a href="/dashboard/create">Start Creating</a>
+                  <Link to="/dashboard/create">Start Creating</Link>
                 </Button>
                 <Button asChild size="lg" variant="outline">
-                  <a href="/features">View All Features</a>
+                  <Link to="/features">View All Features</Link>
                 </Button>
               </div>
             </CardContent>

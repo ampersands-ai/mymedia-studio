@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,8 @@ export const FeatureShowcase = ({
   visual,
   reversed = false,
 }: FeatureShowcaseProps) => {
+  const isInternal = ctaLink?.startsWith("/");
+  
   return (
     <div
       className={cn(
@@ -42,7 +45,11 @@ export const FeatureShowcase = ({
           ))}
         </ul>
         <Button asChild variant="default" size="lg">
-          <a href={ctaLink}>{ctaText}</a>
+          {isInternal ? (
+            <Link to={ctaLink}>{ctaText}</Link>
+          ) : (
+            <a href={ctaLink}>{ctaText}</a>
+          )}
         </Button>
       </div>
       <div className={cn("brutalist-card p-8", reversed && "md:col-start-1")}>

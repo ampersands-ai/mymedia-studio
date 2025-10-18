@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { GlobalHeader } from "@/components/GlobalHeader";
@@ -129,7 +130,7 @@ const About = () => {
                 Join thousands of creators using Artifio to bring their ideas to life
               </p>
               <Button asChild size="lg" variant="neon">
-                <a href="/auth">Try Artifio Free</a>
+                <Link to="/auth">Try Artifio Free</Link>
               </Button>
               <p className="text-sm text-muted-foreground mt-4">
                 500 free tokens • No credit card required

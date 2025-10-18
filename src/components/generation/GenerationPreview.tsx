@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useNativeShare } from "@/hooks/useNativeShare";
 import { useNativeDownload } from "@/hooks/useNativeDownload";
 import { triggerHaptic } from "@/utils/capacitor-utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface GenerationPreviewProps {
   storagePath: string;
@@ -19,6 +20,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
   const { signedUrl, isLoading, error } = useSignedUrl(storagePath);
   const { shareFile, canShare } = useNativeShare();
   const { downloadFile, isNative } = useNativeDownload();
+  const isMobile = useIsMobile();
   const [videoError, setVideoError] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [audioError, setAudioError] = useState(false);
@@ -188,16 +190,20 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
   }
 
   if (contentType === "video") {
+    // Use direct signed URL on mobile for better compatibility
+    const videoSrc = isMobile || !signedUrl 
+      ? signedUrl 
+      : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stream-content?bucket=generated-content&path=${encodeURIComponent(storagePath)}`;
+    
     return (
       <div className="relative group">
         <video
-          src={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stream-content?bucket=generated-content&path=${encodeURIComponent(storagePath)}`}
+          src={videoSrc}
           className={cn(className, "animate-fade-in")}
           controls
           preload="metadata"
           playsInline
           muted
-          crossOrigin="anonymous"
           onError={() => {
             console.error('Video playback error for:', storagePath);
             setVideoError(true);

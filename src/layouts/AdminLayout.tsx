@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Outlet, useNavigate, Link, useLocation, Navigate } from "react-router-dom";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useAuth } from "@/contexts/AuthContext";
-import { Sparkles, Database, FileText, Users, BarChart3, Loader2, Image, Flag, TrendingUp } from "lucide-react";
+import { Sparkles, Database, FileText, Users, BarChart3, Loader2, Image, Flag, TrendingUp, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Footer } from "@/components/Footer";
 
@@ -46,6 +46,7 @@ export const AdminLayout = () => {
               { path: "/admin/users", label: "Users", icon: Users },
               { path: "/admin/generations", label: "All Generations", icon: Image },
               { path: "/admin/disputes", label: "Token Disputes", icon: Flag },
+              { path: "/admin/threshold-breach", label: "Threshold Breach", icon: AlertTriangle },
             ].map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;

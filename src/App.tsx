@@ -37,6 +37,7 @@ const UsersManager = lazy(() => import("./pages/admin/UsersManager"));
 const AllGenerations = lazy(() => import("./pages/admin/AllGenerations"));
 const TokenDisputes = lazy(() => import("./pages/admin/TokenDisputes").then(m => ({ default: m.TokenDisputes })));
 const AnalyticsDashboard = lazy(() => import("./pages/admin/Analytics"));
+const ThresholdBreach = lazy(() => import("./pages/admin/ThresholdBreach"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -103,6 +104,7 @@ const AppContent = () => {
             <Route path="generations" element={<AllGenerations />} />
             <Route path="disputes" element={<TokenDisputes />} />
             <Route path="analytics" element={<AnalyticsDashboard />} />
+            <Route path="threshold-breach" element={<ThresholdBreach />} />
           </Route>
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/privacy" element={<Privacy />} />

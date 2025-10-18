@@ -384,6 +384,68 @@ export type Database = {
           },
         ]
       }
+      kie_credit_audits: {
+        Row: {
+          api_callback_payload: Json
+          api_callback_received_at: string
+          api_request_payload: Json
+          api_request_sent_at: string
+          created_at: string | null
+          credit_multiplier: number | null
+          generation_id: string
+          id: string
+          is_threshold_breach: boolean | null
+          kie_credits_consumed: number
+          kie_credits_remaining: number | null
+          model_id: string
+          our_tokens_charged: number
+          processing_time_seconds: number | null
+          task_status: string
+        }
+        Insert: {
+          api_callback_payload: Json
+          api_callback_received_at: string
+          api_request_payload: Json
+          api_request_sent_at: string
+          created_at?: string | null
+          credit_multiplier?: number | null
+          generation_id: string
+          id?: string
+          is_threshold_breach?: boolean | null
+          kie_credits_consumed: number
+          kie_credits_remaining?: number | null
+          model_id: string
+          our_tokens_charged: number
+          processing_time_seconds?: number | null
+          task_status: string
+        }
+        Update: {
+          api_callback_payload?: Json
+          api_callback_received_at?: string
+          api_request_payload?: Json
+          api_request_sent_at?: string
+          created_at?: string | null
+          credit_multiplier?: number | null
+          generation_id?: string
+          id?: string
+          is_threshold_breach?: boolean | null
+          kie_credits_consumed?: number
+          kie_credits_remaining?: number | null
+          model_id?: string
+          our_tokens_charged?: number
+          processing_time_seconds?: number | null
+          task_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kie_credit_audits_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: true
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           country: string | null

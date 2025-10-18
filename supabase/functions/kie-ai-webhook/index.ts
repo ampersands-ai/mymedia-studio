@@ -121,6 +121,28 @@ serve(async (req) => {
 
       console.log('Tokens refunded:', generation.tokens_used);
 
+      // Insert audit record for failed generation
+      const { error: auditError } = await supabase
+        .from('kie_credit_audits')
+        .insert({
+          generation_id: generation.id,
+          api_request_payload: generation.provider_request || {},
+          api_request_sent_at: generation.created_at,
+          api_callback_payload: payload,
+          api_callback_received_at: new Date().toISOString(),
+          kie_credits_consumed: consumeCredits || 0,
+          kie_credits_remaining: remainedCredits,
+          our_tokens_charged: generation.tokens_used,
+          model_id: generation.model_id || 'unknown',
+          task_status: 'failed',
+          processing_time_seconds: 0
+        });
+
+      if (auditError) {
+        console.error('Failed to insert credit audit (failure):', auditError);
+        // Don't fail the webhook response, just log
+      }
+
       return new Response(
         JSON.stringify({ success: true, message: 'Generation marked as failed' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -261,6 +283,28 @@ serve(async (req) => {
           kie_credits: consumeCredits,
           difference: Math.abs(generation.tokens_used - consumeCredits)
         });
+      }
+
+      // Insert audit record for credit tracking
+      const { error: auditError } = await supabase
+        .from('kie_credit_audits')
+        .insert({
+          generation_id: generation.id,
+          api_request_payload: generation.provider_request || {},
+          api_request_sent_at: generation.created_at,
+          api_callback_payload: payload,
+          api_callback_received_at: new Date().toISOString(),
+          kie_credits_consumed: consumeCredits || 0,
+          kie_credits_remaining: remainedCredits,
+          our_tokens_charged: generation.tokens_used,
+          model_id: generation.model_id || 'unknown',
+          task_status: 'success',
+          processing_time_seconds: costTime
+        });
+
+      if (auditError) {
+        console.error('Failed to insert credit audit (success):', auditError);
+        // Don't fail the generation, just log
       }
 
       // Process additional outputs (2nd, 3rd, etc.)

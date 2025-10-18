@@ -676,7 +676,7 @@ const History = () => {
 
       {/* Preview Dialog */}
       <Dialog open={!!previewGeneration} onOpenChange={() => setPreviewGeneration(null)}>
-        <DialogContent className="sm:max-w-3xl" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="font-black flex items-center justify-between">
               <div className="flex items-center gap-2">

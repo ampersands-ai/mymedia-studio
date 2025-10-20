@@ -90,43 +90,48 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting }:
       imageUrls.push(signedData.signedUrl);
     }
 
-    // Determine if parameter expects array by checking model schema (same as Custom Creation)
-    const firstStep = workflow.workflow_steps?.[0];
-    if (firstStep?.model_record_id) {
-      const { data: modelData } = await supabase
-        .from('ai_models')
-        .select('input_schema')
-        .eq('record_id', firstStep.model_record_id)
-        .single();
+    // Find which parameter this user input maps to across ALL workflow steps
+    let targetParameterName: string | null = null;
+    let targetParameterSchema: any = null;
 
-      // Find which parameter this user input maps to
-      const mappedParameterName = Object.keys(firstStep.input_mappings || {}).find(
-        paramKey => firstStep.input_mappings?.[paramKey] === `user_input.${fieldName}`
-      );
-
-      if (mappedParameterName && modelData?.input_schema?.properties) {
-        const schema = modelData.input_schema.properties[mappedParameterName];
-        const expectsArray = schema?.type === 'array';
-        
-        console.log(`Parameter ${mappedParameterName} expects array:`, expectsArray);
-        
-        // Store as array or single value based on schema (exactly like CustomCreation)
-        if (expectsArray) {
-          handleInputChange(fieldName, imageUrls);
-          console.log(`Stored ${fieldName} as array:`, imageUrls);
-        } else {
-          handleInputChange(fieldName, imageUrls[0]);
-          console.log(`Stored ${fieldName} as single value:`, imageUrls[0]);
+    // Check ALL workflow steps to find where this user input is mapped
+    for (const step of workflow.workflow_steps || []) {
+      for (const [paramKey, mappingSource] of Object.entries(step.input_mappings || {})) {
+        if (mappingSource === `user_input.${fieldName}`) {
+          targetParameterName = paramKey;
+          
+          // Get the model schema for this step
+          const { data: stepModelData } = await supabase
+            .from('ai_models')
+            .select('input_schema')
+            .eq('record_id', step.model_record_id)
+            .single();
+          
+          const schema = stepModelData?.input_schema as any;
+          targetParameterSchema = schema?.properties?.[paramKey];
+          break;
         }
-        return;
       }
+      if (targetParameterName) break;
     }
 
-    // Fallback: use isMultiple flag if schema check fails
-    if (isMultiple) {
-      handleInputChange(fieldName, imageUrls);
+    // Check if target parameter expects an array
+    const expectsArray = targetParameterSchema?.type === 'array';
+
+    console.log('🔍 Array detection:', {
+      userInputField: fieldName,
+      targetParameter: targetParameterName,
+      targetSchemaType: targetParameterSchema?.type,
+      expectsArray,
+      storingAs: expectsArray ? 'array' : 'single',
+      imageUrls
+    });
+
+    // Store as array or single value based on target parameter type
+    if (expectsArray) {
+      handleInputChange(fieldName, imageUrls);  // Store as array
     } else {
-      handleInputChange(fieldName, imageUrls[0]);
+      handleInputChange(fieldName, imageUrls[0]); // Store as single string
     }
   };
 

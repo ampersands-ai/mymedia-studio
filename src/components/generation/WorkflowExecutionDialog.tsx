@@ -87,7 +87,8 @@ export const WorkflowExecutionDialog = ({
 
           {!isExecuting && !result && (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">Waiting to start...</p>
+              <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+              <p className="text-muted-foreground">Preparing workflow execution...</p>
             </div>
           )}
         </div>

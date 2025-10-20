@@ -41,18 +41,45 @@ const CreateWorkflow = () => {
     if (!file) return;
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      const filePath = `workflow-inputs/${fileName}`;
+      // Get user from auth context  
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('You must be logged in to upload files');
+        return;
+      }
 
+      const fileExt = file.name.split('.').pop();
+      const timestamp = Date.now();
+      const filePath = `${user.id}/uploads/${timestamp}/0.${fileExt}`;
+
+      // Upload to storage (exactly like CustomCreation)
       const { error: uploadError } = await supabase.storage
         .from('generated-content')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        toast.error(`Failed to upload ${file.name}`);
+        console.error('Upload error:', uploadError);
+        return;
+      }
 
-      setInputs(prev => ({ ...prev, [fieldName]: filePath }));
-      toast.success('File uploaded successfully');
+      // Generate signed URL for secure access (exactly like CustomCreation - 1 hour validity)
+      const { data: signedData, error: signedError } = await supabase.storage
+        .from('generated-content')
+        .createSignedUrl(filePath, 3600);
+
+      if (signedError || !signedData) {
+        toast.error(`Failed to create secure URL for ${file.name}`);
+        console.error('Signed URL error:', signedError);
+        return;
+      }
+
+      // Store the signed URL (not storage path) in inputs
+      setInputs(prev => ({ ...prev, [fieldName]: signedData.signedUrl }));
+      toast.success(`Uploaded ${file.name}`);
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Failed to upload file');
@@ -170,11 +197,11 @@ const CreateWorkflow = () => {
               onChange={(e) => handleFileUpload(field.name, e.target.files?.[0])}
             />
             {inputs[field.name] && (
-              <div className="border rounded p-2">
+              <div className="border rounded p-2 bg-muted">
                 <img 
                   src={inputs[field.name]} 
                   alt="Preview" 
-                  className="max-h-40 mx-auto"
+                  className="max-h-40 mx-auto object-contain"
                 />
               </div>
             )}

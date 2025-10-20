@@ -1,6 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Upload, X } from "lucide-react";
@@ -16,9 +17,10 @@ interface SchemaInputProps {
   filteredEnum?: any[];
   allValues?: Record<string, any>;
   modelSchema?: any;
+  rows?: number;
 }
 
-export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema }: SchemaInputProps) => {
+export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema, rows }: SchemaInputProps) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   // Check if this field should be visible based on conditional dependencies
@@ -282,6 +284,20 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
   }
 
   // Default to text input for strings and unknown types
+  // Use Textarea if rows is specified (for longer text like prompts)
+  if (rows) {
+    return (
+      <div className="space-y-2">
+        <Textarea
+          value={value ?? schema.default ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={schema.description || `Enter ${displayName.toLowerCase()}`}
+          rows={rows}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
       <Label>

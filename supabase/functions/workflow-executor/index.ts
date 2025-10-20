@@ -86,12 +86,6 @@ serve(async (req) => {
         ...stepOutputs,
       };
 
-      // Replace template variables in prompt
-      const resolvedPrompt = replaceTemplateVariables(
-        step.prompt_template,
-        context
-      );
-
       // Resolve input mappings to get dynamic parameter values
       const resolvedMappings = resolveInputMappings(
         step.input_mappings || {},
@@ -100,6 +94,11 @@ serve(async (req) => {
 
       // Merge static parameters with resolved mappings
       const allParameters = { ...step.parameters, ...resolvedMappings };
+
+      // Generate prompt - check both locations for backward compatibility
+      const resolvedPrompt = allParameters.prompt 
+        ? (typeof allParameters.prompt === 'string' ? allParameters.prompt : String(allParameters.prompt))
+        : replaceTemplateVariables(step.prompt_template, context);
 
       console.log('Resolved prompt:', resolvedPrompt);
       console.log('Static parameters:', step.parameters);

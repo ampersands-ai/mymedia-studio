@@ -37,6 +37,7 @@ export function WorkflowStepForm({
 
   const selectedModel = availableModels.find(m => m.id === localStep.model_id);
   const modelSchema = selectedModel?.input_schema;
+  const hasPromptInSchema = modelSchema?.properties?.prompt !== undefined;
 
   const handleChange = (updates: Partial<WorkflowStep>) => {
     const updatedStep = { ...localStep, ...updates };
@@ -44,9 +45,14 @@ export function WorkflowStepForm({
     onChange(updatedStep);
   };
 
-  const insertVariable = (variable: string) => {
-    const newPrompt = localStep.prompt_template + ` {{${variable}}}`;
-    handleChange({ prompt_template: newPrompt });
+  const insertVariable = (variable: string, intoPromptParam = false) => {
+    if (intoPromptParam) {
+      const currentPrompt = (localStep.parameters?.prompt || '') as string;
+      handleParameterChange('prompt', `${currentPrompt} {{${variable}}}`);
+    } else {
+      const newPrompt = localStep.prompt_template + ` {{${variable}}}`;
+      handleChange({ prompt_template: newPrompt });
+    }
   };
 
   const handleParameterChange = (paramName: string, value: any) => {
@@ -103,6 +109,7 @@ export function WorkflowStepForm({
     const displayName = paramSchema.title || paramName.split('_').map((word: string) => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
+    const isPromptParam = paramName === 'prompt';
 
     return (
       <div key={paramName} className="space-y-3 p-3 border rounded-lg bg-muted/30">
@@ -138,13 +145,41 @@ export function WorkflowStepForm({
         )}
 
         {mode === 'static' ? (
-          <SchemaInput
-            name={paramName}
-            schema={paramSchema}
-            value={localStep.parameters?.[paramName]}
-            onChange={(value) => handleParameterChange(paramName, value)}
-            required={isRequired}
-          />
+          <>
+            <SchemaInput
+              name={paramName}
+              schema={paramSchema}
+              value={localStep.parameters?.[paramName]}
+              onChange={(value) => handleParameterChange(paramName, value)}
+              required={isRequired}
+              rows={isPromptParam ? 4 : undefined}
+            />
+            {isPromptParam && (
+              <div className="flex flex-wrap gap-2">
+                <p className="text-xs text-muted-foreground w-full">Insert variables:</p>
+                {userInputFields.map((field) => (
+                  <Button
+                    key={field.name}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => insertVariable(`user.${field.name}`, true)}
+                  >
+                    user.{field.name}
+                  </Button>
+                ))}
+                {previousSteps.map((s) => (
+                  <Button
+                    key={s.step_number}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => insertVariable(`step${s.step_number}.${s.output_key}`, true)}
+                  >
+                    step{s.step_number}.{s.output_key}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </>
         ) : (
           <Select
             value={localStep.input_mappings?.[paramName] || ''}
@@ -209,38 +244,40 @@ export function WorkflowStepForm({
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <Label>Prompt Template</Label>
-        <Textarea
-          value={localStep.prompt_template}
-          onChange={(e) => handleChange({ prompt_template: e.target.value })}
-          placeholder="Enter prompt with variables like {{user.field}} or {{step1.output}}"
-          rows={4}
-        />
-        <div className="flex flex-wrap gap-2">
-          <p className="text-xs text-muted-foreground w-full">Insert variables:</p>
-          {userInputFields.map((field) => (
-            <Button
-              key={field.name}
-              variant="outline"
-              size="sm"
-              onClick={() => insertVariable(`user.${field.name}`)}
-            >
-              user.{field.name}
-            </Button>
-          ))}
-          {previousSteps.map((s) => (
-            <Button
-              key={s.step_number}
-              variant="outline"
-              size="sm"
-              onClick={() => insertVariable(`step${s.step_number}.${s.output_key}`)}
-            >
-              step{s.step_number}.{s.output_key}
-            </Button>
-          ))}
+      {!hasPromptInSchema && (
+        <div className="space-y-2">
+          <Label>Prompt Template</Label>
+          <Textarea
+            value={localStep.prompt_template}
+            onChange={(e) => handleChange({ prompt_template: e.target.value })}
+            placeholder="Enter prompt with variables like {{user.field}} or {{step1.output}}"
+            rows={4}
+          />
+          <div className="flex flex-wrap gap-2">
+            <p className="text-xs text-muted-foreground w-full">Insert variables:</p>
+            {userInputFields.map((field) => (
+              <Button
+                key={field.name}
+                variant="outline"
+                size="sm"
+                onClick={() => insertVariable(`user.${field.name}`)}
+              >
+                user.{field.name}
+              </Button>
+            ))}
+            {previousSteps.map((s) => (
+              <Button
+                key={s.step_number}
+                variant="outline"
+                size="sm"
+                onClick={() => insertVariable(`step${s.step_number}.${s.output_key}`)}
+              >
+                step{s.step_number}.{s.output_key}
+              </Button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {modelSchema?.properties && Object.keys(modelSchema.properties).length > 0 && (
         <>

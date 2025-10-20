@@ -353,7 +353,7 @@ export default function WorkflowTemplateManager() {
       </div>
 
       <Dialog open={isCreating} onOpenChange={setIsCreating}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[90vw] h-[90vh] max-w-[90vw] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Workflow</DialogTitle>
           </DialogHeader>
@@ -370,7 +370,7 @@ export default function WorkflowTemplateManager() {
       </Dialog>
 
       <Dialog open={!!editingWorkflow} onOpenChange={(open) => !open && setEditingWorkflow(null)}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[90vw] h-[90vh] max-w-[90vw] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Workflow</DialogTitle>
           </DialogHeader>

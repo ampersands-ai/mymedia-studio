@@ -132,8 +132,8 @@ const Templates = () => {
   return (
     <>
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
-
+      <section className="bg-background">
+        <div className="container mx-auto px-4 py-16 md:py-24">
           <div className="max-w-4xl mx-auto text-center">
             <Sparkles className="h-16 w-16 mx-auto mb-6 text-primary" />
             <h1 className="text-4xl md:text-6xl font-black mb-6 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-gradient">
@@ -143,10 +143,12 @@ const Templates = () => {
               Start creating in seconds with our professional templates
             </p>
           </div>
-        </section>
+        </div>
+      </section>
 
       {/* Templates Grid with Tabs OR Workflow Execution */}
-      <section className="container mx-auto px-4 py-12 md:py-16">
+      <section className="bg-background">
+        <div className="container mx-auto px-4 py-12 md:py-16">
           {selectedWorkflow ? (
             /* Two-Panel Workflow Execution Layout */
             <div className="max-w-7xl mx-auto">
@@ -212,7 +214,7 @@ const Templates = () => {
           ) : (
             /* Template Grid View */
             <Tabs value={activeTab} onValueChange={setActiveTab} className="max-w-6xl mx-auto">
-            <TabsList className="grid w-full grid-cols-6 mb-12">
+            <TabsList className="grid w-full grid-cols-6 mb-12 bg-background border-2 border-black p-1">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="image">Image</TabsTrigger>
               <TabsTrigger value="video">Video</TabsTrigger>
@@ -246,7 +248,7 @@ const Templates = () => {
                       const Icon = getTemplateIcon(template.category || '');
                       const isWorkflow = template.template_type === 'workflow';
                       return (
-                        <Card key={template.id} className="group hover:shadow-lg transition-all overflow-hidden">
+                        <Card key={template.id} className="group hover:shadow-brutal transition-all overflow-hidden border-2 border-black">
                           <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10">
                             {template.thumbnail_url ? (
                               <img 
@@ -290,11 +292,13 @@ const Templates = () => {
             ))}
           </Tabs>
         )}
+        </div>
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
-          <Card className="max-w-2xl mx-auto border-4 border-primary">
+      <section className="bg-background">
+        <div className="container mx-auto px-4 py-16 md:py-24">
+          <Card className="max-w-2xl mx-auto border-4 border-black shadow-brutal">
             <CardContent className="p-8 md:p-12 text-center">
               <h2 className="text-3xl md:text-4xl font-black mb-4">Can't Find What You Need?</h2>
               <p className="text-lg text-muted-foreground mb-6">
@@ -310,6 +314,7 @@ const Templates = () => {
               </div>
           </CardContent>
         </Card>
+        </div>
       </section>
     </>
   );

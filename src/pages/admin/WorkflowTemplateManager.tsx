@@ -13,6 +13,8 @@ import { WorkflowStep, UserInputField, WorkflowTemplate } from '@/hooks/useWorkf
 import { useModels } from '@/hooks/useModels';
 import { Plus, Pencil, Trash2, Save } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function WorkflowTemplateManager() {
   const { toast } = useToast();
@@ -166,6 +168,18 @@ export default function WorkflowTemplateManager() {
       setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
     };
 
+    const updateUserField = (idx: number, updates: Partial<UserInputField>) => {
+      const fields = [...(localWorkflow.user_input_fields || [])];
+      fields[idx] = { ...fields[idx], ...updates };
+      setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
+    };
+
+    const deleteUserField = (idx: number) => {
+      const fields = [...(localWorkflow.user_input_fields || [])];
+      fields.splice(idx, 1);
+      setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
+    };
+
     return (
       <div className="space-y-6">
         <Card className="p-6 space-y-4">
@@ -226,41 +240,86 @@ export default function WorkflowTemplateManager() {
                   Add Field
                 </Button>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {(localWorkflow.user_input_fields || []).map((field, idx) => (
-                  <div key={idx} className="flex gap-2 items-center p-2 border rounded">
-                    <Input
-                      value={field.name}
-                      onChange={(e) => {
-                        const fields = [...(localWorkflow.user_input_fields || [])];
-                        fields[idx] = { ...field, name: e.target.value };
-                        setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
-                      }}
-                      placeholder="field_name"
-                      className="flex-1"
-                    />
-                    <Input
-                      value={field.label}
-                      onChange={(e) => {
-                        const fields = [...(localWorkflow.user_input_fields || [])];
-                        fields[idx] = { ...field, label: e.target.value };
-                        setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
-                      }}
-                      placeholder="Field Label"
-                      className="flex-1"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        const fields = [...(localWorkflow.user_input_fields || [])];
-                        fields.splice(idx, 1);
-                        setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Card key={idx} className="p-4 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Field Name</Label>
+                        <Input
+                          value={field.name}
+                          onChange={(e) => updateUserField(idx, { name: e.target.value })}
+                          placeholder="field_name"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Label</Label>
+                        <Input
+                          value={field.label}
+                          onChange={(e) => updateUserField(idx, { label: e.target.value })}
+                          placeholder="Field Label"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Type</Label>
+                        <Select
+                          value={field.type}
+                          onValueChange={(value) => updateUserField(idx, { type: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="text">Text</SelectItem>
+                            <SelectItem value="textarea">Textarea</SelectItem>
+                            <SelectItem value="number">Number</SelectItem>
+                            <SelectItem value="upload-image">Upload Image</SelectItem>
+                            <SelectItem value="upload-file">Upload File</SelectItem>
+                            <SelectItem value="select">Select Dropdown</SelectItem>
+                            <SelectItem value="checkbox">Checkbox</SelectItem>
+                            <SelectItem value="radio">Radio Buttons</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1 flex items-end">
+                        <label className="flex items-center gap-2 pb-2">
+                          <Checkbox
+                            checked={field.required || false}
+                            onCheckedChange={(checked) => updateUserField(idx, { required: checked as boolean })}
+                          />
+                          <span className="text-xs">Required</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {(field.type === 'select' || field.type === 'radio') && (
+                      <div className="space-y-1">
+                        <Label className="text-xs">Options (comma-separated)</Label>
+                        <Input
+                          value={(field.options || []).join(', ')}
+                          onChange={(e) => {
+                            const options = e.target.value.split(',').map(opt => opt.trim()).filter(Boolean);
+                            updateUserField(idx, { options });
+                          }}
+                          placeholder="Option 1, Option 2, Option 3"
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteUserField(idx)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Field
+                      </Button>
+                    </div>
+                  </Card>
                 ))}
               </div>
             </Card>
@@ -353,7 +412,7 @@ export default function WorkflowTemplateManager() {
       </div>
 
       <Dialog open={isCreating} onOpenChange={setIsCreating}>
-        <DialogContent className="w-[90vw] h-[90vh] max-w-[90vw] overflow-y-auto">
+        <DialogContent className="w-[90vw] h-[90vh] !max-w-[90vw] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Workflow</DialogTitle>
           </DialogHeader>
@@ -370,7 +429,7 @@ export default function WorkflowTemplateManager() {
       </Dialog>
 
       <Dialog open={!!editingWorkflow} onOpenChange={(open) => !open && setEditingWorkflow(null)}>
-        <DialogContent className="w-[90vw] h-[90vh] max-w-[90vw] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Workflow</DialogTitle>
           </DialogHeader>

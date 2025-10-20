@@ -12,6 +12,7 @@ import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
 import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { toast } from "sonner";
 import { createSignedUrl } from "@/lib/storage-utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WorkflowTestDialogProps {
   workflow: Partial<WorkflowTemplate> | null;
@@ -26,6 +27,28 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
 
   const handleInputChange = (fieldName: string, value: any) => {
     setInputs(prev => ({ ...prev, [fieldName]: value }));
+  };
+
+  const handleFileUpload = async (fieldName: string, file: File | undefined) => {
+    if (!file) return;
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `workflow-inputs/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('generated-content')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      setInputs(prev => ({ ...prev, [fieldName]: filePath }));
+      toast.success('File uploaded successfully');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload file');
+    }
   };
 
   const handleTest = async () => {
@@ -121,6 +144,61 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
               onCheckedChange={(checked) => handleInputChange(field.name, checked)}
             />
             <Label>{field.label}</Label>
+          </div>
+        );
+      
+      case 'upload-image':
+        return (
+          <div className="space-y-2">
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileUpload(field.name, e.target.files?.[0])}
+            />
+            {inputs[field.name] && (
+              <div className="border rounded p-2">
+                <img 
+                  src={inputs[field.name]} 
+                  alt="Preview" 
+                  className="max-h-40 mx-auto"
+                />
+              </div>
+            )}
+          </div>
+        );
+
+      case 'upload-file':
+        return (
+          <div className="space-y-2">
+            <Input
+              type="file"
+              onChange={(e) => handleFileUpload(field.name, e.target.files?.[0])}
+            />
+            {inputs[field.name] && (
+              <p className="text-sm text-muted-foreground">
+                File uploaded: {inputs[field.name].split('/').pop()}
+              </p>
+            )}
+          </div>
+        );
+
+      case 'radio':
+        return (
+          <div className="space-y-2">
+            {field.options?.map((opt: string) => (
+              <div key={opt} className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id={`${field.name}-${opt}`}
+                  name={field.name}
+                  value={opt}
+                  checked={inputs[field.name] === opt}
+                  onChange={(e) => handleInputChange(field.name, e.target.value)}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor={`${field.name}-${opt}`}>{opt}</Label>
+              </div>
+            ))}
           </div>
         );
       

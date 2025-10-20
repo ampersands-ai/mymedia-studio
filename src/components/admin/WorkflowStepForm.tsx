@@ -113,35 +113,25 @@ export function WorkflowStepForm({
 
     return (
       <div key={paramName} className="space-y-3 p-3 border rounded-lg bg-muted/30">
-        <div className="flex items-center justify-between">
-          <Label className="font-medium">
-            {displayName}
-            {isRequired && <span className="text-destructive ml-1">*</span>}
-          </Label>
-          {isRequired && (
-            <RadioGroup
-              value={mode}
-              onValueChange={(value) => toggleParameterMode(paramName, value as 'static' | 'mapped')}
-              className="flex gap-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="static" id={`${paramName}-static`} />
-                <Label htmlFor={`${paramName}-static`} className="font-normal cursor-pointer">
-                  Static value
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="mapped" id={`${paramName}-mapped`} />
-                <Label htmlFor={`${paramName}-mapped`} className="font-normal cursor-pointer">
-                  Map from input
-                </Label>
-              </div>
-            </RadioGroup>
-          )}
-        </div>
-
-        {paramSchema.description && (
-          <p className="text-xs text-muted-foreground">{paramSchema.description}</p>
+        {isRequired && (
+          <RadioGroup
+            value={mode}
+            onValueChange={(value) => toggleParameterMode(paramName, value as 'static' | 'mapped')}
+            className="flex gap-4"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="static" id={`${paramName}-static`} />
+              <Label htmlFor={`${paramName}-static`} className="font-normal cursor-pointer">
+                Static value
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="mapped" id={`${paramName}-mapped`} />
+              <Label htmlFor={`${paramName}-mapped`} className="font-normal cursor-pointer">
+                Map from input
+              </Label>
+            </div>
+          </RadioGroup>
         )}
 
         {mode === 'static' ? (
@@ -181,21 +171,30 @@ export function WorkflowStepForm({
             )}
           </>
         ) : (
-          <Select
-            value={localStep.input_mappings?.[paramName] || ''}
-            onValueChange={(value) => handleMappingChange(paramName, value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a source..." />
-            </SelectTrigger>
-            <SelectContent>
-              {getAvailableMappingSources().map((source) => (
-                <SelectItem key={source.value} value={source.value}>
-                  {source.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <>
+            <Label className="font-medium">
+              {displayName}
+              {isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+            {paramSchema.description && (
+              <p className="text-xs text-muted-foreground">{paramSchema.description}</p>
+            )}
+            <Select
+              value={localStep.input_mappings?.[paramName] || ''}
+              onValueChange={(value) => handleMappingChange(paramName, value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a source..." />
+              </SelectTrigger>
+              <SelectContent>
+                {getAvailableMappingSources().map((source) => (
+                  <SelectItem key={source.value} value={source.value}>
+                    {source.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </>
         )}
       </div>
     );

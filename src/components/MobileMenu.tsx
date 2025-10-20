@@ -87,9 +87,9 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
               </Button>
 
               <Button
-                variant={isActive("/dashboard/create") ? "default" : "ghost"}
+                variant={isActive("/dashboard/custom-creation") ? "default" : "ghost"}
                 className="justify-start h-12 text-base"
-                onClick={() => handleNavigation("/dashboard/create")}
+                onClick={() => handleNavigation("/dashboard/custom-creation")}
               >
                 <Wand2 className="h-5 w-5 mr-3" />
                 Create

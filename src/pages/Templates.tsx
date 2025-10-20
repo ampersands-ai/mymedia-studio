@@ -82,7 +82,7 @@ const Templates = () => {
         outputSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }, 100);
     } else {
-      navigate(`/dashboard/create?template=${template.id}`);
+      navigate(`/dashboard/custom-creation?template=${template.id}`);
     }
   };
 

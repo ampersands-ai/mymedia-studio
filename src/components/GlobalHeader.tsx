@@ -43,7 +43,6 @@ export const GlobalHeader = () => {
     };
   };
 
-  const isDashboardCreate = location.pathname === "/dashboard/create";
   const isCustomCreation = location.pathname === "/dashboard/custom-creation";
   const isSettingsPage = location.pathname === "/dashboard/settings";
 
@@ -165,20 +164,6 @@ export const GlobalHeader = () => {
             )}
 
             {/* Context-aware navigation buttons */}
-            {isDashboardCreate && (
-              <>
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={() => navigate("/dashboard/custom-creation")}
-                  className="brutal-card-sm font-black hidden sm:flex"
-                >
-                  <Sparkles className="h-5 w-5 mr-2" />
-                  Custom Creation
-                </Button>
-              </>
-            )}
-
             {isCustomCreation && (
               <>
                 <Button

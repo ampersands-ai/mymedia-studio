@@ -222,7 +222,7 @@ const IndexV2 = () => {
               {filteredTemplates?.map((template) => (
                 <Link
                   key={template.id}
-                  to={`/dashboard/create?template=${template.id}`}
+                  to={`/dashboard/custom-creation?template=${template.id}`}
                   className="group brutalist-card overflow-hidden hover-lift"
                 >
                   <div className="aspect-video bg-muted relative overflow-hidden">
@@ -246,7 +246,7 @@ const IndexV2 = () => {
 
             <div className="text-center">
               <Button asChild variant="outline" size="lg">
-                <Link to="/dashboard/create">Browse All Templates →</Link>
+                <Link to="/dashboard/custom-creation">Browse All Templates →</Link>
               </Button>
             </div>
           </div>
@@ -308,7 +308,7 @@ const IndexV2 = () => {
                 "Community-created templates (coming soon)",
               ]}
               ctaText="Browse Templates →"
-              ctaLink="/dashboard/create"
+              ctaLink="/dashboard/custom-creation"
               visual={
                 <div className="text-center text-muted-foreground">
                   Template library interface preview

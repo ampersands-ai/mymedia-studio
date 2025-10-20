@@ -58,7 +58,7 @@ const Create = () => {
       "name": "artifio.ai Create",
       "applicationCategory": "MultimediaApplication",
       "description": "AI-powered creative studio for generating videos, images, music, and text content.",
-      "url": "https://artifio.ai/dashboard/create",
+      "url": "https://artifio.ai/dashboard/custom-creation",
       "operatingSystem": "Web Browser",
       "offers": {
         "@type": "Offer",
@@ -88,7 +88,7 @@ const Create = () => {
           "@type": "ListItem",
           "position": 3,
           "name": "Create",
-          "item": "https://artifio.ai/dashboard/create"
+          "item": "https://artifio.ai/dashboard/custom-creation"
         }
       ]
     };

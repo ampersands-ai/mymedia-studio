@@ -29,7 +29,7 @@ const CreateWorkflow = () => {
 
   useEffect(() => {
     if (!workflowId) {
-      navigate("/dashboard/create");
+      navigate("/dashboard/custom-creation");
     }
   }, [workflowId, navigate]);
 

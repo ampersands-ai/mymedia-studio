@@ -549,7 +549,7 @@ const History = () => {
                 <p className="text-muted-foreground mb-6">
                   Start creating to see your content here
                 </p>
-                <Button onClick={() => (window.location.href = "/dashboard/create")} className="bg-primary hover:bg-primary/90">
+                <Button onClick={() => (window.location.href = "/dashboard/custom-creation")} className="bg-primary hover:bg-primary/90">
                   Start Creating
                 </Button>
               </>

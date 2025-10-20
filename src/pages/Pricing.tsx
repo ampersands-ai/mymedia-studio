@@ -129,7 +129,7 @@ const Pricing = () => {
     }
 
     if (planName === "Freemium") {
-      navigate("/dashboard/create");
+      navigate("/dashboard/custom-creation");
       return;
     }
 
@@ -329,7 +329,7 @@ const Pricing = () => {
                   <Button
                     variant="neon"
                     size="sm"
-                    onClick={() => navigate("/dashboard/create")}
+                    onClick={() => navigate("/dashboard/custom-creation")}
                     className="md:text-base"
                   >
                     Go to Dashboard

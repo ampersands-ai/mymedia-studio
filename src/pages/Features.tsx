@@ -117,7 +117,7 @@ const Features = () => {
                             )}
                             
                             <Button asChild className="w-full mt-4" variant="outline">
-                              <Link to="/dashboard/create">Try Now</Link>
+                              <Link to="/dashboard/custom-creation">Try Now</Link>
                             </Button>
                           </div>
                         </CardContent>
@@ -173,7 +173,7 @@ const Features = () => {
                 Start exploring all our AI features today
               </p>
               <Button asChild size="lg" variant="neon">
-                <Link to="/dashboard/create">Start Creating</Link>
+                <Link to="/dashboard/custom-creation">Start Creating</Link>
               </Button>
               <p className="text-sm text-muted-foreground mt-4">
                 500 free tokens • No credit card required

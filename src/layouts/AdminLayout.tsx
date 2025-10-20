@@ -25,7 +25,7 @@ export const AdminLayout = () => {
 
   // Only redirect after all checks complete
   if (!isAdmin) {
-    return <Navigate to="/dashboard/create" replace />;
+    return <Navigate to="/dashboard/custom-creation" replace />;
   }
 
   // Render admin layout

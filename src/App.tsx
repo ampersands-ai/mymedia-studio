@@ -15,6 +15,7 @@ import { usePostHog } from "@/hooks/usePostHog";
 const IndexV2 = lazy(() => import("./pages/IndexV2"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Create = lazy(() => import("./pages/Create"));
+const CreateWorkflow = lazy(() => import("./pages/CreateWorkflow"));
 const CustomCreation = lazy(() => import("./pages/CustomCreation"));
 const Settings = lazy(() => import("./pages/Settings"));
 const History = lazy(() => import("./pages/dashboard/History"));
@@ -93,6 +94,7 @@ const AppContent = () => {
               <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route path="create" element={<Create />} />
+            <Route path="create-workflow" element={<CreateWorkflow />} />
             <Route path="custom-creation" element={<CustomCreation />} />
             <Route path="history" element={<History />} />
             <Route path="settings" element={<Settings />} />

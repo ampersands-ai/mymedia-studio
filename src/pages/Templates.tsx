@@ -6,11 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
-import { useTemplatesByCategory } from "@/hooks/useTemplates";
+import { useAllTemplates } from "@/hooks/useTemplates";
 import { Sparkles, Image as ImageIcon, Video, Music, FileText } from "lucide-react";
 
 const Templates = () => {
-  const { templatesByCategory, templates, isLoading } = useTemplatesByCategory();
+  const { data: allTemplates, isLoading } = useAllTemplates();
   const [activeTab, setActiveTab] = useState("all");
   const navigate = useNavigate();
 
@@ -38,16 +38,21 @@ const Templates = () => {
     return categoryIcons[category] || Sparkles;
   };
 
-  const allTemplates = templates || [];
+  const templates = allTemplates || [];
   const filteredTemplates = activeTab === "all"
-    ? allTemplates
-    : allTemplates.filter(t => {
+    ? templates
+    : templates.filter(t => {
+        if (t.template_type === 'workflow') return false; // Workflows don't have content_type
         const contentType = t.ai_models?.content_type?.toLowerCase();
         return contentType === activeTab;
       });
 
-  const handleUseTemplate = (templateId: string) => {
-    navigate(`/dashboard/create?template=${templateId}`);
+  const handleUseTemplate = (template: any) => {
+    if (template.template_type === 'workflow') {
+      navigate(`/dashboard/create-workflow?workflow=${template.id}`);
+    } else {
+      navigate(`/dashboard/create?template=${template.id}`);
+    }
   };
 
   return (
@@ -91,18 +96,24 @@ const Templates = () => {
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredTemplates.map((template) => {
-                    const Icon = getTemplateIcon(template.category);
+                    const Icon = getTemplateIcon(template.category || '');
+                    const isWorkflow = template.template_type === 'workflow';
                     return (
                       <Card key={template.id} className="hover:border-primary transition-colors overflow-hidden">
-                        <div className="aspect-video bg-gradient-to-br from-primary/20 via-accent/20 to-primary/20 flex items-center justify-center">
+                        <div className="aspect-video bg-gradient-to-br from-primary/20 via-accent/20 to-primary/20 flex items-center justify-center relative">
                           {template.thumbnail_url ? (
                             <img 
                               src={template.thumbnail_url} 
-                              alt={template.name}
+                              alt={template.name || ''}
                               className="w-full h-full object-cover"
                             />
                           ) : (
                             <Icon className="h-16 w-16 text-primary" />
+                          )}
+                          {isWorkflow && (
+                            <Badge className="absolute top-2 right-2 bg-accent text-accent-foreground">
+                              🔄 Workflow
+                            </Badge>
                           )}
                         </div>
                         <CardContent className="p-6">
@@ -119,10 +130,16 @@ const Templates = () => {
                               )}
                             </div>
                             
-                            {template.ai_models && (
+                            {template.ai_models && !isWorkflow && (
                               <div className="flex items-center justify-between text-xs text-muted-foreground">
                                 <span>{template.ai_models.model_name}</span>
                                 <span>{template.ai_models.base_token_cost} tokens</span>
+                              </div>
+                            )}
+                            
+                            {isWorkflow && (
+                              <div className="text-xs text-muted-foreground">
+                                Multi-step workflow • {(template as any).workflow_steps?.length || 0} steps
                               </div>
                             )}
                             
@@ -135,7 +152,7 @@ const Templates = () => {
                             <Button 
                               className="w-full mt-4" 
                               variant="default"
-                              onClick={() => handleUseTemplate(template.id)}
+                              onClick={() => handleUseTemplate(template)}
                             >
                               Use Template
                             </Button>

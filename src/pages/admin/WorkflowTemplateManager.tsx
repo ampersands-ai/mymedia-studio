@@ -9,9 +9,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { WorkflowStepForm } from '@/components/admin/WorkflowStepForm';
 import { WorkflowVisualPreview } from '@/components/admin/WorkflowVisualPreview';
+import { WorkflowTestDialog } from '@/components/admin/WorkflowTestDialog';
 import { WorkflowStep, UserInputField, WorkflowTemplate } from '@/hooks/useWorkflowTemplates';
 import { useModels } from '@/hooks/useModels';
-import { Plus, Pencil, Trash2, Save } from 'lucide-react';
+import { Plus, Pencil, Trash2, Save, Play } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -23,6 +24,8 @@ export default function WorkflowTemplateManager() {
   
   const [isCreating, setIsCreating] = useState(false);
   const [editingWorkflow, setEditingWorkflow] = useState<WorkflowTemplate | null>(null);
+  const [testingWorkflow, setTestingWorkflow] = useState<WorkflowTemplate | null>(null);
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
 
   const { data: workflows = [], isLoading } = useQuery({
     queryKey: ['workflow-templates-admin'],
@@ -395,6 +398,17 @@ export default function WorkflowTemplateManager() {
                 </p>
               </div>
               <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setTestingWorkflow(workflow);
+                    setTestDialogOpen(true);
+                  }}
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  Test
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => setEditingWorkflow(workflow)}>
                   <Pencil className="h-4 w-4" />
                 </Button>
@@ -429,13 +443,19 @@ export default function WorkflowTemplateManager() {
       </Dialog>
 
       <Dialog open={!!editingWorkflow} onOpenChange={(open) => !open && setEditingWorkflow(null)}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[90vw] h-[90vh] !max-w-[90vw] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Workflow</DialogTitle>
           </DialogHeader>
           {editingWorkflow && <WorkflowEditor workflow={editingWorkflow} isNew={false} />}
         </DialogContent>
       </Dialog>
+
+      <WorkflowTestDialog
+        workflow={testingWorkflow}
+        open={testDialogOpen}
+        onOpenChange={setTestDialogOpen}
+      />
     </div>
   );
 }

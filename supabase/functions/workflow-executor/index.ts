@@ -105,13 +105,21 @@ serve(async (req) => {
       console.log('Resolved mappings:', resolvedMappings);
       console.log('All parameters:', allParameters);
 
+      // Convert any storage paths to signed URLs
+      const parametersWithSignedUrls = await convertStoragePathsToUrls(
+        allParameters,
+        supabase
+      );
+
+      console.log('Parameters with signed URLs:', parametersWithSignedUrls);
+
       // Call generate-content for this step
       const generateResponse = await supabase.functions.invoke('generate-content', {
         body: {
           model_id: step.model_id,
           model_record_id: step.model_record_id,
           prompt: resolvedPrompt,
-          custom_parameters: allParameters,
+          custom_parameters: parametersWithSignedUrls,
           workflow_execution_id: execution.id,
           workflow_step_number: step.step_number,
         },
@@ -185,6 +193,62 @@ serve(async (req) => {
     );
   }
 });
+
+// Helper function to convert storage paths to signed URLs
+async function convertStoragePathsToUrls(
+  params: Record<string, any>,
+  supabase: any
+): Promise<Record<string, any>> {
+  const converted = { ...params };
+  
+  // Common parameter keys that might contain storage paths
+  const imageKeys = ['image_urls', 'image_url', 'reference_image_urls', 'input_image'];
+  
+  for (const key of imageKeys) {
+    if (!converted[key]) continue;
+    
+    const value = converted[key];
+    
+    // Handle single storage path
+    if (typeof value === 'string' && value.startsWith('workflow-inputs/')) {
+      const { data, error } = await supabase.storage
+        .from('generated-content')
+        .createSignedUrl(value, 3600); // 1 hour expiry
+      
+      if (data?.signedUrl) {
+        converted[key] = data.signedUrl;
+        console.log(`Converted ${key}: ${value} → ${data.signedUrl}`);
+      } else {
+        console.error(`Failed to create signed URL for ${key}:`, error);
+      }
+    }
+    
+    // Handle array of storage paths
+    if (Array.isArray(value)) {
+      const convertedUrls = await Promise.all(
+        value.map(async (item) => {
+          if (typeof item === 'string' && item.startsWith('workflow-inputs/')) {
+            const { data, error } = await supabase.storage
+              .from('generated-content')
+              .createSignedUrl(item, 3600);
+            
+            if (data?.signedUrl) {
+              console.log(`Converted ${key}[]: ${item} → ${data.signedUrl}`);
+              return data.signedUrl;
+            } else {
+              console.error(`Failed to create signed URL for ${key}[]:`, error);
+              return item; // Keep original on error
+            }
+          }
+          return item;
+        })
+      );
+      converted[key] = convertedUrls;
+    }
+  }
+  
+  return converted;
+}
 
 // Helper function to replace template variables
 function replaceTemplateVariables(

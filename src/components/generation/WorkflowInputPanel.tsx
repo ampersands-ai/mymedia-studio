@@ -90,7 +90,39 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting }:
       imageUrls.push(signedData.signedUrl);
     }
 
-    // Set input value
+    // Determine if parameter expects array by checking model schema (same as Custom Creation)
+    const firstStep = workflow.workflow_steps?.[0];
+    if (firstStep?.model_record_id) {
+      const { data: modelData } = await supabase
+        .from('ai_models')
+        .select('input_schema')
+        .eq('record_id', firstStep.model_record_id)
+        .single();
+
+      // Find which parameter this user input maps to
+      const mappedParameterName = Object.keys(firstStep.input_mappings || {}).find(
+        paramKey => firstStep.input_mappings?.[paramKey] === `user_input.${fieldName}`
+      );
+
+      if (mappedParameterName && modelData?.input_schema?.properties) {
+        const schema = modelData.input_schema.properties[mappedParameterName];
+        const expectsArray = schema?.type === 'array';
+        
+        console.log(`Parameter ${mappedParameterName} expects array:`, expectsArray);
+        
+        // Store as array or single value based on schema (exactly like CustomCreation)
+        if (expectsArray) {
+          handleInputChange(fieldName, imageUrls);
+          console.log(`Stored ${fieldName} as array:`, imageUrls);
+        } else {
+          handleInputChange(fieldName, imageUrls[0]);
+          console.log(`Stored ${fieldName} as single value:`, imageUrls[0]);
+        }
+        return;
+      }
+    }
+
+    // Fallback: use isMultiple flag if schema check fails
     if (isMultiple) {
       handleInputChange(fieldName, imageUrls);
     } else {

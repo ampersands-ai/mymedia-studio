@@ -89,38 +89,13 @@ const Templates = () => {
   const handleExecuteWorkflow = async (inputs: Record<string, any>) => {
     if (!selectedWorkflow) return;
 
-    // Format parameters based on model schema (like CustomCreation)
-    let formattedInputs = { ...inputs };
-    
-    const firstStep = selectedWorkflow.workflow_steps?.[0];
-    if (firstStep?.model_record_id) {
-      const { data: modelData } = await supabase
-        .from('ai_models')
-        .select('input_schema')
-        .eq('record_id', firstStep.model_record_id)
-        .single();
-
-      if (modelData?.input_schema && typeof modelData.input_schema === 'object' && 'properties' in modelData.input_schema) {
-        const schema = (modelData.input_schema as any).properties;
-        
-        for (const [key, value] of Object.entries(formattedInputs)) {
-          const expectedType = schema[key]?.type;
-          
-          // If schema expects array and value is not array, wrap it
-          if (expectedType === 'array' && !Array.isArray(value)) {
-            formattedInputs[key] = [value];
-            console.log(`Formatted ${key} as array for workflow`);
-          }
-        }
-      }
-    }
-
+    // Inputs are already formatted correctly by WorkflowInputPanel
     setExecutionResult(null);
     setExecutionStartTime(Date.now());
     
     const result = await executeWorkflow({
       workflow_template_id: selectedWorkflow.id,
-      user_inputs: formattedInputs,
+      user_inputs: inputs,
     });
 
     if (result?.final_output_url) {

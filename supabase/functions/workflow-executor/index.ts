@@ -100,29 +100,12 @@ serve(async (req) => {
         ? (typeof allParameters.prompt === 'string' ? allParameters.prompt : String(allParameters.prompt))
         : replaceTemplateVariables(step.prompt_template, context);
 
-      // Format array parameters properly (exactly like CustomCreation expects)
-      // Fetch model schema to check if parameters should be arrays
-      const { data: modelData } = await supabase
-        .from('ai_models')
-        .select('input_schema')
-        .eq('record_id', step.model_record_id)
-        .single();
-
-      if (modelData?.input_schema?.properties) {
-        const schema = modelData.input_schema.properties;
-        for (const [key, value] of Object.entries(allParameters)) {
-          // If schema expects an array but we have a single value (like a string URL), wrap it
-          if (schema[key]?.type === 'array' && !Array.isArray(value)) {
-            allParameters[key] = [value];
-            console.log(`Wrapped ${key} in array:`, allParameters[key]);
-          }
-        }
-      }
-
+      // Parameters should already be formatted correctly from WorkflowInputPanel
+      // Just log for debugging
       console.log('Resolved prompt:', resolvedPrompt);
       console.log('Static parameters:', step.parameters);
       console.log('Resolved mappings:', resolvedMappings);
-      console.log('All parameters (formatted for API):', allParameters);
+      console.log('All parameters (sending to generate-content):', allParameters);
 
       // Call generate-content for this step (returns immediately with status: 'processing')
       const generateResponse = await supabase.functions.invoke('generate-content', {

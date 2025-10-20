@@ -95,25 +95,41 @@ serve(async (req) => {
       // Merge static parameters with resolved mappings
       const allParameters = { ...step.parameters, ...resolvedMappings };
 
+      // Load model input schema to dynamically coerce parameters (same behavior as Custom Creation)
+      let coercedParameters = allParameters;
+      try {
+        if (step.model_record_id) {
+          const { data: modelData, error: modelLoadError } = await supabase
+            .from('ai_models')
+            .select('input_schema')
+            .eq('record_id', step.model_record_id)
+            .single();
+          if (modelLoadError) {
+            console.warn('Could not load model schema for step', step.step_number, modelLoadError);
+          } else if (modelData?.input_schema) {
+            coercedParameters = coerceParametersToSchema(allParameters, modelData.input_schema);
+          }
+        }
+      } catch (e) {
+        console.warn('Schema coercion skipped due to error:', e);
+      }
+
       // Generate prompt - check both locations for backward compatibility
-      const resolvedPrompt = allParameters.prompt 
-        ? (typeof allParameters.prompt === 'string' ? allParameters.prompt : String(allParameters.prompt))
+      const resolvedPrompt = coercedParameters.prompt 
+        ? (typeof coercedParameters.prompt === 'string' ? coercedParameters.prompt : String(coercedParameters.prompt))
         : replaceTemplateVariables(step.prompt_template, context);
 
-      // Parameters should already be formatted correctly from WorkflowInputPanel
-      // Just log for debugging
       console.log('Resolved prompt:', resolvedPrompt);
       console.log('Static parameters:', step.parameters);
       console.log('Resolved mappings:', resolvedMappings);
-      console.log('All parameters (sending to generate-content):', allParameters);
-
+      console.log('All parameters (after schema coercion):', coercedParameters);
       // Call generate-content for this step (returns immediately with status: 'processing')
       const generateResponse = await supabase.functions.invoke('generate-content', {
         body: {
           model_id: step.model_id,
           model_record_id: step.model_record_id,
           prompt: resolvedPrompt,
-          custom_parameters: allParameters,
+          custom_parameters: coercedParameters,
           workflow_execution_id: execution.id,
           workflow_step_number: step.step_number,
         },
@@ -259,15 +275,30 @@ function getNestedValue(obj: any, path: string): any {
 }
 
 // Helper function to resolve input mappings
-// This resolves parameter mappings like "user.quality" or "step1.output_url"
+// Accepts both "user_input.<field>" and "user.<field>" prefixes for backward compatibility
 function resolveInputMappings(
   mappings: Record<string, string>,
   context: Record<string, any>
 ): Record<string, any> {
   const resolved: Record<string, any> = {};
-  for (const [paramKey, mapping] of Object.entries(mappings)) {
-    // Get the value by traversing the context path
-    const value = getNestedValue(context, mapping);
+  for (const [paramKey, rawMapping] of Object.entries(mappings)) {
+    let mapping = rawMapping;
+    if (typeof mapping === 'string') {
+      // Normalize user_input.* to user.* (context exposes user inputs under "user")
+      mapping = mapping.replace(/^user_input\./, 'user.');
+    }
+
+    // Try primary mapping
+    let value = getNestedValue(context, mapping as string);
+
+    // If not found, try alternate prefix for resilience
+    if ((value === undefined || value === null) && typeof rawMapping === 'string') {
+      const alternate = rawMapping.startsWith('user.')
+        ? rawMapping.replace(/^user\./, 'user_input.')
+        : rawMapping.replace(/^user_input\./, 'user.');
+      value = getNestedValue(context, alternate);
+    }
+
     if (value !== undefined && value !== null) {
       resolved[paramKey] = value;
     }
@@ -284,4 +315,64 @@ function extractFinalOutput(finalStepOutput: any): string | null {
   if (outputKeys.length === 0) return null;
   
   return finalStepOutput[outputKeys[0]];
+}
+
+// Dynamically coerce parameters to the model's input schema
+// Mirrors Custom Creation behavior so payload matches model expectations
+function coerceParametersToSchema(
+  params: Record<string, any>,
+  inputSchema: any
+): Record<string, any> {
+  if (!inputSchema || typeof inputSchema !== 'object') return params;
+  const props = (inputSchema as any).properties || {};
+  const out: Record<string, any> = { ...params };
+
+  for (const [key, schema] of Object.entries<any>(props)) {
+    if (!(key in out)) continue;
+    out[key] = coerceValueToSchema(out[key], schema);
+  }
+
+  return out;
+}
+
+function coerceValueToSchema(value: any, schema: any): any {
+  const declaredType = Array.isArray(schema?.type) ? schema.type[0] : schema?.type;
+  if (!declaredType) return value;
+
+  switch (declaredType) {
+    case 'array': {
+      if (Array.isArray(value)) return value;
+      if (value === undefined || value === null) return value;
+      return [value];
+    }
+    case 'string': {
+      if (value === undefined || value === null) return value;
+      if (Array.isArray(value)) return String(value[0]);
+      return typeof value === 'string' ? value : String(value);
+    }
+    case 'number': {
+      if (value === undefined || value === null) return value;
+      const n = Array.isArray(value) ? parseFloat(value[0]) : parseFloat(value);
+      return Number.isNaN(n) ? value : n;
+    }
+    case 'integer': {
+      if (value === undefined || value === null) return value;
+      const n = Array.isArray(value) ? parseInt(value[0]) : parseInt(value);
+      return Number.isNaN(n) ? value : n;
+    }
+    case 'boolean': {
+      let v = value;
+      if (Array.isArray(v)) v = v[0];
+      if (typeof v === 'boolean') return v;
+      if (typeof v === 'string') {
+        const s = v.toLowerCase();
+        if (s === 'true') return true;
+        if (s === 'false') return false;
+      }
+      return !!v;
+    }
+    case 'object':
+    default:
+      return value;
+  }
 }

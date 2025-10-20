@@ -1,0 +1,333 @@
+import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Upload, ArrowLeft, Loader2, Clock, Camera, Sparkles, Coins } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNativeCamera } from "@/hooks/useNativeCamera";
+import { useUserTokens } from "@/hooks/useUserTokens";
+import { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
+import { formatEstimatedTime } from "@/lib/time-utils";
+
+interface WorkflowInputPanelProps {
+  workflow: WorkflowTemplate;
+  onExecute: (inputs: Record<string, any>) => void;
+  onBack: () => void;
+  isExecuting: boolean;
+}
+
+export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting }: WorkflowInputPanelProps) => {
+  const { user } = useAuth();
+  const { pickImage, pickMultipleImages, isLoading: cameraLoading } = useNativeCamera();
+  const { data: userTokens } = useUserTokens();
+  const [inputs, setInputs] = useState<Record<string, any>>({});
+  const [uploadedFiles, setUploadedFiles] = useState<Record<string, File[]>>({});
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const requiredFields = workflow.user_input_fields?.filter(f => f.required) || [];
+  const estimatedTokens = workflow.workflow_steps?.reduce((sum, step) => {
+    const model = step.model_record_id;
+    return sum + 50; // Rough estimate, could fetch actual model costs
+  }, 0) || 100;
+  
+  const tokenBalance = userTokens?.tokens_remaining || 0;
+  const hasEnoughTokens = tokenBalance >= estimatedTokens;
+
+  const handleInputChange = (fieldName: string, value: any) => {
+    setInputs(prev => ({ ...prev, [fieldName]: value }));
+  };
+
+  const handleFileUpload = async (fieldName: string, files: FileList | null, isMultiple: boolean) => {
+    if (!files || files.length === 0) return;
+
+    const fileArray = Array.from(files);
+    
+    // Validate file types for image uploads
+    const invalidFiles = fileArray.filter(f => !f.type.startsWith('image/'));
+    if (invalidFiles.length > 0) {
+      toast.error(`Invalid file type: ${invalidFiles[0].name}`);
+      return;
+    }
+
+    setUploadedFiles(prev => ({ ...prev, [fieldName]: fileArray }));
+
+    // Upload to storage and get signed URLs
+    const timestamp = Date.now();
+    const imageUrls: string[] = [];
+
+    for (let i = 0; i < fileArray.length; i++) {
+      const file = fileArray[i];
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user?.id}/uploads/${timestamp}/${i}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('generated-content')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        toast.error(`Failed to upload: ${file.name}`);
+        console.error('Upload error:', uploadError);
+        return;
+      }
+
+      const { data: signedData, error: signedError } = await supabase.storage
+        .from('generated-content')
+        .createSignedUrl(filePath, 3600);
+
+      if (signedError || !signedData) {
+        toast.error(`Failed to create URL for: ${file.name}`);
+        return;
+      }
+
+      imageUrls.push(signedData.signedUrl);
+    }
+
+    // Set input value
+    if (isMultiple) {
+      handleInputChange(fieldName, imageUrls);
+    } else {
+      handleInputChange(fieldName, imageUrls[0]);
+    }
+  };
+
+  const handleNativeCamera = async (fieldName: string, isMultiple: boolean) => {
+    const files = isMultiple ? await pickMultipleImages() : [await pickImage()];
+    if (files.length > 0 && files[0]) {
+      const fileList = new DataTransfer();
+      files.forEach(f => f && fileList.items.add(f));
+      await handleFileUpload(fieldName, fileList.files, isMultiple);
+    }
+  };
+
+  const handleExecute = () => {
+    // Validate required fields
+    for (const field of requiredFields) {
+      if (!inputs[field.name]) {
+        toast.error(`${field.label} is required`);
+        return;
+      }
+    }
+
+    onExecute(inputs);
+  };
+
+  const renderInputField = (field: any) => {
+    const isMultiple = field.max_files && field.max_files > 1;
+
+    switch (field.type) {
+      case 'textarea':
+        return (
+          <Textarea
+            value={inputs[field.name] || ''}
+            onChange={(e) => handleInputChange(field.name, e.target.value)}
+            placeholder={`Enter ${field.label.toLowerCase()}...`}
+            disabled={isExecuting}
+            className="min-h-[120px] resize-none"
+          />
+        );
+
+      case 'number':
+        return (
+          <Input
+            type="number"
+            value={inputs[field.name] || ''}
+            onChange={(e) => handleInputChange(field.name, parseFloat(e.target.value))}
+            placeholder={`Enter ${field.label.toLowerCase()}...`}
+            disabled={isExecuting}
+          />
+        );
+
+      case 'select':
+        return (
+          <Select
+            value={inputs[field.name] || ''}
+            onValueChange={(value) => handleInputChange(field.name, value)}
+            disabled={isExecuting}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={`Select ${field.label.toLowerCase()}...`} />
+            </SelectTrigger>
+            <SelectContent>
+              {field.options?.map((option: string) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+
+      case 'checkbox':
+        return (
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              checked={inputs[field.name] || false}
+              onCheckedChange={(checked) => handleInputChange(field.name, checked)}
+              disabled={isExecuting}
+            />
+            <Label className="text-sm cursor-pointer">{field.label}</Label>
+          </div>
+        );
+
+      case 'upload-image':
+        return (
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRefs.current[field.name]?.click()}
+                disabled={isExecuting || cameraLoading}
+                className="flex-1"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {isMultiple ? 'Upload Images' : 'Upload Image'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleNativeCamera(field.name, isMultiple)}
+                disabled={isExecuting || cameraLoading}
+              >
+                <Camera className="h-4 w-4" />
+              </Button>
+            </div>
+            <input
+              ref={(el) => (fileInputRefs.current[field.name] = el)}
+              type="file"
+              accept="image/*"
+              multiple={isMultiple}
+              onChange={(e) => handleFileUpload(field.name, e.target.files, isMultiple)}
+              className="hidden"
+            />
+            {uploadedFiles[field.name] && uploadedFiles[field.name].length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {uploadedFiles[field.name].map((file, idx) => (
+                  <div key={idx} className="relative group">
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={`Upload ${idx + 1}`}
+                      className="w-20 h-20 object-cover rounded-lg border"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
+      default:
+        return (
+          <Input
+            type="text"
+            value={inputs[field.name] || ''}
+            onChange={(e) => handleInputChange(field.name, e.target.value)}
+            placeholder={`Enter ${field.label.toLowerCase()}...`}
+            disabled={isExecuting}
+          />
+        );
+    }
+  };
+
+  return (
+    <Card className="bg-card border border-border shadow-sm rounded-xl">
+      <div className="border-b border-border px-6 py-4 bg-muted/30">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold">{workflow.name}</h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            disabled={isExecuting}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+        </div>
+        {workflow.description && (
+          <p className="text-sm text-muted-foreground mt-2">{workflow.description}</p>
+        )}
+      </div>
+
+      <CardContent className="p-6 space-y-6">
+        {/* Workflow Info */}
+        <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <span className="text-sm font-medium">
+              {workflow.workflow_steps?.length || 0} steps
+            </span>
+          </div>
+          {workflow.estimated_time_seconds && (
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                ~{formatEstimatedTime(workflow.estimated_time_seconds)}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Input Fields */}
+        <div className="space-y-4">
+          {workflow.user_input_fields?.map((field) => (
+            <div key={field.name} className="space-y-2">
+              <Label className="text-sm font-medium">
+                {field.label}
+                {field.required && <span className="text-destructive ml-1">*</span>}
+              </Label>
+              {renderInputField(field)}
+            </div>
+          ))}
+        </div>
+
+        {/* Token Cost Info */}
+        <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium flex items-center gap-2">
+              <Coins className="h-4 w-4 text-primary" />
+              Estimated Cost
+            </span>
+            <Badge variant="secondary">{estimatedTokens} tokens</Badge>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Your balance:</span>
+            <span className={hasEnoughTokens ? "text-green-600 font-semibold" : "text-destructive font-semibold"}>
+              {tokenBalance} tokens
+            </span>
+          </div>
+        </div>
+
+        {/* Execute Button */}
+        <Button
+          onClick={handleExecute}
+          disabled={isExecuting}
+          className="w-full"
+          size="lg"
+        >
+          {isExecuting ? (
+            <>
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              Executing...
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-5 w-5 mr-2" />
+              Execute Workflow
+            </>
+          )}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};

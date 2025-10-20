@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,12 +7,29 @@ import { Badge } from "@/components/ui/badge";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
 import { useAllTemplates } from "@/hooks/useTemplates";
+import { useWorkflowTemplate } from "@/hooks/useWorkflowTemplates";
+import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Image as ImageIcon, Video, Music, FileText } from "lucide-react";
+import { WorkflowInputPanel } from "@/components/generation/WorkflowInputPanel";
+import { GenerationProgress } from "@/components/generation/GenerationProgress";
+import { GenerationPreview } from "@/components/generation/GenerationPreview";
+import { toast } from "sonner";
 
 const Templates = () => {
+  const { user } = useAuth();
   const { data: allTemplates, isLoading } = useAllTemplates();
   const [activeTab, setActiveTab] = useState("all");
   const navigate = useNavigate();
+  
+  // Workflow execution state
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
+  const { data: selectedWorkflow } = useWorkflowTemplate(selectedWorkflowId || '');
+  const { executeWorkflow, isExecuting, progress } = useWorkflowExecution();
+  const [executionResult, setExecutionResult] = useState<{ url: string; tokens: number } | null>(null);
+  const [executionStartTime, setExecutionStartTime] = useState<number | null>(null);
+  const outputSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     document.title = "Templates - Artifio.ai";
@@ -52,10 +69,72 @@ const Templates = () => {
 
   const handleUseTemplate = (template: any) => {
     if (template.template_type === 'workflow') {
-      navigate(`/dashboard/create-workflow?workflow=${template.id}`);
+      if (!user) {
+        navigate('/auth');
+        return;
+      }
+      // Show inline workflow execution
+      setSelectedWorkflowId(template.id);
+      setExecutionResult(null);
+      setExecutionStartTime(null);
+      // Scroll to output section on mobile
+      setTimeout(() => {
+        outputSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
     } else {
       navigate(`/dashboard/create?template=${template.id}`);
     }
+  };
+
+  const handleExecuteWorkflow = async (inputs: Record<string, any>) => {
+    if (!selectedWorkflow) return;
+
+    // Format parameters based on model schema (like CustomCreation)
+    let formattedInputs = { ...inputs };
+    
+    const firstStep = selectedWorkflow.workflow_steps?.[0];
+    if (firstStep?.model_record_id) {
+      const { data: modelData } = await supabase
+        .from('ai_models')
+        .select('input_schema')
+        .eq('record_id', firstStep.model_record_id)
+        .single();
+
+      if (modelData?.input_schema && typeof modelData.input_schema === 'object' && 'properties' in modelData.input_schema) {
+        const schema = (modelData.input_schema as any).properties;
+        
+        for (const [key, value] of Object.entries(formattedInputs)) {
+          const expectedType = schema[key]?.type;
+          
+          // If schema expects array and value is not array, wrap it
+          if (expectedType === 'array' && !Array.isArray(value)) {
+            formattedInputs[key] = [value];
+            console.log(`Formatted ${key} as array for workflow`);
+          }
+        }
+      }
+    }
+
+    setExecutionResult(null);
+    setExecutionStartTime(Date.now());
+    
+    const result = await executeWorkflow({
+      workflow_template_id: selectedWorkflow.id,
+      user_inputs: formattedInputs,
+    });
+
+    if (result?.final_output_url) {
+      setExecutionResult({ url: result.final_output_url, tokens: result.tokens_used });
+      toast.success('Workflow completed!');
+    } else {
+      toast.error('Workflow failed');
+    }
+  };
+
+  const handleBackToTemplates = () => {
+    setSelectedWorkflowId(null);
+    setExecutionResult(null);
+    setExecutionStartTime(null);
   };
 
   return (
@@ -76,9 +155,76 @@ const Templates = () => {
           </div>
         </section>
 
-        {/* Templates Grid with Tabs */}
+        {/* Templates Grid with Tabs OR Workflow Execution */}
         <section className="container mx-auto px-4 py-12 md:py-16">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="max-w-6xl mx-auto">
+          {selectedWorkflow ? (
+            /* Two-Panel Workflow Execution Layout */
+            <div className="max-w-7xl mx-auto">
+              <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 md:gap-8">
+                {/* Left Panel - Input */}
+                <WorkflowInputPanel
+                  workflow={selectedWorkflow}
+                  onExecute={handleExecuteWorkflow}
+                  onBack={handleBackToTemplates}
+                  isExecuting={isExecuting}
+                />
+
+                {/* Right Panel - Output */}
+                <div ref={outputSectionRef}>
+                  <Card className="bg-card border border-border shadow-sm rounded-xl lg:sticky lg:top-24">
+                    <div className="border-b border-border px-6 py-4 bg-muted/30">
+                      <h2 className="text-lg font-bold">Output</h2>
+                    </div>
+                    <CardContent className="p-6 min-h-[400px] flex items-center justify-center">
+                      {!isExecuting && !executionResult && (
+                        <div className="text-center text-muted-foreground">
+                          <Sparkles className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                          <p>Fill in the inputs and execute the workflow to see results</p>
+                        </div>
+                      )}
+
+                      {isExecuting && (
+                        <div className="w-full space-y-4">
+                          <GenerationProgress
+                            startTime={executionStartTime}
+                            isComplete={false}
+                            estimatedTimeSeconds={selectedWorkflow.estimated_time_seconds || undefined}
+                          />
+                          {progress && (
+                            <div className="text-center text-sm text-muted-foreground">
+                              <p>Step {progress.currentStep} of {progress.totalSteps}</p>
+                              {progress.stepName && <p className="font-medium mt-1">{progress.stepName}</p>}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {executionResult && (
+                        <div className="w-full space-y-4">
+                          <GenerationPreview
+                            storagePath={executionResult.url}
+                            contentType={selectedWorkflow.category?.toLowerCase().includes('video') ? 'video' : 'image'}
+                          />
+                          <div className="text-center">
+                            <Badge variant="secondary">
+                              {executionResult.tokens} tokens used
+                            </Badge>
+                            <div className="mt-4 flex gap-2 justify-center">
+                              <Button onClick={handleBackToTemplates} variant="outline">
+                                Create Another
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Template Grid View */
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="max-w-6xl mx-auto">
             <TabsList className="grid w-full grid-cols-6 mb-12">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="image">Image</TabsTrigger>
@@ -169,6 +315,7 @@ const Templates = () => {
               )}
             </TabsContent>
           </Tabs>
+          )}
         </section>
 
         {/* CTA Section */}

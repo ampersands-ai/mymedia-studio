@@ -109,8 +109,8 @@ const CreateWorkflow = () => {
         .eq('record_id', firstStep.model_record_id)
         .single();
 
-      if (modelData?.input_schema?.properties) {
-        const schema = modelData.input_schema.properties;
+      if (modelData?.input_schema && typeof modelData.input_schema === 'object' && 'properties' in modelData.input_schema) {
+        const schema = (modelData.input_schema as any).properties;
         
         for (const [key, value] of Object.entries(formattedInputs)) {
           const expectedType = schema[key]?.type;

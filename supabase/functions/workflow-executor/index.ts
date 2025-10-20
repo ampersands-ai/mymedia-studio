@@ -92,14 +92,19 @@ serve(async (req) => {
         context
       );
 
-      // Resolve input mappings
-      const resolvedInputs = resolveInputMappings(
+      // Resolve input mappings to get dynamic parameter values
+      const resolvedMappings = resolveInputMappings(
         step.input_mappings || {},
         context
       );
 
+      // Merge static parameters with resolved mappings
+      const allParameters = { ...step.parameters, ...resolvedMappings };
+
       console.log('Resolved prompt:', resolvedPrompt);
-      console.log('Resolved inputs:', resolvedInputs);
+      console.log('Static parameters:', step.parameters);
+      console.log('Resolved mappings:', resolvedMappings);
+      console.log('All parameters:', allParameters);
 
       // Call generate-content for this step
       const generateResponse = await supabase.functions.invoke('generate-content', {
@@ -107,7 +112,7 @@ serve(async (req) => {
           model_id: step.model_id,
           model_record_id: step.model_record_id,
           prompt: resolvedPrompt,
-          custom_parameters: { ...step.parameters, ...resolvedInputs },
+          custom_parameters: allParameters,
           workflow_execution_id: execution.id,
           workflow_step_number: step.step_number,
         },
@@ -199,13 +204,18 @@ function getNestedValue(obj: any, path: string): any {
 }
 
 // Helper function to resolve input mappings
+// This resolves parameter mappings like "user.quality" or "step1.output_url"
 function resolveInputMappings(
   mappings: Record<string, string>,
   context: Record<string, any>
 ): Record<string, any> {
   const resolved: Record<string, any> = {};
-  for (const [key, template] of Object.entries(mappings)) {
-    resolved[key] = replaceTemplateVariables(template, context);
+  for (const [paramKey, mapping] of Object.entries(mappings)) {
+    // Get the value by traversing the context path
+    const value = getNestedValue(context, mapping);
+    if (value !== undefined && value !== null) {
+      resolved[paramKey] = value;
+    }
   }
   return resolved;
 }

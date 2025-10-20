@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trash2 } from 'lucide-react';
+import { SchemaInput } from '@/components/generation/SchemaInput';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Separator } from '@/components/ui/separator';
 
 interface WorkflowStepFormProps {
   step: WorkflowStep;
@@ -30,6 +33,10 @@ export function WorkflowStepForm({
   previousSteps,
 }: WorkflowStepFormProps) {
   const [localStep, setLocalStep] = useState(step);
+  const [parameterModes, setParameterModes] = useState<Record<string, 'static' | 'mapped'>>({});
+
+  const selectedModel = availableModels.find(m => m.id === localStep.model_id);
+  const modelSchema = selectedModel?.input_schema;
 
   const handleChange = (updates: Partial<WorkflowStep>) => {
     const updatedStep = { ...localStep, ...updates };
@@ -40,6 +47,123 @@ export function WorkflowStepForm({
   const insertVariable = (variable: string) => {
     const newPrompt = localStep.prompt_template + ` {{${variable}}}`;
     handleChange({ prompt_template: newPrompt });
+  };
+
+  const handleParameterChange = (paramName: string, value: any) => {
+    const newParameters = { ...localStep.parameters, [paramName]: value };
+    handleChange({ parameters: newParameters });
+  };
+
+  const handleMappingChange = (paramName: string, mapping: string) => {
+    const newMappings = { ...localStep.input_mappings, [paramName]: mapping };
+    handleChange({ input_mappings: newMappings });
+  };
+
+  const toggleParameterMode = (paramName: string, mode: 'static' | 'mapped') => {
+    setParameterModes(prev => ({ ...prev, [paramName]: mode }));
+    
+    if (mode === 'static') {
+      // Remove from input_mappings, add to parameters with default value
+      const newMappings = { ...localStep.input_mappings };
+      delete newMappings[paramName];
+      handleChange({ input_mappings: newMappings });
+    } else {
+      // Remove from parameters, will be set via mapping
+      const newParameters = { ...localStep.parameters };
+      delete newParameters[paramName];
+      handleChange({ parameters: newParameters });
+    }
+  };
+
+  const getAvailableMappingSources = () => {
+    const sources: { value: string; label: string }[] = [];
+    
+    // Add user input fields
+    userInputFields.forEach(field => {
+      sources.push({
+        value: `user.${field.name}`,
+        label: `User Input: ${field.label}`
+      });
+    });
+    
+    // Add previous step outputs
+    previousSteps.forEach(s => {
+      sources.push({
+        value: `step${s.step_number}.${s.output_key}`,
+        label: `Step ${s.step_number}: ${s.step_name} (${s.output_key})`
+      });
+    });
+    
+    return sources;
+  };
+
+  const renderModelParameter = (paramName: string, paramSchema: any, isRequired: boolean) => {
+    const mode = parameterModes[paramName] || 
+      (localStep.input_mappings?.[paramName] ? 'mapped' : 'static');
+    const displayName = paramSchema.title || paramName.split('_').map((word: string) => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+
+    return (
+      <div key={paramName} className="space-y-3 p-3 border rounded-lg bg-muted/30">
+        <div className="flex items-center justify-between">
+          <Label className="font-medium">
+            {displayName}
+            {isRequired && <span className="text-destructive ml-1">*</span>}
+          </Label>
+          {isRequired && (
+            <RadioGroup
+              value={mode}
+              onValueChange={(value) => toggleParameterMode(paramName, value as 'static' | 'mapped')}
+              className="flex gap-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="static" id={`${paramName}-static`} />
+                <Label htmlFor={`${paramName}-static`} className="font-normal cursor-pointer">
+                  Static value
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="mapped" id={`${paramName}-mapped`} />
+                <Label htmlFor={`${paramName}-mapped`} className="font-normal cursor-pointer">
+                  Map from input
+                </Label>
+              </div>
+            </RadioGroup>
+          )}
+        </div>
+
+        {paramSchema.description && (
+          <p className="text-xs text-muted-foreground">{paramSchema.description}</p>
+        )}
+
+        {mode === 'static' ? (
+          <SchemaInput
+            name={paramName}
+            schema={paramSchema}
+            value={localStep.parameters?.[paramName]}
+            onChange={(value) => handleParameterChange(paramName, value)}
+            required={isRequired}
+          />
+        ) : (
+          <Select
+            value={localStep.input_mappings?.[paramName] || ''}
+            onValueChange={(value) => handleMappingChange(paramName, value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a source..." />
+            </SelectTrigger>
+            <SelectContent>
+              {getAvailableMappingSources().map((source) => (
+                <SelectItem key={source.value} value={source.value}>
+                  {source.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -117,6 +241,26 @@ export function WorkflowStepForm({
           ))}
         </div>
       </div>
+
+      {modelSchema?.properties && Object.keys(modelSchema.properties).length > 0 && (
+        <>
+          <Separator />
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">Model Parameters</Label>
+            <p className="text-sm text-muted-foreground">
+              Configure model-specific parameters. Required fields can use static values or map to user inputs.
+            </p>
+            <div className="space-y-3">
+              {Object.entries(modelSchema.properties).map(([paramName, paramSchema]: [string, any]) => {
+                const isRequired = modelSchema.required?.includes(paramName);
+                return renderModelParameter(paramName, paramSchema, isRequired);
+              })}
+            </div>
+          </div>
+        </>
+      )}
+
+      <Separator />
 
       <div className="space-y-2">
         <Label>Output Key Name</Label>

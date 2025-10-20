@@ -93,6 +93,14 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
     return null; // No errors
   };
 
+  const handleReset = () => {
+    setResult(null);
+    setStatusMessage('');
+    setInputs({});
+    setPreviewUrls({});
+    toast.info('Test reset');
+  };
+
   const handleTest = async () => {
     if (!workflow?.id) return;
 
@@ -326,6 +334,15 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
 
           {/* Action Buttons */}
           <div className="flex gap-2">
+            {(isExecuting || result) && (
+              <Button
+                onClick={handleReset}
+                variant="outline"
+                disabled={isExecuting}
+              >
+                {isExecuting ? 'Cancel' : 'Reset'}
+              </Button>
+            )}
             <Button
               onClick={handleTest}
               disabled={isExecuting || !workflow?.workflow_steps?.length || uploadingFiles.size > 0}

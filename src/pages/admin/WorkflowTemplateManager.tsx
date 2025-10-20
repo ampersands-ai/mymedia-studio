@@ -12,7 +12,7 @@ import { WorkflowVisualPreview } from '@/components/admin/WorkflowVisualPreview'
 import { WorkflowTestDialog } from '@/components/admin/WorkflowTestDialog';
 import { WorkflowStep, UserInputField, WorkflowTemplate } from '@/hooks/useWorkflowTemplates';
 import { useModels } from '@/hooks/useModels';
-import { Plus, Pencil, Trash2, Save, Play } from 'lucide-react';
+import { Plus, Pencil, Trash2, Save, Play, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -114,6 +114,39 @@ export default function WorkflowTemplateManager() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workflow-templates-admin'] });
       toast({ title: 'Workflow deleted successfully' });
+    },
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: async (workflow: WorkflowTemplate) => {
+      // Generate new ID by appending timestamp
+      const timestamp = Date.now();
+      const newId = `${workflow.id}-copy-${timestamp}`;
+      
+      const insertData: any = {
+        id: newId,
+        name: `${workflow.name} (Copy)`,
+        description: workflow.description,
+        category: workflow.category,
+        thumbnail_url: workflow.thumbnail_url,
+        is_active: false, // Start inactive for review
+        display_order: workflow.display_order,
+        estimated_time_seconds: workflow.estimated_time_seconds,
+        workflow_steps: workflow.workflow_steps,
+        user_input_fields: workflow.user_input_fields,
+      };
+      
+      const { error } = await supabase
+        .from('workflow_templates')
+        .insert(insertData);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflow-templates-admin'] });
+      toast({ title: 'Workflow duplicated successfully' });
+    },
+    onError: (error) => {
+      toast({ title: 'Failed to duplicate workflow', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -408,6 +441,14 @@ export default function WorkflowTemplateManager() {
                 >
                   <Play className="h-4 w-4 mr-2" />
                   Test
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => duplicateMutation.mutate(workflow)}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Duplicate
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => setEditingWorkflow(workflow)}>
                   <Pencil className="h-4 w-4" />

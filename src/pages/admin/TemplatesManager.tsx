@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -535,6 +535,29 @@ function WorkflowEditorDialog({
   onSuccess: () => void;
 }) {
   const [localWorkflow, setLocalWorkflow] = useState<Partial<WorkflowTemplate>>(workflow || {});
+  const [existingCategories, setExistingCategories] = useState<string[]>([]);
+  const [showCustomCategory, setShowCustomCategory] = useState(false);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const [workflowRes, contentRes] = await Promise.all([
+        supabase.from('workflow_templates').select('category'),
+        supabase.from('content_templates').select('category')
+      ]);
+      
+      const allCategories = new Set<string>();
+      workflowRes.data?.forEach(t => allCategories.add(t.category));
+      contentRes.data?.forEach(t => allCategories.add(t.category));
+      
+      setExistingCategories(Array.from(allCategories).sort());
+    };
+    
+    if (open) {
+      fetchCategories();
+      setLocalWorkflow(workflow || {});
+      setShowCustomCategory(false);
+    }
+  }, [open, workflow]);
 
   const createMutation = useMutation({
     mutationFn: async (wf: Partial<WorkflowTemplate>) => {
@@ -688,14 +711,72 @@ function WorkflowEditorDialog({
                 placeholder="Describe this workflow..."
               />
             </div>
+            <div className="space-y-2">
+              <Label>Thumbnail URL</Label>
+              <Input
+                value={localWorkflow.thumbnail_url || ''}
+                onChange={(e) => setLocalWorkflow({ ...localWorkflow, thumbnail_url: e.target.value })}
+                placeholder="/placeholder.svg"
+              />
+              <p className="text-xs text-muted-foreground">
+                Leave empty to use default placeholder image
+              </p>
+            </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Input
-                  value={localWorkflow.category || ''}
-                  onChange={(e) => setLocalWorkflow({ ...localWorkflow, category: e.target.value })}
-                  placeholder="e.g., Image Processing"
-                />
+                {!showCustomCategory ? (
+                  <Select
+                    value={localWorkflow.category || ''}
+                    onValueChange={(value) => {
+                      if (value === '__custom__') {
+                        setShowCustomCategory(true);
+                        setLocalWorkflow({ ...localWorkflow, category: '' });
+                      } else {
+                        setLocalWorkflow({ ...localWorkflow, category: value });
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {existingCategories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="__custom__">
+                        <span className="flex items-center gap-2">
+                          <Plus className="h-3 w-3" />
+                          Create new category
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input
+                      value={localWorkflow.category || ''}
+                      onChange={(e) => setLocalWorkflow({ ...localWorkflow, category: e.target.value })}
+                      placeholder="Enter new category name"
+                      autoFocus
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCustomCategory(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {showCustomCategory 
+                    ? 'Enter a new category name or click Cancel to select existing'
+                    : 'Select existing category or create new'}
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Display Order</Label>

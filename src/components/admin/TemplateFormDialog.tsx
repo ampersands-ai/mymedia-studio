@@ -318,11 +318,11 @@ export function TemplateFormDialog({
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Image Creation">Image Creation</SelectItem>
-                      <SelectItem value="Photo Editing">Photo Editing</SelectItem>
-                      <SelectItem value="Video Creation">Video Creation</SelectItem>
-                      <SelectItem value="Audio Processing">Audio Processing</SelectItem>
-                      <SelectItem value="Text Generation">Text Generation</SelectItem>
+                      <SelectItem value="Product">Product</SelectItem>
+                      <SelectItem value="Marketing">Marketing</SelectItem>
+                      <SelectItem value="Fantasy">Fantasy</SelectItem>
+                      <SelectItem value="Portraits">Portraits</SelectItem>
+                      <SelectItem value="Abstract">Abstract</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -8,7 +8,7 @@ import { useAllTemplates } from "@/hooks/useTemplates";
 import { useWorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
 import { useAuth } from "@/contexts/AuthContext";
-import { Sparkles, Image as ImageIcon, Video, Music, FileText } from "lucide-react";
+import { Sparkles, Package, Users, TrendingUp, Layers, Wand2 } from "lucide-react";
 import { WorkflowInputPanel } from "@/components/generation/WorkflowInputPanel";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
@@ -36,35 +36,52 @@ const Templates = () => {
     }
   }, []);
 
-  const categoryIcons: Record<string, any> = {
-    "Video Creation": Video,
-    "Image Generation": ImageIcon,
-    "Portrait Headshots": ImageIcon,
-    "Product Photos": ImageIcon,
-    "Social Media Content": ImageIcon,
-    "Audio Processing": Music,
-    "Text Generation": FileText,
-    "Creative Design": Sparkles,
-    "Photo Editing": ImageIcon,
-  };
-
   const getTemplateIcon = (category: string) => {
-    return categoryIcons[category] || Sparkles;
+    switch (category.toLowerCase()) {
+      case "product":
+        return Package;
+      case "marketing":
+        return TrendingUp;
+      case "fantasy":
+        return Wand2;
+      case "portraits":
+        return Users;
+      case "abstract":
+        return Layers;
+      default:
+        return Sparkles;
+    }
   };
 
-  const templates = allTemplates || [];
+  const getWorkflowContentType = (template: any): "Video" | "Image" => {
+    // Check if template has workflow_steps to determine output type
+    if (template.workflow_steps && Array.isArray(template.workflow_steps)) {
+      const lastStep = template.workflow_steps[template.workflow_steps.length - 1];
+      if (lastStep?.model_id) {
+        const modelId = lastStep.model_id.toLowerCase();
+        // Check for video model keywords
+        if (modelId.includes("video") || modelId.includes("sora") || modelId.includes("runway") || 
+            modelId.includes("kling") || modelId.includes("luma") || modelId.includes("veo") ||
+            modelId.includes("hailuo") || modelId.includes("wan")) {
+          return "Video";
+        }
+      }
+    }
+    // Also check category as fallback
+    if (template.category?.toLowerCase().includes("video")) {
+      return "Video";
+    }
+    return "Image";
+  };
+
+  // All templates are now workflows - filter by category
+  const templates = (allTemplates || []).sort((a, b) => a.display_order - b.display_order);
   
-  const imageTemplates = templates.filter(t => {
-    if (t.template_type === "workflow") return false;
-    const contentType = t.ai_models?.content_type?.toLowerCase();
-    return contentType === "image";
-  });
-  
-  const videoTemplates = templates.filter(t => {
-    if (t.template_type === "workflow") return false;
-    const contentType = t.ai_models?.content_type?.toLowerCase();
-    return contentType === "video";
-  });
+  const productTemplates = templates.filter(t => t.category === "Product");
+  const marketingTemplates = templates.filter(t => t.category === "Marketing");
+  const fantasyTemplates = templates.filter(t => t.category === "Fantasy");
+  const portraitsTemplates = templates.filter(t => t.category === "Portraits");
+  const abstractTemplates = templates.filter(t => t.category === "Abstract");
 
   const handleUseTemplate = (template: any) => {
     if (template.template_type === 'workflow') {
@@ -128,6 +145,61 @@ const Templates = () => {
       // Storage path - use GenerationPreview
       return <GenerationPreview storagePath={executionResult.url} contentType={contentType} />;
     }
+  };
+
+  const renderCarousel = (categoryTemplates: any[], categoryName: string) => {
+    if (categoryTemplates.length === 0) return null;
+
+    return (
+      <div className="space-y-6">
+        <h2 className="text-3xl font-black">{categoryName}</h2>
+        <Carousel className="w-full">
+          <CarouselContent className="-ml-4">
+            {categoryTemplates.map((template) => {
+              const Icon = getTemplateIcon(template.category || '');
+              const contentType = getWorkflowContentType(template);
+              return (
+                <CarouselItem key={template.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
+                  <Card className="group hover:shadow-brutal transition-all overflow-hidden border-2 border-black">
+                    <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10">
+                      {template.thumbnail_url ? (
+                        <img 
+                          src={template.thumbnail_url} 
+                          alt={template.name || ''}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Icon className="h-12 w-12 text-primary/30" />
+                        </div>
+                      )}
+                      <Badge variant="secondary" className="absolute top-1 right-1 backdrop-blur-sm bg-background/80 text-xs px-1.5 py-0">
+                        {contentType}
+                      </Badge>
+                    </div>
+                    
+                    <div className="p-2 space-y-2">
+                      <p className="text-xs font-medium line-clamp-1">{template.name}</p>
+                      
+                      <Button 
+                        onClick={() => handleUseTemplate(template)}
+                        className="w-full h-7 text-xs"
+                        size="sm"
+                      >
+                        <Sparkles className="mr-1 h-3 w-3" />
+                        Use
+                      </Button>
+                    </div>
+                  </Card>
+                </CarouselItem>
+              );
+            })}
+          </CarouselContent>
+          <CarouselPrevious className="border-2 border-black" />
+          <CarouselNext className="border-2 border-black" />
+        </Carousel>
+      </div>
+    );
   };
 
   return (
@@ -200,139 +272,32 @@ const Templates = () => {
           ) : (
             /* Template Carousels */
             <div className="max-w-7xl mx-auto space-y-16">
-              {/* Images Carousel */}
-              <div className="space-y-6">
-                <h2 className="text-3xl font-black">Images</h2>
-                {isLoading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Card key={i} className="animate-pulse">
-                        <div className="aspect-square bg-muted" />
-                        <div className="p-2">
-                          <div className="h-3 bg-muted rounded w-3/4" />
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                ) : imageTemplates.length === 0 ? (
-                  <div className="text-center py-12">
-                    <ImageIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-muted-foreground">No image templates available.</p>
-                  </div>
-                ) : (
-                  <Carousel className="w-full">
-                    <CarouselContent className="-ml-4">
-                      {imageTemplates.map((template) => {
-                        const Icon = getTemplateIcon(template.category || '');
-                        return (
-                          <CarouselItem key={template.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
-                            <Card className="group hover:shadow-brutal transition-all overflow-hidden border-2 border-black">
-                              <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10">
-                                {template.thumbnail_url ? (
-                                  <img 
-                                    src={template.thumbnail_url} 
-                                    alt={template.name || ''}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center">
-                                    <Icon className="h-12 w-12 text-primary/30" />
-                                  </div>
-                                )}
-                                <Badge variant="secondary" className="absolute top-1 right-1 backdrop-blur-sm bg-background/80 text-xs px-1.5 py-0">
-                                  {template.category}
-                                </Badge>
-                              </div>
-                              
-                              <div className="p-2 space-y-2">
-                                <p className="text-xs font-medium line-clamp-1">{template.name}</p>
-                                
-                                <Button 
-                                  onClick={() => handleUseTemplate(template)}
-                                  className="w-full h-7 text-xs"
-                                  size="sm"
-                                >
-                                  <Sparkles className="mr-1 h-3 w-3" />
-                                  Use
-                                </Button>
-                              </div>
-                            </Card>
-                          </CarouselItem>
-                        );
-                      })}
-                    </CarouselContent>
-                    <CarouselPrevious className="border-2 border-black" />
-                    <CarouselNext className="border-2 border-black" />
-                  </Carousel>
-                )}
-              </div>
+              {renderCarousel(productTemplates, "Product")}
+              {renderCarousel(marketingTemplates, "Marketing")}
+              {renderCarousel(fantasyTemplates, "Fantasy")}
+              {renderCarousel(portraitsTemplates, "Portraits")}
+              {renderCarousel(abstractTemplates, "Abstract")}
 
-              {/* Video Carousel */}
-              <div className="space-y-6">
-                <h2 className="text-3xl font-black">Video</h2>
-                {isLoading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Card key={i} className="animate-pulse">
-                        <div className="aspect-square bg-muted" />
-                        <div className="p-2">
-                          <div className="h-3 bg-muted rounded w-3/4" />
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                ) : videoTemplates.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Video className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-muted-foreground">No video templates available.</p>
-                  </div>
-                ) : (
-                  <Carousel className="w-full">
-                    <CarouselContent className="-ml-4">
-                      {videoTemplates.map((template) => {
-                        const Icon = getTemplateIcon(template.category || '');
-                        return (
-                          <CarouselItem key={template.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
-                            <Card className="group hover:shadow-brutal transition-all overflow-hidden border-2 border-black">
-                              <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10">
-                                {template.thumbnail_url ? (
-                                  <img 
-                                    src={template.thumbnail_url} 
-                                    alt={template.name || ''}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center">
-                                    <Icon className="h-12 w-12 text-primary/30" />
-                                  </div>
-                                )}
-                                <Badge variant="secondary" className="absolute top-1 right-1 backdrop-blur-sm bg-background/80 text-xs px-1.5 py-0">
-                                  {template.category}
-                                </Badge>
-                              </div>
-                              
-                              <div className="p-2 space-y-2">
-                                <p className="text-xs font-medium line-clamp-1">{template.name}</p>
-                                
-                                <Button 
-                                  onClick={() => handleUseTemplate(template)}
-                                  className="w-full h-7 text-xs"
-                                  size="sm"
-                                >
-                                  <Sparkles className="mr-1 h-3 w-3" />
-                                  Use
-                                </Button>
-                              </div>
-                            </Card>
-                          </CarouselItem>
-                        );
-                      })}
-                    </CarouselContent>
-                    <CarouselPrevious className="border-2 border-black" />
-                    <CarouselNext className="border-2 border-black" />
-                  </Carousel>
-                )}
-              </div>
+              {/* Loading and Empty States */}
+              {isLoading && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Card key={i} className="animate-pulse">
+                      <div className="aspect-square bg-muted" />
+                      <div className="p-2">
+                        <div className="h-3 bg-muted rounded w-3/4" />
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {!isLoading && templates.length === 0 && (
+                <div className="text-center py-12">
+                  <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">No templates available.</p>
+                </div>
+              )}
             </div>
         )}
         </div>

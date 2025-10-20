@@ -108,9 +108,9 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
               </Button>
 
               <Button
-                variant={isActive("/templates") ? "default" : "ghost"}
+                variant={isActive("/dashboard/templates") ? "default" : "ghost"}
                 className="justify-start h-12 text-base"
-                onClick={() => handleNavigation("/templates")}
+                onClick={() => handleNavigation("/dashboard/templates")}
               >
                 <Layout className="h-5 w-5 mr-3" />
                 Templates

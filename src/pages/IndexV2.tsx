@@ -57,7 +57,7 @@ const IndexV2 = () => {
               <Link to="/features" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">
                 Features
               </Link>
-              <Link to="/templates" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">
+              <Link to="/dashboard/templates" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">
                 Templates
               </Link>
               <Link to="/pricing" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">

@@ -301,7 +301,7 @@ const CreateWorkflow = () => {
       <div className="container mx-auto px-4 py-8">
         <Button
           variant="ghost"
-          onClick={() => navigate("/templates")}
+          onClick={() => navigate("/dashboard/templates")}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />

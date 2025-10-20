@@ -49,12 +49,12 @@ export const DashboardLayout = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-2">
-              <Link to="/templates">
+              <Link to="/dashboard/templates">
                 <Button
-                  variant={isActive("/templates") ? "default" : "ghost"}
+                  variant={isActive("/dashboard/templates") ? "default" : "ghost"}
                   className={cn(
                     "text-base px-6 py-5 rounded-full",
-                    isActive("/templates") 
+                    isActive("/dashboard/templates") 
                       ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
@@ -131,11 +131,11 @@ export const DashboardLayout = () => {
                         <span>Custom Creation</span>
                       </Link>
                       <Link 
-                        to="/templates" 
+                        to="/dashboard/templates" 
                         onClick={() => setMobileMenuOpen(false)}
                         className={cn(
                           "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                          isActive("/templates") 
+                          isActive("/dashboard/templates") 
                             ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
                             : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                         )}
@@ -155,96 +155,6 @@ export const DashboardLayout = () => {
                       >
                         <History className="h-5 w-5" />
                         <span>My Creations</span>
-                      </Link>
-
-                      {/* Product Section */}
-                      <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">PRODUCT</div>
-                      <Link 
-                        to="/features" 
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                          isActive("/features") 
-                            ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                            : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
-                        )}
-                      >
-                        <span>Features</span>
-                      </Link>
-                      <Link 
-                        to="/templates" 
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                          isActive("/templates") 
-                            ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                            : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
-                        )}
-                      >
-                        <span>Templates</span>
-                      </Link>
-                      <Link 
-                        to="/pricing" 
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                          isActive("/pricing") 
-                            ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                            : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
-                        )}
-                      >
-                        <span>Pricing</span>
-                      </Link>
-
-                      {/* Resources Section */}
-                      <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">RESOURCES</div>
-                      <Link 
-                        to="/about" 
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                          isActive("/about") 
-                            ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                            : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
-                        )}
-                      >
-                        <span>About</span>
-                      </Link>
-                      <Link 
-                        to="/blog" 
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                          isActive("/blog") 
-                            ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                            : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
-                        )}
-                      >
-                        <span>Blog</span>
-                      </Link>
-                      <Link 
-                        to="/faq" 
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                          isActive("/faq") 
-                            ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                            : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
-                        )}
-                      >
-                        <span>FAQ</span>
-                      </Link>
-                      <Link 
-                        to="/community" 
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                          isActive("/community") 
-                            ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                            : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
-                        )}
-                      >
-                        <span>Community</span>
                       </Link>
 
                       {/* Account Section */}

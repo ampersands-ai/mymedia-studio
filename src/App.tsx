@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense, useEffect } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Analytics } from "./components/Analytics";
@@ -95,6 +95,7 @@ const AppContent = () => {
             <Route path="create" element={<Create />} />
             <Route path="create-workflow" element={<CreateWorkflow />} />
             <Route path="custom-creation" element={<CustomCreation />} />
+            <Route path="templates" element={<Templates />} />
             <Route path="history" element={<History />} />
             <Route path="settings" element={<Settings />} />
           </Route>
@@ -116,7 +117,7 @@ const AppContent = () => {
           <Route path="/blog" element={<Blog />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/features" element={<Features />} />
-          <Route path="/templates" element={<Templates />} />
+          <Route path="/templates" element={<Navigate to="/dashboard/templates" replace />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNativeCamera } from "@/hooks/useNativeCamera";
 import { useUserTokens } from "@/hooks/useUserTokens";
+import { useWorkflowTokenCost } from "@/hooks/useWorkflowTokenCost";
 import { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { formatEstimatedTime } from "@/lib/time-utils";
 
@@ -32,10 +33,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting }:
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const requiredFields = workflow.user_input_fields?.filter(f => f.required) || [];
-  const estimatedTokens = workflow.workflow_steps?.reduce((sum, step) => {
-    const model = step.model_record_id;
-    return sum + 50; // Rough estimate, could fetch actual model costs
-  }, 0) || 100;
+  const { estimatedTokens, isCalculating } = useWorkflowTokenCost(workflow, inputs);
   
   const tokenBalance = userTokens?.tokens_remaining || 0;
   const hasEnoughTokens = tokenBalance >= estimatedTokens;

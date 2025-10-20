@@ -105,7 +105,7 @@ serve(async (req) => {
       console.log('Resolved mappings:', resolvedMappings);
       console.log('All parameters (pre-formatted by frontend):', allParameters);
 
-      // Call generate-content for this step
+      // Call generate-content for this step (returns immediately with status: 'processing')
       const generateResponse = await supabase.functions.invoke('generate-content', {
         body: {
           model_id: step.model_id,
@@ -122,19 +122,72 @@ serve(async (req) => {
       }
 
       const stepResult = generateResponse.data;
-      console.log('Step result:', stepResult);
+      const generationId = stepResult.id || stepResult.generation_id;
 
-      // Store step output with key
-      stepOutputs[`step${step.step_number}`] = {
-        [step.output_key]: stepResult.output_url || stepResult.output_data,
-        generation_id: stepResult.generation_id,
-      };
-
-      if (stepResult.generation_id) {
-        generationIds.push(stepResult.generation_id);
+      if (!generationId) {
+        throw new Error(`No generation ID returned for step ${step.step_number}`);
       }
 
-      totalTokens += stepResult.tokens_used || 0;
+      console.log(`Waiting for generation ${generationId} to complete...`);
+
+      // POLL THE DATABASE (exactly like Custom Creation does)
+      let generation: any = null;
+      const startTime = Date.now();
+      const MAX_POLLING_DURATION = 20 * 60 * 1000; // 20 minutes (same as Custom Creation)
+
+      while (!generation) {
+        const elapsed = Date.now() - startTime;
+        
+        // Timeout check
+        if (elapsed >= MAX_POLLING_DURATION) {
+          throw new Error(`Generation timed out for step ${step.step_number} after 20 minutes`);
+        }
+        
+        // Wait before polling (5 seconds, same as Custom Creation starts with)
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        // Fetch generation status from database
+        const { data: genData, error: genError } = await supabase
+          .from('generations')
+          .select('id, status, storage_path, output_url, tokens_used, provider_response')
+          .eq('id', generationId)
+          .single();
+        
+        if (genError) {
+          console.error('Error polling generation:', genError);
+          continue; // Keep trying
+        }
+        
+        console.log(`Generation status: ${genData.status} (${Math.round(elapsed / 1000)}s elapsed)`);
+        
+        // Check for completion (exactly like Custom Creation)
+        if (genData.status === 'completed') {
+          generation = genData;
+          break;
+        }
+        
+        // Check for failure (exactly like Custom Creation)
+        if (genData.status === 'failed') {
+          const providerResponse = genData.provider_response as any;
+          const errorMessage = providerResponse?.error || 
+                              providerResponse?.full_response?.data?.failMsg ||
+                              'Generation failed';
+          throw new Error(`Step ${step.step_number} failed: ${errorMessage}`);
+        }
+        
+        // Otherwise, keep polling (status is still 'processing' or 'pending')
+      }
+
+      console.log('Generation completed:', generation);
+
+      // Store step output with storage_path (same as Custom Creation uses)
+      stepOutputs[`step${step.step_number}`] = {
+        [step.output_key]: generation.storage_path,
+        generation_id: generation.id,
+      };
+
+      generationIds.push(generation.id);
+      totalTokens += generation.tokens_used || 0;
 
       // Update execution with step outputs
       await supabase
@@ -186,61 +239,6 @@ serve(async (req) => {
   }
 });
 
-// Helper function to convert storage paths to signed URLs
-async function convertStoragePathsToUrls(
-  params: Record<string, any>,
-  supabase: any
-): Promise<Record<string, any>> {
-  const converted = { ...params };
-  
-  // Common parameter keys that might contain storage paths
-  const imageKeys = ['image_urls', 'image_url', 'reference_image_urls', 'input_image'];
-  
-  for (const key of imageKeys) {
-    if (!converted[key]) continue;
-    
-    const value = converted[key];
-    
-    // Handle single storage path
-    if (typeof value === 'string' && value.startsWith('workflow-inputs/')) {
-      const { data, error } = await supabase.storage
-        .from('generated-content')
-        .createSignedUrl(value, 3600); // 1 hour expiry
-      
-      if (data?.signedUrl) {
-        converted[key] = data.signedUrl;
-        console.log(`Converted ${key}: ${value} → ${data.signedUrl}`);
-      } else {
-        console.error(`Failed to create signed URL for ${key}:`, error);
-      }
-    }
-    
-    // Handle array of storage paths
-    if (Array.isArray(value)) {
-      const convertedUrls = await Promise.all(
-        value.map(async (item) => {
-          if (typeof item === 'string' && item.startsWith('workflow-inputs/')) {
-            const { data, error } = await supabase.storage
-              .from('generated-content')
-              .createSignedUrl(item, 3600);
-            
-            if (data?.signedUrl) {
-              console.log(`Converted ${key}[]: ${item} → ${data.signedUrl}`);
-              return data.signedUrl;
-            } else {
-              console.error(`Failed to create signed URL for ${key}[]:`, error);
-              return item; // Keep original on error
-            }
-          }
-          return item;
-        })
-      );
-      converted[key] = convertedUrls;
-    }
-  }
-  
-  return converted;
-}
 
 // Helper function to replace template variables
 function replaceTemplateVariables(

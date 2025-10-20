@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { GlobalHeader } from "@/components/GlobalHeader";
-import { Footer } from "@/components/Footer";
 import { useAllTemplates } from "@/hooks/useTemplates";
 import { useWorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
@@ -132,12 +130,10 @@ const Templates = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <GlobalHeader />
-      
-      <main className="flex-1 bg-background">
-        {/* Hero Section */}
-        <section className="container mx-auto px-4 py-16 md:py-24 bg-background">
+    <>
+      {/* Hero Section */}
+      <section className="container mx-auto px-4 py-16 md:py-24">
+
           <div className="max-w-4xl mx-auto text-center">
             <Sparkles className="h-16 w-16 mx-auto mb-6 text-primary" />
             <h1 className="text-4xl md:text-6xl font-black mb-6 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-gradient">
@@ -149,8 +145,8 @@ const Templates = () => {
           </div>
         </section>
 
-        {/* Templates Grid with Tabs OR Workflow Execution */}
-        <section className="container mx-auto px-4 py-12 md:py-16 bg-background">
+      {/* Templates Grid with Tabs OR Workflow Execution */}
+      <section className="container mx-auto px-4 py-12 md:py-16">
           {selectedWorkflow ? (
             /* Two-Panel Workflow Execution Layout */
             <div className="max-w-7xl mx-auto">
@@ -293,11 +289,11 @@ const Templates = () => {
               </TabsContent>
             ))}
           </Tabs>
-          )}
-        </section>
+        )}
+      </section>
 
-        {/* CTA Section */}
-        <section className="container mx-auto px-4 py-16 md:py-24">
+      {/* CTA Section */}
+      <section className="container mx-auto px-4 py-16 md:py-24">
           <Card className="max-w-2xl mx-auto border-4 border-primary">
             <CardContent className="p-8 md:p-12 text-center">
               <h2 className="text-3xl md:text-4xl font-black mb-4">Can't Find What You Need?</h2>
@@ -312,13 +308,10 @@ const Templates = () => {
                   <Link to="/features">View All Features</Link>
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </section>
-      </main>
-
-      <Footer />
-    </div>
+          </CardContent>
+        </Card>
+      </section>
+    </>
   );
 };
 

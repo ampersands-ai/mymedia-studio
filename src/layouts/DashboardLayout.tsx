@@ -49,12 +49,12 @@ export const DashboardLayout = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-2">
-              <Link to="/dashboard/create">
+              <Link to="/templates">
                 <Button
-                  variant={isActive("/dashboard/create") ? "default" : "ghost"}
+                  variant={isActive("/templates") ? "default" : "ghost"}
                   className={cn(
                     "text-base px-6 py-5 rounded-full",
-                    isActive("/dashboard/create") 
+                    isActive("/templates") 
                       ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
@@ -131,11 +131,11 @@ export const DashboardLayout = () => {
                         <span>Custom Creation</span>
                       </Link>
                       <Link 
-                        to="/dashboard/create" 
+                        to="/templates" 
                         onClick={() => setMobileMenuOpen(false)}
                         className={cn(
                           "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                          isActive("/dashboard/create") 
+                          isActive("/templates") 
                             ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
                             : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                         )}

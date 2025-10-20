@@ -39,13 +39,16 @@ const Templates = () => {
   };
 
   const templates = allTemplates || [];
-  const filteredTemplates = activeTab === "all"
-    ? templates
-    : templates.filter(t => {
-        if (t.template_type === 'workflow') return false; // Workflows don't have content_type
-        const contentType = t.ai_models?.content_type?.toLowerCase();
-        return contentType === activeTab;
-      });
+  const filteredTemplates = 
+    activeTab === "all"
+      ? templates
+      : activeTab === "workflows"
+        ? templates.filter(t => t.template_type === "workflow")
+        : templates.filter(t => {
+            if (t.template_type === "workflow") return false;
+            const contentType = t.ai_models?.content_type?.toLowerCase();
+            return contentType === activeTab;
+          });
 
   const handleUseTemplate = (template: any) => {
     if (template.template_type === 'workflow') {
@@ -76,12 +79,13 @@ const Templates = () => {
         {/* Templates Grid with Tabs */}
         <section className="container mx-auto px-4 py-12 md:py-16">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="max-w-6xl mx-auto">
-            <TabsList className="grid w-full grid-cols-5 mb-12">
+            <TabsList className="grid w-full grid-cols-6 mb-12">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="image">Image</TabsTrigger>
               <TabsTrigger value="video">Video</TabsTrigger>
               <TabsTrigger value="audio">Audio</TabsTrigger>
               <TabsTrigger value="text">Text</TabsTrigger>
+              <TabsTrigger value="workflows">Workflows</TabsTrigger>
             </TabsList>
 
             <TabsContent value={activeTab} className="space-y-8">

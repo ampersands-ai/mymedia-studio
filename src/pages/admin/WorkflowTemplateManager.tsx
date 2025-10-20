@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { WorkflowBuilder } from '@/components/admin/WorkflowBuilder';
-import { StepConfigPanel } from '@/components/admin/StepConfigPanel';
+import { WorkflowStepForm } from '@/components/admin/WorkflowStepForm';
+import { WorkflowVisualPreview } from '@/components/admin/WorkflowVisualPreview';
 import { WorkflowStep, UserInputField, WorkflowTemplate } from '@/hooks/useWorkflowTemplates';
 import { useModels } from '@/hooks/useModels';
 import { Plus, Pencil, Trash2, Save } from 'lucide-react';
@@ -21,7 +21,6 @@ export default function WorkflowTemplateManager() {
   
   const [isCreating, setIsCreating] = useState(false);
   const [editingWorkflow, setEditingWorkflow] = useState<WorkflowTemplate | null>(null);
-  const [editingStep, setEditingStep] = useState<WorkflowStep | null>(null);
 
   const { data: workflows = [], isLoading } = useQuery({
     queryKey: ['workflow-templates-admin'],
@@ -124,14 +123,36 @@ export default function WorkflowTemplateManager() {
       }
     };
 
-    const handleStepChange = (updatedStep: WorkflowStep) => {
+    const handleStepUpdate = (index: number, updatedStep: WorkflowStep) => {
       const steps = [...(localWorkflow.workflow_steps || [])];
-      const index = steps.findIndex(s => s.step_number === updatedStep.step_number);
-      if (index >= 0) {
-        steps[index] = updatedStep;
-        setLocalWorkflow({ ...localWorkflow, workflow_steps: steps });
-      }
-      setEditingStep(null);
+      steps[index] = updatedStep;
+      setLocalWorkflow({ ...localWorkflow, workflow_steps: steps });
+    };
+
+    const handleStepDelete = (index: number) => {
+      const steps = [...(localWorkflow.workflow_steps || [])];
+      steps.splice(index, 1);
+      // Renumber remaining steps
+      steps.forEach((step, idx) => {
+        step.step_number = idx + 1;
+      });
+      setLocalWorkflow({ ...localWorkflow, workflow_steps: steps });
+    };
+
+    const addNewStep = () => {
+      const steps = [...(localWorkflow.workflow_steps || [])];
+      const newStep: WorkflowStep = {
+        step_number: steps.length + 1,
+        step_name: `Step ${steps.length + 1}`,
+        model_id: models[0]?.id || '',
+        model_record_id: models[0]?.record_id || '',
+        prompt_template: '',
+        parameters: {},
+        input_mappings: {},
+        output_key: `output_${steps.length + 1}`,
+      };
+      steps.push(newStep);
+      setLocalWorkflow({ ...localWorkflow, workflow_steps: steps });
     };
 
     const addUserField = () => {
@@ -194,76 +215,99 @@ export default function WorkflowTemplateManager() {
           </div>
         </Card>
 
-        <Card className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold">User Input Fields</h3>
-            <Button onClick={addUserField} size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Field
-            </Button>
-          </div>
-          <div className="space-y-2">
-            {(localWorkflow.user_input_fields || []).map((field, idx) => (
-              <div key={idx} className="flex gap-2 items-center p-2 border rounded">
-                <Input
-                  value={field.name}
-                  onChange={(e) => {
-                    const fields = [...(localWorkflow.user_input_fields || [])];
-                    fields[idx] = { ...field, name: e.target.value };
-                    setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
-                  }}
-                  placeholder="field_name"
-                  className="flex-1"
-                />
-                <Input
-                  value={field.label}
-                  onChange={(e) => {
-                    const fields = [...(localWorkflow.user_input_fields || [])];
-                    fields[idx] = { ...field, label: e.target.value };
-                    setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
-                  }}
-                  placeholder="Field Label"
-                  className="flex-1"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    const fields = [...(localWorkflow.user_input_fields || [])];
-                    fields.splice(idx, 1);
-                    setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Left: Form Section (60%) */}
+          <div className="lg:col-span-3 space-y-6">
+            <Card className="p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold">User Input Fields</h3>
+                <Button onClick={addUserField} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Field
                 </Button>
               </div>
-            ))}
+              <div className="space-y-2">
+                {(localWorkflow.user_input_fields || []).map((field, idx) => (
+                  <div key={idx} className="flex gap-2 items-center p-2 border rounded">
+                    <Input
+                      value={field.name}
+                      onChange={(e) => {
+                        const fields = [...(localWorkflow.user_input_fields || [])];
+                        fields[idx] = { ...field, name: e.target.value };
+                        setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
+                      }}
+                      placeholder="field_name"
+                      className="flex-1"
+                    />
+                    <Input
+                      value={field.label}
+                      onChange={(e) => {
+                        const fields = [...(localWorkflow.user_input_fields || [])];
+                        fields[idx] = { ...field, label: e.target.value };
+                        setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
+                      }}
+                      placeholder="Field Label"
+                      className="flex-1"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        const fields = [...(localWorkflow.user_input_fields || [])];
+                        fields.splice(idx, 1);
+                        setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold">Workflow Steps</h3>
+                <Button onClick={addNewStep} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Step
+                </Button>
+              </div>
+              {(localWorkflow.workflow_steps || []).map((step, idx) => (
+                <WorkflowStepForm
+                  key={idx}
+                  step={step}
+                  stepNumber={idx + 1}
+                  onChange={(updated) => handleStepUpdate(idx, updated)}
+                  onDelete={() => handleStepDelete(idx)}
+                  availableModels={models}
+                  userInputFields={localWorkflow.user_input_fields || []}
+                  previousSteps={(localWorkflow.workflow_steps || []).slice(0, idx)}
+                />
+              ))}
+              {(localWorkflow.workflow_steps || []).length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No steps defined. Click "Add Step" to begin.
+                </p>
+              )}
+            </Card>
+
+            <Button onClick={handleSave} className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              Save Workflow
+            </Button>
           </div>
-        </Card>
 
-        <WorkflowBuilder
-          steps={localWorkflow.workflow_steps || []}
-          onStepsChange={(steps) => setLocalWorkflow({ ...localWorkflow, workflow_steps: steps })}
-          userInputFields={localWorkflow.user_input_fields || []}
-          availableModels={models}
-          onEditStep={setEditingStep}
-        />
-
-        {editingStep && (
-          <StepConfigPanel
-            step={editingStep}
-            onStepChange={handleStepChange}
-            onClose={() => setEditingStep(null)}
-            availableModels={models}
-            userInputFields={localWorkflow.user_input_fields || []}
-            allSteps={localWorkflow.workflow_steps || []}
-          />
-        )}
-
-        <Button onClick={handleSave} className="w-full">
-          <Save className="h-4 w-4 mr-2" />
-          Save Workflow
-        </Button>
+          {/* Right: Visual Preview (40%) */}
+          <div className="lg:col-span-2">
+            <div className="sticky top-6">
+              <WorkflowVisualPreview
+                userInputFields={localWorkflow.user_input_fields || []}
+                steps={localWorkflow.workflow_steps || []}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     );
   };

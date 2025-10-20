@@ -7,12 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Download, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CheckCircle2 } from "lucide-react";
 import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
 import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { toast } from "sonner";
-import { createSignedUrl } from "@/lib/storage-utils";
 import { supabase } from "@/integrations/supabase/client";
+import { GenerationPreview } from "@/components/generation/GenerationPreview";
 
 interface WorkflowTestDialogProps {
   workflow: Partial<WorkflowTemplate> | null;
@@ -75,27 +75,12 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
     }
   };
 
-  const handleDownload = async () => {
-    if (!result?.url) return;
-    
-    try {
-      const signedUrl = await createSignedUrl('generated-content', result.url);
-      if (!signedUrl) {
-        toast.error('Failed to create download link');
-        return;
-      }
-
-      const a = document.createElement('a');
-      a.href = signedUrl;
-      a.download = `workflow-test-${Date.now()}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      toast.success('Download started!');
-    } catch (error) {
-      console.error('Download error:', error);
-      toast.error('Failed to download file');
-    }
+  // Determine content type from storage path
+  const getContentType = (path: string): string => {
+    const ext = path.toLowerCase().split('.').pop();
+    if (['mp4', 'webm', 'mov'].includes(ext || '')) return 'video';
+    if (['mp3', 'wav', 'm4a'].includes(ext || '')) return 'audio';
+    return 'image';
   };
 
   const renderInputField = (field: any) => {
@@ -248,16 +233,21 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
 
           {/* Result */}
           {result && (
-            <div className="space-y-3 p-4 border rounded-lg bg-muted/50">
-              <div className="flex items-center gap-2 text-green-600">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-green-600 mb-2">
                 <CheckCircle2 className="h-5 w-5" />
                 <span className="font-semibold">Test Completed Successfully</span>
               </div>
-              <p className="text-sm text-muted-foreground">Tokens used: {result.tokens}</p>
-              <Button onClick={handleDownload} className="w-full">
-                <Download className="h-4 w-4 mr-2" />
-                Download Result
-              </Button>
+              <p className="text-sm text-muted-foreground mb-3">Tokens used: {result.tokens}</p>
+              
+              {/* Output Preview */}
+              <div className="border rounded-lg overflow-hidden bg-background">
+                <GenerationPreview
+                  storagePath={result.url}
+                  contentType={getContentType(result.url)}
+                  className="w-full max-h-[400px] object-contain"
+                />
+              </div>
             </div>
           )}
 

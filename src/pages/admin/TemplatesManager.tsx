@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,9 +12,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown } from "lucide-react";
+import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown, Copy, Play } from "lucide-react";
 import { toast } from "sonner";
 import { TemplateFormDialog } from "@/components/admin/TemplateFormDialog";
+import { WorkflowTestDialog } from "@/components/admin/WorkflowTestDialog";
 import {
   Select,
   SelectContent,
@@ -21,115 +23,248 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface ContentTemplate {
-  id: string;
-  category: string;
-  name: string;
-  description: string | null;
-  model_id: string | null;
-  preset_parameters: any;
-  enhancement_instruction: string | null;
-  thumbnail_url: string | null;
-  is_active: boolean;
-  display_order: number;
-}
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import type { MergedTemplate } from "@/hooks/useTemplates";
+import { WorkflowStepForm } from "@/components/admin/WorkflowStepForm";
+import { WorkflowVisualPreview } from "@/components/admin/WorkflowVisualPreview";
+import { WorkflowStep, UserInputField, WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
+import { useModels } from "@/hooks/useModels";
 
 export default function TemplatesManager() {
-  const [templates, setTemplates] = useState<ContentTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<ContentTemplate | null>(null);
-  const [sortBy, setSortBy] = useState<string>("display_order");
-
-  useEffect(() => {
-    fetchTemplates();
-  }, []);
-
-  const fetchTemplates = async () => {
-    try {
-      const { data, error } = await supabase
+  const queryClient = useQueryClient();
+  const { data: models = [] } = useModels();
+  
+  // Fetch ALL templates for admin (not just active ones)
+  const { data: templates = [], isLoading } = useQuery({
+    queryKey: ["all-templates-admin"],
+    queryFn: async () => {
+      // Fetch content templates
+      const { data: contentTemplates, error: templatesError } = await supabase
         .from("content_templates")
         .select("*")
         .order("display_order", { ascending: true });
 
-      if (error) throw error;
-      setTemplates(data || []);
-    } catch (error) {
-      console.error("Error fetching templates:", error);
-      toast.error("Failed to load templates");
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (templatesError) throw templatesError;
 
-  const toggleTemplateStatus = async (
-    templateId: string,
-    currentStatus: boolean
-  ) => {
+      // Fetch workflow templates
+      const { data: workflowTemplates, error: workflowsError } = await supabase
+        .from("workflow_templates")
+        .select("*")
+        .order("display_order", { ascending: true });
+
+      if (workflowsError) throw workflowsError;
+
+      // Merge and mark type
+      const mergedTemplates = [
+        ...(contentTemplates || []).map(t => ({ 
+          ...t, 
+          template_type: 'template' as const,
+        })),
+        ...(workflowTemplates || []).map(w => ({ 
+          ...w, 
+          template_type: 'workflow' as const,
+        })),
+      ] as MergedTemplate[];
+
+      // Sort by display_order
+      mergedTemplates.sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+      return mergedTemplates;
+    },
+  });
+  
+  const [contentTemplateDialog, setContentTemplateDialog] = useState<{
+    open: boolean;
+    template: any | null;
+  }>({ open: false, template: null });
+  
+  const [workflowDialog, setWorkflowDialog] = useState<{
+    open: boolean;
+    workflow: Partial<WorkflowTemplate> | null;
+    isNew: boolean;
+  }>({ open: false, workflow: null, isNew: false });
+  
+  const [testingWorkflow, setTestingWorkflow] = useState<WorkflowTemplate | null>(null);
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<string>("display_order");
+
+  const handleToggleActive = async (item: MergedTemplate) => {
+    const table = item.template_type === 'template' 
+      ? 'content_templates' 
+      : 'workflow_templates';
+    
     try {
       const { error } = await supabase
-        .from("content_templates")
-        .update({ is_active: !currentStatus })
-        .eq("id", templateId);
+        .from(table)
+        .update({ is_active: !item.is_active })
+        .eq('id', item.id);
 
       if (error) throw error;
-
-      toast.success(`Template ${!currentStatus ? "enabled" : "disabled"}`);
-      fetchTemplates();
+      
+      toast.success(`Template ${!item.is_active ? "enabled" : "disabled"}`);
+      queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
     } catch (error) {
       console.error("Error toggling template status:", error);
       toast.error("Failed to update template status");
     }
   };
 
-  const handleDelete = async (templateId: string) => {
+  const handleDelete = async (item: MergedTemplate) => {
     if (!confirm("Are you sure you want to delete this template? This cannot be undone.")) {
       return;
     }
 
+    const table = item.template_type === 'template' 
+      ? 'content_templates' 
+      : 'workflow_templates';
+
     try {
       const { error } = await supabase
-        .from("content_templates")
+        .from(table)
         .delete()
-        .eq("id", templateId);
+        .eq('id', item.id);
 
       if (error) throw error;
       
       toast.success("Template deleted successfully");
-      fetchTemplates();
+      queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
     } catch (error) {
       console.error("Error deleting template:", error);
       toast.error("Failed to delete template");
     }
   };
 
-  const handleEdit = (template: ContentTemplate) => {
-    setEditingTemplate(template);
-    setDialogOpen(true);
+  const handleDuplicate = async (item: MergedTemplate) => {
+    const timestamp = Date.now();
+    
+    if (item.template_type === 'template') {
+      const { workflow_steps, user_input_fields, template_type, ai_models, ...templateData } = item;
+      
+      // Ensure required fields are present
+      if (!item.category || !item.name) {
+        toast.error("Cannot duplicate: missing required fields");
+        return;
+      }
+      
+      const newTemplate = {
+        id: `${item.id}-copy-${timestamp}`,
+        name: `${item.name} (Copy)`,
+        category: item.category!,
+        description: item.description || null,
+        model_id: item.model_id || null,
+        preset_parameters: item.preset_parameters || {},
+        enhancement_instruction: item.enhancement_instruction || null,
+        thumbnail_url: item.thumbnail_url || null,
+        is_active: false,
+        display_order: item.display_order || 0,
+        estimated_time_seconds: item.estimated_time_seconds || null,
+        user_editable_fields: item.user_editable_fields as any || [],
+        hidden_field_defaults: item.hidden_field_defaults as any || {},
+        is_custom_model: item.is_custom_model || false,
+      };
+      
+      const { error } = await supabase
+        .from('content_templates')
+        .insert([newTemplate]);
+        
+      if (error) {
+        toast.error("Failed to duplicate template: " + error.message);
+        return;
+      }
+      
+      toast.success("Template duplicated successfully");
+    } else {
+      // Ensure required fields are present
+      if (!item.category || !item.name) {
+        toast.error("Cannot duplicate: missing required fields");
+        return;
+      }
+      
+      const newWorkflow = {
+        id: `${item.id}-copy-${timestamp}`,
+        name: `${item.name} (Copy)`,
+        category: item.category!,
+        description: item.description || null,
+        thumbnail_url: item.thumbnail_url || null,
+        is_active: false,
+        display_order: item.display_order || 0,
+        estimated_time_seconds: item.estimated_time_seconds || null,
+        workflow_steps: item.workflow_steps as any || [],
+        user_input_fields: item.user_input_fields as any || [],
+      };
+      
+      const { error } = await supabase
+        .from('workflow_templates')
+        .insert([newWorkflow]);
+        
+      if (error) {
+        toast.error("Failed to duplicate workflow: " + error.message);
+        return;
+      }
+      
+      toast.success("Workflow duplicated successfully");
+    }
+    
+    queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
   };
 
-  const handleAdd = () => {
-    setEditingTemplate(null);
-    setDialogOpen(true);
+  const handleEdit = (item: MergedTemplate) => {
+    if (item.template_type === 'template') {
+      setContentTemplateDialog({ open: true, template: item });
+    } else {
+      setWorkflowDialog({ 
+        open: true, 
+        workflow: item as WorkflowTemplate, 
+        isNew: false 
+      });
+    }
   };
 
-  const handleSuccess = () => {
-    setDialogOpen(false);
-    setEditingTemplate(null);
-    fetchTemplates();
+  const handleCreateContent = () => {
+    setContentTemplateDialog({ open: true, template: null });
+  };
+
+  const handleCreateWorkflow = () => {
+    setWorkflowDialog({ 
+      open: true, 
+      workflow: {
+        id: '',
+        name: '',
+        description: '',
+        category: '',
+        is_active: false,
+        display_order: templates.length,
+        workflow_steps: [],
+        user_input_fields: [],
+      }, 
+      isNew: true 
+    });
+  };
+
+  const handleContentSuccess = () => {
+    setContentTemplateDialog({ open: false, template: null });
+    queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
   };
 
   const handleEnableAll = async () => {
     try {
-      const { error } = await supabase
-        .from("content_templates")
-        .update({ is_active: true })
-        .neq("is_active", true);
-
-      if (error) throw error;
+      await Promise.all([
+        supabase.from('content_templates').update({ is_active: true }).neq('is_active', true),
+        supabase.from('workflow_templates').update({ is_active: true }).neq('is_active', true),
+      ]);
+      
       toast.success("All templates enabled");
-      fetchTemplates();
+      queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
     } catch (error) {
       console.error("Error enabling all templates:", error);
       toast.error("Failed to enable all templates");
@@ -140,14 +275,13 @@ export default function TemplatesManager() {
     if (!confirm("Are you sure you want to disable all templates?")) return;
 
     try {
-      const { error } = await supabase
-        .from("content_templates")
-        .update({ is_active: false })
-        .eq("is_active", true);
-
-      if (error) throw error;
+      await Promise.all([
+        supabase.from('content_templates').update({ is_active: false }).eq('is_active', true),
+        supabase.from('workflow_templates').update({ is_active: false }).eq('is_active', true),
+      ]);
+      
       toast.success("All templates disabled");
-      fetchTemplates();
+      queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
     } catch (error) {
       console.error("Error disabling all templates:", error);
       toast.error("Failed to disable all templates");
@@ -164,28 +298,38 @@ export default function TemplatesManager() {
         return a.display_order - b.display_order;
       case "status":
         return (a.is_active === b.is_active) ? 0 : a.is_active ? -1 : 1;
+      case "type":
+        return a.template_type.localeCompare(b.template_type);
       default:
         return 0;
     }
   });
 
-  // No loading state - render immediately
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-black mb-2">CONTENT TEMPLATES</h1>
+          <h1 className="text-4xl font-black mb-2">TEMPLATES</h1>
           <p className="text-muted-foreground">
-            Manage pre-configured templates for users
+            Manage all content templates and workflows
           </p>
         </div>
-        <Button
-          onClick={handleAdd}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold border-3 border-black brutal-shadow"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Template
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold border-3 border-black brutal-shadow">
+              <Plus className="h-4 w-4 mr-2" />
+              Create
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={handleCreateContent}>
+              Content Template
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleCreateWorkflow}>
+              Workflow Template
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <Card className="border-3 border-black brutal-shadow">
@@ -202,6 +346,7 @@ export default function TemplatesManager() {
                   <SelectItem value="display_order">Display Order</SelectItem>
                   <SelectItem value="name">Name</SelectItem>
                   <SelectItem value="category">Category</SelectItem>
+                  <SelectItem value="type">Type</SelectItem>
                   <SelectItem value="status">Status</SelectItem>
                 </SelectContent>
               </Select>
@@ -232,22 +377,31 @@ export default function TemplatesManager() {
               <p className="text-muted-foreground mb-4">
                 No templates configured yet
               </p>
-              <Button
-                onClick={handleAdd}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold border-3 border-black brutal-shadow"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Your First Template
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold border-3 border-black brutal-shadow">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Your First Template
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={handleCreateContent}>
+                    Content Template
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleCreateWorkflow}>
+                    Workflow Template
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="font-bold">Template ID</TableHead>
+                  <TableHead className="font-bold">Type</TableHead>
+                  <TableHead className="font-bold">ID</TableHead>
                   <TableHead className="font-bold">Name</TableHead>
                   <TableHead className="font-bold">Category</TableHead>
-                  <TableHead className="font-bold">Model</TableHead>
                   <TableHead className="font-bold">Order</TableHead>
                   <TableHead className="font-bold">Status</TableHead>
                   <TableHead className="font-bold">Actions</TableHead>
@@ -255,7 +409,14 @@ export default function TemplatesManager() {
               </TableHeader>
               <TableBody>
                 {sortedTemplates.map((template) => (
-                  <TableRow key={template.id}>
+                  <TableRow key={`${template.template_type}-${template.id}`}>
+                    <TableCell>
+                      {template.template_type === 'template' ? (
+                        <Badge variant="secondary">Content</Badge>
+                      ) : (
+                        <Badge className="bg-purple-500">Workflow</Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="font-mono text-sm">
                       {template.id}
                     </TableCell>
@@ -263,9 +424,6 @@ export default function TemplatesManager() {
                       {template.name}
                     </TableCell>
                     <TableCell>{template.category}</TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {template.model_id || "N/A"}
-                    </TableCell>
                     <TableCell>{template.display_order}</TableCell>
                     <TableCell>
                       {template.is_active ? (
@@ -276,6 +434,18 @@ export default function TemplatesManager() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
+                        {template.template_type === 'workflow' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setTestingWorkflow(template as WorkflowTemplate);
+                              setTestDialogOpen(true);
+                            }}
+                          >
+                            <Play className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button 
                           variant="outline" 
                           size="sm"
@@ -286,12 +456,14 @@ export default function TemplatesManager() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() =>
-                            toggleTemplateStatus(
-                              template.id,
-                              template.is_active
-                            )
-                          }
+                          onClick={() => handleDuplicate(template)}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleActive(template)}
                         >
                           {template.is_active ? (
                             <PowerOff className="h-4 w-4" />
@@ -302,7 +474,7 @@ export default function TemplatesManager() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDelete(template.id)}
+                          onClick={() => handleDelete(template)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -317,11 +489,376 @@ export default function TemplatesManager() {
       </Card>
 
       <TemplateFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        template={editingTemplate}
-        onSuccess={handleSuccess}
+        open={contentTemplateDialog.open}
+        onOpenChange={(open) => setContentTemplateDialog({ ...contentTemplateDialog, open })}
+        template={contentTemplateDialog.template}
+        onSuccess={handleContentSuccess}
       />
+
+      <WorkflowEditorDialog
+        open={workflowDialog.open}
+        onOpenChange={(open) => setWorkflowDialog({ ...workflowDialog, open })}
+        workflow={workflowDialog.workflow}
+        isNew={workflowDialog.isNew}
+        models={models}
+      onSuccess={() => {
+        setWorkflowDialog({ open: false, workflow: null, isNew: false });
+        queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
+      }}
+      />
+
+      {testingWorkflow && (
+        <WorkflowTestDialog
+          open={testDialogOpen}
+          onOpenChange={setTestDialogOpen}
+          workflow={testingWorkflow}
+        />
+      )}
     </div>
+  );
+}
+
+// Workflow Editor Dialog Component
+function WorkflowEditorDialog({ 
+  open, 
+  onOpenChange, 
+  workflow, 
+  isNew,
+  models,
+  onSuccess 
+}: { 
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  workflow: Partial<WorkflowTemplate> | null;
+  isNew: boolean;
+  models: any[];
+  onSuccess: () => void;
+}) {
+  const [localWorkflow, setLocalWorkflow] = useState<Partial<WorkflowTemplate>>(workflow || {});
+
+  const createMutation = useMutation({
+    mutationFn: async (wf: Partial<WorkflowTemplate>) => {
+      const { error } = await supabase
+        .from('workflow_templates')
+        .insert([{
+          id: wf.id,
+          name: wf.name,
+          description: wf.description,
+          category: wf.category,
+          thumbnail_url: wf.thumbnail_url,
+          is_active: wf.is_active,
+          display_order: wf.display_order,
+          estimated_time_seconds: wf.estimated_time_seconds,
+          workflow_steps: wf.workflow_steps as any || [],
+          user_input_fields: wf.user_input_fields as any || [],
+        }]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Workflow created successfully");
+      onSuccess();
+    },
+    onError: (error: any) => {
+      toast.error("Failed to create workflow: " + error.message);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<WorkflowTemplate> }) => {
+      const { error } = await supabase
+        .from('workflow_templates')
+        .update({
+          name: updates.name,
+          description: updates.description,
+          category: updates.category,
+          thumbnail_url: updates.thumbnail_url,
+          is_active: updates.is_active,
+          display_order: updates.display_order,
+          estimated_time_seconds: updates.estimated_time_seconds,
+          workflow_steps: updates.workflow_steps as any || [],
+          user_input_fields: updates.user_input_fields as any || [],
+        })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Workflow updated successfully");
+      onSuccess();
+    },
+    onError: (error: any) => {
+      toast.error("Failed to update workflow: " + error.message);
+    },
+  });
+
+  const handleSave = () => {
+    if (isNew) {
+      createMutation.mutate(localWorkflow);
+    } else {
+      updateMutation.mutate({ id: workflow?.id!, updates: localWorkflow });
+    }
+  };
+
+  const handleStepUpdate = (index: number, updatedStep: WorkflowStep) => {
+    const steps = [...(localWorkflow.workflow_steps || [])];
+    steps[index] = updatedStep;
+    setLocalWorkflow({ ...localWorkflow, workflow_steps: steps });
+  };
+
+  const handleStepDelete = (index: number) => {
+    const steps = [...(localWorkflow.workflow_steps || [])];
+    steps.splice(index, 1);
+    steps.forEach((step, idx) => {
+      step.step_number = idx + 1;
+    });
+    setLocalWorkflow({ ...localWorkflow, workflow_steps: steps });
+  };
+
+  const addNewStep = () => {
+    const steps = [...(localWorkflow.workflow_steps || [])];
+    const newStep: WorkflowStep = {
+      step_number: steps.length + 1,
+      step_name: `Step ${steps.length + 1}`,
+      model_id: models[0]?.id || '',
+      model_record_id: models[0]?.record_id || '',
+      prompt_template: '',
+      parameters: {},
+      input_mappings: {},
+      output_key: `output_${steps.length + 1}`,
+    };
+    steps.push(newStep);
+    setLocalWorkflow({ ...localWorkflow, workflow_steps: steps });
+  };
+
+  const addUserField = () => {
+    const fields = [...(localWorkflow.user_input_fields || [])];
+    fields.push({
+      name: `field_${fields.length + 1}`,
+      type: 'text',
+      label: 'New Field',
+      required: false,
+    });
+    setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
+  };
+
+  const updateUserField = (idx: number, updates: Partial<UserInputField>) => {
+    const fields = [...(localWorkflow.user_input_fields || [])];
+    fields[idx] = { ...fields[idx], ...updates };
+    setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
+  };
+
+  const deleteUserField = (idx: number) => {
+    const fields = [...(localWorkflow.user_input_fields || [])];
+    fields.splice(idx, 1);
+    setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{isNew ? 'Create' : 'Edit'} Workflow Template</DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-6">
+          <Card className="p-6 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Workflow ID</Label>
+                <Input
+                  value={localWorkflow.id || ''}
+                  onChange={(e) => setLocalWorkflow({ ...localWorkflow, id: e.target.value })}
+                  placeholder="unique-workflow-id"
+                  disabled={!isNew}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Name</Label>
+                <Input
+                  value={localWorkflow.name || ''}
+                  onChange={(e) => setLocalWorkflow({ ...localWorkflow, name: e.target.value })}
+                  placeholder="Workflow Name"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                value={localWorkflow.description || ''}
+                onChange={(e) => setLocalWorkflow({ ...localWorkflow, description: e.target.value })}
+                placeholder="Describe this workflow..."
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Input
+                  value={localWorkflow.category || ''}
+                  onChange={(e) => setLocalWorkflow({ ...localWorkflow, category: e.target.value })}
+                  placeholder="e.g., Image Processing"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Display Order</Label>
+                <Input
+                  type="number"
+                  value={localWorkflow.display_order || 0}
+                  onChange={(e) => setLocalWorkflow({ ...localWorkflow, display_order: parseInt(e.target.value) })}
+                />
+              </div>
+              <div className="space-y-2 flex items-end">
+                <label className="flex items-center gap-2 pb-2">
+                  <Checkbox
+                    checked={localWorkflow.is_active || false}
+                    onCheckedChange={(checked) => setLocalWorkflow({ ...localWorkflow, is_active: checked as boolean })}
+                  />
+                  <span className="text-sm">Active</span>
+                </label>
+              </div>
+            </div>
+          </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div className="lg:col-span-3 space-y-6">
+              <Card className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">User Input Fields</h3>
+                  <Button onClick={addUserField} size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Field
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {(localWorkflow.user_input_fields || []).map((field, idx) => (
+                    <Card key={idx} className="p-4 space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Field Name</Label>
+                          <Input
+                            value={field.name}
+                            onChange={(e) => updateUserField(idx, { name: e.target.value })}
+                            placeholder="field_name"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Label</Label>
+                          <Input
+                            value={field.label}
+                            onChange={(e) => updateUserField(idx, { label: e.target.value })}
+                            placeholder="Field Label"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Type</Label>
+                          <Select
+                            value={field.type}
+                            onValueChange={(value) => updateUserField(idx, { type: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="text">Text</SelectItem>
+                              <SelectItem value="textarea">Textarea</SelectItem>
+                              <SelectItem value="number">Number</SelectItem>
+                              <SelectItem value="upload-image">Upload Image</SelectItem>
+                              <SelectItem value="upload-file">Upload File</SelectItem>
+                              <SelectItem value="select">Select Dropdown</SelectItem>
+                              <SelectItem value="checkbox">Checkbox</SelectItem>
+                              <SelectItem value="radio">Radio Buttons</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1 flex items-end">
+                          <label className="flex items-center gap-2 pb-2">
+                            <Checkbox
+                              checked={field.required || false}
+                              onCheckedChange={(checked) => updateUserField(idx, { required: checked as boolean })}
+                            />
+                            <span className="text-xs">Required</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      {(field.type === 'select' || field.type === 'radio') && (
+                        <div className="space-y-1">
+                          <Label className="text-xs">Options (comma-separated)</Label>
+                          <Input
+                            value={(field.options || []).join(', ')}
+                            onChange={(e) => {
+                              const options = e.target.value.split(',').map(opt => opt.trim()).filter(Boolean);
+                              updateUserField(idx, { options });
+                            }}
+                            placeholder="Option 1, Option 2, Option 3"
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteUserField(idx)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Field
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </Card>
+
+              <Card className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Workflow Steps</h3>
+                  <Button onClick={addNewStep} size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Step
+                  </Button>
+                </div>
+                {(localWorkflow.workflow_steps || []).map((step, idx) => (
+                  <WorkflowStepForm
+                    key={idx}
+                    step={step}
+                    stepNumber={idx + 1}
+                    onChange={(updated) => handleStepUpdate(idx, updated)}
+                    onDelete={() => handleStepDelete(idx)}
+                    availableModels={models}
+                    userInputFields={localWorkflow.user_input_fields || []}
+                    previousSteps={(localWorkflow.workflow_steps || []).slice(0, idx)}
+                  />
+                ))}
+                {(localWorkflow.workflow_steps || []).length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No steps defined. Click "Add Step" to begin.
+                  </p>
+                )}
+              </Card>
+            </div>
+
+            <div className="lg:col-span-2">
+              <div className="sticky top-6">
+                <WorkflowVisualPreview
+                  userInputFields={localWorkflow.user_input_fields || []}
+                  steps={localWorkflow.workflow_steps || []}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave}>
+              {isNew ? 'Create' : 'Update'} Workflow
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

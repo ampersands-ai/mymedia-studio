@@ -86,9 +86,14 @@ export const GlobalHeader = () => {
                   Pricing
                 </DropdownMenuItem>
                 {user && (
-                  <DropdownMenuItem onClick={() => navigate("/dashboard/custom-creation")} className="font-bold cursor-pointer">
-                    Dashboard
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/custom-creation")} className="font-bold cursor-pointer">
+                      Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/history")} className="font-bold cursor-pointer">
+                      My Creations
+                    </DropdownMenuItem>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>

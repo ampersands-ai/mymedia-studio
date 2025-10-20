@@ -32,11 +32,11 @@ export const Footer = () => {
             {/* Social Media Links - 44x44px tap targets */}
             <div className="flex justify-center md:justify-start gap-2 pt-2">
               <a 
-                href="https://twitter.com/artifio" 
+                href="https://x.com/artifio_ai" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="p-2 text-foreground/60 hover:text-primary transition-colors rounded-lg hover:bg-muted"
-                aria-label="Follow us on Twitter"
+                aria-label="Follow us on X @artifio_ai"
               >
                 <Twitter size={28} />
               </a>

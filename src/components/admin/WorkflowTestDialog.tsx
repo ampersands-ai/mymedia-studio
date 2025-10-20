@@ -25,6 +25,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
   const [result, setResult] = useState<{ url: string; tokens: number } | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
   const [statusMessage, setStatusMessage] = useState<string>('');
+  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
   const { executeWorkflow, isExecuting, progress } = useWorkflowExecution();
 
   const handleInputChange = (fieldName: string, value: any) => {
@@ -33,20 +34,29 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
 
   const handleFileUpload = async (fieldName: string, file: File | undefined) => {
     if (!file) return;
-
+    
     setUploadingFiles(prev => new Set(prev).add(fieldName));
     
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       const filePath = `workflow-inputs/${fileName}`;
-
+      
       const { error: uploadError } = await supabase.storage
         .from('generated-content')
         .upload(filePath, file);
-
+      
       if (uploadError) throw uploadError;
-
+      
+      // Generate signed URL for preview
+      const { data: urlData } = await supabase.storage
+        .from('generated-content')
+        .createSignedUrl(filePath, 3600); // 1 hour expiry
+      
+      if (urlData?.signedUrl) {
+        setPreviewUrls(prev => ({ ...prev, [fieldName]: urlData.signedUrl }));
+      }
+      
       setInputs(prev => ({ ...prev, [fieldName]: filePath }));
       toast.success('File uploaded successfully');
     } catch (error) {
@@ -95,6 +105,13 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
     setResult(null);
     setStatusMessage('Starting workflow execution...');
     
+    // Update status message after a few seconds
+    setTimeout(() => {
+      if (isExecuting) {
+        setStatusMessage('Processing AI generation (this may take 10-60 seconds)...');
+      }
+    }, 3000);
+    
     const result = await executeWorkflow({
       workflow_template_id: workflow.id,
       user_inputs: inputs,
@@ -105,7 +122,8 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
       setResult({ url: result.final_output_url, tokens: result.tokens_used });
       toast.success('Workflow test completed!');
     } else {
-      setStatusMessage('Workflow failed. Check console for details.');
+      setStatusMessage('');
+      toast.error('Workflow execution failed or timed out');
     }
   };
 
@@ -174,12 +192,12 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
               accept="image/*"
               onChange={(e) => handleFileUpload(field.name, e.target.files?.[0])}
             />
-            {inputs[field.name] && (
-              <div className="border rounded p-2">
+            {previewUrls[field.name] && (
+              <div className="border rounded p-2 bg-muted/30">
                 <img 
-                  src={inputs[field.name]} 
+                  src={previewUrls[field.name]} 
                   alt="Preview" 
-                  className="max-h-40 mx-auto"
+                  className="max-h-40 mx-auto rounded"
                 />
               </div>
             )}

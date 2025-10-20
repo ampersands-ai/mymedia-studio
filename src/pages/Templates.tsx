@@ -112,6 +112,25 @@ const Templates = () => {
     setExecutionStartTime(null);
   };
 
+  const renderWorkflowOutput = () => {
+    if (!executionResult?.url || !selectedWorkflow) return null;
+    
+    const isSignedUrl = executionResult.url.startsWith('http');
+    const contentType = selectedWorkflow.category?.toLowerCase().includes('video') ? 'video' : 'image';
+    
+    if (isSignedUrl) {
+      // Direct signed URL - render media directly
+      return contentType === 'video' ? (
+        <video src={executionResult.url} controls className="w-full rounded-lg" />
+      ) : (
+        <img src={executionResult.url} alt="Generated output" className="w-full rounded-lg" />
+      );
+    } else {
+      // Storage path - use GenerationPreview
+      return <GenerationPreview storagePath={executionResult.url} contentType={contentType} />;
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
       <GlobalHeader />
@@ -176,10 +195,7 @@ const Templates = () => {
 
                       {executionResult && (
                         <div className="w-full space-y-4">
-                          <GenerationPreview
-                            storagePath={executionResult.url}
-                            contentType={selectedWorkflow.category?.toLowerCase().includes('video') ? 'video' : 'image'}
-                          />
+                          {renderWorkflowOutput()}
                           <div className="text-center">
                             <Badge variant="secondary">
                               {executionResult.tokens} tokens used

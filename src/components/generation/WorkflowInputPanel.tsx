@@ -30,6 +30,8 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting }:
   const { data: userTokens } = useUserTokens();
   const [inputs, setInputs] = useState<Record<string, any>>({});
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File[]>>({});
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadingField, setUploadingField] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const requiredFields = workflow.user_input_fields?.filter(f => f.required) || [];
@@ -55,12 +57,15 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting }:
     }
 
     setUploadedFiles(prev => ({ ...prev, [fieldName]: fileArray }));
+    setIsUploading(true);
+    setUploadingField(fieldName);
 
-    // Upload to storage and get signed URLs
-    const timestamp = Date.now();
-    const imageUrls: string[] = [];
+    try {
+      // Upload to storage and get signed URLs
+      const timestamp = Date.now();
+      const imageUrls: string[] = [];
 
-    for (let i = 0; i < fileArray.length; i++) {
+      for (let i = 0; i < fileArray.length; i++) {
       const file = fileArray[i];
       const fileExt = file.name.split('.').pop();
       const filePath = `${user?.id}/uploads/${timestamp}/${i}.${fileExt}`;
@@ -88,9 +93,9 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting }:
       }
 
       imageUrls.push(signedData.signedUrl);
-    }
+      }
 
-    // Find which parameter this user input maps to across ALL workflow steps
+      // Find which parameter this user input maps to across ALL workflow steps
     let targetParameterName: string | null = null;
     let targetParameterSchema: any = null;
 
@@ -127,11 +132,15 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting }:
       imageUrls
     });
 
-    // Store as array or single value based on target parameter type
-    if (expectsArray) {
-      handleInputChange(fieldName, imageUrls);  // Store as array
-    } else {
-      handleInputChange(fieldName, imageUrls[0]); // Store as single string
+      // Store as array or single value based on target parameter type
+      if (expectsArray) {
+        handleInputChange(fieldName, imageUrls);  // Store as array
+      } else {
+        handleInputChange(fieldName, imageUrls[0]); // Store as single string
+      }
+    } finally {
+      setIsUploading(false);
+      setUploadingField(null);
     }
   };
 
@@ -222,17 +231,26 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting }:
                 type="button"
                 variant="outline"
                 onClick={() => fileInputRefs.current[field.name]?.click()}
-                disabled={isExecuting || cameraLoading}
+                disabled={isExecuting || isUploading || cameraLoading}
                 className="flex-1"
               >
-                <Upload className="h-4 w-4 mr-2" />
-                {isMultiple ? 'Upload Images' : 'Upload Image'}
+                {isUploading && uploadingField === field.name ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4 mr-2" />
+                    {isMultiple ? 'Upload Images' : 'Upload Image'}
+                  </>
+                )}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => handleNativeCamera(field.name, isMultiple)}
-                disabled={isExecuting || cameraLoading}
+                disabled={isExecuting || isUploading || cameraLoading}
               >
                 <Camera className="h-4 w-4" />
               </Button>
@@ -346,11 +364,16 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting }:
         {/* Execute Button */}
         <Button
           onClick={handleExecute}
-          disabled={isExecuting}
+          disabled={isExecuting || isUploading}
           className="w-full"
           size="lg"
         >
-          {isExecuting ? (
+          {isUploading ? (
+            <>
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              Uploading images...
+            </>
+          ) : isExecuting ? (
             <>
               <Loader2 className="h-5 w-5 mr-2 animate-spin" />
               Executing...

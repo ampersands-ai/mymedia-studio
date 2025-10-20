@@ -98,12 +98,38 @@ const CreateWorkflow = () => {
       }
     }
 
+    // Format parameters based on model schema (like CustomCreation does)
+    let formattedInputs = { ...inputs };
+    
+    const firstStep = workflow.workflow_steps?.[0];
+    if (firstStep?.model_record_id) {
+      const { data: modelData } = await supabase
+        .from('ai_models')
+        .select('input_schema')
+        .eq('record_id', firstStep.model_record_id)
+        .single();
+
+      if (modelData?.input_schema?.properties) {
+        const schema = modelData.input_schema.properties;
+        
+        for (const [key, value] of Object.entries(formattedInputs)) {
+          const expectedType = schema[key]?.type;
+          
+          // If schema expects array and value is not array, wrap it
+          if (expectedType === 'array' && !Array.isArray(value)) {
+            formattedInputs[key] = [value];
+            console.log(`Formatted ${key} as array for workflow`);
+          }
+        }
+      }
+    }
+
     setResult(null);
     setDialogOpen(true);
     
     const result = await executeWorkflow({
       workflow_template_id: workflow.id,
-      user_inputs: inputs,
+      user_inputs: formattedInputs,
     });
 
     if (result?.final_output_url) {

@@ -306,6 +306,9 @@ let validatedParameters = validateAndFilterParameters(
         } else if (t === 'number') {
           const n = typeof val === 'number' ? val : parseFloat(String(val));
           coerced[key] = Number.isNaN(n) ? val : n;
+        } else if (t === 'array') {
+          // Ensure arrays are properly formatted
+          coerced[key] = Array.isArray(val) ? val : [val];
         } else {
           coerced[key] = val;
         }

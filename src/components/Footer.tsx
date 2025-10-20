@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Twitter, Linkedin, Youtube, MessageSquare } from "lucide-react";
+import { Twitter, Linkedin, Youtube, Instagram, Facebook } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
@@ -59,13 +59,22 @@ export const Footer = () => {
                 <Youtube size={28} />
               </a>
               <a 
-                href="https://discord.gg/artifio" 
+                href="https://www.instagram.com/artifio.ai" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="p-2 text-foreground/60 hover:text-primary transition-colors rounded-lg hover:bg-muted"
-                aria-label="Join our Discord"
+                aria-label="Follow us on Instagram"
               >
-                <MessageSquare size={28} />
+                <Instagram size={28} />
+              </a>
+              <a 
+                href="https://www.facebook.com/share/1F1J8UFCgr/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="p-2 text-foreground/60 hover:text-primary transition-colors rounded-lg hover:bg-muted"
+                aria-label="Follow us on Facebook"
+              >
+                <Facebook size={28} />
               </a>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface WorkflowTestDialogProps {
   workflow: Partial<WorkflowTemplate> | null;
@@ -21,43 +22,168 @@ interface WorkflowTestDialogProps {
 }
 
 export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTestDialogProps) => {
+  const { user } = useAuth();
   const [inputs, setInputs] = useState<Record<string, any>>({});
   const [result, setResult] = useState<{ url: string; tokens: number } | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
+  const [stepModels, setStepModels] = useState<Record<number, any>>({});
   const { executeWorkflow, isExecuting, progress } = useWorkflowExecution();
+
+  // Fetch model schemas for all workflow steps (mirrors Custom Creation)
+  useEffect(() => {
+    if (!workflow?.workflow_steps || !open) return;
+    
+    const fetchModels = async () => {
+      const models: Record<number, any> = {};
+      for (const step of workflow.workflow_steps) {
+        const { data } = await supabase
+          .from('ai_models')
+          .select('input_schema, max_images, content_type, provider')
+          .eq('record_id', step.model_record_id)
+          .single();
+        
+        if (data) {
+          models[step.step_number] = data;
+        }
+      }
+      setStepModels(models);
+      
+      // Initialize defaults from model schemas
+      initializeDefaults(models);
+    };
+    
+    fetchModels();
+  }, [workflow, open]);
+
+  // Initialize default values from model schemas (mirrors Custom Creation lines 465-481)
+  const initializeDefaults = (models: Record<number, any>) => {
+    if (!workflow?.user_input_fields) return;
+    
+    const defaults: Record<string, any> = {};
+    
+    // For each user input field, find its corresponding model parameter
+    for (const field of workflow.user_input_fields) {
+      const fieldInfo = getFieldSchemaInfo(field.name, models);
+      if (!fieldInfo) continue;
+      
+      const modelData = models[fieldInfo.stepNumber];
+      const paramSchema = modelData?.input_schema?.properties?.[fieldInfo.modelParam];
+      
+      // Set default value if defined and not already set
+      if (paramSchema?.default !== undefined && inputs[field.name] === undefined) {
+        defaults[field.name] = paramSchema.default;
+      }
+    }
+    
+    if (Object.keys(defaults).length > 0) {
+      setInputs(prev => ({ ...defaults, ...prev }));
+    }
+  };
+
+  // Helper to determine field schema info (which model parameter, expected format, etc.)
+  const getFieldSchemaInfo = (userInputFieldName: string, models: Record<number, any> = stepModels) => {
+    if (!workflow?.workflow_steps) return null;
+    
+    // Find which step maps this user input to a model parameter
+    for (const step of workflow.workflow_steps) {
+      const modelData = models[step.step_number];
+      if (!modelData) continue;
+      
+      // Check input mappings to find which model parameter this maps to
+      for (const [modelParam, mapping] of Object.entries(step.input_mappings || {})) {
+        if (mapping === `user.${userInputFieldName}`) {
+          const paramSchema = modelData.input_schema?.properties?.[modelParam];
+          return {
+            expectsArray: paramSchema?.type === 'array',
+            isRequired: modelData.input_schema?.required?.includes(modelParam),
+            modelParam: modelParam,
+            stepNumber: step.step_number,
+            maxImages: modelData.max_images || 0
+          };
+        }
+      }
+    }
+    return null;
+  };
 
   const handleInputChange = (fieldName: string, value: any) => {
     setInputs(prev => ({ ...prev, [fieldName]: value }));
   };
 
+  // Handle file upload - mirrors Custom Creation lines 654-698
   const handleFileUpload = async (fieldName: string, file: File | undefined) => {
-    if (!file) return;
-    
+    if (!file) {
+      setInputs(prev => ({ ...prev, [fieldName]: null }));
+      setPreviewUrls(prev => {
+        const newUrls = { ...prev };
+        delete newUrls[fieldName];
+        return newUrls;
+      });
+      return;
+    }
+
+    if (!user?.id) {
+      toast.error("Please sign in to upload files");
+      return;
+    }
+
     setUploadingFiles(prev => new Set(prev).add(fieldName));
-    
+
     try {
+      // Validate file
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast.error(`Invalid file type. Only JPEG, PNG, and WebP allowed.`);
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`File is too large (max 10MB)`);
+        return;
+      }
+
+      // Upload to storage using same pattern as Custom Creation
       const fileExt = file.name.split('.').pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      const filePath = `workflow-inputs/${fileName}`;
-      
+      const timestamp = Date.now();
+      const filePath = `${user.id}/uploads/${timestamp}/${fieldName}.${fileExt}`;
+
       const { error: uploadError } = await supabase.storage
         .from('generated-content')
-        .upload(filePath, file);
-      
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
       if (uploadError) throw uploadError;
-      
-      // Generate signed URL for preview
-      const { data: urlData } = await supabase.storage
+
+      // Generate signed URL immediately (mirrors Custom Creation)
+      const { data: signedData, error: signedError } = await supabase.storage
         .from('generated-content')
-        .createSignedUrl(filePath, 3600); // 1 hour expiry
+        .createSignedUrl(filePath, 3600);
+
+      if (signedError || !signedData?.signedUrl) {
+        throw new Error('Failed to create signed URL');
+      }
+
+      // Determine the expected format from model schema
+      const fieldInfo = getFieldSchemaInfo(fieldName);
       
-      if (urlData?.signedUrl) {
-        setPreviewUrls(prev => ({ ...prev, [fieldName]: urlData.signedUrl }));
+      // Store signed URL in correct format based on schema (mirrors Custom Creation lines 692-696)
+      if (fieldInfo?.expectsArray) {
+        // Model expects array of URLs
+        setInputs(prev => ({ ...prev, [fieldName]: [signedData.signedUrl] }));
+        console.log(`Stored ${fieldName} as array:`, [signedData.signedUrl]);
+      } else {
+        // Model expects single URL string
+        setInputs(prev => ({ ...prev, [fieldName]: signedData.signedUrl }));
+        console.log(`Stored ${fieldName} as string:`, signedData.signedUrl);
       }
       
-      setInputs(prev => ({ ...prev, [fieldName]: filePath }));
+      // Store preview URL separately for UI display
+      setPreviewUrls(prev => ({ ...prev, [fieldName]: signedData.signedUrl }));
+
       toast.success('File uploaded successfully');
     } catch (error) {
       console.error('Upload error:', error);
@@ -71,25 +197,38 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
     }
   };
 
+  // Validate workflow - mirrors Custom Creation validation (lines 549-590)
   const validateWorkflow = (): string | null => {
-    // Check user input fields
-    const requiredFields = workflow?.user_input_fields?.filter(f => f.required) || [];
-    for (const field of requiredFields) {
-      if (!inputs[field.name]) {
-        return `${field.label} is required`;
-      }
-    }
-    
+    if (!workflow?.user_input_fields) return null;
+
     // Check if any files are still uploading
     if (uploadingFiles.size > 0) {
-      return 'Please wait for file uploads to complete';
+      return 'Please wait for all files to finish uploading';
     }
-    
-    // Check if workflow has steps
-    if (!workflow?.workflow_steps?.length) {
-      return 'Workflow has no steps configured';
+
+    // Validate each user input field
+    for (const field of workflow.user_input_fields) {
+      // Get the model schema info for this field
+      const fieldInfo = getFieldSchemaInfo(field.name);
+      
+      // Check if field is required by model schema
+      const isRequired = field.required || fieldInfo?.isRequired;
+      
+      if (isRequired) {
+        const value = inputs[field.name];
+        
+        // Check for empty values
+        if (value === undefined || value === null || value === '') {
+          return `${field.label || field.name} is required`;
+        }
+        
+        // For image fields, check if upload was successful
+        if (field.type === 'file' && typeof value === 'string' && value.startsWith('workflow-inputs/')) {
+          return `${field.label || field.name} upload failed. Please try again.`;
+        }
+      }
     }
-    
+
     return null; // No errors
   };
 
@@ -119,19 +258,28 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
         setStatusMessage('Processing AI generation (this may take 10-60 seconds)...');
       }
     }, 3000);
-    
-    const result = await executeWorkflow({
-      workflow_template_id: workflow.id,
-      user_inputs: inputs,
-    });
 
-    if (result?.final_output_url) {
-      setStatusMessage('');
-      setResult({ url: result.final_output_url, tokens: result.tokens_used });
-      toast.success('Workflow test completed!');
-    } else {
-      setStatusMessage('');
-      toast.error('Workflow execution failed or timed out');
+    try {
+      // Note: inputs already contain properly formatted signed URLs
+      // No conversion needed - they're in the exact format Custom Creation uses
+      console.log('Executing workflow with pre-formatted inputs:', inputs);
+      
+      const result = await executeWorkflow({
+        workflow_template_id: workflow.id,
+        user_inputs: inputs,
+      });
+
+      if (result?.final_output_url) {
+        setStatusMessage('');
+        setResult({ url: result.final_output_url, tokens: result.tokens_used });
+        toast.success('Workflow test completed!');
+      } else {
+        setStatusMessage('');
+        toast.error('Workflow execution failed or timed out');
+      }
+    } catch (error) {
+      console.error('Test execution error:', error);
+      toast.error('Failed to execute workflow');
     }
   };
 
@@ -219,9 +367,9 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
               type="file"
               onChange={(e) => handleFileUpload(field.name, e.target.files?.[0])}
             />
-            {inputs[field.name] && (
+            {previewUrls[field.name] && (
               <p className="text-sm text-muted-foreground">
-                File uploaded: {inputs[field.name].split('/').pop()}
+                File uploaded successfully
               </p>
             )}
           </div>

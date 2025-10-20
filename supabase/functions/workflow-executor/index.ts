@@ -103,15 +103,7 @@ serve(async (req) => {
       console.log('Resolved prompt:', resolvedPrompt);
       console.log('Static parameters:', step.parameters);
       console.log('Resolved mappings:', resolvedMappings);
-      console.log('All parameters:', allParameters);
-
-      // Convert any storage paths to signed URLs
-      const parametersWithSignedUrls = await convertStoragePathsToUrls(
-        allParameters,
-        supabase
-      );
-
-      console.log('Parameters with signed URLs:', parametersWithSignedUrls);
+      console.log('All parameters (pre-formatted by frontend):', allParameters);
 
       // Call generate-content for this step
       const generateResponse = await supabase.functions.invoke('generate-content', {
@@ -119,7 +111,7 @@ serve(async (req) => {
           model_id: step.model_id,
           model_record_id: step.model_record_id,
           prompt: resolvedPrompt,
-          custom_parameters: parametersWithSignedUrls,
+          custom_parameters: allParameters,
           workflow_execution_id: execution.id,
           workflow_step_number: step.step_number,
         },

@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2, Clock, Info, Camera, Share2, RefreshCw, CheckCircle2, Palette, ImagePlus, Video, Film, Music } from "lucide-react";
 import { useNativeCamera } from "@/hooks/useNativeCamera";
 import { triggerHaptic } from "@/utils/capacitor-utils";
-import { GlobalHeader } from "@/components/GlobalHeader";
 import { SessionWarning } from "@/components/SessionWarning";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
@@ -875,8 +874,6 @@ const CustomCreation = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <GlobalHeader />
-      
       <div className="flex-1 bg-background pb-32 md:pb-8">
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
         

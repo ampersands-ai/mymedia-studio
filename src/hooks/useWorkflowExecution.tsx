@@ -38,7 +38,18 @@ export const useWorkflowExecution = () => {
       return data as WorkflowExecutionResult;
     } catch (error: any) {
       console.error('Workflow execution error:', error);
-      toast.error(error.message || 'Failed to execute workflow');
+      
+      // More specific error messages
+      let errorMessage = 'Failed to execute workflow';
+      if (error.message?.includes('Missing required parameter')) {
+        errorMessage = `Configuration error: ${error.message}`;
+      } else if (error.message?.includes('non-2xx status')) {
+        errorMessage = 'Backend processing failed. Please check your workflow configuration.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage, { duration: 5000 });
       return null;
     } finally {
       setIsExecuting(false);

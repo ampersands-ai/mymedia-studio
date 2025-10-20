@@ -23,6 +23,8 @@ interface WorkflowTestDialogProps {
 export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTestDialogProps) => {
   const [inputs, setInputs] = useState<Record<string, any>>({});
   const [result, setResult] = useState<{ url: string; tokens: number } | null>(null);
+  const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
+  const [statusMessage, setStatusMessage] = useState<string>('');
   const { executeWorkflow, isExecuting, progress } = useWorkflowExecution();
 
   const handleInputChange = (fieldName: string, value: any) => {
@@ -32,6 +34,8 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
   const handleFileUpload = async (fieldName: string, file: File | undefined) => {
     if (!file) return;
 
+    setUploadingFiles(prev => new Set(prev).add(fieldName));
+    
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
@@ -48,30 +52,60 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Failed to upload file');
+    } finally {
+      setUploadingFiles(prev => {
+        const next = new Set(prev);
+        next.delete(fieldName);
+        return next;
+      });
     }
+  };
+
+  const validateWorkflow = (): string | null => {
+    // Check user input fields
+    const requiredFields = workflow?.user_input_fields?.filter(f => f.required) || [];
+    for (const field of requiredFields) {
+      if (!inputs[field.name]) {
+        return `${field.label} is required`;
+      }
+    }
+    
+    // Check if any files are still uploading
+    if (uploadingFiles.size > 0) {
+      return 'Please wait for file uploads to complete';
+    }
+    
+    // Check if workflow has steps
+    if (!workflow?.workflow_steps?.length) {
+      return 'Workflow has no steps configured';
+    }
+    
+    return null; // No errors
   };
 
   const handleTest = async () => {
     if (!workflow?.id) return;
 
-    // Validate required fields
-    const requiredFields = workflow.user_input_fields?.filter(f => f.required) || [];
-    for (const field of requiredFields) {
-      if (!inputs[field.name]) {
-        toast.error(`${field.label} is required`);
-        return;
-      }
+    const validationError = validateWorkflow();
+    if (validationError) {
+      toast.error(validationError);
+      return;
     }
 
     setResult(null);
+    setStatusMessage('Starting workflow execution...');
+    
     const result = await executeWorkflow({
       workflow_template_id: workflow.id,
       user_inputs: inputs,
     });
 
     if (result?.final_output_url) {
+      setStatusMessage('');
       setResult({ url: result.final_output_url, tokens: result.tokens_used });
       toast.success('Workflow test completed!');
+    } else {
+      setStatusMessage('Workflow failed. Check console for details.');
     }
   };
 
@@ -220,6 +254,27 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
             </div>
           ))}
 
+          {/* Upload Status */}
+          {uploadingFiles.size > 0 && (
+            <div className="flex items-center gap-2 text-blue-600 text-sm p-3 border rounded-lg bg-blue-50 border-blue-200">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Uploading {uploadingFiles.size} file(s)...</span>
+            </div>
+          )}
+
+          {/* Status Message */}
+          {statusMessage && !result && (
+            <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
+              <div className="flex items-center gap-2 text-blue-700">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>{statusMessage}</span>
+              </div>
+              <p className="text-xs text-blue-600 mt-2">
+                This may take 10-60 seconds depending on the AI model...
+              </p>
+            </div>
+          )}
+
           {/* Progress */}
           {isExecuting && progress && (
             <div className="space-y-2 p-4 border rounded-lg bg-muted/50">
@@ -255,7 +310,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
           <div className="flex gap-2">
             <Button
               onClick={handleTest}
-              disabled={isExecuting || !workflow?.workflow_steps?.length}
+              disabled={isExecuting || !workflow?.workflow_steps?.length || uploadingFiles.size > 0}
               className="flex-1"
             >
               {isExecuting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

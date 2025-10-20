@@ -131,21 +131,6 @@ const Templates = () => {
 
   return (
     <>
-      {/* Hero Section */}
-      <section className="bg-background">
-        <div className="container mx-auto px-4 py-16 md:py-24">
-          <div className="max-w-4xl mx-auto text-center">
-            <Sparkles className="h-16 w-16 mx-auto mb-6 text-primary" />
-            <h1 className="text-4xl md:text-6xl font-black mb-6 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-gradient">
-              Ready-to-Use Templates
-            </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground">
-              Start creating in seconds with our professional templates
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* Templates Grid with Tabs OR Workflow Execution */}
       <section className="bg-background">
         <div className="container mx-auto px-4 py-12 md:py-16">

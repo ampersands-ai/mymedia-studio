@@ -53,20 +53,30 @@ const Templates = () => {
           let beforeUrl: string | null = null;
           let afterUrl: string | null = null;
           
-          // Handle before_image_url - check if it's already a full URL or a storage path
+          // Handle before_image_url - extract path from URL if needed
           if (template.before_image_url) {
             if (template.before_image_url.startsWith('http')) {
-              beforeUrl = template.before_image_url;
+              // Extract path from URL: .../generated-content/templates/before/xxx.png -> templates/before/xxx.png
+              const match = template.before_image_url.match(/generated-content\/(.+)$/);
+              if (match) {
+                beforeUrl = await createSignedUrl('generated-content', match[1]);
+              }
             } else {
+              // It's already a storage path
               beforeUrl = await createSignedUrl('generated-content', template.before_image_url);
             }
           }
           
-          // Handle after_image_url - check if it's already a full URL or a storage path
+          // Handle after_image_url - extract path from URL if needed
           if (template.after_image_url) {
             if (template.after_image_url.startsWith('http')) {
-              afterUrl = template.after_image_url;
+              // Extract path from URL: .../generated-content/templates/after/xxx.png -> templates/after/xxx.png
+              const match = template.after_image_url.match(/generated-content\/(.+)$/);
+              if (match) {
+                afterUrl = await createSignedUrl('generated-content', match[1]);
+              }
             } else {
+              // It's already a storage path
               afterUrl = await createSignedUrl('generated-content', template.after_image_url);
             }
           }

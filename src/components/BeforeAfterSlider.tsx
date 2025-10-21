@@ -21,7 +21,6 @@ const BeforeAfterSliderComponent = ({
   showHint = false,
 }: BeforeAfterSliderProps) => {
   const [position, setPosition] = useState(defaultPosition);
-  const [isDragging, setIsDragging] = useState(false);
   const [showHintText, setShowHintText] = useState(showHint);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -32,76 +31,26 @@ const BeforeAfterSliderComponent = ({
     }
   }, [showHint]);
 
-  const updatePosition = (clientX: number) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
-    const x = clientX - rect.left;
+    const x = e.clientX - rect.left;
     const newPosition = Math.max(0, Math.min(100, (x / rect.width) * 100));
     setPosition(newPosition);
     setShowHintText(false);
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsDragging(true);
+  const handleMouseLeave = () => {
+    setPosition(defaultPosition);
   };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (isDragging) {
-      updatePosition(e.clientX);
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleTouchMove = (e: TouchEvent) => {
-    if (isDragging && e.touches[0]) {
-      e.preventDefault();
-      updatePosition(e.touches[0].clientX);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-  };
-
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === containerRef.current || (e.target as HTMLElement).closest('.slider-container')) {
-      updatePosition(e.clientX);
-    }
-  };
-
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      document.addEventListener("touchmove", handleTouchMove, { passive: false });
-      document.addEventListener("touchend", handleTouchEnd);
-
-      return () => {
-        document.removeEventListener("mousemove", handleMouseMove);
-        document.removeEventListener("mouseup", handleMouseUp);
-        document.removeEventListener("touchmove", handleTouchMove);
-        document.removeEventListener("touchend", handleTouchEnd);
-      };
-    }
-  }, [isDragging]);
 
   return (
     <div
       ref={containerRef}
-      className={cn("relative w-full h-full overflow-hidden cursor-col-resize select-none", className)}
-      onClick={handleClick}
-      onMouseDown={(e) => e.stopPropagation()}
-      onTouchStart={(e) => e.stopPropagation()}
+      className={cn("relative w-full h-full overflow-hidden select-none", className)}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       role="slider"
       aria-label="Image comparison slider"
       aria-valuemin={0}
@@ -140,11 +89,8 @@ const BeforeAfterSliderComponent = ({
 
       {/* Handle */}
       <div
-        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center cursor-col-resize z-20 touch-manipulation"
+        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center pointer-events-none z-20"
         style={{ left: `${position}%` }}
-        onMouseDown={handleMouseDown}
-        onTouchStart={handleTouchStart}
-        onClick={(e) => e.stopPropagation()}
       >
         <svg
           width="16"
@@ -168,7 +114,7 @@ const BeforeAfterSliderComponent = ({
       {/* Hint Text */}
       {showHintText && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/70 text-white text-xs rounded animate-fade-in pointer-events-none z-5">
-          Drag to compare
+          Hover to compare
         </div>
       )}
     </div>

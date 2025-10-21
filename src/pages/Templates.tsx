@@ -7,7 +7,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { useAllTemplates } from "@/hooks/useTemplates";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Package, Users, TrendingUp, Layers, Wand2, Coins } from "lucide-react";
+import { Sparkles, Package, Users, TrendingUp, Layers, Wand2, Coins, Shirt, Plane } from "lucide-react";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { createSignedUrl } from "@/lib/storage-utils";
 
@@ -141,6 +141,10 @@ const Templates = () => {
         return Users;
       case "abstract":
         return Layers;
+      case "fashion":
+        return Shirt;
+      case "travel":
+        return Plane;
       default:
         return Sparkles;
     }
@@ -175,6 +179,8 @@ const Templates = () => {
   const fantasyTemplates = templates.filter(t => t.category === "Fantasy");
   const portraitsTemplates = templates.filter(t => t.category === "Portraits");
   const abstractTemplates = templates.filter(t => t.category === "Abstract");
+  const fashionTemplates = templates.filter(t => t.category === "Fashion");
+  const travelTemplates = templates.filter(t => t.category === "Travel");
 
   const handleUseTemplate = (template: any) => {
     if (!user) {
@@ -274,6 +280,8 @@ const Templates = () => {
             {renderCarousel(fantasyTemplates, "Fantasy")}
             {renderCarousel(portraitsTemplates, "Portraits")}
             {renderCarousel(abstractTemplates, "Abstract")}
+            {renderCarousel(fashionTemplates, "Fashion")}
+            {renderCarousel(travelTemplates, "Travel")}
 
             {/* Loading and Empty States */}
             {isLoading && (

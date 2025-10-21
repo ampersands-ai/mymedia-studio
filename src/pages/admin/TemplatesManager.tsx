@@ -546,7 +546,10 @@ function WorkflowEditorDialog({
   const [uploadingImages, setUploadingImages] = useState(false);
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const initializeDialog = async () => {
+      if (!open) return;
+
+      // Fetch categories
       const [workflowRes, contentRes] = await Promise.all([
         supabase.from('workflow_templates').select('category'),
         supabase.from('content_templates').select('category')
@@ -557,58 +560,61 @@ function WorkflowEditorDialog({
       contentRes.data?.forEach(t => allCategories.add(t.category));
       
       setExistingCategories(Array.from(allCategories).sort());
-    };
-    
-    if (open) {
-      fetchCategories();
+      
+      // Set workflow data
       setLocalWorkflow(workflow || {});
       setShowCustomCategory(false);
-      // Reset image upload states
+      
+      // Reset file upload states
       setBeforeImageFile(null);
       setAfterImageFile(null);
       setBeforeImagePreview(null);
       setAfterImagePreview(null);
-      setBeforeSignedPreview(null);
-      setAfterSignedPreview(null);
-    }
-  }, [open, workflow]);
-
-  // Generate signed URLs for existing storage paths
-  useEffect(() => {
-    const generateSignedUrls = async () => {
-      if (!localWorkflow.before_image_url && !localWorkflow.after_image_url) return;
       
-      if (localWorkflow.before_image_url && !beforeImagePreview) {
-        const raw = localWorkflow.before_image_url;
-        if (!raw.startsWith('http')) {
-          const path = raw.includes('generated-content/') 
-            ? raw.match(/generated-content\/(.+)$/)?.[1] || raw
-            : raw;
-          const signedUrl = await createSignedUrl('generated-content', path);
-          setBeforeSignedPreview(signedUrl);
+      // Generate signed URLs for existing storage paths
+      if (workflow?.before_image_url) {
+        const raw = workflow.before_image_url;
+        if (raw.startsWith('http')) {
+          // Extract path from full URL
+          const match = raw.match(/generated-content\/(.+)$/);
+          if (match) {
+            const signedUrl = await createSignedUrl('generated-content', match[1]);
+            setBeforeSignedPreview(signedUrl);
+          } else {
+            setBeforeSignedPreview(raw);
+          }
         } else {
-          setBeforeSignedPreview(raw);
+          // Already a storage path
+          const signedUrl = await createSignedUrl('generated-content', raw);
+          setBeforeSignedPreview(signedUrl);
         }
+      } else {
+        setBeforeSignedPreview(null);
       }
       
-      if (localWorkflow.after_image_url && !afterImagePreview) {
-        const raw = localWorkflow.after_image_url;
-        if (!raw.startsWith('http')) {
-          const path = raw.includes('generated-content/')
-            ? raw.match(/generated-content\/(.+)$/)?.[1] || raw
-            : raw;
-          const signedUrl = await createSignedUrl('generated-content', path);
-          setAfterSignedPreview(signedUrl);
+      if (workflow?.after_image_url) {
+        const raw = workflow.after_image_url;
+        if (raw.startsWith('http')) {
+          // Extract path from full URL
+          const match = raw.match(/generated-content\/(.+)$/);
+          if (match) {
+            const signedUrl = await createSignedUrl('generated-content', match[1]);
+            setAfterSignedPreview(signedUrl);
+          } else {
+            setAfterSignedPreview(raw);
+          }
         } else {
-          setAfterSignedPreview(raw);
+          // Already a storage path
+          const signedUrl = await createSignedUrl('generated-content', raw);
+          setAfterSignedPreview(signedUrl);
         }
+      } else {
+        setAfterSignedPreview(null);
       }
     };
-
-    if (open && localWorkflow) {
-      generateSignedUrls();
-    }
-  }, [open, localWorkflow.before_image_url, localWorkflow.after_image_url, beforeImagePreview, afterImagePreview]);
+    
+    initializeDialog();
+  }, [open, workflow]);
 
   const handleImageUpload = async (file: File, type: 'before' | 'after') => {
     if (!file.type.startsWith('image/')) {

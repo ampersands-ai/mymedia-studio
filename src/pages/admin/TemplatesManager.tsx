@@ -129,19 +129,32 @@ export default function TemplatesManager() {
       ? 'content_templates' 
       : 'workflow_templates';
 
+    console.log(`Attempting to delete ${item.template_type} with ID: ${item.id} from table: ${table}`);
+
     try {
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from(table)
         .delete()
-        .eq('id', item.id);
+        .eq('id', item.id)
+        .select();
 
-      if (error) throw error;
+      console.log('Delete response:', { error, data });
+
+      if (error) {
+        console.error("Delete error details:", {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
       
       toast.success("Template deleted successfully");
       queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting template:", error);
-      toast.error("Failed to delete template");
+      toast.error(`Failed to delete template: ${error.message || 'Unknown error'}`);
     }
   };
 

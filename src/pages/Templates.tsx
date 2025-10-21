@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useAllTemplates } from "@/hooks/useTemplates";
 import { useAuth } from "@/contexts/AuthContext";
-import { Sparkles, Package, Users, TrendingUp, Layers, Wand2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Sparkles, Package, Users, TrendingUp, Layers, Wand2, Coins } from "lucide-react";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { createSignedUrl } from "@/lib/storage-utils";
 
@@ -18,6 +19,9 @@ const Templates = () => {
   
   // State for signed URLs for before/after images
   const [signedUrls, setSignedUrls] = useState<Record<string, { before: string | null, after: string | null }>>({});
+  
+  // State for token costs
+  const [tokenCosts, setTokenCosts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     document.title = "Templates - Artifio.ai";
@@ -26,6 +30,54 @@ const Templates = () => {
       metaDescription.setAttribute('content', 'Ready-to-use AI templates for videos, images, audio, and text. Start creating in seconds with professional templates.');
     }
   }, []);
+
+  // Calculate token costs for all templates
+  useEffect(() => {
+    const calculateTokenCosts = async () => {
+      if (!allTemplates) return;
+      
+      const costs: Record<string, number> = {};
+      
+      for (const template of allTemplates) {
+        if (template.template_type === 'workflow' && template.workflow_steps) {
+          // For workflow templates: sum base costs of all steps
+          const modelRecordIds = template.workflow_steps
+            .map((step: any) => step.model_record_id)
+            .filter(Boolean);
+          
+          if (modelRecordIds.length > 0) {
+            const { data: models } = await supabase
+              .from("ai_models")
+              .select("record_id, base_token_cost")
+              .in("record_id", modelRecordIds);
+            
+            if (models) {
+              const totalCost = template.workflow_steps.reduce((sum: number, step: any) => {
+                const model = models.find((m) => m.record_id === step.model_record_id);
+                return sum + (model?.base_token_cost || 0);
+              }, 0);
+              costs[template.id] = totalCost;
+            }
+          }
+        } else if (template.template_type === 'template' && 'model_record_id' in template && template.model_record_id) {
+          // For content templates: use the model's base cost
+          const { data: model } = await supabase
+            .from("ai_models")
+            .select("base_token_cost")
+            .eq("record_id", template.model_record_id as string)
+            .single();
+          
+          if (model) {
+            costs[template.id] = model.base_token_cost;
+          }
+        }
+      }
+      
+      setTokenCosts(costs);
+    };
+    
+    calculateTokenCosts();
+  }, [allTemplates]);
 
   // Generate signed URLs for templates with before/after images
   useEffect(() => {
@@ -129,7 +181,13 @@ const Templates = () => {
       navigate('/auth');
       return;
     }
-    navigate(`/dashboard/custom-creation?template=${template.id}`);
+    
+    // Navigate based on template type
+    if (template.template_type === 'workflow') {
+      navigate(`/dashboard/create-workflow?workflow=${template.id}`);
+    } else {
+      navigate(`/dashboard/custom-creation?template=${template.id}`);
+    }
   };
 
   const renderCarousel = (categoryTemplates: any[], categoryName: string) => {
@@ -174,7 +232,15 @@ const Templates = () => {
                     </div>
                     
                     <div className="p-2 space-y-2">
-                      <p className="text-xs font-medium line-clamp-1">{template.name}</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium line-clamp-1 flex-1">{template.name}</p>
+                        {tokenCosts[template.id] !== undefined && (
+                          <Badge variant="outline" className="text-xs px-1 py-0 ml-1 flex items-center gap-0.5">
+                            <Coins className="h-2.5 w-2.5" />
+                            {tokenCosts[template.id]}
+                          </Badge>
+                        )}
+                      </div>
                       
                       <Button 
                         onClick={() => handleUseTemplate(template)}

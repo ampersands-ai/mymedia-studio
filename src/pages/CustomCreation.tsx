@@ -13,9 +13,17 @@ import { createSignedUrl } from "@/lib/storage-utils";
 import { OutputGrid } from "@/components/generation/OutputGrid";
 import { OutputLightbox } from "@/components/generation/OutputLightbox";
 import { trackEvent } from "@/lib/posthog";
-import { CustomCreationInputPanel } from "@/components/generation/CustomCreationInputPanel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, X, Upload, ArrowLeft } from "lucide-react";
+import { ModelParameterForm } from "@/components/generation/ModelParameterForm";
+import { useUserTokens } from "@/hooks/useUserTokens";
+import { useNativeCamera } from "@/hooks/useNativeCamera";
 
 // Group type definition
 type CreationGroup = "image_editing" | "prompt_to_image" | "prompt_to_video" | "image_to_video" | "prompt_to_audio";
@@ -56,6 +64,12 @@ const CustomCreation = () => {
   const [selectedOutputIndex, setSelectedOutputIndex] = useState<number>(0);
   const [showLightbox, setShowLightbox] = useState(false);
   const [localGenerating, setLocalGenerating] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  
+  const { data: tokensData, isLoading: tokensLoading } = useUserTokens();
+  const { pickImage } = useNativeCamera();
+  
+  const userTokenBalance = tokensData?.tokens_remaining || 0;
 
   // Filter models by selected group
   const filteredModels = allModels?.filter(model => {
@@ -306,18 +320,26 @@ const CustomCreation = () => {
     }
   };
 
-  const handleBack = () => {
-    if (generatedOutputs.length > 0) {
-      // If there are outputs, just clear them
-      setGeneratedOutputs([]);
-      setPrompt("");
-      setUploadedImages([]);
-      setModelParameters({});
-    } else {
-      // Otherwise go back to templates
-      navigate("/dashboard/templates");
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      setUploadedImages(prev => [...prev, ...newFiles]);
     }
   };
+
+  const handleCameraCapture = async () => {
+    const imageFile = await pickImage('gallery');
+    if (imageFile) {
+      setUploadedImages(prev => [...prev, imageFile]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const currentModel = filteredModels.find(m => m.record_id === selectedModel);
 
   if (!modelsLoading && (!allModels || allModels.length === 0)) {
     return (
@@ -392,65 +414,219 @@ const CustomCreation = () => {
     );
   }
 
-  // Split-panel layout when model is selected
+  const imageFieldInfo = getImageFieldInfo();
+  const schemaRequired = currentModel?.input_schema?.required || [];
+  const canExecute = !localGenerating && !isGenerating && 
+    (!schemaRequired.includes('prompt') || prompt.trim()) &&
+    (!schemaRequired.includes(imageFieldInfo.fieldName || '') || uploadedImages.length > 0);
+
+  // Full page layout when model is selected
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
       <SessionWarning />
       
-      <div className="h-screen flex flex-col lg:flex-row">
-        {/* Left Panel - Input */}
-        <div className="lg:w-1/2 border-r flex flex-col">
-          <CustomCreationInputPanel
-            selectedModel={selectedModel}
-            models={filteredModels}
-            prompt={prompt}
-            onPromptChange={setPrompt}
-            uploadedImages={uploadedImages}
-            onImagesChange={setUploadedImages}
-            modelParameters={modelParameters}
-            onParametersChange={setModelParameters}
-            enhancePrompt={enhancePrompt}
-            onEnhancePromptChange={setEnhancePrompt}
-            generateCaption={generateCaption}
-            onGenerateCaptionChange={setGenerateCaption}
-            estimatedTokens={estimatedTokens}
-            isGenerating={localGenerating || isGenerating}
-            maxPromptLength={getMaxPromptLength()}
-            onGenerate={handleGenerate}
-            onBack={handleBack}
-          />
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/dashboard/templates")}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Templates
+          </Button>
+          <h1 className="text-3xl font-black mb-2">{currentModel?.model_name || "CREATION STUDIO"}</h1>
+          <p className="text-muted-foreground">Configure and execute your creation</p>
         </div>
 
-        {/* Right Panel - Output */}
-        <div className="lg:w-1/2 flex flex-col bg-muted/30">
-          <div className="border-b px-6 py-4 bg-background">
-            <h2 className="text-lg font-bold">Output</h2>
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Input Section */}
+          <div className="space-y-6">
+            {/* Prompt Input */}
+            {currentModel?.input_schema?.properties?.prompt && (
+              <div>
+                <Label htmlFor="prompt" className="text-base font-semibold mb-2 block">
+                  Prompt {schemaRequired.includes('prompt') && <span className="text-destructive">*</span>}
+                </Label>
+                <Textarea
+                  id="prompt"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value.slice(0, getMaxPromptLength()))}
+                  placeholder="Describe what you want to create..."
+                  className="min-h-[120px] resize-none"
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  {prompt.length} / {getMaxPromptLength()}
+                </p>
+              </div>
+            )}
+
+            {/* Image Upload */}
+            {imageFieldInfo.fieldName && (
+              <div>
+                <Label className="text-base font-semibold mb-2 block">
+                  {currentModel?.input_schema?.properties?.[imageFieldInfo.fieldName]?.title || "Upload Image"}
+                  {schemaRequired.includes(imageFieldInfo.fieldName) && <span className="text-destructive"> *</span>}
+                </Label>
+                
+                {uploadedImages.length > 0 && (
+                  <div className="grid grid-cols-3 gap-3 mb-3">
+                    {uploadedImages.map((file, idx) => (
+                      <div key={idx} className="relative group">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`Upload ${idx + 1}`}
+                          className="w-full aspect-square object-cover rounded-lg"
+                        />
+                        <button
+                          onClick={() => removeImage(idx)}
+                          className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                    className="flex-1"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Choose File
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCameraCapture}
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                  </Button>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    accept="image/*"
+                    multiple={imageFieldInfo.isArray}
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Advanced Options */}
+            <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  Advanced Options
+                  <ChevronDown className={cn("h-4 w-4 transition-transform", advancedOpen && "rotate-180")} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-4 space-y-4">
+                {currentModel?.input_schema && (
+                  <ModelParameterForm
+                    modelSchema={currentModel.input_schema}
+                    currentValues={modelParameters}
+                    onChange={setModelParameters}
+                    excludeFields={['prompt', imageFieldInfo.fieldName].filter(Boolean) as string[]}
+                  />
+                )}
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="enhance"
+                    checked={enhancePrompt}
+                    onCheckedChange={(checked) => setEnhancePrompt(!!checked)}
+                  />
+                  <Label htmlFor="enhance" className="text-sm cursor-pointer">
+                    Enhance prompt with AI
+                  </Label>
+                </div>
+
+                {imageFieldInfo.fieldName && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="caption"
+                      checked={generateCaption}
+                      onCheckedChange={(checked) => setGenerateCaption(!!checked)}
+                    />
+                    <Label htmlFor="caption" className="text-sm cursor-pointer">
+                      Generate caption from image
+                    </Label>
+                  </div>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Token Cost */}
+            <Card className="p-4 bg-muted/50">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">Estimated Cost</span>
+                <Badge variant="secondary">{estimatedTokens} tokens</Badge>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Your Balance</span>
+                <span className={cn(
+                  "font-semibold",
+                  userTokenBalance < estimatedTokens ? "text-destructive" : "text-primary"
+                )}>
+                  {tokensLoading ? "..." : userTokenBalance.toLocaleString()} tokens
+                </span>
+              </div>
+            </Card>
+
+            {/* Execute Button */}
+            <Button
+              onClick={handleGenerate}
+              disabled={!canExecute || userTokenBalance < estimatedTokens}
+              className="w-full"
+              size="lg"
+            >
+              {localGenerating || isGenerating ? (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Execute Creation
+                </>
+              )}
+            </Button>
           </div>
 
-          <div className="flex-1 flex items-center justify-center p-6">
+          {/* Output Section */}
+          <div>
+            <h2 className="text-xl font-bold mb-4">Generated Outputs</h2>
             {generatedOutputs.length > 0 ? (
-              <div className="w-full h-full">
-                <OutputGrid
-                  outputs={generatedOutputs}
-                  contentType={filteredModels.find(m => m.record_id === selectedModel)?.content_type || "image"}
-                  onSelectOutput={(index) => {
-                    setSelectedOutputIndex(index);
-                    setShowLightbox(true);
-                  }}
-                />
-              </div>
+              <OutputGrid
+                outputs={generatedOutputs}
+                contentType={currentModel?.content_type || "image"}
+                onSelectOutput={(index) => {
+                  setSelectedOutputIndex(index);
+                  setShowLightbox(true);
+                }}
+              />
             ) : (localGenerating || isGenerating) ? (
-              <div className="text-center">
-                <Sparkles className="h-16 w-16 mx-auto mb-4 text-primary animate-pulse" />
-                <p className="text-lg font-medium">Generating your creation...</p>
-                <p className="text-sm text-muted-foreground mt-2">This may take a moment</p>
+              <div className="flex items-center justify-center h-64 bg-muted/30 rounded-lg">
+                <div className="text-center">
+                  <Sparkles className="h-12 w-12 mx-auto mb-3 text-primary animate-pulse" />
+                  <p className="font-medium">Generating...</p>
+                </div>
               </div>
             ) : (
-              <div className="text-center">
-                <ImageIcon className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-                <p className="text-lg text-muted-foreground">
-                  Fill in the inputs and execute to see results
-                </p>
+              <div className="flex items-center justify-center h-64 bg-muted/30 rounded-lg border-2 border-dashed">
+                <div className="text-center">
+                  <ImageIcon className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+                  <p className="text-muted-foreground">Your outputs will appear here</p>
+                </div>
               </div>
             )}
           </div>
@@ -461,7 +637,7 @@ const CustomCreation = () => {
       <OutputLightbox
         outputs={generatedOutputs}
         selectedIndex={selectedOutputIndex}
-        contentType={filteredModels.find(m => m.record_id === selectedModel)?.content_type || "image"}
+        contentType={currentModel?.content_type || "image"}
         open={showLightbox}
         onOpenChange={setShowLightbox}
         onNavigate={(direction) => {

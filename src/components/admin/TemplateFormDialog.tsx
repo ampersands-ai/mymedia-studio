@@ -68,6 +68,7 @@ export function TemplateFormDialog({
   template,
   onSuccess,
 }: TemplateFormDialogProps) {
+  const [originalId, setOriginalId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     id: "",
     category: "",
@@ -103,6 +104,7 @@ export function TemplateFormDialog({
   useEffect(() => {
     if (template) {
       const isCustom = template.is_custom_model || false;
+      setOriginalId(template.id);
       setFormData({
         id: template.id,
         category: template.category,
@@ -128,6 +130,7 @@ export function TemplateFormDialog({
         fetchModelDetails(template.model_id);
       }
     } else {
+      setOriginalId(null);
       setFormData({
         id: "",
         category: "",
@@ -252,13 +255,34 @@ export function TemplateFormDialog({
       };
 
       if (template) {
-        const { error } = await supabase
-          .from("content_templates")
-          .update(data)
-          .eq("id", template.id);
+        // Check if ID has changed
+        const idChanged = originalId !== formData.id;
+        
+        if (idChanged) {
+          // ID changed: delete old, insert new
+          const { error: deleteError } = await supabase
+            .from("content_templates")
+            .delete()
+            .eq("id", originalId!);
 
-        if (error) throw error;
-        toast.success("Template updated successfully");
+          if (deleteError) throw deleteError;
+
+          const { error: insertError } = await supabase
+            .from("content_templates")
+            .insert(data);
+
+          if (insertError) throw insertError;
+          toast.success("Template ID updated successfully");
+        } else {
+          // ID unchanged: normal update
+          const { error } = await supabase
+            .from("content_templates")
+            .update(data)
+            .eq("id", template.id);
+
+          if (error) throw error;
+          toast.success("Template updated successfully");
+        }
       } else {
         const { error } = await supabase.from("content_templates").insert(data);
 
@@ -314,8 +338,12 @@ export function TemplateFormDialog({
                     onChange={(e) => setFormData({ ...formData, id: e.target.value })}
                     placeholder="IMG-001"
                     required
-                    disabled={!!template}
                   />
+                  {template && originalId !== formData.id && (
+                    <p className="text-xs text-amber-600">
+                      ⚠️ Changing ID will create a new template and remove the old one
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">

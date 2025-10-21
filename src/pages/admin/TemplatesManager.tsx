@@ -549,6 +549,7 @@ function WorkflowEditorDialog({
   onSuccess: () => void;
 }) {
   const [localWorkflow, setLocalWorkflow] = useState<Partial<WorkflowTemplate>>(workflow || {});
+  const [originalWorkflowId, setOriginalWorkflowId] = useState<string | null>(null);
   const [existingCategories, setExistingCategories] = useState<string[]>([]);
   const [showCustomCategory, setShowCustomCategory] = useState(false);
   const [beforeImageFile, setBeforeImageFile] = useState<File | null>(null);
@@ -577,6 +578,7 @@ function WorkflowEditorDialog({
       
       // Set workflow data
       setLocalWorkflow(workflow || {});
+      setOriginalWorkflowId(workflow?.id || null);
       setShowCustomCategory(false);
       
       // Reset file upload states
@@ -750,23 +752,56 @@ function WorkflowEditorDialog({
       
       setUploadingImages(false);
 
-      const { error } = await supabase
-        .from('workflow_templates')
-        .update({
-          name: updates.name,
-          description: updates.description,
-          category: updates.category,
-          thumbnail_url: updates.thumbnail_url,
-          before_image_url: beforeUrl,
-          after_image_url: afterUrl,
-          is_active: updates.is_active,
-          display_order: updates.display_order,
-          estimated_time_seconds: updates.estimated_time_seconds,
-          workflow_steps: updates.workflow_steps as any || [],
-          user_input_fields: updates.user_input_fields as any || [],
-        })
-        .eq('id', id);
-      if (error) throw error;
+      // Check if ID has changed
+      const idChanged = originalWorkflowId !== updates.id;
+
+      if (idChanged) {
+        // ID changed: delete old, insert new
+        const { error: deleteError } = await supabase
+          .from('workflow_templates')
+          .delete()
+          .eq('id', originalWorkflowId!);
+
+        if (deleteError) throw deleteError;
+
+        const { error: insertError } = await supabase
+          .from('workflow_templates')
+          .insert({
+            id: updates.id,
+            name: updates.name,
+            description: updates.description,
+            category: updates.category,
+            thumbnail_url: updates.thumbnail_url,
+            before_image_url: beforeUrl,
+            after_image_url: afterUrl,
+            is_active: updates.is_active,
+            display_order: updates.display_order,
+            estimated_time_seconds: updates.estimated_time_seconds,
+            workflow_steps: updates.workflow_steps as any || [],
+            user_input_fields: updates.user_input_fields as any || [],
+          });
+
+        if (insertError) throw insertError;
+      } else {
+        // ID unchanged: normal update
+        const { error } = await supabase
+          .from('workflow_templates')
+          .update({
+            name: updates.name,
+            description: updates.description,
+            category: updates.category,
+            thumbnail_url: updates.thumbnail_url,
+            before_image_url: beforeUrl,
+            after_image_url: afterUrl,
+            is_active: updates.is_active,
+            display_order: updates.display_order,
+            estimated_time_seconds: updates.estimated_time_seconds,
+            workflow_steps: updates.workflow_steps as any || [],
+            user_input_fields: updates.user_input_fields as any || [],
+          })
+          .eq('id', id);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       toast.success("Workflow updated successfully");
@@ -866,8 +901,12 @@ function WorkflowEditorDialog({
                   value={localWorkflow.id || ''}
                   onChange={(e) => setLocalWorkflow({ ...localWorkflow, id: e.target.value })}
                   placeholder="unique-workflow-id"
-                  disabled={!isNew}
                 />
+                {!isNew && originalWorkflowId !== localWorkflow.id && (
+                  <p className="text-xs text-amber-600">
+                    ⚠️ Changing ID will create a new workflow and remove the old one
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Name</Label>

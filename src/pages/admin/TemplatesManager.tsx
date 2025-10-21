@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown, Copy, Play } from "lucide-react";
+import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown, Copy, Play, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { TemplateFormDialog } from "@/components/admin/TemplateFormDialog";
 import { WorkflowTestDialog } from "@/components/admin/WorkflowTestDialog";
@@ -537,6 +537,11 @@ function WorkflowEditorDialog({
   const [localWorkflow, setLocalWorkflow] = useState<Partial<WorkflowTemplate>>(workflow || {});
   const [existingCategories, setExistingCategories] = useState<string[]>([]);
   const [showCustomCategory, setShowCustomCategory] = useState(false);
+  const [beforeImageFile, setBeforeImageFile] = useState<File | null>(null);
+  const [afterImageFile, setAfterImageFile] = useState<File | null>(null);
+  const [beforeImagePreview, setBeforeImagePreview] = useState<string | null>(null);
+  const [afterImagePreview, setAfterImagePreview] = useState<string | null>(null);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -556,11 +561,88 @@ function WorkflowEditorDialog({
       fetchCategories();
       setLocalWorkflow(workflow || {});
       setShowCustomCategory(false);
+      // Reset image upload states
+      setBeforeImageFile(null);
+      setAfterImageFile(null);
+      setBeforeImagePreview(null);
+      setAfterImagePreview(null);
     }
   }, [open, workflow]);
 
+  const handleImageUpload = async (file: File, type: 'before' | 'after') => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (type === 'before') {
+        setBeforeImagePreview(reader.result as string);
+      } else {
+        setAfterImagePreview(reader.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // Store file for later upload
+    if (type === 'before') {
+      setBeforeImageFile(file);
+    } else {
+      setAfterImageFile(file);
+    }
+  };
+
+  const uploadImageToStorage = async (file: File, type: 'before' | 'after'): Promise<string | null> => {
+    try {
+      const timestamp = Date.now();
+      const fileExt = file.name.split('.').pop();
+      const filePath = `templates/${type}/${timestamp}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('generated-content')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        toast.error(`Failed to upload ${type} image`);
+        return null;
+      }
+
+      // Get public URL
+      const { data: urlData } = await supabase.storage
+        .from('generated-content')
+        .getPublicUrl(filePath);
+
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error(`Failed to upload ${type} image`);
+      return null;
+    }
+  };
+
   const createMutation = useMutation({
     mutationFn: async (wf: Partial<WorkflowTemplate>) => {
+      setUploadingImages(true);
+      
+      // Upload images if files are selected
+      let beforeUrl = wf.before_image_url;
+      let afterUrl = wf.after_image_url;
+      
+      if (beforeImageFile) {
+        beforeUrl = await uploadImageToStorage(beforeImageFile, 'before');
+      }
+      if (afterImageFile) {
+        afterUrl = await uploadImageToStorage(afterImageFile, 'after');
+      }
+      
+      setUploadingImages(false);
+
       const { error } = await supabase
         .from('workflow_templates')
         .insert([{
@@ -569,6 +651,8 @@ function WorkflowEditorDialog({
           description: wf.description,
           category: wf.category,
           thumbnail_url: wf.thumbnail_url,
+          before_image_url: beforeUrl,
+          after_image_url: afterUrl,
           is_active: wf.is_active,
           display_order: wf.display_order,
           estimated_time_seconds: wf.estimated_time_seconds,
@@ -579,15 +663,36 @@ function WorkflowEditorDialog({
     },
     onSuccess: () => {
       toast.success("Workflow created successfully");
+      // Reset image states
+      setBeforeImageFile(null);
+      setAfterImageFile(null);
+      setBeforeImagePreview(null);
+      setAfterImagePreview(null);
       onSuccess();
     },
     onError: (error: any) => {
+      setUploadingImages(false);
       toast.error("Failed to create workflow: " + error.message);
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<WorkflowTemplate> }) => {
+      setUploadingImages(true);
+      
+      // Upload new images if files are selected
+      let beforeUrl = updates.before_image_url;
+      let afterUrl = updates.after_image_url;
+      
+      if (beforeImageFile) {
+        beforeUrl = await uploadImageToStorage(beforeImageFile, 'before');
+      }
+      if (afterImageFile) {
+        afterUrl = await uploadImageToStorage(afterImageFile, 'after');
+      }
+      
+      setUploadingImages(false);
+
       const { error } = await supabase
         .from('workflow_templates')
         .update({
@@ -595,6 +700,8 @@ function WorkflowEditorDialog({
           description: updates.description,
           category: updates.category,
           thumbnail_url: updates.thumbnail_url,
+          before_image_url: beforeUrl,
+          after_image_url: afterUrl,
           is_active: updates.is_active,
           display_order: updates.display_order,
           estimated_time_seconds: updates.estimated_time_seconds,
@@ -606,9 +713,15 @@ function WorkflowEditorDialog({
     },
     onSuccess: () => {
       toast.success("Workflow updated successfully");
+      // Reset image states
+      setBeforeImageFile(null);
+      setAfterImageFile(null);
+      setBeforeImagePreview(null);
+      setAfterImagePreview(null);
       onSuccess();
     },
     onError: (error: any) => {
+      setUploadingImages(false);
       toast.error("Failed to update workflow: " + error.message);
     },
   });
@@ -722,6 +835,109 @@ function WorkflowEditorDialog({
                 Leave empty to use default placeholder image
               </p>
             </div>
+
+            <div className="space-y-4">
+              <Label>Before/After Images (for comparison slider)</Label>
+              
+              {/* Before Image */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm text-muted-foreground">Before Image</Label>
+                </div>
+                
+                {beforeImagePreview || localWorkflow.before_image_url ? (
+                  <div className="relative">
+                    <img
+                      src={beforeImagePreview || localWorkflow.before_image_url || ''}
+                      alt="Before preview"
+                      className="w-full h-32 object-cover rounded-md border"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => {
+                        setBeforeImageFile(null);
+                        setBeforeImagePreview(null);
+                        setLocalWorkflow({ ...localWorkflow, before_image_url: '' });
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 'before');
+                      }}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-muted-foreground self-center">or</span>
+                    <Input
+                      value={localWorkflow.before_image_url || ''}
+                      onChange={(e) => setLocalWorkflow({ ...localWorkflow, before_image_url: e.target.value })}
+                      placeholder="Enter URL"
+                      className="flex-1"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* After Image */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm text-muted-foreground">After Image</Label>
+                </div>
+                
+                {afterImagePreview || localWorkflow.after_image_url ? (
+                  <div className="relative">
+                    <img
+                      src={afterImagePreview || localWorkflow.after_image_url || ''}
+                      alt="After preview"
+                      className="w-full h-32 object-cover rounded-md border"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => {
+                        setAfterImageFile(null);
+                        setAfterImagePreview(null);
+                        setLocalWorkflow({ ...localWorkflow, after_image_url: '' });
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 'after');
+                      }}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-muted-foreground self-center">or</span>
+                    <Input
+                      value={localWorkflow.after_image_url || ''}
+                      onChange={(e) => setLocalWorkflow({ ...localWorkflow, after_image_url: e.target.value })}
+                      placeholder="Enter URL"
+                      className="flex-1"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Category</Label>
@@ -934,8 +1150,23 @@ function WorkflowEditorDialog({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave}>
-              {isNew ? 'Create' : 'Update'} Workflow
+            <Button
+              onClick={handleSave}
+              disabled={
+                !localWorkflow.name ||
+                !localWorkflow.category ||
+                (localWorkflow.workflow_steps || []).length === 0 ||
+                uploadingImages
+              }
+            >
+              {uploadingImages ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading Images...
+                </>
+              ) : (
+                <>{isNew ? 'Create' : 'Update'} Workflow</>
+              )}
             </Button>
           </div>
         </div>

@@ -5,11 +5,14 @@ import { useWorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
 import { WorkflowInputPanel } from "@/components/generation/WorkflowInputPanel";
 import { createSignedUrl } from "@/lib/storage-utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ArrowLeft } from "lucide-react";
 
 const CreateWorkflow = () => {
   const [searchParams] = useSearchParams();
   const workflowId = searchParams.get("workflow");
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   const { data: workflow, isLoading } = useWorkflowTemplate(workflowId || "");
   const { executeWorkflow, isExecuting, progress } = useWorkflowExecution();
@@ -79,21 +82,36 @@ const CreateWorkflow = () => {
     );
   }
 
+  const showInputPanel = !isMobile || (!isExecuting && !result);
+  const showOutputPanel = !isMobile || isExecuting || result;
+
   return (
     <div className="min-h-screen bg-background grid grid-cols-1 lg:grid-cols-2 gap-0">
       {/* Left Panel - Inputs */}
-      <div className="border-r border-border p-6 overflow-y-auto">
-        <WorkflowInputPanel
-          workflow={workflow}
-          onExecute={handleExecute}
-          onBack={() => navigate("/dashboard/templates")}
-          isExecuting={isExecuting}
-        />
-      </div>
+      {showInputPanel && (
+        <div className="border-r border-border p-6 overflow-y-auto">
+          <WorkflowInputPanel
+            workflow={workflow}
+            onExecute={handleExecute}
+            onBack={() => navigate("/dashboard/templates")}
+            isExecuting={isExecuting}
+          />
+        </div>
+      )}
 
       {/* Right Panel - Output */}
-      <div className="p-6 overflow-y-auto">
-        <h2 className="text-2xl font-semibold mb-6">Output</h2>
+      {showOutputPanel && (
+        <div className="p-6 overflow-y-auto">
+          {isMobile && (isExecuting || result) && (
+            <button
+              onClick={() => setResult(null)}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Inputs</span>
+            </button>
+          )}
+          <h2 className="text-2xl font-semibold mb-6">Output</h2>
         
         {!isExecuting && !result && (
           <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] text-center">
@@ -155,7 +173,8 @@ const CreateWorkflow = () => {
             </div>
           </div>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

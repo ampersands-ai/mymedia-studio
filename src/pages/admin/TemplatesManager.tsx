@@ -1183,21 +1183,6 @@ function WorkflowEditorDialog({
             ))}
           </Card>
 
-          {/* Visual Workflow Builder */}
-          {(localWorkflow.workflow_steps || []).length > 0 && (
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Workflow Visualization</h3>
-              <div className="h-[400px] border rounded-lg">
-                <WorkflowBuilder
-                  steps={localWorkflow.workflow_steps || []}
-                  onStepsChange={(steps) => setLocalWorkflow({ ...localWorkflow, workflow_steps: steps })}
-                  userInputFields={localWorkflow.user_input_fields || []}
-                  availableModels={models}
-                  onEditStep={() => {}}
-                />
-              </div>
-            </Card>
-          )}
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>

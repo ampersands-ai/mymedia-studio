@@ -384,6 +384,55 @@ All colors MUST be HSL.
     padding-right: var(--sar);
   }
   
+  /* Mobile Optimizations */
+  @media (max-width: 768px) {
+    .mobile-single-col {
+      grid-template-columns: 1fr !important;
+    }
+    
+    .mobile-stack {
+      flex-direction: column !important;
+    }
+    
+    .mobile-full-width {
+      width: 100% !important;
+    }
+    
+    .mobile-p-4 {
+      padding: 1rem !important;
+    }
+    
+    /* Ensure text is readable on mobile */
+    body {
+      -webkit-text-size-adjust: 100%;
+      -moz-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    
+    /* Better touch targets for accessibility */
+    button:not(.h-8):not(.h-9):not(.h-10), 
+    a:not(.h-8):not(.h-9):not(.h-10) {
+      min-height: 44px;
+    }
+    
+    /* Prevent zoom on input focus on iOS */
+    input, select, textarea {
+      font-size: max(16px, 1em) !important;
+    }
+    
+    /* Better spacing for mobile cards */
+    .card {
+      margin-bottom: 1rem;
+    }
+  }
+
+  /* Tablet Optimizations */
+  @media (min-width: 640px) and (max-width: 1023px) {
+    .tablet-2-cols {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+  }
+  
   /* Disable animations and improve accessibility for reduced motion */
   @media (prefers-reduced-motion: reduce) {
     *,

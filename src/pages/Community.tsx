@@ -204,7 +204,7 @@ const Community = () => {
 
         {/* Grid of Creations */}
         {!loading && creations.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {creations.map((creation) => (
               <Card key={creation.id} className="overflow-hidden brutal-card hover:scale-105 transition-transform">
                 {/* Media Preview */}

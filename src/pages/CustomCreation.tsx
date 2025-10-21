@@ -54,6 +54,7 @@ import { OutputLightbox } from "@/components/generation/OutputLightbox";
 import { downloadMultipleOutputs } from "@/lib/download-utils";
 import { trackEvent } from "@/lib/posthog";
 import { useUserTokens } from "@/hooks/useUserTokens";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Group type definition
 type CreationGroup = "image_editing" | "prompt_to_image" | "prompt_to_video" | "image_to_video" | "prompt_to_audio";
@@ -71,6 +72,7 @@ const CREATION_GROUPS = [
 const CustomCreation = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { pickImage, pickMultipleImages, isLoading: cameraLoading, isNative } = useNativeCamera();
   const [selectedGroup, setSelectedGroup] = useState<CreationGroup>(() => {
     const saved = localStorage.getItem('customCreation_selectedGroup');

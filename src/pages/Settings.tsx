@@ -315,7 +315,7 @@ const Settings = () => {
         <h1 className="text-4xl font-black gradient-text mb-8">Settings</h1>
         
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="subscription">Subscription</TabsTrigger>
             <TabsTrigger value="usage">Token Usage</TabsTrigger>

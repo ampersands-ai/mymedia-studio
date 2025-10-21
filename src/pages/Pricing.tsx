@@ -378,7 +378,7 @@ const Pricing = () => {
           </div>
 
           {/* All Plans Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto mb-16">
           {plans.map((plan) => (
             <Card
               key={plan.name}
@@ -447,9 +447,9 @@ const Pricing = () => {
           <div className="max-w-6xl mx-auto mb-16">
             <h3 className="text-3xl font-black text-center mb-8">Compare All Plans</h3>
             <Card className="brutal-card">
-              <CardContent className="p-6 md:p-8">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+              <CardContent className="p-4 md:p-8">
+                <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                  <table className="w-full min-w-[600px]">
                     <thead>
                       <tr className="border-b-2 border-black">
                         <th className="py-4 px-4 text-left font-black">Plan</th>

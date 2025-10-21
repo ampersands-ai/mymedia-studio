@@ -31,6 +31,10 @@ const BeforeAfterSliderComponent = ({
     }
   }, [showHint]);
 
+  useEffect(() => {
+    setPosition(defaultPosition);
+  }, [defaultPosition]);
+
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
 

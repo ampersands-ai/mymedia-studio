@@ -41,6 +41,8 @@ interface ContentTemplate {
   is_custom_model?: boolean;
   enhancement_instruction: string | null;
   thumbnail_url: string | null;
+  before_image_url: string | null;
+  after_image_url: string | null;
   is_active: boolean;
   display_order: number;
   estimated_time_seconds?: number | null;
@@ -75,6 +77,8 @@ export function TemplateFormDialog({
     preset_parameters: "{}",
     enhancement_instruction: "",
     thumbnail_url: "",
+    before_image_url: "",
+    after_image_url: "",
     display_order: "0",
     estimated_time_seconds: "",
     is_custom_model: false,
@@ -108,6 +112,8 @@ export function TemplateFormDialog({
         preset_parameters: JSON.stringify(template.preset_parameters, null, 2),
         enhancement_instruction: template.enhancement_instruction || "",
         thumbnail_url: template.thumbnail_url || "",
+        before_image_url: template.before_image_url || "",
+        after_image_url: template.after_image_url || "",
         display_order: template.display_order.toString(),
         estimated_time_seconds: (template as any).estimated_time_seconds?.toString() || "",
         is_custom_model: isCustom,
@@ -131,6 +137,8 @@ export function TemplateFormDialog({
         preset_parameters: "{}",
         enhancement_instruction: "",
         thumbnail_url: "",
+        before_image_url: "",
+        after_image_url: "",
         display_order: "0",
         estimated_time_seconds: "",
         is_custom_model: false,
@@ -236,6 +244,8 @@ export function TemplateFormDialog({
         is_custom_model: formData.is_custom_model,
         enhancement_instruction: formData.enhancement_instruction || null,
         thumbnail_url: formData.thumbnail_url || null,
+        before_image_url: formData.before_image_url || null,
+        after_image_url: formData.after_image_url || null,
         display_order: parseInt(formData.display_order),
         is_active: true,
         estimated_time_seconds: formData.estimated_time_seconds ? parseInt(formData.estimated_time_seconds) : null,
@@ -387,6 +397,26 @@ export function TemplateFormDialog({
                     value={formData.thumbnail_url}
                     onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
                     placeholder="https://example.com/thumbnail.jpg"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="before_image_url">Before Image URL (for comparison slider)</Label>
+                  <Input
+                    id="before_image_url"
+                    value={formData.before_image_url}
+                    onChange={(e) => setFormData({ ...formData, before_image_url: e.target.value })}
+                    placeholder="https://example.com/before.jpg"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="after_image_url">After Image URL (for comparison slider)</Label>
+                  <Input
+                    id="after_image_url"
+                    value={formData.after_image_url}
+                    onChange={(e) => setFormData({ ...formData, after_image_url: e.target.value })}
+                    placeholder="https://example.com/after.jpg"
                   />
                 </div>
 

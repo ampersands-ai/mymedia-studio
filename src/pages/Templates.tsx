@@ -9,6 +9,7 @@ import { useWorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sparkles, Package, Users, TrendingUp, Layers, Wand2 } from "lucide-react";
+import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { WorkflowInputPanel } from "@/components/generation/WorkflowInputPanel";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
@@ -162,7 +163,17 @@ const Templates = () => {
                 <CarouselItem key={template.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
                   <Card className="group hover:shadow-brutal transition-all overflow-hidden border-2 border-black">
                     <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10">
-                      {template.thumbnail_url ? (
+                      {template.before_image_url && template.after_image_url ? (
+                        <BeforeAfterSlider
+                          beforeImage={template.before_image_url}
+                          afterImage={template.after_image_url}
+                          beforeLabel="Original"
+                          afterLabel="Enhanced"
+                          defaultPosition={50}
+                          showHint={true}
+                          className="w-full h-full"
+                        />
+                      ) : template.thumbnail_url ? (
                         <img 
                           src={template.thumbnail_url} 
                           alt={template.name || ''}

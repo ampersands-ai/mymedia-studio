@@ -1,0 +1,173 @@
+import { useState, useRef, useEffect, memo } from "react";
+import { cn } from "@/lib/utils";
+
+interface BeforeAfterSliderProps {
+  beforeImage: string;
+  afterImage: string;
+  beforeLabel?: string;
+  afterLabel?: string;
+  defaultPosition?: number;
+  className?: string;
+  showHint?: boolean;
+}
+
+const BeforeAfterSliderComponent = ({
+  beforeImage,
+  afterImage,
+  beforeLabel = "Before",
+  afterLabel = "After",
+  defaultPosition = 50,
+  className,
+  showHint = false,
+}: BeforeAfterSliderProps) => {
+  const [position, setPosition] = useState(defaultPosition);
+  const [isDragging, setIsDragging] = useState(false);
+  const [showHintText, setShowHintText] = useState(showHint);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (showHint) {
+      const timer = setTimeout(() => setShowHintText(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showHint]);
+
+  const updatePosition = (clientX: number) => {
+    if (!containerRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const newPosition = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    setPosition(newPosition);
+    setShowHintText(false);
+  };
+
+  const handleMouseDown = () => {
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (isDragging) {
+      updatePosition(e.clientX);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = () => {
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (isDragging && e.touches[0]) {
+      e.preventDefault();
+      updatePosition(e.touches[0].clientX);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === containerRef.current || (e.target as HTMLElement).closest('.slider-container')) {
+      updatePosition(e.clientX);
+    }
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.addEventListener("touchmove", handleTouchMove, { passive: false });
+      document.addEventListener("touchend", handleTouchEnd);
+
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+        document.removeEventListener("touchmove", handleTouchMove);
+        document.removeEventListener("touchend", handleTouchEnd);
+      };
+    }
+  }, [isDragging]);
+
+  return (
+    <div
+      ref={containerRef}
+      className={cn("relative w-full h-full overflow-hidden cursor-col-resize select-none", className)}
+      onClick={handleClick}
+      role="slider"
+      aria-label="Image comparison slider"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(position)}
+      tabIndex={0}
+    >
+      {/* Before Image (Base layer) */}
+      <img
+        src={beforeImage}
+        alt={beforeLabel}
+        className="absolute inset-0 w-full h-full object-cover"
+        draggable={false}
+      />
+
+      {/* After Image (Clipped layer) */}
+      <div
+        className="absolute inset-0 overflow-hidden"
+        style={{
+          clipPath: `inset(0 ${100 - position}% 0 0)`,
+        }}
+      >
+        <img
+          src={afterImage}
+          alt={afterLabel}
+          className="absolute inset-0 w-full h-full object-cover"
+          draggable={false}
+        />
+      </div>
+
+      {/* Vertical Line */}
+      <div
+        className="absolute top-0 bottom-0 w-0.5 bg-[#FDB022] pointer-events-none z-10"
+        style={{ left: `${position}%` }}
+      />
+
+      {/* Handle */}
+      <div
+        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center cursor-col-resize z-20 touch-manipulation"
+        style={{ left: `${position}%` }}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          className="text-[#FDB022]"
+        >
+          <path d="M6 3L2 8L6 13M10 3L14 8L10 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+
+      {/* Labels */}
+      <div className="absolute top-2 left-2 px-2 py-1 bg-black/70 text-white text-xs rounded z-5 pointer-events-none">
+        {beforeLabel}
+      </div>
+      <div className="absolute top-2 right-2 px-2 py-1 bg-black/70 text-white text-xs rounded z-5 pointer-events-none">
+        {afterLabel}
+      </div>
+
+      {/* Hint Text */}
+      {showHintText && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/70 text-white text-xs rounded animate-fade-in pointer-events-none z-5">
+          Drag to compare
+        </div>
+      )}
+    </div>
+  );
+};
+
+export const BeforeAfterSlider = memo(BeforeAfterSliderComponent);

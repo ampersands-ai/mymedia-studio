@@ -27,6 +27,8 @@ export interface WorkflowTemplate {
   description: string | null;
   category: string;
   thumbnail_url: string | null;
+  before_image_url: string | null;
+  after_image_url: string | null;
   is_active: boolean;
   display_order: number;
   estimated_time_seconds: number | null;

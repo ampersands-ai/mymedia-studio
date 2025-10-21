@@ -926,6 +926,8 @@ export type Database = {
       }
       workflow_templates: {
         Row: {
+          after_image_url: string | null
+          before_image_url: string | null
           category: string
           created_at: string
           description: string | null
@@ -940,6 +942,8 @@ export type Database = {
           workflow_steps: Json
         }
         Insert: {
+          after_image_url?: string | null
+          before_image_url?: string | null
           category: string
           created_at?: string
           description?: string | null
@@ -954,6 +958,8 @@ export type Database = {
           workflow_steps?: Json
         }
         Update: {
+          after_image_url?: string | null
+          before_image_url?: string | null
           category?: string
           created_at?: string
           description?: string | null

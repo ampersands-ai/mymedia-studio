@@ -36,6 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { MergedTemplate } from "@/hooks/useTemplates";
 import { WorkflowStepForm } from "@/components/admin/WorkflowStepForm";
+import { WorkflowBuilder } from "@/components/admin/WorkflowBuilder";
 import { WorkflowStep, UserInputField, WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { useModels } from "@/hooks/useModels";
 import { createSignedUrl } from "@/lib/storage-utils";
@@ -808,6 +809,11 @@ function WorkflowEditorDialog({
     setLocalWorkflow({ ...localWorkflow, workflow_steps: steps });
   };
 
+  // Aliases for consistency
+  const addStep = addNewStep;
+  const updateStep = handleStepUpdate;
+  const deleteStep = handleStepDelete;
+
   const addUserField = () => {
     const fields = [...(localWorkflow.user_input_fields || [])];
     fields.push({
@@ -1061,11 +1067,137 @@ function WorkflowEditorDialog({
             </div>
           </Card>
 
-          <div className="space-y-6">
-            <Card className="p-6 space-y-4">
-...
+          {/* User Input Fields */}
+          <Card className="p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">User Input Fields</h3>
+              <Button onClick={addUserField} size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Field
+              </Button>
+            </div>
+            {(localWorkflow.user_input_fields || []).map((field, idx) => (
+              <Card key={idx} className="p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div className="text-sm font-medium">Field {idx + 1}</div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteUserField(idx)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Field Name</Label>
+                    <Input
+                      value={field.name}
+                      onChange={(e) => updateUserField(idx, { name: e.target.value })}
+                      placeholder="field_name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Label</Label>
+                    <Input
+                      value={field.label}
+                      onChange={(e) => updateUserField(idx, { label: e.target.value })}
+                      placeholder="Display Label"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Type</Label>
+                    <Select
+                      value={field.type}
+                      onValueChange={(value) => updateUserField(idx, { type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="text">Text</SelectItem>
+                        <SelectItem value="textarea">Textarea</SelectItem>
+                        <SelectItem value="number">Number</SelectItem>
+                        <SelectItem value="select">Select</SelectItem>
+                        <SelectItem value="checkbox">Checkbox</SelectItem>
+                        <SelectItem value="file">File Upload</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2 flex items-end">
+                    <label className="flex items-center gap-2 pb-2">
+                      <Checkbox
+                        checked={field.required || false}
+                        onCheckedChange={(checked) => updateUserField(idx, { required: checked as boolean })}
+                      />
+                      <span className="text-xs">Required</span>
+                    </label>
+                  </div>
+                </div>
+                {field.type === 'select' && (
+                  <div className="space-y-2">
+                    <Label className="text-xs">Options (comma-separated)</Label>
+                    <Input
+                      value={field.options?.join(', ') || ''}
+                      onChange={(e) => updateUserField(idx, { options: e.target.value.split(',').map(o => o.trim()) })}
+                      placeholder="Option 1, Option 2, Option 3"
+                    />
+                  </div>
+                )}
+                {field.type === 'file' && (
+                  <div className="space-y-2">
+                    <Label className="text-xs">Max Files</Label>
+                    <Input
+                      type="number"
+                      value={field.max_files || 1}
+                      onChange={(e) => updateUserField(idx, { max_files: parseInt(e.target.value) || 1 })}
+                      min={1}
+                      max={10}
+                    />
+                  </div>
+                )}
+              </Card>
+            ))}
+          </Card>
+
+          {/* Workflow Steps */}
+          <Card className="p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">Workflow Steps</h3>
+              <Button onClick={addStep} size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Step
+              </Button>
+            </div>
+            {(localWorkflow.workflow_steps || []).map((step, idx) => (
+              <WorkflowStepForm
+                key={idx}
+                step={step}
+                stepNumber={idx + 1}
+                availableModels={models}
+                previousSteps={(localWorkflow.workflow_steps || []).slice(0, idx)}
+                userInputFields={localWorkflow.user_input_fields || []}
+                onChange={(updated) => updateStep(idx, updated)}
+                onDelete={() => deleteStep(idx)}
+              />
+            ))}
+          </Card>
+
+          {/* Visual Workflow Builder */}
+          {(localWorkflow.workflow_steps || []).length > 0 && (
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Workflow Visualization</h3>
+              <div className="h-[400px] border rounded-lg">
+                <WorkflowBuilder
+                  steps={localWorkflow.workflow_steps || []}
+                  onStepsChange={(steps) => setLocalWorkflow({ ...localWorkflow, workflow_steps: steps })}
+                  userInputFields={localWorkflow.user_input_fields || []}
+                  availableModels={models}
+                  onEditStep={() => {}}
+                />
+              </div>
             </Card>
-          </div>
+          )}
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>

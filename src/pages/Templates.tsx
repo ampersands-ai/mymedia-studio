@@ -14,6 +14,7 @@ import { WorkflowInputPanel } from "@/components/generation/WorkflowInputPanel";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { toast } from "sonner";
+import { createSignedUrl } from "@/lib/storage-utils";
 
 
 const Templates = () => {
@@ -28,6 +29,9 @@ const Templates = () => {
   const [executionResult, setExecutionResult] = useState<{ url: string; tokens: number } | null>(null);
   const [executionStartTime, setExecutionStartTime] = useState<number | null>(null);
   const outputSectionRef = useRef<HTMLDivElement>(null);
+  
+  // State for signed URLs for before/after images
+  const [signedUrls, setSignedUrls] = useState<Record<string, { before: string | null, after: string | null }>>({});
 
   useEffect(() => {
     document.title = "Templates - Artifio.ai";
@@ -36,6 +40,32 @@ const Templates = () => {
       metaDescription.setAttribute('content', 'Ready-to-use AI templates for videos, images, audio, and text. Start creating in seconds with professional templates.');
     }
   }, []);
+
+  // Generate signed URLs for templates with before/after images
+  useEffect(() => {
+    const generateSignedUrls = async () => {
+      if (!allTemplates) return;
+      
+      const urlsToGenerate: Record<string, { before: string | null, after: string | null }> = {};
+      
+      for (const template of allTemplates) {
+        if (template.before_image_url || template.after_image_url) {
+          const beforeUrl = template.before_image_url 
+            ? await createSignedUrl('generated-content', template.before_image_url)
+            : null;
+          const afterUrl = template.after_image_url 
+            ? await createSignedUrl('generated-content', template.after_image_url)
+            : null;
+          
+          urlsToGenerate[template.id] = { before: beforeUrl, after: afterUrl };
+        }
+      }
+      
+      setSignedUrls(urlsToGenerate);
+    };
+    
+    generateSignedUrls();
+  }, [allTemplates]);
 
   const getTemplateIcon = (category: string) => {
     switch (category.toLowerCase()) {
@@ -163,10 +193,10 @@ const Templates = () => {
                 <CarouselItem key={template.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
                   <Card className="group hover:shadow-brutal transition-all overflow-hidden border-2 border-black">
                     <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10">
-                      {template.before_image_url && template.after_image_url ? (
+                      {signedUrls[template.id]?.before && signedUrls[template.id]?.after ? (
                         <BeforeAfterSlider
-                          beforeImage={template.before_image_url}
-                          afterImage={template.after_image_url}
+                          beforeImage={signedUrls[template.id].before!}
+                          afterImage={signedUrls[template.id].after!}
                           beforeLabel="Original"
                           afterLabel="Enhanced"
                           defaultPosition={50}

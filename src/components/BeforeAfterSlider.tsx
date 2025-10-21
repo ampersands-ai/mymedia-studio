@@ -42,7 +42,8 @@ const BeforeAfterSliderComponent = ({
     setShowHintText(false);
   };
 
-  const handleMouseDown = () => {
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsDragging(true);
   };
 
@@ -56,7 +57,8 @@ const BeforeAfterSliderComponent = ({
     setIsDragging(false);
   };
 
-  const handleTouchStart = () => {
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
     setIsDragging(true);
   };
 
@@ -98,6 +100,8 @@ const BeforeAfterSliderComponent = ({
       ref={containerRef}
       className={cn("relative w-full h-full overflow-hidden cursor-col-resize select-none", className)}
       onClick={handleClick}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
       role="slider"
       aria-label="Image comparison slider"
       aria-valuemin={0}
@@ -140,6 +144,7 @@ const BeforeAfterSliderComponent = ({
         style={{ left: `${position}%` }}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
+        onClick={(e) => e.stopPropagation()}
       >
         <svg
           width="16"

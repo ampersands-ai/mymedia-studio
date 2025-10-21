@@ -613,12 +613,8 @@ function WorkflowEditorDialog({
         return null;
       }
 
-      // Get public URL
-      const { data: urlData } = await supabase.storage
-        .from('generated-content')
-        .getPublicUrl(filePath);
-
-      return urlData.publicUrl;
+      // Return the storage path instead of URL (for signed URL generation later)
+      return filePath;
     } catch (error) {
       console.error('Upload error:', error);
       toast.error(`Failed to upload ${type} image`);

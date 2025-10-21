@@ -381,7 +381,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting }:
           ) : (
             <>
               <Sparkles className="h-5 w-5 mr-2" />
-              Execute Workflow
+              Create
             </>
           )}
         </Button>

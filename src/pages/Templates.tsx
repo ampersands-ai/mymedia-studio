@@ -220,8 +220,8 @@ const Templates = () => {
                         <BeforeAfterSlider
                           beforeImage={signedUrls[template.id].after!}
                           afterImage={signedUrls[template.id].before!}
-                          beforeLabel="Original"
-                          afterLabel="Enhanced"
+                          beforeLabel=""
+                          afterLabel=""
                           defaultPosition={25}
                           showHint={true}
                           className="w-full h-full"

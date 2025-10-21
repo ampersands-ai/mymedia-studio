@@ -31,47 +31,54 @@ const Templates = () => {
     }
   }, []);
 
-  // Calculate token costs for all templates
+  // Calculate token costs for all templates - OPTIMIZED with single batch query
   useEffect(() => {
     const calculateTokenCosts = async () => {
       if (!allTemplates) return;
       
+      // Collect all unique model_record_ids from all templates
+      const allModelRecordIds = new Set<string>();
+      
+      allTemplates.forEach(template => {
+        if (template.template_type === 'workflow' && template.workflow_steps) {
+          template.workflow_steps.forEach((step: any) => {
+            if (step.model_record_id) {
+              allModelRecordIds.add(step.model_record_id);
+            }
+          });
+        } else if (template.template_type === 'template' && 'model_record_id' in template && template.model_record_id) {
+          allModelRecordIds.add(template.model_record_id as string);
+        }
+      });
+      
+      // Single batch query to get all model costs at once
+      if (allModelRecordIds.size === 0) return;
+      
+      const { data: models } = await supabase
+        .from("ai_models")
+        .select("record_id, base_token_cost")
+        .in("record_id", Array.from(allModelRecordIds));
+      
+      if (!models) return;
+      
+      // Create lookup map for O(1) access
+      const modelCostMap = new Map(
+        models.map(m => [m.record_id, m.base_token_cost])
+      );
+      
+      // Calculate costs for each template
       const costs: Record<string, number> = {};
       
-      for (const template of allTemplates) {
+      allTemplates.forEach(template => {
         if (template.template_type === 'workflow' && template.workflow_steps) {
-          // For workflow templates: sum base costs of all steps
-          const modelRecordIds = template.workflow_steps
-            .map((step: any) => step.model_record_id)
-            .filter(Boolean);
-          
-          if (modelRecordIds.length > 0) {
-            const { data: models } = await supabase
-              .from("ai_models")
-              .select("record_id, base_token_cost")
-              .in("record_id", modelRecordIds);
-            
-            if (models) {
-              const totalCost = template.workflow_steps.reduce((sum: number, step: any) => {
-                const model = models.find((m) => m.record_id === step.model_record_id);
-                return sum + (model?.base_token_cost || 0);
-              }, 0);
-              costs[template.id] = totalCost;
-            }
-          }
+          const totalCost = template.workflow_steps.reduce((sum: number, step: any) => {
+            return sum + (modelCostMap.get(step.model_record_id) || 0);
+          }, 0);
+          costs[template.id] = totalCost;
         } else if (template.template_type === 'template' && 'model_record_id' in template && template.model_record_id) {
-          // For content templates: use the model's base cost
-          const { data: model } = await supabase
-            .from("ai_models")
-            .select("base_token_cost")
-            .eq("record_id", template.model_record_id as string)
-            .single();
-          
-          if (model) {
-            costs[template.id] = model.base_token_cost;
-          }
+          costs[template.id] = modelCostMap.get(template.model_record_id as string) || 0;
         }
-      }
+      });
       
       setTokenCosts(costs);
     };
@@ -79,51 +86,49 @@ const Templates = () => {
     calculateTokenCosts();
   }, [allTemplates]);
 
-  // Generate signed URLs for templates with before/after images
+  // Generate signed URLs for templates with before/after images - OPTIMIZED with parallel processing
   useEffect(() => {
     const generateSignedUrls = async () => {
       if (!allTemplates) return;
       
-      const urlsToGenerate: Record<string, { before: string | null, after: string | null }> = {};
-      
-      for (const template of allTemplates) {
-        if (template.before_image_url || template.after_image_url) {
-          let beforeUrl: string | null = null;
-          let afterUrl: string | null = null;
-          
-          // Handle before_image_url - extract path from URL if needed
-          if (template.before_image_url) {
-            if (template.before_image_url.startsWith('http')) {
-              // Extract path from URL: .../generated-content/templates/before/xxx.png -> templates/before/xxx.png
-              const match = template.before_image_url.match(/generated-content\/(.+)$/);
-              if (match) {
-                beforeUrl = await createSignedUrl('generated-content', match[1]);
-              }
-            } else {
-              // It's already a storage path
-              beforeUrl = await createSignedUrl('generated-content', template.before_image_url);
-            }
+      // Helper function to extract storage path and generate signed URL
+      const getSignedUrl = async (url: string | null): Promise<string | null> => {
+        if (!url) return null;
+        
+        if (url.startsWith('http')) {
+          const match = url.match(/generated-content\/(.+)$/);
+          if (match) {
+            return createSignedUrl('generated-content', match[1]);
           }
-          
-          // Handle after_image_url - extract path from URL if needed
-          if (template.after_image_url) {
-            if (template.after_image_url.startsWith('http')) {
-              // Extract path from URL: .../generated-content/templates/after/xxx.png -> templates/after/xxx.png
-              const match = template.after_image_url.match(/generated-content\/(.+)$/);
-              if (match) {
-                afterUrl = await createSignedUrl('generated-content', match[1]);
-              }
-            } else {
-              // It's already a storage path
-              afterUrl = await createSignedUrl('generated-content', template.after_image_url);
-            }
-          }
-          
-          urlsToGenerate[template.id] = { before: beforeUrl, after: afterUrl };
+        } else {
+          return createSignedUrl('generated-content', url);
         }
-      }
+        return null;
+      };
       
-      setSignedUrls(urlsToGenerate);
+      // Process all templates in parallel
+      const urlPromises = allTemplates
+        .filter(template => template.before_image_url || template.after_image_url)
+        .map(async (template) => {
+          const [beforeUrl, afterUrl] = await Promise.all([
+            getSignedUrl(template.before_image_url || null),
+            getSignedUrl(template.after_image_url || null)
+          ]);
+          
+          return {
+            id: template.id,
+            urls: { before: beforeUrl, after: afterUrl }
+          };
+        });
+      
+      const results = await Promise.all(urlPromises);
+      
+      const urlsMap: Record<string, { before: string | null, after: string | null }> = {};
+      results.forEach(result => {
+        urlsMap[result.id] = result.urls;
+      });
+      
+      setSignedUrls(urlsMap);
     };
     
     generateSignedUrls();
@@ -200,8 +205,8 @@ const Templates = () => {
     if (categoryTemplates.length === 0) return null;
 
     return (
-      <div className="space-y-6">
-        <h2 className="text-3xl font-black">{categoryName}</h2>
+      <div className="space-y-4">
+        <h2 className="text-2xl md:text-3xl font-black">{categoryName}</h2>
         <Carousel className="w-full">
           <CarouselContent className="-ml-4">
             {categoryTemplates.map((template) => {
@@ -270,11 +275,25 @@ const Templates = () => {
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <section className="border-b">
+        <div className="container mx-auto px-4 py-8 md:py-12">
+          <div className="max-w-4xl mx-auto text-center space-y-4">
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight">
+              AI Templates
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Ready-to-use templates for videos, images, and more. Start creating in seconds.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Templates Grid */}
       <section className="bg-background">
-        <div className="container mx-auto px-4 py-12 md:py-16">
-          <div className="max-w-7xl mx-auto space-y-16">
+        <div className="container mx-auto px-4 py-8 md:py-12">
+          <div className="max-w-7xl mx-auto space-y-12">
             {renderCarousel(productTemplates, "Product")}
             {renderCarousel(marketingTemplates, "Marketing")}
             {renderCarousel(fantasyTemplates, "Fantasy")}
@@ -308,15 +327,15 @@ const Templates = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-background">
-        <div className="container mx-auto px-4 py-16 md:py-24">
-          <Card className="max-w-2xl mx-auto border-4 border-black shadow-brutal">
-            <CardContent className="p-8 md:p-12 text-center">
-              <h2 className="text-3xl md:text-4xl font-black mb-4">Can't Find What You Need?</h2>
-              <p className="text-lg text-muted-foreground mb-6">
+      <section className="border-t bg-muted/30">
+        <div className="container mx-auto px-4 py-12 md:py-16">
+          <Card className="max-w-2xl mx-auto border-2 border-border shadow-sm">
+            <CardContent className="p-6 md:p-8 text-center space-y-4">
+              <h2 className="text-2xl md:text-3xl font-black">Can't Find What You Need?</h2>
+              <p className="text-muted-foreground">
                 Explore all our AI models for custom creations
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
                 <Button asChild size="lg" variant="neon">
                   <Link to="/dashboard/custom-creation">Start Creating</Link>
                 </Button>
@@ -328,7 +347,7 @@ const Templates = () => {
         </Card>
         </div>
       </section>
-    </>
+    </div>
   );
 };
 

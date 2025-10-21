@@ -22,6 +22,7 @@ interface CommunityCreation {
   is_featured: boolean;
   shared_at: string;
   user_id: string;
+  workflow_execution_id?: string | null;
 }
 
 const Community = () => {
@@ -64,7 +65,7 @@ const Community = () => {
         .from("community_creations")
         .select(`
           *,
-          generations!inner(storage_path)
+          generations!inner(storage_path, workflow_execution_id)
         `);
 
       // Apply filter
@@ -87,11 +88,12 @@ const Community = () => {
       const creationsWithUrls = await Promise.all(
         (data || []).map(async (creation: any) => {
           const storagePath = creation.generations?.storage_path;
+          const workflowExecutionId = creation.generations?.workflow_execution_id;
           if (storagePath) {
             const signedUrl = await createSignedUrl("generated-content", storagePath);
-            return { ...creation, storage_path: storagePath, output_url: signedUrl };
+            return { ...creation, storage_path: storagePath, output_url: signedUrl, workflow_execution_id: workflowExecutionId };
           }
-          return { ...creation, storage_path: null, output_url: null };
+          return { ...creation, storage_path: null, output_url: null, workflow_execution_id: workflowExecutionId };
         })
       );
 
@@ -248,9 +250,15 @@ const Community = () => {
 
                 {/* Info */}
                 <div className="p-4 space-y-3">
-                  <p className="text-sm line-clamp-2 font-medium">
-                    {creation.prompt}
-                  </p>
+                  {!creation.workflow_execution_id ? (
+                    <p className="text-sm line-clamp-2 font-medium">
+                      {creation.prompt}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">
+                      Workflow generation
+                    </p>
+                  )}
 
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">

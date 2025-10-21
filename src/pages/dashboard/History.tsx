@@ -143,6 +143,7 @@ interface Generation {
   parent_generation_id?: string | null;
   output_index?: number;
   is_batch_output?: boolean;
+  workflow_execution_id?: string | null;
 }
 
 // Component to render video with signed URL and hover-to-play
@@ -631,9 +632,16 @@ const History = () => {
                   {getStatusBadge(generation.status, generation.created_at)}
                 </div>
 
-                <p className="text-xs text-foreground/80 line-clamp-1">
-                  {generation.enhanced_prompt || generation.prompt}
-                </p>
+                {!generation.workflow_execution_id && (
+                  <p className="text-xs text-foreground/80 line-clamp-1">
+                    {generation.enhanced_prompt || generation.prompt}
+                  </p>
+                )}
+                {generation.workflow_execution_id && (
+                  <p className="text-xs text-muted-foreground italic line-clamp-1">
+                    Workflow generation
+                  </p>
+                )}
 
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>{format(new Date(generation.created_at), "MMM d")}</span>
@@ -730,12 +738,22 @@ const History = () => {
                 </div>
               ) : null}
 
-              <div className="space-y-2">
-                <h4 className="font-bold text-sm">Prompt:</h4>
-                <p className="text-sm text-foreground/80">
-                  {previewGeneration.enhanced_prompt || previewGeneration.prompt}
-                </p>
-              </div>
+              {!previewGeneration.workflow_execution_id && (
+                <div className="space-y-2">
+                  <h4 className="font-bold text-sm">Prompt:</h4>
+                  <p className="text-sm text-foreground/80">
+                    {previewGeneration.enhanced_prompt || previewGeneration.prompt}
+                  </p>
+                </div>
+              )}
+              {previewGeneration.workflow_execution_id && (
+                <div className="space-y-2">
+                  <h4 className="font-bold text-sm">Type:</h4>
+                  <p className="text-sm text-muted-foreground italic">
+                    Workflow generation
+                  </p>
+                </div>
+              )}
 
               {previewGeneration.ai_caption && (
                 <div className="space-y-2">

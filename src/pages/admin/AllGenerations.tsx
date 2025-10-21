@@ -38,6 +38,7 @@ interface Generation {
   created_at: string;
   tokens_used: number;
   file_size_bytes: number | null;
+  workflow_execution_id?: string | null;
   is_shared?: boolean;
   profiles?: {
     email: string | null;
@@ -267,7 +268,11 @@ export default function AllGenerations() {
               <div className="space-y-2 text-sm">
                 <p><strong>Type:</strong> {selectedGeneration.type}</p>
                 <p><strong>Model:</strong> <code className="bg-muted px-2 py-1 rounded">{selectedGeneration.model_id}</code></p>
-                <p><strong>Prompt:</strong> {selectedGeneration.prompt}</p>
+                {!selectedGeneration.workflow_execution_id ? (
+                  <p><strong>Prompt:</strong> {selectedGeneration.prompt}</p>
+                ) : (
+                  <p><strong>Source:</strong> <span className="italic text-muted-foreground">Workflow generation</span></p>
+                )}
                 {selectedGeneration.profiles?.email && (
                   <p><strong>User:</strong> {selectedGeneration.profiles.email}</p>
                 )}

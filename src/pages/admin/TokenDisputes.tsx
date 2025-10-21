@@ -38,6 +38,7 @@ interface TokenDispute {
     tokens_used: number;
     model_id: string | null;
     settings: any;
+    workflow_execution_id?: string | null;
     provider_response?: {
       data?: {
         failMsg?: string;
@@ -751,10 +752,17 @@ export const TokenDisputes = () => {
               </div>
 
               {/* Prompt */}
-              <div>
-                <label className="text-sm font-medium">Prompt</label>
-                <p className="mt-1 p-3 bg-muted rounded-lg text-sm">{selectedDispute.generation.prompt}</p>
-              </div>
+              {!selectedDispute.generation.workflow_execution_id ? (
+                <div>
+                  <label className="text-sm font-medium">Prompt</label>
+                  <p className="mt-1 p-3 bg-muted rounded-lg text-sm">{selectedDispute.generation.prompt}</p>
+                </div>
+              ) : (
+                <div>
+                  <label className="text-sm font-medium">Source</label>
+                  <p className="mt-1 p-3 bg-muted rounded-lg text-sm italic text-muted-foreground">Workflow generation</p>
+                </div>
+              )}
 
               {/* Preview */}
               <div>

@@ -1,33 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Sparkles, Settings, Menu, X, Coins, History } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sparkles, Coins, History } from "lucide-react";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { Footer } from "@/components/Footer";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
+import { MobileMenu } from "@/components/MobileMenu";
 
 export const DashboardLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, session, loading } = useAuth();
+  const { session, loading } = useAuth();
   const { data: tokenData } = useUserTokens();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !session) {
       navigate("/auth");
     }
   }, [session, loading, navigate]);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
-  };
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -102,91 +94,7 @@ export const DashboardLayout = () => {
               </div>
 
               {/* Mobile Menu */}
-              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="icon" title="Open menu">
-                    {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent className="flex flex-col p-0 pb-safe">
-                  <div className="p-6 border-b">
-                    <h2 className="text-lg font-semibold">Navigation</h2>
-                  </div>
-                  
-                  <ScrollArea className="flex-1 px-6">
-                    <nav className="flex flex-col gap-4 py-6">
-                      {/* Dashboard Section */}
-                      <div className="text-xs font-bold text-muted-foreground mb-2 px-2">DASHBOARD</div>
-                      <Link 
-                        to="/dashboard/custom-creation" 
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                          isActive("/dashboard/custom-creation") 
-                            ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                            : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
-                        )}
-                      >
-                        <Sparkles className="h-5 w-5" />
-                        <span>Custom Creation</span>
-                      </Link>
-                      <Link 
-                        to="/dashboard/templates" 
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                          isActive("/dashboard/templates") 
-                            ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                            : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
-                        )}
-                      >
-                        <Sparkles className="h-5 w-5" />
-                        <span>Templates</span>
-                      </Link>
-                      <Link 
-                        to="/dashboard/history" 
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                          isActive("/dashboard/history") 
-                            ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                            : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
-                        )}
-                      >
-                        <History className="h-5 w-5" />
-                        <span>My Creations</span>
-                      </Link>
-
-                      {/* Account Section */}
-                      <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">ACCOUNT</div>
-                      <Link 
-                        to="/dashboard/settings" 
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                          isActive("/dashboard/settings") 
-                            ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                            : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
-                        )}
-                      >
-                        <Settings className="h-5 w-5" />
-                        <span>Settings</span>
-                      </Link>
-                    </nav>
-                  </ScrollArea>
-                  
-                  <div className="p-6 pt-4 border-t">
-                    <Button
-                      variant="outline"
-                      onClick={handleSignOut}
-                      className="justify-start w-full"
-                    >
-                      <LogOut className="h-5 w-5 mr-3" />
-                      Sign Out
-                    </Button>
-                  </div>
-                </SheetContent>
-              </Sheet>
+              <MobileMenu tokenBalance={tokenData?.tokens_remaining} />
             </div>
           </div>
         </div>

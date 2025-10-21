@@ -12,11 +12,12 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Menu, Home, Wand2, Settings, LogOut, Coins, Shield,
-  Sparkles, Layout, DollarSign, Info, BookOpen, HelpCircle, Users
+  Sparkles, Layout, DollarSign, Info, BookOpen, HelpCircle, Users, History
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface MobileMenuProps {
   tokenBalance?: number;
@@ -47,146 +48,213 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
   };
 
   const isActive = (path: string) => location.pathname === path;
+  const isDashboard = location.pathname.startsWith("/dashboard");
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="icon" title="Open menu" className="brutal-card-sm">
+        <Button variant="outline" size="icon" title="Open menu" className="brutal-card-sm lg:hidden">
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="w-[280px] sm:w-[320px] flex flex-col p-0 pb-safe">
         <SheetHeader className="px-6 pt-6 pb-4 border-b">
-          <SheetTitle className="text-left font-black text-xl">Menu</SheetTitle>
+          <SheetTitle className="text-left font-black text-xl">Navigation</SheetTitle>
         </SheetHeader>
 
         <ScrollArea className="flex-1 px-6">
-          <div className="flex flex-col gap-4 py-4">
-            {/* Token Balance */}
-            {tokenBalance !== undefined && (
-              <div className="p-4 bg-primary/10 rounded-lg border-2 border-primary/20">
-                <div className="flex items-center gap-2">
-                  <Coins className="h-5 w-5 text-primary" />
-                  <div>
-                    <div className="text-xs text-muted-foreground">Token Balance</div>
-                    <div className="text-xl font-black text-primary">{tokenBalance.toLocaleString()}</div>
-                  </div>
-                </div>
-              </div>
+          <div className="flex flex-col gap-2 py-4">
+            {/* Dashboard Context */}
+            {isDashboard ? (
+              <>
+                <div className="text-xs font-bold text-muted-foreground mb-2 px-2">DASHBOARD</div>
+                
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/dashboard/custom-creation") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/dashboard/custom-creation")}
+                >
+                  <Sparkles className="h-5 w-5" />
+                  <span>Custom Creation</span>
+                </button>
+
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/dashboard/templates") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/dashboard/templates")}
+                >
+                  <Layout className="h-5 w-5" />
+                  <span>Templates</span>
+                </button>
+
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/dashboard/history") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/dashboard/history")}
+                >
+                  <History className="h-5 w-5" />
+                  <span>My Creations</span>
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Public Pages Context */}
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/")}
+                >
+                  <Home className="h-5 w-5" />
+                  <span>Home</span>
+                </button>
+
+                <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">PRODUCT</div>
+                
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/features") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/features")}
+                >
+                  <Sparkles className="h-5 w-5" />
+                  <span>Features</span>
+                </button>
+
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/dashboard/templates") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/dashboard/templates")}
+                >
+                  <Layout className="h-5 w-5" />
+                  <span>Templates</span>
+                </button>
+
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/pricing") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/pricing")}
+                >
+                  <DollarSign className="h-5 w-5" />
+                  <span>Pricing</span>
+                </button>
+
+                <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">RESOURCES</div>
+                
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/about") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/about")}
+                >
+                  <Info className="h-5 w-5" />
+                  <span>About</span>
+                </button>
+
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/blog") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/blog")}
+                >
+                  <BookOpen className="h-5 w-5" />
+                  <span>Blog</span>
+                </button>
+
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/faq") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/faq")}
+                >
+                  <HelpCircle className="h-5 w-5" />
+                  <span>FAQ</span>
+                </button>
+
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/community") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/community")}
+                >
+                  <Users className="h-5 w-5" />
+                  <span>Community</span>
+                </button>
+              </>
             )}
 
-            {/* Navigation Links */}
-            <nav className="flex flex-col gap-2">
-              <Button
-                variant={isActive("/") ? "default" : "ghost"}
-                className="justify-start h-12 text-base"
-                onClick={() => handleNavigation("/")}
-              >
-                <Home className="h-5 w-5 mr-3" />
-                Home
-              </Button>
-
-              <Button
-                variant={isActive("/dashboard/custom-creation") ? "default" : "ghost"}
-                className="justify-start h-12 text-base"
-                onClick={() => handleNavigation("/dashboard/custom-creation")}
-              >
-                <Wand2 className="h-5 w-5 mr-3" />
-                Create
-              </Button>
-
-              {/* Product Section */}
-              <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">PRODUCT</div>
-              
-              <Button
-                variant={isActive("/features") ? "default" : "ghost"}
-                className="justify-start h-12 text-base"
-                onClick={() => handleNavigation("/features")}
-              >
-                <Sparkles className="h-5 w-5 mr-3" />
-                Features
-              </Button>
-
-              <Button
-                variant={isActive("/dashboard/templates") ? "default" : "ghost"}
-                className="justify-start h-12 text-base"
-                onClick={() => handleNavigation("/dashboard/templates")}
-              >
-                <Layout className="h-5 w-5 mr-3" />
-                Templates
-              </Button>
-
-              <Button
-                variant={isActive("/pricing") ? "default" : "ghost"}
-                className="justify-start h-12 text-base"
-                onClick={() => handleNavigation("/pricing")}
-              >
-                <DollarSign className="h-5 w-5 mr-3" />
-                Pricing
-              </Button>
-
-              {/* Resources Section */}
-              <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">RESOURCES</div>
-              
-              <Button
-                variant={isActive("/about") ? "default" : "ghost"}
-                className="justify-start h-12 text-base"
-                onClick={() => handleNavigation("/about")}
-              >
-                <Info className="h-5 w-5 mr-3" />
-                About
-              </Button>
-
-              <Button
-                variant={isActive("/blog") ? "default" : "ghost"}
-                className="justify-start h-12 text-base"
-                onClick={() => handleNavigation("/blog")}
-              >
-                <BookOpen className="h-5 w-5 mr-3" />
-                Blog
-              </Button>
-
-              <Button
-                variant={isActive("/faq") ? "default" : "ghost"}
-                className="justify-start h-12 text-base"
-                onClick={() => handleNavigation("/faq")}
-              >
-                <HelpCircle className="h-5 w-5 mr-3" />
-                FAQ
-              </Button>
-
-              <Button
-                variant={isActive("/community") ? "default" : "ghost"}
-                className="justify-start h-12 text-base"
-                onClick={() => handleNavigation("/community")}
-              >
-                <Users className="h-5 w-5 mr-3" />
-                Community
-              </Button>
-
-              {/* Account Section */}
-              <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">ACCOUNT</div>
-              
-              <Button
-                variant={isActive("/dashboard/settings") ? "default" : "ghost"}
-                className="justify-start h-12 text-base"
-                onClick={() => handleNavigation("/dashboard/settings")}
-              >
-                <Settings className="h-5 w-5 mr-3" />
-                Settings
-              </Button>
-
-              {isAdmin && (
-                <Button
-                  variant={isActive("/admin/dashboard") ? "default" : "ghost"}
-                  className="justify-start h-12 text-base"
-                  onClick={() => handleNavigation("/admin/dashboard")}
+            {/* Account Section - Always visible when logged in */}
+            {user && (
+              <>
+                <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">ACCOUNT</div>
+                
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/dashboard/settings") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/dashboard/settings")}
                 >
-                  <Shield className="h-5 w-5 mr-3" />
-                  Admin Panel
-                </Button>
-              )}
-            </nav>
+                  <Settings className="h-5 w-5" />
+                  <span>Settings</span>
+                </button>
+
+                {isAdmin && (
+                  <button
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                      isActive("/admin/dashboard") 
+                        ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                        : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                    )}
+                    onClick={() => handleNavigation("/admin/dashboard")}
+                  >
+                    <Shield className="h-5 w-5" />
+                    <span>Admin Panel</span>
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </ScrollArea>
 

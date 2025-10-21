@@ -430,8 +430,8 @@ let validatedParameters = validateAndFilterParameters(
         if (promptRequired && (!prompt || prompt.trim() === '')) {
           throw new Error('Prompt is required for this model');
         }
-        if (prompt && (prompt.length < 3 || prompt.length > 2000)) {
-          throw new Error('Prompt must be between 3 and 2000 characters');
+        if (prompt && (prompt.length < 3 || prompt.length > 10000)) {
+          throw new Error('Prompt must be between 3 and 10000 characters');
         }
       }
 

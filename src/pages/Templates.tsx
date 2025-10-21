@@ -50,12 +50,26 @@ const Templates = () => {
       
       for (const template of allTemplates) {
         if (template.before_image_url || template.after_image_url) {
-          const beforeUrl = template.before_image_url 
-            ? await createSignedUrl('generated-content', template.before_image_url)
-            : null;
-          const afterUrl = template.after_image_url 
-            ? await createSignedUrl('generated-content', template.after_image_url)
-            : null;
+          let beforeUrl: string | null = null;
+          let afterUrl: string | null = null;
+          
+          // Handle before_image_url - check if it's already a full URL or a storage path
+          if (template.before_image_url) {
+            if (template.before_image_url.startsWith('http')) {
+              beforeUrl = template.before_image_url;
+            } else {
+              beforeUrl = await createSignedUrl('generated-content', template.before_image_url);
+            }
+          }
+          
+          // Handle after_image_url - check if it's already a full URL or a storage path
+          if (template.after_image_url) {
+            if (template.after_image_url.startsWith('http')) {
+              afterUrl = template.after_image_url;
+            } else {
+              afterUrl = await createSignedUrl('generated-content', template.after_image_url);
+            }
+          }
           
           urlsToGenerate[template.id] = { before: beforeUrl, after: afterUrl };
         }

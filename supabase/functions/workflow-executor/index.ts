@@ -114,10 +114,18 @@ serve(async (req) => {
         console.warn('Schema coercion skipped due to error:', e);
       }
 
-      // Generate prompt - check both locations for backward compatibility
-      const resolvedPrompt = coercedParameters.prompt 
-        ? (typeof coercedParameters.prompt === 'string' ? coercedParameters.prompt : String(coercedParameters.prompt))
-        : replaceTemplateVariables(step.prompt_template, context);
+      // Generate prompt - always replace template variables regardless of source
+      let resolvedPrompt: string;
+      if (coercedParameters.prompt) {
+        // Prompt comes from parameters - still need to replace variables
+        const promptString = typeof coercedParameters.prompt === 'string' 
+          ? coercedParameters.prompt 
+          : String(coercedParameters.prompt);
+        resolvedPrompt = replaceTemplateVariables(promptString, context);
+      } else {
+        // Prompt comes from prompt_template (legacy)
+        resolvedPrompt = replaceTemplateVariables(step.prompt_template, context);
+      }
 
       console.log('Resolved prompt:', resolvedPrompt);
       console.log('Static parameters:', step.parameters);

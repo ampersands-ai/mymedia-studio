@@ -368,10 +368,14 @@ const History = () => {
       }
     },
     onSuccess: (_data, variables) => {
-      if (variables.generation.status === 'failed') {
-        toast.success(`Tokens automatically refunded! ${variables.generation.tokens_used} tokens returned to your account.`);
+      const hasOutput = variables.generation.output_url || variables.generation.storage_path;
+      
+      if (!hasOutput) {
+        // No output = instant refund
+        toast.success(`Report submitted! ${variables.generation.tokens_used} tokens will be refunded to your account.`);
       } else {
-        toast.success("Token issue reported successfully. We'll review it shortly.");
+        // Has output = needs review
+        toast.success("Report submitted! Our team will review it and respond shortly.");
       }
       setShowReportDialog(false);
       setReportReason("");
@@ -385,17 +389,6 @@ const History = () => {
   });
 
   const handleReportTokenIssue = (generation: Generation) => {
-    // Check if dispute already exists
-    if (generation.has_dispute) {
-      const statusText = generation.dispute_status === 'pending' ? 'pending review' :
-                         generation.dispute_status === 'reviewed' ? 'under review' :
-                         generation.dispute_status === 'resolved' ? 'resolved' : 
-                         generation.dispute_status === 'rejected' ? 'rejected' : 'being processed';
-      
-      toast.error(`You've already reported this generation. Status: ${statusText}`);
-      return;
-    }
-    
     setReportingGeneration(generation);
     setShowReportDialog(true);
     setPreviewGeneration(null); // Close preview dialog
@@ -822,12 +815,9 @@ const History = () => {
                     handleReportTokenIssue(previewGeneration);
                   }}
                   className="w-full sm:flex-1"
-                  disabled={previewGeneration.has_dispute}
                 >
                   <Flag className="h-4 w-4 mr-2" />
-                  {previewGeneration.has_dispute 
-                    ? `Reported (${previewGeneration.dispute_status})`
-                    : 'Report Token Issue'}
+                  Report Token Issue
                 </Button>
                 <Button
                   variant="destructive"
@@ -879,7 +869,11 @@ const History = () => {
             </div>
 
             <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-3 rounded-lg text-xs text-muted-foreground">
-              <p>Our team will review your report and investigate the token consumption. If we find an error, we'll refund the tokens to your account.</p>
+              {!reportingGeneration?.output_url && !reportingGeneration?.storage_path ? (
+                <p>Since no output was recorded, your tokens will be automatically refunded upon submission.</p>
+              ) : (
+                <p>Our team will review your report and investigate the token consumption. If we find an error, we'll refund the tokens to your account.</p>
+              )}
             </div>
 
             <div className="flex gap-2">

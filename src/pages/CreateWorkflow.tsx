@@ -3,10 +3,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useWorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
-import { WorkflowExecutionDialog } from "@/components/generation/WorkflowExecutionDialog";
 import { WorkflowInputPanel } from "@/components/generation/WorkflowInputPanel";
 import { createSignedUrl } from "@/lib/storage-utils";
-import { supabase } from "@/integrations/supabase/client";
 
 const CreateWorkflow = () => {
   const [searchParams] = useSearchParams();
@@ -17,7 +15,6 @@ const CreateWorkflow = () => {
   const { executeWorkflow, isExecuting, progress } = useWorkflowExecution();
   
   const [result, setResult] = useState<{ url: string; tokens: number } | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!workflowId) {
@@ -29,7 +26,6 @@ const CreateWorkflow = () => {
     if (!workflow) return;
 
     setResult(null);
-    setDialogOpen(true);
     
     const result = await executeWorkflow({
       workflow_template_id: workflow.id,
@@ -41,7 +37,6 @@ const CreateWorkflow = () => {
       toast.success('Workflow completed!');
     } else {
       toast.error('Workflow failed');
-      setDialogOpen(false);
     }
   };
 
@@ -85,23 +80,82 @@ const CreateWorkflow = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <WorkflowInputPanel
-        workflow={workflow}
-        onExecute={handleExecute}
-        onBack={() => navigate("/dashboard/templates")}
-        isExecuting={isExecuting}
-      />
+    <div className="min-h-screen bg-background grid grid-cols-1 lg:grid-cols-2 gap-0">
+      {/* Left Panel - Inputs */}
+      <div className="border-r border-border p-6 overflow-y-auto">
+        <WorkflowInputPanel
+          workflow={workflow}
+          onExecute={handleExecute}
+          onBack={() => navigate("/dashboard/templates")}
+          isExecuting={isExecuting}
+        />
+      </div>
 
-      <WorkflowExecutionDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        workflowName={workflow.name || ""}
-        isExecuting={isExecuting}
-        progress={progress}
-        result={result}
-        onDownload={handleDownload}
-      />
+      {/* Right Panel - Output */}
+      <div className="p-6 overflow-y-auto">
+        <h2 className="text-2xl font-semibold mb-6">Output</h2>
+        
+        {!isExecuting && !result && (
+          <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] text-center">
+            <div className="w-16 h-16 mb-4 text-muted-foreground/30">
+              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 20L60 40L80 45L65 60L68 80L50 70L32 80L35 60L20 45L40 40L50 20Z" 
+                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <p className="text-muted-foreground">
+              Fill in the inputs and execute the workflow to see results
+            </p>
+          </div>
+        )}
+
+        {isExecuting && (
+          <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+            <div className="w-full max-w-md space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">
+                  Step {progress.currentStep} of {progress.totalSteps}
+                </span>
+                <span className="text-sm font-medium">
+                  {Math.round((progress.currentStep / progress.totalSteps) * 100)}%
+                </span>
+              </div>
+              <div className="w-full bg-secondary rounded-full h-2">
+                <div 
+                  className="bg-primary h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(progress.currentStep / progress.totalSteps) * 100}%` }}
+                />
+              </div>
+              <p className="text-center text-sm text-muted-foreground mt-4">
+                Processing workflow...
+              </p>
+            </div>
+          </div>
+        )}
+
+        {result && (
+          <div className="space-y-4">
+            <div className="rounded-lg border border-border overflow-hidden">
+              <img 
+                src={result.url} 
+                alt="Generated output" 
+                className="w-full h-auto"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Tokens used: {result.tokens}
+              </p>
+              <button
+                onClick={handleDownload}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+              >
+                Download
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

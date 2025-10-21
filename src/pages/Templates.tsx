@@ -149,8 +149,8 @@ const Templates = () => {
                     <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10">
                       {signedUrls[template.id]?.before && signedUrls[template.id]?.after ? (
                         <BeforeAfterSlider
-                          beforeImage={signedUrls[template.id].before!}
-                          afterImage={signedUrls[template.id].after!}
+                          beforeImage={signedUrls[template.id].after!}
+                          afterImage={signedUrls[template.id].before!}
                           beforeLabel="Original"
                           afterLabel="Enhanced"
                           defaultPosition={50}

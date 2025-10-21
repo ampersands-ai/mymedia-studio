@@ -153,7 +153,7 @@ const Templates = () => {
                           afterImage={signedUrls[template.id].before!}
                           beforeLabel="Original"
                           afterLabel="Enhanced"
-                          defaultPosition={50}
+                          defaultPosition={25}
                           showHint={true}
                           className="w-full h-full"
                         />

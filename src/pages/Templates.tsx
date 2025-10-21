@@ -1,19 +1,13 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useAllTemplates } from "@/hooks/useTemplates";
-import { useWorkflowTemplate } from "@/hooks/useWorkflowTemplates";
-import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sparkles, Package, Users, TrendingUp, Layers, Wand2 } from "lucide-react";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
-import { WorkflowInputPanel } from "@/components/generation/WorkflowInputPanel";
-import { GenerationProgress } from "@/components/generation/GenerationProgress";
-import { GenerationPreview } from "@/components/generation/GenerationPreview";
-import { toast } from "sonner";
 import { createSignedUrl } from "@/lib/storage-utils";
 
 
@@ -21,14 +15,6 @@ const Templates = () => {
   const { user } = useAuth();
   const { data: allTemplates, isLoading } = useAllTemplates();
   const navigate = useNavigate();
-  
-  // Workflow execution state
-  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
-  const { data: selectedWorkflow } = useWorkflowTemplate(selectedWorkflowId || '');
-  const { executeWorkflow, isExecuting, progress } = useWorkflowExecution();
-  const [executionResult, setExecutionResult] = useState<{ url: string; tokens: number } | null>(null);
-  const [executionStartTime, setExecutionStartTime] = useState<number | null>(null);
-  const outputSectionRef = useRef<HTMLDivElement>(null);
   
   // State for signed URLs for before/after images
   const [signedUrls, setSignedUrls] = useState<Record<string, { before: string | null, after: string | null }>>({});
@@ -139,67 +125,11 @@ const Templates = () => {
   const abstractTemplates = templates.filter(t => t.category === "Abstract");
 
   const handleUseTemplate = (template: any) => {
-    if (template.template_type === 'workflow') {
-      if (!user) {
-        navigate('/auth');
-        return;
-      }
-      // Show inline workflow execution
-      setSelectedWorkflowId(template.id);
-      setExecutionResult(null);
-      setExecutionStartTime(null);
-      // Scroll to output section on mobile
-      setTimeout(() => {
-        outputSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 100);
-    } else {
-      navigate(`/dashboard/custom-creation?template=${template.id}`);
+    if (!user) {
+      navigate('/auth');
+      return;
     }
-  };
-
-  const handleExecuteWorkflow = async (inputs: Record<string, any>) => {
-    if (!selectedWorkflow) return;
-
-    // Inputs are already formatted correctly by WorkflowInputPanel
-    setExecutionResult(null);
-    setExecutionStartTime(Date.now());
-    
-    const result = await executeWorkflow({
-      workflow_template_id: selectedWorkflow.id,
-      user_inputs: inputs,
-    });
-
-    if (result?.final_output_url) {
-      setExecutionResult({ url: result.final_output_url, tokens: result.tokens_used });
-      toast.success('Workflow completed!');
-    } else {
-      toast.error('Workflow failed');
-    }
-  };
-
-  const handleBackToTemplates = () => {
-    setSelectedWorkflowId(null);
-    setExecutionResult(null);
-    setExecutionStartTime(null);
-  };
-
-  const renderWorkflowOutput = () => {
-    if (!executionResult?.url || !selectedWorkflow) return null;
-    
-    const isSignedUrl = executionResult.url.startsWith('http');
-    const contentType = selectedWorkflow.category?.toLowerCase().includes('video') ? 'video' : 'image';
-    
-    if (isSignedUrl) {
-      // Direct signed URL - render media directly
-      return contentType === 'video' ? (
-        <video src={executionResult.url} controls className="w-full rounded-lg" />
-      ) : (
-        <img src={executionResult.url} alt="Generated output" className="w-full rounded-lg" />
-      );
-    } else {
-      // Storage path - use GenerationPreview
-      return <GenerationPreview storagePath={executionResult.url} contentType={contentType} />;
-    }
+    navigate(`/dashboard/custom-creation?template=${template.id}`);
   };
 
   const renderCarousel = (categoryTemplates: any[], categoryName: string) => {
@@ -269,102 +199,37 @@ const Templates = () => {
 
   return (
     <>
-      {/* Templates Grid with Tabs OR Workflow Execution */}
+      {/* Templates Grid */}
       <section className="bg-background">
         <div className="container mx-auto px-4 py-12 md:py-16">
-          {selectedWorkflow ? (
-            /* Two-Panel Workflow Execution Layout */
-            <div className="max-w-7xl mx-auto">
-              <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 md:gap-8">
-                {/* Left Panel - Input */}
-                <WorkflowInputPanel
-                  workflow={selectedWorkflow}
-                  onExecute={handleExecuteWorkflow}
-                  onBack={handleBackToTemplates}
-                  isExecuting={isExecuting}
-                />
+          <div className="max-w-7xl mx-auto space-y-16">
+            {renderCarousel(productTemplates, "Product")}
+            {renderCarousel(marketingTemplates, "Marketing")}
+            {renderCarousel(fantasyTemplates, "Fantasy")}
+            {renderCarousel(portraitsTemplates, "Portraits")}
+            {renderCarousel(abstractTemplates, "Abstract")}
 
-                {/* Right Panel - Output */}
-                <div ref={outputSectionRef}>
-                  <Card className="bg-card border border-border shadow-sm rounded-xl lg:sticky lg:top-24">
-                    <div className="border-b border-border px-6 py-4 bg-muted/30">
-                      <h2 className="text-lg font-bold">Output</h2>
+            {/* Loading and Empty States */}
+            {isLoading && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Card key={i} className="animate-pulse">
+                    <div className="aspect-square bg-muted" />
+                    <div className="p-2">
+                      <div className="h-3 bg-muted rounded w-3/4" />
                     </div>
-                    <CardContent className="p-6 min-h-[400px] flex items-center justify-center">
-                      {!isExecuting && !executionResult && (
-                        <div className="text-center text-muted-foreground">
-                          <Sparkles className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                          <p>Fill in the inputs and execute the workflow to see results</p>
-                        </div>
-                      )}
-
-                      {isExecuting && (
-                        <div className="w-full space-y-4">
-                          <GenerationProgress
-                            startTime={executionStartTime}
-                            isComplete={false}
-                            estimatedTimeSeconds={selectedWorkflow.estimated_time_seconds || undefined}
-                          />
-                          {progress && (
-                            <div className="text-center text-sm text-muted-foreground">
-                              <p>Step {progress.currentStep} of {progress.totalSteps}</p>
-                              {progress.stepName && <p className="font-medium mt-1">{progress.stepName}</p>}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {executionResult && (
-                        <div className="w-full space-y-4">
-                          {renderWorkflowOutput()}
-                          <div className="text-center">
-                            <Badge variant="secondary">
-                              {executionResult.tokens} tokens used
-                            </Badge>
-                            <div className="mt-4 flex gap-2 justify-center">
-                              <Button onClick={handleBackToTemplates} variant="outline">
-                                Create Another
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
                   </Card>
-                </div>
+                ))}
               </div>
-            </div>
-          ) : (
-            /* Template Carousels */
-            <div className="max-w-7xl mx-auto space-y-16">
-              {renderCarousel(productTemplates, "Product")}
-              {renderCarousel(marketingTemplates, "Marketing")}
-              {renderCarousel(fantasyTemplates, "Fantasy")}
-              {renderCarousel(portraitsTemplates, "Portraits")}
-              {renderCarousel(abstractTemplates, "Abstract")}
+            )}
 
-              {/* Loading and Empty States */}
-              {isLoading && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <Card key={i} className="animate-pulse">
-                      <div className="aspect-square bg-muted" />
-                      <div className="p-2">
-                        <div className="h-3 bg-muted rounded w-3/4" />
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
-
-              {!isLoading && templates.length === 0 && (
-                <div className="text-center py-12">
-                  <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">No templates available.</p>
-                </div>
-              )}
-            </div>
-        )}
+            {!isLoading && templates.length === 0 && (
+              <div className="text-center py-12">
+                <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">No templates available.</p>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 

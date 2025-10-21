@@ -36,9 +36,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { MergedTemplate } from "@/hooks/useTemplates";
 import { WorkflowStepForm } from "@/components/admin/WorkflowStepForm";
-import { WorkflowVisualPreview } from "@/components/admin/WorkflowVisualPreview";
 import { WorkflowStep, UserInputField, WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { useModels } from "@/hooks/useModels";
+import { createSignedUrl } from "@/lib/storage-utils";
 
 export default function TemplatesManager() {
   const queryClient = useQueryClient();
@@ -541,6 +541,8 @@ function WorkflowEditorDialog({
   const [afterImageFile, setAfterImageFile] = useState<File | null>(null);
   const [beforeImagePreview, setBeforeImagePreview] = useState<string | null>(null);
   const [afterImagePreview, setAfterImagePreview] = useState<string | null>(null);
+  const [beforeSignedPreview, setBeforeSignedPreview] = useState<string | null>(null);
+  const [afterSignedPreview, setAfterSignedPreview] = useState<string | null>(null);
   const [uploadingImages, setUploadingImages] = useState(false);
 
   useEffect(() => {
@@ -566,8 +568,47 @@ function WorkflowEditorDialog({
       setAfterImageFile(null);
       setBeforeImagePreview(null);
       setAfterImagePreview(null);
+      setBeforeSignedPreview(null);
+      setAfterSignedPreview(null);
     }
   }, [open, workflow]);
+
+  // Generate signed URLs for existing storage paths
+  useEffect(() => {
+    const generateSignedUrls = async () => {
+      if (!localWorkflow.before_image_url && !localWorkflow.after_image_url) return;
+      
+      if (localWorkflow.before_image_url && !beforeImagePreview) {
+        const raw = localWorkflow.before_image_url;
+        if (!raw.startsWith('http')) {
+          const path = raw.includes('generated-content/') 
+            ? raw.match(/generated-content\/(.+)$/)?.[1] || raw
+            : raw;
+          const signedUrl = await createSignedUrl('generated-content', path);
+          setBeforeSignedPreview(signedUrl);
+        } else {
+          setBeforeSignedPreview(raw);
+        }
+      }
+      
+      if (localWorkflow.after_image_url && !afterImagePreview) {
+        const raw = localWorkflow.after_image_url;
+        if (!raw.startsWith('http')) {
+          const path = raw.includes('generated-content/')
+            ? raw.match(/generated-content\/(.+)$/)?.[1] || raw
+            : raw;
+          const signedUrl = await createSignedUrl('generated-content', path);
+          setAfterSignedPreview(signedUrl);
+        } else {
+          setAfterSignedPreview(raw);
+        }
+      }
+    };
+
+    if (open && localWorkflow) {
+      generateSignedUrls();
+    }
+  }, [open, localWorkflow.before_image_url, localWorkflow.after_image_url, beforeImagePreview, afterImagePreview]);
 
   const handleImageUpload = async (file: File, type: 'before' | 'after') => {
     if (!file.type.startsWith('image/')) {
@@ -835,102 +876,106 @@ function WorkflowEditorDialog({
             <div className="space-y-4">
               <Label>Before/After Images (for comparison slider)</Label>
               
-              {/* Before Image */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Before Image */}
+                <div className="space-y-2">
                   <Label className="text-sm text-muted-foreground">Before Image</Label>
+                  
+                  {beforeImagePreview || beforeSignedPreview ? (
+                    <div className="relative">
+                      <img
+                        src={beforeImagePreview || beforeSignedPreview || ''}
+                        alt="Before preview"
+                        className="w-full h-40 object-contain bg-muted rounded-md border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => {
+                          setBeforeImageFile(null);
+                          setBeforeImagePreview(null);
+                          setBeforeSignedPreview(null);
+                          setLocalWorkflow({ ...localWorkflow, before_image_url: '' });
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImageUpload(file, 'before');
+                        }}
+                      />
+                      <div className="flex items-center gap-2">
+                        <div className="h-px bg-border flex-1" />
+                        <span className="text-xs text-muted-foreground">or</span>
+                        <div className="h-px bg-border flex-1" />
+                      </div>
+                      <Input
+                        value={localWorkflow.before_image_url || ''}
+                        onChange={(e) => setLocalWorkflow({ ...localWorkflow, before_image_url: e.target.value })}
+                        placeholder="Enter URL"
+                      />
+                    </div>
+                  )}
                 </div>
-                
-                {beforeImagePreview || localWorkflow.before_image_url ? (
-                  <div className="relative">
-                    <img
-                      src={beforeImagePreview || localWorkflow.before_image_url || ''}
-                      alt="Before preview"
-                      className="w-full h-32 object-cover rounded-md border"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={() => {
-                        setBeforeImageFile(null);
-                        setBeforeImagePreview(null);
-                        setLocalWorkflow({ ...localWorkflow, before_image_url: '' });
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleImageUpload(file, 'before');
-                      }}
-                      className="flex-1"
-                    />
-                    <span className="text-xs text-muted-foreground self-center">or</span>
-                    <Input
-                      value={localWorkflow.before_image_url || ''}
-                      onChange={(e) => setLocalWorkflow({ ...localWorkflow, before_image_url: e.target.value })}
-                      placeholder="Enter URL"
-                      className="flex-1"
-                    />
-                  </div>
-                )}
-              </div>
 
-              {/* After Image */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
+                {/* After Image */}
+                <div className="space-y-2">
                   <Label className="text-sm text-muted-foreground">After Image</Label>
+                  
+                  {afterImagePreview || afterSignedPreview ? (
+                    <div className="relative">
+                      <img
+                        src={afterImagePreview || afterSignedPreview || ''}
+                        alt="After preview"
+                        className="w-full h-40 object-contain bg-muted rounded-md border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => {
+                          setAfterImageFile(null);
+                          setAfterImagePreview(null);
+                          setAfterSignedPreview(null);
+                          setLocalWorkflow({ ...localWorkflow, after_image_url: '' });
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImageUpload(file, 'after');
+                        }}
+                      />
+                      <div className="flex items-center gap-2">
+                        <div className="h-px bg-border flex-1" />
+                        <span className="text-xs text-muted-foreground">or</span>
+                        <div className="h-px bg-border flex-1" />
+                      </div>
+                      <Input
+                        value={localWorkflow.after_image_url || ''}
+                        onChange={(e) => setLocalWorkflow({ ...localWorkflow, after_image_url: e.target.value })}
+                        placeholder="Enter URL"
+                      />
+                    </div>
+                  )}
                 </div>
-                
-                {afterImagePreview || localWorkflow.after_image_url ? (
-                  <div className="relative">
-                    <img
-                      src={afterImagePreview || localWorkflow.after_image_url || ''}
-                      alt="After preview"
-                      className="w-full h-32 object-cover rounded-md border"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={() => {
-                        setAfterImageFile(null);
-                        setAfterImagePreview(null);
-                        setLocalWorkflow({ ...localWorkflow, after_image_url: '' });
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleImageUpload(file, 'after');
-                      }}
-                      className="flex-1"
-                    />
-                    <span className="text-xs text-muted-foreground self-center">or</span>
-                    <Input
-                      value={localWorkflow.after_image_url || ''}
-                      onChange={(e) => setLocalWorkflow({ ...localWorkflow, after_image_url: e.target.value })}
-                      placeholder="Enter URL"
-                      className="flex-1"
-                    />
-                  </div>
-                )}
               </div>
             </div>
 
@@ -1010,136 +1055,10 @@ function WorkflowEditorDialog({
             </div>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            <div className="lg:col-span-3 space-y-6">
-              <Card className="p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">User Input Fields</h3>
-                  <Button onClick={addUserField} size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Field
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  {(localWorkflow.user_input_fields || []).map((field, idx) => (
-                    <Card key={idx} className="p-4 space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <Label className="text-xs">Field Name</Label>
-                          <Input
-                            value={field.name}
-                            onChange={(e) => updateUserField(idx, { name: e.target.value })}
-                            placeholder="field_name"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">Label</Label>
-                          <Input
-                            value={field.label}
-                            onChange={(e) => updateUserField(idx, { label: e.target.value })}
-                            placeholder="Field Label"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <Label className="text-xs">Type</Label>
-                          <Select
-                            value={field.type}
-                            onValueChange={(value) => updateUserField(idx, { type: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="text">Text</SelectItem>
-                              <SelectItem value="textarea">Textarea</SelectItem>
-                              <SelectItem value="number">Number</SelectItem>
-                              <SelectItem value="upload-image">Upload Image</SelectItem>
-                              <SelectItem value="upload-file">Upload File</SelectItem>
-                              <SelectItem value="select">Select Dropdown</SelectItem>
-                              <SelectItem value="checkbox">Checkbox</SelectItem>
-                              <SelectItem value="radio">Radio Buttons</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1 flex items-end">
-                          <label className="flex items-center gap-2 pb-2">
-                            <Checkbox
-                              checked={field.required || false}
-                              onCheckedChange={(checked) => updateUserField(idx, { required: checked as boolean })}
-                            />
-                            <span className="text-xs">Required</span>
-                          </label>
-                        </div>
-                      </div>
-
-                      {(field.type === 'select' || field.type === 'radio') && (
-                        <div className="space-y-1">
-                          <Label className="text-xs">Options (comma-separated)</Label>
-                          <Input
-                            value={(field.options || []).join(', ')}
-                            onChange={(e) => {
-                              const options = e.target.value.split(',').map(opt => opt.trim()).filter(Boolean);
-                              updateUserField(idx, { options });
-                            }}
-                            placeholder="Option 1, Option 2, Option 3"
-                          />
-                        </div>
-                      )}
-
-                      <div className="flex justify-end">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteUserField(idx)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Field
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </Card>
-
-              <Card className="p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">Workflow Steps</h3>
-                  <Button onClick={addNewStep} size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Step
-                  </Button>
-                </div>
-                {(localWorkflow.workflow_steps || []).map((step, idx) => (
-                  <WorkflowStepForm
-                    key={idx}
-                    step={step}
-                    stepNumber={idx + 1}
-                    onChange={(updated) => handleStepUpdate(idx, updated)}
-                    onDelete={() => handleStepDelete(idx)}
-                    availableModels={models}
-                    userInputFields={localWorkflow.user_input_fields || []}
-                    previousSteps={(localWorkflow.workflow_steps || []).slice(0, idx)}
-                  />
-                ))}
-                {(localWorkflow.workflow_steps || []).length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No steps defined. Click "Add Step" to begin.
-                  </p>
-                )}
-              </Card>
-            </div>
-
-            <div className="lg:col-span-2">
-              <div className="sticky top-6">
-                <WorkflowVisualPreview
-                  userInputFields={localWorkflow.user_input_fields || []}
-                  steps={localWorkflow.workflow_steps || []}
-                />
-              </div>
-            </div>
+          <div className="space-y-6">
+            <Card className="p-6 space-y-4">
+...
+            </Card>
           </div>
 
           <div className="flex justify-end gap-2">

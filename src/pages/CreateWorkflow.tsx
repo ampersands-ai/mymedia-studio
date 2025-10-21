@@ -130,23 +130,36 @@ const CreateWorkflow = () => {
         {isExecuting && (
           <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
             <div className="w-full max-w-md space-y-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">
-                  Step {progress.currentStep} of {progress.totalSteps}
-                </span>
-                <span className="text-sm font-medium">
-                  {Math.round((progress.currentStep / progress.totalSteps) * 100)}%
-                </span>
-              </div>
-              <div className="w-full bg-secondary rounded-full h-2">
-                <div 
-                  className="bg-primary h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${(progress.currentStep / progress.totalSteps) * 100}%` }}
-                />
-              </div>
-              <p className="text-center text-sm text-muted-foreground mt-4">
-                Processing workflow...
-              </p>
+              {progress ? (
+                <>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">
+                      Step {progress.currentStep} of {progress.totalSteps}
+                    </span>
+                    <span className="text-sm font-medium">
+                      {Math.round((progress.currentStep / progress.totalSteps) * 100)}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-secondary rounded-full h-2">
+                    <div 
+                      className="bg-primary h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${(progress.currentStep / progress.totalSteps) * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-center text-sm text-muted-foreground mt-4">
+                    Processing workflow...
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-center mb-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                  </div>
+                  <p className="text-center text-sm text-muted-foreground">
+                    Starting workflow...
+                  </p>
+                </>
+              )}
             </div>
           </div>
         )}

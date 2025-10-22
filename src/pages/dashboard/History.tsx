@@ -14,20 +14,33 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Component to render image with signed URL
 const ImageWithSignedUrl = ({ generation, className }: { generation: Generation; className?: string }) => {
   const { signedUrl, isLoading } = useSignedUrl(generation.storage_path);
+  const [imageLoaded, setImageLoaded] = useState(false);
   
   if (isLoading || !signedUrl) {
     return (
-      <div className={`${className} flex items-center justify-center bg-muted`}>
-        <ImageIcon className="h-8 w-8 text-muted-foreground animate-pulse" />
-      </div>
+      <Skeleton className={className} />
     );
   }
   
-  return <img src={signedUrl} alt="Generated content" className={className} />;
+  return (
+    <>
+      {!imageLoaded && <Skeleton className={className} />}
+      <img 
+        src={signedUrl} 
+        alt="Generated content" 
+        className={className}
+        loading="lazy"
+        decoding="async"
+        onLoad={() => setImageLoaded(true)}
+        style={{ display: imageLoaded ? 'block' : 'none' }}
+      />
+    </>
+  );
 };
 
 // Component to render audio with signed URL

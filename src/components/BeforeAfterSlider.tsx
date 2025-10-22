@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, memo } from "react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface BeforeAfterSliderProps {
   beforeImage: string;
@@ -22,6 +23,8 @@ const BeforeAfterSliderComponent = ({
 }: BeforeAfterSliderProps) => {
   const [position, setPosition] = useState(defaultPosition);
   const [showHintText, setShowHintText] = useState(showHint);
+  const [beforeLoaded, setBeforeLoaded] = useState(false);
+  const [afterLoaded, setAfterLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -62,12 +65,23 @@ const BeforeAfterSliderComponent = ({
       aria-valuenow={Math.round(position)}
       tabIndex={0}
     >
+      {/* Loading skeleton */}
+      {(!beforeLoaded || !afterLoaded) && (
+        <Skeleton className="absolute inset-0 w-full h-full" />
+      )}
+      
       {/* Before Image (Base layer) */}
       <img
         src={beforeImage}
         alt={beforeLabel}
-        className="absolute inset-0 w-full h-full object-cover"
+        className={cn(
+          "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
+          beforeLoaded ? "opacity-100" : "opacity-0"
+        )}
         draggable={false}
+        loading="lazy"
+        decoding="async"
+        onLoad={() => setBeforeLoaded(true)}
       />
 
       {/* After Image (Clipped layer) */}
@@ -80,8 +94,14 @@ const BeforeAfterSliderComponent = ({
         <img
           src={afterImage}
           alt={afterLabel}
-          className="absolute inset-0 w-full h-full object-cover"
+          className={cn(
+            "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
+            afterLoaded ? "opacity-100" : "opacity-0"
+          )}
           draggable={false}
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setAfterLoaded(true)}
         />
       </div>
 

@@ -13,6 +13,7 @@ import { useState } from "react";
 import { Check, Frown, Clock, HelpCircle, DollarSign, Palette, Edit, Download, Video, Image, Music, FileText } from "lucide-react";
 import { MobileMenu } from "@/components/MobileMenu";
 import { useUserTokens } from "@/hooks/useUserTokens";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 // Import assets
 import logoImage from "@/assets/logo.png";
@@ -48,7 +49,14 @@ const IndexV2 = () => {
           <nav className="flex items-center justify-between gap-4">
             {/* Logo - Left side */}
             <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <img src={logoImage} alt="artifio.ai logo" className="h-6 md:h-8 object-contain" />
+              <OptimizedImage 
+                src={logoImage} 
+                alt="artifio.ai logo" 
+                className="h-6 md:h-8 object-contain" 
+                width={32}
+                height={32}
+                priority
+              />
               <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
             </Link>
 
@@ -227,10 +235,13 @@ const IndexV2 = () => {
                 >
                   <div className="aspect-video bg-muted relative overflow-hidden">
                     {template.thumbnail_url && (
-                      <img
+                      <OptimizedImage
                         src={template.thumbnail_url}
                         alt={template.name}
                         className="w-full h-full object-cover"
+                        width={600}
+                        height={338}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                       />
                     )}
                   </div>

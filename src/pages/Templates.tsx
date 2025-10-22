@@ -9,6 +9,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Package, Users, TrendingUp, Layers, Wand2, Coins, Shirt, Plane } from "lucide-react";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
+import { OptimizedImage } from "@/components/ui/optimized-image";
+import { Skeleton } from "@/components/ui/skeleton";
 import { createSignedUrl } from "@/lib/storage-utils";
 
 
@@ -265,16 +267,22 @@ const Templates = () => {
                             className="w-full h-full"
                           />
                         ) : signedUrls[template.id]?.before || signedUrls[template.id]?.after ? (
-                          <img 
+                          <OptimizedImage 
                             src={(signedUrls[template.id]?.after || signedUrls[template.id]?.before)!}
                             alt={template.name || ''}
                             className="w-full h-full object-cover"
+                            width={400}
+                            height={400}
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                           />
                         ) : template.thumbnail_url ? (
-                          <img 
+                          <OptimizedImage 
                             src={template.thumbnail_url} 
                             alt={template.name || ''}
                             className="w-full h-full object-cover"
+                            width={400}
+                            height={400}
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
@@ -381,10 +389,11 @@ const Templates = () => {
             {isLoading && (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <Card key={i} className="animate-pulse">
-                    <div className="aspect-square bg-muted" />
-                    <div className="p-2">
-                      <div className="h-3 bg-muted rounded w-3/4" />
+                  <Card key={i}>
+                    <Skeleton className="aspect-square w-full" />
+                    <div className="p-2 space-y-2">
+                      <Skeleton className="h-3 w-3/4" />
+                      <Skeleton className="h-7 w-full" />
                     </div>
                   </Card>
                 ))}

@@ -130,3 +130,57 @@ export const useAllTemplates = () => {
     gcTime: 10 * 60 * 1000,
   });
 };
+
+// Hook for admin to fetch ALL templates regardless of active status
+export const useAllTemplatesAdmin = () => {
+  return useQuery({
+    queryKey: ["all-templates-admin"],
+    queryFn: async () => {
+      // Fetch ALL content templates (including inactive)
+      const { data: contentTemplates, error: templatesError } = await supabase
+        .from("content_templates")
+        .select("*, ai_models(*)")
+        .order("display_order", { ascending: true });
+
+      if (templatesError) throw templatesError;
+
+      // Fetch ALL workflow templates (including inactive)
+      const { data: workflowTemplates, error: workflowsError } = await supabase
+        .from("workflow_templates")
+        .select("*")
+        .order("display_order", { ascending: true });
+
+      if (workflowsError) throw workflowsError;
+
+      // Merge and mark type - cast entire objects to bypass Json types
+      const mergedTemplates = [
+        ...(contentTemplates || []).map(t => ({ 
+          ...t, 
+          template_type: 'template' as const,
+          user_editable_fields: (t.user_editable_fields as any) || [],
+          hidden_field_defaults: (t.hidden_field_defaults as any) || {},
+          preset_parameters: (t.preset_parameters as any) || {},
+          ai_models: t.ai_models ? {
+            ...t.ai_models,
+            groups: (t.ai_models.groups as any) || [],
+            cost_multipliers: (t.ai_models.cost_multipliers as any) || {},
+            input_schema: (t.ai_models.input_schema as any) || {},
+          } : undefined,
+        })),
+        ...(workflowTemplates || []).map(w => ({ 
+          ...w, 
+          template_type: 'workflow' as const,
+          user_input_fields: (w.user_input_fields as any) || [],
+          workflow_steps: (w.workflow_steps as any) || [],
+        })),
+      ] as MergedTemplate[];
+
+      // Sort by display_order
+      mergedTemplates.sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+      return mergedTemplates;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+};

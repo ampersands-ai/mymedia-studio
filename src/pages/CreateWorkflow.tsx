@@ -4,8 +4,10 @@ import { toast } from "sonner";
 import { useWorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
 import { WorkflowInputPanel } from "@/components/generation/WorkflowInputPanel";
+import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { createSignedUrl } from "@/lib/storage-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNativeDownload } from "@/hooks/useNativeDownload";
 import { ArrowLeft } from "lucide-react";
 
 const CreateWorkflow = () => {
@@ -16,6 +18,7 @@ const CreateWorkflow = () => {
   
   const { data: workflow, isLoading } = useWorkflowTemplate(workflowId || "");
   const { executeWorkflow, isExecuting, progress } = useWorkflowExecution();
+  const { downloadFile } = useNativeDownload();
   
   const [result, setResult] = useState<{ url: string; tokens: number } | null>(null);
 
@@ -53,13 +56,8 @@ const CreateWorkflow = () => {
         return;
       }
 
-      const a = document.createElement('a');
-      a.href = signedUrl;
-      a.download = `workflow-${Date.now()}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      toast.success('Download started!');
+      const extension = result.url.split('.').pop() || 'jpg';
+      await downloadFile(signedUrl, `workflow-${Date.now()}.${extension}`);
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download file');
@@ -101,91 +99,94 @@ const CreateWorkflow = () => {
 
       {/* Right Panel - Output */}
       {showOutputPanel && (
-        <div className="p-6 overflow-y-auto">
+        <div className="p-6 lg:p-8 overflow-y-auto bg-background">
           {isMobile && (isExecuting || result) && (
             <button
               onClick={() => setResult(null)}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors"
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Inputs</span>
+              <span className="text-sm">Back to Inputs</span>
             </button>
           )}
-          <h2 className="text-2xl font-semibold mb-6">Output</h2>
-        
-        {!isExecuting && !result && (
-          <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] text-center">
-            <div className="w-16 h-16 mb-4 text-muted-foreground/30">
-              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M50 20L60 40L80 45L65 60L68 80L50 70L32 80L35 60L20 45L40 40L50 20Z" 
-                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            <p className="text-muted-foreground">
-              Fill in the inputs and execute the workflow to see results
-            </p>
-          </div>
-        )}
+          
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold">Output</h2>
+          
+            {!isExecuting && !result && (
+              <div className="flex flex-col items-center justify-center min-h-[400px] lg:min-h-[calc(100vh-200px)] text-center px-4">
+                <div className="w-16 h-16 mb-4 text-muted-foreground/30">
+                  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 20L60 40L80 45L65 60L68 80L50 70L32 80L35 60L20 45L40 40L50 20Z" 
+                          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <p className="text-muted-foreground text-sm max-w-md">
+                  Fill in the inputs and click Create to generate your content
+                </p>
+              </div>
+            )}
 
-        {isExecuting && (
-          <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
-            <div className="w-full max-w-md space-y-4">
-              {progress ? (
-                <>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">
-                      Step {progress.currentStep} of {progress.totalSteps}
-                    </span>
-                    <span className="text-sm font-medium">
-                      {Math.round((progress.currentStep / progress.totalSteps) * 100)}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-2">
-                    <div 
-                      className="bg-primary h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${(progress.currentStep / progress.totalSteps) * 100}%` }}
-                    />
-                  </div>
-                  <p className="text-center text-sm text-muted-foreground mt-4">
-                    Processing workflow...
-                  </p>
-                </>
-              ) : (
-                <>
-                  <div className="flex justify-center mb-4">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>
-                  <p className="text-center text-sm text-muted-foreground">
-                    Starting workflow...
-                  </p>
-                </>
-              )}
-            </div>
-          </div>
-        )}
+            {isExecuting && (
+              <div className="flex flex-col items-center justify-center min-h-[400px] lg:min-h-[calc(100vh-200px)]">
+                <div className="w-full max-w-md space-y-4 px-4">
+                  {progress ? (
+                    <>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-muted-foreground">
+                          Step {progress.currentStep} of {progress.totalSteps}
+                        </span>
+                        <span className="text-sm font-medium">
+                          {Math.round((progress.currentStep / progress.totalSteps) * 100)}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-secondary rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${(progress.currentStep / progress.totalSteps) * 100}%` }}
+                        />
+                      </div>
+                      <p className="text-center text-sm text-muted-foreground mt-4">
+                        Processing workflow...
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-center mb-4">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                      </div>
+                      <p className="text-center text-sm text-muted-foreground">
+                        Generating content...
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
 
-        {result && (
-          <div className="space-y-4">
-            <div className="rounded-lg border border-border overflow-hidden">
-              <img 
-                src={result.url} 
-                alt="Generated output" 
-                className="w-full h-auto"
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Tokens used: {result.tokens}
-              </p>
-              <button
-                onClick={handleDownload}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-              >
-                Download
-              </button>
-            </div>
+            {result && (
+              <div className="space-y-6 max-w-4xl mx-auto">
+                <div className="rounded-lg border border-border overflow-hidden shadow-sm">
+                  <GenerationPreview
+                    storagePath={result.url}
+                    contentType="image"
+                    className="w-full h-auto"
+                  />
+                </div>
+                <div className="flex items-center justify-between bg-muted/30 p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    Tokens used: <span className="font-medium text-foreground">{result.tokens}</span>
+                  </p>
+                  <button
+                    onClick={handleDownload}
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium"
+                  >
+                    Download
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        )}
         </div>
       )}
     </div>

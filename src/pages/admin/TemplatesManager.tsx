@@ -185,6 +185,9 @@ export default function TemplatesManager() {
         user_editable_fields: item.user_editable_fields as any || [],
         hidden_field_defaults: item.hidden_field_defaults as any || {},
         is_custom_model: item.is_custom_model || false,
+        model_record_id: ('model_record_id' in item ? item.model_record_id as string : null) || null,
+        before_image_url: item.before_image_url || null,
+        after_image_url: item.after_image_url || null,
       };
       
       const { error } = await supabase
@@ -196,7 +199,11 @@ export default function TemplatesManager() {
         return;
       }
       
-      toast.success("Template duplicated successfully");
+      toast.success("Template duplicated - now editing copy");
+      queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
+      
+      // Auto-open edit dialog with the duplicated template
+      setContentTemplateDialog({ open: true, template: newTemplate });
     } else {
       // Ensure required fields are present
       if (!item.category || !item.name) {
@@ -210,11 +217,15 @@ export default function TemplatesManager() {
         category: item.category!,
         description: item.description || null,
         thumbnail_url: item.thumbnail_url || null,
+        before_image_url: item.before_image_url || null,
+        after_image_url: item.after_image_url || null,
         is_active: false,
         display_order: item.display_order || 0,
         estimated_time_seconds: item.estimated_time_seconds || null,
         workflow_steps: item.workflow_steps as any || [],
         user_input_fields: item.user_input_fields as any || [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
       
       const { error } = await supabase
@@ -226,10 +237,16 @@ export default function TemplatesManager() {
         return;
       }
       
-      toast.success("Workflow duplicated successfully");
+      toast.success("Workflow duplicated - now editing copy");
+      queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
+      
+      // Auto-open edit dialog with the duplicated workflow
+      setWorkflowDialog({ 
+        open: true, 
+        workflow: newWorkflow as WorkflowTemplate, 
+        isNew: false 
+      });
     }
-    
-    queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
   };
 
   const handleEdit = (item: MergedTemplate) => {

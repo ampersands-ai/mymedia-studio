@@ -22,6 +22,9 @@ const Templates = () => {
   
   // State for token costs
   const [tokenCosts, setTokenCosts] = useState<Record<string, number>>({});
+  
+  // State for category filtering
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(['All']);
 
   useEffect(() => {
     document.title = "Templates - Artifio.ai";
@@ -176,9 +179,33 @@ const Templates = () => {
     return "Image";
   };
 
-  // All templates are now workflows - filter by category
+  // Extract unique categories with counts
   const templates = (allTemplates || []).sort((a, b) => a.display_order - b.display_order);
+  const uniqueCategories = Array.from(new Set(templates.map(t => t.category))).sort();
+  const categoryCounts = uniqueCategories.reduce((acc, cat) => {
+    acc[cat] = templates.filter(t => t.category === cat).length;
+    return acc;
+  }, {} as Record<string, number>);
   
+  // Toggle category filter
+  const handleCategoryToggle = (category: string) => {
+    if (category === 'All') {
+      setSelectedCategories(['All']);
+    } else {
+      setSelectedCategories(prev => {
+        const withoutAll = prev.filter(c => c !== 'All');
+        if (withoutAll.includes(category)) {
+          const filtered = withoutAll.filter(c => c !== category);
+          return filtered.length === 0 ? ['All'] : filtered;
+        } else {
+          return [...withoutAll, category];
+        }
+      });
+    }
+  };
+  
+  // Filter templates by selected categories
+  const showAllCategories = selectedCategories.includes('All');
   const productTemplates = templates.filter(t => t.category === "Product");
   const marketingTemplates = templates.filter(t => t.category === "Marketing");
   const fantasyTemplates = templates.filter(t => t.category === "Fantasy");
@@ -296,17 +323,46 @@ const Templates = () => {
         </div>
       </section>
 
+      {/* Category Filter */}
+      <section className="border-b bg-muted/30">
+        <div className="container mx-auto px-4 py-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              <Button
+                variant={selectedCategories.includes('All') ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleCategoryToggle('All')}
+                className={selectedCategories.includes('All') ? 'border-2 border-black' : 'border-2'}
+              >
+                All ({templates.length})
+              </Button>
+              {uniqueCategories.map(category => (
+                <Button
+                  key={category}
+                  variant={selectedCategories.includes(category) ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleCategoryToggle(category)}
+                  className={selectedCategories.includes(category) ? 'border-2 border-black' : 'border-2'}
+                >
+                  {category} ({categoryCounts[category]})
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Templates Grid */}
       <section className="bg-background">
         <div className="container mx-auto px-4 py-8 md:py-12">
           <div className="max-w-7xl mx-auto space-y-12">
-            {renderCarousel(productTemplates, "Product")}
-            {renderCarousel(marketingTemplates, "Marketing")}
-            {renderCarousel(fantasyTemplates, "Fantasy")}
-            {renderCarousel(portraitsTemplates, "Portraits")}
-            {renderCarousel(abstractTemplates, "Abstract")}
-            {renderCarousel(fashionTemplates, "Fashion")}
-            {renderCarousel(travelTemplates, "Travel")}
+            {(showAllCategories || selectedCategories.includes("Product")) && renderCarousel(productTemplates, "Product")}
+            {(showAllCategories || selectedCategories.includes("Marketing")) && renderCarousel(marketingTemplates, "Marketing")}
+            {(showAllCategories || selectedCategories.includes("Fantasy")) && renderCarousel(fantasyTemplates, "Fantasy")}
+            {(showAllCategories || selectedCategories.includes("Portraits")) && renderCarousel(portraitsTemplates, "Portraits")}
+            {(showAllCategories || selectedCategories.includes("Abstract")) && renderCarousel(abstractTemplates, "Abstract")}
+            {(showAllCategories || selectedCategories.includes("Fashion")) && renderCarousel(fashionTemplates, "Fashion")}
+            {(showAllCategories || selectedCategories.includes("Travel")) && renderCarousel(travelTemplates, "Travel")}
 
             {/* Loading and Empty States */}
             {isLoading && (

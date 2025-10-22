@@ -117,13 +117,16 @@ serve(async (req) => {
         console.warn('Schema coercion skipped due to error:', e);
       }
 
+      // Sanitize parameters to convert any base64 images to signed URLs
+      const sanitizedParameters = await sanitizeParametersForProviders(coercedParameters, user.id, supabase);
+
       // Generate prompt - always replace template variables regardless of source
       let resolvedPrompt: string;
-      if (coercedParameters.prompt) {
+      if (sanitizedParameters.prompt) {
         // Prompt comes from parameters - still need to replace variables
-        const promptString = typeof coercedParameters.prompt === 'string' 
-          ? coercedParameters.prompt 
-          : String(coercedParameters.prompt);
+        const promptString = typeof sanitizedParameters.prompt === 'string' 
+          ? sanitizedParameters.prompt 
+          : String(sanitizedParameters.prompt);
         resolvedPrompt = replaceTemplateVariables(promptString, context);
       } else {
         // Prompt comes from prompt_template (legacy)
@@ -133,14 +136,14 @@ serve(async (req) => {
       console.log('Resolved prompt:', resolvedPrompt);
       console.log('Static parameters:', step.parameters);
       console.log('Resolved mappings:', resolvedMappings);
-      console.log('All parameters (after schema coercion):', coercedParameters);
+      console.log('All parameters (after sanitization):', sanitizedParameters);
       // Call generate-content for this step (returns immediately with status: 'processing')
       const generateResponse = await supabase.functions.invoke('generate-content', {
         body: {
           model_id: step.model_id,
           model_record_id: step.model_record_id,
           prompt: resolvedPrompt,
-          custom_parameters: coercedParameters,
+          custom_parameters: sanitizedParameters,
           workflow_execution_id: execution.id,
           workflow_step_number: step.step_number,
         },
@@ -268,6 +271,112 @@ serve(async (req) => {
   }
 });
 
+
+// Helper function to sanitize parameters and convert base64 images to signed URLs
+async function sanitizeParametersForProviders(
+  params: Record<string, any>,
+  userId: string,
+  supabaseClient: any
+): Promise<Record<string, any>> {
+  const mediaKeys = ['image_url', 'image_urls', 'input_image', 'reference_image', 'mask_image', 'image', 'images', 'thumbnail', 'cover'];
+  const processed = { ...params };
+  let convertedCount = 0;
+  
+  for (const [key, value] of Object.entries(params)) {
+    // Check if this is a known media key
+    const isMediaKey = mediaKeys.includes(key.toLowerCase());
+    
+    // Handle single image (string)
+    if (typeof value === 'string' && value.startsWith('data:image/')) {
+      try {
+        const signedUrl = await uploadBase64Image(value, userId, supabaseClient);
+        processed[key] = signedUrl;
+        convertedCount++;
+      } catch (error) {
+        console.error(`Error processing image for ${key}:`, error);
+        throw error;
+      }
+    }
+    // Handle array of images
+    else if (Array.isArray(value) && isMediaKey) {
+      const processedArray = [];
+      for (const item of value) {
+        if (typeof item === 'string' && item.startsWith('data:image/')) {
+          try {
+            const signedUrl = await uploadBase64Image(item, userId, supabaseClient);
+            processedArray.push(signedUrl);
+            convertedCount++;
+          } catch (error) {
+            console.error(`Error processing array image for ${key}:`, error);
+            throw error;
+          }
+        } else if (typeof item === 'string' && (item.startsWith('http://') || item.startsWith('https://'))) {
+          processedArray.push(item);
+        } else {
+          processedArray.push(item);
+        }
+      }
+      processed[key] = processedArray;
+    }
+  }
+  
+  if (convertedCount > 0) {
+    console.log(`Sanitized parameters: converted ${convertedCount} base64 image(s) to signed URLs`);
+  }
+  
+  return processed;
+}
+
+// Helper function to upload a base64 image and return signed URL
+async function uploadBase64Image(
+  dataUrl: string,
+  userId: string,
+  supabaseClient: any
+): Promise<string> {
+  // Extract base64 data and content type
+  const matches = dataUrl.match(/^data:(.+);base64,(.+)$/);
+  if (!matches) {
+    throw new Error('Invalid data URL format');
+  }
+  
+  const contentType = matches[1];
+  const base64Data = matches[2];
+  
+  // Determine file extension
+  const extension = contentType.split('/')[1] || 'jpg';
+  const fileName = `workflow-input-${Date.now()}-${Math.random().toString(36).substring(7)}.${extension}`;
+  const filePath = `${userId}/${fileName}`;
+  
+  // Convert base64 to Uint8Array
+  const binaryString = atob(base64Data);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  
+  // Upload to Supabase storage
+  const { error: uploadError } = await supabaseClient.storage
+    .from('generated-content')
+    .upload(filePath, bytes, {
+      contentType,
+      upsert: false
+    });
+  
+  if (uploadError) {
+    throw new Error(`Failed to upload image: ${uploadError.message}`);
+  }
+  
+  // Generate signed URL (valid for 24 hours)
+  const { data: urlData, error: urlError } = await supabaseClient.storage
+    .from('generated-content')
+    .createSignedUrl(filePath, 86400);
+  
+  if (urlError || !urlData?.signedUrl) {
+    throw new Error(`Failed to generate signed URL: ${urlError?.message}`);
+  }
+  
+  return urlData.signedUrl;
+}
 
 // Helper function to process image uploads and generate signed URLs
 async function processImageUploads(

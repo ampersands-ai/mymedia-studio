@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useWorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
 import { WorkflowInputPanel } from "@/components/generation/WorkflowInputPanel";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
+import { GenerationProgress } from "@/components/generation/GenerationProgress";
 import { createSignedUrl } from "@/lib/storage-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNativeDownload } from "@/hooks/useNativeDownload";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 const CreateWorkflow = () => {
   const [searchParams] = useSearchParams();
@@ -21,6 +23,8 @@ const CreateWorkflow = () => {
   const { downloadFile } = useNativeDownload();
   
   const [result, setResult] = useState<{ url: string; tokens: number } | null>(null);
+  const [generationCompleteTime, setGenerationCompleteTime] = useState<number | null>(null);
+  const generationStartTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!workflowId) {
@@ -32,6 +36,8 @@ const CreateWorkflow = () => {
     if (!workflow) return;
 
     setResult(null);
+    setGenerationCompleteTime(null);
+    generationStartTimeRef.current = Date.now();
     
     const result = await executeWorkflow({
       workflow_template_id: workflow.id,
@@ -39,9 +45,11 @@ const CreateWorkflow = () => {
     });
 
     if (result?.final_output_url) {
+      setGenerationCompleteTime(Date.now());
       setResult({ url: result.final_output_url, tokens: result.tokens_used });
       toast.success('Workflow completed!');
     } else {
+      generationStartTimeRef.current = null;
       toast.error('Workflow failed');
     }
   };
@@ -128,43 +136,42 @@ const CreateWorkflow = () => {
             )}
 
             {isExecuting && (
-              <div className="flex flex-col items-center justify-center min-h-[400px] lg:min-h-[calc(100vh-200px)]">
-                <div className="w-full max-w-md space-y-4 px-4">
-                  {progress ? (
-                    <>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-muted-foreground">
-                          Step {progress.currentStep} of {progress.totalSteps}
-                        </span>
-                        <span className="text-sm font-medium">
-                          {Math.round((progress.currentStep / progress.totalSteps) * 100)}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-secondary rounded-full h-2">
-                        <div 
-                          className="bg-primary h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${(progress.currentStep / progress.totalSteps) * 100}%` }}
-                        />
-                      </div>
-                      <p className="text-center text-sm text-muted-foreground mt-4">
-                        Processing workflow...
+              <div className="space-y-4">
+                <Card className="border border-gray-200 shadow-sm bg-muted/50 rounded-xl">
+                  <CardContent className="p-4 space-y-4">
+                    <div className="flex items-start gap-2">
+                      <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-muted-foreground">
+                        Feel free to navigate away - your generation will be saved in History
                       </p>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex justify-center mb-4">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                      </div>
-                      <p className="text-center text-sm text-muted-foreground">
-                        Generating content...
-                      </p>
-                    </>
-                  )}
-                </div>
+                    </div>
+
+                    {generationStartTimeRef.current && (
+                      <GenerationProgress
+                        startTime={generationStartTimeRef.current}
+                        isComplete={!!result}
+                        completedAt={generationCompleteTime || undefined}
+                        estimatedTimeSeconds={workflow?.estimated_time_seconds}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+
+                {result && (
+                  <div className="space-y-6 max-w-4xl mx-auto animate-fade-in">
+                    <div className="rounded-lg border border-border overflow-hidden shadow-sm">
+                      <GenerationPreview
+                        storagePath={result.url}
+                        contentType="image"
+                        className="w-full h-auto"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {result && (
+            {!isExecuting && result && (
               <div className="space-y-6 max-w-4xl mx-auto">
                 <div className="rounded-lg border border-border overflow-hidden shadow-sm">
                   <GenerationPreview

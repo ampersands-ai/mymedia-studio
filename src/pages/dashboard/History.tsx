@@ -639,7 +639,7 @@ const History = () => {
                 )}
                 {generation.workflow_execution_id && (
                   <p className="text-xs text-muted-foreground italic line-clamp-1">
-                    Workflow generation
+                    Template Generation
                   </p>
                 )}
 
@@ -750,7 +750,7 @@ const History = () => {
                 <div className="space-y-2">
                   <h4 className="font-bold text-sm">Type:</h4>
                   <p className="text-sm text-muted-foreground italic">
-                    Workflow generation
+                    Template Generation
                   </p>
                 </div>
               )}

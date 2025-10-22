@@ -131,12 +131,39 @@ const Carousel = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEl
 );
 Carousel.displayName = "Carousel";
 
+const CarouselViewport = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, children, ...props }, ref) => {
+    const { canScrollPrev, canScrollNext } = useCarousel();
+    
+    return (
+      <div 
+        ref={ref}
+        className={cn("relative overflow-hidden", className)}
+        {...props}
+      >
+        {/* Left fade gradient - only show when can scroll prev */}
+        {canScrollPrev && (
+          <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+        )}
+        
+        {children}
+        
+        {/* Right fade gradient - only show when can scroll next */}
+        {canScrollNext && (
+          <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+        )}
+      </div>
+    );
+  },
+);
+CarouselViewport.displayName = "CarouselViewport";
+
 const CarouselContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => {
     const { carouselRef, orientation } = useCarousel();
 
     return (
-      <div ref={carouselRef} className="overflow-hidden">
+      <div ref={carouselRef} className="overflow-visible">
         <div
           ref={ref}
           className={cn("flex", orientation === "horizontal" ? "-ml-4" : "-mt-4 flex-col", className)}
@@ -221,4 +248,4 @@ const CarouselNext = React.forwardRef<HTMLButtonElement, React.ComponentProps<ty
 );
 CarouselNext.displayName = "CarouselNext";
 
-export { type CarouselApi, Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext };
+export { type CarouselApi, Carousel, CarouselViewport, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext };

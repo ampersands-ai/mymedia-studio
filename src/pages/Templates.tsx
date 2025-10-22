@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Carousel, CarouselViewport, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useAllTemplates } from "@/hooks/useTemplates";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -237,74 +237,83 @@ const Templates = () => {
     return (
       <div className="space-y-4">
         <h2 className="text-2xl md:text-3xl font-black">{categoryName}</h2>
-        <Carousel className="w-full">
-          <CarouselContent className="-ml-4">
-            {categoryTemplates.map((template) => {
-              const Icon = getTemplateIcon(template.category || '');
-              const contentType = getWorkflowContentType(template);
-              return (
-                <CarouselItem key={template.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
-                  <Card className="group hover:shadow-brutal transition-all overflow-hidden border-2 border-black">
-                    <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10">
-                      {signedUrls[template.id]?.before && signedUrls[template.id]?.after ? (
-                        <BeforeAfterSlider
-                          beforeImage={signedUrls[template.id].after!}
-                          afterImage={signedUrls[template.id].before!}
-                          beforeLabel=""
-                          afterLabel=""
-                          defaultPosition={25}
-                          showHint={true}
-                          className="w-full h-full"
-                        />
-                      ) : signedUrls[template.id]?.before || signedUrls[template.id]?.after ? (
-                        <img 
-                          src={(signedUrls[template.id]?.after || signedUrls[template.id]?.before)!}
-                          alt={template.name || ''}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : template.thumbnail_url ? (
-                        <img 
-                          src={template.thumbnail_url} 
-                          alt={template.name || ''}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Icon className="h-12 w-12 text-primary/30" />
-                        </div>
-                      )}
-                      <Badge variant="secondary" className="absolute top-1 right-1 backdrop-blur-sm bg-background/80 text-xs px-1.5 py-0">
-                        {contentType}
-                      </Badge>
-                    </div>
-                    
-                    <div className="p-2 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-medium line-clamp-1 flex-1">{template.name}</p>
-                        {tokenCosts[template.id] !== undefined && (
-                          <Badge variant="outline" className="text-xs px-1 py-0 ml-1 flex items-center gap-0.5">
-                            <Coins className="h-2.5 w-2.5" />
-                            {tokenCosts[template.id]}
-                          </Badge>
+        <Carousel 
+          className="w-full"
+          opts={{
+            align: "start",
+            containScroll: "trimSnaps",
+            dragFree: true,
+          }}
+        >
+          <CarouselViewport>
+            <CarouselContent className="-ml-4">
+              {categoryTemplates.map((template) => {
+                const Icon = getTemplateIcon(template.category || '');
+                const contentType = getWorkflowContentType(template);
+                return (
+                  <CarouselItem key={template.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
+                    <Card className="group hover:shadow-brutal transition-all overflow-hidden border-2 border-black">
+                      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10">
+                        {signedUrls[template.id]?.before && signedUrls[template.id]?.after ? (
+                          <BeforeAfterSlider
+                            beforeImage={signedUrls[template.id].after!}
+                            afterImage={signedUrls[template.id].before!}
+                            beforeLabel=""
+                            afterLabel=""
+                            defaultPosition={25}
+                            showHint={true}
+                            className="w-full h-full"
+                          />
+                        ) : signedUrls[template.id]?.before || signedUrls[template.id]?.after ? (
+                          <img 
+                            src={(signedUrls[template.id]?.after || signedUrls[template.id]?.before)!}
+                            alt={template.name || ''}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : template.thumbnail_url ? (
+                          <img 
+                            src={template.thumbnail_url} 
+                            alt={template.name || ''}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Icon className="h-12 w-12 text-primary/30" />
+                          </div>
                         )}
+                        <Badge variant="secondary" className="absolute top-1 right-1 backdrop-blur-sm bg-background/80 text-xs px-1.5 py-0">
+                          {contentType}
+                        </Badge>
                       </div>
                       
-                      <Button 
-                        onClick={() => handleUseTemplate(template)}
-                        className="w-full h-7 text-xs"
-                        size="sm"
-                      >
-                        <Sparkles className="mr-1 h-3 w-3" />
-                        Use
-                      </Button>
-                    </div>
-                  </Card>
-                </CarouselItem>
-              );
-            })}
-          </CarouselContent>
-          <CarouselPrevious className="border-2 border-black" />
-          <CarouselNext className="border-2 border-black" />
+                      <div className="p-2 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-medium line-clamp-1 flex-1">{template.name}</p>
+                          {tokenCosts[template.id] !== undefined && (
+                            <Badge variant="outline" className="text-xs px-1 py-0 ml-1 flex items-center gap-0.5">
+                              <Coins className="h-2.5 w-2.5" />
+                              {tokenCosts[template.id]}
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        <Button 
+                          onClick={() => handleUseTemplate(template)}
+                          className="w-full h-7 text-xs"
+                          size="sm"
+                        >
+                          <Sparkles className="mr-1 h-3 w-3" />
+                          Use
+                        </Button>
+                      </div>
+                    </Card>
+                  </CarouselItem>
+                );
+              })}
+            </CarouselContent>
+          </CarouselViewport>
+          <CarouselPrevious className="border-2 border-black z-20" />
+          <CarouselNext className="border-2 border-black z-20" />
         </Carousel>
       </div>
     );

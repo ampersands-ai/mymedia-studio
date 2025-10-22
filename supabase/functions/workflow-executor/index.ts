@@ -32,6 +32,9 @@ serve(async (req) => {
 
     console.log('Executing workflow:', workflow_template_id, 'for user:', user.id);
 
+    // Process any image uploads to generate signed URLs
+    const processedInputs = await processImageUploads(user_inputs, user.id, supabase);
+
     // 1. Load workflow template
     const { data: workflow, error: workflowError } = await supabase
       .from('workflow_templates')
@@ -53,7 +56,7 @@ serve(async (req) => {
         workflow_template_id,
         user_id: user.id,
         total_steps: totalSteps,
-        user_inputs,
+        user_inputs: processedInputs,
         status: 'processing',
       })
       .select()
@@ -82,7 +85,7 @@ serve(async (req) => {
 
       // Build context with all available data
       const context = {
-        user: user_inputs,
+        user: processedInputs,
         ...stepOutputs,
       };
 
@@ -265,6 +268,95 @@ serve(async (req) => {
   }
 });
 
+
+// Helper function to process image uploads and generate signed URLs
+async function processImageUploads(
+  inputs: Record<string, any>,
+  userId: string,
+  supabaseClient: any
+): Promise<Record<string, any>> {
+  const processed = { ...inputs };
+  
+  for (const [key, value] of Object.entries(inputs)) {
+    // Check if value is a data URL (base64 image)
+    if (typeof value === 'string' && value.startsWith('data:image/')) {
+      try {
+        console.log(`Processing image upload for field: ${key}`);
+        
+        // Extract base64 data and content type
+        const matches = value.match(/^data:(.+);base64,(.+)$/);
+        if (!matches) {
+          console.warn(`Invalid data URL format for ${key}`);
+          continue;
+        }
+        
+        const contentType = matches[1];
+        const base64Data = matches[2];
+        
+        // Determine file extension
+        const extension = contentType.split('/')[1] || 'jpg';
+        const fileName = `workflow-input-${Date.now()}-${Math.random().toString(36).substring(7)}.${extension}`;
+        const filePath = `${userId}/${fileName}`;
+        
+        // Convert base64 to Uint8Array
+        const binaryString = atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        // Upload to Supabase storage
+        const { data: uploadData, error: uploadError } = await supabaseClient.storage
+          .from('generated-content')
+          .upload(filePath, bytes, {
+            contentType,
+            upsert: false
+          });
+        
+        if (uploadError) {
+          console.error(`Upload error for ${key}:`, uploadError);
+          throw new Error(`Failed to upload image: ${uploadError.message}`);
+        }
+        
+        console.log(`Image uploaded successfully: ${filePath}`);
+        
+        // Generate signed URL (valid for 24 hours)
+        const { data: urlData, error: urlError } = await supabaseClient.storage
+          .from('generated-content')
+          .createSignedUrl(filePath, 86400);
+        
+        if (urlError || !urlData?.signedUrl) {
+          console.error(`Signed URL error for ${key}:`, urlError);
+          throw new Error(`Failed to generate signed URL: ${urlError?.message}`);
+        }
+        
+        console.log(`Signed URL generated for ${key}`);
+        
+        // Replace data URL with signed URL
+        processed[key] = urlData.signedUrl;
+        
+      } catch (error) {
+        console.error(`Error processing image for ${key}:`, error);
+        throw error;
+      }
+    }
+    // Handle array of images
+    else if (Array.isArray(value)) {
+      const processedArray = [];
+      for (const item of value) {
+        if (typeof item === 'string' && item.startsWith('data:image/')) {
+          const temp = await processImageUploads({ temp: item }, userId, supabaseClient);
+          processedArray.push(temp.temp);
+        } else {
+          processedArray.push(item);
+        }
+      }
+      processed[key] = processedArray;
+    }
+  }
+  
+  return processed;
+}
 
 // Helper function to replace template variables
 function replaceTemplateVariables(

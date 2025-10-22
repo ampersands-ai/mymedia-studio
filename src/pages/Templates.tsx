@@ -7,7 +7,7 @@ import { Carousel, CarouselViewport, CarouselContent, CarouselItem, CarouselNext
 import { useAllTemplates } from "@/hooks/useTemplates";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Package, Users, TrendingUp, Layers, Wand2, Coins, Shirt, Plane } from "lucide-react";
+import { Sparkles, Package, Users, TrendingUp, Layers, Wand2, Coins, Shirt, Plane, Search, Image as ImageIcon, Video } from "lucide-react";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,8 +25,9 @@ const Templates = () => {
   // State for token costs
   const [tokenCosts, setTokenCosts] = useState<Record<string, number>>({});
   
-  // State for category filtering
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(['All']);
+  // State for search and content type filtering
+  const [searchQuery, setSearchQuery] = useState("");
+  const [contentTypeFilter, setContentTypeFilter] = useState<'all' | 'image' | 'video'>('all');
 
   useEffect(() => {
     document.title = "Templates - Artifio.ai";
@@ -183,41 +184,50 @@ const Templates = () => {
     return "Image";
   };
 
-  // Extract unique categories with counts
+  // Sort templates by display order
   const templates = (allTemplates || []).sort((a, b) => a.display_order - b.display_order);
-  const uniqueCategories = Array.from(new Set(templates.map(t => t.category))).sort();
-  const categoryCounts = uniqueCategories.reduce((acc, cat) => {
-    acc[cat] = templates.filter(t => t.category === cat).length;
-    return acc;
-  }, {} as Record<string, number>);
   
-  // Toggle category filter
-  const handleCategoryToggle = (category: string) => {
-    if (category === 'All') {
-      setSelectedCategories(['All']);
-    } else {
-      setSelectedCategories(prev => {
-        const withoutAll = prev.filter(c => c !== 'All');
-        if (withoutAll.includes(category)) {
-          const filtered = withoutAll.filter(c => c !== category);
-          return filtered.length === 0 ? ['All'] : filtered;
-        } else {
-          return [...withoutAll, category];
-        }
+  // Filter templates by search query and content type
+  const filterTemplates = (templates: any[]) => {
+    let filtered = templates;
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(t => 
+        t.name.toLowerCase().includes(query) || 
+        (t.description || '').toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply content type filter
+    if (contentTypeFilter !== 'all') {
+      filtered = filtered.filter(t => {
+        const type = getWorkflowContentType(t);
+        return contentTypeFilter === 'image' 
+          ? type === 'Image' 
+          : type === 'Video';
       });
     }
+    
+    return filtered;
   };
   
-  // Filter templates by selected categories
-  const showAllCategories = selectedCategories.includes('All');
-  const productTemplates = templates.filter(t => t.category === "Product");
-  const marketingTemplates = templates.filter(t => t.category === "Marketing");
-  const fantasyTemplates = templates.filter(t => t.category === "Fantasy");
-  const portraitsTemplates = templates.filter(t => t.category === "Portraits");
-  const abstractTemplates = templates.filter(t => t.category === "Abstract");
-  const fashionTemplates = templates.filter(t => t.category === "Fashion");
-  const travelTemplates = templates.filter(t => t.category === "Travel");
-  const babyMilestonesTemplates = templates.filter(t => t.category === "Baby Milestones");
+  const filteredTemplates = filterTemplates(templates);
+  
+  // Filter by category
+  const productTemplates = filteredTemplates.filter(t => t.category === "Product");
+  const marketingTemplates = filteredTemplates.filter(t => t.category === "Marketing");
+  const fantasyTemplates = filteredTemplates.filter(t => t.category === "Fantasy");
+  const portraitsTemplates = filteredTemplates.filter(t => t.category === "Portraits");
+  const abstractTemplates = filteredTemplates.filter(t => t.category === "Abstract");
+  const fashionTemplates = filteredTemplates.filter(t => t.category === "Fashion");
+  const travelTemplates = filteredTemplates.filter(t => t.category === "Travel");
+  const babyMilestonesTemplates = filteredTemplates.filter(t => t.category === "Baby Milestones");
+  
+  // Count content types
+  const imageCount = templates.filter(t => getWorkflowContentType(t) === 'Image').length;
+  const videoCount = templates.filter(t => getWorkflowContentType(t) === 'Video').length;
 
   const handleUseTemplate = (template: any) => {
     if (!user) {
@@ -333,9 +343,6 @@ const Templates = () => {
       <section className="border-b">
         <div className="container mx-auto px-4 py-8 md:py-12">
           <div className="max-w-4xl mx-auto text-center space-y-4">
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight">
-              AI Templates
-            </h1>
             <p className="text-lg text-muted-foreground">
               Ready-to-use templates for videos, images, and more. Start creating in seconds.
             </p>
@@ -343,30 +350,51 @@ const Templates = () => {
         </div>
       </section>
 
-      {/* Category Filter */}
+      {/* Search & Content Type Filters */}
       <section className="border-b bg-muted/30">
-        <div className="container mx-auto px-4 py-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="container mx-auto px-4 py-6">
+          <div className="max-w-4xl mx-auto space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search templates..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 rounded-lg border-2 border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+              />
+            </div>
+            
+            {/* Content Type Filters */}
+            <div className="flex flex-wrap gap-2 justify-center">
               <Button
-                variant={selectedCategories.includes('All') ? 'default' : 'outline'}
+                variant={contentTypeFilter === 'all' ? "default" : "outline"}
                 size="sm"
-                onClick={() => handleCategoryToggle('All')}
-                className={selectedCategories.includes('All') ? 'border-2 border-black' : 'border-2'}
+                onClick={() => setContentTypeFilter('all')}
+                className="gap-2 border-2"
               >
+                <Sparkles className="w-4 h-4" />
                 All ({templates.length})
               </Button>
-              {uniqueCategories.map(category => (
-                <Button
-                  key={category}
-                  variant={selectedCategories.includes(category) ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handleCategoryToggle(category)}
-                  className={selectedCategories.includes(category) ? 'border-2 border-black' : 'border-2'}
-                >
-                  {category} ({categoryCounts[category]})
-                </Button>
-              ))}
+              <Button
+                variant={contentTypeFilter === 'image' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setContentTypeFilter('image')}
+                className="gap-2 border-2"
+              >
+                <ImageIcon className="w-4 h-4" />
+                Image ({imageCount})
+              </Button>
+              <Button
+                variant={contentTypeFilter === 'video' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setContentTypeFilter('video')}
+                className="gap-2 border-2"
+              >
+                <Video className="w-4 h-4" />
+                Video ({videoCount})
+              </Button>
             </div>
           </div>
         </div>
@@ -376,14 +404,22 @@ const Templates = () => {
       <section className="bg-background">
         <div className="container mx-auto px-4 py-8 md:py-12">
           <div className="max-w-7xl mx-auto space-y-12">
-            {(showAllCategories || selectedCategories.includes("Product")) && renderCarousel(productTemplates, "Product")}
-            {(showAllCategories || selectedCategories.includes("Marketing")) && renderCarousel(marketingTemplates, "Marketing")}
-            {(showAllCategories || selectedCategories.includes("Fantasy")) && renderCarousel(fantasyTemplates, "Fantasy")}
-            {(showAllCategories || selectedCategories.includes("Portraits")) && renderCarousel(portraitsTemplates, "Portraits")}
-            {(showAllCategories || selectedCategories.includes("Abstract")) && renderCarousel(abstractTemplates, "Abstract")}
-            {(showAllCategories || selectedCategories.includes("Fashion")) && renderCarousel(fashionTemplates, "Fashion")}
-            {(showAllCategories || selectedCategories.includes("Travel")) && renderCarousel(travelTemplates, "Travel")}
-            {(showAllCategories || selectedCategories.includes("Baby Milestones")) && renderCarousel(babyMilestonesTemplates, "Baby Milestones")}
+            {productTemplates.length > 0 && renderCarousel(productTemplates, "Product")}
+            {marketingTemplates.length > 0 && renderCarousel(marketingTemplates, "Marketing")}
+            {fantasyTemplates.length > 0 && renderCarousel(fantasyTemplates, "Fantasy")}
+            {portraitsTemplates.length > 0 && renderCarousel(portraitsTemplates, "Portraits")}
+            {abstractTemplates.length > 0 && renderCarousel(abstractTemplates, "Abstract")}
+            {fashionTemplates.length > 0 && renderCarousel(fashionTemplates, "Fashion")}
+            {travelTemplates.length > 0 && renderCarousel(travelTemplates, "Travel")}
+            {babyMilestonesTemplates.length > 0 && renderCarousel(babyMilestonesTemplates, "Baby Milestones")}
+            
+            {/* Empty State */}
+            {!isLoading && filteredTemplates.length === 0 && (
+              <div className="text-center py-12">
+                <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-lg text-muted-foreground">No templates found matching your search.</p>
+              </div>
+            )}
 
             {/* Loading and Empty States */}
             {isLoading && (

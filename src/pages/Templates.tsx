@@ -226,6 +226,12 @@ const Templates = () => {
                           showHint={true}
                           className="w-full h-full"
                         />
+                      ) : signedUrls[template.id]?.before || signedUrls[template.id]?.after ? (
+                        <img 
+                          src={(signedUrls[template.id]?.after || signedUrls[template.id]?.before)!}
+                          alt={template.name || ''}
+                          className="w-full h-full object-cover"
+                        />
                       ) : template.thumbnail_url ? (
                         <img 
                           src={template.thumbnail_url} 

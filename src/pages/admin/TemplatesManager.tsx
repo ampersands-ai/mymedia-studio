@@ -98,6 +98,31 @@ export default function TemplatesManager() {
   const [testingWorkflow, setTestingWorkflow] = useState<WorkflowTemplate | null>(null);
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [sortBy, setSortBy] = useState<string>("display_order");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(['All']);
+  
+  // Extract unique categories with counts
+  const uniqueCategories = Array.from(new Set(templates.map(t => t.category))).sort();
+  const categoryCounts = uniqueCategories.reduce((acc, cat) => {
+    acc[cat] = templates.filter(t => t.category === cat).length;
+    return acc;
+  }, {} as Record<string, number>);
+  
+  // Toggle category filter
+  const handleCategoryToggle = (category: string) => {
+    if (category === 'All') {
+      setSelectedCategories(['All']);
+    } else {
+      setSelectedCategories(prev => {
+        const withoutAll = prev.filter(c => c !== 'All');
+        if (withoutAll.includes(category)) {
+          const filtered = withoutAll.filter(c => c !== category);
+          return filtered.length === 0 ? ['All'] : filtered;
+        } else {
+          return [...withoutAll, category];
+        }
+      });
+    }
+  };
 
   const handleToggleActive = async (item: MergedTemplate) => {
     const table = item.template_type === 'template' 
@@ -319,7 +344,13 @@ export default function TemplatesManager() {
     }
   };
 
-  const sortedTemplates = [...templates].sort((a, b) => {
+  // Filter by category
+  const showAllCategories = selectedCategories.includes('All');
+  const filteredTemplates = showAllCategories 
+    ? templates 
+    : templates.filter(t => selectedCategories.includes(t.category));
+  
+  const sortedTemplates = [...filteredTemplates].sort((a, b) => {
     switch (sortBy) {
       case "name":
         return a.name.localeCompare(b.name);
@@ -365,9 +396,10 @@ export default function TemplatesManager() {
 
       <Card className="border-3 border-black brutal-shadow">
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>All Templates ({templates.length})</CardTitle>
-            <div className="flex gap-2 items-center">
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-between items-center">
+              <CardTitle>All Templates ({filteredTemplates.length})</CardTitle>
+              <div className="flex gap-2 items-center">
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-[180px]">
                   <ArrowUpDown className="h-4 w-4 mr-2" />
@@ -400,6 +432,30 @@ export default function TemplatesManager() {
                 Disable All
               </Button>
             </div>
+          </div>
+          
+          {/* Category Filter */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2">
+            <Button
+              variant={selectedCategories.includes('All') ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleCategoryToggle('All')}
+              className={selectedCategories.includes('All') ? 'border-2 border-black' : 'border-2'}
+            >
+              All ({templates.length})
+            </Button>
+            {uniqueCategories.map(category => (
+              <Button
+                key={category}
+                variant={selectedCategories.includes(category) ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleCategoryToggle(category)}
+                className={selectedCategories.includes(category) ? 'border-2 border-black' : 'border-2'}
+              >
+                {category} ({categoryCounts[category]})
+              </Button>
+            ))}
+          </div>
           </div>
         </CardHeader>
         <CardContent>

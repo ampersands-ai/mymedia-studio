@@ -153,6 +153,8 @@ const Templates = () => {
         return Shirt;
       case "travel":
         return Plane;
+      case "baby milestones":
+        return Sparkles;
       default:
         return Sparkles;
     }
@@ -213,6 +215,7 @@ const Templates = () => {
   const abstractTemplates = templates.filter(t => t.category === "Abstract");
   const fashionTemplates = templates.filter(t => t.category === "Fashion");
   const travelTemplates = templates.filter(t => t.category === "Travel");
+  const babyMilestonesTemplates = templates.filter(t => t.category === "Baby Milestones");
 
   const handleUseTemplate = (template: any) => {
     if (!user) {
@@ -363,6 +366,7 @@ const Templates = () => {
             {(showAllCategories || selectedCategories.includes("Abstract")) && renderCarousel(abstractTemplates, "Abstract")}
             {(showAllCategories || selectedCategories.includes("Fashion")) && renderCarousel(fashionTemplates, "Fashion")}
             {(showAllCategories || selectedCategories.includes("Travel")) && renderCarousel(travelTemplates, "Travel")}
+            {(showAllCategories || selectedCategories.includes("Baby Milestones")) && renderCarousel(babyMilestonesTemplates, "Baby Milestones")}
 
             {/* Loading and Empty States */}
             {isLoading && (

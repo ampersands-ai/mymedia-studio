@@ -340,15 +340,6 @@ const Templates = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="border-b">
-        <div className="container mx-auto px-4 py-8 md:py-12">
-          <div className="max-w-4xl mx-auto text-center space-y-4">
-            <p className="text-lg text-muted-foreground">
-              Ready-to-use templates for videos, images, and more. Start creating in seconds.
-            </p>
-          </div>
-        </div>
-      </section>
 
       {/* Search & Content Type Filters */}
       <section className="border-b bg-muted/30">

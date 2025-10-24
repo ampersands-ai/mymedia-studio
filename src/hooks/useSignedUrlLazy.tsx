@@ -48,6 +48,9 @@ export const useSignedUrlLazy = (
           if (pathMatch) {
             actualPath = pathMatch;
           }
+        } else if (storagePath.startsWith(`${bucket}/`)) {
+          // Handle: bucket/path (without leading slash)
+          actualPath = storagePath.substring(bucket.length + 1);
         }
 
         const url = await createSignedUrl(bucket, actualPath, 14400);

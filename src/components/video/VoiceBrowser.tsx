@@ -75,11 +75,49 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
       if (error) throw error;
       
       if (data?.voices && Array.isArray(data.voices) && data.voices.length > 0) {
-        setVoices(data.voices);
-        setFilteredVoices(data.voices);
+        console.log(`Received ${data.voices.length} voices from API`);
+        
+        // Create a map of fallback voices for enrichment
+        const fallbackMap = new Map(
+          FALLBACK_VOICES.map(v => [v.voice_id, v.preview_url!])
+        );
+        
+        // Enrich voices: use our hosted previews for known voices if their preview_url is missing
+        const enrichedVoices = data.voices.map((voice: Voice) => ({
+          ...voice,
+          preview_url: voice.preview_url || fallbackMap.get(voice.voice_id)
+        }));
+        
+        // Filter to only voices with valid preview URLs
+        const voicesWithPreviews = enrichedVoices.filter(
+          (voice: Voice) => typeof voice.preview_url === 'string' && voice.preview_url.length > 0
+        );
+        
+        console.log(`Showing ${voicesWithPreviews.length} voices with working previews`);
+        
+        if (voicesWithPreviews.length > 0) {
+          // Sort: put our known top voices first, then alphabetically
+          const topVoiceIds = new Set(FALLBACK_VOICES.map(v => v.voice_id));
+          voicesWithPreviews.sort((a: Voice, b: Voice) => {
+            const aIsTop = topVoiceIds.has(a.voice_id);
+            const bIsTop = topVoiceIds.has(b.voice_id);
+            if (aIsTop && !bIsTop) return -1;
+            if (!aIsTop && bIsTop) return 1;
+            return a.name.localeCompare(b.name);
+          });
+          
+          setVoices(voicesWithPreviews);
+          setFilteredVoices(voicesWithPreviews);
+        } else {
+          // No voices with previews, use fallback
+          console.warn('No voices with previews found, using fallback');
+          setVoices(FALLBACK_VOICES);
+          setFilteredVoices(FALLBACK_VOICES);
+          toast.info('Using default voice library');
+        }
       } else {
         // Use fallback voices if API fails or returns empty
-        console.warn('Using fallback voices');
+        console.warn('API returned no voices, using fallback');
         setVoices(FALLBACK_VOICES);
         setFilteredVoices(FALLBACK_VOICES);
         toast.info('Using default voice library');
@@ -89,7 +127,7 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
       // Use fallback voices on error
       setVoices(FALLBACK_VOICES);
       setFilteredVoices(FALLBACK_VOICES);
-      toast.error('Using default voices - preview unavailable');
+      toast.error('Using default voices');
     } finally {
       setLoading(false);
     }

@@ -231,17 +231,23 @@ export function VideoCreator() {
                 {voiceName}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-3xl lg:max-w-4xl flex flex-col max-h-[90vh] overflow-hidden">
-              <DialogHeader className="shrink-0">
+            <DialogContent className="max-w-[95vw] sm:max-w-3xl lg:max-w-4xl max-h-[90vh]">
+              <DialogHeader>
                 <DialogTitle className="text-lg md:text-xl">Choose a Voice</DialogTitle>
               </DialogHeader>
-              <div className="flex-1 overflow-y-auto min-h-0">
-                <VoiceBrowser
-                  voices={voices}
-                  voicesLoading={voicesLoading}
-                  selectedVoiceId={voiceId}
-                  onSelectVoice={handleSelectVoice}
-                />
+              <div className="mt-4 overflow-y-auto max-h-[calc(90vh-8rem)]">
+                {voicesLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <VoiceBrowser
+                    voices={voices}
+                    voicesLoading={false}
+                    selectedVoiceId={voiceId}
+                    onSelectVoice={handleSelectVoice}
+                  />
+                )}
               </div>
             </DialogContent>
           </Dialog>

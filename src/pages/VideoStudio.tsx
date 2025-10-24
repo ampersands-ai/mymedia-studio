@@ -4,7 +4,7 @@ import { Video } from 'lucide-react';
 
 export default function VideoStudio() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="mb-8">
@@ -22,11 +22,11 @@ export default function VideoStudio() {
         </div>
 
         {/* Main Content */}
-        <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
-          <div className="w-full">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 min-w-0">
+          <div className="w-full min-w-0">
             <VideoCreator />
           </div>
-          <div className="w-full">
+          <div className="w-full min-w-0">
             <VideoJobsList />
           </div>
         </div>

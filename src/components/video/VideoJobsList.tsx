@@ -22,11 +22,11 @@ export function VideoJobsList() {
 
   return (
     <>
-      <Card className="border-2 w-full">
+      <Card className="border-2 w-full overflow-hidden">
         <CardHeader className="space-y-2">
           <CardTitle className="text-xl sm:text-2xl font-black">YOUR VIDEOS</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-w-0">
           <div className="space-y-3 md:space-y-4">
             {!jobs || jobs.length === 0 ? (
               <div className="text-center py-8 md:py-12">

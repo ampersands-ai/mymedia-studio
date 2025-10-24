@@ -76,7 +76,7 @@ export function VideoCreator() {
   const isDisabled = isCreating || isGeneratingTopic;
 
   return (
-    <Card className="border-2 w-full">
+    <Card className="border-2 w-full overflow-hidden">
       <CardHeader className="space-y-2">
         <CardTitle className="text-xl sm:text-2xl font-black break-words">
           CREATE FACELESS VIDEO
@@ -85,7 +85,7 @@ export function VideoCreator() {
           Generate professional videos with AI in minutes
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4 md:space-y-6">
+      <CardContent className="space-y-4 md:space-y-6 min-w-0">
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <Label htmlFor="topic" className="text-sm font-bold">
@@ -119,7 +119,7 @@ export function VideoCreator() {
             onChange={(e) => setTopic(e.target.value)}
             maxLength={500}
             disabled={isDisabled}
-            className="text-sm"
+            className="text-sm w-full min-w-0"
           />
           <p className="text-xs text-muted-foreground">
             {topic.length}/500 characters
@@ -130,16 +130,18 @@ export function VideoCreator() {
           <Label htmlFor="duration" className="text-sm font-bold">
             Duration: {duration} seconds
           </Label>
-          <Slider
-            id="duration"
-            min={30}
-            max={90}
-            step={5}
-            value={[duration]}
-            onValueChange={(value) => setDuration(value[0])}
-            disabled={isDisabled}
-            className="w-full"
-          />
+          <div className="overflow-x-hidden px-1">
+            <Slider
+              id="duration"
+              min={30}
+              max={90}
+              step={5}
+              value={[duration]}
+              onValueChange={(value) => setDuration(value[0])}
+              disabled={isDisabled}
+              className="w-full max-w-full"
+            />
+          </div>
           <p className="text-xs text-muted-foreground">
             Recommended: 60 seconds for optimal engagement
           </p>

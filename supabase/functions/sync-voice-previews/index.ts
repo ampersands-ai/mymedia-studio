@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const TOP_VOICES = [
+  { id: '9BWtsMINqrJLrRacOk9x', name: 'Aria' },
   { id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger' },
   { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah' },
   { id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura' },
@@ -15,6 +16,7 @@ const TOP_VOICES = [
   { id: 'N2lVS1w4EtoT3dr4eOWO', name: 'Callum' },
   { id: 'SAz9YHcvj6GT2YYXdXww', name: 'River' },
   { id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Liam' },
+  { id: 'XB0fDUnXU5powFXDhCwa', name: 'Charlotte' },
   { id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice' },
   { id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda' },
   { id: 'bIHbv24MWmeRgasZH58o', name: 'Will' },

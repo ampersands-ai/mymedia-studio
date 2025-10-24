@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Play, Pause, Check, Search, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Play, Pause, Check, Search, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { getVoicePreviewUrl } from '@/lib/storage-utils';
 import { toast } from 'sonner';
 
-export interface Voice {
+interface Voice {
   voice_id: string;
   name: string;
   preview_url?: string;
@@ -24,8 +24,9 @@ export interface Voice {
   };
 }
 
-// Fallback voices with Supabase Storage preview URLs - only voices with working previews
-export const FALLBACK_VOICES: Voice[] = [
+// Fallback voices with Supabase Storage preview URLs
+const FALLBACK_VOICES: Voice[] = [
+  { voice_id: '9BWtsMINqrJLrRacOk9x', name: 'Aria', preview_url: getVoicePreviewUrl('9BWtsMINqrJLrRacOk9x'), labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
   { voice_id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger', preview_url: getVoicePreviewUrl('CwhRBWXzGAHq8TQ4Fs17'), labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
   { voice_id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', preview_url: getVoicePreviewUrl('EXAVITQu4vr4xnSDxMaL'), labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
   { voice_id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura', preview_url: getVoicePreviewUrl('FGY2WhTYpPnrIDTdsKH5'), labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
@@ -34,6 +35,7 @@ export const FALLBACK_VOICES: Voice[] = [
   { voice_id: 'N2lVS1w4EtoT3dr4eOWO', name: 'Callum', preview_url: getVoicePreviewUrl('N2lVS1w4EtoT3dr4eOWO'), labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
   { voice_id: 'SAz9YHcvj6GT2YYXdXww', name: 'River', preview_url: getVoicePreviewUrl('SAz9YHcvj6GT2YYXdXww'), labels: { gender: 'neutral', accent: 'American', use_case: 'narration' } },
   { voice_id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Liam', preview_url: getVoicePreviewUrl('TX3LPaxmHKxFdv7VOQHJ'), labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'XB0fDUnXU5powFXDhCwa', name: 'Charlotte', preview_url: getVoicePreviewUrl('XB0fDUnXU5powFXDhCwa'), labels: { gender: 'female', accent: 'British', use_case: 'narration' } },
   { voice_id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', preview_url: getVoicePreviewUrl('Xb7hH8MSUJpSbSDYk0k2'), labels: { gender: 'female', accent: 'British', use_case: 'narration' } },
   { voice_id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda', preview_url: getVoicePreviewUrl('XrExE9yKIg1WjnnlVkGX'), labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
   { voice_id: 'bIHbv24MWmeRgasZH58o', name: 'Will', preview_url: getVoicePreviewUrl('bIHbv24MWmeRgasZH58o'), labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
@@ -47,24 +49,53 @@ export const FALLBACK_VOICES: Voice[] = [
 ];
 
 interface VoiceBrowserProps {
-  voices: Voice[];
-  voicesLoading: boolean;
   selectedVoiceId?: string;
   onSelectVoice: (voiceId: string, voiceName: string) => void;
 }
 
-export function VoiceBrowser({ voices, voicesLoading, selectedVoiceId, onSelectVoice }: VoiceBrowserProps) {
-  console.log('🎤 VoiceBrowser mounted with', voices.length, 'voices');
-  
+export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserProps) {
+  const [voices, setVoices] = useState<Voice[]>([]);
   const [filteredVoices, setFilteredVoices] = useState<Voice[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    fetchVoices();
+  }, []);
+
+  useEffect(() => {
     filterVoices();
   }, [searchQuery, selectedFilter, voices]);
+
+  const fetchVoices = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-voices');
+      
+      if (error) throw error;
+      
+      if (data?.voices && Array.isArray(data.voices) && data.voices.length > 0) {
+        setVoices(data.voices);
+        setFilteredVoices(data.voices);
+      } else {
+        // Use fallback voices if API fails or returns empty
+        console.warn('Using fallback voices');
+        setVoices(FALLBACK_VOICES);
+        setFilteredVoices(FALLBACK_VOICES);
+        toast.info('Using default voice library');
+      }
+    } catch (error: any) {
+      console.error('Error fetching voices:', error);
+      // Use fallback voices on error
+      setVoices(FALLBACK_VOICES);
+      setFilteredVoices(FALLBACK_VOICES);
+      toast.error('Using default voices - preview unavailable');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filterVoices = () => {
     let filtered = voices;
@@ -144,52 +175,8 @@ export function VoiceBrowser({ voices, voicesLoading, selectedVoiceId, onSelectV
     { label: 'Narration', value: 'narration' },
   ];
 
-  console.log('🎨 Rendering VoiceBrowser:', { 
-    voicesLoading, 
-    voicesCount: voices.length, 
-    filteredCount: filteredVoices.length 
-  });
-
-  // Loading state
-  if (voicesLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Loading voices...</p>
-      </div>
-    );
-  }
-
-  // Empty state after filtering
-  if (filteredVoices.length === 0) {
-    return (
-      <div className="space-y-3 md:space-y-4">
-        <div className="flex gap-2 items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Search voices..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 text-sm"
-            />
-          </div>
-        </div>
-        <div className="flex flex-col items-center justify-center py-12 space-y-4">
-          <AlertCircle className="h-12 w-12 text-muted-foreground" />
-          <p className="text-center text-muted-foreground">
-            No voices match your filters
-          </p>
-          <Button onClick={() => { setSearchQuery(''); setSelectedFilter('all'); }} variant="outline" size="sm">
-            Clear Filters
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-3 md:space-y-4 w-full">
+    <div className="space-y-3 md:space-y-4">
       <div className="flex gap-2 items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -216,9 +203,14 @@ export function VoiceBrowser({ voices, voicesLoading, selectedVoiceId, onSelectV
         ))}
       </div>
 
-      <ScrollArea className="h-[400px] max-h-[60vh] w-full">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pr-2 md:pr-4">
-          {filteredVoices.map(voice => (
+      <ScrollArea className="h-[400px] max-h-[60vh]">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 md:h-8 md:w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pr-2 md:pr-4">
+            {filteredVoices.map(voice => (
               <Card
                 key={voice.voice_id}
                 className={`cursor-pointer transition-all hover:shadow-lg ${
@@ -283,7 +275,8 @@ export function VoiceBrowser({ voices, voicesLoading, selectedVoiceId, onSelectV
                 </CardContent>
               </Card>
             ))}
-        </div>
+          </div>
+        )}
       </ScrollArea>
     </div>
   );

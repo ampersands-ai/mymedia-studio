@@ -48,47 +48,21 @@ export const useSignedUrlLazy = (
           if (pathMatch) {
             actualPath = pathMatch;
           }
-        } else if (storagePath.startsWith(`${bucket}/`)) {
-          // Handle: bucket/path (without leading slash)
-          actualPath = storagePath.substring(bucket.length + 1);
         }
-
-        console.debug('useSignedUrlLazy: storagePath:', storagePath);
-        console.debug('useSignedUrlLazy: actualPath:', actualPath);
 
         const url = await createSignedUrl(bucket, actualPath, 14400);
         
         if (!url) {
-          console.debug('useSignedUrlLazy: Signed URL failed, falling back to public URL');
-          // Fallback to public URL if signed URL generation fails
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${actualPath}`;
-          setSignedUrl(publicUrl);
-          setError(false);
-          console.debug('useSignedUrlLazy: Using public URL:', publicUrl);
+          setError(true);
+          setSignedUrl(null);
         } else {
           setSignedUrl(url);
           setError(false);
-          console.debug('useSignedUrlLazy: Using signed URL');
         }
       } catch (error) {
         console.error('Error fetching signed URL:', error);
-        // Fallback to public URL on error
-        try {
-          let actualPath = storagePath;
-          if (storagePath.startsWith(`${bucket}/`)) {
-            actualPath = storagePath.substring(bucket.length + 1);
-          }
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${actualPath}`;
-          setSignedUrl(publicUrl);
-          setError(false);
-          console.debug('useSignedUrlLazy: Error fallback to public URL:', publicUrl);
-        } catch (fallbackError) {
-          console.error('Fallback URL generation failed:', fallbackError);
-          setError(true);
-          setSignedUrl(null);
-        }
+        setError(true);
+        setSignedUrl(null);
       } finally {
         setIsLoading(false);
       }

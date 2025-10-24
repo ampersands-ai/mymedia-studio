@@ -46,12 +46,22 @@ serve(async (req) => {
 
     console.log(`Successfully fetched ${data.voices.length} voices`);
 
-    // Replace ElevenLabs preview URLs with Supabase Storage URLs
+    // Only add Supabase Storage preview URLs for voices that originally have previews
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-    const voicesWithLocalPreviews = data.voices.map((voice: any) => ({
-      ...voice,
-      preview_url: `${SUPABASE_URL}/storage/v1/object/public/voice-previews/${voice.voice_id}.mp3`
-    }));
+    const voicesWithLocalPreviews = data.voices.map((voice: any) => {
+      // Only replace preview URL if the voice originally had one
+      if (voice.preview_url) {
+        return {
+          ...voice,
+          preview_url: `${SUPABASE_URL}/storage/v1/object/public/voice-previews/${voice.voice_id}.mp3`
+        };
+      }
+      // Return voice without preview_url if it didn't have one
+      return {
+        ...voice,
+        preview_url: undefined
+      };
+    });
 
     return new Response(
       JSON.stringify({ voices: voicesWithLocalPreviews }),

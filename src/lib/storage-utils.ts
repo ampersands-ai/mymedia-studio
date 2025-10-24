@@ -47,3 +47,13 @@ export async function createSignedUrls(
 
   return signedUrls.filter((url): url is string => url !== null);
 }
+
+/**
+ * Get the public URL for a voice preview from Supabase Storage
+ * @param voiceId - ElevenLabs voice ID
+ * @returns Public URL to the voice preview audio file
+ */
+export function getVoicePreviewUrl(voiceId: string): string {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  return `${supabaseUrl}/storage/v1/object/public/voice-previews/${voiceId}.mp3`;
+}

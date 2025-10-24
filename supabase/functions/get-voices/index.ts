@@ -46,8 +46,15 @@ serve(async (req) => {
 
     console.log(`Successfully fetched ${data.voices.length} voices`);
 
+    // Replace ElevenLabs preview URLs with Supabase Storage URLs
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const voicesWithLocalPreviews = data.voices.map((voice: any) => ({
+      ...voice,
+      preview_url: `${SUPABASE_URL}/storage/v1/object/public/voice-previews/${voice.voice_id}.mp3`
+    }));
+
     return new Response(
-      JSON.stringify({ voices: data.voices }),
+      JSON.stringify({ voices: voicesWithLocalPreviews }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {

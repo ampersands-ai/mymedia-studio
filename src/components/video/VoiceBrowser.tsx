@@ -24,9 +24,8 @@ interface Voice {
   };
 }
 
-// Fallback voices with Supabase Storage preview URLs
+// Fallback voices with Supabase Storage preview URLs - only voices with working previews
 const FALLBACK_VOICES: Voice[] = [
-  { voice_id: '9BWtsMINqrJLrRacOk9x', name: 'Aria', preview_url: getVoicePreviewUrl('9BWtsMINqrJLrRacOk9x'), labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
   { voice_id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger', preview_url: getVoicePreviewUrl('CwhRBWXzGAHq8TQ4Fs17'), labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
   { voice_id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', preview_url: getVoicePreviewUrl('EXAVITQu4vr4xnSDxMaL'), labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
   { voice_id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura', preview_url: getVoicePreviewUrl('FGY2WhTYpPnrIDTdsKH5'), labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
@@ -35,7 +34,6 @@ const FALLBACK_VOICES: Voice[] = [
   { voice_id: 'N2lVS1w4EtoT3dr4eOWO', name: 'Callum', preview_url: getVoicePreviewUrl('N2lVS1w4EtoT3dr4eOWO'), labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
   { voice_id: 'SAz9YHcvj6GT2YYXdXww', name: 'River', preview_url: getVoicePreviewUrl('SAz9YHcvj6GT2YYXdXww'), labels: { gender: 'neutral', accent: 'American', use_case: 'narration' } },
   { voice_id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Liam', preview_url: getVoicePreviewUrl('TX3LPaxmHKxFdv7VOQHJ'), labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'XB0fDUnXU5powFXDhCwa', name: 'Charlotte', preview_url: getVoicePreviewUrl('XB0fDUnXU5powFXDhCwa'), labels: { gender: 'female', accent: 'British', use_case: 'narration' } },
   { voice_id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', preview_url: getVoicePreviewUrl('Xb7hH8MSUJpSbSDYk0k2'), labels: { gender: 'female', accent: 'British', use_case: 'narration' } },
   { voice_id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda', preview_url: getVoicePreviewUrl('XrExE9yKIg1WjnnlVkGX'), labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
   { voice_id: 'bIHbv24MWmeRgasZH58o', name: 'Will', preview_url: getVoicePreviewUrl('bIHbv24MWmeRgasZH58o'), labels: { gender: 'male', accent: 'American', use_case: 'narration' } },

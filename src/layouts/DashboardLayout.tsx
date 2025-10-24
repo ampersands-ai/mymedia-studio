@@ -94,7 +94,7 @@ export const DashboardLayout = () => {
                   )}
                 >
                   <Video className="h-5 w-5 mr-2" />
-                  Video Creator
+                  Faceless Videos
                 </Button>
               </Link>
             </nav>

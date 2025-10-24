@@ -13,7 +13,7 @@ export default function VideoStudio() {
               <Video className="h-8 w-8 text-primary" />
             </div>
             <h1 className="text-4xl md:text-5xl font-black">
-              FACELESS VIDEO CREATOR
+              FACELESS VIDEOS
             </h1>
           </div>
           <p className="text-lg text-muted-foreground">

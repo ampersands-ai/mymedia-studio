@@ -11,8 +11,11 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let job_id: string | undefined;
+
   try {
-    const { job_id } = await req.json();
+    const { job_id: jobIdParam } = await req.json();
+    job_id = jobIdParam;
 
     if (!job_id) {
       throw new Error('job_id is required');
@@ -93,25 +96,33 @@ serve(async (req) => {
   } catch (error: any) {
     console.error('Error in process-video-job:', error);
     
-    // Update job as failed
-    if (error.job_id) {
-      const supabaseClient = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
-      
-      await supabaseClient
-        .from('video_jobs')
-        .update({
-          status: 'failed',
-          error_message: error.message,
-          error_details: { error: error.message, stack: error.stack }
-        })
-        .eq('id', error.job_id);
+    // Update job as failed if we have a job_id
+    if (job_id) {
+      try {
+        const supabaseClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+        
+        await supabaseClient
+          .from('video_jobs')
+          .update({
+            status: 'failed',
+            error_message: error.message || 'Unknown error occurred',
+            error_details: { 
+              error: error.message,
+              stack: error.stack,
+              timestamp: new Date().toISOString()
+            }
+          })
+          .eq('id', job_id);
+      } catch (updateError) {
+        console.error('Failed to update job status:', updateError);
+      }
     }
 
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message || 'Unknown error occurred' }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -189,8 +200,29 @@ async function generateVoiceover(script: string, voiceId: string): Promise<Blob>
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`ElevenLabs error: ${error}`);
+    const errorText = await response.text();
+    console.error('ElevenLabs API error:', response.status, errorText);
+    
+    // Try to parse error response
+    let errorDetails: any = {};
+    try {
+      errorDetails = JSON.parse(errorText);
+    } catch {
+      errorDetails = { message: errorText };
+    }
+
+    // Detect specific error types
+    const errorMessage = errorDetails.detail?.message || errorDetails.message || errorText;
+    
+    if (errorMessage.includes('detected_unusual_activity') || errorMessage.includes('Free Tier usage disabled')) {
+      throw new Error('ElevenLabs API key has been restricted due to unusual activity. Please upgrade to a paid plan or use a different API key.');
+    } else if (errorMessage.includes('quota') || errorMessage.includes('limit')) {
+      throw new Error('ElevenLabs API quota exceeded. Please check your account limits.');
+    } else if (errorMessage.includes('invalid') || errorMessage.includes('unauthorized')) {
+      throw new Error('Invalid ElevenLabs API key. Please check your configuration.');
+    }
+    
+    throw new Error(`ElevenLabs error: ${errorMessage}`);
   }
 
   return await response.blob();

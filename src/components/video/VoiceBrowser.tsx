@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Play, Pause, Check, Search, Loader2 } from 'lucide-react';
+import { Play, Pause, Check, Search, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { getVoicePreviewUrl } from '@/lib/storage-utils';
 import { toast } from 'sonner';
@@ -52,15 +52,19 @@ interface VoiceBrowserProps {
 }
 
 export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserProps) {
+  console.log('🎤 VoiceBrowser component mounted');
+  
   const [voices, setVoices] = useState<Voice[]>([]);
   const [filteredVoices, setFilteredVoices] = useState<Voice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    console.log('🔄 Fetching voices on mount');
     fetchVoices();
   }, []);
 
@@ -69,8 +73,14 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
   }, [searchQuery, selectedFilter, voices]);
 
   const fetchVoices = async () => {
+    console.log('📞 Starting voice fetch from API...');
+    setLoading(true);
+    setError(null);
+    
     try {
       const { data, error } = await supabase.functions.invoke('get-voices');
+      
+      console.log('📥 API Response:', { hasData: !!data, error: error?.message });
       
       if (error) throw error;
       
@@ -123,12 +133,14 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
         toast.info('Using default voice library');
       }
     } catch (error: any) {
-      console.error('Error fetching voices:', error);
+      console.error('❌ Error fetching voices:', error);
+      setError(error.message || 'Failed to load voices');
       // Use fallback voices on error
       setVoices(FALLBACK_VOICES);
       setFilteredVoices(FALLBACK_VOICES);
       toast.error('Using default voices');
     } finally {
+      console.log('✅ Voice fetch complete');
       setLoading(false);
     }
   };
@@ -211,8 +223,70 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
     { label: 'Narration', value: 'narration' },
   ];
 
+  console.log('🎨 Rendering VoiceBrowser:', { 
+    loading, 
+    error, 
+    voicesCount: voices.length, 
+    filteredCount: filteredVoices.length 
+  });
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Loading voices...</p>
+      </div>
+    );
+  }
+
+  // Error state with retry
+  if (error && filteredVoices.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+        <AlertCircle className="h-12 w-12 text-destructive" />
+        <div className="text-center space-y-2">
+          <p className="font-semibold">Failed to load voices</p>
+          <p className="text-sm text-muted-foreground">{error}</p>
+        </div>
+        <Button onClick={fetchVoices} variant="outline">
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  // Empty state after filtering
+  if (filteredVoices.length === 0) {
+    return (
+      <div className="space-y-3 md:space-y-4">
+        <div className="flex gap-2 items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Input
+              placeholder="Search voices..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 text-sm"
+            />
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center py-12 space-y-4">
+          <AlertCircle className="h-12 w-12 text-muted-foreground" />
+          <p className="text-center text-muted-foreground">
+            No voices match your filters
+          </p>
+          <Button onClick={() => { setSearchQuery(''); setSelectedFilter('all'); }} variant="outline" size="sm">
+            Clear Filters
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-3 md:space-y-4">
+    <div className="space-y-3 md:space-y-4 w-full">
       <div className="flex gap-2 items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -239,14 +313,9 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
         ))}
       </div>
 
-      <ScrollArea className="h-[400px] max-h-[60vh]">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 md:h-8 md:w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pr-2 md:pr-4">
-            {filteredVoices.map(voice => (
+      <ScrollArea className="h-[400px] max-h-[60vh] w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pr-2 md:pr-4">
+          {filteredVoices.map(voice => (
               <Card
                 key={voice.voice_id}
                 className={`cursor-pointer transition-all hover:shadow-lg ${
@@ -311,8 +380,7 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
                 </CardContent>
               </Card>
             ))}
-          </div>
-        )}
+        </div>
       </ScrollArea>
     </div>
   );

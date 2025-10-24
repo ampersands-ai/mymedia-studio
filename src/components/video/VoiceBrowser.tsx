@@ -77,8 +77,20 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
       if (error) throw error;
       
       if (data?.voices && Array.isArray(data.voices) && data.voices.length > 0) {
-        setVoices(data.voices);
-        setFilteredVoices(data.voices);
+        // Filter to only voices with valid preview URLs
+        const voicesWithPreviews = data.voices.filter(v => v.preview_url && v.preview_url.length > 0);
+        console.log(`Filtered ${data.voices.length} voices to ${voicesWithPreviews.length} with previews`);
+        
+        if (voicesWithPreviews.length > 0) {
+          setVoices(voicesWithPreviews);
+          setFilteredVoices(voicesWithPreviews);
+        } else {
+          // Use fallback if all voices lack previews
+          console.warn('No voices with previews, using fallback');
+          setVoices(FALLBACK_VOICES);
+          setFilteredVoices(FALLBACK_VOICES);
+          toast.info('Using default voice library');
+        }
       } else {
         // Use fallback voices if API fails or returns empty
         console.warn('Using fallback voices');

@@ -70,6 +70,18 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     { immediate: true }
   );
 
+  // Diagnostic logging for voiceover review
+  useEffect(() => {
+    if (job.status === 'awaiting_voice_approval') {
+      console.log('=== VOICEOVER REVIEW DEBUG ===');
+      console.log('Job status:', job.status);
+      console.log('Voiceover URL:', job.voiceover_url);
+      console.log('Signed URL:', voiceoverSignedUrl);
+      console.log('Is loading signed URL:', isLoadingVoiceUrl);
+      console.log('==============================');
+    }
+  }, [job.status, job.voiceover_url, voiceoverSignedUrl, isLoadingVoiceUrl]);
+
   useEffect(() => {
     setEditedScript(job.script || '');
   }, [job.script]);

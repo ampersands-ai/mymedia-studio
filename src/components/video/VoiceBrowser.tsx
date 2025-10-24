@@ -11,8 +11,8 @@ import { toast } from 'sonner';
 interface Voice {
   voice_id: string;
   name: string;
-  preview_url: string;
-  category: string;
+  preview_url?: string;
+  category?: string;
   description?: string;
   labels: {
     accent?: string;
@@ -22,6 +22,30 @@ interface Voice {
     use_case?: string;
   };
 }
+
+// Fallback voices from ElevenLabs default library
+const FALLBACK_VOICES: Voice[] = [
+  { voice_id: '9BWtsMINqrJLrRacOk9x', name: 'Aria', labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura', labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', labels: { gender: 'male', accent: 'British', use_case: 'conversational' } },
+  { voice_id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', labels: { gender: 'male', accent: 'British', use_case: 'narration' } },
+  { voice_id: 'N2lVS1w4EtoT3dr4eOWO', name: 'Callum', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'SAz9YHcvj6GT2YYXdXww', name: 'River', labels: { gender: 'neutral', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Liam', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'XB0fDUnXU5powFXDhCwa', name: 'Charlotte', labels: { gender: 'female', accent: 'British', use_case: 'narration' } },
+  { voice_id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', labels: { gender: 'female', accent: 'British', use_case: 'narration' } },
+  { voice_id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda', labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'bIHbv24MWmeRgasZH58o', name: 'Will', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'cgSgspJ2msm6clMCkdW9', name: 'Jessica', labels: { gender: 'female', accent: 'American', use_case: 'conversational' } },
+  { voice_id: 'cjVigY5qzO86Huf0OWal', name: 'Eric', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'iP95p4xoKVk53GoZ742B', name: 'Chris', labels: { gender: 'male', accent: 'American', use_case: 'conversational' } },
+  { voice_id: 'nPczCjzI2devNBz1zQrb', name: 'Brian', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', labels: { gender: 'male', accent: 'British', use_case: 'narration' } },
+  { voice_id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily', labels: { gender: 'female', accent: 'British', use_case: 'narration' } },
+  { voice_id: 'pqHfZKP75CvOlQylNhV4', name: 'Bill', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
+];
 
 interface VoiceBrowserProps {
   selectedVoiceId?: string;
@@ -50,13 +74,23 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
       const { data, error } = await supabase.functions.invoke('get-voices');
       
       if (error) throw error;
-      if (data.error) throw new Error(data.error);
       
-      setVoices(data.voices || []);
-      setFilteredVoices(data.voices || []);
+      if (data?.voices && Array.isArray(data.voices) && data.voices.length > 0) {
+        setVoices(data.voices);
+        setFilteredVoices(data.voices);
+      } else {
+        // Use fallback voices if API fails or returns empty
+        console.warn('Using fallback voices');
+        setVoices(FALLBACK_VOICES);
+        setFilteredVoices(FALLBACK_VOICES);
+        toast.info('Using default voice library');
+      }
     } catch (error: any) {
       console.error('Error fetching voices:', error);
-      toast.error(error.message || 'Failed to load voices');
+      // Use fallback voices on error
+      setVoices(FALLBACK_VOICES);
+      setFilteredVoices(FALLBACK_VOICES);
+      toast.error('Using default voices - preview unavailable');
     } finally {
       setLoading(false);
     }
@@ -96,23 +130,25 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
         return;
       }
 
+      if (!voice.preview_url) {
+        toast.error('Preview not available for this voice');
+        return;
+      }
+
       setPlayingVoiceId(voice.voice_id);
 
-      if (voice.preview_url) {
-        const audio = new Audio(voice.preview_url);
-        audioRef.current = audio;
-        
-        audio.onended = () => setPlayingVoiceId(null);
-        audio.onerror = () => {
-          setPlayingVoiceId(null);
-          toast.error('Failed to play preview');
-        };
-        
-        await audio.play();
-      }
+      const audio = new Audio(voice.preview_url);
+      audioRef.current = audio;
+      
+      audio.onended = () => setPlayingVoiceId(null);
+      audio.onerror = () => {
+        setPlayingVoiceId(null);
+        toast.error('Preview unavailable');
+      };
+      
+      await audio.play();
     } catch (error) {
       setPlayingVoiceId(null);
-      toast.error('Failed to play preview');
     }
   };
 
@@ -164,7 +200,7 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
         ))}
       </div>
 
-      <ScrollArea className="h-[50vh] md:h-[500px]">
+      <ScrollArea className="h-[400px] max-h-[60vh]">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-6 w-6 md:h-8 md:w-8 animate-spin text-muted-foreground" />
@@ -204,29 +240,31 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
                   </div>
 
                   <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => playVoicePreview(voice)}
-                      className="flex-1 text-xs md:text-sm"
-                    >
-                      {playingVoiceId === voice.voice_id ? (
-                        <>
-                          <Pause className="w-3 h-3 md:w-4 md:h-4 mr-1.5 md:mr-2" />
-                          Pause
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-3 h-3 md:w-4 md:h-4 mr-1.5 md:mr-2" />
-                          Preview
-                        </>
-                      )}
-                    </Button>
+                    {voice.preview_url && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => playVoicePreview(voice)}
+                        className="flex-1 text-xs md:text-sm"
+                      >
+                        {playingVoiceId === voice.voice_id ? (
+                          <>
+                            <Pause className="w-3 h-3 md:w-4 md:h-4 mr-1.5 md:mr-2" />
+                            Pause
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-3 h-3 md:w-4 md:h-4 mr-1.5 md:mr-2" />
+                            Preview
+                          </>
+                        )}
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       onClick={() => onSelectVoice(voice.voice_id, voice.name)}
                       disabled={selectedVoiceId === voice.voice_id}
-                      className="text-xs md:text-sm"
+                      className={`text-xs md:text-sm ${!voice.preview_url ? 'flex-1' : ''}`}
                     >
                       {selectedVoiceId === voice.voice_id ? 'Selected' : 'Select'}
                     </Button>

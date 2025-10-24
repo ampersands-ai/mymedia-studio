@@ -179,7 +179,7 @@ export function VideoCreator() {
                 {voiceName}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-3xl lg:max-w-4xl max-h-[85vh] overflow-hidden">
+            <DialogContent className="max-w-[95vw] sm:max-w-3xl lg:max-w-4xl flex flex-col max-h-[90vh]">
               <DialogHeader>
                 <DialogTitle className="text-lg md:text-xl">Choose a Voice</DialogTitle>
               </DialogHeader>

@@ -5,16 +5,21 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Coins, Sparkles } from 'lucide-react';
+import { Loader2, Coins, Sparkles, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { VoiceBrowser } from './VoiceBrowser';
 
 export function VideoCreator() {
   const [topic, setTopic] = useState('');
   const [duration, setDuration] = useState(60);
   const [style, setStyle] = useState('modern');
+  const [voiceId, setVoiceId] = useState('21m00Tcm4TlvDq8ikWAM');
+  const [voiceName, setVoiceName] = useState('Rachel');
+  const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
   const [isGeneratingTopic, setIsGeneratingTopic] = useState(false);
   const { createJob, isCreating } = useVideoJobs();
   const { data: tokens } = useUserTokens();
@@ -39,6 +44,13 @@ export function VideoCreator() {
     }
   };
 
+  const handleSelectVoice = (id: string, name: string) => {
+    setVoiceId(id);
+    setVoiceName(name);
+    setVoiceDialogOpen(false);
+    toast.success(`Voice changed to ${name}`);
+  };
+
   const handleCreate = async () => {
     if (!topic.trim()) {
       return;
@@ -48,12 +60,16 @@ export function VideoCreator() {
       topic: topic.trim(),
       duration,
       style: style as any,
+      voice_id: voiceId,
+      voice_name: voiceName,
     });
 
     // Reset form on success
     setTopic('');
     setDuration(60);
     setStyle('modern');
+    setVoiceId('21m00Tcm4TlvDq8ikWAM');
+    setVoiceName('Rachel');
   };
 
   const canAfford = (tokens?.tokens_remaining ?? 0) >= 15;
@@ -141,6 +157,36 @@ export function VideoCreator() {
               <SelectItem value="dramatic">🎬 Dramatic - Cinematic & Bold</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-sm font-bold">
+            Voiceover
+          </Label>
+          <Dialog open={voiceDialogOpen} onOpenChange={setVoiceDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                disabled={isDisabled}
+              >
+                <Volume2 className="w-4 h-4 mr-2" />
+                {voiceName}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh]">
+              <DialogHeader>
+                <DialogTitle>Choose a Voice</DialogTitle>
+              </DialogHeader>
+              <VoiceBrowser
+                selectedVoiceId={voiceId}
+                onSelectVoice={handleSelectVoice}
+              />
+            </DialogContent>
+          </Dialog>
+          <p className="text-xs text-muted-foreground">
+            Browse and preview professional AI voices
+          </p>
         </div>
 
         <div className="rounded-lg border-2 border-primary/20 bg-primary/5 p-4">

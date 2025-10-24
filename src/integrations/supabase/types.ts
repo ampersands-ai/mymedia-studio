@@ -861,6 +861,7 @@ export type Database = {
           updated_at: string
           user_id: string
           voice_id: string
+          voice_name: string | null
           voiceover_url: string | null
         }
         Insert: {
@@ -882,6 +883,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           voice_id?: string
+          voice_name?: string | null
           voiceover_url?: string | null
         }
         Update: {
@@ -903,6 +905,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           voice_id?: string
+          voice_name?: string | null
           voiceover_url?: string | null
         }
         Relationships: []

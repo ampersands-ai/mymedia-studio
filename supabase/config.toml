@@ -56,3 +56,6 @@ verify_jwt = true
 
 [functions.generate-video-topic]
 verify_jwt = true
+
+[functions.get-voices]
+verify_jwt = true

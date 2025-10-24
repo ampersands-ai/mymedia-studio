@@ -62,6 +62,12 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
               <span>{job.duration}s</span>
               <span>•</span>
               <span className="capitalize">{job.style}</span>
+              {job.voice_name && (
+                <>
+                  <span>•</span>
+                  <span>🎙️ {job.voice_name}</span>
+                </>
+              )}
             </div>
           </div>
           <Badge className={`${getStatusColor(job.status)} text-white shrink-0`}>

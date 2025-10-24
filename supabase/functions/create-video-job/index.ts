@@ -27,7 +27,7 @@ serve(async (req) => {
     }
 
     // Parse and validate input
-    const { topic, duration = 60, style = 'modern', voice_id = '21m00Tcm4TlvDq8ikWAM' } = await req.json();
+    const { topic, duration = 60, style = 'modern', voice_id = '21m00Tcm4TlvDq8ikWAM', voice_name = 'Rachel' } = await req.json();
 
     if (!topic || topic.trim().length < 5) {
       throw new Error('Topic must be at least 5 characters');
@@ -73,6 +73,7 @@ serve(async (req) => {
         duration,
         style,
         voice_id,
+        voice_name,
         status: 'pending',
       })
       .select()

@@ -6,6 +6,7 @@ export interface VideoJobInput {
   duration: number;
   style?: 'modern' | 'tech' | 'educational' | 'dramatic';
   voice_id?: string;
+  voice_name?: string;
 }
 
 export interface VideoJob {
@@ -16,6 +17,7 @@ export interface VideoJob {
   duration: number;
   style: string;
   voice_id: string;
+  voice_name?: string;
   script?: string;
   voiceover_url?: string;
   background_video_url?: string;

@@ -340,9 +340,77 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string) 
     console.log(`Job ${jobId} render status: ${status}`);
 
     if (status === 'done' && result.response.url) {
+      const videoUrl = result.response.url;
+      
+      // Get job details to create generation
+      const { data: job } = await supabase
+        .from('video_jobs')
+        .select('user_id, topic, duration, style, voice_id')
+        .eq('id', jobId)
+        .single();
+      
+      if (job) {
+        try {
+          // Download video from Shotstack
+          console.log('Downloading video from Shotstack...');
+          const videoResponse = await fetch(videoUrl);
+          if (!videoResponse.ok) {
+            throw new Error('Failed to download video from Shotstack');
+          }
+          
+          const videoBlob = await videoResponse.blob();
+          const videoBuffer = await videoBlob.arrayBuffer();
+          const videoData = new Uint8Array(videoBuffer);
+          
+          // Upload to generated-content bucket
+          const videoPath = `${job.user_id}/${new Date().toISOString().split('T')[0]}/${jobId}.mp4`;
+          console.log('Uploading video to storage:', videoPath);
+          
+          const { error: uploadError } = await supabase.storage
+            .from('generated-content')
+            .upload(videoPath, videoData, {
+              contentType: 'video/mp4',
+              upsert: true
+            });
+          
+          if (uploadError) {
+            console.error('Storage upload error:', uploadError);
+            throw uploadError;
+          }
+          
+          // Create generation record
+          console.log('Creating generation record...');
+          const { error: genError } = await supabase.from('generations').insert({
+            user_id: job.user_id,
+            type: 'video',
+            prompt: `Faceless Video: ${job.topic}`,
+            status: 'completed',
+            tokens_used: 15,
+            storage_path: videoPath,
+            model_id: 'faceless-video-generator',
+            file_size_bytes: videoData.length,
+            settings: {
+              duration: job.duration,
+              style: job.style,
+              voice_id: job.voice_id,
+              video_job_id: jobId
+            }
+          });
+          
+          if (genError) {
+            console.error('Generation insert error:', genError);
+          } else {
+            console.log('Generation record created successfully');
+          }
+        } catch (error) {
+          console.error('Error creating generation record:', error);
+          // Don't fail the job if generation creation fails
+        }
+      }
+      
       await supabase.from('video_jobs').update({
         status: 'completed',
-        final_video_url: result.response.url,
+        final_video_url: videoUrl,
         completed_at: new Date().toISOString()
       }).eq('id', jobId);
       return;

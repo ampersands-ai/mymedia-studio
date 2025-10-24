@@ -7,14 +7,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Slider } from '@/components/ui/slider';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { Loader2, Coins } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Loader2, Coins, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function VideoCreator() {
   const [topic, setTopic] = useState('');
   const [duration, setDuration] = useState(60);
   const [style, setStyle] = useState('modern');
+  const [isGeneratingTopic, setIsGeneratingTopic] = useState(false);
   const { createJob, isCreating } = useVideoJobs();
   const { data: tokens } = useUserTokens();
+
+  const handleSurpriseMe = async () => {
+    setIsGeneratingTopic(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-video-topic');
+      
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+      
+      if (data.topic) {
+        setTopic(data.topic);
+        toast.success('✨ Creative topic generated!');
+      }
+    } catch (error: any) {
+      console.error('Error generating topic:', error);
+      toast.error(error.message || 'Failed to generate topic');
+    } finally {
+      setIsGeneratingTopic(false);
+    }
+  };
 
   const handleCreate = async () => {
     if (!topic.trim()) {
@@ -34,6 +57,7 @@ export function VideoCreator() {
   };
 
   const canAfford = (tokens?.tokens_remaining ?? 0) >= 15;
+  const isDisabled = isCreating || isGeneratingTopic;
 
   return (
     <Card className="border-2">
@@ -45,16 +69,38 @@ export function VideoCreator() {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="topic" className="text-sm font-bold">
-            Video Topic *
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="topic" className="text-sm font-bold">
+              Video Topic *
+            </Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleSurpriseMe}
+              disabled={isDisabled}
+              className="h-8"
+            >
+              {isGeneratingTopic ? (
+                <>
+                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-3 w-3" />
+                  Surprise Me
+                </>
+              )}
+            </Button>
+          </div>
           <Input
             id="topic"
             placeholder="e.g., Top 5 AI tools for productivity in 2025"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             maxLength={500}
-            disabled={isCreating}
+            disabled={isDisabled}
           />
           <p className="text-xs text-muted-foreground">
             {topic.length}/500 characters
@@ -72,7 +118,7 @@ export function VideoCreator() {
             step={5}
             value={[duration]}
             onValueChange={(value) => setDuration(value[0])}
-            disabled={isCreating}
+            disabled={isDisabled}
             className="w-full"
           />
           <p className="text-xs text-muted-foreground">
@@ -84,7 +130,7 @@ export function VideoCreator() {
           <Label htmlFor="style" className="text-sm font-bold">
             Video Style
           </Label>
-          <Select value={style} onValueChange={setStyle} disabled={isCreating}>
+          <Select value={style} onValueChange={setStyle} disabled={isDisabled}>
             <SelectTrigger id="style">
               <SelectValue />
             </SelectTrigger>
@@ -116,7 +162,7 @@ export function VideoCreator() {
 
         <Button 
           onClick={handleCreate} 
-          disabled={isCreating || !topic.trim() || !canAfford}
+          disabled={isDisabled || !topic.trim() || !canAfford}
           className="w-full h-12 text-lg font-bold"
           size="lg"
         >

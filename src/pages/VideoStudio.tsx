@@ -23,10 +23,10 @@ export default function VideoStudio() {
 
         {/* Main Content */}
         <div className="grid lg:grid-cols-2 gap-8">
-          <div>
+          <div className="min-h-[600px] h-full">
             <VideoCreator />
           </div>
-          <div>
+          <div className="min-h-[600px] h-full">
             <VideoJobsList />
           </div>
         </div>

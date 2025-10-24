@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to upload voiceover: ${uploadError.message}`);
     }
 
-    const voiceoverPath = `video-assets/${voiceFileName}`;
+    const voiceoverPath = voiceFileName; // Just the filename for storage bucket path
 
     // Update job with voiceover URL and new status
     await supabaseClient

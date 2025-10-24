@@ -50,6 +50,7 @@ export const useSignedUrlLazy = (
           }
         }
 
+        console.log(`[useSignedUrlLazy] Fetching signed URL for bucket: ${bucket}, path: ${actualPath} (original: ${storagePath})`);
         const url = await createSignedUrl(bucket, actualPath, 14400);
         
         if (!url) {

@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, Download, Eye, Clock, AlertCircle, Play, XCircle, Volume2, Edit } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useState, useEffect } from 'react';
@@ -64,7 +65,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling } = useVideoJobs();
 
   // Fetch signed URL for voiceover (only when needed)
-  const { signedUrl: voiceoverSignedUrl, isLoading: isLoadingVoiceUrl } = useSignedUrlLazy(
+  const { signedUrl: voiceoverSignedUrl, isLoading: isLoadingVoiceUrl, error: voiceUrlError } = useSignedUrlLazy(
     job.status === 'awaiting_voice_approval' ? job.voiceover_url : null,
     'video-assets',
     { immediate: true }
@@ -240,6 +241,16 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
               </ScrollArea>
             </div>
 
+            {voiceUrlError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error Loading Audio</AlertTitle>
+                <AlertDescription>
+                  Could not load voiceover preview. You can still proceed with rendering the video.
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">Voiceover Preview:</label>
               <Button
@@ -247,7 +258,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                 variant="outline"
                 className="w-full"
                 onClick={handlePlayVoiceover}
-                disabled={isPlayingAudio || isLoadingVoiceUrl || !voiceoverSignedUrl}
+                disabled={isPlayingAudio || isLoadingVoiceUrl || !voiceoverSignedUrl || voiceUrlError}
               >
                 {isLoadingVoiceUrl ? (
                   <>

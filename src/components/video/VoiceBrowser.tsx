@@ -23,28 +23,28 @@ interface Voice {
   };
 }
 
-// Fallback voices from ElevenLabs default library
+// Fallback voices from ElevenLabs default library with preview URLs
 const FALLBACK_VOICES: Voice[] = [
-  { voice_id: '9BWtsMINqrJLrRacOk9x', name: 'Aria', labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura', labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', labels: { gender: 'male', accent: 'British', use_case: 'conversational' } },
-  { voice_id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', labels: { gender: 'male', accent: 'British', use_case: 'narration' } },
-  { voice_id: 'N2lVS1w4EtoT3dr4eOWO', name: 'Callum', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'SAz9YHcvj6GT2YYXdXww', name: 'River', labels: { gender: 'neutral', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Liam', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'XB0fDUnXU5powFXDhCwa', name: 'Charlotte', labels: { gender: 'female', accent: 'British', use_case: 'narration' } },
-  { voice_id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', labels: { gender: 'female', accent: 'British', use_case: 'narration' } },
-  { voice_id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda', labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'bIHbv24MWmeRgasZH58o', name: 'Will', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'cgSgspJ2msm6clMCkdW9', name: 'Jessica', labels: { gender: 'female', accent: 'American', use_case: 'conversational' } },
-  { voice_id: 'cjVigY5qzO86Huf0OWal', name: 'Eric', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'iP95p4xoKVk53GoZ742B', name: 'Chris', labels: { gender: 'male', accent: 'American', use_case: 'conversational' } },
-  { voice_id: 'nPczCjzI2devNBz1zQrb', name: 'Brian', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', labels: { gender: 'male', accent: 'British', use_case: 'narration' } },
-  { voice_id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily', labels: { gender: 'female', accent: 'British', use_case: 'narration' } },
-  { voice_id: 'pqHfZKP75CvOlQylNhV4', name: 'Bill', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
+  { voice_id: '9BWtsMINqrJLrRacOk9x', name: 'Aria', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/9BWtsMINqrJLrRacOk9x/df6788f9-5c96-470d-8312-aab3b3d8f50a.mp3', labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/CwhRBWXzGAHq8TQ4Fs17/1e535bf9-f393-4d3c-a0e3-91c5c1e510f8.mp3', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/EXAVITQu4vr4xnSDxMaL/4b3d6f97-9e2d-4d95-bb27-1e79c8cfae13.mp3', labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/FGY2WhTYpPnrIDTdsKH5/4d2fd738-3b3d-4368-957a-bb4805275bd9.mp3', labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/IKne3meq5aSn9XLyUdCD/102de6f2-22ed-43e0-a1f1-111fa75c5481.mp3', labels: { gender: 'male', accent: 'British', use_case: 'conversational' } },
+  { voice_id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/JBFqnCBsd6RMkjVDRZzb/e6206d1a-0721-4787-aafb-06a6e705cac5.mp3', labels: { gender: 'male', accent: 'British', use_case: 'narration' } },
+  { voice_id: 'N2lVS1w4EtoT3dr4eOWO', name: 'Callum', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/N2lVS1w4EtoT3dr4eOWO/ac833bd8-ffda-4938-9ebc-b0f99ca25481.mp3', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'SAz9YHcvj6GT2YYXdXww', name: 'River', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/SAz9YHcvj6GT2YYXdXww/99830aad-cd59-4d62-bb73-b3db1140f110.mp3', labels: { gender: 'neutral', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Liam', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/TX3LPaxmHKxFdv7VOQHJ/cb49bb5c-9f4a-4e31-9d79-c207b027c442.mp3', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'XB0fDUnXU5powFXDhCwa', name: 'Charlotte', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/XB0fDUnXU5powFXDhCwa/942356dc-f10d-4d89-bda5-4f8505ee038b.mp3', labels: { gender: 'female', accent: 'British', use_case: 'narration' } },
+  { voice_id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/Xb7hH8MSUJpSbSDYk0k2/56a97bf8-b69b-448f-846c-c3a11683d45a.mp3', labels: { gender: 'female', accent: 'British', use_case: 'narration' } },
+  { voice_id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/XrExE9yKIg1WjnnlVkGX/b9455fc4-4f37-45dc-9623-bb24ef7b7c1e.mp3', labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'bIHbv24MWmeRgasZH58o', name: 'Will', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/bIHbv24MWmeRgasZH58o/e3c2c188-fc2c-490e-a2d6-9ec7c7c8e98f.mp3', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'cgSgspJ2msm6clMCkdW9', name: 'Jessica', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/cgSgspJ2msm6clMCkdW9/819c34e7-ff1b-43db-bb65-f87d4c5e3c9f.mp3', labels: { gender: 'female', accent: 'American', use_case: 'conversational' } },
+  { voice_id: 'cjVigY5qzO86Huf0OWal', name: 'Eric', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/cjVigY5qzO86Huf0OWal/65a45b78-0007-4014-ae45-03fd1e14d316.mp3', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'iP95p4xoKVk53GoZ742B', name: 'Chris', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/iP95p4xoKVk53GoZ742B/e6d3d7a7-c083-4e9f-bb48-87918c27f9cc.mp3', labels: { gender: 'male', accent: 'American', use_case: 'conversational' } },
+  { voice_id: 'nPczCjzI2devNBz1zQrb', name: 'Brian', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/nPczCjzI2devNBz1zQrb/38f4c4ae-9f24-4422-ab6c-89c166bc5633.mp3', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
+  { voice_id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/onwK4e9ZLuTAKqWW03F9/1c4d417c-ba80-4de8-874a-a286cab7f776.mp3', labels: { gender: 'male', accent: 'British', use_case: 'narration' } },
+  { voice_id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/pFZP5JQG7iQjIQuC4Bku/4a2c33c0-da11-4489-9cd3-5718a174c60d.mp3', labels: { gender: 'female', accent: 'British', use_case: 'narration' } },
+  { voice_id: 'pqHfZKP75CvOlQylNhV4', name: 'Bill', preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/pqHfZKP75CvOlQylNhV4/3af8f718-2931-4de5-a812-787e619695c2.mp3', labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
 ];
 
 interface VoiceBrowserProps {

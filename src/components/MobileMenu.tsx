@@ -120,6 +120,60 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   <Video className="h-5 w-5" />
                   <span>Faceless Videos</span>
                 </button>
+
+                <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">RESOURCES</div>
+                
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/about") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/about")}
+                >
+                  <Info className="h-5 w-5" />
+                  <span>About</span>
+                </button>
+
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/blog") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/blog")}
+                >
+                  <BookOpen className="h-5 w-5" />
+                  <span>Blog</span>
+                </button>
+
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/faq") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/faq")}
+                >
+                  <HelpCircle className="h-5 w-5" />
+                  <span>FAQ</span>
+                </button>
+
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/community") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/community")}
+                >
+                  <Users className="h-5 w-5" />
+                  <span>Community</span>
+                </button>
               </>
             ) : (
               <>

@@ -70,8 +70,13 @@ export function useVideoJobs() {
   // Approve script mutation (with optional editing)
   const approveScript = useMutation({
     mutationFn: async ({ jobId, editedScript }: { jobId: string; editedScript?: string }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
       const { data, error } = await supabase.functions.invoke('approve-script', {
         body: { job_id: jobId, edited_script: editedScript },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
       });
       
       if (error) throw error;
@@ -90,8 +95,13 @@ export function useVideoJobs() {
   // Approve voiceover mutation
   const approveVoiceover = useMutation({
     mutationFn: async (jobId: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
       const { data, error } = await supabase.functions.invoke('approve-voiceover', {
         body: { job_id: jobId },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
       });
       
       if (error) throw error;

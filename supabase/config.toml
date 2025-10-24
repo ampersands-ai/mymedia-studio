@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.sync-voice-previews]
 verify_jwt = false
+
+[functions.approve-video-job]
+verify_jwt = true

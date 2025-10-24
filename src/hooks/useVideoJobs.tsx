@@ -67,10 +67,56 @@ export function useVideoJobs() {
     },
   });
 
+  // Approve video job mutation
+  const approveJob = useMutation({
+    mutationFn: async (jobId: string) => {
+      const { data, error } = await supabase.functions.invoke('approve-video-job', {
+        body: { job_id: jobId },
+      });
+      
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
+      toast.success('Video assembly started! This will take 2-3 more minutes.');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to approve video job');
+    },
+  });
+
+  // Cancel video job mutation
+  const cancelJob = useMutation({
+    mutationFn: async (jobId: string) => {
+      const { error } = await supabase
+        .from('video_jobs')
+        .update({ 
+          status: 'failed',
+          error_message: 'Cancelled by user during review'
+        })
+        .eq('id', jobId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
+      toast.info('Video job cancelled');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to cancel video job');
+    },
+  });
+
   return { 
     jobs, 
     isLoading, 
     createJob,
-    isCreating: createJob.isPending
+    isCreating: createJob.isPending,
+    approveJob,
+    isApproving: approveJob.isPending,
+    cancelJob,
+    isCancelling: cancelJob.isPending
   };
 }

@@ -12,7 +12,7 @@ export interface VideoJobInput {
 export interface VideoJob {
   id: string;
   user_id: string;
-  status: 'pending' | 'generating_script' | 'generating_voice' | 'fetching_video' | 'assembling' | 'completed' | 'failed';
+  status: 'pending' | 'generating_script' | 'generating_voice' | 'awaiting_approval' | 'fetching_video' | 'assembling' | 'completed' | 'failed';
   topic: string;
   duration: number;
   style: string;

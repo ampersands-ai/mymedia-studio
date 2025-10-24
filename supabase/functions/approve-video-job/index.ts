@@ -11,29 +11,34 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  let job_id: string | undefined;
-
   try {
-    const { job_id: jobIdParam } = await req.json();
-    job_id = jobIdParam;
+    const { job_id } = await req.json();
 
     if (!job_id) {
       throw new Error('job_id is required');
     }
 
+    // Get auth user
+    const authHeader = req.headers.get('authorization');
     const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { authorization: authHeader ?? '' } } }
+    );
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+      throw new Error('Unauthorized');
+    }
+
+    // Use service role for operations
+    const serviceClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Validate Shotstack API key
-    const shotstackApiKey = Deno.env.get('SHOTSTACK_API_KEY');
-    if (!shotstackApiKey || shotstackApiKey.trim() === '') {
-      throw new Error('SHOTSTACK_API_KEY is not configured');
-    }
-
-    // Get job details
-    const { data: job, error: jobError } = await supabaseClient
+    // Get job and verify ownership
+    const { data: job, error: jobError } = await serviceClient
       .from('video_jobs')
       .select('*')
       .eq('id', job_id)
@@ -43,79 +48,77 @@ serve(async (req) => {
       throw new Error('Job not found');
     }
 
-    console.log(`Processing video job ${job_id}: ${job.topic}`);
-
-    // Step 1: Generate script using Claude
-    await updateJobStatus(supabaseClient, job_id, 'generating_script');
-    const script = await generateScript(job.topic, job.duration, job.style);
-    await supabaseClient.from('video_jobs').update({ script }).eq('id', job_id);
-    console.log(`Generated script for job ${job_id}`);
-
-    // Step 2: Generate voiceover using ElevenLabs
-    await updateJobStatus(supabaseClient, job_id, 'generating_voice');
-    const voiceoverBlob = await generateVoiceover(script, job.voice_id);
-    
-    // Upload voiceover to storage
-    const voiceoverPath = `${job.user_id}/${job_id}-voiceover.mp3`;
-    const { error: uploadError } = await supabaseClient.storage
-      .from('video-assets')
-      .upload(voiceoverPath, voiceoverBlob, { 
-        contentType: 'audio/mpeg',
-        upsert: true 
-      });
-
-    if (uploadError) {
-      throw new Error(`Failed to upload voiceover: ${uploadError.message}`);
+    if (job.user_id !== user.id) {
+      throw new Error('Unauthorized: not your job');
     }
 
-    const { data: { publicUrl } } = supabaseClient.storage
-      .from('video-assets')
-      .getPublicUrl(voiceoverPath);
+    if (job.status !== 'awaiting_approval') {
+      throw new Error(`Job cannot be approved from status: ${job.status}`);
+    }
 
-    await supabaseClient.from('video_jobs').update({ voiceover_url: publicUrl }).eq('id', job_id);
-    console.log(`Generated voiceover for job ${job_id}`);
+    console.log(`Approving video job ${job_id}, continuing assembly...`);
 
-    // Pause for user approval
-    await updateJobStatus(supabaseClient, job_id, 'awaiting_approval');
-    console.log(`Job ${job_id} ready for user review`);
+    // Continue from where process-video-job left off
+    // Step 3: Fetch background video
+    await updateJobStatus(serviceClient, job_id, 'fetching_video');
+    const backgroundVideoUrl = await getBackgroundVideo(job.style, job.duration);
+    await serviceClient.from('video_jobs').update({ background_video_url: backgroundVideoUrl }).eq('id', job_id);
+    console.log(`Fetched background video for job ${job_id}`);
+
+    // Step 4: Assemble video
+    await updateJobStatus(serviceClient, job_id, 'assembling');
+    
+    // Validate assets before submission
+    console.log('Validating asset accessibility...');
+    const testVoiceover = await fetch(job.voiceover_url, { method: 'HEAD' });
+    if (!testVoiceover.ok) {
+      throw new Error(`Voiceover URL is not accessible: ${testVoiceover.status}`);
+    }
+    const testBgVideo = await fetch(backgroundVideoUrl, { method: 'HEAD' });
+    if (!testBgVideo.ok) {
+      throw new Error(`Background video URL is not accessible: ${testBgVideo.status}`);
+    }
+    console.log('Assets validated successfully');
+    
+    const renderId = await assembleVideo({
+      script: job.script,
+      voiceoverUrl: job.voiceover_url,
+      backgroundVideoUrl,
+      duration: job.duration,
+    });
+    await serviceClient.from('video_jobs').update({ shotstack_render_id: renderId }).eq('id', job_id);
+    console.log(`Submitted to Shotstack: ${renderId}`);
+
+    // Step 5: Poll for completion
+    await pollRenderStatus(serviceClient, job_id, renderId);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        job_id,
-        status: 'awaiting_approval',
-        message: 'Script and voiceover ready for review'
-      }),
+      JSON.stringify({ success: true, job_id }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error in process-video-job:', error);
+    console.error('Error in approve-video-job:', error);
     
-    // Update job as failed if we have a job_id
-    if (job_id) {
+    // Update job as failed
+    if (error.job_id) {
       try {
-        const supabaseClient = createClient(
+        const serviceClient = createClient(
           Deno.env.get('SUPABASE_URL') ?? '',
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         );
         
-        await supabaseClient
+        await serviceClient
           .from('video_jobs')
           .update({
             status: 'failed',
             error_message: error.message || 'Unknown error occurred',
-            error_details: { 
-              error: error.message,
-              stack: error.stack,
-              timestamp: new Date().toISOString()
-            }
           })
-          .eq('id', job_id);
+          .eq('id', error.job_id);
       } catch (updateError) {
         console.error('Failed to update job status:', updateError);
       }
     }
-
+    
     return new Response(
       JSON.stringify({ error: error.message || 'Unknown error occurred' }),
       { 
@@ -127,100 +130,8 @@ serve(async (req) => {
 });
 
 // Helper functions
-
 async function updateJobStatus(supabase: any, jobId: string, status: string) {
   await supabase.from('video_jobs').update({ status }).eq('id', jobId);
-}
-
-async function generateScript(topic: string, duration: number, style: string): Promise<string> {
-  const wordsPerSecond = 2.5;
-  const targetWords = Math.floor(duration * wordsPerSecond);
-
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': Deno.env.get('ANTHROPIC_API_KEY') ?? '',
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 1024,
-      messages: [{
-        role: 'user',
-        content: `Write a ${duration}-second video script about: ${topic}
-
-Style: ${style}
-Target: ~${targetWords} words
-
-Requirements:
-- Engaging hook in first 3 seconds
-- Clear, conversational tone
-- No fluff, straight to value
-- End with CTA or thought-provoking question
-- Format: Just narration text, no stage directions
-
-Script:`
-      }]
-    })
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Claude API error: ${error}`);
-  }
-
-  const data = await response.json();
-  return data.content[0].text.trim();
-}
-
-async function generateVoiceover(script: string, voiceId: string): Promise<Blob> {
-  const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-    method: 'POST',
-    headers: {
-      'Accept': 'audio/mpeg',
-      'Content-Type': 'application/json',
-      'xi-api-key': Deno.env.get('ELEVENLABS_API_KEY') ?? ''
-    },
-    body: JSON.stringify({
-      text: script,
-      model_id: 'eleven_turbo_v2_5',
-      voice_settings: {
-        stability: 0.5,
-        similarity_boost: 0.75,
-        style: 0.5,
-        use_speaker_boost: true
-      }
-    })
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('ElevenLabs API error:', response.status, errorText);
-    
-    // Try to parse error response
-    let errorDetails: any = {};
-    try {
-      errorDetails = JSON.parse(errorText);
-    } catch {
-      errorDetails = { message: errorText };
-    }
-
-    // Detect specific error types
-    const errorMessage = errorDetails.detail?.message || errorDetails.message || errorText;
-    
-    if (errorMessage.includes('detected_unusual_activity') || errorMessage.includes('Free Tier usage disabled')) {
-      throw new Error('ElevenLabs API key has been restricted due to unusual activity. Please upgrade to a paid plan or use a different API key.');
-    } else if (errorMessage.includes('quota') || errorMessage.includes('limit')) {
-      throw new Error('ElevenLabs API quota exceeded. Please check your account limits.');
-    } else if (errorMessage.includes('invalid') || errorMessage.includes('unauthorized')) {
-      throw new Error('Invalid ElevenLabs API key. Please check your configuration.');
-    }
-    
-    throw new Error(`ElevenLabs error: ${errorMessage}`);
-  }
-
-  return await response.blob();
 }
 
 async function getBackgroundVideo(style: string, duration: number): Promise<string> {
@@ -248,11 +159,9 @@ async function getBackgroundVideo(style: string, duration: number): Promise<stri
     throw new Error('No background videos found');
   }
 
-  // Filter videos longer than required duration
   const suitable = data.videos.filter((v: any) => v.duration >= duration);
   const video = suitable.length ? suitable[Math.floor(Math.random() * suitable.length)] : data.videos[0];
 
-  // Get HD file
   const hdFile = video.video_files.find((f: any) => f.quality === 'hd' && f.width === 1920) || 
                  video.video_files.find((f: any) => f.quality === 'hd') || 
                  video.video_files[0];
@@ -266,7 +175,6 @@ async function assembleVideo(assets: {
   backgroundVideoUrl: string;
   duration: number;
 }): Promise<string> {
-  // Generate word-by-word subtitles
   const words = assets.script.split(' ');
   const wordsPerSecond = 2.5;
   const secondsPerWord = 1 / wordsPerSecond;
@@ -351,11 +259,11 @@ async function assembleVideo(assets: {
 }
 
 async function pollRenderStatus(supabase: any, jobId: string, renderId: string) {
-  const maxAttempts = 120; // 10 minutes max (5s interval)
+  const maxAttempts = 120;
   let attempts = 0;
 
   while (attempts < maxAttempts) {
-    await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     const response = await fetch(`https://api.shotstack.io/v1/render/${renderId}`, {
       headers: { 'x-api-key': Deno.env.get('SHOTSTACK_API_KEY') ?? '' }
@@ -369,7 +277,6 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string) 
     if (status === 'done' && result.response.url) {
       const videoUrl = result.response.url;
       
-      // Get job details to create generation
       const { data: job } = await supabase
         .from('video_jobs')
         .select('user_id, topic, duration, style, voice_id')
@@ -378,7 +285,6 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string) 
       
       if (job) {
         try {
-          // Download video from Shotstack
           console.log('Downloading video from Shotstack...');
           const videoResponse = await fetch(videoUrl);
           if (!videoResponse.ok) {
@@ -389,7 +295,6 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string) 
           const videoBuffer = await videoBlob.arrayBuffer();
           const videoData = new Uint8Array(videoBuffer);
           
-          // Upload to generated-content bucket
           const videoPath = `${job.user_id}/${new Date().toISOString().split('T')[0]}/${jobId}.mp4`;
           console.log('Uploading video to storage:', videoPath);
           
@@ -405,7 +310,6 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string) 
             throw uploadError;
           }
           
-          // Create generation record
           console.log('Creating generation record...');
           const { error: genError } = await supabase.from('generations').insert({
             user_id: job.user_id,
@@ -431,7 +335,6 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string) 
           }
         } catch (error) {
           console.error('Error creating generation record:', error);
-          // Don't fail the job if generation creation fails
         }
       }
       

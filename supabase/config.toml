@@ -63,7 +63,10 @@ verify_jwt = false
 [functions.sync-voice-previews]
 verify_jwt = false
 
-[functions.approve-video-job]
+[functions.approve-script]
+verify_jwt = true
+
+[functions.approve-voiceover]
 verify_jwt = true
 
 [functions.recover-stuck-jobs]

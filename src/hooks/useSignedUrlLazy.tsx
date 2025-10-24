@@ -11,7 +11,7 @@ import { createSignedUrl } from '@/lib/storage-utils';
 export const useSignedUrlLazy = (
   storagePath: string | null, 
   bucket: string = 'generated-content',
-  options: { triggerOnce?: boolean; rootMargin?: string } = {}
+  options: { triggerOnce?: boolean; rootMargin?: string; immediate?: boolean } = {}
 ) => {
   const { ref, inView } = useInView({
     triggerOnce: options.triggerOnce ?? true,
@@ -23,7 +23,12 @@ export const useSignedUrlLazy = (
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!storagePath || !inView) {
+    if (!storagePath) {
+      return;
+    }
+
+    // Allow immediate fetch or wait for inView
+    if (!options.immediate && !inView) {
       return;
     }
 
@@ -64,7 +69,7 @@ export const useSignedUrlLazy = (
     };
 
     fetchSignedUrl();
-  }, [storagePath, bucket, inView]);
+  }, [storagePath, bucket, inView, options.immediate]);
 
   return { ref, signedUrl, isLoading, error, inView };
 };

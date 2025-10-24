@@ -49,7 +49,9 @@ export default function VideoJobs() {
     const colors = {
       pending: 'bg-gray-500',
       generating_script: 'bg-blue-500',
+      awaiting_script_approval: 'bg-orange-500',
       generating_voice: 'bg-purple-500',
+      awaiting_voice_approval: 'bg-amber-500',
       fetching_video: 'bg-indigo-500',
       assembling: 'bg-yellow-500',
       completed: 'bg-green-500',
@@ -146,7 +148,9 @@ export default function VideoJobs() {
               <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="generating_script">Generating Script</SelectItem>
+              <SelectItem value="awaiting_script_approval">Review Script</SelectItem>
               <SelectItem value="generating_voice">Generating Voice</SelectItem>
+              <SelectItem value="awaiting_voice_approval">Review Voiceover</SelectItem>
               <SelectItem value="fetching_video">Fetching Video</SelectItem>
               <SelectItem value="assembling">Assembling</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>

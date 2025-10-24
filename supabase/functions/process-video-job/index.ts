@@ -62,10 +62,10 @@ serve(async (req) => {
       );
     }
 
-    if (job.status === 'awaiting_approval') {
-      console.log(`[${job_id}] Awaiting user approval, skipping auto-processing`);
+    if (job.status === 'awaiting_script_approval' || job.status === 'awaiting_voice_approval') {
+      console.log(`[${job_id}] Awaiting user approval (${job.status}), skipping auto-processing`);
       return new Response(
-        JSON.stringify({ success: true, status: 'awaiting_approval' }),
+        JSON.stringify({ success: true, status: job.status }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -82,46 +82,16 @@ serve(async (req) => {
       console.log(`[${job_id}] Script already exists, skipping generation`);
     }
 
-    // Step 2: Generate voiceover (skip if already done)
-    let voiceoverUrl = job.voiceover_url;
-    if (!voiceoverUrl) {
-      console.log(`[${job_id}] Generating voiceover...`);
-      await updateJobStatus(supabaseClient, job_id, 'generating_voice');
-      const voiceoverBlob = await generateVoiceover(script, job.voice_id);
-      
-      const voiceoverPath = `${job.user_id}/voiceovers/${job_id}.mp3`;
-      const { error: uploadError } = await supabaseClient.storage
-        .from('video-assets')
-        .upload(voiceoverPath, voiceoverBlob, { 
-          contentType: 'audio/mpeg',
-          upsert: true 
-        });
-
-      if (uploadError) {
-        throw new Error(`Failed to upload voiceover: ${uploadError.message}`);
-      }
-
-      const { data: { publicUrl } } = supabaseClient.storage
-        .from('video-assets')
-        .getPublicUrl(voiceoverPath);
-
-      voiceoverUrl = publicUrl;
-      await supabaseClient.from('video_jobs').update({ voiceover_url: voiceoverUrl }).eq('id', job_id);
-      console.log(`[${job_id}] Voiceover generated and uploaded successfully`);
-    } else {
-      console.log(`[${job_id}] Voiceover already exists, skipping generation`);
-    }
-
-    // Pause for user approval
-    console.log(`[${job_id}] Script and voiceover ready, awaiting user approval`);
-    await updateJobStatus(supabaseClient, job_id, 'awaiting_approval');
+    // Pause for user approval of script
+    console.log(`[${job_id}] Script ready for review`);
+    await updateJobStatus(supabaseClient, job_id, 'awaiting_script_approval');
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         job_id,
-        status: 'awaiting_approval',
-        message: 'Script and voiceover ready for review'
+        status: 'awaiting_script_approval',
+        message: 'Script ready for review'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

@@ -52,13 +52,12 @@ serve(async (req) => {
       throw new Error('Unauthorized: not your job');
     }
 
-    if (job.status !== 'awaiting_approval') {
+    if (job.status !== 'awaiting_voice_approval') {
       throw new Error(`Job cannot be approved from status: ${job.status}`);
     }
 
-    console.log(`Approving video job ${job_id}, continuing assembly...`);
+    console.log(`Approving voiceover for job ${job_id}, continuing assembly...`);
 
-    // Continue from where process-video-job left off
     // Step 3: Fetch background video
     await updateJobStatus(serviceClient, job_id, 'fetching_video');
     const backgroundVideoUrl = await getBackgroundVideo(job.style, job.duration);
@@ -68,9 +67,22 @@ serve(async (req) => {
     // Step 4: Assemble video
     await updateJobStatus(serviceClient, job_id, 'assembling');
     
+    // Get public URL for voiceover from storage (need public URL for Shotstack)
+    const voiceFileName = job.voiceover_url.split('/').pop();
+    const { data: signedData } = await serviceClient.storage
+      .from('video-assets')
+      .createSignedUrl(voiceFileName!, 7200); // 2 hour expiry for Shotstack processing
+    
+    if (!signedData?.signedUrl) {
+      throw new Error('Failed to generate signed URL for voiceover');
+    }
+    
+    const voiceoverPublicUrl = signedData.signedUrl;
+    console.log('Generated signed URL for voiceover');
+    
     // Validate assets before submission
     console.log('Validating asset accessibility...');
-    const testVoiceover = await fetch(job.voiceover_url, { method: 'HEAD' });
+    const testVoiceover = await fetch(voiceoverPublicUrl, { method: 'HEAD' });
     if (!testVoiceover.ok) {
       throw new Error(`Voiceover URL is not accessible: ${testVoiceover.status}`);
     }
@@ -82,7 +94,7 @@ serve(async (req) => {
     
     const renderId = await assembleVideo({
       script: job.script,
-      voiceoverUrl: job.voiceover_url,
+      voiceoverUrl: voiceoverPublicUrl,
       backgroundVideoUrl,
       duration: job.duration,
     });
@@ -97,7 +109,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error in approve-video-job:', error);
+    console.error('Error in approve-voiceover:', error);
     
     // Update job as failed
     if (error.job_id) {

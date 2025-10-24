@@ -60,17 +60,37 @@ export function useVideoJobs() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
       queryClient.invalidateQueries({ queryKey: ['user-tokens'] });
-      toast.success('Video generation started! This will take 3-5 minutes.');
+      toast.success('Video generation started! Script will be ready for review shortly.');
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to create video job');
     },
   });
 
-  // Approve video job mutation
-  const approveJob = useMutation({
+  // Approve script mutation (with optional editing)
+  const approveScript = useMutation({
+    mutationFn: async ({ jobId, editedScript }: { jobId: string; editedScript?: string }) => {
+      const { data, error } = await supabase.functions.invoke('approve-script', {
+        body: { job_id: jobId, edited_script: editedScript },
+      });
+      
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
+      toast.success('Voiceover generation started! This will take about 1 minute.');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to approve script');
+    },
+  });
+
+  // Approve voiceover mutation
+  const approveVoiceover = useMutation({
     mutationFn: async (jobId: string) => {
-      const { data, error } = await supabase.functions.invoke('approve-video-job', {
+      const { data, error } = await supabase.functions.invoke('approve-voiceover', {
         body: { job_id: jobId },
       });
       
@@ -83,7 +103,7 @@ export function useVideoJobs() {
       toast.success('Video assembly started! This will take 2-3 more minutes.');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to approve video job');
+      toast.error(error.message || 'Failed to approve voiceover');
     },
   });
 
@@ -94,9 +114,13 @@ export function useVideoJobs() {
         .from('video_jobs')
         .update({ 
           status: 'failed',
-          error_message: 'Cancelled by user during review'
+          error_message: 'Cancelled by user'
         })
-        .eq('id', jobId);
+        .eq('id', jobId)
+        .in('status', [
+          'pending', 'generating_script', 'awaiting_script_approval',
+          'generating_voice', 'awaiting_voice_approval', 'fetching_video', 'assembling'
+        ]);
       
       if (error) throw error;
     },
@@ -114,8 +138,10 @@ export function useVideoJobs() {
     isLoading, 
     createJob,
     isCreating: createJob.isPending,
-    approveJob,
-    isApproving: approveJob.isPending,
+    approveScript,
+    isApprovingScript: approveScript.isPending,
+    approveVoiceover,
+    isApprovingVoiceover: approveVoiceover.isPending,
     cancelJob,
     isCancelling: cancelJob.isPending
   };

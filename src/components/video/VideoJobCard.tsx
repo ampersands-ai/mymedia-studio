@@ -2,12 +2,14 @@ import { VideoJob } from '@/types/video';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Download, Eye, Clock, AlertCircle, Play, XCircle, Volume2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Loader2, Download, Eye, Clock, AlertCircle, Play, XCircle, Volume2, Edit } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import { useSignedUrlLazy } from '@/hooks/useSignedUrlLazy';
 
 interface VideoJobCardProps {
   job: VideoJob;
@@ -19,8 +21,9 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     const colors = {
       pending: 'bg-gray-500',
       generating_script: 'bg-blue-500',
+      awaiting_script_approval: 'bg-orange-500',
       generating_voice: 'bg-purple-500',
-      awaiting_approval: 'bg-orange-500',
+      awaiting_voice_approval: 'bg-amber-500',
       fetching_video: 'bg-indigo-500',
       assembling: 'bg-yellow-500',
       completed: 'bg-green-500',
@@ -33,8 +36,9 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     const labels = {
       pending: 'Queued',
       generating_script: 'Writing Script',
+      awaiting_script_approval: 'Review Script',
       generating_voice: 'Generating Voice',
-      awaiting_approval: 'Ready for Review',
+      awaiting_voice_approval: 'Review Voiceover',
       fetching_video: 'Finding Background',
       assembling: 'Assembling Video',
       completed: 'Completed',
@@ -55,13 +59,28 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
 
   const isProcessing = ['pending', 'generating_script', 'generating_voice', 'fetching_video', 'assembling'].includes(job.status);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const { approveJob, isApproving, cancelJob, isCancelling } = useVideoJobs();
+  const [isEditingScript, setIsEditingScript] = useState(false);
+  const [editedScript, setEditedScript] = useState(job.script || '');
+  const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling } = useVideoJobs();
+
+  // Fetch signed URL for voiceover (only when needed)
+  const { signedUrl: voiceoverSignedUrl, isLoading: isLoadingVoiceUrl } = useSignedUrlLazy(
+    job.status === 'awaiting_voice_approval' ? job.voiceover_url : null,
+    'video-assets',
+    { immediate: true }
+  );
+
+  useEffect(() => {
+    setEditedScript(job.script || '');
+  }, [job.script]);
 
   const handlePlayVoiceover = () => {
-    if (!job.voiceover_url) return;
+    if (!voiceoverSignedUrl) {
+      toast.error('Voiceover URL not ready');
+      return;
+    }
     
-    const audio = new Audio(job.voiceover_url);
-    audio.crossOrigin = 'anonymous';
+    const audio = new Audio(voiceoverSignedUrl);
     setIsPlayingAudio(true);
     
     audio.onended = () => setIsPlayingAudio(false);
@@ -73,8 +92,17 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     audio.play();
   };
 
-  const handleApprove = () => {
-    approveJob.mutate(job.id);
+  const handleApproveScript = () => {
+    const finalScript = isEditingScript ? editedScript : job.script;
+    approveScript.mutate({ 
+      jobId: job.id, 
+      editedScript: isEditingScript && editedScript !== job.script ? editedScript : undefined 
+    });
+    setIsEditingScript(false);
+  };
+
+  const handleApproveVoiceover = () => {
+    approveVoiceover.mutate(job.id);
   };
 
   const handleCancel = () => {
@@ -114,17 +142,89 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
           Created {formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}
         </div>
 
-        {job.status === 'awaiting_approval' && job.script && job.voiceover_url && (
+        {/* Script Approval UI */}
+        {job.status === 'awaiting_script_approval' && job.script && (
           <div className="space-y-3 pt-2 border-t">
             <div className="flex items-center gap-2 text-sm font-semibold text-orange-600">
               <AlertCircle className="h-4 w-4" />
-              Review Required
+              Review Script
             </div>
             
             <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Generated Script:</label>
-              <ScrollArea className="h-32 rounded-md border bg-muted/30 p-3">
-                <p className="text-sm whitespace-pre-wrap">{job.script}</p>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-muted-foreground">Generated Script:</label>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs"
+                  onClick={() => setIsEditingScript(!isEditingScript)}
+                >
+                  <Edit className="w-3 h-3 mr-1" />
+                  {isEditingScript ? 'Cancel Edit' : 'Edit Script'}
+                </Button>
+              </div>
+              
+              {isEditingScript ? (
+                <Textarea
+                  value={editedScript}
+                  onChange={(e) => setEditedScript(e.target.value)}
+                  className="min-h-[150px] text-sm font-mono"
+                  placeholder="Edit the script here..."
+                />
+              ) : (
+                <ScrollArea className="h-32 rounded-md border bg-muted/30 p-3">
+                  <p className="text-sm whitespace-pre-wrap">{job.script}</p>
+                </ScrollArea>
+              )}
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button 
+                size="sm" 
+                className="flex-1"
+                onClick={handleApproveScript}
+                disabled={isApprovingScript || isCancelling}
+              >
+                {isApprovingScript ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="w-4 h-4 mr-2" />
+                    Generate Voiceover
+                  </>
+                )}
+              </Button>
+              <Button 
+                size="sm" 
+                variant="destructive"
+                onClick={handleCancel}
+                disabled={isApprovingScript || isCancelling}
+              >
+                {isCancelling ? (
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                ) : (
+                  <XCircle className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Voiceover Approval UI */}
+        {job.status === 'awaiting_voice_approval' && job.script && job.voiceover_url && (
+          <div className="space-y-3 pt-2 border-t">
+            <div className="flex items-center gap-2 text-sm font-semibold text-amber-600">
+              <AlertCircle className="h-4 w-4" />
+              Review Voiceover
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Script:</label>
+              <ScrollArea className="h-24 rounded-md border bg-muted/30 p-3">
+                <p className="text-xs whitespace-pre-wrap">{job.script}</p>
               </ScrollArea>
             </div>
 
@@ -135,9 +235,14 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                 variant="outline"
                 className="w-full"
                 onClick={handlePlayVoiceover}
-                disabled={isPlayingAudio}
+                disabled={isPlayingAudio || isLoadingVoiceUrl || !voiceoverSignedUrl}
               >
-                {isPlayingAudio ? (
+                {isLoadingVoiceUrl ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : isPlayingAudio ? (
                   <>
                     <Volume2 className="w-4 h-4 mr-2 animate-pulse" />
                     Playing...
@@ -155,10 +260,10 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
               <Button 
                 size="sm" 
                 className="flex-1"
-                onClick={handleApprove}
-                disabled={isApproving || isCancelling}
+                onClick={handleApproveVoiceover}
+                disabled={isApprovingVoiceover || isCancelling}
               >
-                {isApproving ? (
+                {isApprovingVoiceover ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Starting...
@@ -166,7 +271,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                 ) : (
                   <>
                     <Eye className="w-4 h-4 mr-2" />
-                    Proceed with Video
+                    Render Video
                   </>
                 )}
               </Button>
@@ -174,18 +279,12 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                 size="sm" 
                 variant="destructive"
                 onClick={handleCancel}
-                disabled={isApproving || isCancelling}
+                disabled={isApprovingVoiceover || isCancelling}
               >
                 {isCancelling ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Cancelling...
-                  </>
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                 ) : (
-                  <>
-                    <XCircle className="w-4 h-4 mr-2" />
-                    Cancel Job
-                  </>
+                  <XCircle className="w-4 h-4" />
                 )}
               </Button>
             </div>

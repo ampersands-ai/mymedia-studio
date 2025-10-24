@@ -91,16 +91,34 @@ serve(async (req) => {
 
     console.log(`Created video job ${job.id} for user ${user.id}`);
 
-    // Trigger async processing (fire-and-forget)
-    const processUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/process-video-job`;
-    fetch(processUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ job_id: job.id }),
-    }).catch(err => console.error('Failed to trigger processing:', err));
+    // Trigger async processing using waitUntil for reliable background execution
+    const processJob = async () => {
+      try {
+        console.log(`Triggering processing for job ${job.id}`);
+        const { data, error } = await supabaseClient.functions.invoke('process-video-job', {
+          body: { job_id: job.id },
+        });
+        
+        if (error) {
+          console.error('Failed to invoke process-video-job:', error);
+          // Mark job as failed if we can't even start processing
+          await supabaseClient
+            .from('video_jobs')
+            .update({ 
+              status: 'failed', 
+              error_message: `Failed to start processing: ${error.message}` 
+            })
+            .eq('id', job.id);
+        } else {
+          console.log(`Successfully triggered processing for job ${job.id}`);
+        }
+      } catch (err) {
+        console.error('Error triggering processing:', err);
+      }
+    };
+
+    // Start background processing (don't await)
+    processJob();
 
     return new Response(
       JSON.stringify({ success: true, job }),

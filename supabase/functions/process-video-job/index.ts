@@ -43,41 +43,78 @@ serve(async (req) => {
       throw new Error('Job not found');
     }
 
-    console.log(`Processing video job ${job_id}: ${job.topic}`);
+    console.log(`[${job_id}] Current status: ${job.status}, topic: ${job.topic}`);
 
-    // Step 1: Generate script using Claude
-    await updateJobStatus(supabaseClient, job_id, 'generating_script');
-    const script = await generateScript(job.topic, job.duration, job.style);
-    await supabaseClient.from('video_jobs').update({ script }).eq('id', job_id);
-    console.log(`Generated script for job ${job_id}`);
-
-    // Step 2: Generate voiceover using ElevenLabs
-    await updateJobStatus(supabaseClient, job_id, 'generating_voice');
-    const voiceoverBlob = await generateVoiceover(script, job.voice_id);
-    
-    // Upload voiceover to storage
-    const voiceoverPath = `${job.user_id}/${job_id}-voiceover.mp3`;
-    const { error: uploadError } = await supabaseClient.storage
-      .from('video-assets')
-      .upload(voiceoverPath, voiceoverBlob, { 
-        contentType: 'audio/mpeg',
-        upsert: true 
-      });
-
-    if (uploadError) {
-      throw new Error(`Failed to upload voiceover: ${uploadError.message}`);
+    // Idempotency: Resume from current status
+    if (job.status === 'completed') {
+      console.log(`[${job_id}] Already completed, skipping`);
+      return new Response(
+        JSON.stringify({ success: true, status: 'already_completed' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    const { data: { publicUrl } } = supabaseClient.storage
-      .from('video-assets')
-      .getPublicUrl(voiceoverPath);
+    if (job.status === 'failed') {
+      console.log(`[${job_id}] Already failed, skipping`);
+      return new Response(
+        JSON.stringify({ success: false, status: 'already_failed' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
 
-    await supabaseClient.from('video_jobs').update({ voiceover_url: publicUrl }).eq('id', job_id);
-    console.log(`Generated voiceover for job ${job_id}`);
+    if (job.status === 'awaiting_approval') {
+      console.log(`[${job_id}] Awaiting user approval, skipping auto-processing`);
+      return new Response(
+        JSON.stringify({ success: true, status: 'awaiting_approval' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Step 1: Generate script (skip if already done)
+    let script = job.script;
+    if (!script) {
+      console.log(`[${job_id}] Generating script...`);
+      await updateJobStatus(supabaseClient, job_id, 'generating_script');
+      script = await generateScript(job.topic, job.duration, job.style);
+      await supabaseClient.from('video_jobs').update({ script }).eq('id', job_id);
+      console.log(`[${job_id}] Script generated successfully`);
+    } else {
+      console.log(`[${job_id}] Script already exists, skipping generation`);
+    }
+
+    // Step 2: Generate voiceover (skip if already done)
+    let voiceoverUrl = job.voiceover_url;
+    if (!voiceoverUrl) {
+      console.log(`[${job_id}] Generating voiceover...`);
+      await updateJobStatus(supabaseClient, job_id, 'generating_voice');
+      const voiceoverBlob = await generateVoiceover(script, job.voice_id);
+      
+      const voiceoverPath = `${job.user_id}/voiceovers/${job_id}.mp3`;
+      const { error: uploadError } = await supabaseClient.storage
+        .from('video-assets')
+        .upload(voiceoverPath, voiceoverBlob, { 
+          contentType: 'audio/mpeg',
+          upsert: true 
+        });
+
+      if (uploadError) {
+        throw new Error(`Failed to upload voiceover: ${uploadError.message}`);
+      }
+
+      const { data: { publicUrl } } = supabaseClient.storage
+        .from('video-assets')
+        .getPublicUrl(voiceoverPath);
+
+      voiceoverUrl = publicUrl;
+      await supabaseClient.from('video_jobs').update({ voiceover_url: voiceoverUrl }).eq('id', job_id);
+      console.log(`[${job_id}] Voiceover generated and uploaded successfully`);
+    } else {
+      console.log(`[${job_id}] Voiceover already exists, skipping generation`);
+    }
 
     // Pause for user approval
+    console.log(`[${job_id}] Script and voiceover ready, awaiting user approval`);
     await updateJobStatus(supabaseClient, job_id, 'awaiting_approval');
-    console.log(`Job ${job_id} ready for user review`);
 
     return new Response(
       JSON.stringify({ 
@@ -90,6 +127,15 @@ serve(async (req) => {
     );
   } catch (error: any) {
     console.error('Error in process-video-job:', error);
+    console.error('Error stack:', error.stack);
+    
+    const errorMessage = error.message || 'Unknown error occurred';
+    
+    console.error(`[${job_id || 'unknown'}] Fatal error during processing:`, {
+      message: errorMessage,
+      stack: error.stack,
+      name: error.name
+    });
     
     // Update job as failed if we have a job_id
     if (job_id) {
@@ -103,9 +149,9 @@ serve(async (req) => {
           .from('video_jobs')
           .update({
             status: 'failed',
-            error_message: error.message || 'Unknown error occurred',
+            error_message: errorMessage,
             error_details: { 
-              error: error.message,
+              error: errorMessage,
               stack: error.stack,
               timestamp: new Date().toISOString()
             }
@@ -117,7 +163,10 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ error: error.message || 'Unknown error occurred' }),
+      JSON.stringify({ 
+        error: errorMessage,
+        job_id: job_id || 'unknown'
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

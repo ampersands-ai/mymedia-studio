@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.approve-video-job]
 verify_jwt = true
+
+[functions.recover-stuck-jobs]
+verify_jwt = false  # Can be called by cron or manually

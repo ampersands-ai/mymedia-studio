@@ -76,16 +76,18 @@ export function VideoCreator() {
   const isDisabled = isCreating || isGeneratingTopic;
 
   return (
-    <Card className="border-2">
-      <CardHeader>
-        <CardTitle className="text-2xl font-black">CREATE FACELESS VIDEO</CardTitle>
-        <CardDescription>
+    <Card className="border-2 w-full">
+      <CardHeader className="space-y-2">
+        <CardTitle className="text-xl sm:text-2xl font-black break-words">
+          CREATE FACELESS VIDEO
+        </CardTitle>
+        <CardDescription className="text-sm">
           Generate professional videos with AI in minutes
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 md:space-y-6">
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <Label htmlFor="topic" className="text-sm font-bold">
               Video Topic *
             </Label>
@@ -95,16 +97,16 @@ export function VideoCreator() {
               size="sm"
               onClick={handleSurpriseMe}
               disabled={isDisabled}
-              className="h-8"
+              className="h-8 text-xs"
             >
               {isGeneratingTopic ? (
                 <>
-                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                  <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
                   Generating...
                 </>
               ) : (
                 <>
-                  <Sparkles className="mr-2 h-3 w-3" />
+                  <Sparkles className="mr-1.5 h-3 w-3" />
                   Surprise Me
                 </>
               )}
@@ -112,11 +114,12 @@ export function VideoCreator() {
           </div>
           <Input
             id="topic"
-            placeholder="e.g., Top 5 AI tools for productivity in 2025"
+            placeholder="e.g., Top 5 AI tools for productivity"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             maxLength={500}
             disabled={isDisabled}
+            className="text-sm"
           />
           <p className="text-xs text-muted-foreground">
             {topic.length}/500 characters
@@ -174,9 +177,9 @@ export function VideoCreator() {
                 {voiceName}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh]">
+            <DialogContent className="max-w-[95vw] sm:max-w-3xl lg:max-w-4xl max-h-[85vh] overflow-hidden">
               <DialogHeader>
-                <DialogTitle>Choose a Voice</DialogTitle>
+                <DialogTitle className="text-lg md:text-xl">Choose a Voice</DialogTitle>
               </DialogHeader>
               <VoiceBrowser
                 selectedVoiceId={voiceId}
@@ -189,18 +192,18 @@ export function VideoCreator() {
           </p>
         </div>
 
-        <div className="rounded-lg border-2 border-primary/20 bg-primary/5 p-4">
-          <div className="flex items-center justify-between">
+        <div className="rounded-lg border-2 border-primary/20 bg-primary/5 p-3 md:p-4">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
-              <Coins className="h-5 w-5 text-primary" />
-              <span className="font-bold">Cost: 15 tokens</span>
+              <Coins className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+              <span className="font-bold text-sm md:text-base">Cost: 15 tokens</span>
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs md:text-sm text-muted-foreground">
               Balance: {tokens?.tokens_remaining ?? 0} tokens
             </div>
           </div>
           {!canAfford && (
-            <p className="mt-2 text-sm text-destructive font-medium">
+            <p className="mt-2 text-xs md:text-sm text-destructive font-medium">
               Insufficient tokens. Please purchase more to continue.
             </p>
           )}
@@ -209,12 +212,12 @@ export function VideoCreator() {
         <Button 
           onClick={handleCreate} 
           disabled={isDisabled || !topic.trim() || !canAfford}
-          className="w-full h-12 text-lg font-bold"
+          className="w-full h-11 md:h-12 text-base md:text-lg font-bold"
           size="lg"
         >
           {isCreating ? (
             <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              <Loader2 className="mr-2 h-4 w-4 md:h-5 md:w-5 animate-spin" />
               Creating Video...
             </>
           ) : (

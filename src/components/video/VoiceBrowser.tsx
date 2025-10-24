@@ -137,7 +137,7 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 md:space-y-4">
       <div className="flex gap-2 items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -145,7 +145,7 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
             placeholder="Search voices..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 text-sm"
           />
         </div>
       </div>
@@ -157,19 +157,20 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
             variant={selectedFilter === filter.value ? 'default' : 'outline'}
             size="sm"
             onClick={() => setSelectedFilter(filter.value)}
+            className="text-xs"
           >
             {filter.label}
           </Button>
         ))}
       </div>
 
-      <ScrollArea className="h-[500px]">
+      <ScrollArea className="h-[50vh] md:h-[500px]">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 md:h-8 md:w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pr-2 md:pr-4">
             {filteredVoices.map(voice => (
               <Card
                 key={voice.voice_id}
@@ -177,24 +178,24 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
                   selectedVoiceId === voice.voice_id ? 'ring-2 ring-primary' : ''
                 }`}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
+                <CardContent className="p-3 md:p-4">
+                  <div className="flex items-start justify-between mb-2 md:mb-3">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold">{voice.name}</h4>
+                        <h4 className="font-semibold text-sm md:text-base truncate">{voice.name}</h4>
                         {selectedVoiceId === voice.voice_id && (
-                          <Check className="w-4 h-4 text-primary" />
+                          <Check className="w-4 h-4 text-primary shrink-0" />
                         )}
                       </div>
                       {voice.labels.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">
+                        <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">
                           {voice.labels.description}
                         </p>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-1 mb-3">
+                  <div className="flex flex-wrap gap-1 mb-2 md:mb-3">
                     {getVoiceTags(voice).map(tag => (
                       <Badge key={tag} variant="secondary" className="text-xs">
                         {tag}
@@ -207,16 +208,16 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
                       size="sm"
                       variant="outline"
                       onClick={() => playVoicePreview(voice)}
-                      className="flex-1"
+                      className="flex-1 text-xs md:text-sm"
                     >
                       {playingVoiceId === voice.voice_id ? (
                         <>
-                          <Pause className="w-4 h-4 mr-2" />
+                          <Pause className="w-3 h-3 md:w-4 md:h-4 mr-1.5 md:mr-2" />
                           Pause
                         </>
                       ) : (
                         <>
-                          <Play className="w-4 h-4 mr-2" />
+                          <Play className="w-3 h-3 md:w-4 md:h-4 mr-1.5 md:mr-2" />
                           Preview
                         </>
                       )}
@@ -225,6 +226,7 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
                       size="sm"
                       onClick={() => onSelectVoice(voice.voice_id, voice.name)}
                       disabled={selectedVoiceId === voice.voice_id}
+                      className="text-xs md:text-sm"
                     >
                       {selectedVoiceId === voice.voice_id ? 'Selected' : 'Select'}
                     </Button>

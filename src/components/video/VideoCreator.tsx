@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +11,7 @@ import { useUserTokens } from '@/hooks/useUserTokens';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Coins, Sparkles, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { VoiceBrowser } from './VoiceBrowser';
+import { VoiceBrowser, Voice, FALLBACK_VOICES } from './VoiceBrowser';
 
 export function VideoCreator() {
   const [topic, setTopic] = useState('');
@@ -21,8 +21,60 @@ export function VideoCreator() {
   const [voiceName, setVoiceName] = useState('Rachel');
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
   const [isGeneratingTopic, setIsGeneratingTopic] = useState(false);
+  const [voices, setVoices] = useState<Voice[]>([]);
+  const [voicesLoading, setVoicesLoading] = useState(false);
   const { createJob, isCreating } = useVideoJobs();
   const { data: tokens } = useUserTokens();
+
+  // Fetch voices once on mount
+  useEffect(() => {
+    fetchAllVoices();
+  }, []);
+
+  const fetchAllVoices = async () => {
+    console.log('🔄 VideoCreator: Fetching all voices');
+    setVoicesLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-voices');
+      
+      if (error) {
+        console.error('❌ VideoCreator: Error fetching voices:', error);
+        throw error;
+      }
+
+      console.log('✅ VideoCreator: Received voices from API:', data?.voices?.length);
+
+      // Enrich with fallback preview URLs
+      const fallbackMap = new Map(FALLBACK_VOICES.map(v => [v.voice_id, v.preview_url]));
+      const enrichedVoices = (data.voices || []).map((voice: Voice) => ({
+        ...voice,
+        preview_url: voice.preview_url || fallbackMap.get(voice.voice_id) || ''
+      }));
+
+      console.log('🔍 VideoCreator: Enriched voices:', enrichedVoices.length);
+
+      // Filter to only voices with preview URLs
+      const voicesWithPreviews = enrichedVoices.filter((v: Voice) => v.preview_url && v.preview_url.length > 0);
+      console.log('✅ VideoCreator: Voices with previews:', voicesWithPreviews.length);
+
+      if (voicesWithPreviews.length > 0) {
+        // Sort by name
+        const sorted = [...voicesWithPreviews].sort((a: Voice, b: Voice) => 
+          a.name.localeCompare(b.name)
+        );
+        setVoices(sorted);
+        console.log('✅ VideoCreator: Set voices state with', sorted.length, 'voices');
+      } else {
+        console.log('⚠️ VideoCreator: No voices with previews, using fallback');
+        setVoices(FALLBACK_VOICES);
+      }
+    } catch (error) {
+      console.error('❌ VideoCreator: Error in fetchAllVoices:', error);
+      setVoices(FALLBACK_VOICES);
+    } finally {
+      setVoicesLoading(false);
+    }
+  };
 
   const handleSurpriseMe = async () => {
     setIsGeneratingTopic(true);
@@ -185,6 +237,8 @@ export function VideoCreator() {
               </DialogHeader>
               <div className="flex-1 overflow-y-auto min-h-0">
                 <VoiceBrowser
+                  voices={voices}
+                  voicesLoading={voicesLoading}
                   selectedVoiceId={voiceId}
                   onSelectVoice={handleSelectVoice}
                 />

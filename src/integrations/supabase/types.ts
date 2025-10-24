@@ -841,6 +841,72 @@ export type Database = {
           },
         ]
       }
+      video_jobs: {
+        Row: {
+          background_video_url: string | null
+          completed_at: string | null
+          cost_tokens: number
+          created_at: string
+          duration: number
+          error_details: Json | null
+          error_message: string | null
+          final_video_url: string | null
+          id: string
+          renderer: string
+          script: string | null
+          shotstack_render_id: string | null
+          status: string
+          style: string
+          topic: string
+          updated_at: string
+          user_id: string
+          voice_id: string
+          voiceover_url: string | null
+        }
+        Insert: {
+          background_video_url?: string | null
+          completed_at?: string | null
+          cost_tokens?: number
+          created_at?: string
+          duration?: number
+          error_details?: Json | null
+          error_message?: string | null
+          final_video_url?: string | null
+          id?: string
+          renderer?: string
+          script?: string | null
+          shotstack_render_id?: string | null
+          status?: string
+          style?: string
+          topic: string
+          updated_at?: string
+          user_id: string
+          voice_id?: string
+          voiceover_url?: string | null
+        }
+        Update: {
+          background_video_url?: string | null
+          completed_at?: string | null
+          cost_tokens?: number
+          created_at?: string
+          duration?: number
+          error_details?: Json | null
+          error_message?: string | null
+          final_video_url?: string | null
+          id?: string
+          renderer?: string
+          script?: string | null
+          shotstack_render_id?: string | null
+          status?: string
+          style?: string
+          topic?: string
+          updated_at?: string
+          user_id?: string
+          voice_id?: string
+          voiceover_url?: string | null
+        }
+        Relationships: []
+      }
       webhook_events: {
         Row: {
           created_at: string
@@ -984,18 +1050,9 @@ export type Database = {
         Args: { _generation_id: string }
         Returns: boolean
       }
-      cleanup_expired_sessions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_old_webhook_events: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_rate_limits: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_expired_sessions: { Args: never; Returns: undefined }
+      cleanup_old_webhook_events: { Args: never; Returns: undefined }
+      cleanup_rate_limits: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1007,10 +1064,7 @@ export type Database = {
         Args: { amount: number; user_id_param: string }
         Returns: undefined
       }
-      sanitize_provider_data: {
-        Args: { data: Json }
-        Returns: Json
-      }
+      sanitize_provider_data: { Args: { data: Json }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

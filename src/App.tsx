@@ -29,6 +29,7 @@ const FAQ = lazy(() => import("./pages/FAQ"));
 const Features = lazy(() => import("./pages/Features"));
 const Templates = lazy(() => import("./pages/Templates"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const VideoStudio = lazy(() => import("./pages/VideoStudio"));
 const DashboardLayout = lazy(() => import("./layouts/DashboardLayout").then(m => ({ default: m.DashboardLayout })));
 const AdminLayout = lazy(() => import("./layouts/AdminLayout").then(m => ({ default: m.AdminLayout })));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -39,6 +40,7 @@ const AllGenerations = lazy(() => import("./pages/admin/AllGenerations"));
 const TokenDisputes = lazy(() => import("./pages/admin/TokenDisputes").then(m => ({ default: m.TokenDisputes })));
 const AnalyticsDashboard = lazy(() => import("./pages/admin/Analytics"));
 const ThresholdBreach = lazy(() => import("./pages/admin/ThresholdBreach"));
+const VideoJobs = lazy(() => import("./pages/admin/VideoJobs"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -97,6 +99,7 @@ const AppContent = () => {
             <Route path="custom-creation" element={<CustomCreation />} />
             <Route path="templates" element={<Templates />} />
             <Route path="history" element={<History />} />
+            <Route path="video-studio" element={<VideoStudio />} />
             <Route path="settings" element={<Settings />} />
           </Route>
           <Route path="/admin" element={<AdminLayout />}>
@@ -108,6 +111,7 @@ const AppContent = () => {
             <Route path="disputes" element={<TokenDisputes />} />
             <Route path="analytics" element={<AnalyticsDashboard />} />
             <Route path="threshold-breach" element={<ThresholdBreach />} />
+            <Route path="video-jobs" element={<VideoJobs />} />
           </Route>
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/privacy" element={<Privacy />} />

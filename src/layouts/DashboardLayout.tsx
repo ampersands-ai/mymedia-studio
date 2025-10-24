@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Sparkles, Coins, History } from "lucide-react";
+import { Sparkles, Coins, History, Video } from "lucide-react";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { Footer } from "@/components/Footer";
 import { cn } from "@/lib/utils";
@@ -81,6 +81,20 @@ export const DashboardLayout = () => {
                 >
                   <History className="h-5 w-5 mr-2" />
                   My Creations
+                </Button>
+              </Link>
+              <Link to="/dashboard/video-studio">
+                <Button
+                  variant={isActive("/dashboard/video-studio") ? "default" : "ghost"}
+                  className={cn(
+                    "text-base px-6 py-5 rounded-full",
+                    isActive("/dashboard/video-studio") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                >
+                  <Video className="h-5 w-5 mr-2" />
+                  Video Creator
                 </Button>
               </Link>
             </nav>

@@ -44,3 +44,12 @@ verify_jwt = true
 
 [functions.workflow-executor]
 verify_jwt = true
+
+[functions.create-video-job]
+verify_jwt = true
+
+[functions.process-video-job]
+verify_jwt = false  # Called by service role
+
+[functions.check-video-status]
+verify_jwt = true

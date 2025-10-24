@@ -139,10 +139,12 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
       setPlayingVoiceId(voice.voice_id);
 
       const audio = new Audio(voice.preview_url);
+      audio.crossOrigin = 'anonymous';
       audioRef.current = audio;
       
       audio.onended = () => setPlayingVoiceId(null);
-      audio.onerror = () => {
+      audio.onerror = (e) => {
+        console.error('Audio preview failed for', voice.preview_url, e);
         setPlayingVoiceId(null);
         toast.error('Preview unavailable');
       };

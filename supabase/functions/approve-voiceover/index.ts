@@ -622,17 +622,14 @@ async function assembleVideo(
       lineHeight: 1.2
     },
     alignment: {
-      horizontal: 'center',
-      vertical: style.position || 'center' // top, center, bottom
+      horizontal: 'center'
     }
   };
 
-  // Add stroke if specified
+  // Add stroke INSIDE font object per Shotstack docs
   if (style.strokeColor && style.strokeWidth) {
-    captionAsset.stroke = {
-      color: style.strokeColor,
-      width: Number(style.strokeWidth)
-    };
+    captionAsset.font.stroke = style.strokeColor;
+    captionAsset.font.strokeWidth = Number(style.strokeWidth);
   }
 
   // Add background if not transparent
@@ -658,8 +655,7 @@ async function assembleVideo(
     fontSize: captionAsset.font.size,
     fontFamily: captionAsset.font.family,
     fontWeight: captionAsset.font.weight,
-    position: captionAsset.alignment.vertical,
-    hasStroke: !!captionAsset.stroke,
+    hasStroke: !!(captionAsset.font.stroke),
     hasBackground: !!captionAsset.background
   });
 

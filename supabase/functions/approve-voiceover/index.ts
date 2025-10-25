@@ -602,8 +602,7 @@ backgroundMediaType: 'video' | 'image' = 'video'
       start: index * secondsPerWord,
       length: secondsPerWord * 1.2,
       position: positionMap[style.position] || 'center',
-      offset: { x: 0, y: 0 },  // Explicit positioning
-      z: 2  // Force layering on top
+      offset: { x: 0, y: 0 }
     };
     
     // Add transition based on animation style

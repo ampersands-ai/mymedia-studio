@@ -403,8 +403,8 @@ const Create = () => {
                   <CarouselContent className="-ml-2">
                   {categoryTemplates.map((template) => (
                     <CarouselItem key={template.id} className="pl-2 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6">
-                      <Card 
-                        className="brutal-card-sm hover-lift cursor-pointer overflow-hidden"
+                       <Card 
+                        className="brutal-card-sm gpu-accelerated card hover-lift cursor-pointer overflow-hidden"
                         onClick={() => handleTemplateSelect(template)}
                       >
                         <div className="aspect-square relative overflow-hidden">

@@ -11,6 +11,7 @@ import { Sparkles, Package, Users, TrendingUp, Layers, Wand2, Coins, Shirt, Plan
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TemplateSkeleton } from "@/components/ui/skeletons";
 import { createSignedUrl } from "@/lib/storage-utils";
 
 
@@ -415,14 +416,8 @@ const Templates = () => {
             {/* Loading and Empty States */}
             {isLoading && (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Card key={i}>
-                    <Skeleton className="aspect-square w-full" />
-                    <div className="p-2 space-y-2">
-                      <Skeleton className="h-3 w-3/4" />
-                      <Skeleton className="h-7 w-full" />
-                    </div>
-                  </Card>
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <TemplateSkeleton key={i} />
                 ))}
               </div>
             )}

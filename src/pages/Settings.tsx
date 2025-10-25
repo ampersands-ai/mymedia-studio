@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, Download, Clock, CheckCircle, XCircle, AlertCircle, Coins, Sparkles, TrendingUp, Video, Image as ImageIcon, Music, FileText, DollarSign, TrendingDown } from "lucide-react";
+import { Loader2, Download, Clock, CheckCircle, XCircle, AlertCircle, Coins, Sparkles, TrendingUp, Video, Image as ImageIcon, Music, FileText, DollarSign, TrendingDown, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { profileUpdateSchema } from "@/lib/validation-schemas";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,7 @@ import { TokenUsageHistoryModal } from "@/components/TokenUsageHistoryModal";
 import { useConfetti } from "@/hooks/useConfetti";
 import { Progress } from "@/components/ui/progress";
 import { differenceInMonths } from "date-fns";
+import { clearAllCaches, getCacheStats } from "@/utils/cacheManagement";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -441,6 +442,42 @@ const Settings = () => {
                     )}
                   </Button>
                 </form>
+              </CardContent>
+            </Card>
+
+            {/* Advanced/Developer Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Advanced Settings</CardTitle>
+                <CardDescription>Developer tools and cache management</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg border">
+                    <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-sm mb-1">Clear All Caches</h4>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        This will clear all cached data, unregister service workers, and reload the page. 
+                        Use this if you're experiencing issues with outdated content.
+                      </p>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            await clearAllCaches();
+                          } catch (error) {
+                            toast.error("Failed to clear caches");
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Clear All Caches
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

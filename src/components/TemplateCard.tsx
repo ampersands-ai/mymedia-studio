@@ -73,7 +73,7 @@ const TemplateCardComponent = ({ image, video, alt, className }: TemplateCardPro
 
   return (
     <div
-      className={cn("relative overflow-hidden", className)}
+      className={cn("relative overflow-hidden gpu-accelerated card", className)}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onTouchStart={handleTouchStart}

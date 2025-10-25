@@ -528,10 +528,7 @@ async function assembleVideo(
           clips: backgroundClips  // Track 0: background
         },
         {
-          clips: []  // Track 1: empty for spacing
-        },
-        {
-          clips: subtitleClips  // Track 2: captions on top
+          clips: subtitleClips  // Track 1: captions with z-index layering
         }
       ]
     },

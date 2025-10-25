@@ -74,13 +74,13 @@ export function VoiceSelector({ selectedValue, onSelectVoice, mode, disabled }: 
       audio.onerror = () => {
         console.error('Audio preview failed for', voiceId);
         setPlayingVoiceId(null);
-        toast.error('Preview unavailable');
       };
       
       await audio.play();
     } catch (error) {
+      console.error('Error playing voice preview:', error);
       setPlayingVoiceId(null);
-      toast.error('Failed to play preview');
+      toast.error('Preview unavailable');
     }
   };
 

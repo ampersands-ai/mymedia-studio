@@ -1214,6 +1214,7 @@ const CustomCreation = () => {
                         onChange={setModelParameters}
                         currentValues={modelParameters}
                         excludeFields={['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls']}
+                        modelId={currentModel.id}
                       />
                     ) : (
                       // Legacy Resolution fallback if no schema

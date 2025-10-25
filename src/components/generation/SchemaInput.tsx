@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { VoiceSelector } from "./VoiceSelector";
 import { useState } from "react";
 
 interface SchemaInputProps {
@@ -18,9 +20,10 @@ interface SchemaInputProps {
   allValues?: Record<string, any>;
   modelSchema?: any;
   rows?: number;
+  modelId?: string;
 }
 
-export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema, rows }: SchemaInputProps) => {
+export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema, rows, modelId }: SchemaInputProps) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   // Check if this field should be visible based on conditional dependencies
@@ -159,6 +162,44 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
             </>
           )}
         </div>
+      </div>
+    );
+  }
+
+  // Special handling for ElevenLabs voice selection
+  const isElevenLabsVoiceField = 
+    modelId?.startsWith('elevenlabs/') && 
+    name === 'input.voice' && 
+    schema.enum;
+
+  if (isElevenLabsVoiceField) {
+    return (
+      <div className="space-y-2">
+        <Label htmlFor={name}>
+          {displayName}
+          {isRequired && <span className="text-destructive ml-1">*</span>}
+        </Label>
+        {schema.description && (
+          <p className="text-xs text-muted-foreground mb-2">{schema.description}</p>
+        )}
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="w-full justify-start">
+              <Volume2 className="w-4 h-4 mr-2" />
+              {value || schema.default || 'Select voice'}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>Choose a Voice</DialogTitle>
+            </DialogHeader>
+            <VoiceSelector 
+              selectedValue={value || schema.default || 'Rachel'}
+              onSelectVoice={(voiceName) => onChange(voiceName)}
+              mode="name"
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }

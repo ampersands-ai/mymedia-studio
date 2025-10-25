@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Play, Pause, Check, Search, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { getVoicePreviewUrl } from '@/lib/storage-utils';
+import { VOICE_DATABASE } from '@/lib/voice-mapping';
 import { toast } from 'sonner';
 
 interface Voice {
@@ -24,29 +25,18 @@ interface Voice {
   };
 }
 
-// Fallback voices with Supabase Storage preview URLs
-const FALLBACK_VOICES: Voice[] = [
-  { voice_id: '9BWtsMINqrJLrRacOk9x', name: 'Aria', preview_url: getVoicePreviewUrl('9BWtsMINqrJLrRacOk9x'), labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger', preview_url: getVoicePreviewUrl('CwhRBWXzGAHq8TQ4Fs17'), labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', preview_url: getVoicePreviewUrl('EXAVITQu4vr4xnSDxMaL'), labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura', preview_url: getVoicePreviewUrl('FGY2WhTYpPnrIDTdsKH5'), labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', preview_url: getVoicePreviewUrl('IKne3meq5aSn9XLyUdCD'), labels: { gender: 'male', accent: 'British', use_case: 'conversational' } },
-  { voice_id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', preview_url: getVoicePreviewUrl('JBFqnCBsd6RMkjVDRZzb'), labels: { gender: 'male', accent: 'British', use_case: 'narration' } },
-  { voice_id: 'N2lVS1w4EtoT3dr4eOWO', name: 'Callum', preview_url: getVoicePreviewUrl('N2lVS1w4EtoT3dr4eOWO'), labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'SAz9YHcvj6GT2YYXdXww', name: 'River', preview_url: getVoicePreviewUrl('SAz9YHcvj6GT2YYXdXww'), labels: { gender: 'neutral', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Liam', preview_url: getVoicePreviewUrl('TX3LPaxmHKxFdv7VOQHJ'), labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'XB0fDUnXU5powFXDhCwa', name: 'Charlotte', preview_url: getVoicePreviewUrl('XB0fDUnXU5powFXDhCwa'), labels: { gender: 'female', accent: 'British', use_case: 'narration' } },
-  { voice_id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', preview_url: getVoicePreviewUrl('Xb7hH8MSUJpSbSDYk0k2'), labels: { gender: 'female', accent: 'British', use_case: 'narration' } },
-  { voice_id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda', preview_url: getVoicePreviewUrl('XrExE9yKIg1WjnnlVkGX'), labels: { gender: 'female', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'bIHbv24MWmeRgasZH58o', name: 'Will', preview_url: getVoicePreviewUrl('bIHbv24MWmeRgasZH58o'), labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'cgSgspJ2msm6clMCkdW9', name: 'Jessica', preview_url: getVoicePreviewUrl('cgSgspJ2msm6clMCkdW9'), labels: { gender: 'female', accent: 'American', use_case: 'conversational' } },
-  { voice_id: 'cjVigY5qzO86Huf0OWal', name: 'Eric', preview_url: getVoicePreviewUrl('cjVigY5qzO86Huf0OWal'), labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'iP95p4xoKVk53GoZ742B', name: 'Chris', preview_url: getVoicePreviewUrl('iP95p4xoKVk53GoZ742B'), labels: { gender: 'male', accent: 'American', use_case: 'conversational' } },
-  { voice_id: 'nPczCjzI2devNBz1zQrb', name: 'Brian', preview_url: getVoicePreviewUrl('nPczCjzI2devNBz1zQrb'), labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
-  { voice_id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', preview_url: getVoicePreviewUrl('onwK4e9ZLuTAKqWW03F9'), labels: { gender: 'male', accent: 'British', use_case: 'narration' } },
-  { voice_id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily', preview_url: getVoicePreviewUrl('pFZP5JQG7iQjIQuC4Bku'), labels: { gender: 'female', accent: 'British', use_case: 'narration' } },
-  { voice_id: 'pqHfZKP75CvOlQylNhV4', name: 'Bill', preview_url: getVoicePreviewUrl('pqHfZKP75CvOlQylNhV4'), labels: { gender: 'male', accent: 'American', use_case: 'narration' } },
-];
+// Fallback voices using central voice database
+const FALLBACK_VOICES: Voice[] = VOICE_DATABASE.map(voice => ({
+  voice_id: voice.voice_id,
+  name: voice.name,
+  preview_url: getVoicePreviewUrl(voice.voice_id),
+  description: voice.description,
+  labels: {
+    gender: voice.gender,
+    accent: voice.accent,
+    use_case: voice.use_case,
+  }
+}));
 
 interface VoiceBrowserProps {
   selectedVoiceId?: string;

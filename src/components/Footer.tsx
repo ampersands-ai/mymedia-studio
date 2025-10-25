@@ -14,7 +14,7 @@ export const Footer = () => {
   return (
     <footer className="border-t-4 border-black bg-card mt-20">
       <div className="container mx-auto px-4 py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-12">
           {/* Brand */}
           <div className="space-y-4 text-center md:text-left">
             <Link to="/" className="flex items-center gap-3 justify-center md:justify-start">
@@ -90,7 +90,7 @@ export const Footer = () => {
               </li>
               <li>
                 <Link to="/dashboard/templates" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
-                  Templates
+                  Workflow Templates
                 </Link>
               </li>
               <li>
@@ -102,6 +102,18 @@ export const Footer = () => {
                 <Link to="/auth" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   Sign Up
                 </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Popular Templates */}
+          <div className="text-center md:text-left">
+            <h3 className="font-black text-sm mb-4">POPULAR TEMPLATES</h3>
+            <ul className="space-y-4">
+              <li>
+                <span className="text-sm text-foreground/70 font-medium">
+                  Coming Soon
+                </span>
               </li>
             </ul>
           </div>

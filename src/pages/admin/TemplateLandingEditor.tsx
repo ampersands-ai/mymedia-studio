@@ -20,6 +20,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SmartLoader } from "@/components/ui/smart-loader";
+import { ImageUploader } from "@/components/admin/template-landing/ImageUploader";
 import { ArrowLeft, Save, Eye } from "lucide-react";
 import type { TemplateLandingPage } from "@/hooks/useTemplateLanding";
 
@@ -185,20 +186,23 @@ export default function TemplateLandingEditor() {
 
           <TabsContent value="content" className="space-y-6">
             <Card className="p-6 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="hero_before_image">Hero Before Image URL</Label>
-                <Input id="hero_before_image" {...register("hero_before_image")} placeholder="https://..." />
-              </div>
+              <ImageUploader
+                label="Hero Before Image"
+                value={watch("hero_before_image") || ""}
+                onChange={(url) => setValue("hero_before_image", url)}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="hero_after_image">Hero After Image URL</Label>
-                <Input id="hero_after_image" {...register("hero_after_image")} placeholder="https://..." />
-              </div>
+              <ImageUploader
+                label="Hero After Image"
+                value={watch("hero_after_image") || ""}
+                onChange={(url) => setValue("hero_after_image", url)}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="thumbnail_url">Thumbnail URL</Label>
-                <Input id="thumbnail_url" {...register("thumbnail_url")} placeholder="https://..." />
-              </div>
+              <ImageUploader
+                label="Thumbnail"
+                value={watch("thumbnail_url") || ""}
+                onChange={(url) => setValue("thumbnail_url", url)}
+              />
 
               <div className="space-y-2">
                 <Label htmlFor="demo_video_url">Demo Video URL</Label>

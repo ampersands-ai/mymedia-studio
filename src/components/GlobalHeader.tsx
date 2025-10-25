@@ -79,7 +79,7 @@ export const GlobalHeader = () => {
                   Features
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/dashboard/templates")} className="font-bold cursor-pointer">
-                  Templates
+                  Workflow Templates
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/pricing")} className="font-bold cursor-pointer">
                   Pricing

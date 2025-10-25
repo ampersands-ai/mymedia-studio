@@ -1178,6 +1178,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_template_use_count: {
+        Args: { template_id: string }
+        Returns: undefined
+      }
+      increment_template_view_count: {
+        Args: { template_id: string }
+        Returns: undefined
+      }
       increment_tokens: {
         Args: { amount: number; user_id_param: string }
         Returns: undefined

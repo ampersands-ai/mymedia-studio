@@ -5,6 +5,7 @@ import { componentTagger } from "lovable-tagger";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 import viteCompression from "vite-plugin-compression";
 import { visualizer } from "rollup-plugin-visualizer";
+import viteImagemin from "vite-plugin-imagemin";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -20,6 +21,17 @@ export default defineConfig(({ mode }) => ({
       jpeg: { quality: 80 },
       jpg: { quality: 80 },
       webp: { quality: 80 },
+    }),
+    viteImagemin({
+      gifsicle: { optimizationLevel: 3 },
+      mozjpeg: { quality: 80 },
+      pngquant: { quality: [0.7, 0.8], speed: 4 },
+      svgo: {
+        plugins: [
+          { name: 'removeViewBox', active: false },
+          { name: 'removeEmptyAttrs', active: true }
+        ]
+      }
     }),
     // Brotli compression
     viteCompression({

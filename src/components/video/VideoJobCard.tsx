@@ -370,6 +370,15 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                   <Button
                     size="sm"
                     onClick={() => {
+                      // Stop audio if playing
+                      if (audioRef.current) {
+                        audioRef.current.pause();
+                        audioRef.current = null;
+                      }
+                      setIsPlayingAudio(false);
+                      setCurrentTime(0);
+                      setDuration(0);
+                      
                       approveScript.mutate(
                         { jobId: job.id, editedScript: editedVoiceoverScript },
                         {

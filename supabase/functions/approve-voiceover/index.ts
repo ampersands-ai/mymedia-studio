@@ -129,24 +129,16 @@ Deno.serve(async (req) => {
     
     if (backgroundMediaType === 'image') {
       // For images: Use custom background or fetch from Pixabay
-      if (job.custom_background_video) {
-        backgroundImageUrls = [job.custom_background_video];
-        console.log('Using custom background image');
-      } else {
-        // Fetch images from Pixabay (similar logic to videos, but for images)
-        // For now, use the existing video fetching as fallback
-        backgroundVideoUrls = await getBackgroundVideos(
-          supabaseClient,
-          job.style,
-          videoDuration,
-          job_id,
-          user.id,
-          job.aspect_ratio || '4:5',
-          undefined,
-          job.topic
-        );
-        console.log('Fallback: Using videos as images not yet implemented');
-      }
+      backgroundImageUrls = await getBackgroundImages(
+        supabaseClient,
+        job.style,
+        job_id,
+        user.id,
+        job.aspect_ratio || '4:5',
+        job.custom_background_video,
+        job.topic
+      );
+      console.log(`Fetched ${backgroundImageUrls.length} background images from Pixabay`);
     } else {
       // For videos: Use existing logic
       backgroundVideoUrls = await getBackgroundVideos(
@@ -278,6 +270,99 @@ function extractSearchTerms(topic: string): string {
     .slice(0, 5); // Limit to 5 key terms
   
   return words.join(' ') || 'abstract background';
+}
+
+// Fetch background images from Pixabay for automatic background
+async function getBackgroundImages(
+  supabase: any,
+  style: string,
+  videoJobId: string,
+  userId: string,
+  aspectRatio: string = '4:5',
+  customImageUrl?: string,
+  topic?: string
+): Promise<string[]> {
+  // If user selected custom image, return it as single-item array
+  if (customImageUrl) {
+    console.log('Using custom background image:', customImageUrl);
+    return [customImageUrl];
+  }
+
+  // Use topic for search if available, otherwise fall back to style
+  let searchQuery: string;
+  if (topic && topic.trim()) {
+    searchQuery = extractSearchTerms(topic);
+    console.log(`Using topic-based image search: "${searchQuery}" (from topic: "${topic}")`);
+  } else {
+    const queries: Record<string, string> = {
+      modern: 'abstract modern design',
+      tech: 'technology digital background',
+      educational: 'education learning',
+      dramatic: 'dramatic cinematic'
+    };
+    searchQuery = queries[style] || 'abstract background';
+    console.log(`Using style-based image search: "${searchQuery}"`);
+  }
+
+  // Determine orientation based on aspect ratio
+  const orientationMap: Record<string, string> = {
+    '16:9': 'horizontal',
+    '9:16': 'vertical',
+    '4:5': 'vertical',
+    '1:1': 'all'
+  };
+  const orientation = orientationMap[aspectRatio] || 'vertical';
+
+  const pixabayApiKey = Deno.env.get('PIXABAY_API_KEY');
+  if (!pixabayApiKey) {
+    throw new Error('Pixabay API key not configured');
+  }
+
+  // Request 6 images from Pixabay
+  const endpoint = `https://pixabay.com/api/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&image_type=photo&orientation=${orientation}&per_page=6`;
+  const requestSentAt = new Date();
+
+  const response = await fetch(endpoint);
+  const data = response.ok ? await response.json() : null;
+
+  // Log the API call
+  logApiCall(
+    supabase,
+    {
+      videoJobId,
+      userId,
+      serviceName: 'pixabay',
+      endpoint: endpoint.replace(pixabayApiKey, '[REDACTED]'),
+      httpMethod: 'GET',
+      stepName: 'fetch_background_images',
+      requestPayload: { query: searchQuery, per_page: 6, orientation },
+      additionalMetadata: { style, topic: topic || 'none' }
+    },
+    requestSentAt,
+    {
+      statusCode: response.status,
+      payload: data,
+      isError: !response.ok,
+      errorMessage: response.ok ? undefined : `Pixabay returned ${response.status}`
+    }
+  ).catch(e => console.error('Failed to log API call:', e));
+
+  if (!response.ok) {
+    throw new Error('Pixabay API error');
+  }
+
+  if (!data.hits?.length) {
+    throw new Error('No background images found');
+  }
+
+  // CRITICAL: Use only largeImageURL or webformatURL for automatic backgrounds (Pixabay policy)
+  // Premium URLs (fullHDURL, imageURL, vectorURL) are only for user-selected content
+  const imageUrls = data.hits
+    .map((hit: any) => hit.largeImageURL || hit.webformatURL)
+    .filter(Boolean);
+
+  console.log(`Selected ${imageUrls.length} background images from Pixabay using permitted URLs`);
+  return imageUrls;
 }
 
 async function getBackgroundVideos(

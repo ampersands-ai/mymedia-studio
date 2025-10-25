@@ -68,8 +68,35 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const [editedVoiceoverScript, setEditedVoiceoverScript] = useState(job.script || '');
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [timeoutCountdown, setTimeoutCountdown] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling, recoverJob, isRecoveringJob, dismissError, isDismissingError } = useVideoJobs();
+  
+  // Check if job is approaching 5-minute timeout
+  const isApproachingTimeout = ['assembling', 'fetching_video'].includes(job.status);
+  const elapsedMs = Date.now() - new Date(job.created_at).getTime();
+  const timeoutMs = 5 * 60 * 1000; // 5 minutes
+  const remainingMs = Math.max(0, timeoutMs - elapsedMs);
+  const isNearTimeout = isApproachingTimeout && elapsedMs > 4 * 60 * 1000; // After 4 minutes
+
+  // Update countdown every second when near timeout
+  useEffect(() => {
+    if (!isNearTimeout) {
+      setTimeoutCountdown(null);
+      return;
+    }
+
+    const updateCountdown = () => {
+      const elapsed = Date.now() - new Date(job.created_at).getTime();
+      const remaining = Math.max(0, timeoutMs - elapsed);
+      setTimeoutCountdown(Math.ceil(remaining / 1000));
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    
+    return () => clearInterval(interval);
+  }, [job.created_at, isNearTimeout, timeoutMs]);
   
   // Check if job is stuck in assembling for >5 minutes
   const isStuckAssembling = job.status === 'assembling' && 
@@ -634,7 +661,21 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
           </div>
         )}
 
-        {isProcessing && !isStuckAssembling && (
+        {isNearTimeout && timeoutCountdown !== null && timeoutCountdown > 0 && (
+          <div className="pt-2 border-t">
+            <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+              <Clock className="h-4 w-4 text-amber-600" />
+              <AlertTitle className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                Approaching Timeout
+              </AlertTitle>
+              <AlertDescription className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                This generation is taking longer than expected. It will automatically move to My Creations in {timeoutCountdown} seconds.
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
+        {isProcessing && !isStuckAssembling && !isNearTimeout && (
           <div className="text-xs text-muted-foreground italic">
             ⏳ Processing... This usually takes 3-5 minutes
           </div>

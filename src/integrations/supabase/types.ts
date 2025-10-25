@@ -1163,6 +1163,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_and_fail_stuck_jobs: { Args: never; Returns: undefined }
       check_existing_dispute: {
         Args: { _generation_id: string }
         Returns: boolean

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Loader2, Clock } from 'lucide-react';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { VideoJobCard } from './VideoJobCard';
 import { VideoPreviewModal } from './VideoPreviewModal';
@@ -27,6 +28,15 @@ export function VideoJobsList() {
           <CardTitle className="text-xl sm:text-2xl font-black">CURRENT GENERATION</CardTitle>
         </CardHeader>
         <CardContent className="min-w-0">
+          {jobs && jobs.length > 0 && (
+            <Alert className="mb-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+              <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <AlertTitle className="text-blue-900 dark:text-blue-100">Auto-Timeout Policy</AlertTitle>
+              <AlertDescription className="text-blue-800 dark:text-blue-200 text-sm">
+                Jobs taking longer than 5 minutes will automatically move to My Creations to allow you to generate other content.
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="space-y-3 md:space-y-4">
             {!jobs || jobs.length === 0 ? (
               <div className="text-center py-8 md:py-12">

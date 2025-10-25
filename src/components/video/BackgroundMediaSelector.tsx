@@ -166,6 +166,17 @@ export function BackgroundMediaSelector({
         <DialogContent className="max-w-4xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle>Select Background Media</DialogTitle>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
+              <span>Powered by</span>
+              <a 
+                href="https://pixabay.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="font-semibold hover:underline text-primary"
+              >
+                Pixabay
+              </a>
+            </div>
           </DialogHeader>
 
           <div className="space-y-4">

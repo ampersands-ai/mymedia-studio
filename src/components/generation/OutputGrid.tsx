@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import { GenerationPreview } from "./GenerationPreview";
+import { OptimizedGenerationPreview } from "./OptimizedGenerationPreview";
 
 interface OutputGridProps {
   outputs: Array<{
@@ -28,7 +28,7 @@ export const OutputGrid = ({
           className="relative aspect-square bg-background rounded-lg overflow-hidden border cursor-pointer hover:border-primary transition-colors"
           onClick={() => onSelectOutput(0)}
         >
-          <GenerationPreview
+          <OptimizedGenerationPreview
             storagePath={outputs[0].storage_path}
             contentType={contentType}
             className="w-full h-full object-contain"
@@ -59,7 +59,7 @@ export const OutputGrid = ({
 
             {/* Thumbnail */}
             <div className="relative w-full h-full rounded-lg overflow-hidden border-2 border-transparent group-hover:border-primary transition-all group-hover:scale-[1.02] bg-background">
-              <GenerationPreview
+              <OptimizedGenerationPreview
                 storagePath={output.storage_path}
                 contentType={contentType}
                 className="w-full h-full object-cover"

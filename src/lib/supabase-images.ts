@@ -37,7 +37,7 @@ export function getOptimizedImageUrl(
 
   // Supabase Storage public URL pattern
   const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const bucket = 'public'; // Adjust based on your bucket name
+  const bucket = 'generated-content'; // Using generated-content bucket for user creations
 
   return `${baseUrl}/storage/v1/render/image/${bucket}/${bucketPath}?${params.toString()}`;
 }

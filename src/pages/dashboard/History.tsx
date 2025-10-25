@@ -15,31 +15,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { Skeleton } from "@/components/ui/skeleton";
+import { OptimizedGenerationImage } from "@/components/generation/OptimizedGenerationImage";
 
-// Component to render image with signed URL
-const ImageWithSignedUrl = ({ generation, className }: { generation: Generation; className?: string }) => {
-  const { signedUrl, isLoading } = useSignedUrl(generation.storage_path);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  
-  if (isLoading || !signedUrl) {
-    return (
-      <Skeleton className={className} />
-    );
+// Component to render image with optimized loading (no signed URL needed for public bucket)
+const ImageWithOptimizedLoading = ({ generation, className }: { generation: Generation; className?: string }) => {
+  if (!generation.storage_path) {
+    return <Skeleton className={className} />;
   }
   
   return (
-    <>
-      {!imageLoaded && <Skeleton className={className} />}
-      <img 
-        src={signedUrl} 
-        alt="Generated content" 
-        className={className}
-        loading="lazy"
-        decoding="async"
-        onLoad={() => setImageLoaded(true)}
-        style={{ display: imageLoaded ? 'block' : 'none' }}
-      />
-    </>
+    <OptimizedGenerationImage
+      storagePath={generation.storage_path}
+      alt="Generated content"
+      className={className}
+    />
   );
 };
 
@@ -480,7 +469,7 @@ const History = () => {
   };
 
   const handleDownload = async (storagePath: string | null, type: string, outputUrl?: string | null) => {
-    // For video jobs with direct URLs, use the URL directly
+    // For video jobs with direct URLs, use the URL directly (legacy support)
     if (!storagePath && outputUrl) {
       toast.loading('Preparing your download...', { id: 'download-toast' });
       
@@ -696,7 +685,7 @@ const History = () => {
                         playOnHover={true}
                       />
                     ) : generation.type === "image" ? (
-                      <ImageWithSignedUrl 
+                      <ImageWithOptimizedLoading 
                         generation={generation}
                         className="w-full h-full object-cover"
                       />
@@ -827,7 +816,7 @@ const History = () => {
                       />
                     )
                   ) : previewGeneration.type === "image" ? (
-                    <ImageWithSignedUrl 
+                    <ImageWithOptimizedLoading 
                       generation={previewGeneration}
                       className="w-full h-full object-contain"
                     />

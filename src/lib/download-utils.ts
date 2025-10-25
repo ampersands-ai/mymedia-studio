@@ -7,28 +7,25 @@ export async function downloadMultipleOutputs(
   contentType: string,
   onDownloadSuccess?: () => void
 ) {
-  // Single output - direct download
+  // Single output - direct download using public URL (no signed URL needed)
   if (outputs.length === 1) {
     try {
-      const { data } = await supabase.storage
-        .from('generated-content')
-        .createSignedUrl(outputs[0].storage_path, 60);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const publicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${outputs[0].storage_path}`;
       
-      if (data?.signedUrl) {
-        const response = await fetch(data.signedUrl);
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        const extension = outputs[0].storage_path.split('.').pop() || 'file';
-        a.download = `output-1-${Date.now()}.${extension}`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        toast.success('Download started!');
-        onDownloadSuccess?.();
-      }
+      const response = await fetch(publicUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const extension = outputs[0].storage_path.split('.').pop() || 'file';
+      a.download = `output-1-${Date.now()}.${extension}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Download started!');
+      onDownloadSuccess?.();
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download');
@@ -36,25 +33,21 @@ export async function downloadMultipleOutputs(
     return;
   }
 
-  // Multiple outputs - create ZIP
+  // Multiple outputs - create ZIP using public URLs
   try {
     const toastId = toast.loading(`Preparing ${outputs.length} files for download...`);
     
     const zip = new JSZip();
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     
-    // Download all files in parallel
+    // Download all files in parallel using public URLs
     const downloadPromises = outputs.map(async (output) => {
-      const { data } = await supabase.storage
-        .from('generated-content')
-        .createSignedUrl(output.storage_path, 60);
-      
-      if (data?.signedUrl) {
-        const response = await fetch(data.signedUrl);
-        const blob = await response.blob();
-        const extension = output.storage_path.split('.').pop() || 'file';
-        const filename = `output-${output.output_index + 1}.${extension}`;
-        zip.file(filename, blob);
-      }
+      const publicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${output.storage_path}`;
+      const response = await fetch(publicUrl);
+      const blob = await response.blob();
+      const extension = output.storage_path.split('.').pop() || 'file';
+      const filename = `output-${output.output_index + 1}.${extension}`;
+      zip.file(filename, blob);
     });
     
     await Promise.all(downloadPromises);

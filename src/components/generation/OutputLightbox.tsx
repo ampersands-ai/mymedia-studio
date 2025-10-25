@@ -2,10 +2,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Download, ChevronLeft, ChevronRight, Image as ImageIcon, Share2, RefreshCw, Heart } from "lucide-react";
-import { GenerationPreview } from "./GenerationPreview";
+import { OptimizedGenerationPreview } from "./OptimizedGenerationPreview";
 import { ShareModal } from "./ShareModal";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNativeShare } from "@/hooks/useNativeShare";
 import { trackEvent } from "@/lib/posthog";
@@ -93,29 +92,26 @@ export const OutputLightbox = ({
 
   const handleDownload = async () => {
     try {
-      const { data } = await supabase.storage
-        .from('generated-content')
-        .createSignedUrl(currentOutput.storage_path, 60);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const publicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
       
-      if (data?.signedUrl) {
-        const response = await fetch(data.signedUrl);
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        const extension = currentOutput.storage_path.split('.').pop() || 'file';
-        a.download = `artifio-${currentOutput.output_index + 1}-${Date.now()}.${extension}`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        toast.success('Download started!');
-        trackEvent('output_downloaded', {
-          generation_id: currentOutput.id,
-          content_type: contentType,
-          output_index: selectedIndex
-        });
-      }
+      const response = await fetch(publicUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const extension = currentOutput.storage_path.split('.').pop() || 'file';
+      a.download = `artifio-${currentOutput.output_index + 1}-${Date.now()}.${extension}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Download started!');
+      trackEvent('output_downloaded', {
+        generation_id: currentOutput.id,
+        content_type: contentType,
+        output_index: selectedIndex
+      });
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download');
@@ -124,12 +120,11 @@ export const OutputLightbox = ({
 
   const handleShare = async () => {
     try {
-      const { data } = await supabase.storage
-        .from('generated-content')
-        .createSignedUrl(currentOutput.storage_path, 60);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const publicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
       
-      if (data?.signedUrl && canShare) {
-        await shareFile(data.signedUrl, 'Created with artifio.ai');
+      if (canShare) {
+        await shareFile(publicUrl, 'Created with artifio.ai');
         trackEvent('output_shared', {
           generation_id: currentOutput.id,
           content_type: contentType,
@@ -195,7 +190,7 @@ export const OutputLightbox = ({
 
           {/* Image Preview - Centered, reasonable size */}
           <div className="flex items-center justify-center bg-muted/30 rounded-lg p-4 my-4 overflow-hidden">
-            <GenerationPreview
+            <OptimizedGenerationPreview
               storagePath={currentOutput.storage_path}
               contentType={contentType}
               className="max-w-full max-h-[400px] object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"

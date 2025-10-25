@@ -146,8 +146,11 @@ Deno.serve(async (req) => {
       throw new Error('Job not found or access denied');
     }
 
-    if (job.status !== 'awaiting_script_approval') {
-      throw new Error(`Job is in ${job.status} status, expected awaiting_script_approval`);
+    const allowedStatuses = ['awaiting_script_approval', 'awaiting_voice_approval'];
+    if (!allowedStatuses.includes(job.status)) {
+      throw new Error(
+        `Job is in ${job.status} status, expected one of: ${allowedStatuses.join(', ')}`
+      );
     }
 
     const finalScript = edited_script || job.script;

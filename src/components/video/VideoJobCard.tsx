@@ -4,13 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, Download, Eye, Clock, AlertCircle, Play, XCircle, Volume2, Edit, Pause } from 'lucide-react';
+import { Loader2, Download, Eye, Clock, AlertCircle, Play, XCircle, Volume2, Edit, Pause, RotateCcw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useState, useEffect, useRef } from 'react';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { useSignedUrlLazy } from '@/hooks/useSignedUrlLazy';
+import { Slider } from '@/components/ui/slider';
 
 interface VideoJobCardProps {
   job: VideoJob;
@@ -64,6 +65,8 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const [isEditingVoiceoverScript, setIsEditingVoiceoverScript] = useState(false);
   const [editedScript, setEditedScript] = useState(job.script || '');
   const [editedVoiceoverScript, setEditedVoiceoverScript] = useState(job.script || '');
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling, recoverJob, isRecoveringJob } = useVideoJobs();
   
@@ -131,9 +134,17 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     audioRef.current = audio;
     setIsPlayingAudio(true);
     
+    audio.onloadedmetadata = () => {
+      setDuration(audio.duration);
+    };
+    
+    audio.ontimeupdate = () => {
+      setCurrentTime(audio.currentTime);
+    };
+    
     audio.onended = () => {
       setIsPlayingAudio(false);
-      audioRef.current = null;
+      setCurrentTime(0);
     };
     
     audio.onerror = () => {
@@ -143,6 +154,30 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     };
     
     audio.play();
+  };
+
+  const handleRestartAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      setCurrentTime(0);
+      if (!isPlayingAudio) {
+        audioRef.current.play();
+        setIsPlayingAudio(true);
+      }
+    }
+  };
+
+  const handleSeek = (value: number[]) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = value[0];
+      setCurrentTime(value[0]);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const handleApproveScript = () => {
@@ -365,7 +400,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
               <>
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-muted-foreground">Script:</label>
-                  <ScrollArea className="h-24 rounded-md border bg-muted/30 p-3">
+                  <ScrollArea className="h-72 rounded-md border bg-muted/30 p-3">
                     <p className="text-xs whitespace-pre-wrap">{job.script}</p>
                   </ScrollArea>
                 </div>
@@ -380,32 +415,53 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                   </Alert>
                 )}
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <label className="text-xs font-medium text-muted-foreground">Voiceover Preview:</label>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full"
-                    onClick={handleToggleVoiceover}
-                    disabled={isLoadingVoiceUrl || !voiceoverSignedUrl || voiceUrlError}
-                  >
-                    {isLoadingVoiceUrl ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Loading...
-                      </>
-                    ) : isPlayingAudio ? (
-                      <>
-                        <Pause className="w-4 h-4 mr-2" />
-                        Pause Voiceover
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4 mr-2" />
-                        Play Voiceover
-                      </>
-                    )}
-                  </Button>
+                  
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleToggleVoiceover}
+                      disabled={isLoadingVoiceUrl || !voiceoverSignedUrl || voiceUrlError}
+                      className="shrink-0"
+                    >
+                      {isLoadingVoiceUrl ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : isPlayingAudio ? (
+                        <Pause className="w-4 h-4" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleRestartAudio}
+                      disabled={!audioRef.current}
+                      className="shrink-0"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                    </Button>
+
+                    <div className="flex-1 flex items-center gap-2">
+                      <span className="text-xs font-mono tabular-nums shrink-0">
+                        {formatTime(currentTime)}
+                      </span>
+                      <Slider
+                        value={[currentTime]}
+                        max={duration || 100}
+                        step={0.1}
+                        onValueChange={handleSeek}
+                        disabled={!audioRef.current}
+                        className="flex-1"
+                      />
+                      <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
+                        {formatTime(duration)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex gap-2 pt-2">

@@ -166,18 +166,10 @@ Deno.serve(async (req) => {
     // Step 4: Assemble video
     await updateJobStatus(supabaseClient, job_id, 'assembling');
     
-    // Get public URL for voiceover from storage (need public URL for Shotstack)
+    // Get direct public URL for voiceover from storage (bucket is public)
     const voiceFileName = job.voiceover_url.split('/').pop();
-    const { data: signedData } = await supabaseClient.storage
-      .from('generated-content')
-      .createSignedUrl(voiceFileName!, 7200); // 2 hour expiry for Shotstack processing
-    
-    if (!signedData?.signedUrl) {
-      throw new Error('Failed to generate signed URL for voiceover');
-    }
-    
-    const voiceoverPublicUrl = signedData.signedUrl;
-    console.log('Generated signed URL for voiceover');
+    const voiceoverPublicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${voiceFileName}`;
+    console.log('Using direct public URL for voiceover');
     
     // Validate assets before submission
     console.log('Validating asset accessibility...');

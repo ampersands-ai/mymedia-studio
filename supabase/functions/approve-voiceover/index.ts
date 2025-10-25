@@ -303,37 +303,43 @@ async function assembleVideo(
     black: '900'
   };
   
-  const subtitleClips = words.map((word, index) => ({
-    asset: {
-      type: 'html',
-      html: `<p>${word}</p>`,
-      css: `p { 
-        font-family: '${style.fontFamily}', Arial, sans-serif; 
-        font-size: ${style.fontSize}px; 
-        font-weight: ${fontWeightMap[style.fontWeight] || '700'};
-        color: ${style.textColor}; 
-        text-align: center; 
-        background: ${style.backgroundColor}; 
-        padding: 20px 40px;
-        margin: 0;
-        border-radius: 12px;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        ${style.strokeColor && style.strokeWidth ? `
-          -webkit-text-stroke: ${style.strokeWidth}px ${style.strokeColor};
-          paint-order: stroke fill;
-          text-shadow: 3px 3px 6px ${style.strokeColor};
-        ` : `text-shadow: 2px 2px 4px rgba(0,0,0,0.8);`}
-      }`,
-      width: config.width,
-      height: Math.floor(config.height * 0.2),
-      position: positionMap[style.position] || 'center'
-    },
-    start: index * secondsPerWord,
-    length: secondsPerWord * 1.2,
-    transition: transitions[style.animation] || { in: 'fade', out: 'fade' },
-    effect: style.animation === 'bounce' ? 'zoomIn' : undefined
-  }));
+  // Build CSS string without complex template literals that might break
+  const buildCss = (style: any, fontWeight: string) => {
+    let css = `p { font-family: '${style.fontFamily}', Arial, sans-serif; font-size: ${style.fontSize}px; font-weight: ${fontWeight}; color: ${style.textColor}; text-align: center; background: ${style.backgroundColor}; padding: 20px 40px; margin: 0; border-radius: 12px; text-transform: uppercase; letter-spacing: 2px;`;
+    
+    if (style.strokeColor && style.strokeWidth) {
+      css += ` -webkit-text-stroke: ${style.strokeWidth}px ${style.strokeColor}; paint-order: stroke fill; text-shadow: 3px 3px 6px ${style.strokeColor};`;
+    } else {
+      css += ` text-shadow: 2px 2px 4px rgba(0,0,0,0.8);`;
+    }
+    
+    css += ` }`;
+    return css;
+  };
+  
+  const subtitleClips = words.map((word, index) => {
+    const clip: any = {
+      asset: {
+        type: 'html',
+        html: `<p>${word}</p>`,
+        css: buildCss(style, fontWeightMap[style.fontWeight] || '700'),
+        width: config.width,
+        height: Math.floor(config.height * 0.2),
+        position: positionMap[style.position] || 'center'
+      },
+      start: index * secondsPerWord,
+      length: secondsPerWord * 1.2
+    };
+    
+    // Add transition based on animation style
+    if (style.animation === 'fade') {
+      clip.transition = { in: 'fade', out: 'fade' };
+    } else if (style.animation === 'zoom') {
+      clip.transition = { in: 'zoom', out: 'zoom' };
+    }
+    
+    return clip;
+  });
 
   const edit = {
     timeline: {
@@ -346,13 +352,12 @@ async function assembleVideo(
           clips: [{
             asset: {
               type: 'video',
-              src: assets.backgroundVideoUrl,
+              src: assets.backgroundVideoUrl
             },
             start: 0,
             length: assets.duration,
             fit: 'cover',
-            effect: 'zoomIn',
-            scale: 1.1
+            scale: 1.05
           }]
         },
         {

@@ -234,7 +234,21 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
       ? (schema.default ?? schema.minimum) 
       : value;
     
-    if (hasMinMax && schema.maximum - schema.minimum <= 100) {
+    // Smart step calculation based on range and type
+    const calculateStep = () => {
+      if (schema.type === "integer") return 1;
+      
+      // For ranges 0-1 or similar small fractional ranges, use 0.01
+      if (hasMinMax && schema.maximum - schema.minimum <= 1) {
+        return 0.01;
+      }
+      
+      // Default to 0.1 for other number types
+      return 0.1;
+    };
+    
+    // Show slider for ranges <= 100 or small fractional ranges (e.g., 0-1)
+    if (hasMinMax && (schema.maximum - schema.minimum <= 100 || (schema.maximum - schema.minimum <= 1 && schema.minimum >= 0))) {
       // Use slider for small ranges
       return (
         <div className="space-y-2">
@@ -253,7 +267,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
             onValueChange={([val]) => onChange(val)}
             min={schema.minimum}
             max={schema.maximum}
-            step={schema.type === "integer" ? 1 : 0.1}
+            step={calculateStep()}
             className="w-full"
           />
         </div>
@@ -276,7 +290,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
           onChange={(e) => onChange(schema.type === "integer" ? parseInt(e.target.value) : parseFloat(e.target.value))}
           min={schema.minimum}
           max={schema.maximum}
-          step={schema.type === "integer" ? 1 : 0.1}
+          step={calculateStep()}
           placeholder={`Enter ${displayName.toLowerCase()}`}
         />
       </div>

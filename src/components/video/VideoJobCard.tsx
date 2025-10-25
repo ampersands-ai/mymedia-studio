@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, Download, Eye, Clock, AlertCircle, Play, XCircle, Volume2, Edit } from 'lucide-react';
+import { Loader2, Download, Eye, Clock, AlertCircle, Play, XCircle, Volume2, Edit, Pause } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
@@ -62,6 +62,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isEditingScript, setIsEditingScript] = useState(false);
   const [editedScript, setEditedScript] = useState(job.script || '');
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling } = useVideoJobs();
 
   // Fetch signed URL for voiceover (only when needed)
@@ -87,18 +88,49 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     setEditedScript(job.script || '');
   }, [job.script]);
 
-  const handlePlayVoiceover = () => {
+  // Cleanup audio on unmount or job change
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, [job.id]);
+
+  const handleToggleVoiceover = () => {
     if (!voiceoverSignedUrl) {
       toast.error('Voiceover URL not ready');
       return;
     }
     
+    // If audio is playing, pause it
+    if (isPlayingAudio && audioRef.current) {
+      audioRef.current.pause();
+      setIsPlayingAudio(false);
+      return;
+    }
+    
+    // If audio exists but is paused, resume it
+    if (audioRef.current && !isPlayingAudio) {
+      audioRef.current.play();
+      setIsPlayingAudio(true);
+      return;
+    }
+    
+    // Create new audio instance
     const audio = new Audio(voiceoverSignedUrl);
+    audioRef.current = audio;
     setIsPlayingAudio(true);
     
-    audio.onended = () => setIsPlayingAudio(false);
+    audio.onended = () => {
+      setIsPlayingAudio(false);
+      audioRef.current = null;
+    };
+    
     audio.onerror = () => {
       setIsPlayingAudio(false);
+      audioRef.current = null;
       toast.error('Failed to play voiceover');
     };
     
@@ -280,8 +312,8 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                 size="sm"
                 variant="outline"
                 className="w-full"
-                onClick={handlePlayVoiceover}
-                disabled={isPlayingAudio || isLoadingVoiceUrl || !voiceoverSignedUrl || voiceUrlError}
+                onClick={handleToggleVoiceover}
+                disabled={isLoadingVoiceUrl || !voiceoverSignedUrl || voiceUrlError}
               >
                 {isLoadingVoiceUrl ? (
                   <>
@@ -290,8 +322,8 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                   </>
                 ) : isPlayingAudio ? (
                   <>
-                    <Volume2 className="w-4 h-4 mr-2 animate-pulse" />
-                    Playing...
+                    <Pause className="w-4 h-4 mr-2" />
+                    Pause Voiceover
                   </>
                 ) : (
                   <>

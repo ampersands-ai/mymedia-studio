@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logApiCall, linkApiLogsToGeneration } from '../_shared/api-logger.ts';
 
@@ -7,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -20,26 +19,25 @@ serve(async (req) => {
     }
 
     // Get auth user
-    const authHeader = req.headers.get('authorization');
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { authorization: authHeader ?? '' } } }
-    );
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Missing Authorization header');
+    }
 
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+    // Authenticate user
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    
+    if (authError || !user) {
       throw new Error('Unauthorized');
     }
 
-    // Use service role for operations
-    const serviceClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
     // Get job and verify ownership
-    const { data: job, error: jobError } = await serviceClient
+    const { data: job, error: jobError } = await supabaseClient
       .from('video_jobs')
       .select('*')
       .eq('id', job_id)
@@ -60,23 +58,23 @@ serve(async (req) => {
     console.log(`Approving voiceover for job ${job_id}, continuing assembly...`);
 
     // Step 3: Fetch background video
-    await updateJobStatus(serviceClient, job_id, 'fetching_video');
+    await updateJobStatus(supabaseClient, job_id, 'fetching_video');
     const backgroundVideoUrl = await getBackgroundVideo(
-      serviceClient,
+      supabaseClient,
       job.style,
       job.duration,
       job_id,
       user.id
     );
-    await serviceClient.from('video_jobs').update({ background_video_url: backgroundVideoUrl }).eq('id', job_id);
+    await supabaseClient.from('video_jobs').update({ background_video_url: backgroundVideoUrl }).eq('id', job_id);
     console.log(`Fetched background video for job ${job_id}`);
 
     // Step 4: Assemble video
-    await updateJobStatus(serviceClient, job_id, 'assembling');
+    await updateJobStatus(supabaseClient, job_id, 'assembling');
     
     // Get public URL for voiceover from storage (need public URL for Shotstack)
     const voiceFileName = job.voiceover_url.split('/').pop();
-    const { data: signedData } = await serviceClient.storage
+    const { data: signedData } = await supabaseClient.storage
       .from('video-assets')
       .createSignedUrl(voiceFileName!, 7200); // 2 hour expiry for Shotstack processing
     
@@ -100,7 +98,7 @@ serve(async (req) => {
     console.log('Assets validated successfully');
     
     const renderId = await assembleVideo(
-      serviceClient,
+      supabaseClient,
       {
         script: job.script,
         voiceoverUrl: voiceoverPublicUrl,
@@ -110,11 +108,11 @@ serve(async (req) => {
       job_id,
       user.id
     );
-    await serviceClient.from('video_jobs').update({ shotstack_render_id: renderId }).eq('id', job_id);
+    await supabaseClient.from('video_jobs').update({ shotstack_render_id: renderId }).eq('id', job_id);
     console.log(`Submitted to Shotstack: ${renderId}`);
 
     // Step 5: Poll for completion
-    await pollRenderStatus(serviceClient, job_id, renderId, user.id);
+    await pollRenderStatus(supabaseClient, job_id, renderId, user.id);
 
     return new Response(
       JSON.stringify({ success: true, job_id }),
@@ -126,12 +124,12 @@ serve(async (req) => {
     // Update job as failed
     if (error.job_id) {
       try {
-        const serviceClient = createClient(
+        const supabaseClient = createClient(
           Deno.env.get('SUPABASE_URL') ?? '',
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         );
         
-        await serviceClient
+        await supabaseClient
           .from('video_jobs')
           .update({
             status: 'failed',

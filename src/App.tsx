@@ -15,6 +15,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { reportWebVitals, monitorPerformance } from "@/lib/webVitals";
 import { queryClient } from "@/lib/queryClient";
+import { DevPerformanceMonitor } from "./components/DevPerformanceMonitor";
 
 // Lazy load pages for better performance
 const IndexV2 = lazy(() => import("./pages/IndexV2"));
@@ -142,6 +143,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <DevPerformanceMonitor />
         <BrowserRouter>
           <AppContent />
         </BrowserRouter>

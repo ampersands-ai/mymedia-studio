@@ -647,7 +647,7 @@ async function assembleVideo(
     clips: [{
       asset: captionAsset,
       start: 0,
-      length: 'end' // Cover entire video duration
+      length: 'auto' // Match voiceover duration automatically
     }]
   });
 
@@ -723,6 +723,115 @@ async function assembleVideo(
       errorMessage = result.response.errors.map((e: any) => e.message || e.code).join(', ');
     } else if (result?.message) {
       errorMessage = result.message;
+    }
+
+    const isCaptionValidation = (errorMessage || '').toLowerCase().includes('caption asset');
+
+    if (isCaptionValidation) {
+      console.log('Retrying with minimal caption asset and auto length...');
+      const fallbackEdit: any = JSON.parse(JSON.stringify(edit));
+      try {
+        const captionTrack = fallbackEdit.timeline.tracks[2];
+        if (captionTrack?.clips?.[0]) {
+          captionTrack.clips[0].asset = { type: 'caption', src: 'alias://VOICEOVER' };
+          captionTrack.clips[0].length = 'auto';
+        }
+      } catch (_) {}
+
+      const retryRequestSentAt = new Date();
+      const retryRes = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': Deno.env.get('SHOTSTACK_API_KEY') ?? ''
+        },
+        body: JSON.stringify(fallbackEdit)
+      });
+      const retryText = await retryRes.text();
+      let retryResult = null;
+      try { retryResult = retryText ? JSON.parse(retryText) : null; } catch {}
+
+      logApiCall(
+        supabase,
+        {
+          videoJobId,
+          userId,
+          serviceName: 'shotstack',
+          endpoint,
+          httpMethod: 'POST',
+          stepName: 'assemble_video_retry_minimal_captions',
+          requestPayload: fallbackEdit,
+          additionalMetadata: { captionRetry: 'minimal' }
+        },
+        retryRequestSentAt,
+        {
+          statusCode: retryRes.status,
+          payload: retryResult,
+          isError: !retryRes.ok,
+          errorMessage: retryRes.ok ? undefined : retryResult?.message || retryResult?.detail || `Shotstack API error ${retryRes.status}`
+        }
+      ).catch(e => console.error('Failed to log API call (retry minimal):', e));
+
+      if (!retryRes.ok) {
+        console.error('Shotstack API Error (retry minimal captions):', {
+          status: retryRes.status,
+          response: retryResult,
+          requestPayload: fallbackEdit
+        });
+
+        console.log('Retrying with asset type "captions"...');
+        const fallbackEdit2: any = JSON.parse(JSON.stringify(fallbackEdit));
+        try {
+          const captionTrack2 = fallbackEdit2.timeline.tracks[2];
+          if (captionTrack2?.clips?.[0]) {
+            captionTrack2.clips[0].asset = { type: 'captions', src: 'alias://VOICEOVER' };
+          }
+        } catch (_) {}
+
+        const retryRequestSentAt2 = new Date();
+        const retryRes2 = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': Deno.env.get('SHOTSTACK_API_KEY') ?? ''
+          },
+          body: JSON.stringify(fallbackEdit2)
+        });
+        const retryText2 = await retryRes2.text();
+        let retryResult2 = null;
+        try { retryResult2 = retryText2 ? JSON.parse(retryText2) : null; } catch {}
+
+        logApiCall(
+          supabase,
+          {
+            videoJobId,
+            userId,
+            serviceName: 'shotstack',
+            endpoint,
+            httpMethod: 'POST',
+            stepName: 'assemble_video_retry_captions_type',
+            requestPayload: fallbackEdit2,
+            additionalMetadata: { captionRetry: 'captions_type' }
+          },
+          retryRequestSentAt2,
+          {
+            statusCode: retryRes2.status,
+            payload: retryResult2,
+            isError: !retryRes2.ok,
+            errorMessage: retryRes2.ok ? undefined : retryResult2?.message || retryResult2?.detail || `Shotstack API error ${retryRes2.status}`
+          }
+        ).catch(e => console.error('Failed to log API call (retry captions type):', e));
+
+        if (!retryRes2.ok) {
+          let retryMsg = retryResult2?.response?.message || (retryResult2?.response?.errors ? retryResult2.response.errors.map((e: any) => e.message || e.code).join(', ') : '') || retryResult2?.message || errorMessage;
+          throw new Error(`Shotstack error: ${retryMsg}`);
+        }
+        console.log('Shotstack render submitted successfully (captions type fallback):', retryResult2.response.id);
+        return retryResult2.response.id;
+      }
+
+      console.log('Shotstack render submitted successfully (minimal captions):', retryResult.response.id);
+      return retryResult.response.id;
     }
     
     throw new Error(`Shotstack error: ${errorMessage}`);

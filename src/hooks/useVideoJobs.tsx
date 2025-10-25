@@ -7,24 +7,22 @@ import { VideoJob, VideoJobInput } from '@/types/video';
 export function useVideoJobs() {
   const queryClient = useQueryClient();
 
-  // Fetch user's video jobs
+  // Fetch user's video jobs (exclude completed ones - they go to History)
   const { data: jobs, isLoading } = useQuery({
     queryKey: ['video-jobs'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('video_jobs')
         .select('*')
+        .neq('status', 'completed')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
       return (data || []) as VideoJob[];
     },
     refetchInterval: (query) => {
-      // Poll every 10s if there are active jobs
-      const hasActive = query.state.data?.some(j => 
-        ['pending', 'generating_script', 'awaiting_script_approval', 
-         'generating_voice', 'awaiting_voice_approval', 'fetching_video', 'assembling'].includes(j.status)
-      );
+      // Poll every 10s if there are any active jobs (all non-completed are active)
+      const hasActive = query.state.data && query.state.data.length > 0;
       return hasActive ? 10000 : false;
     },
   });

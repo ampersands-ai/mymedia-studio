@@ -36,6 +36,29 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
     }
   };
 
+  const handleDownload = async () => {
+    if (!job.final_video_url) return;
+    
+    toast.loading('Preparing download...', { id: 'video-download' });
+    
+    try {
+      const response = await fetch(job.final_video_url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `${job.topic.slice(0, 30)}-${Date.now()}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(blobUrl);
+      document.body.removeChild(a);
+      toast.success('Download started!', { id: 'video-download' });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download video', { id: 'video-download' });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl">
@@ -70,12 +93,10 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
             <Button
               variant="default"
               className="flex-1"
-              asChild
+              onClick={handleDownload}
             >
-              <a href={job.final_video_url} download={`${job.topic.slice(0, 30)}.mp4`}>
-                <Download className="w-4 h-4 mr-2" />
-                Download Video
-              </a>
+              <Download className="w-4 h-4 mr-2" />
+              Download Video
             </Button>
             <Button
               variant="outline"

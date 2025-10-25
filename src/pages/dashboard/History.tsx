@@ -157,6 +157,8 @@ interface Generation {
   output_index?: number;
   is_batch_output?: boolean;
   workflow_execution_id?: string | null;
+  is_video_job?: boolean; // Flag for video jobs
+  video_job_data?: any; // Original video job data
 }
 
 // Component to render video with signed URL and hover-to-play
@@ -282,6 +284,16 @@ const History = () => {
 
       if (genError) throw genError;
 
+      // Get completed video jobs
+      const { data: videoData, error: videoError } = await supabase
+        .from("video_jobs")
+        .select("*")
+        .eq("user_id", user!.id)
+        .eq("status", "completed")
+        .order("created_at", { ascending: false });
+
+      if (videoError) console.error("Error fetching video jobs:", videoError);
+
       // Then get all disputes for this user
       const { data: disputes, error: disputeError } = await supabase
         .from("token_dispute_reports")
@@ -299,7 +311,36 @@ const History = () => {
         dispute_status: disputeMap.get(gen.id),
       }));
 
-      return enrichedGenerations as Generation[];
+      // Convert video jobs to generation-like format for unified display
+      const videoGenerations = (videoData || []).map(video => ({
+        id: video.id,
+        type: 'video',
+        prompt: video.topic,
+        output_url: video.final_video_url,
+        storage_path: null, // Videos use direct URLs
+        status: 'completed',
+        tokens_used: video.cost_tokens,
+        created_at: video.created_at,
+        enhanced_prompt: null,
+        ai_caption: null,
+        ai_hashtags: null,
+        caption_generated_at: null,
+        has_dispute: false,
+        dispute_status: undefined,
+        parent_generation_id: null,
+        output_index: 0,
+        is_batch_output: false,
+        workflow_execution_id: null,
+        is_video_job: true, // Flag to identify video jobs
+        video_job_data: video // Store original video job data
+      }));
+
+      // Combine and sort by created_at
+      const combined = [...enrichedGenerations, ...videoGenerations].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      return combined as Generation[];
     },
     enabled: !!user,
     staleTime: 30 * 1000, // 30 seconds
@@ -427,7 +468,40 @@ const History = () => {
     toast.success('History refreshed!');
   };
 
-  const handleDownload = async (storagePath: string, type: string) => {
+  const handleDownload = async (storagePath: string | null, type: string, outputUrl?: string | null) => {
+    // For video jobs with direct URLs, use the URL directly
+    if (!storagePath && outputUrl) {
+      toast.loading('Preparing your download...', { id: 'download-toast' });
+      
+      if (progress && !progress.checklist.downloadedResult) {
+        updateProgress({ downloadedResult: true });
+      }
+      
+      try {
+        const response = await fetch(outputUrl);
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `artifio-video-${Date.now()}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(blobUrl);
+        document.body.removeChild(a);
+        toast.success('Download started successfully!', { id: 'download-toast' });
+        return;
+      } catch (error) {
+        console.error('Download error:', error);
+        toast.error('Failed to download file', { id: 'download-toast' });
+        return;
+      }
+    }
+
+    if (!storagePath) {
+      toast.error('No file path available');
+      return;
+    }
+
     // Show instant feedback
     toast.loading('Preparing your download...', { id: 'download-toast' });
     
@@ -666,14 +740,14 @@ const History = () => {
                 </div>
 
                 {/* Quick actions - Download without opening preview */}
-                {generation.storage_path && generation.status === "completed" && (
+                {(generation.storage_path || generation.output_url) && generation.status === "completed" && (
                   <div className="flex gap-1 pt-1 border-t mt-1">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDownload(generation.storage_path!, generation.type);
+                        handleDownload(generation.storage_path, generation.type, generation.output_url);
                       }}
                       className="flex-1 h-7 text-xs"
                     >
@@ -724,14 +798,23 @@ const History = () => {
                     </div>
                   </div>
                 </div>
-              ) : previewGeneration.storage_path && previewGeneration.status === "completed" ? (
+              ) : (previewGeneration.storage_path || previewGeneration.output_url) && previewGeneration.status === "completed" ? (
                 <div className="aspect-video relative overflow-hidden bg-muted rounded-lg">
                   {previewGeneration.type === "video" ? (
-                    <VideoPreview 
-                      generation={previewGeneration}
-                      className="w-full h-full object-contain"
-                      showControls={true}
-                    />
+                    previewGeneration.is_video_job && previewGeneration.output_url ? (
+                      <video
+                        src={previewGeneration.output_url}
+                        className="w-full h-full object-contain"
+                        controls
+                        preload="metadata"
+                      />
+                    ) : (
+                      <VideoPreview 
+                        generation={previewGeneration}
+                        className="w-full h-full object-contain"
+                        showControls={true}
+                      />
+                    )
                   ) : previewGeneration.type === "image" ? (
                     <ImageWithSignedUrl 
                       generation={previewGeneration}
@@ -827,11 +910,11 @@ const History = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-2 pt-4">
-                {previewGeneration.storage_path && previewGeneration.status === "completed" && (
+                {(previewGeneration.storage_path || previewGeneration.output_url) && previewGeneration.status === "completed" && (
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDownload(previewGeneration.storage_path!, previewGeneration.type);
+                      handleDownload(previewGeneration.storage_path, previewGeneration.type, previewGeneration.output_url);
                     }}
                     className="w-full sm:flex-1"
                   >

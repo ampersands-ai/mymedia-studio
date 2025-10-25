@@ -124,6 +124,29 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     }
   };
 
+  const handleDownload = async () => {
+    if (!job.final_video_url) return;
+    
+    toast.loading('Preparing download...', { id: 'video-download' });
+    
+    try {
+      const response = await fetch(job.final_video_url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `${job.topic.slice(0, 30)}-${Date.now()}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(blobUrl);
+      document.body.removeChild(a);
+      toast.success('Download started!', { id: 'video-download' });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download video', { id: 'video-download' });
+    }
+  };
+
   return (
     <Card className="border-2 hover:border-primary/50 transition-colors w-full overflow-hidden">
       <CardContent className="p-3 md:p-4 space-y-2 md:space-y-3">
@@ -329,12 +352,10 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
               size="sm" 
               variant="outline"
               className="flex-1 text-xs md:text-sm"
-              asChild
+              onClick={handleDownload}
             >
-              <a href={job.final_video_url} download={`${job.topic.slice(0, 30)}.mp4`}>
-                <Download className="w-3 h-3 md:w-4 md:h-4 mr-1.5 md:mr-2" />
-                Download
-              </a>
+              <Download className="w-3 h-3 md:w-4 md:h-4 mr-1.5 md:mr-2" />
+              Download
             </Button>
           </div>
         )}

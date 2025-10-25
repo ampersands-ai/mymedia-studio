@@ -478,6 +478,14 @@ async function assembleVideo(
     return clip;
   });
 
+  // CAPTION DEBUGGING: Log what we're sending to Shotstack
+  console.log('=== CAPTION GENERATION DEBUG ===');
+  console.log('Caption style:', JSON.stringify(style, null, 2));
+  console.log('Total subtitle clips:', subtitleClips.length);
+  console.log('Sample clip (first):', JSON.stringify(subtitleClips[0], null, 2));
+  console.log('CSS generated:', buildCss(style, fontWeightMap[style.fontWeight] || '700'));
+  console.log('================================');
+
   console.log(`Assembling video with Shotstack dimensions: ${config.width}x${config.height} for aspect ratio ${aspectRatio}`);
 
   // Create background video clips from multiple videos

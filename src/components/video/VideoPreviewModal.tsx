@@ -116,8 +116,9 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
           <video
             src={job.final_video_url}
             controls
+            controlsList="nodownload"
             className="w-full"
-            autoPlay
+            playsInline
           >
             Your browser does not support the video tag.
           </video>

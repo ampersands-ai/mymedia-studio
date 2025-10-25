@@ -546,82 +546,40 @@ backgroundMediaType: 'video' | 'image' = 'video'
   };
   const config = dimensions[aspectRatio] || dimensions['4:5'];
 
-  // Position mapping
+  // Generate captions using Shotstack's native caption asset for automatic audio sync
   const positionMap: Record<string, string> = {
     top: 'top',
     center: 'center',
     bottom: 'bottom'
   };
 
-  // Animation transitions
-  const transitions: Record<string, any> = {
-    fade: { in: 'fade', out: 'fade' },
-    zoom: { in: 'zoom', out: 'zoom' },
-    slide: { in: 'slideRight', out: 'slideLeft' },
-    bounce: { in: 'zoom', out: 'zoom' }
-  };
-  const words = assets.script.split(' ');
-  const wordsPerSecond = 2.5;
-  const secondsPerWord = 1 / wordsPerSecond;
-  
-  // Font weight mapping
-  const fontWeightMap: Record<string, string> = {
-    normal: '400',
-    bold: '700',
-    black: '900'
-  };
-  
-  // Build CSS string with enhanced visibility
-  const buildCss = (style: any, fontWeight: string) => {
-    let css = `p { font-family: '${style.fontFamily}', Arial, sans-serif; font-size: ${style.fontSize}px; font-weight: ${fontWeight}; color: ${style.textColor}; text-align: center; background: ${style.backgroundColor}; padding: 20px 40px; margin: 0; border-radius: 12px; text-transform: uppercase; letter-spacing: 2px;`;
-    
-    if (style.strokeColor && style.strokeWidth) {
-      css += ` -webkit-text-stroke: ${style.strokeWidth}px ${style.strokeColor}; paint-order: stroke fill; text-shadow: 4px 4px 8px ${style.strokeColor}, 0 0 20px rgba(0,0,0,0.9);`;
-    } else {
-      css += ` text-shadow: 3px 3px 6px rgba(0,0,0,0.9), 0 0 15px rgba(0,0,0,0.7);`;
-    }
-    
-    // Add semi-transparent background for better readability
-    if (style.backgroundColor === 'rgba(0,0,0,0)') {
-      css += ` background: rgba(0,0,0,0.4); padding: 15px 30px;`;
-    }
-    
-    css += ` }`;
-    return css;
-  };
-  
-  const subtitleClips = words.map((word, index) => {
-    const clip: any = {
-      asset: {
-        type: 'html',
-        html: `<p>${word}</p>`,
-        css: buildCss(style, fontWeightMap[style.fontWeight] || '700'),
-        width: config.width,
-        height: Math.floor(config.height * 0.2)
-      },
-      start: index * secondsPerWord,
-      length: secondsPerWord * 1.2,
+  const captionClip = {
+    asset: {
+      type: 'caption',
+      src: assets.voiceoverUrl,
+      maxLines: 3,  // Show 3 words at a time
+      fontSize: style.fontSize || 48,
+      fontFamily: style.fontFamily || 'Montserrat ExtraBold',
+      color: style.textColor || '#FFFFFF',
+      align: 'center',
       position: positionMap[style.position] || 'center',
-      offset: { x: 0, y: 0 }
-    };
-    
-    // Add transition based on animation style
-    if (style.animation === 'fade') {
-      clip.transition = { in: 'fade', out: 'fade' };
-    } else if (style.animation === 'zoom') {
-      clip.transition = { in: 'zoom', out: 'zoom' };
-    }
-    
-    return clip;
-  });
+      background: style.backgroundColor !== 'rgba(0,0,0,0)' 
+        ? {
+            color: style.backgroundColor,
+            padding: 20,
+            borderRadius: 12
+          }
+        : undefined
+    },
+    start: 0,
+    length: 'end'
+  };
 
-  // CAPTION DEBUGGING: Log what we're sending to Shotstack
-  console.log('=== CAPTION GENERATION DEBUG ===');
-  console.log('Caption style:', JSON.stringify(style, null, 2));
-  console.log('Total subtitle clips:', subtitleClips.length);
-  console.log('Sample clip (first):', JSON.stringify(subtitleClips[0], null, 2));
-  console.log('CSS generated:', buildCss(style, fontWeightMap[style.fontWeight] || '700'));
-  console.log('================================');
+  console.log('Generated caption clip with auto-sync:', {
+    voiceoverSrc: assets.voiceoverUrl,
+    captionStyle: style,
+    position: positionMap[style.position] || 'center'
+  });
 
   console.log(`Assembling video with Shotstack dimensions: ${config.width}x${config.height} for aspect ratio ${aspectRatio}`);
 
@@ -670,29 +628,36 @@ backgroundMediaType: 'video' | 'image' = 'video'
     console.log(`Created ${backgroundClips.length} background video clips for ${assets.duration}s video`);
   }
 
+  // Build timeline with proper track structure
   const edit = {
     timeline: {
-      soundtrack: {
-        src: assets.voiceoverUrl,
-        effect: 'fadeInFadeOut'
-      },
+      background: '#000000',
       tracks: [
         {
-          clips: backgroundClips  // Track 0: background
+          clips: backgroundClips  // Track 0: background media
         },
         {
-          clips: subtitleClips  // Track 1: captions with z-index layering
+          clips: [captionClip]  // Track 1: synchronized captions
+        },
+        {
+          clips: [{
+            asset: {
+              type: 'audio',
+              src: assets.voiceoverUrl
+            },
+            start: 0,
+            length: 'auto'
+          }]  // Track 2: voiceover audio
         }
       ]
     },
     output: {
       format: 'mp4',
+      fps: 25,
       size: {
         width: config.width,
         height: config.height
-      },
-      fps: 30,
-      quality: 'high'
+      }
     }
   };
 
@@ -730,7 +695,7 @@ backgroundMediaType: 'video' | 'image' = 'video'
       requestPayload: edit,
       additionalMetadata: {
         duration: assets.duration,
-        subtitle_clips: subtitleClips.length
+        caption_track: 'native_shotstack_caption'
       }
     },
     requestSentAt,

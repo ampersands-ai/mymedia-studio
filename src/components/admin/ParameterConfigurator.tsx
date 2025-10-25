@@ -285,7 +285,7 @@ export function ParameterConfigurator({
                     <Badge variant="secondary" className="text-xs">{param.type}</Badge>
                   </div>
                   {param.description && (
-                    <p className="text-xs text-muted-foreground">{param.description}</p>
+                    <p className="text-xs text-muted-foreground break-words">{param.description}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">

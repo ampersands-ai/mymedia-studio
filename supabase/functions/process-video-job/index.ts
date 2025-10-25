@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logApiCall } from '../_shared/api-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -75,7 +76,7 @@ serve(async (req) => {
     if (!script) {
       console.log(`[${job_id}] Generating script...`);
       await updateJobStatus(supabaseClient, job_id, 'generating_script');
-      script = await generateScript(job.topic, job.duration, job.style);
+      script = await generateScript(supabaseClient, job.topic, job.duration, job.style, job_id, job.user_id);
       await supabaseClient.from('video_jobs').update({ script }).eq('id', job_id);
       console.log(`[${job_id}] Script generated successfully`);
     } else {
@@ -151,23 +152,23 @@ async function updateJobStatus(supabase: any, jobId: string, status: string) {
   await supabase.from('video_jobs').update({ status }).eq('id', jobId);
 }
 
-async function generateScript(topic: string, duration: number, style: string): Promise<string> {
+async function generateScript(
+  supabase: any,
+  topic: string,
+  duration: number,
+  style: string,
+  videoJobId: string,
+  userId: string
+): Promise<string> {
   const wordsPerSecond = 2.5;
   const targetWords = Math.floor(duration * wordsPerSecond);
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': Deno.env.get('ANTHROPIC_API_KEY') ?? '',
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 1024,
-      messages: [{
-        role: 'user',
-        content: `Write a ${duration}-second video script about: ${topic}
+  const requestPayload = {
+    model: 'claude-sonnet-4-5',
+    max_tokens: 1024,
+    messages: [{
+      role: 'user',
+      content: `Write a ${duration}-second video script about: ${topic}
 
 Style: ${style}
 Target: ~${targetWords} words
@@ -180,16 +181,56 @@ Requirements:
 - Format: Just narration text, no stage directions
 
 Script:`
-      }]
-    })
+    }]
+  };
+
+  const endpoint = 'https://api.anthropic.com/v1/messages';
+  const requestSentAt = new Date();
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': Deno.env.get('ANTHROPIC_API_KEY') ?? '',
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify(requestPayload)
   });
+
+  const data = response.ok ? await response.json() : null;
+
+  // Log the API call
+  await logApiCall(
+    supabase,
+    {
+      videoJobId,
+      userId,
+      serviceName: 'anthropic',
+      endpoint,
+      httpMethod: 'POST',
+      stepName: 'generate_script',
+      requestPayload,
+      additionalMetadata: {
+        topic,
+        duration,
+        style,
+        target_words: targetWords
+      }
+    },
+    requestSentAt,
+    {
+      statusCode: response.status,
+      payload: data,
+      isError: !response.ok,
+      errorMessage: response.ok ? undefined : `Anthropic returned ${response.status}`
+    }
+  );
 
   if (!response.ok) {
     const error = await response.text();
     throw new Error(`Claude API error: ${error}`);
   }
 
-  const data = await response.json();
   return data.content[0].text.trim();
 }
 

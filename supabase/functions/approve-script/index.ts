@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
+import { logApiCall } from '../_shared/api-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,22 +74,49 @@ Deno.serve(async (req) => {
       throw new Error('ELEVENLABS_API_KEY not configured');
     }
 
-    const voiceResponse = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${job.voice_id}`,
+    const requestPayload = {
+      text: finalScript,
+      model_id: 'eleven_multilingual_v2',
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: 0.75,
+      },
+    };
+
+    const endpoint = `https://api.elevenlabs.io/v1/text-to-speech/${job.voice_id}`;
+    const requestSentAt = new Date();
+
+    const voiceResponse = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'xi-api-key': elevenLabsKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestPayload),
+    });
+
+    // Log the API call
+    await logApiCall(
+      supabaseClient,
       {
-        method: 'POST',
-        headers: {
-          'xi-api-key': elevenLabsKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: finalScript,
-          model_id: 'eleven_multilingual_v2',
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
-          },
-        }),
+        videoJobId: job_id,
+        userId: user.id,
+        serviceName: 'elevenlabs',
+        endpoint,
+        httpMethod: 'POST',
+        stepName: 'generate_voiceover',
+        requestPayload,
+        additionalMetadata: {
+          voice_id: job.voice_id,
+          script_length: finalScript.length
+        }
+      },
+      requestSentAt,
+      {
+        statusCode: voiceResponse.status,
+        payload: voiceResponse.ok ? { success: true } : await voiceResponse.text(),
+        isError: !voiceResponse.ok,
+        errorMessage: voiceResponse.ok ? undefined : `ElevenLabs returned ${voiceResponse.status}`
       }
     );
 

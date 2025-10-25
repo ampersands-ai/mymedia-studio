@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logApiCall, linkApiLogsToGeneration } from '../_shared/api-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -60,7 +61,13 @@ serve(async (req) => {
 
     // Step 3: Fetch background video
     await updateJobStatus(serviceClient, job_id, 'fetching_video');
-    const backgroundVideoUrl = await getBackgroundVideo(job.style, job.duration);
+    const backgroundVideoUrl = await getBackgroundVideo(
+      serviceClient,
+      job.style,
+      job.duration,
+      job_id,
+      user.id
+    );
     await serviceClient.from('video_jobs').update({ background_video_url: backgroundVideoUrl }).eq('id', job_id);
     console.log(`Fetched background video for job ${job_id}`);
 
@@ -92,17 +99,22 @@ serve(async (req) => {
     }
     console.log('Assets validated successfully');
     
-    const renderId = await assembleVideo({
-      script: job.script,
-      voiceoverUrl: voiceoverPublicUrl,
-      backgroundVideoUrl,
-      duration: job.duration,
-    });
+    const renderId = await assembleVideo(
+      serviceClient,
+      {
+        script: job.script,
+        voiceoverUrl: voiceoverPublicUrl,
+        backgroundVideoUrl,
+        duration: job.duration,
+      },
+      job_id,
+      user.id
+    );
     await serviceClient.from('video_jobs').update({ shotstack_render_id: renderId }).eq('id', job_id);
     console.log(`Submitted to Shotstack: ${renderId}`);
 
     // Step 5: Poll for completion
-    await pollRenderStatus(serviceClient, job_id, renderId);
+    await pollRenderStatus(serviceClient, job_id, renderId, user.id);
 
     return new Response(
       JSON.stringify({ success: true, job_id }),
@@ -146,7 +158,13 @@ async function updateJobStatus(supabase: any, jobId: string, status: string) {
   await supabase.from('video_jobs').update({ status }).eq('id', jobId);
 }
 
-async function getBackgroundVideo(style: string, duration: number): Promise<string> {
+async function getBackgroundVideo(
+  supabase: any,
+  style: string,
+  duration: number,
+  videoJobId: string,
+  userId: string
+): Promise<string> {
   const queries: Record<string, string> = {
     modern: 'technology abstract motion',
     tech: 'digital technology futuristic',
@@ -155,17 +173,41 @@ async function getBackgroundVideo(style: string, duration: number): Promise<stri
   };
 
   const query = queries[style] || 'abstract motion background';
+  const endpoint = `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=20&orientation=landscape`;
+  const requestSentAt = new Date();
 
   const response = await fetch(
-    `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=20&orientation=landscape`,
+    endpoint,
     { headers: { Authorization: Deno.env.get('PEXELS_API_KEY') ?? '' } }
+  );
+
+  const data = response.ok ? await response.json() : null;
+
+  // Log the API call
+  await logApiCall(
+    supabase,
+    {
+      videoJobId,
+      userId,
+      serviceName: 'pexels',
+      endpoint,
+      httpMethod: 'GET',
+      stepName: 'fetch_background_video',
+      requestPayload: { query, per_page: 20, orientation: 'landscape' },
+      additionalMetadata: { style, duration }
+    },
+    requestSentAt,
+    {
+      statusCode: response.status,
+      payload: data,
+      isError: !response.ok,
+      errorMessage: response.ok ? undefined : `Pexels returned ${response.status}`
+    }
   );
 
   if (!response.ok) {
     throw new Error('Pexels API error');
   }
-
-  const data = await response.json();
   
   if (!data.videos?.length) {
     throw new Error('No background videos found');
@@ -181,12 +223,17 @@ async function getBackgroundVideo(style: string, duration: number): Promise<stri
   return hdFile.link;
 }
 
-async function assembleVideo(assets: {
-  script: string;
-  voiceoverUrl: string;
-  backgroundVideoUrl: string;
-  duration: number;
-}): Promise<string> {
+async function assembleVideo(
+  supabase: any,
+  assets: {
+    script: string;
+    voiceoverUrl: string;
+    backgroundVideoUrl: string;
+    duration: number;
+  },
+  videoJobId: string,
+  userId: string
+): Promise<string> {
   const words = assets.script.split(' ');
   const wordsPerSecond = 2.5;
   const secondsPerWord = 1 / wordsPerSecond;
@@ -252,7 +299,10 @@ async function assembleVideo(assets: {
     }
   };
 
-  const response = await fetch('https://api.shotstack.io/v1/render', {
+  const endpoint = 'https://api.shotstack.io/v1/render';
+  const requestSentAt = new Date();
+
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -261,28 +311,80 @@ async function assembleVideo(assets: {
     body: JSON.stringify(edit)
   });
 
+  const result = response.ok ? await response.json() : null;
+
+  // Log the API call
+  await logApiCall(
+    supabase,
+    {
+      videoJobId,
+      userId,
+      serviceName: 'shotstack',
+      endpoint,
+      httpMethod: 'POST',
+      stepName: 'assemble_video',
+      requestPayload: edit,
+      additionalMetadata: {
+        duration: assets.duration,
+        subtitle_clips: subtitleClips.length
+      }
+    },
+    requestSentAt,
+    {
+      statusCode: response.status,
+      payload: result,
+      isError: !response.ok,
+      errorMessage: response.ok ? undefined : `Shotstack returned ${response.status}`
+    }
+  );
+
   if (!response.ok) {
     const error = await response.json();
     throw new Error(`Shotstack error: ${error.message || 'Unknown error'}`);
   }
 
-  const result = await response.json();
   return result.response.id;
 }
 
-async function pollRenderStatus(supabase: any, jobId: string, renderId: string) {
+async function pollRenderStatus(supabase: any, jobId: string, renderId: string, userId: string) {
   const maxAttempts = 120;
   let attempts = 0;
 
   while (attempts < maxAttempts) {
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    const response = await fetch(`https://api.shotstack.io/v1/render/${renderId}`, {
+    const endpoint = `https://api.shotstack.io/v1/render/${renderId}`;
+    const requestSentAt = new Date();
+
+    const response = await fetch(endpoint, {
       headers: { 'x-api-key': Deno.env.get('SHOTSTACK_API_KEY') ?? '' }
     });
 
-    const result = await response.json();
-    const status = result.response.status;
+    const result = response.ok ? await response.json() : null;
+
+    // Log the status check API call
+    await logApiCall(
+      supabase,
+      {
+        videoJobId: jobId,
+        userId,
+        serviceName: 'shotstack',
+        endpoint,
+        httpMethod: 'GET',
+        stepName: 'poll_render_status',
+        requestPayload: { render_id: renderId },
+        additionalMetadata: { attempt: attempts }
+      },
+      requestSentAt,
+      {
+        statusCode: response.status,
+        payload: result,
+        isError: !response.ok,
+        errorMessage: response.ok ? undefined : `Shotstack status check returned ${response.status}`
+      }
+    );
+
+    const status = result?.response?.status;
     
     console.log(`Job ${jobId} render status: ${status}`);
 
@@ -323,7 +425,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string) 
           }
           
           console.log('Creating generation record...');
-          const { error: genError } = await supabase.from('generations').insert({
+          const { data: generation, error: genError } = await supabase.from('generations').insert({
             user_id: job.user_id,
             type: 'video',
             prompt: `Faceless Video: ${job.topic}`,
@@ -338,12 +440,15 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string) 
               voice_id: job.voice_id,
               video_job_id: jobId
             }
-          });
+          }).select().single();
           
           if (genError) {
             console.error('Generation insert error:', genError);
           } else {
             console.log('Generation record created successfully');
+            
+            // Link all API logs to this generation
+            await linkApiLogsToGeneration(supabase, jobId, generation.id);
           }
         } catch (error) {
           console.error('Error creating generation record:', error);

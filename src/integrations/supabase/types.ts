@@ -71,6 +71,93 @@ export type Database = {
         }
         Relationships: []
       }
+      api_call_logs: {
+        Row: {
+          additional_metadata: Json | null
+          created_at: string
+          endpoint: string
+          error_details: Json | null
+          error_message: string | null
+          generation_id: string | null
+          http_method: string
+          id: string
+          is_error: boolean | null
+          latency_ms: number | null
+          request_headers: Json | null
+          request_payload: Json
+          request_sent_at: string
+          response_headers: Json | null
+          response_payload: Json | null
+          response_received_at: string | null
+          response_status_code: number | null
+          service_name: string
+          step_name: string | null
+          user_id: string
+          video_job_id: string | null
+        }
+        Insert: {
+          additional_metadata?: Json | null
+          created_at?: string
+          endpoint: string
+          error_details?: Json | null
+          error_message?: string | null
+          generation_id?: string | null
+          http_method?: string
+          id?: string
+          is_error?: boolean | null
+          latency_ms?: number | null
+          request_headers?: Json | null
+          request_payload?: Json
+          request_sent_at?: string
+          response_headers?: Json | null
+          response_payload?: Json | null
+          response_received_at?: string | null
+          response_status_code?: number | null
+          service_name: string
+          step_name?: string | null
+          user_id: string
+          video_job_id?: string | null
+        }
+        Update: {
+          additional_metadata?: Json | null
+          created_at?: string
+          endpoint?: string
+          error_details?: Json | null
+          error_message?: string | null
+          generation_id?: string | null
+          http_method?: string
+          id?: string
+          is_error?: boolean | null
+          latency_ms?: number | null
+          request_headers?: Json | null
+          request_payload?: Json
+          request_sent_at?: string
+          response_headers?: Json | null
+          response_payload?: Json | null
+          response_received_at?: string | null
+          response_status_code?: number | null
+          service_name?: string
+          step_name?: string | null
+          user_id?: string
+          video_job_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_call_logs_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_call_logs_video_job_id_fkey"
+            columns: ["video_job_id"]
+            isOneToOne: false
+            referencedRelation: "video_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           created_at: string

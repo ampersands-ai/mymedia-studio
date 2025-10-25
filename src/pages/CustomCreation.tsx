@@ -44,6 +44,7 @@ import { useModels } from "@/hooks/useModels";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { ModelParameterForm } from "@/components/generation/ModelParameterForm";
+import { SchemaInput } from "@/components/generation/SchemaInput";
 import { formatEstimatedTime } from "@/lib/time-utils";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
@@ -1192,6 +1193,47 @@ const CustomCreation = () => {
               )}
 
 
+              {/* Primary Input Fields (Text & Voice) */}
+              {selectedModel && filteredModels && (() => {
+                const currentModel = filteredModels.find(m => m.record_id === selectedModel);
+                if (!currentModel?.input_schema?.properties) return null;
+                
+                const properties = currentModel.input_schema.properties;
+                const hasInputText = properties['input.text'];
+                const hasInputVoice = properties['input.voice'];
+                
+                if (!hasInputText && !hasInputVoice) return null;
+                
+                return (
+                  <div className="space-y-4">
+                    {hasInputText && (
+                      <SchemaInput
+                        name="input.text"
+                        schema={properties['input.text']}
+                        value={modelParameters['input.text']}
+                        onChange={(val) => setModelParameters({ ...modelParameters, 'input.text': val })}
+                        required={currentModel.input_schema.required?.includes('input.text')}
+                        modelSchema={currentModel.input_schema}
+                        allValues={modelParameters}
+                        modelId={currentModel.id}
+                      />
+                    )}
+                    {hasInputVoice && (
+                      <SchemaInput
+                        name="input.voice"
+                        schema={properties['input.voice']}
+                        value={modelParameters['input.voice']}
+                        onChange={(val) => setModelParameters({ ...modelParameters, 'input.voice': val })}
+                        required={currentModel.input_schema.required?.includes('input.voice')}
+                        modelSchema={currentModel.input_schema}
+                        allValues={modelParameters}
+                        modelId={currentModel.id}
+                      />
+                    )}
+                  </div>
+                );
+              })()}
+
               {/* Collapsible Advanced Options */}
               <div ref={advancedOptionsRef}>
                 <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
@@ -1213,7 +1255,7 @@ const CustomCreation = () => {
                         modelSchema={currentModel.input_schema}
                         onChange={setModelParameters}
                         currentValues={modelParameters}
-                        excludeFields={['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls']}
+                        excludeFields={['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls', 'input.text', 'input.voice']}
                         modelId={currentModel.id}
                       />
                     ) : (

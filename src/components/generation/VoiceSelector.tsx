@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Play, Pause, Check, Search } from 'lucide-react';
+import { Play, Pause, Check, Search, X } from 'lucide-react';
 import { getVoicePreviewUrl } from '@/lib/storage-utils';
 import { VOICE_DATABASE, VoiceData, getVoiceById, getVoiceByName } from '@/lib/voice-mapping';
 import { toast } from 'sonner';
@@ -26,18 +26,26 @@ export function VoiceSelector({ selectedValue, onSelectVoice, mode, disabled }: 
   // Get all voices from central database
   const voices = VOICE_DATABASE;
   
-  // Filter logic based on search and filters
-  const filteredVoices = voices.filter(voice => {
-    const matchesSearch = voice.name.toLowerCase().includes(search.toLowerCase()) ||
-                         voice.description?.toLowerCase().includes(search.toLowerCase());
-    
-    const matchesFilter = filter === 'all' || 
-                         voice.gender === filter || 
-                         voice.accent.toLowerCase() === filter ||
-                         voice.use_case === filter;
-    
-    return matchesSearch && matchesFilter;
-  });
+  // Filter logic based on search and filters, then sort by preview availability
+  const filteredVoices = voices
+    .filter(voice => {
+      const matchesSearch = voice.name.toLowerCase().includes(search.toLowerCase()) ||
+                           voice.description?.toLowerCase().includes(search.toLowerCase());
+      
+      const matchesFilter = filter === 'all' || 
+                           voice.gender === filter || 
+                           voice.accent.toLowerCase() === filter ||
+                           voice.use_case === filter;
+      
+      return matchesSearch && matchesFilter;
+    })
+    .sort((a, b) => {
+      // Sort voices with previews first, then those without
+      const aHasPreview = a.hasPreview !== false;
+      const bHasPreview = b.hasPreview !== false;
+      if (aHasPreview === bHasPreview) return 0;
+      return aHasPreview ? -1 : 1;
+    });
 
   // Determine selected voice based on mode
   const selectedVoice = mode === 'id' 
@@ -160,25 +168,37 @@ export function VoiceSelector({ selectedValue, onSelectVoice, mode, disabled }: 
                 </div>
 
                 <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handlePreview(voice.voice_id)}
-                    className="flex-1 text-xs"
-                    disabled={disabled}
-                  >
-                    {playingVoiceId === voice.voice_id ? (
-                      <>
-                        <Pause className="w-3 h-3 mr-1.5" />
-                        Pause
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-3 h-3 mr-1.5" />
-                        Preview
-                      </>
-                    )}
-                  </Button>
+                  {voice.hasPreview === false ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 text-xs"
+                      disabled={true}
+                    >
+                      <X className="w-3 h-3 mr-1.5" />
+                      No Preview
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handlePreview(voice.voice_id)}
+                      className="flex-1 text-xs"
+                      disabled={disabled}
+                    >
+                      {playingVoiceId === voice.voice_id ? (
+                        <>
+                          <Pause className="w-3 h-3 mr-1.5" />
+                          Pause
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-3 h-3 mr-1.5" />
+                          Preview
+                        </>
+                      )}
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     onClick={() => handleSelect(voice)}

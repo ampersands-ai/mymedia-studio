@@ -8,6 +8,7 @@ export interface VoiceData {
   accent: string;
   use_case: string;
   description?: string;
+  hasPreview?: boolean;    // Whether audio preview is available
 }
 
 // All 20 ElevenLabs voices with complete metadata

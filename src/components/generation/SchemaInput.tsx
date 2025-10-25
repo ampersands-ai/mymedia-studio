@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { Upload, X, Volume2 } from "lucide-react";
+import { Upload, X, Volume2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
 import { VoiceSelector } from "./VoiceSelector";
 import { useState } from "react";
 
@@ -92,6 +93,42 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     setImagePreview(null);
     onChange(null);
   };
+
+  // Special case for input.text - elegant, large textarea
+  if (name === 'input.text') {
+    const charCount = (value || '').length;
+    const maxChars = schema.maxLength || 5000;
+    
+    return (
+      <Card className="border-2 border-primary/20 shadow-sm hover:border-primary/30 transition-colors">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            <Label className="text-base font-semibold">
+              {displayName}
+              {isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+          </div>
+          {schema.description && (
+            <p className="text-sm text-muted-foreground">{schema.description}</p>
+          )}
+          <Textarea
+            value={value ?? schema.default ?? ""}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={schema.description || "Enter your text here..."}
+            rows={10}
+            className="resize-none font-mono text-sm focus-visible:ring-2 focus-visible:ring-primary"
+            maxLength={maxChars}
+          />
+          <div className="flex justify-end">
+            <span className={`text-xs ${charCount > maxChars * 0.9 ? 'text-orange-600 font-medium' : 'text-muted-foreground'}`}>
+              {charCount} / {maxChars} characters
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Handle image upload fields
   if (isImageUpload) {

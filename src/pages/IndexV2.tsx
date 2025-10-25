@@ -4,16 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/Footer";
 import { StatCounter } from "@/components/homepage/StatCounter";
 import { ProblemCard } from "@/components/homepage/ProblemCard";
-import { FeatureShowcase } from "@/components/homepage/FeatureShowcase";
-import { TestimonialCarousel } from "@/components/homepage/TestimonialCarousel";
-import { FAQAccordion } from "@/components/homepage/FAQAccordion";
-import { ComparisonTable } from "@/components/homepage/ComparisonTable";
 import { useTemplates } from "@/hooks/useTemplates";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Check, Frown, Clock, HelpCircle, DollarSign, Palette, Edit, Download, Video, Image, Music, FileText } from "lucide-react";
 import { MobileMenu } from "@/components/MobileMenu";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { GallerySkeleton, PricingSkeleton } from "@/components/ui/skeletons";
+import { usePrefetchOnHover } from "@/utils/routePreload";
+
+// Lazy load heavy components
+const FeatureShowcase = lazy(() => import("@/components/homepage/FeatureShowcase").then(m => ({ default: m.FeatureShowcase })));
+const TestimonialCarousel = lazy(() => import("@/components/homepage/TestimonialCarousel").then(m => ({ default: m.TestimonialCarousel })));
+const FAQAccordion = lazy(() => import("@/components/homepage/FAQAccordion").then(m => ({ default: m.FAQAccordion })));
+const ComparisonTable = lazy(() => import("@/components/homepage/ComparisonTable").then(m => ({ default: m.ComparisonTable })));
 
 // Import assets
 import logoImage from "@/assets/logo.png";
@@ -111,10 +115,10 @@ const IndexV2 = () => {
             Everything creators need at 1/5th the cost.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button asChild variant="default" size="lg" className="text-lg">
+            <Button asChild variant="default" size="lg" className="text-lg" {...usePrefetchOnHover('create')}>
               <Link to="/auth">START CREATING FOR FREE</Link>
             </Button>
-            <Button asChild variant="secondary" size="lg" className="text-lg">
+            <Button asChild variant="secondary" size="lg" className="text-lg" {...usePrefetchOnHover('pricing')}>
               <Link to="/pricing">SEE PRICING</Link>
             </Button>
           </div>
@@ -231,7 +235,8 @@ const IndexV2 = () => {
                 <Link
                   key={template.id}
                   to={`/dashboard/custom-creation?template=${template.id}`}
-                  className="group brutalist-card overflow-hidden hover-lift"
+                  className="group brutalist-card gpu-accelerated card overflow-hidden hover-lift"
+                  {...usePrefetchOnHover('custom-creation')}
                 >
                   <div className="aspect-video bg-muted relative overflow-hidden">
                     {template.thumbnail_url && (
@@ -256,7 +261,7 @@ const IndexV2 = () => {
             </div>
 
             <div className="text-center">
-              <Button asChild variant="outline" size="lg">
+              <Button asChild variant="outline" size="lg" {...usePrefetchOnHover('custom-creation')}>
                 <Link to="/dashboard/custom-creation">Browse All Templates →</Link>
               </Button>
             </div>
@@ -310,83 +315,85 @@ const IndexV2 = () => {
       <section className="bg-neutral-50 py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-24">
-            <FeatureShowcase
-              title="200+ Ready-to-Use Templates"
-              description="No prompt engineering. No guesswork. Just pick a template and start creating."
-              benefits={[
-                "YouTube thumbnails, TikTok videos, Instagram posts",
-                "Updated weekly with new templates",
-                "Community-created templates (coming soon)",
-              ]}
-              ctaText="Browse Templates →"
-              ctaLink="/dashboard/custom-creation"
-              visual={
-                <div className="text-center text-muted-foreground">
-                  Template library interface preview
-                </div>
-              }
-            />
-
-            <FeatureShowcase
-              title="22+ AI Models in One Place"
-              description="Not happy with the result? Switch models instantly. Access Midjourney, Runway, DALL-E, and more."
-              benefits={[
-                "Compare outputs side-by-side",
-                "No need for 22 separate subscriptions",
-                "Always get the best tool for the job",
-              ]}
-              ctaText="See All Models →"
-              ctaLink="/pricing"
-              visual={
-                <div className="space-y-2">
-                  <div className="text-sm font-bold text-muted-foreground mb-4">
-                    Select AI Model:
+            <Suspense fallback={<GallerySkeleton />}>
+              <FeatureShowcase
+                title="200+ Ready-to-Use Templates"
+                description="No prompt engineering. No guesswork. Just pick a template and start creating."
+                benefits={[
+                  "YouTube thumbnails, TikTok videos, Instagram posts",
+                  "Updated weekly with new templates",
+                  "Community-created templates (coming soon)",
+                ]}
+                ctaText="Browse Templates →"
+                ctaLink="/dashboard/custom-creation"
+                visual={
+                  <div className="text-center text-muted-foreground">
+                    Template library interface preview
                   </div>
-                  {["Midjourney", "DALL-E 3", "Runway", "Flux"].map((model) => (
-                    <div key={model} className="p-3 bg-background border-2 border-black">
-                      {model}
+                }
+              />
+
+              <FeatureShowcase
+                title="22+ AI Models in One Place"
+                description="Not happy with the result? Switch models instantly. Access Midjourney, Runway, DALL-E, and more."
+                benefits={[
+                  "Compare outputs side-by-side",
+                  "No need for 22 separate subscriptions",
+                  "Always get the best tool for the job",
+                ]}
+                ctaText="See All Models →"
+                ctaLink="/pricing"
+                visual={
+                  <div className="space-y-2">
+                    <div className="text-sm font-bold text-muted-foreground mb-4">
+                      Select AI Model:
                     </div>
-                  ))}
-                </div>
-              }
-              reversed
-            />
+                    {["Midjourney", "DALL-E 3", "Runway", "Flux"].map((model) => (
+                      <div key={model} className="p-3 bg-background border-2 border-black">
+                        {model}
+                      </div>
+                    ))}
+                  </div>
+                }
+                reversed
+              />
 
-            <FeatureShowcase
-              title="Simple, Predictable Pricing"
-              description="No per-minute charges. No surprise bills. Just tokens you can use anytime."
-              benefits={[
-                "Know exactly what you're spending",
-                "Unused tokens roll over",
-                "Top up anytime you need",
-              ]}
-              ctaText="See Pricing →"
-              ctaLink="/pricing"
-              visual={
-                <div className="text-center space-y-4">
-                  <div className="text-5xl font-black text-primary">10,000</div>
-                  <div className="text-muted-foreground">Tokens Remaining</div>
-                </div>
-              }
-            />
+              <FeatureShowcase
+                title="Simple, Predictable Pricing"
+                description="No per-minute charges. No surprise bills. Just tokens you can use anytime."
+                benefits={[
+                  "Know exactly what you're spending",
+                  "Unused tokens roll over",
+                  "Top up anytime you need",
+                ]}
+                ctaText="See Pricing →"
+                ctaLink="/pricing"
+                visual={
+                  <div className="text-center space-y-4">
+                    <div className="text-5xl font-black text-primary">10,000</div>
+                    <div className="text-muted-foreground">Tokens Remaining</div>
+                  </div>
+                }
+              />
 
-            <FeatureShowcase
-              title="Advanced Mode for Power Users"
-              description="Start from scratch when templates aren't enough. Full control over every parameter."
-              benefits={[
-                "Choose any AI model",
-                "Adjust all settings",
-                "Perfect for experimentation",
-              ]}
-              ctaText="Try Custom Mode →"
-              ctaLink="/dashboard/custom-creation"
-              visual={
-                <div className="text-center text-muted-foreground">
-                  Custom creation interface preview
-                </div>
-              }
-              reversed
-            />
+              <FeatureShowcase
+                title="Advanced Mode for Power Users"
+                description="Start from scratch when templates aren't enough. Full control over every parameter."
+                benefits={[
+                  "Choose any AI model",
+                  "Adjust all settings",
+                  "Perfect for experimentation",
+                ]}
+                ctaText="Try Custom Mode →"
+                ctaLink="/dashboard/custom-creation"
+                visual={
+                  <div className="text-center text-muted-foreground">
+                    Custom creation interface preview
+                  </div>
+                }
+                reversed
+              />
+            </Suspense>
           </div>
         </div>
       </section>
@@ -397,9 +404,11 @@ const IndexV2 = () => {
           <h2 className="text-3xl md:text-5xl font-black text-center">
             Stop Overpaying for AI Tools
           </h2>
-          <ComparisonTable />
+          <Suspense fallback={<PricingSkeleton />}>
+            <ComparisonTable />
+          </Suspense>
           <div className="text-center">
-            <Button asChild variant="default" size="lg">
+            <Button asChild variant="default" size="lg" {...usePrefetchOnHover('pricing')}>
               <Link to="/pricing">Start Saving Now →</Link>
             </Button>
           </div>
@@ -413,7 +422,9 @@ const IndexV2 = () => {
             <h2 className="text-3xl md:text-5xl font-black text-center">
               Loved by 10,000+ Creators
             </h2>
-            <TestimonialCarousel />
+            <Suspense fallback={<div className="h-64 skeleton rounded-xl" />}>
+              <TestimonialCarousel />
+            </Suspense>
           </div>
         </div>
       </section>
@@ -543,7 +554,11 @@ const IndexV2 = () => {
           <h2 className="text-3xl md:text-5xl font-black text-center">
             Frequently Asked Questions
           </h2>
-          <FAQAccordion />
+          <Suspense fallback={<div className="space-y-4">
+            {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-16 skeleton rounded-lg" />)}
+          </div>}>
+            <FAQAccordion />
+          </Suspense>
         </div>
       </section>
 
@@ -559,7 +574,7 @@ const IndexV2 = () => {
               subscriptions, no technical skills required.
             </p>
             <div className="px-2">
-              <Button asChild size="lg" className="text-sm sm:text-base md:text-lg lg:text-xl px-6 sm:px-8 md:px-12 py-4 sm:py-6 bg-white hover:bg-neutral-50 text-neutral-900 border-2 border-neutral-900 shadow-xl w-full sm:w-auto">
+              <Button asChild size="lg" className="text-sm sm:text-base md:text-lg lg:text-xl px-6 sm:px-8 md:px-12 py-4 sm:py-6 bg-white hover:bg-neutral-50 text-neutral-900 border-2 border-neutral-900 shadow-xl w-full sm:w-auto" {...usePrefetchOnHover('create')}>
                 <Link to="/auth">START FREE - GET 500 TOKENS</Link>
               </Button>
             </div>

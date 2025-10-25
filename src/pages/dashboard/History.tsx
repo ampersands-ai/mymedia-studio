@@ -284,12 +284,12 @@ const History = () => {
 
       if (genError) throw genError;
 
-      // Get completed and failed video jobs
+      // Get completed video jobs
       const { data: videoData, error: videoError } = await supabase
         .from("video_jobs")
         .select("*")
         .eq("user_id", user!.id)
-        .in("status", ["completed", "failed"])
+        .eq("status", "completed")
         .order("created_at", { ascending: false });
 
       if (videoError) console.error("Error fetching video jobs:", videoError);
@@ -318,13 +318,13 @@ const History = () => {
         prompt: video.topic,
         output_url: video.final_video_url,
         storage_path: null, // Videos use direct URLs
-        status: video.status, // Keep original status (completed or failed)
+        status: 'completed',
         tokens_used: video.cost_tokens,
         created_at: video.created_at,
         enhanced_prompt: null,
-        ai_caption: video.ai_caption,
-        ai_hashtags: video.ai_hashtags,
-        caption_generated_at: video.caption_generated_at,
+        ai_caption: null,
+        ai_hashtags: null,
+        caption_generated_at: null,
         has_dispute: false,
         dispute_status: undefined,
         parent_generation_id: null,
@@ -332,10 +332,7 @@ const History = () => {
         is_batch_output: false,
         workflow_execution_id: null,
         is_video_job: true, // Flag to identify video jobs
-        video_job_data: video, // Store original video job data
-        provider_response: video.status === 'failed' ? {
-          data: { failMsg: video.error_message || 'Video generation failed' }
-        } : undefined
+        video_job_data: video // Store original video job data
       }));
 
       // Combine and sort by created_at

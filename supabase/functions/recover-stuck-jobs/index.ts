@@ -17,38 +17,20 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { job_id } = await req.json().catch(() => ({}));
-    
-    if (job_id) {
-      console.log(`[Force Sync] Processing specific job: ${job_id}`);
-    } else {
-      console.log('Scanning for stuck video jobs...');
-    }
+    console.log('Scanning for stuck video jobs...');
 
-    // Find stuck jobs
-    let stuckJobs;
-    if (job_id) {
-      // Force sync specific job (bypass time threshold)
-      const { data, error: fetchError } = await supabaseClient
-        .from('video_jobs')
-        .select('*')
-        .eq('id', job_id);
-      
-      if (fetchError) throw fetchError;
-      stuckJobs = data || [];
-    } else {
-      // Scheduled recovery: jobs stuck for >5 minutes
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      
-      const { data, error: fetchError } = await supabaseClient
-        .from('video_jobs')
-        .select('*')
-        .in('status', ['pending', 'generating_script', 'generating_voice', 'fetching_video', 'assembling'])
-        .lt('updated_at', fiveMinutesAgo)
-        .order('updated_at', { ascending: true });
-      
-      if (fetchError) throw fetchError;
-      stuckJobs = data || [];
+    // Find jobs stuck in intermediate states for > 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    
+    const { data: stuckJobs, error: fetchError } = await supabaseClient
+      .from('video_jobs')
+      .select('*')
+      .in('status', ['pending', 'generating_script', 'generating_voice', 'fetching_video', 'assembling'])
+      .lt('updated_at', fiveMinutesAgo)
+      .order('updated_at', { ascending: true });
+
+    if (fetchError) {
+      throw fetchError;
     }
 
     if (!stuckJobs || stuckJobs.length === 0) {
@@ -92,19 +74,37 @@ serve(async (req) => {
               console.log(`Shotstack render ${job.shotstack_render_id} status: ${renderStatus}`);
               
               if (renderStatus === 'done' && shotstackResult.response.url) {
-                // Render is done, use Shotstack URL directly (no storage upload)
-                console.log(`Job ${job.id}: Render complete, using Shotstack URL directly`);
+                // Render is done, download and upload with streaming
+                console.log(`Job ${job.id}: Render complete, downloading video with streaming`);
                 const videoUrl = shotstackResult.response.url;
                 
-                // Create generation record with Shotstack URL
+                const videoResponse = await fetch(videoUrl);
+                if (!videoResponse.ok || !videoResponse.body) {
+                  throw new Error('Failed to fetch video from Shotstack');
+                }
+                
+                // Upload using streaming (no memory buffer)
+                const videoPath = `${job.user_id}/${new Date().toISOString().split('T')[0]}/${job.id}.mp4`;
+                const { error: uploadError } = await supabaseClient.storage
+                  .from('video-assets')
+                  .upload(videoPath, videoResponse.body, {
+                    contentType: 'video/mp4',
+                    upsert: true
+                  });
+                
+                if (uploadError) {
+                  console.error(`Job ${job.id}: Upload error:`, uploadError);
+                  throw uploadError;
+                }
+                
+                // Create generation record
                 await supabaseClient.from('generations').insert({
                   user_id: job.user_id,
                   type: 'video',
                   prompt: `Faceless Video: ${job.topic}`,
                   status: 'completed',
                   tokens_used: 15,
-                  storage_path: null,
-                  output_url: videoUrl,
+                  storage_path: videoPath,
                   model_id: 'faceless-video-generator',
                   settings: {
                     duration: job.duration,
@@ -114,7 +114,7 @@ serve(async (req) => {
                   }
                 });
                 
-                // Mark job as completed with Shotstack URL
+                // Mark job as completed
                 await supabaseClient.from('video_jobs').update({
                   status: 'completed',
                   final_video_url: videoUrl,

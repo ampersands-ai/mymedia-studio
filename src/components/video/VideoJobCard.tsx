@@ -65,11 +65,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const [editedScript, setEditedScript] = useState(job.script || '');
   const [editedVoiceoverScript, setEditedVoiceoverScript] = useState(job.script || '');
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling, recoverJob, isRecovering } = useVideoJobs();
-
-  // Check if job is stuck in assembling
-  const isStuckAssembling = job.status === 'assembling' && 
-    (new Date().getTime() - new Date(job.updated_at).getTime()) > 5 * 60 * 1000;
+  const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling } = useVideoJobs();
 
   // Fetch signed URL for voiceover (only when needed)
   const { signedUrl: voiceoverSignedUrl, isLoading: isLoadingVoiceUrl, error: voiceUrlError } = useSignedUrlLazy(
@@ -187,10 +183,6 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     }
   };
 
-  const handleForceSync = () => {
-    recoverJob.mutate(job.id);
-  };
-
   return (
     <Card className="border-2 hover:border-primary/50 transition-colors w-full overflow-hidden">
       <CardContent className="p-3 md:p-4 space-y-2 md:space-y-3">
@@ -221,32 +213,6 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
         <div className="text-xs text-muted-foreground">
           Created {formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}
         </div>
-
-        {/* Force Sync for Stuck Assembling Jobs */}
-        {isStuckAssembling && (
-          <div className="flex items-center gap-2 pt-2 border-t">
-            <AlertCircle className="h-4 w-4 text-yellow-600 shrink-0" />
-            <span className="text-xs text-muted-foreground flex-1">
-              Video assembly taking longer than expected
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleForceSync}
-              disabled={isRecovering}
-              className="text-xs"
-            >
-              {isRecovering ? (
-                <>
-                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                  Syncing...
-                </>
-              ) : (
-                'Force Sync'
-              )}
-            </Button>
-          </div>
-        )}
 
         {/* Script Approval UI */}
         {job.status === 'awaiting_script_approval' && job.script && (

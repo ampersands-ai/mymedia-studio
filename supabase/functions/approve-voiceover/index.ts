@@ -200,6 +200,7 @@ Deno.serve(async (req) => {
           .update({
             status: 'failed',
             error_message: error.message || 'Unknown error occurred',
+            updated_at: new Date().toISOString()
           })
           .eq('id', error.job_id);
       } catch (updateError) {
@@ -725,7 +726,8 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
       await supabase.from('video_jobs').update({
         status: 'completed',
         final_video_url: videoUrl,
-        completed_at: new Date().toISOString()
+        completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }).eq('id', jobId);
       return;
     }

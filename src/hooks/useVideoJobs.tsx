@@ -197,6 +197,40 @@ export function useVideoJobs() {
     }
   });
 
+  // Force recover/sync stuck job
+  const recoverJob = useMutation({
+    mutationFn: async (jobId: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recover-stuck-jobs?job_id=${jobId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to recover job');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
+      toast.success('Job status synced successfully');
+    },
+    onError: (error: any) => {
+      console.error('Recovery error:', error);
+      toast.error(error.message || 'Failed to sync job status');
+    }
+  });
+
   return { 
     jobs, 
     isLoading, 
@@ -210,5 +244,7 @@ export function useVideoJobs() {
     isCancelling: cancelJob.isPending,
     generateCaption,
     isGeneratingCaption: generateCaption.isPending,
+    recoverJob,
+    isRecoveringJob: recoverJob.isPending,
   };
 }

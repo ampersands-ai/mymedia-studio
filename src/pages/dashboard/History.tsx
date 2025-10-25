@@ -168,7 +168,9 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
   showControls?: boolean;
   playOnHover?: boolean;
 }) => {
-  const { signedUrl, isLoading, error } = useSignedUrl(generation.storage_path);
+  // Use video-assets bucket for video jobs
+  const bucket = generation.is_video_job ? 'video-assets' : 'generated-content';
+  const { signedUrl, isLoading, error } = useSignedUrl(generation.storage_path, bucket);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoError, setVideoError] = useState(false);
@@ -232,10 +234,12 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
     }
   };
 
+  const streamUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stream-content?bucket=${bucket}&path=${encodeURIComponent(generation.storage_path || '')}`;
+
   return (
     <video
       ref={videoRef}
-      src={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stream-content?bucket=generated-content&path=${encodeURIComponent(generation.storage_path || '')}`}
+      src={streamUrl}
       className={className}
       preload="metadata"
       controls={showControls}
@@ -246,10 +250,10 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onError={() => {
-        console.error('Video playback error for:', generation.storage_path);
+        console.error('Video playback error for:', generation.storage_path, 'bucket:', bucket);
         setVideoError(true);
       }}
-      onLoadedMetadata={() => console.log('Video loaded successfully:', generation.storage_path)}
+      onLoadedMetadata={() => console.log('Video loaded successfully:', generation.storage_path, 'from bucket:', bucket)}
     />
   );
 };
@@ -284,12 +288,12 @@ const History = () => {
 
       if (genError) throw genError;
 
-      // Get completed video jobs
+      // Get completed AND failed video jobs
       const { data: videoData, error: videoError } = await supabase
         .from("video_jobs")
         .select("*")
         .eq("user_id", user!.id)
-        .eq("status", "completed")
+        .in("status", ["completed", "failed"])
         .order("created_at", { ascending: false });
 
       if (videoError) console.error("Error fetching video jobs:", videoError);
@@ -312,28 +316,36 @@ const History = () => {
       }));
 
       // Convert video jobs to generation-like format for unified display
-      const videoGenerations = (videoData || []).map(video => ({
-        id: video.id,
-        type: 'video',
-        prompt: video.topic,
-        output_url: video.final_video_url,
-        storage_path: null, // Videos use direct URLs
-        status: 'completed',
-        tokens_used: video.cost_tokens,
-        created_at: video.created_at,
-        enhanced_prompt: null,
-        ai_caption: null,
-        ai_hashtags: null,
-        caption_generated_at: null,
-        has_dispute: false,
-        dispute_status: undefined,
-        parent_generation_id: null,
-        output_index: 0,
-        is_batch_output: false,
-        workflow_execution_id: null,
-        is_video_job: true, // Flag to identify video jobs
-        video_job_data: video // Store original video job data
-      }));
+      const videoGenerations = (videoData || []).map(video => {
+        // Construct storage path for completed videos
+        const storagePath = video.status === 'completed' && video.final_video_url
+          ? `${video.user_id}/${new Date(video.created_at).toISOString().split('T')[0]}/${video.id}.mp4`
+          : null;
+
+        return {
+          id: video.id,
+          type: 'video',
+          prompt: `Faceless Video: ${video.topic}`,
+          output_url: video.final_video_url,
+          storage_path: storagePath,
+          status: video.status,
+          tokens_used: video.cost_tokens,
+          created_at: video.created_at,
+          enhanced_prompt: null,
+          ai_caption: video.ai_caption || null,
+          ai_hashtags: video.ai_hashtags || null,
+          caption_generated_at: video.caption_generated_at,
+          provider_response: video.error_message ? { data: { failMsg: video.error_message } } : undefined,
+          has_dispute: false,
+          dispute_status: undefined,
+          parent_generation_id: null,
+          output_index: 0,
+          is_batch_output: false,
+          workflow_execution_id: null,
+          is_video_job: true,
+          video_job_data: video
+        };
+      });
 
       // Combine and sort by created_at
       const combined = [...enrichedGenerations, ...videoGenerations].sort(

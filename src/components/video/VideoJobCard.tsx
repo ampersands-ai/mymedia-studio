@@ -65,7 +65,11 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const [editedScript, setEditedScript] = useState(job.script || '');
   const [editedVoiceoverScript, setEditedVoiceoverScript] = useState(job.script || '');
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling } = useVideoJobs();
+  const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling, recoverJob, isRecoveringJob } = useVideoJobs();
+  
+  // Check if job is stuck in assembling for >5 minutes
+  const isStuckAssembling = job.status === 'assembling' && 
+    (Date.now() - new Date(job.updated_at).getTime()) > 5 * 60 * 1000;
 
   // Fetch signed URL for voiceover (only when needed)
   const { signedUrl: voiceoverSignedUrl, isLoading: isLoadingVoiceUrl, error: voiceUrlError } = useSignedUrlLazy(
@@ -478,7 +482,37 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
           </div>
         )}
 
-        {isProcessing && (
+        {isStuckAssembling && (
+          <div className="pt-2 border-t">
+            <Alert className="bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900">
+              <AlertCircle className="h-4 w-4 text-orange-600" />
+              <AlertTitle className="text-sm font-semibold text-orange-700 dark:text-orange-400">
+                Video Assembly Taking Longer Than Expected
+              </AlertTitle>
+              <AlertDescription className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                This job has been assembling for over 5 minutes. Try force syncing to check status.
+              </AlertDescription>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2 h-7 text-xs border-orange-300 dark:border-orange-800"
+                onClick={() => recoverJob.mutate(job.id)}
+                disabled={isRecoveringJob}
+              >
+                {isRecoveringJob ? (
+                  <>
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    Syncing...
+                  </>
+                ) : (
+                  'Force Sync'
+                )}
+              </Button>
+            </Alert>
+          </div>
+        )}
+
+        {isProcessing && !isStuckAssembling && (
           <div className="text-xs text-muted-foreground italic">
             ⏳ Processing... This usually takes 3-5 minutes
           </div>

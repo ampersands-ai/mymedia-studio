@@ -1,11 +1,39 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-import { createErrorResponse } from "../_shared/error-handler.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Inline helper: sanitize errors before logging
+function sanitizeError(error: any): any {
+  if (error && typeof error === 'object') {
+    const { authorization, token, api_key, apiKey, secret, ...safe } = error;
+    return safe;
+  }
+  return error;
+}
+
+// Inline helper: log errors to console
+function logError(context: string, error: any, metadata?: any): void {
+  console.error(`[ERROR] ${context}:`, sanitizeError(error), metadata);
+}
+
+// Inline helper: create standardized error response
+function createErrorResponse(error: any, headers: any, context: string, metadata?: any): Response {
+  logError(context, error, metadata);
+  const message = error?.message || 'An error occurred';
+  const status = message.includes('Unauthorized') || message.includes('authorization') ? 401
+    : message.includes('Forbidden') ? 403
+    : message.includes('not found') ? 404
+    : 400;
+  
+  return new Response(
+    JSON.stringify({ error: message }),
+    { status, headers: { ...headers, 'Content-Type': 'application/json' } }
+  );
+}
 
 // Rate limits configuration
 const RATE_LIMITS = {

@@ -71,18 +71,38 @@ export function useVideoJobs() {
   // Approve script mutation (with optional editing)
   const approveScript = useMutation({
     mutationFn: async ({ jobId, editedScript }: { jobId: string; editedScript?: string }) => {
+      // Check session before calling function
       const { data: { session } } = await supabase.auth.getSession();
-      
-      const { data, error } = await supabase.functions.invoke('approve-script', {
-        body: { job_id: jobId, edited_script: editedScript },
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      });
-      
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
-      return data;
+      if (!session?.access_token) {
+        throw new Error('Please sign in to continue');
+      }
+
+      // Retry helper for transient failures
+      const invokeWithRetry = async (attempt = 1): Promise<any> => {
+        try {
+          const { data, error } = await supabase.functions.invoke('approve-script', {
+            body: { job_id: jobId, edited_script: editedScript },
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          });
+
+          if (error) throw error;
+          if (data?.error) throw new Error(data.error);
+          return data;
+        } catch (err: any) {
+          const errorMsg = err?.message || String(err);
+          // Retry once on "Failed to send" or 503 errors
+          if (attempt === 1 && (errorMsg.includes('Failed to send a request to the Edge Function') || errorMsg.includes('503'))) {
+            console.log('[approve-script] Retrying after transient error...');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            return invokeWithRetry(2);
+          }
+          throw err;
+        }
+      };
+
+      return invokeWithRetry();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
@@ -92,7 +112,9 @@ export function useVideoJobs() {
       const message = error.message || 'Failed to approve script';
       
       // Surface helpful messages
-      if (message.includes('429') || message.includes('rate limit')) {
+      if (message.includes('sign in')) {
+        toast.error('Please sign in to continue');
+      } else if (message.includes('429') || message.includes('rate limit')) {
         toast.error('Service temporarily busy. Please try again in a moment.');
       } else if (message.includes('timeout') || message.includes('timed out')) {
         toast.error('Request timed out. Please try again.');

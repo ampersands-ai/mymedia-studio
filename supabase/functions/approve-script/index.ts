@@ -239,6 +239,12 @@ Deno.serve(async (req) => {
     const audioBlob = await voiceResponse.blob();
     const audioBuffer = await audioBlob.arrayBuffer();
 
+    // Calculate actual audio duration based on script word count
+    const words = finalScript.split(' ').filter((w: string) => w.trim().length > 0);
+    const wordsPerSecond = 2.5;
+    const actualAudioDuration = words.length / wordsPerSecond;
+    console.log(`[${job_id}] Calculated audio duration: ${actualAudioDuration}s from ${words.length} words`);
+
     // Upload voiceover to storage
     const voiceFileName = `${job_id}_voiceover.mp3`;
     const { error: uploadError } = await supabaseClient.storage
@@ -254,11 +260,12 @@ Deno.serve(async (req) => {
 
     const voiceoverPath = voiceFileName; // Just the filename for storage bucket path
 
-    // Update job with voiceover URL and new status
+    // Update job with voiceover URL, actual duration, and new status
     await supabaseClient
       .from('video_jobs')
       .update({
         voiceover_url: voiceoverPath,
+        actual_audio_duration: actualAudioDuration,
         status: 'awaiting_voice_approval',
         updated_at: new Date().toISOString(),
       })

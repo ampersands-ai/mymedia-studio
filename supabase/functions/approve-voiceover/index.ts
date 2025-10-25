@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
     // Get job and verify ownership
     const { data: job, error: jobError } = await supabaseClient
       .from('video_jobs')
-      .select('user_id, script, voiceover_url, style, duration, aspect_ratio, caption_style, custom_background_video, status, topic')
+      .select('user_id, script, voiceover_url, style, duration, aspect_ratio, caption_style, custom_background_video, status, topic, actual_audio_duration')
       .eq('id', job_id)
       .single();
 
@@ -111,20 +111,26 @@ Deno.serve(async (req) => {
 
     console.log(`Approving voiceover for job ${job_id}, continuing assembly...`);
 
-    // Step 3: Fetch background video
+    // Use actual audio duration if available, otherwise fall back to requested duration
+    const videoDuration = job.actual_audio_duration || job.duration;
+    console.log(`Using video duration: ${videoDuration}s (actual_audio_duration: ${job.actual_audio_duration}, requested: ${job.duration})`);
+
+    // Step 3: Fetch multiple background videos
     await updateJobStatus(supabaseClient, job_id, 'fetching_video');
-    const backgroundVideoUrl = await getBackgroundVideo(
+    const backgroundVideoUrls = await getBackgroundVideos(
       supabaseClient,
       job.style,
-      job.duration,
+      videoDuration,
       job_id,
       user.id,
       job.aspect_ratio || '4:5',
       job.custom_background_video,
       job.topic
     );
-    await supabaseClient.from('video_jobs').update({ background_video_url: backgroundVideoUrl }).eq('id', job_id);
-    console.log(`Fetched background video for job ${job_id}`);
+    await supabaseClient.from('video_jobs').update({ 
+      background_video_url: backgroundVideoUrls[0] // Store first video URL for reference
+    }).eq('id', job_id);
+    console.log(`Fetched ${backgroundVideoUrls.length} background videos for job ${job_id}`);
 
     // Step 4: Assemble video
     await updateJobStatus(supabaseClient, job_id, 'assembling');
@@ -148,7 +154,8 @@ Deno.serve(async (req) => {
     if (!testVoiceover.ok) {
       throw new Error(`Voiceover URL is not accessible: ${testVoiceover.status}`);
     }
-    const testBgVideo = await fetch(backgroundVideoUrl, { method: 'HEAD' });
+    // Test first background video
+    const testBgVideo = await fetch(backgroundVideoUrls[0], { method: 'HEAD' });
     if (!testBgVideo.ok) {
       throw new Error(`Background video URL is not accessible: ${testBgVideo.status}`);
     }
@@ -159,8 +166,8 @@ Deno.serve(async (req) => {
       {
         script: job.script,
         voiceoverUrl: voiceoverPublicUrl,
-        backgroundVideoUrl,
-        duration: job.duration,
+        backgroundVideoUrls,
+        duration: videoDuration, // Use actual audio duration
       },
       job_id,
       user.id,
@@ -229,7 +236,7 @@ function extractSearchTerms(topic: string): string {
   return words.join(' ') || 'abstract background';
 }
 
-async function getBackgroundVideo(
+async function getBackgroundVideos(
   supabase: any,
   style: string,
   duration: number,
@@ -238,11 +245,11 @@ async function getBackgroundVideo(
   aspectRatio: string = '4:5',
   customVideoUrl?: string,
   topic?: string
-): Promise<string> {
-  // If user selected custom video, use it
+): Promise<string[]> {
+  // If user selected custom video, return it as single-item array
   if (customVideoUrl) {
     console.log('Using custom background video:', customVideoUrl);
-    return customVideoUrl;
+    return [customVideoUrl];
   }
 
   // Use topic for search if available, otherwise fall back to style
@@ -271,7 +278,9 @@ async function getBackgroundVideo(
     '1:1': 'square'
   };
   const orientation = orientationMap[aspectRatio] || 'portrait';
-  const endpoint = `https://api.pexels.com/videos/search?query=${encodeURIComponent(searchQuery)}&per_page=20&orientation=${orientation}`;
+  
+  // Request more videos (40 instead of 20) to have enough variety
+  const endpoint = `https://api.pexels.com/videos/search?query=${encodeURIComponent(searchQuery)}&per_page=40&orientation=${orientation}`;
   const requestSentAt = new Date();
 
   const response = await fetch(
@@ -290,8 +299,8 @@ async function getBackgroundVideo(
       serviceName: 'pexels',
       endpoint,
       httpMethod: 'GET',
-      stepName: 'fetch_background_video',
-      requestPayload: { query: searchQuery, per_page: 20, orientation },
+      stepName: 'fetch_background_videos',
+      requestPayload: { query: searchQuery, per_page: 40, orientation },
       additionalMetadata: { style, duration, topic: topic || 'none' }
     },
     requestSentAt,
@@ -311,34 +320,62 @@ async function getBackgroundVideo(
     throw new Error('No background videos found');
   }
 
-  const suitable = data.videos.filter((v: any) => v.duration >= duration);
-  const video = suitable.length ? suitable[Math.floor(Math.random() * suitable.length)] : data.videos[0];
-
   // Select video file based on aspect ratio orientation
-  let hdFile;
+  const selectHdFile = (video: any) => {
+    let hdFile;
+    
+    if (orientation === 'portrait') {
+      // For portrait (9:16, 4:5), prioritize videos with height > width
+      hdFile = video.video_files.find((f: any) => 
+        f.quality === 'hd' && f.height >= 1920 && f.height > f.width
+      ) || video.video_files.find((f: any) => 
+        f.quality === 'hd' && f.height > f.width
+      );
+    } else {
+      // For landscape (16:9), prioritize videos with width > height
+      hdFile = video.video_files.find((f: any) => 
+        f.quality === 'hd' && f.width === 1920 && f.width > f.height
+      ) || video.video_files.find((f: any) => 
+        f.quality === 'hd' && f.width > f.height
+      );
+    }
+    
+    // Fallback
+    if (!hdFile) {
+      hdFile = video.video_files.find((f: any) => f.quality === 'hd') || video.video_files[0];
+    }
+    
+    return hdFile;
+  };
+
+  // Filter videos that are long enough (at least 10s for variety)
+  const suitable = data.videos.filter((v: any) => v.duration >= 10);
+  const videosToUse = suitable.length >= 5 ? suitable : data.videos;
   
-  if (orientation === 'portrait') {
-    // For portrait (9:16, 4:5), prioritize videos with height > width
-    hdFile = video.video_files.find((f: any) => 
-      f.quality === 'hd' && f.height >= 1920 && f.height > f.width
-    ) || video.video_files.find((f: any) => 
-      f.quality === 'hd' && f.height > f.width
-    );
-  } else {
-    // For landscape (16:9), prioritize videos with width > height
-    hdFile = video.video_files.find((f: any) => 
-      f.quality === 'hd' && f.width === 1920 && f.width > f.height
-    ) || video.video_files.find((f: any) => 
-      f.quality === 'hd' && f.width > f.height
-    );
+  // Calculate how many clips we need (aim for 8-12 second clips)
+  const averageClipDuration = 10;
+  const numberOfClips = Math.min(5, Math.ceil(duration / averageClipDuration));
+  
+  console.log(`Selecting ${numberOfClips} background videos for ${duration}s duration`);
+  
+  // Randomly select different videos (no duplicates)
+  const selectedVideos: string[] = [];
+  const usedIndices = new Set<number>();
+  
+  for (let i = 0; i < numberOfClips && selectedVideos.length < videosToUse.length; i++) {
+    let randomIndex;
+    do {
+      randomIndex = Math.floor(Math.random() * videosToUse.length);
+    } while (usedIndices.has(randomIndex) && usedIndices.size < videosToUse.length);
+    
+    usedIndices.add(randomIndex);
+    const video = videosToUse[randomIndex];
+    const hdFile = selectHdFile(video);
+    selectedVideos.push(hdFile.link);
   }
   
-  // Fallback
-  if (!hdFile) {
-    hdFile = video.video_files.find((f: any) => f.quality === 'hd') || video.video_files[0];
-  }
-  
-  return hdFile.link;
+  console.log(`Selected ${selectedVideos.length} unique background videos`);
+  return selectedVideos;
 }
 
 async function assembleVideo(
@@ -346,7 +383,7 @@ async function assembleVideo(
   assets: {
     script: string;
     voiceoverUrl: string;
-    backgroundVideoUrl: string;
+    backgroundVideoUrls: string[];
     duration: number;
   },
   videoJobId: string,
@@ -443,6 +480,27 @@ async function assembleVideo(
 
   console.log(`Assembling video with Shotstack dimensions: ${config.width}x${config.height} for aspect ratio ${aspectRatio}`);
 
+  // Create background video clips from multiple videos
+  const clipDuration = Math.ceil(assets.duration / assets.backgroundVideoUrls.length);
+  const backgroundClips = assets.backgroundVideoUrls.map((videoUrl, index) => {
+    const startTime = index * clipDuration;
+    const clipLength = Math.min(clipDuration, assets.duration - startTime);
+    
+    return {
+      asset: {
+        type: 'video',
+        src: videoUrl
+      },
+      start: startTime,
+      length: clipLength,
+      fit: 'cover',
+      scale: 1.05,
+      transition: index > 0 ? { in: 'fade', out: 'fade' } : undefined
+    };
+  });
+
+  console.log(`Created ${backgroundClips.length} background clips for ${assets.duration}s video`);
+
   const edit = {
     timeline: {
       soundtrack: {
@@ -451,17 +509,7 @@ async function assembleVideo(
       },
       tracks: [
         {
-          clips: [{
-            asset: {
-              type: 'video',
-              src: assets.backgroundVideoUrl
-            },
-            start: 0,
-            length: assets.duration,
-            fit: 'cover',
-            scale: 1.05,
-            loop: true
-          }]
+          clips: backgroundClips
         },
         {
           clips: subtitleClips

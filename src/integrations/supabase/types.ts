@@ -930,6 +930,7 @@ export type Database = {
       }
       video_jobs: {
         Row: {
+          actual_audio_duration: number | null
           aspect_ratio: string | null
           background_video_thumbnail: string | null
           background_video_url: string | null
@@ -956,6 +957,7 @@ export type Database = {
           voiceover_url: string | null
         }
         Insert: {
+          actual_audio_duration?: number | null
           aspect_ratio?: string | null
           background_video_thumbnail?: string | null
           background_video_url?: string | null
@@ -982,6 +984,7 @@ export type Database = {
           voiceover_url?: string | null
         }
         Update: {
+          actual_audio_duration?: number | null
           aspect_ratio?: string | null
           background_video_thumbnail?: string | null
           background_video_url?: string | null

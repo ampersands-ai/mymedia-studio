@@ -12,6 +12,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Coins, Sparkles, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { VoiceBrowser } from './VoiceBrowser';
+import { BackgroundVideoSelector } from './BackgroundVideoSelector';
+import { captionPresets, aspectRatioConfig } from '@/config/captionStyles';
 
 export function VideoCreator() {
   const [topic, setTopic] = useState('');
@@ -21,6 +23,10 @@ export function VideoCreator() {
   const [voiceName, setVoiceName] = useState('Rachel');
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
   const [isGeneratingTopic, setIsGeneratingTopic] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16' | '4:5' | '1:1'>('4:5');
+  const [captionStyle, setCaptionStyle] = useState<string>('modern');
+  const [backgroundVideoUrl, setBackgroundVideoUrl] = useState<string>('');
+  const [backgroundThumbnail, setBackgroundThumbnail] = useState<string>('');
   const { createJob, isCreating } = useVideoJobs();
   const { data: tokens } = useUserTokens();
 
@@ -62,6 +68,10 @@ export function VideoCreator() {
       style: style as any,
       voice_id: voiceId,
       voice_name: voiceName,
+      aspect_ratio: aspectRatio,
+      background_video_url: backgroundVideoUrl || undefined,
+      background_video_thumbnail: backgroundThumbnail || undefined,
+      caption_style: captionPresets[captionStyle],
     });
 
     // Reset form on success
@@ -70,6 +80,10 @@ export function VideoCreator() {
     setStyle('modern');
     setVoiceId('21m00Tcm4TlvDq8ikWAM');
     setVoiceName('Rachel');
+    setAspectRatio('4:5');
+    setCaptionStyle('modern');
+    setBackgroundVideoUrl('');
+    setBackgroundThumbnail('');
   };
 
   const canAfford = (tokens?.tokens_remaining ?? 0) >= 15;
@@ -193,6 +207,58 @@ export function VideoCreator() {
             Browse and preview professional AI voices
           </p>
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="aspectRatio" className="text-sm font-bold">
+            Aspect Ratio
+          </Label>
+          <Select value={aspectRatio} onValueChange={(value: any) => setAspectRatio(value)} disabled={isDisabled}>
+            <SelectTrigger id="aspectRatio">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(aspectRatioConfig).map(([ratio, config]) => (
+                <SelectItem key={ratio} value={ratio}>
+                  {config.label} ({ratio})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Choose the format for your target platform
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="captionStyle" className="text-sm font-bold">
+            Caption Style
+          </Label>
+          <Select value={captionStyle} onValueChange={setCaptionStyle} disabled={isDisabled}>
+            <SelectTrigger id="captionStyle">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="modern">Modern (Large, Bold, Centered)</SelectItem>
+              <SelectItem value="minimal">Minimal (Bottom, Clean)</SelectItem>
+              <SelectItem value="bold">Bold (Gold, Impact Font)</SelectItem>
+              <SelectItem value="elegant">Elegant (Serif, Bottom)</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Animated word-by-word captions
+          </p>
+        </div>
+
+        <BackgroundVideoSelector
+          style={style}
+          duration={duration}
+          aspectRatio={aspectRatio}
+          selectedVideoUrl={backgroundVideoUrl}
+          onSelectVideo={(url, thumbnail) => {
+            setBackgroundVideoUrl(url);
+            setBackgroundThumbnail(thumbnail);
+          }}
+        />
 
         <div className="rounded-lg border-2 border-primary/20 bg-primary/5 p-3 md:p-4">
           <div className="flex items-center justify-between flex-wrap gap-2">

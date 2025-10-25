@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     // Get job and verify ownership
     const { data: job, error: jobError } = await supabaseClient
       .from('video_jobs')
-      .select('*')
+      .select('user_id, script, voiceover_url, style, duration, aspect_ratio, caption_style, custom_background_video, status')
       .eq('id', job_id)
       .single();
 
@@ -64,7 +64,9 @@ Deno.serve(async (req) => {
       job.style,
       job.duration,
       job_id,
-      user.id
+      user.id,
+      job.aspect_ratio || '4:5',
+      job.custom_background_video
     );
     await supabaseClient.from('video_jobs').update({ background_video_url: backgroundVideoUrl }).eq('id', job_id);
     console.log(`Fetched background video for job ${job_id}`);
@@ -106,7 +108,9 @@ Deno.serve(async (req) => {
         duration: job.duration,
       },
       job_id,
-      user.id
+      user.id,
+      job.aspect_ratio || '4:5',
+      job.caption_style
     );
     await supabaseClient.from('video_jobs').update({ shotstack_render_id: renderId }).eq('id', job_id);
     console.log(`Submitted to Shotstack: ${renderId}`);
@@ -161,8 +165,15 @@ async function getBackgroundVideo(
   style: string,
   duration: number,
   videoJobId: string,
-  userId: string
+  userId: string,
+  aspectRatio: string = '4:5',
+  customVideoUrl?: string
 ): Promise<string> {
+  // If user selected custom video, use it
+  if (customVideoUrl) {
+    console.log('Using custom background video:', customVideoUrl);
+    return customVideoUrl;
+  }
   const queries: Record<string, string> = {
     modern: 'technology abstract motion',
     tech: 'digital technology futuristic',
@@ -170,8 +181,17 @@ async function getBackgroundVideo(
     dramatic: 'cinematic nature dramatic'
   };
 
+  // Determine orientation based on aspect ratio
+  const orientationMap: Record<string, string> = {
+    '16:9': 'landscape',
+    '9:16': 'portrait',
+    '4:5': 'portrait',
+    '1:1': 'square'
+  };
+  const orientation = orientationMap[aspectRatio] || 'portrait';
+
   const query = queries[style] || 'abstract motion background';
-  const endpoint = `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=20&orientation=landscape`;
+  const endpoint = `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=20&orientation=${orientation}`;
   const requestSentAt = new Date();
 
   const response = await fetch(
@@ -230,38 +250,89 @@ async function assembleVideo(
     duration: number;
   },
   videoJobId: string,
-  userId: string
+  userId: string,
+  aspectRatio: string = '4:5',
+  captionStyle?: any
 ): Promise<string> {
+  // Default caption style
+  const defaultStyle = {
+    position: 'center',
+    animation: 'zoom',
+    fontSize: 72,
+    fontWeight: 'black',
+    fontFamily: 'Montserrat',
+    textColor: '#FFFFFF',
+    backgroundColor: 'rgba(0,0,0,0)',
+    strokeColor: '#000000',
+    strokeWidth: 3
+  };
+  
+  const style = captionStyle || defaultStyle;
+  
+  // Get dimensions from aspect ratio
+  const dimensions: Record<string, any> = {
+    '16:9': { width: 1920, height: 1080 },
+    '9:16': { width: 1080, height: 1920 },
+    '4:5': { width: 1080, height: 1350 },
+    '1:1': { width: 1080, height: 1080 }
+  };
+  const config = dimensions[aspectRatio] || dimensions['4:5'];
+
+  // Position mapping
+  const positionMap: Record<string, string> = {
+    top: 'top',
+    center: 'center',
+    bottom: 'bottom'
+  };
+
+  // Animation transitions
+  const transitions: Record<string, any> = {
+    fade: { in: 'fade', out: 'fade' },
+    zoom: { in: 'zoom', out: 'zoom' },
+    slide: { in: 'slideRight', out: 'slideLeft' },
+    bounce: { in: 'zoom', out: 'zoom' }
+  };
   const words = assets.script.split(' ');
   const wordsPerSecond = 2.5;
   const secondsPerWord = 1 / wordsPerSecond;
+  
+  // Font weight mapping
+  const fontWeightMap: Record<string, string> = {
+    normal: '400',
+    bold: '700',
+    black: '900'
+  };
   
   const subtitleClips = words.map((word, index) => ({
     asset: {
       type: 'html',
       html: `<p>${word}</p>`,
       css: `p { 
-        font-family: 'Montserrat', 'Arial', sans-serif; 
-        font-size: 60px; 
-        font-weight: 800;
-        color: #ffffff; 
+        font-family: '${style.fontFamily}', Arial, sans-serif; 
+        font-size: ${style.fontSize}px; 
+        font-weight: ${fontWeightMap[style.fontWeight] || '700'};
+        color: ${style.textColor}; 
         text-align: center; 
-        background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(0,0,0,0.85)); 
-        padding: 24px 48px;
+        background: ${style.backgroundColor}; 
+        padding: 20px 40px;
+        margin: 0;
         border-radius: 12px;
-        text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
-        letter-spacing: 1px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        ${style.strokeColor && style.strokeWidth ? `
+          -webkit-text-stroke: ${style.strokeWidth}px ${style.strokeColor};
+          paint-order: stroke fill;
+          text-shadow: 3px 3px 6px ${style.strokeColor};
+        ` : `text-shadow: 2px 2px 4px rgba(0,0,0,0.8);`}
       }`,
-      width: 1920,
-      height: 200,
-      position: 'center'
+      width: config.width,
+      height: Math.floor(config.height * 0.2),
+      position: positionMap[style.position] || 'center'
     },
     start: index * secondsPerWord,
     length: secondsPerWord * 1.2,
-    transition: {
-      in: 'fade',
-      out: 'fade'
-    }
+    transition: transitions[style.animation] || { in: 'fade', out: 'fade' },
+    effect: style.animation === 'bounce' ? 'zoomIn' : undefined
   }));
 
   const edit = {
@@ -291,7 +362,9 @@ async function assembleVideo(
     },
     output: {
       format: 'mp4',
-      resolution: 'hd',
+      resolution: 'custom',
+      width: config.width,
+      height: config.height,
       fps: 30,
       quality: 'high'
     }

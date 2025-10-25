@@ -27,7 +27,17 @@ serve(async (req) => {
     }
 
     // Parse and validate input
-    const { topic, duration = 60, style = 'modern', voice_id = '21m00Tcm4TlvDq8ikWAM', voice_name = 'Rachel' } = await req.json();
+    const { 
+      topic, 
+      duration = 60, 
+      style = 'modern', 
+      voice_id = '21m00Tcm4TlvDq8ikWAM', 
+      voice_name = 'Rachel',
+      aspect_ratio = '4:5',
+      caption_style,
+      background_video_url,
+      background_video_thumbnail
+    } = await req.json();
 
     if (!topic || topic.trim().length < 5) {
       throw new Error('Topic must be at least 5 characters');
@@ -74,6 +84,10 @@ serve(async (req) => {
         style,
         voice_id,
         voice_name,
+        aspect_ratio: aspect_ratio || '4:5',
+        caption_style: caption_style || null,
+        custom_background_video: background_video_url || null,
+        background_video_thumbnail: background_video_thumbnail || null,
         status: 'pending',
       })
       .select()

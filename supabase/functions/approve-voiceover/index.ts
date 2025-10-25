@@ -881,6 +881,11 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
           
           console.log('Video uploaded successfully using streaming');
           
+          // Generate direct public URL for the video
+          const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+          const videoPublicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${videoPath}`;
+          console.log('Video available at:', videoPublicUrl);
+          
           console.log('Creating generation record...');
           const { data: generation, error: genError } = await supabase.from('generations').insert({
             user_id: job.user_id,
@@ -914,6 +919,16 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
               console.error('Failed to link API logs to generation:', error);
             }
           }
+          
+          // Update job with permanent storage URL instead of temporary Shotstack URL
+          await supabase.from('video_jobs').update({
+            status: 'completed',
+            final_video_url: videoPublicUrl,
+            completed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }).eq('id', jobId);
+          
+          return; // Exit after successful completion
         } catch (uploadError: any) {
           console.error('Error during video download/upload:', uploadError);
           
@@ -933,12 +948,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
         }
       }
       
-      await supabase.from('video_jobs').update({
-        status: 'completed',
-        final_video_url: videoUrl,
-        completed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }).eq('id', jobId);
+      // Job completed successfully - should have already been updated above
       return;
     }
 

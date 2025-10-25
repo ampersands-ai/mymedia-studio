@@ -379,10 +379,11 @@ async function assembleVideo(
         css: buildCss(style, fontWeightMap[style.fontWeight] || '700'),
         width: config.width,
         height: Math.floor(config.height * 0.2),
-        position: positionMap[style.position] || 'center'
+        background: style.backgroundColor || 'transparent'
       },
       start: index * secondsPerWord,
-      length: secondsPerWord * 1.2
+      length: secondsPerWord * 1.2,
+      position: positionMap[style.position] || 'center'
     };
     
     // Add transition based on animation style
@@ -441,9 +442,16 @@ async function assembleVideo(
     body: JSON.stringify(edit)
   });
 
-  const result = response.ok ? await response.json() : null;
+  const responseText = await response.text();
+  let result = null;
+  
+  try {
+    result = responseText ? JSON.parse(responseText) : null;
+  } catch (parseError) {
+    console.error('Failed to parse Shotstack response:', responseText);
+  }
 
-  // Log the API call
+  // Log the API call with detailed error info
   logApiCall(
     supabase,
     {
@@ -464,13 +472,17 @@ async function assembleVideo(
       statusCode: response.status,
       payload: result,
       isError: !response.ok,
-      errorMessage: response.ok ? undefined : `Shotstack returned ${response.status}`
+      errorMessage: response.ok ? undefined : result?.message || result?.detail || `Shotstack returned ${response.status}`
     }
   ).catch(e => console.error('Failed to log API call:', e));
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`Shotstack error: ${error.message || 'Unknown error'}`);
+    console.error('Shotstack error details:', {
+      status: response.status,
+      response: result,
+      requestPayload: edit
+    });
+    throw new Error(`Shotstack error: ${result?.message || result?.detail || response.statusText || 'Bad Request'}`);
   }
 
   return result.response.id;

@@ -50,6 +50,9 @@ const AnalyticsDashboard = lazy(() => import("./pages/admin/Analytics"));
 const ThresholdBreach = lazy(() => import("./pages/admin/ThresholdBreach"));
 const VideoJobs = lazy(() => import("./pages/admin/VideoJobs"));
 const TemplateLanding = lazy(() => import("./pages/TemplateLanding"));
+const TemplateLandingManager = lazy(() => import("./pages/admin/TemplateLandingManager"));
+const TemplateLandingEditor = lazy(() => import("./pages/admin/TemplateLandingEditor"));
+const TemplateCategoriesManager = lazy(() => import("./pages/admin/TemplateCategoriesManager"));
 
 const AppContent = () => {
   // Initialize PostHog
@@ -123,6 +126,9 @@ const AppContent = () => {
               <Route path="analytics" element={<AnalyticsDashboard />} />
               <Route path="threshold-breach" element={<ThresholdBreach />} />
               <Route path="video-jobs" element={<VideoJobs />} />
+              <Route path="template-landing" element={<TemplateLandingManager />} />
+              <Route path="template-landing/:id" element={<TemplateLandingEditor />} />
+              <Route path="template-categories" element={<TemplateCategoriesManager />} />
             </Route>
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/privacy" element={<Privacy />} />

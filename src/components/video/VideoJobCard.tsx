@@ -12,6 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { useSignedUrlLazy } from '@/hooks/useSignedUrlLazy';
 import { Slider } from '@/components/ui/slider';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VideoJobCardProps {
   job: VideoJob;
@@ -420,6 +421,36 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                     <AlertTitle>Error Loading Audio</AlertTitle>
                     <AlertDescription>
                       Could not load voiceover preview. You can still proceed with rendering the video.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Error Display for Rendering Failures */}
+                {job.error_details && (
+                  <Alert variant="destructive" className="border-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Video Rendering Failed</AlertTitle>
+                    <AlertDescription className="space-y-2">
+                      <p className="text-sm">{job.error_details.message}</p>
+                      {job.error_details.timestamp && (
+                        <p className="text-xs text-muted-foreground">
+                          Failed at: {new Date(job.error_details.timestamp).toLocaleString()}
+                        </p>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          await supabase
+                            .from('video_jobs')
+                            .update({ error_details: null })
+                            .eq('id', job.id);
+                          toast.success('Error dismissed');
+                        }}
+                        className="mt-2"
+                      >
+                        Dismiss Error
+                      </Button>
                     </AlertDescription>
                   </Alert>
                 )}

@@ -65,8 +65,11 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let job_id: string | undefined;
+  
   try {
-    const { job_id } = await req.json();
+    const body = await req.json();
+    job_id = body.job_id;
 
     if (!job_id) {
       throw new Error('job_id is required');
@@ -187,8 +190,8 @@ Deno.serve(async (req) => {
   } catch (error: any) {
     console.error('Error in approve-voiceover:', error);
     
-    // Update job as failed
-    if (error.job_id) {
+    // Revert job to awaiting_voice_approval so user can retry
+    if (job_id) {
       try {
         const supabaseClient = createClient(
           Deno.env.get('SUPABASE_URL') ?? '',
@@ -198,11 +201,15 @@ Deno.serve(async (req) => {
         await supabaseClient
           .from('video_jobs')
           .update({
-            status: 'failed',
-            error_message: error.message || 'Unknown error occurred',
+            status: 'awaiting_voice_approval',
+            error_details: {
+              message: error.message || 'Video rendering failed',
+              timestamp: new Date().toISOString(),
+              step: 'approve_voiceover'
+            },
             updated_at: new Date().toISOString()
           })
-          .eq('id', error.job_id);
+          .eq('id', job_id);
       } catch (updateError) {
         console.error('Failed to update job status:', updateError);
       }

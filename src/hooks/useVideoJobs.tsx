@@ -146,7 +146,21 @@ export function useVideoJobs() {
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to approve voiceover');
+      const message = error.message || 'Failed to approve voiceover';
+      
+      // Parse specific error types for better user feedback
+      if (message.includes('Shotstack')) {
+        toast.error('Video assembly failed. Please try again or contact support.');
+      } else if (message.includes('validation')) {
+        toast.error('Video validation failed. Please try again.');
+      } else if (message.includes('timeout') || message.includes('timed out')) {
+        toast.error('Request timed out. Please try again.');
+      } else {
+        toast.error(message);
+      }
+      
+      // Refresh job data to show updated error state
+      queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
     },
   });
 

@@ -63,7 +63,6 @@ export function useVideoJobs() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
       queryClient.invalidateQueries({ queryKey: ['user-tokens'] });
-      toast.success('Video generation started! Script will be ready for review shortly.');
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to create video job');
@@ -108,7 +107,6 @@ export function useVideoJobs() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
-      toast.success('Voiceover generation started! This will take about 1 minute.');
     },
     onError: (error: any) => {
       const message = error.message || 'Failed to approve script';
@@ -146,7 +144,6 @@ export function useVideoJobs() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
-      toast.success('Video assembly started! This will take 2-3 more minutes.');
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to approve voiceover');
@@ -172,7 +169,6 @@ export function useVideoJobs() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
-      toast.info('Video job cancelled');
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to cancel video job');
@@ -194,7 +190,6 @@ export function useVideoJobs() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
-      toast.success('Caption and hashtags generated!');
     },
     onError: (error: any) => {
       console.error('Caption generation error:', error);

@@ -40,7 +40,6 @@ export function VideoCreator() {
       
       if (data.topic) {
         setTopic(data.topic);
-        toast.success('✨ Creative topic generated!');
       }
     } catch (error: any) {
       console.error('Error generating topic:', error);
@@ -54,7 +53,6 @@ export function VideoCreator() {
     setVoiceId(id);
     setVoiceName(name);
     setVoiceDialogOpen(false);
-    toast.success(`Voice changed to ${name}`);
   };
 
   const handleCreate = async () => {

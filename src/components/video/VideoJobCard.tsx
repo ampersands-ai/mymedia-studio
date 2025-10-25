@@ -334,10 +334,9 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                       approveScript.mutate(
                         { jobId: job.id, editedScript: editedVoiceoverScript },
                         {
-                          onSuccess: () => {
-                            setIsEditingVoiceoverScript(false);
-                            toast.success('Regenerating voiceover with updated script...');
-                          },
+                  onSuccess: () => {
+                    setIsEditingVoiceoverScript(false);
+                  },
                         }
                       );
                     }}

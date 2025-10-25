@@ -86,17 +86,15 @@ export function VoiceBrowser({ selectedVoiceId, onSelectVoice }: VoiceBrowserPro
           setFilteredVoices(voicesWithPreviews);
         } else {
           // Use fallback if all voices lack previews
-          console.warn('No voices with previews, using fallback');
+          console.log('No voices with previews, using fallback');
           setVoices(FALLBACK_VOICES);
           setFilteredVoices(FALLBACK_VOICES);
-          toast.info('Using default voice library');
         }
       } else {
         // Use fallback voices if API fails or returns empty
-        console.warn('Using fallback voices');
+        console.log('Using fallback voices');
         setVoices(FALLBACK_VOICES);
         setFilteredVoices(FALLBACK_VOICES);
-        toast.info('Using default voice library');
       }
     } catch (error: any) {
       console.error('Error fetching voices:', error);

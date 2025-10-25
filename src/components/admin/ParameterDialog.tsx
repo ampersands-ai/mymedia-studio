@@ -162,12 +162,12 @@ export function ParameterDialog({
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value.replace(/[^a-zA-Z0-9_]/g, '_') })}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value.replace(/[^a-zA-Z0-9_.]/g, '_') })}
               onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
-              placeholder="e.g., image_size, ImageSize, aspect_ratio"
+              placeholder="e.g., image_size, image.width, aspect_ratio"
             />
             <p className="text-xs text-muted-foreground">
-              Alphanumeric and underscores only. This is the JSON key.
+              Alphanumeric, underscores, and dots allowed. This is the JSON key.
             </p>
           </div>
 

@@ -111,7 +111,7 @@ export function generateSchema(parameters: Parameter[]): Record<string, any> {
  */
 function formatLabel(name: string): string {
   return name
-    .replace(/_/g, ' ')
+    .replace(/[_.]/g, ' ')
     .replace(/\b\w/g, c => c.toUpperCase());
 }
 
@@ -120,8 +120,8 @@ function formatLabel(name: string): string {
  */
 export function validateParameterName(name: string, existingNames: string[]): string | null {
   if (!name) return "Parameter name is required";
-  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
-    return "Parameter name must start with a letter or underscore, and contain only letters, numbers, and underscores";
+  if (!/^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(name)) {
+    return "Parameter name must start with a letter or underscore, and contain only letters, numbers, underscores, and dots";
   }
   if (existingNames.includes(name)) {
     return "Parameter name must be unique";

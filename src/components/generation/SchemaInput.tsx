@@ -226,7 +226,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
               {value || schema.default || 'Select voice'}
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh]">
+          <DialogContent className="max-w-5xl max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>Choose a Voice</DialogTitle>
             </DialogHeader>

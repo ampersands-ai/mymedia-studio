@@ -12,7 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { useSignedUrlLazy } from '@/hooks/useSignedUrlLazy';
 import { Slider } from '@/components/ui/slider';
-import { supabase } from '@/integrations/supabase/client';
+
 
 interface VideoJobCardProps {
   job: VideoJob;
@@ -69,7 +69,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling, recoverJob, isRecoveringJob } = useVideoJobs();
+  const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling, recoverJob, isRecoveringJob, dismissError, isDismissingError } = useVideoJobs();
   
   // Check if job is stuck in assembling for >5 minutes
   const isStuckAssembling = job.status === 'assembling' && 
@@ -425,36 +425,6 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                   </Alert>
                 )}
 
-                {/* Error Display for Rendering Failures */}
-                {job.error_details && (
-                  <Alert variant="destructive" className="border-2">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Video Rendering Failed</AlertTitle>
-                    <AlertDescription className="space-y-2">
-                      <p className="text-sm">{job.error_details.message}</p>
-                      {job.error_details.timestamp && (
-                        <p className="text-xs text-muted-foreground">
-                          Failed at: {new Date(job.error_details.timestamp).toLocaleString()}
-                        </p>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={async () => {
-                          await supabase
-                            .from('video_jobs')
-                            .update({ error_details: null })
-                            .eq('id', job.id);
-                          toast.success('Error dismissed');
-                        }}
-                        className="mt-2"
-                      >
-                        Dismiss Error
-                      </Button>
-                    </AlertDescription>
-                  </Alert>
-                )}
-
                 <div className="space-y-3">
                   <label className="text-xs font-medium text-muted-foreground">Voiceover Preview:</label>
                   
@@ -503,6 +473,62 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                     </div>
                   </div>
                 </div>
+
+                {/* Error Display - Positioned Before Render Button */}
+                {job.error_details && (
+                  <Alert variant="destructive" className="border-2 animate-in fade-in slide-in-from-top-2">
+                    <AlertCircle className="h-5 w-5" />
+                    <AlertTitle className="text-base font-semibold">Video Rendering Failed</AlertTitle>
+                    <AlertDescription className="space-y-3 mt-2">
+                      <p className="text-sm leading-relaxed">{job.error_details.message}</p>
+                      
+                      {job.error_details.step && (
+                        <p className="text-xs text-muted-foreground">
+                          Failed during: <span className="font-medium">{job.error_details.step}</span>
+                        </p>
+                      )}
+                      
+                      {job.error_details.timestamp && (
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(job.error_details.timestamp).toLocaleString()}
+                        </p>
+                      )}
+
+                      <div className="flex gap-2 mt-3">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => dismissError.mutate(job.id)}
+                          disabled={isDismissingError}
+                        >
+                          {isDismissingError ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            'Dismiss'
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => approveVoiceover.mutate(job.id)}
+                          disabled={isApprovingVoiceover}
+                        >
+                          {isApprovingVoiceover ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Retrying...
+                            </>
+                          ) : (
+                            'Try Again'
+                          )}
+                        </Button>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground mt-2">
+                        💡 If the issue persists, try editing the script or selecting a different background.
+                      </p>
+                    </AlertDescription>
+                  </Alert>
+                )}
 
                 <div className="flex gap-2 pt-2">
                   <Button 

@@ -22,6 +22,7 @@ export interface VideoJobInput {
   aspect_ratio?: '16:9' | '9:16' | '4:5' | '1:1';
   background_video_url?: string;
   background_video_thumbnail?: string;
+  background_media_type?: 'video' | 'image';
   caption_style?: CaptionStyle;
 }
 

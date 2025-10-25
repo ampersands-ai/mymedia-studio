@@ -934,6 +934,7 @@ export type Database = {
           ai_caption: string | null
           ai_hashtags: string[] | null
           aspect_ratio: string | null
+          background_media_type: string | null
           background_video_thumbnail: string | null
           background_video_url: string | null
           caption_generated_at: string | null
@@ -964,6 +965,7 @@ export type Database = {
           ai_caption?: string | null
           ai_hashtags?: string[] | null
           aspect_ratio?: string | null
+          background_media_type?: string | null
           background_video_thumbnail?: string | null
           background_video_url?: string | null
           caption_generated_at?: string | null
@@ -994,6 +996,7 @@ export type Database = {
           ai_caption?: string | null
           ai_hashtags?: string[] | null
           aspect_ratio?: string | null
+          background_media_type?: string | null
           background_video_thumbnail?: string | null
           background_video_url?: string | null
           caption_generated_at?: string | null

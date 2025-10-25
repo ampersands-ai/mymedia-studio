@@ -118,22 +118,53 @@ Deno.serve(async (req) => {
     const videoDuration = job.actual_audio_duration || job.duration;
     console.log(`Using video duration: ${videoDuration}s (actual_audio_duration: ${job.actual_audio_duration}, requested: ${job.duration})`);
 
-    // Step 3: Fetch multiple background videos
+    const backgroundMediaType = (job as any).background_media_type || 'video';
+    console.log(`Using background media type: ${backgroundMediaType}`);
+
+    // Step 3: Fetch multiple background videos or images
     await updateJobStatus(supabaseClient, job_id, 'fetching_video');
-    const backgroundVideoUrls = await getBackgroundVideos(
-      supabaseClient,
-      job.style,
-      videoDuration,
-      job_id,
-      user.id,
-      job.aspect_ratio || '4:5',
-      job.custom_background_video,
-      job.topic
-    );
+    
+    let backgroundVideoUrls: string[] = [];
+    let backgroundImageUrls: string[] = [];
+    
+    if (backgroundMediaType === 'image') {
+      // For images: Use custom background or fetch from Pixabay
+      if (job.custom_background_video) {
+        backgroundImageUrls = [job.custom_background_video];
+        console.log('Using custom background image');
+      } else {
+        // Fetch images from Pixabay (similar logic to videos, but for images)
+        // For now, use the existing video fetching as fallback
+        backgroundVideoUrls = await getBackgroundVideos(
+          supabaseClient,
+          job.style,
+          videoDuration,
+          job_id,
+          user.id,
+          job.aspect_ratio || '4:5',
+          undefined,
+          job.topic
+        );
+        console.log('Fallback: Using videos as images not yet implemented');
+      }
+    } else {
+      // For videos: Use existing logic
+      backgroundVideoUrls = await getBackgroundVideos(
+        supabaseClient,
+        job.style,
+        videoDuration,
+        job_id,
+        user.id,
+        job.aspect_ratio || '4:5',
+        job.custom_background_video,
+        job.topic
+      );
+    }
+    
     await supabaseClient.from('video_jobs').update({ 
-      background_video_url: backgroundVideoUrls[0] // Store first video URL for reference
+      background_video_url: backgroundVideoUrls[0] || backgroundImageUrls[0] // Store first URL for reference
     }).eq('id', job_id);
-    console.log(`Fetched ${backgroundVideoUrls.length} background videos for job ${job_id}`);
+    console.log(`Fetched background media for job ${job_id}`);
 
     // Step 4: Assemble video
     await updateJobStatus(supabaseClient, job_id, 'assembling');
@@ -157,10 +188,13 @@ Deno.serve(async (req) => {
     if (!testVoiceover.ok) {
       throw new Error(`Voiceover URL is not accessible: ${testVoiceover.status}`);
     }
-    // Test first background video
-    const testBgVideo = await fetch(backgroundVideoUrls[0], { method: 'HEAD' });
-    if (!testBgVideo.ok) {
-      throw new Error(`Background video URL is not accessible: ${testBgVideo.status}`);
+    // Test first background media
+    const testBgMedia = await fetch(
+      backgroundVideoUrls[0] || backgroundImageUrls[0], 
+      { method: 'HEAD' }
+    );
+    if (!testBgMedia.ok) {
+      throw new Error(`Background media URL is not accessible: ${testBgMedia.status}`);
     }
     console.log('Assets validated successfully');
     
@@ -170,12 +204,14 @@ Deno.serve(async (req) => {
         script: job.script,
         voiceoverUrl: voiceoverPublicUrl,
         backgroundVideoUrls,
+        backgroundImageUrls,
         duration: videoDuration, // Use actual audio duration
       },
       job_id,
       user.id,
       job.aspect_ratio || '4:5',
-      job.caption_style
+      job.caption_style,
+      backgroundMediaType
     );
     await supabaseClient.from('video_jobs').update({ shotstack_render_id: renderId }).eq('id', job_id);
     console.log(`Submitted to Shotstack: ${renderId}`);
@@ -389,15 +425,17 @@ async function getBackgroundVideos(
 async function assembleVideo(
   supabase: any,
   assets: {
-    script: string;
-    voiceoverUrl: string;
-    backgroundVideoUrls: string[];
-    duration: number;
-  },
-  videoJobId: string,
-  userId: string,
-  aspectRatio: string = '4:5',
-  captionStyle?: any
+  script: string;
+  voiceoverUrl: string;
+  backgroundVideoUrls: string[];
+  backgroundImageUrls?: string[];
+  duration: number;
+},
+videoJobId: string,
+userId: string,
+aspectRatio: string = '4:5',
+captionStyle?: any,
+backgroundMediaType: 'video' | 'image' = 'video'
 ): Promise<string> {
   // Default caption style
   const defaultStyle = {
@@ -503,26 +541,50 @@ async function assembleVideo(
 
   console.log(`Assembling video with Shotstack dimensions: ${config.width}x${config.height} for aspect ratio ${aspectRatio}`);
 
-  // Create background video clips from multiple videos
-  const clipDuration = Math.ceil(assets.duration / assets.backgroundVideoUrls.length);
-  const backgroundClips = assets.backgroundVideoUrls.map((videoUrl, index) => {
-    const startTime = index * clipDuration;
-    const clipLength = Math.min(clipDuration, assets.duration - startTime);
-    
-    return {
-      asset: {
-        type: 'video',
-        src: videoUrl
-      },
-      start: startTime,
-      length: clipLength,
-      fit: 'cover',
-      scale: 1.05,
-      transition: index > 0 ? { in: 'fade', out: 'fade' } : undefined
-    };
-  });
-
-  console.log(`Created ${backgroundClips.length} background clips for ${assets.duration}s video`);
+  // Create background clips based on media type
+  let backgroundClips;
+  
+  if (backgroundMediaType === 'image' && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
+    // For images: Create static image clips that cover the duration
+    const clipDuration = Math.ceil(assets.duration / assets.backgroundImageUrls.length);
+    backgroundClips = assets.backgroundImageUrls.map((imageUrl, index) => {
+      const startTime = index * clipDuration;
+      const clipLength = Math.min(clipDuration, assets.duration - startTime);
+      
+      return {
+        asset: {
+          type: 'image',
+          src: imageUrl
+        },
+        start: startTime,
+        length: clipLength,
+        fit: 'cover',
+        scale: 1.05,
+        transition: index > 0 ? { in: 'fade', out: 'fade' } : undefined
+      };
+    });
+    console.log(`Created ${backgroundClips.length} background image clips for ${assets.duration}s video`);
+  } else {
+    // For videos: Use existing video logic
+    const clipDuration = Math.ceil(assets.duration / assets.backgroundVideoUrls.length);
+    backgroundClips = assets.backgroundVideoUrls.map((videoUrl, index) => {
+      const startTime = index * clipDuration;
+      const clipLength = Math.min(clipDuration, assets.duration - startTime);
+      
+      return {
+        asset: {
+          type: 'video',
+          src: videoUrl
+        },
+        start: startTime,
+        length: clipLength,
+        fit: 'cover',
+        scale: 1.05,
+        transition: index > 0 ? { in: 'fade', out: 'fade' } : undefined
+      };
+    });
+    console.log(`Created ${backgroundClips.length} background video clips for ${assets.duration}s video`);
+  }
 
   const edit = {
     timeline: {

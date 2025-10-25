@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Coins, Sparkles, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { VoiceBrowser } from './VoiceBrowser';
-import { BackgroundVideoSelector } from './BackgroundVideoSelector';
+import { BackgroundMediaSelector } from './BackgroundMediaSelector';
 import { captionPresets, aspectRatioConfig } from '@/config/captionStyles';
 
 export function VideoCreator() {
@@ -27,6 +27,7 @@ export function VideoCreator() {
   const [captionStyle, setCaptionStyle] = useState<string>('modern');
   const [backgroundVideoUrl, setBackgroundVideoUrl] = useState<string>('');
   const [backgroundThumbnail, setBackgroundThumbnail] = useState<string>('');
+  const [backgroundMediaType, setBackgroundMediaType] = useState<'video' | 'image'>('video');
   const { createJob, isCreating } = useVideoJobs();
   const { data: tokens } = useUserTokens();
 
@@ -69,6 +70,7 @@ export function VideoCreator() {
       aspect_ratio: aspectRatio,
       background_video_url: backgroundVideoUrl || undefined,
       background_video_thumbnail: backgroundThumbnail || undefined,
+      background_media_type: backgroundMediaType,
       caption_style: captionPresets[captionStyle],
     });
 
@@ -82,6 +84,7 @@ export function VideoCreator() {
     setCaptionStyle('modern');
     setBackgroundVideoUrl('');
     setBackgroundThumbnail('');
+    setBackgroundMediaType('video');
   };
 
   const canAfford = (tokens?.tokens_remaining ?? 0) >= 15;
@@ -247,14 +250,16 @@ export function VideoCreator() {
           </p>
         </div>
 
-        <BackgroundVideoSelector
+        <BackgroundMediaSelector
           style={style}
           duration={duration}
           aspectRatio={aspectRatio}
-          selectedVideoUrl={backgroundVideoUrl}
-          onSelectVideo={(url, thumbnail) => {
+          selectedMediaUrl={backgroundVideoUrl}
+          selectedMediaType={backgroundMediaType}
+          onSelectMedia={(url, thumbnail, type) => {
             setBackgroundVideoUrl(url);
             setBackgroundThumbnail(thumbnail);
+            setBackgroundMediaType(type);
           }}
         />
 

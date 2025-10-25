@@ -245,6 +245,25 @@ export function useVideoJobs() {
     }
   });
 
+  // Dismiss error mutation
+  const dismissError = useMutation({
+    mutationFn: async (jobId: string) => {
+      const { error } = await supabase
+        .from('video_jobs')
+        .update({ error_details: null, updated_at: new Date().toISOString() })
+        .eq('id', jobId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Error dismissed');
+      queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to dismiss error');
+    },
+  });
+
   return { 
     jobs, 
     isLoading, 
@@ -260,5 +279,7 @@ export function useVideoJobs() {
     isGeneratingCaption: generateCaption.isPending,
     recoverJob,
     isRecoveringJob: recoverJob.isPending,
+    dismissError,
+    isDismissingError: dismissError.isPending,
   };
 }

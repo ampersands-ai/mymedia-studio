@@ -49,6 +49,7 @@ const TokenDisputes = lazy(() => import("./pages/admin/TokenDisputes").then(m =>
 const AnalyticsDashboard = lazy(() => import("./pages/admin/Analytics"));
 const ThresholdBreach = lazy(() => import("./pages/admin/ThresholdBreach"));
 const VideoJobs = lazy(() => import("./pages/admin/VideoJobs"));
+const TemplateLanding = lazy(() => import("./pages/TemplateLanding"));
 
 const AppContent = () => {
   // Initialize PostHog
@@ -132,6 +133,7 @@ const AppContent = () => {
             <Route path="/faq" element={<FAQ />} />
             <Route path="/features" element={<Features />} />
             <Route path="/templates" element={<Navigate to="/dashboard/templates" replace />} />
+            <Route path="/templates/:category/:slug" element={<TemplateLanding />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -421,7 +421,20 @@ async function assembleVideo(
     return clip;
   });
 
-  console.log(`Assembling video with Shotstack resolution: 1080 (1080x1920) for aspect ratio ${aspectRatio}`);
+  // Normalize Shotstack resolution to a valid value
+  const allowedResolutions = new Set(['preview','mobile','sd','hd','1080','4k']);
+  const normalizeResolution = (res?: string) => {
+    const val = typeof res === 'string' ? res : '';
+    return allowedResolutions.has(val) ? val : '1080';
+  };
+  const resolutionForAspect: Record<string,string> = {
+    '16:9': '1080',
+    '9:16': '1080',
+    '4:5': '1080',
+    '1:1': '1080'
+  };
+  const safeResolution = normalizeResolution(resolutionForAspect[aspectRatio]);
+  console.log(`Assembling video with Shotstack resolution: ${safeResolution} for aspect ratio ${aspectRatio}`);
 
   const edit = {
     timeline: {
@@ -449,7 +462,7 @@ async function assembleVideo(
     },
     output: {
       format: 'mp4',
-      resolution: '1080',
+      resolution: safeResolution,
       fps: 30,
       quality: 'high'
     }

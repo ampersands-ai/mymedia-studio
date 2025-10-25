@@ -50,12 +50,18 @@ export async function callKieAI(request: ProviderRequest): Promise<ProviderRespo
   } else {
     // Standard nested input structure for other models
     console.log('Using WRAPPER payload structure');
+    
+    // Strip "input." prefix from parameter keys if present
+    const cleanedParameters: Record<string, any> = {};
+    for (const [key, value] of Object.entries(request.parameters)) {
+      const cleanKey = key.startsWith('input.') ? key.substring(6) : key;
+      cleanedParameters[cleanKey] = value;
+    }
+    
     payload = {
       model: request.model,
       callBackUrl: callbackUrl,
-      input: {
-        ...request.parameters
-      }
+      input: cleanedParameters
     };
     // Only include prompt if provided
     if (request.prompt) {

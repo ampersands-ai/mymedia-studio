@@ -314,9 +314,29 @@ async function getBackgroundVideo(
   const suitable = data.videos.filter((v: any) => v.duration >= duration);
   const video = suitable.length ? suitable[Math.floor(Math.random() * suitable.length)] : data.videos[0];
 
-  const hdFile = video.video_files.find((f: any) => f.quality === 'hd' && f.width === 1920) || 
-                 video.video_files.find((f: any) => f.quality === 'hd') || 
-                 video.video_files[0];
+  // Select video file based on aspect ratio orientation
+  let hdFile;
+  
+  if (orientation === 'portrait') {
+    // For portrait (9:16, 4:5), prioritize videos with height > width
+    hdFile = video.video_files.find((f: any) => 
+      f.quality === 'hd' && f.height >= 1920 && f.height > f.width
+    ) || video.video_files.find((f: any) => 
+      f.quality === 'hd' && f.height > f.width
+    );
+  } else {
+    // For landscape (16:9), prioritize videos with width > height
+    hdFile = video.video_files.find((f: any) => 
+      f.quality === 'hd' && f.width === 1920 && f.width > f.height
+    ) || video.video_files.find((f: any) => 
+      f.quality === 'hd' && f.width > f.height
+    );
+  }
+  
+  // Fallback
+  if (!hdFile) {
+    hdFile = video.video_files.find((f: any) => f.quality === 'hd') || video.video_files[0];
+  }
   
   return hdFile.link;
 }
@@ -452,7 +472,8 @@ async function assembleVideo(
             start: 0,
             length: assets.duration,
             fit: 'cover',
-            scale: 1.05
+            scale: 1.05,
+            loop: true
           }]
         },
         {

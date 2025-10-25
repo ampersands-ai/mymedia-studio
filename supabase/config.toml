@@ -71,3 +71,6 @@ verify_jwt = true
 
 [functions.recover-stuck-jobs]
 verify_jwt = false  # Can be called by cron or manually
+
+[functions.search-pexels-videos]
+verify_jwt = false

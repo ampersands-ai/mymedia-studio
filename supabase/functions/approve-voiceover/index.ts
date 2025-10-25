@@ -1,10 +1,64 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { logApiCall, linkApiLogsToGeneration } from '../_shared/api-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Inlined helper: sanitize sensitive data
+function sanitizeData(data: any): any {
+  if (!data) return data;
+  const sanitized = { ...data };
+  const sensitiveKeys = ['api_key', 'authorization', 'token', 'secret', 'apiKey'];
+  sensitiveKeys.forEach(key => delete sanitized[key]);
+  if (sanitized.headers) {
+    sensitiveKeys.forEach(key => delete sanitized.headers[key]);
+  }
+  return sanitized;
+}
+
+// Inlined helper: log API call
+async function logApiCall(
+  supabase: any,
+  request: {
+    videoJobId: string;
+    userId: string;
+    serviceName: string;
+    endpoint: string;
+    httpMethod: string;
+    stepName: string;
+    requestPayload?: any;
+    additionalMetadata?: any;
+  },
+  requestSentAt: Date,
+  response: {
+    statusCode: number;
+    payload?: any;
+    isError: boolean;
+    errorMessage?: string;
+  }
+) {
+  try {
+    await supabase.from('api_call_logs').insert({
+      video_job_id: request.videoJobId,
+      user_id: request.userId,
+      service_name: request.serviceName,
+      endpoint: request.endpoint,
+      http_method: request.httpMethod,
+      step_name: request.stepName,
+      request_payload: sanitizeData(request.requestPayload),
+      request_sent_at: requestSentAt.toISOString(),
+      response_received_at: new Date().toISOString(),
+      response_status_code: response.statusCode,
+      response_payload: sanitizeData(response.payload),
+      is_error: response.isError,
+      error_message: response.errorMessage,
+      additional_metadata: request.additionalMetadata,
+    });
+  } catch (error) {
+    console.error('Failed to log API call:', error);
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -202,7 +256,7 @@ async function getBackgroundVideo(
   const data = response.ok ? await response.json() : null;
 
   // Log the API call
-  await logApiCall(
+  logApiCall(
     supabase,
     {
       videoJobId,
@@ -221,7 +275,7 @@ async function getBackgroundVideo(
       isError: !response.ok,
       errorMessage: response.ok ? undefined : `Pexels returned ${response.status}`
     }
-  );
+  ).catch(e => console.error('Failed to log API call:', e));
 
   if (!response.ok) {
     throw new Error('Pexels API error');
@@ -390,7 +444,7 @@ async function assembleVideo(
   const result = response.ok ? await response.json() : null;
 
   // Log the API call
-  await logApiCall(
+  logApiCall(
     supabase,
     {
       videoJobId,
@@ -412,7 +466,7 @@ async function assembleVideo(
       isError: !response.ok,
       errorMessage: response.ok ? undefined : `Shotstack returned ${response.status}`
     }
-  );
+  ).catch(e => console.error('Failed to log API call:', e));
 
   if (!response.ok) {
     const error = await response.json();
@@ -439,7 +493,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
     const result = response.ok ? await response.json() : null;
 
     // Log the status check API call
-    await logApiCall(
+    logApiCall(
       supabase,
       {
         videoJobId: jobId,
@@ -458,7 +512,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
         isError: !response.ok,
         errorMessage: response.ok ? undefined : `Shotstack status check returned ${response.status}`
       }
-    );
+    ).catch(e => console.error('Failed to log API call:', e));
 
     const status = result?.response?.status;
     
@@ -524,7 +578,15 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
             console.log('Generation record created successfully');
             
             // Link all API logs to this generation
-            await linkApiLogsToGeneration(supabase, jobId, generation.id);
+            try {
+              await supabase
+                .from('api_call_logs')
+                .update({ generation_id: generation.id })
+                .eq('video_job_id', jobId)
+                .is('generation_id', null);
+            } catch (error) {
+              console.error('Failed to link API logs to generation:', error);
+            }
           }
         } catch (error) {
           console.error('Error creating generation record:', error);

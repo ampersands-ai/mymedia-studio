@@ -89,7 +89,18 @@ export function useVideoJobs() {
       toast.success('Voiceover generation started! This will take about 1 minute.');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to approve script');
+      const message = error.message || 'Failed to approve script';
+      
+      // Surface helpful messages
+      if (message.includes('429') || message.includes('rate limit')) {
+        toast.error('Service temporarily busy. Please try again in a moment.');
+      } else if (message.includes('timeout') || message.includes('timed out')) {
+        toast.error('Request timed out. Please try again.');
+      } else if (message.includes('quota') || message.includes('limit exceeded')) {
+        toast.error('API quota exceeded. Please contact support.');
+      } else {
+        toast.error(message);
+      }
     },
   });
 

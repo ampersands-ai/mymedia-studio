@@ -1,10 +1,109 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
-import { logApiCall } from '../_shared/api-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Inlined helper: sanitize sensitive data
+function sanitizeData(data: any): any {
+  if (!data) return data;
+  const sanitized = { ...data };
+  const sensitiveKeys = ['api_key', 'authorization', 'token', 'secret', 'apiKey', 'xi-api-key'];
+  sensitiveKeys.forEach(key => delete sanitized[key]);
+  if (sanitized.headers) {
+    sensitiveKeys.forEach(key => delete sanitized.headers[key]);
+  }
+  return sanitized;
+}
+
+// Inlined helper: log API call (background task)
+async function logApiCall(
+  supabase: any,
+  request: {
+    videoJobId: string;
+    userId: string;
+    serviceName: string;
+    endpoint: string;
+    httpMethod: string;
+    stepName: string;
+    requestPayload?: any;
+    additionalMetadata?: any;
+  },
+  requestSentAt: Date,
+  response: {
+    statusCode: number;
+    payload?: any;
+    isError: boolean;
+    errorMessage?: string;
+  }
+) {
+  try {
+    await supabase.from('api_call_logs').insert({
+      video_job_id: request.videoJobId,
+      user_id: request.userId,
+      service_name: request.serviceName,
+      endpoint: request.endpoint,
+      http_method: request.httpMethod,
+      step_name: request.stepName,
+      request_payload: sanitizeData(request.requestPayload),
+      request_sent_at: requestSentAt.toISOString(),
+      response_received_at: new Date().toISOString(),
+      response_status_code: response.statusCode,
+      response_payload: sanitizeData(response.payload),
+      is_error: response.isError,
+      error_message: response.errorMessage,
+      additional_metadata: request.additionalMetadata,
+    });
+  } catch (error) {
+    console.error('Failed to log API call:', error);
+  }
+}
+
+// Retry with exponential backoff
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries = 3
+): Promise<Response> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      // Retry on 429 or 5xx
+      if (response.status === 429 || response.status >= 500) {
+        if (attempt < maxRetries - 1) {
+          const delay = Math.pow(2, attempt) * 1000; // 0s, 1s, 2s
+          console.log(`Retry ${attempt + 1}/${maxRetries} after ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+      }
+      
+      return response;
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout after 30 seconds');
+      }
+      if (attempt < maxRetries - 1) {
+        const delay = Math.pow(2, attempt) * 1000;
+        console.log(`Network error, retry ${attempt + 1}/${maxRetries} after ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -86,7 +185,7 @@ Deno.serve(async (req) => {
     const endpoint = `https://api.elevenlabs.io/v1/text-to-speech/${job.voice_id}`;
     const requestSentAt = new Date();
 
-    const voiceResponse = await fetch(endpoint, {
+    const voiceResponse = await fetchWithRetry(endpoint, {
       method: 'POST',
       headers: {
         'xi-api-key': elevenLabsKey,
@@ -96,7 +195,8 @@ Deno.serve(async (req) => {
     });
 
     // Log the API call
-    await logApiCall(
+    const voiceResponseClone = voiceResponse.clone();
+    logApiCall(
       supabaseClient,
       {
         videoJobId: job_id,
@@ -114,15 +214,26 @@ Deno.serve(async (req) => {
       requestSentAt,
       {
         statusCode: voiceResponse.status,
-        payload: voiceResponse.ok ? { success: true } : await voiceResponse.text(),
+        payload: voiceResponse.ok ? { success: true } : await voiceResponseClone.text(),
         isError: !voiceResponse.ok,
         errorMessage: voiceResponse.ok ? undefined : `ElevenLabs returned ${voiceResponse.status}`
       }
-    );
+    ).catch(e => console.error('Failed to log API call:', e));
 
     if (!voiceResponse.ok) {
       const errorText = await voiceResponse.text();
-      throw new Error(`ElevenLabs API error: ${errorText}`);
+      
+      // Update job back to awaiting_script_approval so user can retry
+      await supabaseClient
+        .from('video_jobs')
+        .update({ 
+          status: 'awaiting_script_approval',
+          error_message: `Voiceover generation failed: ${errorText}. Please try approving the script again.`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', job_id);
+      
+      throw new Error(`ElevenLabs API error (${voiceResponse.status}): ${errorText}`);
     }
 
     const audioBlob = await voiceResponse.blob();

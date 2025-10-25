@@ -630,6 +630,161 @@ export type Database = {
         }
         Relationships: []
       }
+      template_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_visible: boolean | null
+          meta_description: string | null
+          meta_title: string | null
+          name: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_visible?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
+          name: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_visible?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
+          name?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      template_landing_pages: {
+        Row: {
+          category_slug: string
+          conversion_rate: number | null
+          created_at: string
+          default_settings: Json | null
+          demo_video_url: string | null
+          example_images: Json | null
+          faqs: Json | null
+          hero_after_image: string | null
+          hero_before_image: string | null
+          id: string
+          is_published: boolean | null
+          keywords: string[] | null
+          long_description: string | null
+          meta_description: string
+          meta_title: string
+          published_at: string | null
+          related_template_ids: string[] | null
+          schema_markup: Json | null
+          slug: string
+          steps: Json | null
+          subtitle: string | null
+          target_audience: string[] | null
+          thumbnail_url: string | null
+          tips: Json | null
+          title: string
+          token_cost: number | null
+          tutorial_content: string | null
+          updated_at: string
+          use_cases: Json | null
+          use_count: number
+          view_count: number
+          workflow_id: string | null
+        }
+        Insert: {
+          category_slug: string
+          conversion_rate?: number | null
+          created_at?: string
+          default_settings?: Json | null
+          demo_video_url?: string | null
+          example_images?: Json | null
+          faqs?: Json | null
+          hero_after_image?: string | null
+          hero_before_image?: string | null
+          id?: string
+          is_published?: boolean | null
+          keywords?: string[] | null
+          long_description?: string | null
+          meta_description: string
+          meta_title: string
+          published_at?: string | null
+          related_template_ids?: string[] | null
+          schema_markup?: Json | null
+          slug: string
+          steps?: Json | null
+          subtitle?: string | null
+          target_audience?: string[] | null
+          thumbnail_url?: string | null
+          tips?: Json | null
+          title: string
+          token_cost?: number | null
+          tutorial_content?: string | null
+          updated_at?: string
+          use_cases?: Json | null
+          use_count?: number
+          view_count?: number
+          workflow_id?: string | null
+        }
+        Update: {
+          category_slug?: string
+          conversion_rate?: number | null
+          created_at?: string
+          default_settings?: Json | null
+          demo_video_url?: string | null
+          example_images?: Json | null
+          faqs?: Json | null
+          hero_after_image?: string | null
+          hero_before_image?: string | null
+          id?: string
+          is_published?: boolean | null
+          keywords?: string[] | null
+          long_description?: string | null
+          meta_description?: string
+          meta_title?: string
+          published_at?: string | null
+          related_template_ids?: string[] | null
+          schema_markup?: Json | null
+          slug?: string
+          steps?: Json | null
+          subtitle?: string | null
+          target_audience?: string[] | null
+          thumbnail_url?: string | null
+          tips?: Json | null
+          title?: string
+          token_cost?: number | null
+          tutorial_content?: string | null
+          updated_at?: string
+          use_cases?: Json | null
+          use_count?: number
+          view_count?: number
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_category"
+            columns: ["category_slug"]
+            isOneToOne: false
+            referencedRelation: "template_categories"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       token_dispute_history: {
         Row: {
           admin_notes: string | null

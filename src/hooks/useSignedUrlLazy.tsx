@@ -35,6 +35,15 @@ export const useSignedUrlLazy = (
     const fetchSignedUrl = async () => {
       setIsLoading(true);
       try {
+        // If already an absolute URL, use it directly
+        if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
+          console.log(`[useSignedUrlLazy] Using absolute URL directly: ${storagePath}`);
+          setSignedUrl(storagePath);
+          setError(false);
+          setIsLoading(false);
+          return;
+        }
+
         // Extract the actual storage path if it's a full URL
         let actualPath = storagePath;
         
@@ -54,16 +63,38 @@ export const useSignedUrlLazy = (
         const url = await createSignedUrl(bucket, actualPath, 14400);
         
         if (!url) {
-          setError(true);
-          setSignedUrl(null);
+          // Fallback to public URL construction
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${actualPath}`;
+          console.log(`[useSignedUrlLazy] Signed URL generation failed, using public URL: ${publicUrl}`);
+          setSignedUrl(publicUrl);
+          setError(false);
         } else {
           setSignedUrl(url);
           setError(false);
         }
       } catch (error) {
         console.error('Error fetching signed URL:', error);
-        setError(true);
-        setSignedUrl(null);
+        // Fallback to public URL construction on error
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        let actualPath = storagePath;
+        
+        if (storagePath.includes('/storage/v1/object/public/')) {
+          const pathMatch = storagePath.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)/);
+          if (pathMatch) {
+            actualPath = pathMatch[1];
+          }
+        } else if (storagePath.includes(`/${bucket}/`)) {
+          const pathMatch = storagePath.split(`/${bucket}/`)[1];
+          if (pathMatch) {
+            actualPath = pathMatch;
+          }
+        }
+        
+        const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${actualPath}`;
+        console.log(`[useSignedUrlLazy] Error caught, using public URL fallback: ${publicUrl}`);
+        setSignedUrl(publicUrl);
+        setError(false);
       } finally {
         setIsLoading(false);
       }

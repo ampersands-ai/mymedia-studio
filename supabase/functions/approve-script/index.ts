@@ -261,13 +261,15 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to upload voiceover: ${uploadError.message}`);
     }
 
-    const voiceoverPath = voiceFileName; // Just the filename for storage bucket path
+    // Construct full public URL for voiceover (bucket is public)
+    const voiceoverPublicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${voiceFileName}`;
+    console.log(`[${job_id}] Voiceover stored at: ${voiceoverPublicUrl}`);
 
-    // Update job with voiceover URL, actual duration, and new status
+    // Update job with FULL PUBLIC URL, actual duration, and new status
     await supabaseClient
       .from('video_jobs')
       .update({
-        voiceover_url: voiceoverPath,
+        voiceover_url: voiceoverPublicUrl, // Store full public URL
         actual_audio_duration: actualAudioDuration,
         status: 'awaiting_voice_approval',
         updated_at: new Date().toISOString(),

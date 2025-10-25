@@ -22,7 +22,8 @@ export function useVideoJobs() {
     refetchInterval: (query) => {
       // Poll every 10s if there are active jobs
       const hasActive = query.state.data?.some(j => 
-        ['pending', 'generating_script', 'generating_voice', 'fetching_video', 'assembling'].includes(j.status)
+        ['pending', 'generating_script', 'awaiting_script_approval', 
+         'generating_voice', 'awaiting_voice_approval', 'fetching_video', 'assembling'].includes(j.status)
       );
       return hasActive ? 10000 : false;
     },

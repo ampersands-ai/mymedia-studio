@@ -336,25 +336,49 @@ async function generateVoiceover(script: string, voiceId: string): Promise<Blob>
   return await response.blob();
 }
 
+function extractSearchTerms(topic: string): string {
+  // Remove common filler words and limit to key terms
+  const fillerWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'about', 'into', 'through', 'during', 'how', 'what', 'why', 'when', 'where', 'who', 'which', 'top', 'best', 'ways', 'tips', 'guide'];
+  
+  const words = topic
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '') // Remove special characters
+    .split(/\s+/)
+    .filter(word => word.length > 2 && !fillerWords.includes(word))
+    .slice(0, 5); // Limit to 5 key terms
+  
+  return words.join(' ') || 'abstract background';
+}
+
 async function getBackgroundVideo(
   supabase: any,
   style: string,
   duration: number,
   videoJobId: string,
-  userId: string
+  userId: string,
+  topic?: string
 ): Promise<string> {
-  const queries: Record<string, string> = {
-    modern: 'technology abstract motion',
-    tech: 'digital technology futuristic',
-    educational: 'books learning study',
-    dramatic: 'cinematic nature dramatic'
-  };
-
-  const query = queries[style] || 'abstract motion background';
-  const endpoint = `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=20&orientation=landscape`;
+  // Use topic for search if available, otherwise fall back to style
+  let searchQuery: string;
+  if (topic && topic.trim()) {
+    // Extract key terms from topic (remove filler words, limit length)
+    searchQuery = extractSearchTerms(topic);
+    console.log(`[${videoJobId}] Using topic-based search: "${searchQuery}" (from topic: "${topic}")`);
+  } else {
+    // Fallback to style-based queries
+    const queries: Record<string, string> = {
+      modern: 'technology abstract motion',
+      tech: 'digital technology futuristic',
+      educational: 'books learning study',
+      dramatic: 'cinematic nature dramatic'
+    };
+    searchQuery = queries[style] || 'abstract motion background';
+    console.log(`[${videoJobId}] Using style-based search: "${searchQuery}"`);
+  }
+  const endpoint = `https://api.pexels.com/videos/search?query=${encodeURIComponent(searchQuery)}&per_page=20&orientation=landscape`;
   const requestSentAt = new Date();
 
-  console.log(`[${videoJobId}] Searching Pexels for: ${query}`);
+  console.log(`[${videoJobId}] Searching Pexels for: ${searchQuery}`);
 
   const response = await fetch(endpoint, {
     headers: { Authorization: Deno.env.get('PEXELS_API_KEY') ?? '' }
@@ -372,8 +396,8 @@ async function getBackgroundVideo(
       endpoint,
       httpMethod: 'GET',
       stepName: 'fetch_background_video',
-      requestPayload: { query, style, duration },
-      additionalMetadata: { per_page: 20, orientation: 'landscape' }
+      requestPayload: { query: searchQuery, style, duration },
+      additionalMetadata: { per_page: 20, orientation: 'landscape', topic: topic || 'none' }
     },
     requestSentAt,
     {
@@ -440,8 +464,7 @@ async function assembleVideo(
         letter-spacing: 1px;
       }`,
       width: 1920,
-      height: 200,
-      background: 'transparent'
+      height: 200
     },
     start: index * secondsPerWord,
     length: secondsPerWord * 1.2,
@@ -546,17 +569,6 @@ async function assembleVideo(
 
   console.log(`[${videoJobId}] Render submitted: ${result.response.id}`);
   return result.response.id;
-
-  if (!response.ok) {
-    const error = result || { message: 'Unknown error' };
-    const errorMsg = error.message || error.error || 'Unknown Shotstack error';
-    console.error(`[${videoJobId}] Shotstack submit error:`, JSON.stringify(error, null, 2));
-    throw new Error(`Shotstack error: ${errorMsg}`);
-  }
-
-  const renderId = result.response.id;
-  console.log(`[${videoJobId}] Shotstack render submitted: ${renderId}`);
-  return renderId;
 }
 
 async function pollRenderStatus(supabase: any, jobId: string, renderId: string, userId: string) {

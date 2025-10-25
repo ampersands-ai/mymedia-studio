@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
     // Get job and verify ownership
     const { data: job, error: jobError } = await supabaseClient
       .from('video_jobs')
-      .select('user_id, script, voiceover_url, style, duration, aspect_ratio, caption_style, custom_background_video, status')
+      .select('user_id, script, voiceover_url, style, duration, aspect_ratio, caption_style, custom_background_video, status, topic')
       .eq('id', job_id)
       .single();
 
@@ -120,7 +120,8 @@ Deno.serve(async (req) => {
       job_id,
       user.id,
       job.aspect_ratio || '4:5',
-      job.custom_background_video
+      job.custom_background_video,
+      job.topic
     );
     await supabaseClient.from('video_jobs').update({ background_video_url: backgroundVideoUrl }).eq('id', job_id);
     console.log(`Fetched background video for job ${job_id}`);
@@ -214,6 +215,20 @@ async function updateJobStatus(supabase: any, jobId: string, status: string) {
   await supabase.from('video_jobs').update({ status }).eq('id', jobId);
 }
 
+function extractSearchTerms(topic: string): string {
+  // Remove common filler words and limit to key terms
+  const fillerWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'about', 'into', 'through', 'during', 'how', 'what', 'why', 'when', 'where', 'who', 'which', 'top', 'best', 'ways', 'tips', 'guide'];
+  
+  const words = topic
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '') // Remove special characters
+    .split(/\s+/)
+    .filter(word => word.length > 2 && !fillerWords.includes(word))
+    .slice(0, 5); // Limit to 5 key terms
+  
+  return words.join(' ') || 'abstract background';
+}
+
 async function getBackgroundVideo(
   supabase: any,
   style: string,
@@ -221,19 +236,32 @@ async function getBackgroundVideo(
   videoJobId: string,
   userId: string,
   aspectRatio: string = '4:5',
-  customVideoUrl?: string
+  customVideoUrl?: string,
+  topic?: string
 ): Promise<string> {
   // If user selected custom video, use it
   if (customVideoUrl) {
     console.log('Using custom background video:', customVideoUrl);
     return customVideoUrl;
   }
-  const queries: Record<string, string> = {
-    modern: 'technology abstract motion',
-    tech: 'digital technology futuristic',
-    educational: 'books learning study',
-    dramatic: 'cinematic nature dramatic'
-  };
+
+  // Use topic for search if available, otherwise fall back to style
+  let searchQuery: string;
+  if (topic && topic.trim()) {
+    // Extract key terms from topic (remove filler words, limit length)
+    searchQuery = extractSearchTerms(topic);
+    console.log(`Using topic-based search: "${searchQuery}" (from topic: "${topic}")`);
+  } else {
+    // Fallback to style-based queries
+    const queries: Record<string, string> = {
+      modern: 'technology abstract motion',
+      tech: 'digital technology futuristic',
+      educational: 'books learning study',
+      dramatic: 'cinematic nature dramatic'
+    };
+    searchQuery = queries[style] || 'abstract motion background';
+    console.log(`Using style-based search: "${searchQuery}"`);
+  }
 
   // Determine orientation based on aspect ratio
   const orientationMap: Record<string, string> = {
@@ -243,9 +271,7 @@ async function getBackgroundVideo(
     '1:1': 'square'
   };
   const orientation = orientationMap[aspectRatio] || 'portrait';
-
-  const query = queries[style] || 'abstract motion background';
-  const endpoint = `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=20&orientation=${orientation}`;
+  const endpoint = `https://api.pexels.com/videos/search?query=${encodeURIComponent(searchQuery)}&per_page=20&orientation=${orientation}`;
   const requestSentAt = new Date();
 
   const response = await fetch(
@@ -265,8 +291,8 @@ async function getBackgroundVideo(
       endpoint,
       httpMethod: 'GET',
       stepName: 'fetch_background_video',
-      requestPayload: { query, per_page: 20, orientation: 'landscape' },
-      additionalMetadata: { style, duration }
+      requestPayload: { query: searchQuery, per_page: 20, orientation },
+      additionalMetadata: { style, duration, topic: topic || 'none' }
     },
     requestSentAt,
     {
@@ -378,8 +404,7 @@ async function assembleVideo(
         html: `<p>${word}</p>`,
         css: buildCss(style, fontWeightMap[style.fontWeight] || '700'),
         width: config.width,
-        height: Math.floor(config.height * 0.2),
-        background: style.backgroundColor || 'transparent'
+        height: Math.floor(config.height * 0.2)
       },
       start: index * secondsPerWord,
       length: secondsPerWord * 1.2,

@@ -441,14 +441,19 @@ async function assembleVideo(
     black: '900'
   };
   
-  // Build CSS string without complex template literals that might break
+  // Build CSS string with enhanced visibility
   const buildCss = (style: any, fontWeight: string) => {
     let css = `p { font-family: '${style.fontFamily}', Arial, sans-serif; font-size: ${style.fontSize}px; font-weight: ${fontWeight}; color: ${style.textColor}; text-align: center; background: ${style.backgroundColor}; padding: 20px 40px; margin: 0; border-radius: 12px; text-transform: uppercase; letter-spacing: 2px;`;
     
     if (style.strokeColor && style.strokeWidth) {
-      css += ` -webkit-text-stroke: ${style.strokeWidth}px ${style.strokeColor}; paint-order: stroke fill; text-shadow: 3px 3px 6px ${style.strokeColor};`;
+      css += ` -webkit-text-stroke: ${style.strokeWidth}px ${style.strokeColor}; paint-order: stroke fill; text-shadow: 4px 4px 8px ${style.strokeColor}, 0 0 20px rgba(0,0,0,0.9);`;
     } else {
-      css += ` text-shadow: 2px 2px 4px rgba(0,0,0,0.8);`;
+      css += ` text-shadow: 3px 3px 6px rgba(0,0,0,0.9), 0 0 15px rgba(0,0,0,0.7);`;
+    }
+    
+    // Add semi-transparent background for better readability
+    if (style.backgroundColor === 'rgba(0,0,0,0)') {
+      css += ` background: rgba(0,0,0,0.4); padding: 15px 30px;`;
     }
     
     css += ` }`;
@@ -466,7 +471,9 @@ async function assembleVideo(
       },
       start: index * secondsPerWord,
       length: secondsPerWord * 1.2,
-      position: positionMap[style.position] || 'center'
+      position: positionMap[style.position] || 'center',
+      offset: { x: 0, y: 0 },  // Explicit positioning
+      z: 2  // Force layering on top
     };
     
     // Add transition based on animation style
@@ -518,10 +525,13 @@ async function assembleVideo(
       },
       tracks: [
         {
-          clips: backgroundClips
+          clips: backgroundClips  // Track 0: background
         },
         {
-          clips: subtitleClips
+          clips: []  // Track 1: empty for spacing
+        },
+        {
+          clips: subtitleClips  // Track 2: captions on top
         }
       ]
     },

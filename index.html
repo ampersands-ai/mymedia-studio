@@ -30,6 +30,22 @@
     <!-- Load fonts for video captions -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
     
+    <!-- Critical inline CSS for fastest First Contentful Paint -->
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background: hsl(210 40% 98%);
+        color: hsl(222 47% 11%);
+      }
+      #root { min-height: 100vh; }
+      button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .loading-spinner { animation: spin 1s linear infinite; }
+    </style>
+    
     <link rel="modulepreload" href="/src/main.tsx">
     
     <!-- Primary Meta Tags -->

@@ -1,7 +1,8 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense, useEffect } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -13,6 +14,7 @@ import { usePostHog } from "@/hooks/usePostHog";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { reportWebVitals, monitorPerformance } from "@/lib/webVitals";
+import { queryClient } from "@/lib/queryClient";
 
 // Lazy load pages for better performance
 const IndexV2 = lazy(() => import("./pages/IndexV2"));
@@ -44,15 +46,6 @@ const TokenDisputes = lazy(() => import("./pages/admin/TokenDisputes").then(m =>
 const AnalyticsDashboard = lazy(() => import("./pages/admin/Analytics"));
 const ThresholdBreach = lazy(() => import("./pages/admin/ThresholdBreach"));
 const VideoJobs = lazy(() => import("./pages/admin/VideoJobs"));
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      refetchOnWindowFocus: false,
-    },
-  },
-});
 
 const AppContent = () => {
   // Initialize PostHog
@@ -144,6 +137,7 @@ const AppContent = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    {import.meta.env.DEV && <ReactQueryDevtools />}
     <AuthProvider>
       <TooltipProvider>
         <Toaster />

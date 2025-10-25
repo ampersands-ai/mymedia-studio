@@ -277,8 +277,47 @@ All colors MUST be HSL.
 
 /* Skeleton shimmer loading */
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, hsl(var(--neutral-100)) 0%, hsl(var(--neutral-200)) 50%, hsl(var(--neutral-100)) 100%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+  border-radius: 0.5rem;
+}
+
+/* GPU-accelerated base classes */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Optimized card with containment */
+.card {
+  contain: layout style paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+  will-change: transform;
+  transform: translateY(-4px);
+}
+
+.card:not(:hover) {
+  will-change: auto;
+}
+
+/* Glassmorphism effect */
+.glass-card {
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  background: hsl(var(--card) / 0.7);
+  border: 1px solid hsl(var(--border) / 0.3);
 }
 
 @layer utilities {

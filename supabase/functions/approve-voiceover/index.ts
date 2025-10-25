@@ -618,11 +618,7 @@ async function assembleVideo(
       color: style.textColor,
       size: Number(style.fontSize) || 48, // CRITICAL: NUMBER not string
       family: style.fontFamily || 'Montserrat ExtraBold',
-      weight: style.fontWeight === 'black' ? 900 : (style.fontWeight === 'bold' ? 700 : 400),
       lineHeight: 1.2
-    },
-    alignment: {
-      horizontal: 'center'
     }
   };
 
@@ -654,10 +650,10 @@ async function assembleVideo(
   console.log('Caption configuration:', {
     fontSize: captionAsset.font.size,
     fontFamily: captionAsset.font.family,
-    fontWeight: captionAsset.font.weight,
     hasStroke: !!(captionAsset.font.stroke),
     hasBackground: !!captionAsset.background
   });
+  console.log('Caption asset payload:', captionAsset);
 
   // Submit to Shotstack API
   const endpoint = 'https://api.shotstack.io/v1/render';

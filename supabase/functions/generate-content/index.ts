@@ -285,7 +285,37 @@ serve(async (req) => {
       return filtered;
     }
 
-let validatedParameters = validateAndFilterParameters(
+    // Normalize parameter keys by stripping "input." prefix if present
+    function normalizeParameterKeys(params: Record<string, any>): Record<string, any> {
+      const normalized: Record<string, any> = {};
+      for (const [key, value] of Object.entries(params || {})) {
+        const normalizedKey = key.startsWith('input.') ? key.substring(6) : key;
+        normalized[normalizedKey] = value;
+      }
+      return normalized;
+    }
+
+    // Store original keys for logging
+    const originalParamKeys = Object.keys(parameters || {});
+    parameters = normalizeParameterKeys(parameters);
+    console.log('Parameter keys normalized:', { 
+      original: originalParamKeys, 
+      normalized: Object.keys(parameters || {}) 
+    });
+
+    // Safety fallback for ElevenLabs models: map prompt to text if text is missing
+    if (
+      (model.id === 'elevenlabs/text-to-speech-multilingual-v2' ||
+       model.id === 'elevenlabs/text-to-speech-turbo-2-5') &&
+      !parameters.text &&
+      typeof prompt === 'string' &&
+      prompt.trim().length > 0
+    ) {
+      parameters.text = prompt;
+      console.log('Applied prompt->text fallback for ElevenLabs model');
+    }
+
+    let validatedParameters = validateAndFilterParameters(
       parameters,
       model.input_schema
     );

@@ -71,7 +71,7 @@ serve(async (req) => {
                   
                   const videoPath = `${job.user_id}/${new Date().toISOString().split('T')[0]}/${job.id}.mp4`;
                   const { error: uploadError } = await supabaseClient.storage
-                    .from('video-assets')
+                    .from('generated-content')
                     .upload(videoPath, videoResponse.body, {
                       contentType: 'video/mp4',
                       upsert: true
@@ -246,7 +246,7 @@ serve(async (req) => {
                 // Upload using streaming (no memory buffer)
                 const videoPath = `${job.user_id}/${new Date().toISOString().split('T')[0]}/${job.id}.mp4`;
                 const { error: uploadError } = await supabaseClient.storage
-                  .from('video-assets')
+                  .from('generated-content')
                   .upload(videoPath, videoResponse.body, {
                     contentType: 'video/mp4',
                     upsert: true

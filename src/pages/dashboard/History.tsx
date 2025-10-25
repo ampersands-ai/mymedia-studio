@@ -168,9 +168,8 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
   showControls?: boolean;
   playOnHover?: boolean;
 }) => {
-  // Use video-assets bucket for video jobs
-  const bucket = generation.is_video_job ? 'video-assets' : 'generated-content';
-  const { signedUrl, isLoading, error } = useSignedUrl(generation.storage_path, bucket);
+  // All content now uses generated-content bucket (which is public)
+  const { signedUrl, isLoading, error } = useSignedUrl(generation.storage_path, 'generated-content');
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoError, setVideoError] = useState(false);
@@ -234,7 +233,7 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
     }
   };
 
-  const streamUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stream-content?bucket=${bucket}&path=${encodeURIComponent(generation.storage_path || '')}`;
+  const streamUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stream-content?bucket=generated-content&path=${encodeURIComponent(generation.storage_path || '')}`;
 
   return (
     <video
@@ -250,10 +249,10 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onError={() => {
-        console.error('Video playback error for:', generation.storage_path, 'bucket:', bucket);
+        console.error('Video playback error for:', generation.storage_path);
         setVideoError(true);
       }}
-      onLoadedMetadata={() => console.log('Video loaded successfully:', generation.storage_path, 'from bucket:', bucket)}
+      onLoadedMetadata={() => console.log('Video loaded successfully:', generation.storage_path)}
     />
   );
 };

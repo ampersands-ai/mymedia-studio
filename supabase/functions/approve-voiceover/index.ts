@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
     // Get public URL for voiceover from storage (need public URL for Shotstack)
     const voiceFileName = job.voiceover_url.split('/').pop();
     const { data: signedData } = await supabaseClient.storage
-      .from('video-assets')
+      .from('generated-content')
       .createSignedUrl(voiceFileName!, 7200); // 2 hour expiry for Shotstack processing
     
     if (!signedData?.signedUrl) {
@@ -876,7 +876,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
           
           // Stream upload - no intermediate memory buffer
           const { error: uploadError } = await supabase.storage
-            .from('video-assets')
+            .from('generated-content')
             .upload(videoPath, videoResponse.body, {
               contentType: 'video/mp4',
               upsert: true

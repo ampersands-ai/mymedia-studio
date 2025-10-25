@@ -1107,6 +1107,7 @@ export type Database = {
           script: string | null
           shotstack_render_id: string | null
           status: string
+          storage_path: string | null
           style: string
           topic: string
           updated_at: string
@@ -1138,6 +1139,7 @@ export type Database = {
           script?: string | null
           shotstack_render_id?: string | null
           status?: string
+          storage_path?: string | null
           style?: string
           topic: string
           updated_at?: string
@@ -1169,6 +1171,7 @@ export type Database = {
           script?: string | null
           shotstack_render_id?: string | null
           status?: string
+          storage_path?: string | null
           style?: string
           topic?: string
           updated_at?: string

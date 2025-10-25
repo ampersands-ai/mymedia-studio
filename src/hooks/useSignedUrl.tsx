@@ -41,11 +41,13 @@ export const useSignedUrl = (storagePath: string | null, bucket: string = 'gener
         const url = await createSignedUrl(bucket, actualPath, 14400);
         
         if (!url) {
-          console.warn('Failed to create signed URL for:', actualPath);
-          setError(true);
-          setSignedUrl(null);
+          console.warn('Failed to create signed URL, trying public URL:', actualPath);
+          // Fallback to public URL if bucket is public
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${actualPath}`;
+          setSignedUrl(publicUrl);
+          setError(false);
         } else {
-          console.log('Signed URL created successfully for:', actualPath);
           setSignedUrl(url);
           setError(false);
         }

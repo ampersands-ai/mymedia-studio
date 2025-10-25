@@ -251,7 +251,7 @@ Deno.serve(async (req) => {
     // Upload voiceover to storage
     const voiceFileName = `${job_id}_voiceover.mp3`;
     const { error: uploadError } = await supabaseClient.storage
-      .from('video-assets')
+      .from('generated-content')
       .upload(voiceFileName, audioBuffer, {
         contentType: 'audio/mpeg',
         upsert: true,

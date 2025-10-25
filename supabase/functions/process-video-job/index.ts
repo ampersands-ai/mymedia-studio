@@ -628,6 +628,9 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
         .eq('id', jobId)
         .single();
       
+      // Define videoPath here after we have job data
+      const videoPath = job ? `${job.user_id}/${new Date().toISOString().split('T')[0]}/${jobId}.mp4` : '';
+      
       if (job) {
         try {
           // Download video from Shotstack
@@ -641,8 +644,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
           const videoBuffer = await videoBlob.arrayBuffer();
           const videoData = new Uint8Array(videoBuffer);
           
-          // Upload to generated-content bucket
-          const videoPath = `${job.user_id}/${new Date().toISOString().split('T')[0]}/${jobId}.mp4`;
+          // Upload to generated-content bucket (using videoPath defined above)
           console.log(`[${jobId}] Uploading video to storage: ${videoPath}`);
           
           const { error: uploadError } = await supabase.storage
@@ -701,6 +703,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
       await supabase.from('video_jobs').update({
         status: 'completed',
         final_video_url: videoUrl,
+        storage_path: videoPath,
         completed_at: new Date().toISOString()
       }).eq('id', jobId);
       

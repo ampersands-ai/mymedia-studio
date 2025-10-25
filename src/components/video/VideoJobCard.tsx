@@ -105,7 +105,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   // Fetch signed URL for voiceover (only when needed)
   const { signedUrl: voiceoverSignedUrl, isLoading: isLoadingVoiceUrl, error: voiceUrlError } = useSignedUrlLazy(
     job.status === 'awaiting_voice_approval' ? job.voiceover_url : null,
-    'video-assets',
+    'generated-content',
     { immediate: true }
   );
 

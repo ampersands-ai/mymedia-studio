@@ -57,9 +57,91 @@ serve(async (req) => {
       console.log(`Recovering job ${job.id} (status: ${job.status})`);
 
       try {
-        // Determine recovery action based on current state
+        // Special handling for jobs stuck in assembling - check Shotstack status
+        if (job.status === 'assembling' && job.shotstack_render_id) {
+          console.log(`Job ${job.id}: Checking Shotstack status for render ${job.shotstack_render_id}`);
+          
+          try {
+            const shotstackResponse = await fetch(
+              `https://api.shotstack.io/v1/render/${job.shotstack_render_id}`,
+              { headers: { 'x-api-key': Deno.env.get('SHOTSTACK_API_KEY') ?? '' } }
+            );
+            
+            if (shotstackResponse.ok) {
+              const shotstackResult = await shotstackResponse.json();
+              const renderStatus = shotstackResult?.response?.status;
+              
+              console.log(`Shotstack render ${job.shotstack_render_id} status: ${renderStatus}`);
+              
+              if (renderStatus === 'done' && shotstackResult.response.url) {
+                // Render is done, download and upload with streaming
+                console.log(`Job ${job.id}: Render complete, downloading video with streaming`);
+                const videoUrl = shotstackResult.response.url;
+                
+                const videoResponse = await fetch(videoUrl);
+                if (!videoResponse.ok || !videoResponse.body) {
+                  throw new Error('Failed to fetch video from Shotstack');
+                }
+                
+                // Upload using streaming (no memory buffer)
+                const videoPath = `${job.user_id}/${new Date().toISOString().split('T')[0]}/${job.id}.mp4`;
+                const { error: uploadError } = await supabaseClient.storage
+                  .from('video-assets')
+                  .upload(videoPath, videoResponse.body, {
+                    contentType: 'video/mp4',
+                    upsert: true
+                  });
+                
+                if (uploadError) {
+                  console.error(`Job ${job.id}: Upload error:`, uploadError);
+                  throw uploadError;
+                }
+                
+                // Create generation record
+                await supabaseClient.from('generations').insert({
+                  user_id: job.user_id,
+                  type: 'video',
+                  prompt: `Faceless Video: ${job.topic}`,
+                  status: 'completed',
+                  tokens_used: 15,
+                  storage_path: videoPath,
+                  model_id: 'faceless-video-generator',
+                  settings: {
+                    duration: job.duration,
+                    style: job.style,
+                    voice_id: job.voice_id,
+                    video_job_id: job.id
+                  }
+                });
+                
+                // Mark job as completed
+                await supabaseClient.from('video_jobs').update({
+                  status: 'completed',
+                  final_video_url: videoUrl,
+                  completed_at: new Date().toISOString()
+                }).eq('id', job.id);
+                
+                recoveredJobs.push({ id: job.id, action: 'completed_from_shotstack' });
+                continue;
+              } else if (renderStatus === 'failed') {
+                // Shotstack render failed
+                await supabaseClient.from('video_jobs').update({
+                  status: 'failed',
+                  error_message: 'Shotstack rendering failed',
+                  updated_at: new Date().toISOString()
+                }).eq('id', job.id);
+                recoveredJobs.push({ id: job.id, action: 'marked_failed_shotstack' });
+                continue;
+              }
+              // If still rendering, leave it alone
+            }
+          } catch (shotstackError: any) {
+            console.error(`Job ${job.id}: Shotstack check failed:`, shotstackError);
+          }
+        }
+        
+        // Other recovery logic
         if (job.status === 'generating_voice' && job.script && job.voiceover_url) {
-          // Script and voiceover exist, move to approval
           console.log(`Job ${job.id}: Moving to awaiting_approval`);
           await supabaseClient
             .from('video_jobs')
@@ -71,7 +153,6 @@ serve(async (req) => {
           recoveredJobs.push({ id: job.id, action: 'moved_to_approval' });
         } 
         else if (job.status === 'generating_script' && job.script) {
-          // Script exists but stuck, retry voiceover
           console.log(`Job ${job.id}: Script exists, retrying from voiceover`);
           await supabaseClient.functions.invoke('process-video-job', {
             body: { job_id: job.id }
@@ -79,15 +160,14 @@ serve(async (req) => {
           recoveredJobs.push({ id: job.id, action: 'retried_processing' });
         }
         else if (['pending', 'generating_script', 'generating_voice'].includes(job.status)) {
-          // Early stage stuck, retry from beginning
           console.log(`Job ${job.id}: Retrying from beginning`);
           await supabaseClient.functions.invoke('process-video-job', {
             body: { job_id: job.id }
           });
           recoveredJobs.push({ id: job.id, action: 'retried_processing' });
         }
-        else {
-          // Unknown state or can't recover, mark as failed
+        else if (job.status !== 'assembling') {
+          // Unknown state (not assembling which we handled above)
           console.log(`Job ${job.id}: Cannot recover, marking as failed`);
           await supabaseClient
             .from('video_jobs')

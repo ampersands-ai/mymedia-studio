@@ -646,22 +646,19 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
       
       if (job) {
         try {
-          console.log('Downloading video from Shotstack...');
+          console.log('Downloading video from Shotstack using streaming...');
           const videoResponse = await fetch(videoUrl);
-          if (!videoResponse.ok) {
-            throw new Error('Failed to download video from Shotstack');
+          if (!videoResponse.ok || !videoResponse.body) {
+            throw new Error(`Failed to download video from Shotstack: ${videoResponse.status}`);
           }
           
-          const videoBlob = await videoResponse.blob();
-          const videoBuffer = await videoBlob.arrayBuffer();
-          const videoData = new Uint8Array(videoBuffer);
-          
           const videoPath = `${job.user_id}/${new Date().toISOString().split('T')[0]}/${jobId}.mp4`;
-          console.log('Uploading video to storage:', videoPath);
+          console.log('Uploading video to storage with streaming:', videoPath);
           
+          // Stream upload - no intermediate memory buffer
           const { error: uploadError } = await supabase.storage
-            .from('generated-content')
-            .upload(videoPath, videoData, {
+            .from('video-assets')
+            .upload(videoPath, videoResponse.body, {
               contentType: 'video/mp4',
               upsert: true
             });
@@ -670,6 +667,8 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
             console.error('Storage upload error:', uploadError);
             throw uploadError;
           }
+          
+          console.log('Video uploaded successfully using streaming');
           
           console.log('Creating generation record...');
           const { data: generation, error: genError } = await supabase.from('generations').insert({
@@ -680,7 +679,6 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
             tokens_used: 15,
             storage_path: videoPath,
             model_id: 'faceless-video-generator',
-            file_size_bytes: videoData.length,
             settings: {
               duration: job.duration,
               style: job.style,
@@ -705,8 +703,22 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
               console.error('Failed to link API logs to generation:', error);
             }
           }
-        } catch (error) {
-          console.error('Error creating generation record:', error);
+        } catch (uploadError: any) {
+          console.error('Error during video download/upload:', uploadError);
+          
+          // Update job status to failed with detailed error
+          await supabase.from('video_jobs').update({
+            status: 'failed',
+            error_message: 'Failed to save final video',
+            error_details: { 
+              error: uploadError.message,
+              step: 'video_upload',
+              render_id: renderId
+            },
+            updated_at: new Date().toISOString()
+          }).eq('id', jobId);
+          
+          throw new Error(`Video upload failed: ${uploadError.message}`);
         }
       }
       

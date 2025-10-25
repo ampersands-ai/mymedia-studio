@@ -510,27 +510,27 @@ async function getBackgroundVideos(
 async function assembleVideo(
   supabase: any,
   assets: {
-  script: string;
-  voiceoverUrl: string;
-  backgroundVideoUrls: string[];
-  backgroundImageUrls?: string[];
-  duration: number;
-},
-videoJobId: string,
-userId: string,
-aspectRatio: string = '4:5',
-captionStyle?: any,
-backgroundMediaType: 'video' | 'image' = 'video'
+    script: string;
+    voiceoverUrl: string;
+    backgroundVideoUrls: string[];
+    backgroundImageUrls?: string[];
+    duration: number;
+  },
+  videoJobId: string,
+  userId: string,
+  aspectRatio: string = '4:5',
+  captionStyle?: any,
+  backgroundMediaType: 'video' | 'image' = 'video'
 ): Promise<string> {
-  // Default caption style
+  // Default caption style matching official Shotstack format
   const defaultStyle = {
     position: 'center',
     animation: 'zoom',
-    fontSize: 72,
+    fontSize: 48, // NUMBER not string!
     fontWeight: 'black',
-    fontFamily: 'Montserrat',
+    fontFamily: 'Montserrat ExtraBold',
     textColor: '#FFFFFF',
-    backgroundColor: 'rgba(0,0,0,0)',
+    backgroundColor: 'rgba(0,0,0,0.8)',
     strokeColor: '#000000',
     strokeWidth: 3
   };
@@ -546,111 +546,17 @@ backgroundMediaType: 'video' | 'image' = 'video'
   };
   const config = dimensions[aspectRatio] || dimensions['4:5'];
 
-  // Generate captions using Shotstack's native caption asset for automatic audio sync
-  const positionMap: Record<string, string> = {
-    top: 'top',
-    center: 'center',
-    bottom: 'bottom'
-  };
+  console.log(`Assembling video with Shotstack - ${config.width}x${config.height} (${aspectRatio})`);
 
-  const captionClip = {
-    asset: {
-      type: 'caption',
-      src: assets.voiceoverUrl,
-      font: {
-        size: String(style.fontSize || 48)
-      },
-      ...(style.backgroundColor !== 'rgba(0,0,0,0)' && {
-        background: {
-          color: style.backgroundColor,
-          padding: 20,
-          borderRadius: 12
-        }
-      })
-    },
-    start: 0,
-    length: 'end'
-  };
-
-  console.log('Generated caption clip with auto-sync:', {
-    voiceoverSrc: assets.voiceoverUrl,
-    captionStyle: style,
-    position: positionMap[style.position] || 'center'
-  });
-
-  console.log(`Assembling video with Shotstack dimensions: ${config.width}x${config.height} for aspect ratio ${aspectRatio}`);
-
-  // Create background clips based on media type
-  let backgroundClips;
-  
-  if (backgroundMediaType === 'image' && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
-    // For images: Create static image clips that cover the duration
-    const clipDuration = Math.ceil(assets.duration / assets.backgroundImageUrls.length);
-    backgroundClips = assets.backgroundImageUrls.map((imageUrl, index) => {
-      const startTime = index * clipDuration;
-      const clipLength = Math.min(clipDuration, assets.duration - startTime);
-      
-      return {
-        asset: {
-          type: 'image',
-          src: imageUrl
-        },
-        start: startTime,
-        length: clipLength,
-        fit: 'cover',
-        scale: 1.05,
-        transition: index > 0 ? { in: 'fade', out: 'fade' } : undefined
-      };
-    });
-    console.log(`Created ${backgroundClips.length} background image clips for ${assets.duration}s video`);
-  } else {
-    // For videos: Use existing video logic
-    const clipDuration = Math.ceil(assets.duration / assets.backgroundVideoUrls.length);
-    backgroundClips = assets.backgroundVideoUrls.map((videoUrl, index) => {
-      const startTime = index * clipDuration;
-      const clipLength = Math.min(clipDuration, assets.duration - startTime);
-      
-      return {
-        asset: {
-          type: 'video',
-          src: videoUrl
-        },
-        start: startTime,
-        length: clipLength,
-        fit: 'cover',
-        scale: 1.05,
-        transition: index > 0 ? { in: 'fade', out: 'fade' } : undefined
-      };
-    });
-    console.log(`Created ${backgroundClips.length} background video clips for ${assets.duration}s video`);
-  }
-
-  // Build timeline with proper track structure
+  // Build Shotstack JSON using official format
   const edit = {
     timeline: {
       background: '#000000',
-      tracks: [
-        {
-          clips: backgroundClips  // Track 0: background media
-        },
-        {
-          clips: [captionClip]  // Track 1: synchronized captions
-        },
-        {
-          clips: [{
-            asset: {
-              type: 'audio',
-              src: assets.voiceoverUrl
-            },
-            start: 0,
-            length: 'auto'
-          }]  // Track 2: voiceover audio
-        }
-      ]
+      tracks: [] as any[]
     },
     output: {
       format: 'mp4',
-      fps: 25,
+      fps: 30, // Increased from 25 for smoother playback
       size: {
         width: config.width,
         height: config.height
@@ -658,6 +564,106 @@ backgroundMediaType: 'video' | 'image' = 'video'
     }
   };
 
+  // Track 0: Background media (video or images)
+  if (backgroundMediaType === 'image' && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
+    const clipDuration = Math.ceil(assets.duration / assets.backgroundImageUrls.length);
+    const imageClips = assets.backgroundImageUrls.map((imageUrl, index) => ({
+      asset: {
+        type: 'image',
+        src: imageUrl
+      },
+      start: index * clipDuration,
+      length: Math.min(clipDuration, assets.duration - (index * clipDuration)),
+      fit: 'cover',
+      scale: 1.05,
+      ...(index > 0 && { transition: { in: 'fade', out: 'fade' } })
+    }));
+    edit.timeline.tracks.push({ clips: imageClips });
+    console.log(`Added ${imageClips.length} background image clips`);
+  } else {
+    const clipDuration = Math.ceil(assets.duration / assets.backgroundVideoUrls.length);
+    const videoClips = assets.backgroundVideoUrls.map((videoUrl, index) => ({
+      asset: {
+        type: 'video',
+        src: videoUrl
+      },
+      start: index * clipDuration,
+      length: Math.min(clipDuration, assets.duration - (index * clipDuration)),
+      fit: 'cover',
+      scale: 1.05,
+      ...(index > 0 && { transition: { in: 'fade', out: 'fade' } })
+    }));
+    edit.timeline.tracks.push({ clips: videoClips });
+    console.log(`Added ${videoClips.length} background video clips`);
+  }
+
+  // Track 1: Audio with alias (for auto-captions)
+  edit.timeline.tracks.push({
+    clips: [{
+      asset: {
+        type: 'audio',
+        src: assets.voiceoverUrl
+      },
+      start: 0,
+      length: 'auto',
+      alias: 'VOICEOVER' // Alias for caption generation
+    }]
+  });
+
+  // Track 2: Auto-generated captions using alias://VOICEOVER
+  const captionAsset: any = {
+    type: 'caption',
+    src: 'alias://VOICEOVER', // Auto-sync to voiceover audio!
+    font: {
+      color: style.textColor,
+      size: Number(style.fontSize) || 48, // CRITICAL: NUMBER not string
+      family: style.fontFamily || 'Montserrat ExtraBold',
+      weight: style.fontWeight === 'black' ? 900 : (style.fontWeight === 'bold' ? 700 : 400),
+      lineHeight: 1.2
+    },
+    alignment: {
+      horizontal: 'center',
+      vertical: style.position || 'center' // top, center, bottom
+    }
+  };
+
+  // Add stroke if specified
+  if (style.strokeColor && style.strokeWidth) {
+    captionAsset.stroke = {
+      color: style.strokeColor,
+      width: Number(style.strokeWidth)
+    };
+  }
+
+  // Add background if not transparent
+  if (style.backgroundColor && style.backgroundColor !== 'rgba(0,0,0,0)') {
+    captionAsset.background = {
+      color: style.backgroundColor,
+      padding: 20,
+      borderRadius: 10,
+      opacity: 0.85
+    };
+  }
+
+  edit.timeline.tracks.push({
+    clips: [{
+      asset: captionAsset,
+      start: 0,
+      length: 'end' // Cover entire video duration
+    }]
+  });
+
+  console.log('Using official Shotstack auto-captions with alias://VOICEOVER');
+  console.log('Caption configuration:', {
+    fontSize: captionAsset.font.size,
+    fontFamily: captionAsset.font.family,
+    fontWeight: captionAsset.font.weight,
+    position: captionAsset.alignment.vertical,
+    hasStroke: !!captionAsset.stroke,
+    hasBackground: !!captionAsset.background
+  });
+
+  // Submit to Shotstack API
   const endpoint = 'https://api.shotstack.io/v1/render';
   const requestSentAt = new Date();
 
@@ -679,7 +685,7 @@ backgroundMediaType: 'video' | 'image' = 'video'
     console.error('Failed to parse Shotstack response:', responseText);
   }
 
-  // Log the API call with detailed error info
+  // Log the API call
   logApiCall(
     supabase,
     {
@@ -692,7 +698,8 @@ backgroundMediaType: 'video' | 'image' = 'video'
       requestPayload: edit,
       additionalMetadata: {
         duration: assets.duration,
-        caption_track: 'native_shotstack_caption'
+        captionMethod: 'auto_alias',
+        backgroundMediaType
       }
     },
     requestSentAt,
@@ -700,19 +707,31 @@ backgroundMediaType: 'video' | 'image' = 'video'
       statusCode: response.status,
       payload: result,
       isError: !response.ok,
-      errorMessage: response.ok ? undefined : result?.message || result?.detail || `Shotstack returned ${response.status}`
+      errorMessage: response.ok ? undefined : result?.message || result?.detail || `Shotstack API error ${response.status}`
     }
   ).catch(e => console.error('Failed to log API call:', e));
 
   if (!response.ok) {
-    console.error('Shotstack error details:', {
+    console.error('Shotstack API Error:', {
       status: response.status,
       response: result,
       requestPayload: edit
     });
-    throw new Error(`Shotstack error: ${result?.message || result?.detail || response.statusText || 'Bad Request'}`);
+    
+    // Extract detailed error message
+    let errorMessage = 'Shotstack API error';
+    if (result?.response?.message) {
+      errorMessage = result.response.message;
+    } else if (result?.response?.errors && Array.isArray(result.response.errors)) {
+      errorMessage = result.response.errors.map((e: any) => e.message || e.code).join(', ');
+    } else if (result?.message) {
+      errorMessage = result.message;
+    }
+    
+    throw new Error(`Shotstack error: ${errorMessage}`);
   }
 
+  console.log('Shotstack render submitted successfully:', result.response.id);
   return result.response.id;
 }
 

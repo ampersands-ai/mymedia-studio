@@ -4,29 +4,29 @@ export const captionPresets: Record<string, CaptionStyle> = {
   modern: {
     position: 'center',
     animation: 'zoom',
-    fontSize: 72,
+    fontSize: 48, // Optimized for Shotstack
     fontWeight: 'black',
-    fontFamily: 'Montserrat',
+    fontFamily: 'Montserrat ExtraBold',
     textColor: '#FFFFFF',
-    backgroundColor: 'rgba(0,0,0,0)',
+    backgroundColor: 'rgba(0,0,0,0.8)',
     strokeColor: '#000000',
     strokeWidth: 3
   },
   minimal: {
     position: 'bottom',
     animation: 'fade',
-    fontSize: 56,
+    fontSize: 42,
     fontWeight: 'bold',
-    fontFamily: 'Inter',
+    fontFamily: 'Clear Sans',
     textColor: '#FFFFFF',
-    backgroundColor: 'rgba(0,0,0,0.8)'
+    backgroundColor: 'rgba(0,0,0,0.85)'
   },
   bold: {
     position: 'center',
     animation: 'bounce',
-    fontSize: 84,
+    fontSize: 56,
     fontWeight: 'black',
-    fontFamily: 'Impact',
+    fontFamily: 'Permanent Marker',
     textColor: '#FFD700',
     backgroundColor: 'rgba(0,0,0,0)',
     strokeColor: '#000000',
@@ -35,11 +35,11 @@ export const captionPresets: Record<string, CaptionStyle> = {
   elegant: {
     position: 'bottom',
     animation: 'slide',
-    fontSize: 64,
+    fontSize: 44,
     fontWeight: 'normal',
-    fontFamily: 'Playfair Display',
+    fontFamily: 'Didact Gothic',
     textColor: '#FFFFFF',
-    backgroundColor: 'rgba(0,0,0,0.7)'
+    backgroundColor: 'rgba(30,30,60,0.85)'
   }
 };
 

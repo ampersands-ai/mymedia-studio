@@ -3,7 +3,7 @@
  * Implements aggressive caching for static assets and API responses
  */
 
-const VERSION = '1.0.0';
+const VERSION = '1.0.1'; // Update this on each deployment
 const CACHE_NAME = `artifio-v${VERSION}`;
 const STATIC_CACHE = `static-v${VERSION}`;
 const DYNAMIC_CACHE = `dynamic-v${VERSION}`;

@@ -1,24 +1,38 @@
 import { useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { preloadForAuthenticatedUser, preloadForAnonymousUser } from '@/utils/routePreload';
+import { prefetchOnIdle } from '@/utils/routePreload';
 
 /**
- * Automatically preload critical routes based on user authentication status
- * Call this in App.tsx or main layout
+ * Hook to prefetch critical routes on idle
  */
 export function useRoutePreload() {
-  const { user } = useAuth();
-
   useEffect(() => {
-    // Wait a bit for initial page load
-    const timeout = setTimeout(() => {
-      if (user) {
-        preloadForAuthenticatedUser();
-      } else {
-        preloadForAnonymousUser();
-      }
-    }, 1000);
+    // Prefetch likely routes after initial render
+    prefetchOnIdle(() => import('../pages/Create'));
+    prefetchOnIdle(() => import('../pages/Templates'), 3000);
+    prefetchOnIdle(() => import('../pages/Pricing'), 4000);
+  }, []);
+}
 
-    return () => clearTimeout(timeout);
-  }, [user]);
+/**
+ * Hook for hover-based preloading
+ */
+export function usePrefetchOnHover(routePath: string) {
+  const routeMap: Record<string, () => Promise<any>> = {
+    '/create': () => import('../pages/Create'),
+    '/templates': () => import('../pages/Templates'),
+    '/pricing': () => import('../pages/Pricing'),
+    '/playground': () => import('../pages/Playground'),
+    '/video-studio': () => import('../pages/VideoStudio'),
+  };
+
+  const handleMouseEnter = () => {
+    const importFn = routeMap[routePath];
+    if (importFn) {
+      importFn().catch(() => {
+        // Ignore prefetch errors
+      });
+    }
+  };
+
+  return { onMouseEnter: handleMouseEnter };
 }

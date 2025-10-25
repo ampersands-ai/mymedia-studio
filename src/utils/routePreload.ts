@@ -1,78 +1,64 @@
 /**
- * Route preloading utilities for better performance
- * Preloads routes on hover or idle time
+ * Route Preloading Utilities
+ * Preload critical chunks to avoid loading waterfalls
  */
 
-// Preload specific route chunks
-export function preloadRoute(routeName: string): void {
-  switch (routeName) {
-    case 'create':
-      import('@/pages/Create');
-      break;
-    case 'custom-creation':
-      import('@/pages/CustomCreation');
-      break;
-    case 'create-workflow':
-      import('@/pages/CreateWorkflow');
-      break;
-    case 'templates':
-      import('@/pages/Templates');
-      break;
-    case 'settings':
-      import('@/pages/Settings');
-      break;
-    case 'history':
-      import('@/pages/dashboard/History');
-      break;
-    case 'pricing':
-      import('@/pages/Pricing');
-      break;
-    case 'video-studio':
-      import('@/pages/VideoStudio');
-      break;
-    default:
-      console.warn(`Unknown route: ${routeName}`);
-  }
+export function preloadRoute(chunkName: string) {
+  const link = document.createElement('link');
+  link.rel = 'modulepreload';
+  link.as = 'script';
+  link.crossOrigin = 'anonymous';
+  // Vite will handle the actual chunk URL resolution
+  link.href = `/src/pages/${chunkName}.tsx`;
+  document.head.appendChild(link);
 }
 
-// Preload on link hover
-export function usePrefetchOnHover(routeName: string) {
-  return {
-    onMouseEnter: () => preloadRoute(routeName),
-    onTouchStart: () => preloadRoute(routeName), // Mobile support
-  };
+export function preloadChunk(chunkPath: string) {
+  const link = document.createElement('link');
+  link.rel = 'modulepreload';
+  link.as = 'script';
+  link.crossOrigin = 'anonymous';
+  link.href = chunkPath;
+  document.head.appendChild(link);
 }
 
-// Preload multiple routes on idle
-export function preloadCriticalRoutes(routes: string[]): void {
+/**
+ * Prefetch routes on idle
+ */
+export function prefetchOnIdle(importFn: () => Promise<any>, timeout = 2000) {
   if ('requestIdleCallback' in window) {
     requestIdleCallback(
       () => {
-        routes.forEach(route => preloadRoute(route));
+        importFn().catch(() => {
+          // Ignore prefetch errors
+        });
       },
-      { timeout: 2000 }
+      { timeout }
     );
   } else {
-    // Fallback for browsers that don't support requestIdleCallback
+    // Fallback for browsers without requestIdleCallback
     setTimeout(() => {
-      routes.forEach(route => preloadRoute(route));
-    }, 2000);
+      importFn().catch(() => {});
+    }, timeout);
   }
 }
 
-// Preload routes based on user role
-export function preloadForAuthenticatedUser(): void {
-  preloadCriticalRoutes([
-    'create',
-    'custom-creation',
-    'templates',
-    'history'
-  ]);
-}
+/**
+ * Preload route on hover
+ */
+export function preloadOnHover(routePath: string) {
+  const routeMap: Record<string, () => Promise<any>> = {
+    '/create': () => import('../pages/Create'),
+    '/templates': () => import('../pages/Templates'),
+    '/pricing': () => import('../pages/Pricing'),
+    '/playground': () => import('../pages/Playground'),
+    '/video-studio': () => import('../pages/VideoStudio'),
+  };
 
-export function preloadForAnonymousUser(): void {
-  preloadCriticalRoutes([
-    'pricing',
-    'templates'
-  ]);
+  const importFn = routeMap[routePath];
+  if (importFn) {
+    importFn().catch(() => {
+      // Ignore prefetch errors
+    });
+  }
 }

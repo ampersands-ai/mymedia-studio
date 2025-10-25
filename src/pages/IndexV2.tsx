@@ -11,7 +11,7 @@ import { MobileMenu } from "@/components/MobileMenu";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { GallerySkeleton, PricingSkeleton } from "@/components/ui/skeletons";
-import { usePrefetchOnHover } from "@/utils/routePreload";
+import { usePrefetchOnHover } from "@/hooks/useRoutePreload";
 
 // Lazy load heavy components
 const FeatureShowcase = lazy(() => import("@/components/homepage/FeatureShowcase").then(m => ({ default: m.FeatureShowcase })));

@@ -1,89 +1,86 @@
 /**
- * Clear all caches and reload the page
- * Use this for troubleshooting or after major updates
+ * Cache Management Utilities
+ * Manual cache clearing for admin/troubleshooting
  */
-export async function clearAllCaches(): Promise<void> {
-  try {
-    // Unregister all service workers
-    if ('serviceWorker' in navigator) {
+
+export async function clearAllCaches() {
+  if ('serviceWorker' in navigator) {
+    try {
+      // Unregister service worker
       const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map(reg => reg.unregister()));
-      console.log('✅ Service workers unregistered');
-    }
+      await Promise.all(registrations.map((reg) => reg.unregister()));
+      console.log('[Cache] Service workers unregistered');
 
-    // Clear all caches
-    if ('caches' in window) {
+      // Clear all caches
       const cacheNames = await caches.keys();
-      await Promise.all(cacheNames.map(name => caches.delete(name)));
-      console.log('✅ All caches cleared');
+      await Promise.all(cacheNames.map((name) => caches.delete(name)));
+      console.log('[Cache] All caches deleted');
+
+      // Clear storage
+      localStorage.clear();
+      sessionStorage.clear();
+      console.log('[Cache] Local/session storage cleared');
+
+      console.log('✅ All caches cleared successfully');
+      
+      // Reload page
+      window.location.reload();
+    } catch (error) {
+      console.error('[Cache] Failed to clear caches:', error);
     }
-
-    // Clear storage
-    localStorage.clear();
-    sessionStorage.clear();
-    console.log('✅ Storage cleared');
-
-    // Reload page
-    window.location.reload();
-  } catch (error) {
-    console.error('Failed to clear caches:', error);
-    throw error;
   }
 }
 
 /**
  * Get cache statistics
  */
-export async function getCacheStats(): Promise<{
-  serviceWorkerActive: boolean;
-  cacheCount: number;
-  totalCachedItems: number;
-  cacheNames: string[];
-}> {
-  const stats = {
-    serviceWorkerActive: false,
-    cacheCount: 0,
-    totalCachedItems: 0,
-    cacheNames: [] as string[]
+export async function getCacheStats() {
+  if (!('caches' in window)) {
+    return {
+      serviceWorkerActive: false,
+      cacheCount: 0,
+      totalCachedItems: 0,
+      cacheNames: []
+    };
+  }
+
+  const cacheNames = await caches.keys();
+  let totalCachedItems = 0;
+
+  for (const name of cacheNames) {
+    const cache = await caches.open(name);
+    const keys = await cache.keys();
+    totalCachedItems += keys.length;
+  }
+
+  const serviceWorkerActive = !!(
+    'serviceWorker' in navigator && 
+    navigator.serviceWorker.controller
+  );
+
+  return {
+    serviceWorkerActive,
+    cacheCount: cacheNames.length,
+    totalCachedItems,
+    cacheNames
   };
-
-  // Check service worker
-  if ('serviceWorker' in navigator) {
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    stats.serviceWorkerActive = registrations.length > 0;
-  }
-
-  // Check caches
-  if ('caches' in window) {
-    const cacheNames = await caches.keys();
-    stats.cacheCount = cacheNames.length;
-    stats.cacheNames = cacheNames;
-
-    for (const name of cacheNames) {
-      const cache = await caches.open(name);
-      const keys = await cache.keys();
-      stats.totalCachedItems += keys.length;
-    }
-  }
-
-  return stats;
 }
 
 /**
- * Clear only old cache versions (keep current version)
+ * Clear old cache versions
  */
-export async function clearOldCaches(currentVersion: string): Promise<void> {
-  if (!('caches' in window)) return;
-
-  const cacheNames = await caches.keys();
-  const cachesToDelete = cacheNames.filter(name => !name.includes(currentVersion));
-
-  await Promise.all(
-    cachesToDelete.map(name => {
-      console.log('Deleting old cache:', name);
-      return caches.delete(name);
-    })
-  );
-
-  console.log(`✅ Cleared ${cachesToDelete.length} old caches`);
+export async function clearOldCaches(currentVersion: string) {
+  if ('caches' in window) {
+    const cacheNames = await caches.keys();
+    const oldCaches = cacheNames.filter(name => !name.includes(currentVersion));
+    
+    await Promise.all(
+      oldCaches.map(name => {
+        console.log('[Cache] Deleting old cache:', name);
+        return caches.delete(name);
+      })
+    );
+    
+    console.log(`[Cache] Cleared ${oldCaches.length} old cache(s)`);
+  }
 }

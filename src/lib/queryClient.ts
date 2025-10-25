@@ -10,11 +10,13 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime in v4)
+      gcTime: 10 * 60 * 1000, // 10 minutes (prevent infinite cache growth)
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
       retry: 1,
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      // Remove on unmount to prevent memory leaks
+      refetchOnMount: false,
     },
     mutations: {
       retry: 1,

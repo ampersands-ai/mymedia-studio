@@ -4,6 +4,7 @@
  */
 
 export function registerServiceWorker() {
+  // ✅ ONLY register in production
   if ('serviceWorker' in navigator && import.meta.env.PROD) {
     window.addEventListener('load', () => {
       navigator.serviceWorker
@@ -38,10 +39,13 @@ export function registerServiceWorker() {
  * Auto-unregister service worker in dev mode
  */
 export function unregisterServiceWorker() {
-  if (import.meta.env.DEV && navigator.serviceWorker?.controller) {
-    console.warn('[SW] Service Worker active in dev mode. Unregistering...');
+  if (import.meta.env.DEV && 'serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then((registrations) => {
-      registrations.forEach((reg) => reg.unregister());
+      if (registrations.length > 0) {
+        console.warn('⚠️ Service Worker active in dev mode. Auto-unregistering...');
+        console.warn('Chrome: DevTools > Application > Service Workers > Unregister');
+        registrations.forEach((reg) => reg.unregister());
+      }
     });
   }
 }

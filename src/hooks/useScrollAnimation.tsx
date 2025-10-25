@@ -34,10 +34,12 @@ export function useScrollAnimation(options: ScrollAnimationOptions = {}) {
       observer.observe(currentRef);
     }
 
+    // CRITICAL: Cleanup to prevent memory leaks
     return () => {
       if (currentRef) {
         observer.unobserve(currentRef);
       }
+      observer.disconnect();
     };
   }, [options.threshold, options.rootMargin, options.triggerOnce]);
 

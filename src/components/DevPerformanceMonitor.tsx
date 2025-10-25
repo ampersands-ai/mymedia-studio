@@ -64,7 +64,7 @@ export function DevPerformanceMonitor() {
       }
 
       // will-change count
-      const willChangeElements = document.querySelectorAll('[style*=\\"will-change\\"]');
+      const willChangeElements = document.querySelectorAll('[style*="will-change"]');
       setMetrics(prev => ({ 
         ...prev, 
         willChangeCount: willChangeElements.length 

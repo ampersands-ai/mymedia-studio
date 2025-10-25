@@ -646,38 +646,17 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
       
       if (job) {
         try {
-          console.log('Downloading video from Shotstack using streaming...');
-          const videoResponse = await fetch(videoUrl);
-          if (!videoResponse.ok || !videoResponse.body) {
-            throw new Error(`Failed to download video from Shotstack: ${videoResponse.status}`);
-          }
+          console.log('Using Shotstack video URL directly (no storage upload)');
           
-          const videoPath = `${job.user_id}/${new Date().toISOString().split('T')[0]}/${jobId}.mp4`;
-          console.log('Uploading video to storage with streaming:', videoPath);
-          
-          // Stream upload - no intermediate memory buffer
-          const { error: uploadError } = await supabase.storage
-            .from('video-assets')
-            .upload(videoPath, videoResponse.body, {
-              contentType: 'video/mp4',
-              upsert: true
-            });
-          
-          if (uploadError) {
-            console.error('Storage upload error:', uploadError);
-            throw uploadError;
-          }
-          
-          console.log('Video uploaded successfully using streaming');
-          
-          console.log('Creating generation record...');
+          // Create generation record with Shotstack URL
           const { data: generation, error: genError } = await supabase.from('generations').insert({
             user_id: job.user_id,
             type: 'video',
             prompt: `Faceless Video: ${job.topic}`,
             status: 'completed',
             tokens_used: 15,
-            storage_path: videoPath,
+            storage_path: null,
+            output_url: videoUrl,
             model_id: 'faceless-video-generator',
             settings: {
               duration: job.duration,
@@ -703,22 +682,22 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
               console.error('Failed to link API logs to generation:', error);
             }
           }
-        } catch (uploadError: any) {
-          console.error('Error during video download/upload:', uploadError);
+        } catch (error: any) {
+          console.error('Error creating generation:', error);
           
           // Update job status to failed with detailed error
           await supabase.from('video_jobs').update({
             status: 'failed',
             error_message: 'Failed to save final video',
             error_details: { 
-              error: uploadError.message,
-              step: 'video_upload',
+              error: error.message,
+              step: 'generation_create',
               render_id: renderId
             },
             updated_at: new Date().toISOString()
           }).eq('id', jobId);
           
-          throw new Error(`Video upload failed: ${uploadError.message}`);
+          throw new Error(`Generation creation failed: ${error.message}`);
         }
       }
       

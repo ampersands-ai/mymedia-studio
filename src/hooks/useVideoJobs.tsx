@@ -197,6 +197,31 @@ export function useVideoJobs() {
     }
   });
 
+  // Force recover stuck job mutation
+  const recoverJob = useMutation({
+    mutationFn: async (jobId: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('recover-stuck-jobs', {
+        body: { job_id: jobId },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+      
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['generations'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to sync job');
+    },
+  });
+
   return { 
     jobs, 
     isLoading, 
@@ -210,5 +235,7 @@ export function useVideoJobs() {
     isCancelling: cancelJob.isPending,
     generateCaption,
     isGeneratingCaption: generateCaption.isPending,
+    recoverJob,
+    isRecovering: recoverJob.isPending,
   };
 }

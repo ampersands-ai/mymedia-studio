@@ -61,7 +61,9 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const isProcessing = ['pending', 'generating_script', 'generating_voice', 'fetching_video', 'assembling'].includes(job.status);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isEditingScript, setIsEditingScript] = useState(false);
+  const [isEditingVoiceoverScript, setIsEditingVoiceoverScript] = useState(false);
   const [editedScript, setEditedScript] = useState(job.script || '');
+  const [editedVoiceoverScript, setEditedVoiceoverScript] = useState(job.script || '');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling } = useVideoJobs();
 
@@ -84,8 +86,10 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     }
   }, [job.status, job.voiceover_url, voiceoverSignedUrl, isLoadingVoiceUrl]);
 
+  // Reset editing state when script changes
   useEffect(() => {
     setEditedScript(job.script || '');
+    setEditedVoiceoverScript(job.script || '');
   }, [job.script]);
 
   // Cleanup audio on unmount or job change
@@ -284,88 +288,157 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
         {/* Voiceover Approval UI */}
         {job.status === 'awaiting_voice_approval' && job.script && job.voiceover_url && (
           <div className="space-y-3 pt-2 border-t">
-            <div className="flex items-center gap-2 text-sm font-semibold text-amber-600">
-              <AlertCircle className="h-4 w-4" />
-              Review Voiceover
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-semibold text-amber-600">
+                <AlertCircle className="h-4 w-4" />
+                Review Voiceover
+              </div>
+              {!isEditingVoiceoverScript && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs"
+                  onClick={() => setIsEditingVoiceoverScript(true)}
+                >
+                  <Edit className="w-3 h-3 mr-1" />
+                  Edit Script
+                </Button>
+              )}
             </div>
             
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Script:</label>
-              <ScrollArea className="h-24 rounded-md border bg-muted/30 p-3">
-                <p className="text-xs whitespace-pre-wrap">{job.script}</p>
-              </ScrollArea>
-            </div>
+            {isEditingVoiceoverScript ? (
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">Edit Script to Regenerate Voiceover:</label>
+                <Textarea
+                  value={editedVoiceoverScript}
+                  onChange={(e) => setEditedVoiceoverScript(e.target.value)}
+                  className="min-h-[150px] text-sm font-mono"
+                  placeholder="Edit the script here..."
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setIsEditingVoiceoverScript(false);
+                      setEditedVoiceoverScript(job.script || '');
+                    }}
+                    className="flex-1"
+                    disabled={isApprovingScript}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      approveScript.mutate(
+                        { jobId: job.id, editedScript: editedVoiceoverScript },
+                        {
+                          onSuccess: () => {
+                            setIsEditingVoiceoverScript(false);
+                            toast.success('Regenerating voiceover with updated script...');
+                          },
+                        }
+                      );
+                    }}
+                    className="flex-1"
+                    disabled={isApprovingScript || !editedVoiceoverScript.trim()}
+                  >
+                    {isApprovingScript ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Regenerating...
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="w-4 h-4 mr-2" />
+                        Regenerate Voiceover
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">Script:</label>
+                  <ScrollArea className="h-24 rounded-md border bg-muted/30 p-3">
+                    <p className="text-xs whitespace-pre-wrap">{job.script}</p>
+                  </ScrollArea>
+                </div>
 
-            {voiceUrlError && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error Loading Audio</AlertTitle>
-                <AlertDescription>
-                  Could not load voiceover preview. You can still proceed with rendering the video.
-                </AlertDescription>
-              </Alert>
+                {voiceUrlError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error Loading Audio</AlertTitle>
+                    <AlertDescription>
+                      Could not load voiceover preview. You can still proceed with rendering the video.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">Voiceover Preview:</label>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleToggleVoiceover}
+                    disabled={isLoadingVoiceUrl || !voiceoverSignedUrl || voiceUrlError}
+                  >
+                    {isLoadingVoiceUrl ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Loading...
+                      </>
+                    ) : isPlayingAudio ? (
+                      <>
+                        <Pause className="w-4 h-4 mr-2" />
+                        Pause Voiceover
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4 mr-2" />
+                        Play Voiceover
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={handleApproveVoiceover}
+                    disabled={isApprovingVoiceover || isCancelling}
+                  >
+                    {isApprovingVoiceover ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Starting...
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-4 h-4 mr-2" />
+                        Render Video
+                      </>
+                    )}
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="destructive"
+                    onClick={handleCancel}
+                    disabled={isApprovingVoiceover || isCancelling}
+                  >
+                    {isCancelling ? (
+                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                    ) : (
+                      <XCircle className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+              </>
             )}
-
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Voiceover Preview:</label>
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full"
-                onClick={handleToggleVoiceover}
-                disabled={isLoadingVoiceUrl || !voiceoverSignedUrl || voiceUrlError}
-              >
-                {isLoadingVoiceUrl ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Loading...
-                  </>
-                ) : isPlayingAudio ? (
-                  <>
-                    <Pause className="w-4 h-4 mr-2" />
-                    Pause Voiceover
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    Play Voiceover
-                  </>
-                )}
-              </Button>
-            </div>
-
-            <div className="flex gap-2 pt-2">
-              <Button 
-                size="sm" 
-                className="flex-1"
-                onClick={handleApproveVoiceover}
-                disabled={isApprovingVoiceover || isCancelling}
-              >
-                {isApprovingVoiceover ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Starting...
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-4 h-4 mr-2" />
-                    Render Video
-                  </>
-                )}
-              </Button>
-              <Button 
-                size="sm" 
-                variant="destructive"
-                onClick={handleCancel}
-                disabled={isApprovingVoiceover || isCancelling}
-              >
-                {isCancelling ? (
-                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                ) : (
-                  <XCircle className="w-4 h-4" />
-                )}
-              </Button>
-            </div>
           </div>
         )}
 

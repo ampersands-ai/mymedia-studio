@@ -6,10 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Coins, Sparkles, Volume2 } from 'lucide-react';
+import { Loader2, Coins, Sparkles, Volume2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { VoiceBrowser } from './VoiceBrowser';
 import { BackgroundMediaSelector } from './BackgroundMediaSelector';
@@ -28,7 +29,7 @@ export function VideoCreator() {
   const [backgroundVideoUrl, setBackgroundVideoUrl] = useState<string>('');
   const [backgroundThumbnail, setBackgroundThumbnail] = useState<string>('');
   const [backgroundMediaType, setBackgroundMediaType] = useState<'video' | 'image'>('video');
-  const { createJob, isCreating } = useVideoJobs();
+  const { createJob, isCreating, jobs } = useVideoJobs();
   const { data: tokens } = useUserTokens();
 
   const handleSurpriseMe = async () => {
@@ -87,8 +88,14 @@ export function VideoCreator() {
     setBackgroundMediaType('video');
   };
 
+  const hasActiveJob = jobs?.some(job => 
+    ['pending', 'generating_script', 'awaiting_script_approval', 
+     'generating_voice', 'awaiting_voice_approval', 
+     'fetching_video', 'assembling'].includes(job.status)
+  );
+
   const canAfford = (tokens?.tokens_remaining ?? 0) >= 15;
-  const isDisabled = isCreating || isGeneratingTopic;
+  const isDisabled = isCreating || isGeneratingTopic || hasActiveJob;
 
   return (
     <Card className="border-2 w-full overflow-hidden">
@@ -262,6 +269,19 @@ export function VideoCreator() {
             setBackgroundMediaType(type);
           }}
         />
+
+        {hasActiveJob && (
+          <Alert className="bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800">
+            <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            <AlertTitle className="text-orange-900 dark:text-orange-100">
+              Generation In Progress
+            </AlertTitle>
+            <AlertDescription className="text-orange-800 dark:text-orange-200 text-sm">
+              Please wait for your current video to complete or fail before creating a new one. 
+              Check "Current Generation" section below for status.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="rounded-lg border-2 border-primary/20 bg-primary/5 p-3 md:p-4">
           <div className="flex items-center justify-between flex-wrap gap-2">

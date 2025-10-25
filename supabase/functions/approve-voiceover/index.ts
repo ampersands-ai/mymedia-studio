@@ -557,19 +557,21 @@ backgroundMediaType: 'video' | 'image' = 'video'
     asset: {
       type: 'caption',
       src: assets.voiceoverUrl,
-      maxLines: 3,  // Show 3 words at a time
-      fontSize: style.fontSize || 48,
-      fontFamily: style.fontFamily || 'Montserrat ExtraBold',
-      color: style.textColor || '#FFFFFF',
+      font: {
+        size: style.fontSize || 48,
+        family: style.fontFamily || 'Montserrat ExtraBold',
+        color: style.textColor || '#FFFFFF',
+        weight: 'black'
+      },
       align: 'center',
       position: positionMap[style.position] || 'center',
-      background: style.backgroundColor !== 'rgba(0,0,0,0)' 
-        ? {
-            color: style.backgroundColor,
-            padding: 20,
-            borderRadius: 12
-          }
-        : undefined
+      ...(style.backgroundColor !== 'rgba(0,0,0,0)' && {
+        background: {
+          color: style.backgroundColor,
+          padding: 20,
+          borderRadius: 12
+        }
+      })
     },
     start: 0,
     length: 'end'

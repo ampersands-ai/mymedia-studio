@@ -50,7 +50,6 @@ export function BackgroundVideoSelector({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedThumbnail, setSelectedThumbnail] = useState<string>('');
   const { toast } = useToast();
-  const pexelsApiKey = import.meta.env.VITE_PEXELS_API_KEY;
 
   useEffect(() => {
     if (dialogOpen && videos.length === 0) {
@@ -79,35 +78,33 @@ export function BackgroundVideoSelector({
   };
 
   const searchVideos = async (query: string) => {
-    if (!pexelsApiKey) {
-      toast({
-        title: 'Configuration Error',
-        description: 'Pexels API key not configured',
-        variant: 'destructive'
-      });
-      return;
-    }
-
     setLoading(true);
     setSearchQuery(query);
 
     try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
       const orientation = getOrientation(aspectRatio);
-      const response = await fetch(
-        `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=20&orientation=${orientation}`,
-        {
-          headers: { Authorization: pexelsApiKey }
+
+      const { data, error } = await supabase.functions.invoke('search-pexels-videos', {
+        body: { 
+          query, 
+          orientation,
+          per_page: 20 
         }
-      );
+      });
 
-      if (!response.ok) throw new Error('Failed to fetch videos');
-
-      const data = await response.json();
+      if (error) throw error;
       
       // Filter by minimum duration
-      const filtered = data.videos.filter((v: PexelsVideo) => v.duration >= duration);
+      const filtered = (data?.videos || []).filter((v: PexelsVideo) => v.duration >= duration);
       
-      setVideos(filtered.length > 0 ? filtered : data.videos);
+      setVideos(filtered.length > 0 ? filtered : (data?.videos || []));
       
       if (filtered.length === 0) {
         toast({

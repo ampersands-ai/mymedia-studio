@@ -11,12 +11,14 @@ export function useVideoJobs() {
   const { data: jobs, isLoading } = useQuery({
     queryKey: ['video-jobs'],
     queryFn: async () => {
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
       const { data, error } = await supabase
         .from('video_jobs')
         .select('*')
         .neq('status', 'completed')
         .neq('status', 'failed')
-        .order('created_at', { ascending: false })
+        .gte('updated_at', twoHoursAgo)
+        .order('updated_at', { ascending: false })
         .limit(1);
       
       if (error) throw error;

@@ -558,13 +558,8 @@ backgroundMediaType: 'video' | 'image' = 'video'
       type: 'caption',
       src: assets.voiceoverUrl,
       font: {
-        size: style.fontSize || 48,
-        family: style.fontFamily || 'Montserrat ExtraBold',
-        color: style.textColor || '#FFFFFF',
-        weight: 'black'
+        size: String(style.fontSize || 48)
       },
-      align: 'center',
-      position: positionMap[style.position] || 'center',
       ...(style.backgroundColor !== 'rgba(0,0,0,0)' && {
         background: {
           color: style.backgroundColor,

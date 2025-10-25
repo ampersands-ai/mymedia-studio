@@ -108,8 +108,13 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized: not your job');
     }
 
-    if (job.status !== 'awaiting_voice_approval') {
+    if (job.status !== 'awaiting_voice_approval' && job.status !== 'failed') {
       throw new Error(`Job cannot be approved from status: ${job.status}`);
+    }
+
+    if (job.status === 'failed') {
+      console.log('Job is in failed state; resetting to awaiting_voice_approval for retry');
+      await updateJobStatus(supabaseClient, job_id, 'awaiting_voice_approval');
     }
 
     console.log(`Approving voiceover for job ${job_id}, continuing assembly...`);

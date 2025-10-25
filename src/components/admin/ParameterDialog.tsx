@@ -318,7 +318,8 @@ export function ParameterDialog({
                 <Input
                   id="minimum"
                   type="number"
-                  value={formData.minimum || ''}
+                  step={0.01}
+                  value={formData.minimum !== undefined && formData.minimum !== null ? formData.minimum : ''}
                   onChange={(e) => setFormData({ 
                     ...formData, 
                     minimum: e.target.value ? parseFloat(e.target.value) : undefined 
@@ -332,7 +333,8 @@ export function ParameterDialog({
                 <Input
                   id="maximum"
                   type="number"
-                  value={formData.maximum || ''}
+                  step={0.01}
+                  value={formData.maximum !== undefined && formData.maximum !== null ? formData.maximum : ''}
                   onChange={(e) => setFormData({ 
                     ...formData, 
                     maximum: e.target.value ? parseFloat(e.target.value) : undefined 

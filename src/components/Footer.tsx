@@ -111,9 +111,19 @@ export const Footer = () => {
             <h3 className="font-black text-sm mb-4">POPULAR TEMPLATES</h3>
             <ul className="space-y-4">
               <li>
-                <span className="text-sm text-foreground/70 font-medium">
-                  Coming Soon
-                </span>
+                <Link to="/templates/photo-editing/professional-headshot" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                  Professional Headshots
+                </Link>
+              </li>
+              <li>
+                <Link to="/templates/ai-image/product-photography" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                  Product Photography
+                </Link>
+              </li>
+              <li>
+                <Link to="/templates/text-to-image/social-media-content" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                  Social Media Content
+                </Link>
               </li>
             </ul>
           </div>

@@ -50,6 +50,7 @@ export const AdminLayout = () => {
               { path: "/admin/video-jobs", label: "Video Jobs", icon: Video },
               { path: "/admin/template-landing", label: "Landing Pages", icon: FileText },
               { path: "/admin/template-categories", label: "Categories", icon: FolderTree },
+              { path: "/admin/template-analytics", label: "Template Analytics", icon: BarChart3 },
             ].map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;

@@ -53,6 +53,7 @@ const TemplateLanding = lazy(() => import("./pages/TemplateLanding"));
 const TemplateLandingManager = lazy(() => import("./pages/admin/TemplateLandingManager"));
 const TemplateLandingEditor = lazy(() => import("./pages/admin/TemplateLandingEditor"));
 const TemplateCategoriesManager = lazy(() => import("./pages/admin/TemplateCategoriesManager"));
+const TemplateAnalytics = lazy(() => import("./pages/admin/TemplateAnalytics"));
 
 const AppContent = () => {
   // Initialize PostHog
@@ -129,6 +130,7 @@ const AppContent = () => {
               <Route path="template-landing" element={<TemplateLandingManager />} />
               <Route path="template-landing/:id" element={<TemplateLandingEditor />} />
               <Route path="template-categories" element={<TemplateCategoriesManager />} />
+              <Route path="template-analytics" element={<TemplateAnalytics />} />
             </Route>
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/privacy" element={<Privacy />} />

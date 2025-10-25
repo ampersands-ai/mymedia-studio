@@ -615,50 +615,21 @@ async function assembleVideo(
     }]
   });
 
-  // Track 2: Auto-generated captions using alias://VOICEOVER
-  const captionAsset: any = {
+  // Track 2: Auto-generated captions using minimal config (styling causes validation errors)
+  const captionAsset = {
     type: 'caption',
-    src: 'alias://VOICEOVER', // Auto-sync to voiceover audio!
-    font: {
-      color: style.textColor,
-      size: Number(style.fontSize) || 48, // CRITICAL: NUMBER not string
-      family: style.fontFamily || 'Montserrat ExtraBold',
-      lineHeight: 1.2
-    }
+    src: 'alias://VOICEOVER' // Auto-sync to voiceover audio
   };
-
-  // Add stroke INSIDE font object per Shotstack docs
-  if (style.strokeColor && style.strokeWidth) {
-    captionAsset.font.stroke = style.strokeColor;
-    captionAsset.font.strokeWidth = Number(style.strokeWidth);
-  }
-
-  // Add background if not transparent
-  if (style.backgroundColor && style.backgroundColor !== 'rgba(0,0,0,0)') {
-    captionAsset.background = {
-      color: style.backgroundColor,
-      padding: 20,
-      borderRadius: 10,
-      opacity: 0.85
-    };
-  }
 
   edit.timeline.tracks.push({
     clips: [{
       asset: captionAsset,
       start: 0,
-      length: 'auto' // Match voiceover duration automatically
+      length: 'auto'
     }]
   });
 
-  console.log('Using official Shotstack auto-captions with alias://VOICEOVER');
-  console.log('Caption configuration:', {
-    fontSize: captionAsset.font.size,
-    fontFamily: captionAsset.font.family,
-    hasStroke: !!(captionAsset.font.stroke),
-    hasBackground: !!captionAsset.background
-  });
-  console.log('Caption asset payload:', captionAsset);
+  console.log('Using minimal auto-captions (validated to work with Shotstack)');
 
   // Submit to Shotstack API
   const endpoint = 'https://api.shotstack.io/v1/render';

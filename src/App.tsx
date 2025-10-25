@@ -10,6 +10,9 @@ import { App as CapacitorApp } from '@capacitor/app';
 import { setStatusBarStyle, isNativePlatform } from "@/utils/capacitor-utils";
 import { initPostHog } from "@/lib/posthog";
 import { usePostHog } from "@/hooks/usePostHog";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { ScrollProgress } from "@/components/ui/scroll-progress";
+import { reportWebVitals, monitorPerformance } from "@/lib/webVitals";
 
 // Lazy load pages for better performance
 const IndexV2 = lazy(() => import("./pages/IndexV2"));
@@ -60,6 +63,12 @@ const AppContent = () => {
   // Use PostHog tracking
   usePostHog();
 
+  // Initialize performance monitoring
+  useEffect(() => {
+    reportWebVitals();
+    monitorPerformance();
+  }, []);
+
   // Initialize mobile app features
   useEffect(() => {
     if (!isNativePlatform()) return;
@@ -83,50 +92,53 @@ const AppContent = () => {
   }, []);
 
   return (
-    <div className="safe-area-container">
-      <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <div className="animate-pulse text-foreground">Loading...</div>
-        </div>
-      }>
-        <Analytics />
-            <Routes>
-              <Route path="/" element={<IndexV2 />} />
-              <Route path="/auth" element={<Auth />} />
-          <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route path="create" element={<Create />} />
-            <Route path="create-workflow" element={<CreateWorkflow />} />
-            <Route path="custom-creation" element={<CustomCreation />} />
-            <Route path="templates" element={<Templates />} />
-            <Route path="history" element={<History />} />
-            <Route path="video-studio" element={<VideoStudio />} />
-            <Route path="settings" element={<Settings />} />
-          </Route>
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="models" element={<AIModelsManager />} />
-            <Route path="templates" element={<TemplatesManager />} />
-            <Route path="users" element={<UsersManager />} />
-            <Route path="generations" element={<AllGenerations />} />
-            <Route path="disputes" element={<TokenDisputes />} />
-            <Route path="analytics" element={<AnalyticsDashboard />} />
-            <Route path="threshold-breach" element={<ThresholdBreach />} />
-            <Route path="video-jobs" element={<VideoJobs />} />
-          </Route>
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/community" element={<Community />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/features" element={<Features />} />
-          <Route path="/templates" element={<Navigate to="/dashboard/templates" replace />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
-    </div>
+    <ErrorBoundary>
+      <div className="safe-area-container">
+        <ScrollProgress />
+        <Suspense fallback={
+          <div className="min-h-screen flex items-center justify-center bg-background">
+            <div className="animate-pulse text-foreground">Loading...</div>
+          </div>
+        }>
+          <Analytics />
+              <Routes>
+                <Route path="/" element={<IndexV2 />} />
+                <Route path="/auth" element={<Auth />} />
+            <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route path="create" element={<Create />} />
+              <Route path="create-workflow" element={<CreateWorkflow />} />
+              <Route path="custom-creation" element={<CustomCreation />} />
+              <Route path="templates" element={<Templates />} />
+              <Route path="history" element={<History />} />
+              <Route path="video-studio" element={<VideoStudio />} />
+              <Route path="settings" element={<Settings />} />
+            </Route>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="models" element={<AIModelsManager />} />
+              <Route path="templates" element={<TemplatesManager />} />
+              <Route path="users" element={<UsersManager />} />
+              <Route path="generations" element={<AllGenerations />} />
+              <Route path="disputes" element={<TokenDisputes />} />
+              <Route path="analytics" element={<AnalyticsDashboard />} />
+              <Route path="threshold-breach" element={<ThresholdBreach />} />
+              <Route path="video-jobs" element={<VideoJobs />} />
+            </Route>
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/community" element={<Community />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/features" element={<Features />} />
+            <Route path="/templates" element={<Navigate to="/dashboard/templates" replace />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </div>
+    </ErrorBoundary>
   );
 };
 

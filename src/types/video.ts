@@ -50,6 +50,9 @@ export interface VideoJob {
   caption_style?: CaptionStyle | any; // Allow Json type from DB
   custom_background_video?: string;
   background_video_thumbnail?: string;
+  ai_caption?: string;
+  ai_hashtags?: string[];
+  caption_generated_at?: string;
 }
 
 export interface VideoAssets {

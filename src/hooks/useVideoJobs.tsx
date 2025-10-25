@@ -15,7 +15,8 @@ export function useVideoJobs() {
         .from('video_jobs')
         .select('*')
         .neq('status', 'completed')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(1);
       
       if (error) throw error;
       return (data || []) as VideoJob[];
@@ -175,6 +176,29 @@ export function useVideoJobs() {
     },
   });
 
+  // Generate caption and hashtags mutation
+  const generateCaption = useMutation({
+    mutationFn: async ({ jobId, topic, script }: { jobId: string; topic: string; script: string }) => {
+      const { data, error } = await supabase.functions.invoke('generate-caption', {
+        body: { 
+          video_job_id: jobId,
+          prompt: `Video Topic: ${topic}\n\nScript: ${script}`,
+          content_type: 'video'
+        }
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
+      toast.success('Caption and hashtags generated!');
+    },
+    onError: (error: any) => {
+      console.error('Caption generation error:', error);
+      toast.error(error.message || 'Failed to generate caption');
+    }
+  });
+
   return { 
     jobs, 
     isLoading, 
@@ -185,6 +209,8 @@ export function useVideoJobs() {
     approveVoiceover,
     isApprovingVoiceover: approveVoiceover.isPending,
     cancelJob,
-    isCancelling: cancelJob.isPending
+    isCancelling: cancelJob.isPending,
+    generateCaption,
+    isGeneratingCaption: generateCaption.isPending,
   };
 }

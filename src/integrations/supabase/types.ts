@@ -931,9 +931,12 @@ export type Database = {
       video_jobs: {
         Row: {
           actual_audio_duration: number | null
+          ai_caption: string | null
+          ai_hashtags: string[] | null
           aspect_ratio: string | null
           background_video_thumbnail: string | null
           background_video_url: string | null
+          caption_generated_at: string | null
           caption_style: Json | null
           completed_at: string | null
           cost_tokens: number
@@ -958,9 +961,12 @@ export type Database = {
         }
         Insert: {
           actual_audio_duration?: number | null
+          ai_caption?: string | null
+          ai_hashtags?: string[] | null
           aspect_ratio?: string | null
           background_video_thumbnail?: string | null
           background_video_url?: string | null
+          caption_generated_at?: string | null
           caption_style?: Json | null
           completed_at?: string | null
           cost_tokens?: number
@@ -985,9 +991,12 @@ export type Database = {
         }
         Update: {
           actual_audio_duration?: number | null
+          ai_caption?: string | null
+          ai_hashtags?: string[] | null
           aspect_ratio?: string | null
           background_video_thumbnail?: string | null
           background_video_url?: string | null
+          caption_generated_at?: string | null
           caption_style?: Json | null
           completed_at?: string | null
           cost_tokens?: number

@@ -13,11 +13,11 @@ serve(async (req) => {
   }
 
   try {
-    const { generation_id, prompt, content_type, model_name } = await req.json();
+    const { generation_id, video_job_id, prompt, content_type, model_name } = await req.json();
 
-    if (!generation_id || !prompt || !content_type) {
+    if ((!generation_id && !video_job_id) || !prompt || !content_type) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: generation_id, prompt, content_type' }),
+        JSON.stringify({ error: 'Missing required fields: (generation_id OR video_job_id), prompt, content_type' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -27,22 +27,22 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    const systemPrompt = `You are a social media expert. Generate a captivating caption and 20 popular hashtags that describe the image content.
+    const systemPrompt = `You are a social media expert. Generate a captivating caption and 15 popular hashtags that describe the ${content_type === 'video' ? 'video' : 'image'} content.
 
 Content Type: ${content_type}
-What the image shows: ${prompt}
+What the ${content_type === 'video' ? 'video' : 'image'} shows: ${prompt}
 
 Create a caption (2-3 sentences) that:
-- Describes what's actually IN the image
-- Is engaging and works well on Instagram, Twitter, or other social media
+- Describes what's actually IN the ${content_type === 'video' ? 'video' : 'image'}
+- Is engaging and works well on Instagram, Twitter, TikTok, or other social media
 - Does NOT mention AI, models, or the generation process
 - Focuses on the visual content and subject matter
 
 Make the hashtags relevant to:
-- The actual subject matter in the image
+- The actual subject matter in the ${content_type === 'video' ? 'video' : 'image'}
 - Popular related topics
 - Niche-specific content categories
-- Current trends related to the image content
+- Current trends related to the content
 
 IMPORTANT: Each hashtag MUST include the # symbol (e.g., #Fashion, #Style).`;
 
@@ -56,7 +56,7 @@ IMPORTANT: Each hashtag MUST include the # symbol (e.g., #Fashion, #Style).`;
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: 'Generate a captivating caption and exactly 20 popular hashtags for this AI-generated content.' }
+          { role: 'user', content: 'Generate a captivating caption and exactly 15 popular hashtags for this content.' }
         ],
         tools: [
           {
@@ -74,9 +74,9 @@ IMPORTANT: Each hashtag MUST include the # symbol (e.g., #Fashion, #Style).`;
                   hashtags: {
                     type: "array",
                     items: { type: "string" },
-                    minItems: 20,
-                    maxItems: 20,
-                    description: "Exactly 20 hashtags WITH # symbol (e.g., #AIArt)"
+                    minItems: 15,
+                    maxItems: 15,
+                    description: "Exactly 15 hashtags WITH # symbol (e.g., #Fashion)"
                   }
                 },
                 required: ["caption", "hashtags"],
@@ -106,7 +106,7 @@ IMPORTANT: Each hashtag MUST include the # symbol (e.g., #Fashion, #Style).`;
     const result = JSON.parse(toolCall.function.arguments);
     const { caption, hashtags } = result;
 
-    if (!caption || !Array.isArray(hashtags) || hashtags.length !== 20) {
+    if (!caption || !Array.isArray(hashtags) || hashtags.length !== 15) {
       throw new Error('Invalid response format from AI');
     }
 
@@ -115,27 +115,39 @@ IMPORTANT: Each hashtag MUST include the # symbol (e.g., #Fashion, #Style).`;
       tag.startsWith('#') ? tag : `#${tag}`
     );
 
-    // Update the generation record
+    // Update the generation or video_job record
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const now = new Date().toISOString();
-    const { error: updateError } = await supabase
-      .from('generations')
-      .update({
-        ai_caption: caption,
-        ai_hashtags: formattedHashtags,
-        caption_generated_at: now
-      })
-      .eq('id', generation_id);
+    const updateData = {
+      ai_caption: caption,
+      ai_hashtags: formattedHashtags,
+      caption_generated_at: now
+    };
+
+    let updateError;
+    if (video_job_id) {
+      const result = await supabase
+        .from('video_jobs')
+        .update(updateData)
+        .eq('id', video_job_id);
+      updateError = result.error;
+      console.log('Caption generated successfully for video job:', video_job_id);
+    } else {
+      const result = await supabase
+        .from('generations')
+        .update(updateData)
+        .eq('id', generation_id);
+      updateError = result.error;
+      console.log('Caption generated successfully for generation:', generation_id);
+    }
 
     if (updateError) {
       console.error('Database update error:', updateError);
       throw new Error('Failed to save caption to database');
     }
-
-    console.log('Caption generated successfully for generation:', generation_id);
 
     return new Response(
       JSON.stringify({

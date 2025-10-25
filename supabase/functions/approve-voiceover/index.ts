@@ -421,6 +421,8 @@ async function assembleVideo(
     return clip;
   });
 
+  console.log(`Assembling video with Shotstack resolution: 1080 (1080x1920) for aspect ratio ${aspectRatio}`);
+
   const edit = {
     timeline: {
       soundtrack: {
@@ -447,9 +449,7 @@ async function assembleVideo(
     },
     output: {
       format: 'mp4',
-      resolution: 'custom',
-      width: config.width,
-      height: config.height,
+      resolution: '1080',
       fps: 30,
       quality: 'high'
     }

@@ -97,7 +97,7 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
       const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;
-      a.download = `${job.topic.slice(0, 30)}-${Date.now()}.mp4`;
+      a.download = `artifio-video-${Date.now()}.mp4`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(blobUrl);

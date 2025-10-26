@@ -157,15 +157,19 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
   showControls?: boolean;
   playOnHover?: boolean;
 }) => {
-  // All content now uses generated-content bucket (which is public)
-  const { signedUrl, isLoading, error } = useSignedUrl(generation.storage_path, 'generated-content');
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoError, setVideoError] = useState(false);
   
+  // For video jobs, use output_url directly instead of storage_path
+  const videoUrl = generation.is_video_job && generation.output_url 
+    ? generation.output_url
+    : generation.storage_path 
+      ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stream-content?bucket=generated-content&path=${encodeURIComponent(generation.storage_path)}`
+      : null;
 
-  // Show download fallback if we encounter playback error or no path
-  if (!generation.storage_path || videoError) {
+  // Show download fallback if we encounter playback error or no video URL
+  if (!videoUrl || videoError) {
     return (
       <div className={`${className} flex flex-col items-center justify-center bg-muted gap-2 p-4`}>
         <Video className="h-8 w-8 text-muted-foreground" />
@@ -175,24 +179,44 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
           variant="outline"
           onClick={async (e) => {
             e.stopPropagation();
-            if (generation.storage_path) {
+            const downloadUrl = generation.is_video_job && generation.output_url 
+              ? generation.output_url 
+              : generation.storage_path;
+              
+            if (downloadUrl) {
               toast.loading('Preparing your download...', { id: 'video-download' });
               try {
-                const { data } = await supabase.storage
-                  .from('generated-content')
-                  .createSignedUrl(generation.storage_path!, 60);
-                if (data?.signedUrl) {
-                  const response = await fetch(data.signedUrl);
+                if (generation.is_video_job && generation.output_url) {
+                  // Direct URL download for video jobs
+                  const response = await fetch(generation.output_url);
                   const blob = await response.blob();
                   const blobUrl = window.URL.createObjectURL(blob);
                   const a = document.createElement('a');
                   a.href = blobUrl;
-                  a.download = `video-${Date.now()}.mp4`;
+                  a.download = `artifio-video-${Date.now()}.mp4`;
                   document.body.appendChild(a);
                   a.click();
                   window.URL.revokeObjectURL(blobUrl);
                   document.body.removeChild(a);
                   toast.success('Download started successfully!', { id: 'video-download' });
+                } else {
+                  // Storage path download for regular videos
+                  const { data } = await supabase.storage
+                    .from('generated-content')
+                    .createSignedUrl(generation.storage_path!, 60);
+                  if (data?.signedUrl) {
+                    const response = await fetch(data.signedUrl);
+                    const blob = await response.blob();
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = `artifio-video-${Date.now()}.mp4`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(blobUrl);
+                    document.body.removeChild(a);
+                    toast.success('Download started successfully!', { id: 'video-download' });
+                  }
                 }
               } catch (error) {
                 toast.error('Failed to download', { id: 'video-download' });
@@ -222,12 +246,10 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
     }
   };
 
-  const streamUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stream-content?bucket=generated-content&path=${encodeURIComponent(generation.storage_path || '')}`;
-
   return (
     <video
       ref={videoRef}
-      src={streamUrl}
+      src={videoUrl}
       className={className}
       preload="metadata"
       controls={showControls}
@@ -238,10 +260,10 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onError={() => {
-        console.error('Video playback error for:', generation.storage_path);
+        console.error('Video playback error for:', videoUrl);
         setVideoError(true);
       }}
-      onLoadedMetadata={() => console.log('Video loaded successfully:', generation.storage_path)}
+      onLoadedMetadata={() => console.log('Video loaded successfully:', videoUrl)}
     />
   );
 };
@@ -305,17 +327,12 @@ const History = () => {
 
       // Convert video jobs to generation-like format for unified display
       const videoGenerations = (videoData || []).map(video => {
-        // Construct storage path for completed videos
-        const storagePath = video.status === 'completed' && video.final_video_url
-          ? `${video.user_id}/${new Date(video.created_at).toISOString().split('T')[0]}/${video.id}.mp4`
-          : null;
-
         return {
           id: video.id,
           type: 'video',
           prompt: `Faceless Video: ${video.topic}`,
           output_url: video.final_video_url,
-          storage_path: storagePath,
+          storage_path: null, // Use final_video_url directly, not synthetic storage path
           status: video.status,
           tokens_used: video.cost_tokens,
           created_at: video.created_at,
@@ -527,7 +544,9 @@ const History = () => {
       const a = document.createElement('a');
       a.href = blobUrl;
       const extension = storagePath.split('.').pop() || type;
-      a.download = `artifio-${type}-${Date.now()}.${extension}`;
+      // Use artifio-video- prefix for videos
+      const prefix = type === 'video' ? 'artifio-video' : `artifio-${type}`;
+      a.download = `${prefix}-${Date.now()}.${extension}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(blobUrl);

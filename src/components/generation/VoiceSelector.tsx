@@ -133,8 +133,8 @@ export function VoiceSelector({ selectedValue, onSelectVoice, mode, disabled }: 
       </div>
 
       {/* Voice grid */}
-      <ScrollArea className="h-[550px]">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pr-4">
+      <ScrollArea className="h-[400px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-4">
           {filteredVoices.map(voice => (
             <Card 
               key={voice.voice_id} 
@@ -167,51 +167,46 @@ export function VoiceSelector({ selectedValue, onSelectVoice, mode, disabled }: 
                   <Badge variant="secondary" className="text-xs">{voice.use_case}</Badge>
                 </div>
 
-                <div className="space-y-1">
-                  <div className="flex gap-2">
-                    {voice.hasPreview === false ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 text-xs"
-                        disabled={true}
-                      >
-                        <X className="w-3 h-3 mr-1.5" />
-                        No Preview
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handlePreview(voice.voice_id)}
-                        className="flex-1 text-xs"
-                        disabled={disabled}
-                      >
-                        {playingVoiceId === voice.voice_id ? (
-                          <>
-                            <Pause className="w-3 h-3 mr-1.5" />
-                            Pause
-                          </>
-                        ) : (
-                          <>
-                            <Play className="w-3 h-3 mr-1.5" />
-                            Preview
-                          </>
-                        )}
-                      </Button>
-                    )}
+                <div className="flex gap-2">
+                  {voice.hasPreview === false ? (
                     <Button
                       size="sm"
-                      onClick={() => handleSelect(voice)}
-                      disabled={disabled || selectedVoice?.voice_id === voice.voice_id}
-                      className="text-xs min-w-[88px] whitespace-nowrap shrink-0"
+                      variant="outline"
+                      className="flex-1 text-xs"
+                      disabled={true}
                     >
-                      {selectedVoice?.voice_id === voice.voice_id ? 'Selected' : 'Select'}
+                      <X className="w-3 h-3 mr-1.5" />
+                      No Preview
                     </Button>
-                  </div>
-                  {voice.hasPreview === false && (
-                    <p className="text-[11px] text-muted-foreground">Preview not available</p>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handlePreview(voice.voice_id)}
+                      className="flex-1 text-xs"
+                      disabled={disabled}
+                    >
+                      {playingVoiceId === voice.voice_id ? (
+                        <>
+                          <Pause className="w-3 h-3 mr-1.5" />
+                          Pause
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-3 h-3 mr-1.5" />
+                          Preview
+                        </>
+                      )}
+                    </Button>
                   )}
+                  <Button
+                    size="sm"
+                    onClick={() => handleSelect(voice)}
+                    disabled={disabled || selectedVoice?.voice_id === voice.voice_id}
+                    className="text-xs"
+                  >
+                    {selectedVoice?.voice_id === voice.voice_id ? 'Selected' : 'Select'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>

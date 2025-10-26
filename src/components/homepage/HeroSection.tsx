@@ -35,7 +35,7 @@ export const HeroSection = () => {
             </h1>
 
             {/* Subheadline */}
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-xl">
+            <p className="text-xl text-gray-800 dark:text-gray-200 max-w-xl">
               30+ AI models for video, image, and audio generation. 
               One platform, unlimited creativity. No design skills needed.
             </p>
@@ -61,7 +61,7 @@ export const HeroSection = () => {
                 <div className="text-3xl font-bold bg-gradient-to-r from-primary-yellow to-primary-orange bg-clip-text text-transparent">
                   1M+
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-gray-700 dark:text-gray-300">
                   Generations Created
                 </div>
               </div>
@@ -69,7 +69,7 @@ export const HeroSection = () => {
                 <div className="text-3xl font-bold bg-gradient-to-r from-primary-yellow to-primary-orange bg-clip-text text-transparent">
                   30+
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-gray-700 dark:text-gray-300">
                   AI Models
                 </div>
               </div>
@@ -77,7 +77,7 @@ export const HeroSection = () => {
                 <div className="text-3xl font-bold bg-gradient-to-r from-primary-yellow to-primary-orange bg-clip-text text-transparent">
                   $79
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-gray-700 dark:text-gray-300">
                   Saved per Month
                 </div>
               </div>
@@ -108,7 +108,7 @@ export const HeroSection = () => {
                   </div>
                   <div>
                     <div className="text-sm font-semibold">18 seconds</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">Generation time</div>
+                    <div className="text-xs text-gray-700 dark:text-gray-300">Generation time</div>
                   </div>
                 </div>
               </GlassCard>

@@ -57,7 +57,7 @@ export const TemplateCarousel = ({ templates }: TemplateCarouselProps) => {
               Templates
             </span>
           </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400">
+          <p className="text-xl text-gray-800 dark:text-gray-200">
             Get inspired by thousands of AI-generated creations
           </p>
         </div>

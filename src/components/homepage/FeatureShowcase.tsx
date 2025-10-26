@@ -35,7 +35,7 @@ export const FeatureShowcase = ({
         <h3 className="text-3xl md:text-4xl font-black text-foreground">
           {title}
         </h3>
-        <p className="text-lg text-muted-foreground">{description}</p>
+        <p className="text-lg text-gray-800 dark:text-gray-200">{description}</p>
         <ul className="space-y-3">
           {benefits.map((benefit, idx) => (
             <li key={idx} className="flex items-start gap-3">

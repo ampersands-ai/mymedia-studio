@@ -70,16 +70,16 @@ const IndexV2 = () => {
 
             {/* Desktop Navigation - Center/Right */}
             <div className="hidden md:flex items-center gap-6">
-              <Link to="/features" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">
+              <Link to="/features" className="font-bold text-neutral-900 dark:text-neutral-100 hover:text-secondary-600 transition-colors">
                 Features
               </Link>
-              <Link to="/dashboard/templates" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">
+              <Link to="/dashboard/templates" className="font-bold text-neutral-900 dark:text-neutral-100 hover:text-secondary-600 transition-colors">
                 Templates
               </Link>
-              <Link to="/pricing" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">
+              <Link to="/pricing" className="font-bold text-neutral-900 dark:text-neutral-100 hover:text-secondary-600 transition-colors">
                 Pricing
               </Link>
-              <Link to="/community" className="font-bold text-neutral-700 hover:text-secondary-600 transition-colors">
+              <Link to="/community" className="font-bold text-neutral-900 dark:text-neutral-100 hover:text-secondary-600 transition-colors">
                 Community
               </Link>
             </div>
@@ -151,7 +151,7 @@ const IndexV2 = () => {
             <h2 className="text-3xl md:text-5xl font-black">
               <span className="font-bold">artifio.ai</span> Solves This
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-xl text-gray-800 dark:text-gray-200 max-w-3xl mx-auto">
               One Platform. Every Tool. Affordable Pricing.
             </p>
             <p className="text-lg max-w-2xl mx-auto">
@@ -201,7 +201,7 @@ const IndexV2 = () => {
                 ctaText="Browse Templates →"
                 ctaLink="/dashboard/custom-creation"
                 visual={
-                  <div className="text-center text-muted-foreground">
+                  <div className="text-center text-gray-800 dark:text-gray-200">
                     Template library interface preview
                   </div>
                 }
@@ -219,7 +219,7 @@ const IndexV2 = () => {
                 ctaLink="/pricing"
                 visual={
                   <div className="space-y-2">
-                    <div className="text-sm font-bold text-muted-foreground mb-4">
+                    <div className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4">
                       Select AI Model:
                     </div>
                     {["Midjourney", "DALL-E 3", "Runway", "Flux"].map((model) => (
@@ -245,7 +245,7 @@ const IndexV2 = () => {
                 visual={
                   <div className="text-center space-y-4">
                     <div className="text-5xl font-black text-primary">10,000</div>
-                    <div className="text-muted-foreground">Tokens Remaining</div>
+                    <div className="text-gray-800 dark:text-gray-200">Tokens Remaining</div>
                   </div>
                 }
               />
@@ -261,7 +261,7 @@ const IndexV2 = () => {
                 ctaText="Try Custom Mode →"
                 ctaLink="/dashboard/custom-creation"
                 visual={
-                  <div className="text-center text-muted-foreground">
+                  <div className="text-center text-gray-800 dark:text-gray-200">
                     Custom creation interface preview
                   </div>
                 }
@@ -310,7 +310,7 @@ const IndexV2 = () => {
             <h2 className="text-3xl md:text-5xl font-black">
               Made by Creators Like You
             </h2>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-xl text-gray-800 dark:text-gray-200">
               Join the community and share your creations
             </p>
           </div>
@@ -338,7 +338,7 @@ const IndexV2 = () => {
               <h2 className="text-3xl md:text-5xl font-black">
                 Access 22+ AI Models
               </h2>
-              <p className="text-xl text-muted-foreground">
+              <p className="text-xl text-gray-800 dark:text-gray-200">
                 All the best AI tools, one subscription
               </p>
             </div>
@@ -414,7 +414,7 @@ const IndexV2 = () => {
             </div>
 
             <div className="text-center">
-              <p className="text-lg font-bold text-muted-foreground">
+              <p className="text-lg font-bold text-gray-800 dark:text-gray-200">
                 + 12 more models
               </p>
             </div>

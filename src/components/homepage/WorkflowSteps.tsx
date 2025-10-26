@@ -39,7 +39,7 @@ export const WorkflowSteps = () => {
               Works
             </span>
           </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400">
+          <p className="text-xl text-gray-800 dark:text-gray-200">
             From idea to creation in 4 simple steps
           </p>
         </div>
@@ -62,7 +62,7 @@ export const WorkflowSteps = () => {
                 <h3 className="text-xl font-semibold mb-2">
                   {step.title}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-200">
                   {step.description}
                 </p>
               </GlassCard>

@@ -6,6 +6,13 @@ import { onCLS, onINP, onFCP, onLCP, onTTFB } from 'web-vitals';
 import { trackSession } from './lib/analytics';
 import { initPostHog } from './lib/posthog';
 
+// Initialize theme before first render to prevent flash
+const stored = localStorage.getItem('theme');
+const isDark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+if (isDark) {
+  document.documentElement.classList.add('dark');
+}
+
 // Initialize PostHog for A/B testing and analytics
 initPostHog();
 

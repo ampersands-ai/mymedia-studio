@@ -35,6 +35,16 @@ export const AdminLayout = () => {
         {/* Sidebar */}
         <aside className="w-64 min-h-screen bg-card border-r-3 border-black brutal-shadow">
           <div className="p-6 border-b-3 border-black">
+            <Link to="/" className="flex items-center space-x-3 mb-4 group">
+              <img 
+                src="/src/assets/logo.png" 
+                alt="artifio.ai logo" 
+                className="w-10 h-10 object-contain transition-transform group-hover:scale-110"
+              />
+              <span className="text-xl font-bold bg-gradient-to-r from-primary-yellow to-primary-orange bg-clip-text text-transparent">
+                artifio.ai
+              </span>
+            </Link>
             <h1 className="text-2xl font-black">ADMIN PANEL</h1>
           </div>
           <nav className="p-4 space-y-2">

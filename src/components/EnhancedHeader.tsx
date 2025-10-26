@@ -47,9 +47,11 @@ export const EnhancedHeader = () => {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-yellow to-primary-orange flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
-              <span className="text-white font-bold text-xl">A</span>
-            </div>
+            <img 
+              src="/src/assets/logo.png" 
+              alt="artifio.ai logo" 
+              className="w-10 h-10 object-contain transition-transform group-hover:scale-110"
+            />
             <span className="text-xl font-bold bg-gradient-to-r from-primary-yellow to-primary-orange bg-clip-text text-transparent">
               artifio.ai
             </span>

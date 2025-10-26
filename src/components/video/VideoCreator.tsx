@@ -13,7 +13,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Coins, Sparkles, Volume2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { VoiceSelector } from '../generation/VoiceSelector';
-import { getVoiceById } from '@/lib/voice-mapping';
 import { BackgroundMediaSelector } from './BackgroundMediaSelector';
 import { captionPresets, aspectRatioConfig } from '@/config/captionStyles';
 
@@ -52,13 +51,10 @@ export function VideoCreator() {
     }
   };
 
-  const handleSelectVoice = (id: string) => {
-    const voice = getVoiceById(id);
-    if (voice) {
-      setVoiceId(id);
-      setVoiceName(voice.name);
-      setVoiceDialogOpen(false);
-    }
+  const handleSelectVoice = (voiceId: string, voiceName: string) => {
+    setVoiceId(voiceId);
+    setVoiceName(voiceName);
+    setVoiceDialogOpen(false);
   };
 
   const handleCreate = async () => {
@@ -212,7 +208,6 @@ export function VideoCreator() {
               <VoiceSelector
                 selectedValue={voiceId}
                 onSelectVoice={handleSelectVoice}
-                mode="id"
               />
             </DialogContent>
           </Dialog>

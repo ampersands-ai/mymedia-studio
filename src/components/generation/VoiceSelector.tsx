@@ -11,13 +11,12 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 interface VoiceSelectorProps {
-  selectedValue: string;              // Can be voice_id or name depending on mode
-  onSelectVoice: (value: string) => void;  // Returns voice_id or name
-  mode: 'id' | 'name';                // Determines what gets stored/returned
+  selectedValue: string;              // voice_id for highlighting selected voice
+  onSelectVoice: (voiceId: string, voiceName: string) => void;  // Returns both ID and name
   disabled?: boolean;
 }
 
-export function VoiceSelector({ selectedValue, onSelectVoice, mode, disabled }: VoiceSelectorProps) {
+export function VoiceSelector({ selectedValue, onSelectVoice, disabled }: VoiceSelectorProps) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
@@ -47,15 +46,12 @@ export function VoiceSelector({ selectedValue, onSelectVoice, mode, disabled }: 
       return aHasPreview ? -1 : 1;
     });
 
-  // Determine selected voice based on mode
-  const selectedVoice = mode === 'id' 
-    ? getVoiceById(selectedValue) 
-    : getVoiceByName(selectedValue);
+  // Determine selected voice by ID
+  const selectedVoice = getVoiceById(selectedValue);
 
   const handleSelect = (voice: VoiceData) => {
     if (disabled) return;
-    const value = mode === 'id' ? voice.voice_id : voice.name;
-    onSelectVoice(value);
+    onSelectVoice(voice.voice_id, voice.name);
   };
 
   // Audio preview using Supabase Storage

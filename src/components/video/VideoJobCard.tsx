@@ -12,12 +12,46 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { useSignedUrlLazy } from '@/hooks/useSignedUrlLazy';
 import { Slider } from '@/components/ui/slider';
+import { GenerationProgress } from '@/components/generation/GenerationProgress';
+import { cn } from '@/lib/utils';
 
 
 interface VideoJobCardProps {
   job: VideoJob;
   onPreview?: (job: VideoJob) => void;
 }
+
+// Step Indicator Component for Progress Visualization
+const StepIndicator = ({ 
+  completed, 
+  active, 
+  label 
+}: { 
+  completed?: boolean; 
+  active?: boolean; 
+  label: string;
+}) => (
+  <div className="flex items-center gap-3">
+    <div className={cn(
+      "flex items-center justify-center w-6 h-6 rounded-full shrink-0",
+      completed ? "bg-green-500" : active ? "bg-primary" : "bg-muted"
+    )}>
+      {completed ? (
+        <CheckCircle className="w-4 h-4 text-white" />
+      ) : active ? (
+        <Loader2 className="w-4 h-4 text-white animate-spin" />
+      ) : (
+        <Clock className="w-4 h-4 text-muted-foreground" />
+      )}
+    </div>
+    <span className={cn(
+      "text-sm font-medium",
+      completed ? "text-foreground" : active ? "text-primary" : "text-muted-foreground"
+    )}>
+      {label}
+    </span>
+  </div>
+);
 
 export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const getStatusColor = (status: VideoJob['status']) => {
@@ -248,6 +282,24 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getEstimatedTime = (status: VideoJob['status']): number => {
+    const estimates = {
+      generating_voice: 180, // 3 minutes
+      fetching_video: 60,    // 1 minute
+      assembling: 120        // 2 minutes
+    };
+    return estimates[status as keyof typeof estimates] || 180;
+  };
+
+  const getStageDescription = (status: VideoJob['status']): string => {
+    const descriptions = {
+      generating_voice: '🎙️ Creating natural-sounding voiceover with AI voice synthesis...',
+      fetching_video: '🎬 Searching for relevant background videos and images...',
+      assembling: '✨ Combining voiceover, visuals, and captions into final video...'
+    };
+    return descriptions[status as keyof typeof descriptions] || 'Processing...';
   };
 
   const handleApproveScript = () => {
@@ -655,6 +707,65 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
           </div>
         )}
 
+        {/* Processing States - Expanded Progress View */}
+        {['generating_voice', 'fetching_video', 'assembling'].includes(job.status) && (
+          <div className="space-y-4 pt-3 border-t">
+            {/* Progress Timeline */}
+            <div className="space-y-3">
+              <StepIndicator completed={true} label="Script Generated" />
+              <StepIndicator 
+                active={job.status === 'generating_voice'} 
+                completed={['fetching_video', 'assembling'].includes(job.status)}
+                label="Voiceover Generation" 
+              />
+              <StepIndicator 
+                active={job.status === 'fetching_video'} 
+                completed={job.status === 'assembling'}
+                label="Finding Background Media" 
+              />
+              <StepIndicator 
+                active={job.status === 'assembling'} 
+                label="Assembling Final Video" 
+              />
+            </div>
+
+            {/* Progress Bar */}
+            <GenerationProgress
+              startTime={new Date(job.updated_at).getTime()}
+              isComplete={false}
+              estimatedTimeSeconds={getEstimatedTime(job.status)}
+            />
+
+            {/* Current Stage Description */}
+            <Alert>
+              <AlertDescription className="text-sm">
+                {getStageDescription(job.status)}
+              </AlertDescription>
+            </Alert>
+
+            {/* Cancel Button */}
+            <Button 
+              variant="destructive" 
+              size="sm"
+              onClick={handleCancel}
+              disabled={isCancelling}
+              className="w-full"
+            >
+              {isCancelling ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Cancelling...
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-4 w-4 mr-2" />
+                  Cancel Generation
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
         {/* Completed Video */}
         {job.status === 'completed' && job.final_video_url && (
           <div className="rounded-lg border-2 border-green-500 bg-green-500/5 p-4 space-y-3">
@@ -806,7 +917,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
           </div>
         )}
 
-        {isProcessing && !isStuckAssembling && !isNearTimeout && (
+        {isProcessing && !['generating_voice', 'fetching_video', 'assembling'].includes(job.status) && !isStuckAssembling && !isNearTimeout && (
           <div className="text-xs text-muted-foreground italic">
             ⏳ Processing... This usually takes 3-5 minutes
           </div>

@@ -169,15 +169,18 @@ export function VoiceSelector({ selectedValue, onSelectVoice, mode, disabled }: 
 
                 <div className="flex gap-2">
                   {voice.hasPreview === false ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 text-xs"
-                      disabled={true}
-                    >
-                      <X className="w-3 h-3 mr-1.5" />
-                      No Preview
-                    </Button>
+                    <div className="flex-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full text-xs"
+                        disabled={true}
+                      >
+                        <X className="w-3 h-3 mr-1.5" />
+                        No Preview
+                      </Button>
+                      <p className="text-[11px] text-muted-foreground mt-1">Preview not available</p>
+                    </div>
                   ) : (
                     <Button
                       size="sm"
@@ -203,7 +206,7 @@ export function VoiceSelector({ selectedValue, onSelectVoice, mode, disabled }: 
                     size="sm"
                     onClick={() => handleSelect(voice)}
                     disabled={disabled || selectedVoice?.voice_id === voice.voice_id}
-                    className="text-xs"
+                    className="text-xs min-w-[88px] whitespace-nowrap shrink-0"
                   >
                     {selectedVoice?.voice_id === voice.voice_id ? 'Selected' : 'Select'}
                   </Button>

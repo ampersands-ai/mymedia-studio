@@ -117,7 +117,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
             onChange={(e) => onChange(e.target.value)}
             placeholder={schema.description || "Enter your text here..."}
             rows={10}
-            className="resize-none font-mono text-sm focus-visible:ring-2 focus-visible:ring-primary"
+            className="min-h-[280px] md:min-h-[340px] resize-y text-base leading-relaxed focus-visible:ring-2 focus-visible:ring-primary"
             maxLength={maxChars}
           />
           <div className="flex justify-end">
@@ -226,7 +226,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
               {value || schema.default || 'Select voice'}
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh]">
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Choose a Voice</DialogTitle>
             </DialogHeader>

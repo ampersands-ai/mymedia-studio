@@ -177,6 +177,73 @@ const CustomCreation = () => {
     return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
   };
 
+  // Heuristic: find primary long-text field key (prompt/script/etc.)
+  const findPrimaryTextKey = (properties: Record<string, any> | undefined): string | undefined => {
+    if (!properties) return undefined;
+    const keywords = ["input text", "text", "prompt", "script", "caption", "description"];
+
+    let bestKey: string | undefined;
+    let bestScore = -Infinity;
+
+    for (const [key, schema] of Object.entries(properties)) {
+      const title = (schema?.title || "").toLowerCase();
+      const desc = (schema?.description || "").toLowerCase();
+      const name = key.toLowerCase();
+
+      // Ignore non-textual fields
+      const isFileLike = ["image", "file", "url", "upload"].some(k => name.includes(k) || title.includes(k) || desc.includes(k));
+      if (isFileLike) continue;
+
+      let score = 0;
+      if (schema?.type === "string") score += 2;
+      if (!schema?.enum) score += 1;
+      if (["textarea", "markdown"].includes(schema?.format)) score += 4;
+      const maxLen = typeof schema?.maxLength === "number" ? schema.maxLength : 0;
+      if (maxLen >= 200) score += 3;
+      if (maxLen >= 500) score += 1;
+
+      for (const kw of keywords) {
+        if (name.includes(kw) || title.includes(kw) || desc.includes(kw)) score += 2;
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestKey = key;
+      }
+    }
+
+    return bestScore >= 3 ? bestKey : undefined;
+  };
+
+  // Heuristic: find primary voice field key for ElevenLabs models
+  const findPrimaryVoiceKey = (properties: Record<string, any> | undefined, modelId?: string): string | undefined => {
+    if (!properties) return undefined;
+    if (!modelId || !modelId.toLowerCase().includes("elevenlabs")) return undefined;
+
+    const keywords = ["voice", "voice_id", "voice name"];  
+    let bestKey: string | undefined;
+    let bestScore = -Infinity;
+
+    for (const [key, schema] of Object.entries(properties)) {
+      const title = (schema?.title || "").toLowerCase();
+      const desc = (schema?.description || "").toLowerCase();
+      const name = key.toLowerCase();
+
+      let score = 0;
+      if (Array.isArray(schema?.enum) && schema.enum.length > 0) score += 2;
+      for (const kw of keywords) {
+        if (name.includes(kw) || title.includes(kw) || desc.includes(kw)) score += 3;
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestKey = key;
+      }
+    }
+
+    return bestScore >= 4 ? bestKey : undefined;
+  };
+
   const imageFieldInfo = getImageFieldInfo();
   const isImageRequired = imageFieldInfo.isRequired;
   const imageFieldName = imageFieldInfo.fieldName;
@@ -1198,33 +1265,34 @@ const CustomCreation = () => {
                 const currentModel = filteredModels.find(m => m.record_id === selectedModel);
                 if (!currentModel?.input_schema?.properties) return null;
                 
-                const properties = currentModel.input_schema.properties;
-                const hasInputText = properties['input.text'];
-                const hasInputVoice = properties['input.voice'];
-                
-                if (!hasInputText && !hasInputVoice) return null;
+                const properties = currentModel.input_schema.properties as Record<string, any>;
+                const textKey = findPrimaryTextKey(properties);
+                const voiceKey = findPrimaryVoiceKey(properties, currentModel.id);
+
+                console.debug('[Primary Inputs]', { textKey, voiceKey, modelId: currentModel.id });
+                if (!textKey && !voiceKey) return null;
                 
                 return (
                   <div className="space-y-4">
-                    {hasInputText && (
+                    {textKey && properties[textKey] && (
                       <SchemaInput
-                        name="input.text"
-                        schema={properties['input.text']}
-                        value={modelParameters['input.text']}
-                        onChange={(val) => setModelParameters({ ...modelParameters, 'input.text': val })}
-                        required={currentModel.input_schema.required?.includes('input.text')}
+                        name={textKey}
+                        schema={properties[textKey]}
+                        value={modelParameters[textKey]}
+                        onChange={(val) => setModelParameters({ ...modelParameters, [textKey]: val })}
+                        required={currentModel.input_schema.required?.includes(textKey)}
                         modelSchema={currentModel.input_schema}
                         allValues={modelParameters}
                         modelId={currentModel.id}
                       />
                     )}
-                    {hasInputVoice && (
+                    {voiceKey && properties[voiceKey] && (
                       <SchemaInput
-                        name="input.voice"
-                        schema={properties['input.voice']}
-                        value={modelParameters['input.voice']}
-                        onChange={(val) => setModelParameters({ ...modelParameters, 'input.voice': val })}
-                        required={currentModel.input_schema.required?.includes('input.voice')}
+                        name={voiceKey}
+                        schema={properties[voiceKey]}
+                        value={modelParameters[voiceKey]}
+                        onChange={(val) => setModelParameters({ ...modelParameters, [voiceKey]: val })}
+                        required={currentModel.input_schema.required?.includes(voiceKey)}
                         modelSchema={currentModel.input_schema}
                         allValues={modelParameters}
                         modelId={currentModel.id}
@@ -1250,15 +1318,22 @@ const CustomCreation = () => {
                   {/* Dynamic Model Parameters */}
                   {selectedModel && filteredModels && (() => {
                     const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-                    return currentModel?.input_schema ? (
-                      <ModelParameterForm
-                        modelSchema={currentModel.input_schema}
-                        onChange={setModelParameters}
-                        currentValues={modelParameters}
-                        excludeFields={['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls', 'input.text', 'input.voice']}
-                        modelId={currentModel.id}
-                      />
-                    ) : (
+                    return currentModel?.input_schema ? (() => {
+                      const properties = currentModel.input_schema.properties as Record<string, any>;
+                      const textKey = findPrimaryTextKey(properties);
+                      const voiceKey = findPrimaryVoiceKey(properties, currentModel.id);
+                      const baseExclude = ['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls'];
+                      const exclude = [...baseExclude, ...(textKey ? [textKey] : []), ...(voiceKey ? [voiceKey] : [])];
+                      return (
+                        <ModelParameterForm
+                          modelSchema={currentModel.input_schema}
+                          onChange={setModelParameters}
+                          currentValues={modelParameters}
+                          excludeFields={exclude}
+                          modelId={currentModel.id}
+                        />
+                      );
+                    })() : (
                       // Legacy Resolution fallback if no schema
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Resolution</label>

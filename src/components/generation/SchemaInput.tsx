@@ -94,8 +94,22 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     onChange(null);
   };
 
-  // Special case for input.text - elegant, large textarea
-  if (name === 'input.text') {
+  // Dynamic detection for primary long text field
+  const isLikelyPrimaryText = (
+    schema?.type === 'string' &&
+    !schema?.enum &&
+    !isImageUpload && (
+      ['textarea','markdown'].includes(schema?.format) ||
+      (typeof schema?.maxLength === 'number' ? schema.maxLength >= 200 : false) ||
+      [name, schema?.title, schema?.description]
+        .filter(Boolean)
+        .map((s: any) => String(s).toLowerCase())
+        .some((s: string) => /(prompt|script|input text|text|caption|description)\b/.test(s))
+    )
+  );
+
+  // Elegant, large textarea for primary text
+  if (isLikelyPrimaryText) {
     const charCount = (value || '').length;
     const maxChars = schema.maxLength || 5000;
     
@@ -203,11 +217,15 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     );
   }
 
-  // Special handling for ElevenLabs voice selection
+  const nameLc = name.toLowerCase();
+  const titleLc = (schema?.title || '').toLowerCase();
+  const descLc = (schema?.description || '').toLowerCase();
+  const voiceKeyHit = ['input.voice','voice','voice_name','voice_id'].includes(nameLc) || titleLc.includes('voice') || descLc.includes('voice');
+
   const isElevenLabsVoiceField = 
-    modelId?.startsWith('elevenlabs/') && 
-    name === 'input.voice' && 
-    schema.enum;
+    (modelId?.toLowerCase().includes('elevenlabs') ?? false) &&
+    Array.isArray(schema?.enum) &&
+    voiceKeyHit;
 
   if (isElevenLabsVoiceField) {
     return (

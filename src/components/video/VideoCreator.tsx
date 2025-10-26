@@ -165,7 +165,7 @@ export function VideoCreator() {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Recommended: 60 seconds for optimal engagement
+            Approximate only: final length of the video to be determined by the audio time (1s = 32 tokens)
           </p>
         </div>
 
@@ -212,7 +212,7 @@ export function VideoCreator() {
             </DialogContent>
           </Dialog>
           <p className="text-xs text-muted-foreground">
-            Browse and preview professional AI voices
+            Browse and preview professional AI voices (powered by ElevenLabs)
           </p>
         </div>
 

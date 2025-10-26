@@ -156,7 +156,7 @@ export function VideoCreator() {
             <Slider
               id="duration"
               min={30}
-              max={90}
+              max={180}
               step={5}
               value={[duration]}
               onValueChange={(value) => setDuration(value[0])}

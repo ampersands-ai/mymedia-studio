@@ -7,7 +7,7 @@ import { VideoJob, VideoJobInput } from '@/types/video';
 export function useVideoJobs() {
   const queryClient = useQueryClient();
 
-  // Fetch user's video jobs (exclude completed/failed ones - they go to History)
+  // Fetch user's latest job (includes completed to keep inline preview visible)
   const { data: jobs, isLoading } = useQuery({
     queryKey: ['video-jobs'],
     queryFn: async () => {
@@ -15,7 +15,6 @@ export function useVideoJobs() {
       const { data, error } = await supabase
         .from('video_jobs')
         .select('*')
-        .neq('status', 'completed')
         .neq('status', 'failed')
         .gte('updated_at', twoHoursAgo)
         .order('updated_at', { ascending: false })

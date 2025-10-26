@@ -285,7 +285,7 @@ const History = () => {
     }
   }, [previewGeneration, progress]);
 
-  const { data: generations, refetch, isRefetching } = useQuery({
+  const { data: generations, refetch, isRefetching } = useQuery<Generation[]>({
     queryKey: ["generations", user?.id],
     queryFn: async () => {
       // First get generations (including batch output fields)
@@ -352,8 +352,26 @@ const History = () => {
         };
       });
 
-      // Combine and sort by created_at
-      const combined = [...enrichedGenerations, ...videoGenerations].sort(
+      // Combine, deduplicate (prefer video jobs), and sort by created_at
+      const all: Generation[] = ([...enrichedGenerations, ...videoGenerations] as unknown) as Generation[];
+
+      const uniqueMap = new Map<string, Generation>();
+      for (const item of all) {
+        const key = item.output_url
+          ? `url:${item.output_url}`
+          : (item.storage_path ? `storage:${item.storage_path}` : `id:${item.id}`);
+        const existing = uniqueMap.get(key);
+        if (!existing) {
+          uniqueMap.set(key, item);
+        } else {
+          // Prefer the video job variant when duplicate output exists
+          if (!existing.is_video_job && item.is_video_job) {
+            uniqueMap.set(key, item);
+          }
+        }
+      }
+
+      const combined = Array.from(uniqueMap.values()).sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
@@ -695,7 +713,7 @@ const History = () => {
                     <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
                     <span className="text-xs text-red-500 font-medium">Generation Failed</span>
                   </div>
-                ) : generation.storage_path && generation.status === "completed" ? (
+                ) : ((generation.storage_path || (generation.is_video_job && generation.output_url)) && generation.status === "completed") ? (
                   <>
                     {generation.type === "video" ? (
                       <VideoPreview 

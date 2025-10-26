@@ -104,8 +104,9 @@ export function useVideoJobs() {
 
       return invokeWithRetry();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
+    onSuccess: async () => {
+      // Force immediate refetch to update UI
+      await queryClient.refetchQueries({ queryKey: ['video-jobs'] });
     },
     onError: (error: any) => {
       const message = error.message || 'Failed to approve script';
@@ -141,8 +142,9 @@ export function useVideoJobs() {
       if (data.error) throw new Error(data.error);
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
+    onSuccess: async () => {
+      // Force immediate refetch to update UI
+      await queryClient.refetchQueries({ queryKey: ['video-jobs'] });
     },
     onError: (error: any) => {
       const message = error.message || 'Failed to approve voiceover';
@@ -180,9 +182,10 @@ export function useVideoJobs() {
       
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Video job cancelled successfully');
-      queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
+      // Force immediate refetch to update UI
+      await queryClient.refetchQueries({ queryKey: ['video-jobs'] });
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to cancel video job');
@@ -202,8 +205,9 @@ export function useVideoJobs() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
+    onSuccess: async () => {
+      // Force immediate refetch to update UI
+      await queryClient.refetchQueries({ queryKey: ['video-jobs'] });
     },
     onError: (error: any) => {
       console.error('Caption generation error:', error);

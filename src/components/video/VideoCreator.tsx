@@ -165,7 +165,7 @@ export function VideoCreator() {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Approximate only: final length of the video to be determined by the audio time (1s = 32 tokens)
+            Approximate only: final length of the video to be determined by the audio time (1s = 12 tokens)
           </p>
         </div>
 

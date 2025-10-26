@@ -22,6 +22,37 @@ All colors MUST be HSL.
   animation: slide-up 0.3s ease-out;
 }
 
+/* Dark mode support */
+[data-theme='dark'] {
+  --bg-primary: hsl(240, 10%, 12%);
+  --bg-surface: hsl(240, 10%, 15%);
+  --text-primary: hsl(210, 40%, 98%);
+  --text-secondary: hsl(215, 20%, 65%);
+  --glass: rgba(30, 30, 38, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --gradient-hero: linear-gradient(180deg, hsl(240, 10%, 12%) 0%, hsl(240, 10%, 15%) 100%);
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes scroll-indicator {
+  0% { transform: translateY(0); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(12px); opacity: 0; }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-scroll {
+  animation: scroll-indicator 2s ease-in-out infinite;
+}
+
 @layer base {
   :root {
     /* Safe area insets for notched devices (iOS, modern Android) */

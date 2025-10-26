@@ -12,6 +12,10 @@ import { useUserTokens } from "@/hooks/useUserTokens";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { GallerySkeleton, PricingSkeleton } from "@/components/ui/skeletons";
 import { usePrefetchOnHover } from "@/hooks/useRoutePreload";
+import { HeroSection } from "@/components/homepage/HeroSection";
+import { TemplateCarousel } from "@/components/homepage/TemplateCarousel";
+import { WorkflowSteps } from "@/components/homepage/WorkflowSteps";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 // Lazy load heavy components
 const FeatureShowcase = lazy(() => import("@/components/homepage/FeatureShowcase").then(m => ({ default: m.FeatureShowcase })));
@@ -82,6 +86,7 @@ const IndexV2 = () => {
 
             {/* Auth Buttons - Right side */}
             <div className="flex items-center gap-3">
+              <ThemeToggle />
               {user ? (
                 <Button asChild variant="default">
                   <Link to="/dashboard/custom-creation">Go to Dashboard</Link>
@@ -102,38 +107,8 @@ const IndexV2 = () => {
         </div>
       </header>
 
-      {/* Section 1: Hero */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
-        <div className="max-w-6xl mx-auto text-center space-y-8">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black leading-tight text-neutral-900">
-            Create Professional Videos, Images & Music
-            <br />
-            <span className="text-primary-600">In Minutes—Not Hours</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-neutral-600 max-w-3xl mx-auto">
-            One platform. 22+ AI models. 200+ ready-to-use templates.
-            Everything creators need at 1/5th the cost.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button asChild variant="default" size="lg" className="text-lg" {...usePrefetchOnHover('create')}>
-              <Link to="/auth">START CREATING FOR FREE</Link>
-            </Button>
-            <Button asChild variant="secondary" size="lg" className="text-lg" {...usePrefetchOnHover('pricing')}>
-              <Link to="/pricing">SEE PRICING</Link>
-            </Button>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center text-sm text-neutral-500">
-            <span className="flex items-center gap-2">
-              <Check className="w-4 h-4 text-success" />
-              500 Free Tokens • No Credit Card
-            </span>
-            <span className="flex items-center gap-2">
-              <Check className="w-4 h-4 text-success" />
-              10,000+ Creators Worldwide
-            </span>
-          </div>
-        </div>
-      </section>
+      {/* Hero Section - New Design */}
+      <HeroSection />
 
       {/* Section 2: Social Proof Bar */}
       <section className="border-y-4 border-black bg-neutral-50 py-12">
@@ -204,112 +179,11 @@ const IndexV2 = () => {
         </div>
       </section>
 
-      {/* Section 4: Template Gallery */}
-      <section className="bg-neutral-50 py-16 md:py-24">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto space-y-8">
-            <div className="text-center space-y-4">
-              <h2 className="text-3xl md:text-5xl font-black">
-                200+ Templates Ready to Use
-              </h2>
-              <p className="text-xl text-muted-foreground">
-                Pick one, add your prompt, create in seconds
-              </p>
-            </div>
-            
-            <div className="flex flex-wrap justify-center gap-3">
-              {["all", "video", "image", "audio"].map((filter) => (
-                <Button
-                  key={filter}
-                  variant={templateFilter === filter ? "default" : "outline"}
-                  onClick={() => setTemplateFilter(filter)}
-                  className="capitalize"
-                >
-                  {filter}
-                </Button>
-              ))}
-            </div>
+      {/* Template Carousel - New Design */}
+      <TemplateCarousel templates={filteredTemplates || []} />
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {filteredTemplates?.map((template) => (
-                <Link
-                  key={template.id}
-                  to={`/dashboard/custom-creation?template=${template.id}`}
-                  className="group brutalist-card gpu-accelerated card overflow-hidden hover-lift"
-                  {...usePrefetchOnHover('custom-creation')}
-                >
-                  <div className="aspect-video bg-muted relative overflow-hidden">
-                    {template.thumbnail_url && (
-                      <OptimizedImage
-                        src={template.thumbnail_url}
-                        alt={template.name}
-                        className="w-full h-full object-cover"
-                        width={600}
-                        height={338}
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                      />
-                    )}
-                  </div>
-                  <div className="p-4 space-y-2">
-                    <h3 className="font-bold text-lg line-clamp-2">{template.name}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {template.description}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            <div className="text-center">
-              <Button asChild variant="outline" size="lg" {...usePrefetchOnHover('custom-creation')}>
-                <Link to="/dashboard/custom-creation">Browse All Templates →</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 5: How It Works */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
-        <div className="max-w-6xl mx-auto space-y-12">
-          <div className="text-center space-y-4">
-            <h2 className="text-3xl md:text-5xl font-black">How It Works</h2>
-            <p className="text-xl text-muted-foreground">
-              Create professional content in 3 steps
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                step: "1",
-                icon: <Palette className="w-16 h-16" />,
-                title: "Pick a Template",
-                desc: "Browse 200+ templates for every platform (Or start from scratch in Custom Mode)",
-              },
-              {
-                step: "2",
-                icon: <Edit className="w-16 h-16" />,
-                title: "Describe What You Want",
-                desc: "Enter your prompt or upload an image. Our AI does the rest",
-              },
-              {
-                step: "3",
-                icon: <Download className="w-16 h-16" />,
-                title: "Download & Share",
-                desc: "Get your creation in seconds. Use it anywhere you want",
-              },
-            ].map((item) => (
-              <div key={item.step} className="text-center space-y-4">
-                <div className="flex justify-center text-secondary-600">{item.icon}</div>
-                <div className="text-5xl font-black text-primary">{item.step}</div>
-                <h3 className="text-2xl font-black">{item.title}</h3>
-                <p className="text-muted-foreground">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Workflow Steps - New Design */}
+      <WorkflowSteps />
 
       {/* Section 6: Feature Showcase */}
       <section className="bg-neutral-50 py-16 md:py-24">

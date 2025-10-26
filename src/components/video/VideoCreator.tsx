@@ -12,7 +12,8 @@ import { useUserTokens } from '@/hooks/useUserTokens';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Coins, Sparkles, Volume2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
-import { VoiceBrowser } from './VoiceBrowser';
+import { VoiceSelector } from '../generation/VoiceSelector';
+import { getVoiceById } from '@/lib/voice-mapping';
 import { BackgroundMediaSelector } from './BackgroundMediaSelector';
 import { captionPresets, aspectRatioConfig } from '@/config/captionStyles';
 
@@ -51,10 +52,13 @@ export function VideoCreator() {
     }
   };
 
-  const handleSelectVoice = (id: string, name: string) => {
-    setVoiceId(id);
-    setVoiceName(name);
-    setVoiceDialogOpen(false);
+  const handleSelectVoice = (id: string) => {
+    const voice = getVoiceById(id);
+    if (voice) {
+      setVoiceId(id);
+      setVoiceName(voice.name);
+      setVoiceDialogOpen(false);
+    }
   };
 
   const handleCreate = async () => {
@@ -205,9 +209,10 @@ export function VideoCreator() {
               <DialogHeader>
                 <DialogTitle className="text-lg md:text-xl">Choose a Voice</DialogTitle>
               </DialogHeader>
-              <VoiceBrowser
-                selectedVoiceId={voiceId}
+              <VoiceSelector
+                selectedValue={voiceId}
                 onSelectVoice={handleSelectVoice}
+                mode="id"
               />
             </DialogContent>
           </Dialog>

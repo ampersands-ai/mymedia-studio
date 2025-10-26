@@ -18,7 +18,7 @@ import { captionPresets, aspectRatioConfig } from '@/config/captionStyles';
 
 export function VideoCreator() {
   const [topic, setTopic] = useState('');
-  const [duration, setDuration] = useState(60);
+  const [duration, setDuration] = useState(15);
   const [style, setStyle] = useState('modern');
   const [voiceId, setVoiceId] = useState('nPczCjzI2devNBz1zQrb');
   const [voiceName, setVoiceName] = useState('Brian');
@@ -79,17 +79,7 @@ export function VideoCreator() {
       caption_style: captionPresets[captionStyle],
     });
 
-    // Reset form on success
-    setTopic('');
-    setDuration(60);
-    setStyle('modern');
-    setVoiceId('21m00Tcm4TlvDq8ikWAM');
-    setVoiceName('Rachel');
-    setAspectRatio('4:5');
-    setCaptionStyle('modern');
-    setBackgroundVideoUrl('');
-    setBackgroundThumbnail('');
-    setBackgroundMediaType('video');
+    // Don't reset form - keep current generation visible until user explicitly cancels/resets
   };
 
   const hasActiveJob = jobs?.some(job => 

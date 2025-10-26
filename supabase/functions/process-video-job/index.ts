@@ -677,6 +677,20 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
               throw uploadError;
             }
             
+            // Generate signed URL from storage (valid for 7 days)
+            console.log(`[${jobId}] Generating signed URL from storage...`);
+            const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+              .from('generated-content')
+              .createSignedUrl(videoPath, 60 * 60 * 24 * 7);
+            
+            let finalVideoUrl = videoUrl; // fallback to Shotstack URL
+            if (!signedUrlError && signedUrlData?.signedUrl) {
+              finalVideoUrl = signedUrlData.signedUrl;
+              console.log(`[${jobId}] Using signed storage URL`);
+            } else {
+              console.warn(`[${jobId}] Could not generate signed URL, using Shotstack URL:`, signedUrlError);
+            }
+            
             // Create generation record with job's cost_tokens
             console.log(`[${jobId}] Creating generation record with ${job.cost_tokens} tokens...`);
             const { data: generation, error: genError } = await supabase.from('generations').insert({
@@ -721,7 +735,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
       
       await supabase.from('video_jobs').update({
         status: 'completed',
-        final_video_url: videoUrl,
+        final_video_url: finalVideoUrl,
         storage_path: videoPath,
         completed_at: new Date().toISOString()
       }).eq('id', jobId);

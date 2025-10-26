@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Sparkles, Database, FileText, Users, BarChart3, Loader2, Image, Flag, TrendingUp, AlertTriangle, Video, FolderTree } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Footer } from "@/components/Footer";
+import logo from "@/assets/logo.png";
 
 export const AdminLayout = () => {
   const location = useLocation();
@@ -37,7 +38,7 @@ export const AdminLayout = () => {
           <div className="p-6 border-b-3 border-black">
             <Link to="/" className="flex items-center space-x-3 mb-4 group">
               <img 
-                src="/src/assets/logo.png" 
+                src={logo} 
                 alt="artifio.ai logo" 
                 className="w-10 h-10 object-contain transition-transform group-hover:scale-110"
               />

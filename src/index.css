@@ -58,13 +58,13 @@ All colors MUST be HSL.
   --ring: 271 81% 56%;
 
   /* Custom variables for backward compatibility */
-  --bg-primary: hsl(240, 10%, 12%);
-  --bg-surface: hsl(240, 10%, 15%);
-  --text-primary: hsl(210, 40%, 98%);
-  --text-secondary: hsl(215, 20%, 75%);
-  --glass: rgba(30, 30, 38, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --gradient-hero: linear-gradient(180deg, hsl(240, 10%, 12%) 0%, hsl(240, 10%, 15%) 100%);
+  --bg-primary: 240 10% 12%;
+  --bg-surface: 240 10% 15%;
+  --text-primary: 210 40% 98%;
+  --text-secondary: 215 20% 75%;
+  --glass: 30 30 38 / 0.7;
+  --glass-border: 255 255 255 / 0.1;
+  --gradient-hero: linear-gradient(180deg, hsl(240 10% 12%) 0%, hsl(240 10% 15%) 100%);
 }
 
 /* Floating animation */
@@ -704,5 +704,37 @@ All colors MUST be HSL.
     color: hsl(var(--popover-foreground)) !important;
     border: 1px solid hsl(var(--border)) !important;
     z-index: 50 !important;
+  }
+
+  /* Dark mode utility classes for better coverage */
+  .bg-neutral-50 {
+    @apply dark:bg-neutral-900;
+  }
+  .bg-neutral-100 {
+    @apply dark:bg-neutral-800;
+  }
+  .text-neutral-600 {
+    @apply dark:text-neutral-400;
+  }
+  .text-neutral-700 {
+    @apply dark:text-neutral-300;
+  }
+  .text-neutral-800 {
+    @apply dark:text-neutral-200;
+  }
+  .text-neutral-900 {
+    @apply dark:text-neutral-100;
+  }
+  .text-gray-700 {
+    @apply dark:text-gray-300;
+  }
+  .text-gray-800 {
+    @apply dark:text-gray-200;
+  }
+  .border-neutral-200 {
+    @apply dark:border-neutral-700;
+  }
+  .border-gray-300 {
+    @apply dark:border-gray-700;
   }
 }

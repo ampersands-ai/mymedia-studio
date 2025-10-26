@@ -5,6 +5,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import logo from '@/assets/logo.png';
 
 export const EnhancedHeader = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -48,7 +49,7 @@ export const EnhancedHeader = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
             <img 
-              src="/src/assets/logo.png" 
+              src={logo} 
               alt="artifio.ai logo" 
               className="w-10 h-10 object-contain transition-transform group-hover:scale-110"
             />

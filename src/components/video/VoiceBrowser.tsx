@@ -29,7 +29,7 @@ interface Voice {
 const FALLBACK_VOICES: Voice[] = VOICE_DATABASE.map(voice => ({
   voice_id: voice.voice_id,
   name: voice.name,
-  preview_url: getVoicePreviewUrl(voice.voice_id),
+  preview_url: voice.hasPreview !== false ? getVoicePreviewUrl(voice.voice_id) : undefined,
   description: voice.description,
   labels: {
     gender: voice.gender,

@@ -155,7 +155,7 @@ export function VideoCreator() {
           <div className="overflow-x-hidden px-1">
             <Slider
               id="duration"
-              min={30}
+              min={10}
               max={180}
               step={5}
               value={[duration]}

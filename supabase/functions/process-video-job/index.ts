@@ -375,14 +375,13 @@ async function getBackgroundVideo(
     searchQuery = queries[style] || 'abstract motion background';
     console.log(`[${videoJobId}] Using style-based search: "${searchQuery}"`);
   }
-  const endpoint = `https://api.pexels.com/videos/search?query=${encodeURIComponent(searchQuery)}&per_page=20&orientation=landscape`;
+  const pixabayApiKey = Deno.env.get('PIXABAY_API_KEY');
+  const endpoint = `https://pixabay.com/api/videos/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&per_page=20`;
   const requestSentAt = new Date();
 
-  console.log(`[${videoJobId}] Searching Pexels for: ${searchQuery}`);
+  console.log(`[${videoJobId}] Searching Pixabay for: ${searchQuery}`);
 
-  const response = await fetch(endpoint, {
-    headers: { Authorization: Deno.env.get('PEXELS_API_KEY') ?? '' }
-  });
+  const response = await fetch(endpoint);
 
   const data = response.ok ? await response.json() : null;
 
@@ -392,43 +391,52 @@ async function getBackgroundVideo(
     {
       videoJobId,
       userId,
-      serviceName: 'pexels',
-      endpoint,
+      serviceName: 'pixabay',
+      endpoint: endpoint.replace(pixabayApiKey || '', 'REDACTED'),
       httpMethod: 'GET',
       stepName: 'fetch_background_video',
       requestPayload: { query: searchQuery, style, duration },
-      additionalMetadata: { per_page: 20, orientation: 'landscape', topic: topic || 'none' }
+      additionalMetadata: { per_page: 20, topic: topic || 'none' }
     },
     requestSentAt,
     {
       statusCode: response.status,
       payload: data,
       isError: !response.ok,
-      errorMessage: response.ok ? undefined : `Pexels returned ${response.status}`
+      errorMessage: response.ok ? undefined : `Pixabay returned ${response.status}`
     }
   ).catch(e => console.error('Failed to log API call:', e));
 
   if (!response.ok) {
-    throw new Error(`Pexels API error: ${response.status}`);
+    throw new Error(`Pixabay API error: ${response.status}`);
   }
   
-  if (!data.videos?.length) {
+  if (!data.hits?.length) {
     throw new Error('No background videos found');
   }
 
-  console.log(`[${videoJobId}] Found ${data.videos.length} videos from Pexels`);
+  console.log(`[${videoJobId}] Found ${data.hits.length} videos from Pixabay`);
 
-  // Filter videos longer than required duration
-  const suitable = data.videos.filter((v: any) => v.duration >= duration);
-  const video = suitable.length ? suitable[Math.floor(Math.random() * suitable.length)] : data.videos[0];
-
-  // Get HD file
-  const hdFile = video.video_files.find((f: any) => f.quality === 'hd' && f.width === 1920) || 
-                 video.video_files.find((f: any) => f.quality === 'hd') || 
-                 video.video_files[0];
+  // Filter landscape videos (width > height) longer than required duration
+  const landscapeVideos = data.hits.filter((v: any) => {
+    const width = v.videos?.large?.width || v.videos?.medium?.width || 1920;
+    const height = v.videos?.large?.height || v.videos?.medium?.height || 1080;
+    return width > height && v.duration >= duration;
+  });
   
-  console.log(`[${videoJobId}] Selected video: ${video.id}, quality: ${hdFile.quality}`);
-  return hdFile.link;
+  const video = landscapeVideos.length 
+    ? landscapeVideos[Math.floor(Math.random() * landscapeVideos.length)] 
+    : data.hits[0];
+
+  // Get best quality video URL
+  const videoUrl = video.videos?.large?.url || video.videos?.medium?.url || video.videos?.small?.url;
+  
+  if (!videoUrl) {
+    throw new Error('No video URL found');
+  }
+  
+  console.log(`[${videoJobId}] Selected video: ${video.id}`);
+  return videoUrl;
 }
 
 async function assembleVideo(

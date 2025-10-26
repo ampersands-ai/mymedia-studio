@@ -411,23 +411,21 @@ async function getBackgroundVideos(
     console.log(`Using style-based search: "${searchQuery}"`);
   }
 
-  // Determine orientation based on aspect ratio
+  // Determine target orientation for filtering
   const orientationMap: Record<string, string> = {
     '16:9': 'landscape',
     '9:16': 'portrait',
     '4:5': 'portrait',
     '1:1': 'square'
   };
-  const orientation = orientationMap[aspectRatio] || 'portrait';
+  const targetOrientation = orientationMap[aspectRatio] || 'portrait';
   
   // Request more videos (40 instead of 20) to have enough variety
-  const endpoint = `https://api.pexels.com/videos/search?query=${encodeURIComponent(searchQuery)}&per_page=40&orientation=${orientation}`;
+  const pixabayApiKey = Deno.env.get('PIXABAY_API_KEY');
+  const endpoint = `https://pixabay.com/api/videos/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&per_page=40`;
   const requestSentAt = new Date();
 
-  const response = await fetch(
-    endpoint,
-    { headers: { Authorization: Deno.env.get('PEXELS_API_KEY') ?? '' } }
-  );
+  const response = await fetch(endpoint);
 
   const data = response.ok ? await response.json() : null;
 
@@ -437,61 +435,61 @@ async function getBackgroundVideos(
     {
       videoJobId,
       userId,
-      serviceName: 'pexels',
-      endpoint,
+      serviceName: 'pixabay',
+      endpoint: endpoint.replace(pixabayApiKey || '', 'REDACTED'),
       httpMethod: 'GET',
       stepName: 'fetch_background_videos',
-      requestPayload: { query: searchQuery, per_page: 40, orientation },
-      additionalMetadata: { style, duration, topic: topic || 'none' }
+      requestPayload: { query: searchQuery, per_page: 40 },
+      additionalMetadata: { style, duration, topic: topic || 'none', targetOrientation }
     },
     requestSentAt,
     {
       statusCode: response.status,
       payload: data,
       isError: !response.ok,
-      errorMessage: response.ok ? undefined : `Pexels returned ${response.status}`
+      errorMessage: response.ok ? undefined : `Pixabay returned ${response.status}`
     }
   ).catch(e => console.error('Failed to log API call:', e));
 
   if (!response.ok) {
-    throw new Error('Pexels API error');
+    throw new Error('Pixabay API error');
   }
   
-  if (!data.videos?.length) {
+  if (!data.hits?.length) {
     throw new Error('No background videos found');
   }
 
-  // Select video file based on aspect ratio orientation
-  const selectHdFile = (video: any) => {
-    let hdFile;
+  // Filter videos by orientation based on aspect ratio
+  const filterByOrientation = (video: any) => {
+    const videoWidth = video.videos?.large?.width || video.videos?.medium?.width || 1920;
+    const videoHeight = video.videos?.large?.height || video.videos?.medium?.height || 1080;
+    const videoRatio = videoWidth / videoHeight;
     
-    if (orientation === 'portrait') {
-      // For portrait (9:16, 4:5), prioritize videos with height > width
-      hdFile = video.video_files.find((f: any) => 
-        f.quality === 'hd' && f.height >= 1920 && f.height > f.width
-      ) || video.video_files.find((f: any) => 
-        f.quality === 'hd' && f.height > f.width
-      );
-    } else {
-      // For landscape (16:9), prioritize videos with width > height
-      hdFile = video.video_files.find((f: any) => 
-        f.quality === 'hd' && f.width === 1920 && f.width > f.height
-      ) || video.video_files.find((f: any) => 
-        f.quality === 'hd' && f.width > f.height
-      );
+    if (targetOrientation === 'portrait') {
+      return videoRatio < 1; // height > width
+    } else if (targetOrientation === 'landscape') {
+      return videoRatio > 1; // width > height
     }
-    
-    // Fallback
-    if (!hdFile) {
-      hdFile = video.video_files.find((f: any) => f.quality === 'hd') || video.video_files[0];
-    }
-    
-    return hdFile;
+    return true; // square or all
   };
 
-  // Filter videos that are long enough (at least 10s for variety)
-  const suitable = data.videos.filter((v: any) => v.duration >= 10);
-  const videosToUse = suitable.length >= 5 ? suitable : data.videos;
+  // Select video URL based on aspect ratio and availability
+  const selectVideoUrl = (video: any) => {
+    const videos = video.videos;
+    
+    if (targetOrientation === 'portrait') {
+      // Prefer medium/small for portrait to ensure proper dimensions
+      return videos?.medium?.url || videos?.small?.url || videos?.large?.url;
+    } else {
+      // Prefer large for landscape
+      return videos?.large?.url || videos?.medium?.url || videos?.small?.url;
+    }
+  };
+
+  // Filter videos that match orientation and are long enough (at least 10s for variety)
+  const orientationFiltered = data.hits.filter(filterByOrientation);
+  const suitable = orientationFiltered.filter((v: any) => v.duration >= 10);
+  const videosToUse = suitable.length >= 5 ? suitable : (orientationFiltered.length ? orientationFiltered : data.hits);
   
   // Calculate how many clips we need (aim for 8-12 second clips)
   const averageClipDuration = 10;
@@ -511,8 +509,10 @@ async function getBackgroundVideos(
     
     usedIndices.add(randomIndex);
     const video = videosToUse[randomIndex];
-    const hdFile = selectHdFile(video);
-    selectedVideos.push(hdFile.link);
+    const videoUrl = selectVideoUrl(video);
+    if (videoUrl) {
+      selectedVideos.push(videoUrl);
+    }
   }
   
   console.log(`Selected ${selectedVideos.length} unique background videos`);

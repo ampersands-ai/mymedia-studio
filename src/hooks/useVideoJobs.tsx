@@ -7,15 +7,24 @@ import { VideoJob, VideoJobInput } from '@/types/video';
 export function useVideoJobs() {
   const queryClient = useQueryClient();
 
-  // Fetch user's latest job (includes completed to keep inline preview visible)
+  // Fetch user's latest active job only
   const { data: jobs, isLoading } = useQuery({
     queryKey: ['video-jobs'],
     queryFn: async () => {
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+      const activeStatuses = [
+        'pending',
+        'generating_script',
+        'awaiting_script_approval',
+        'generating_voice',
+        'awaiting_voice_approval',
+        'fetching_video',
+        'assembling'
+      ];
       const { data, error } = await supabase
         .from('video_jobs')
         .select('*')
-        .neq('status', 'failed')
+        .in('status', activeStatuses)
         .gte('updated_at', twoHoursAgo)
         .order('updated_at', { ascending: false })
         .limit(1);
@@ -24,7 +33,7 @@ export function useVideoJobs() {
       return (data || []) as VideoJob[];
     },
     refetchInterval: (query) => {
-      // Poll every 10s if there are any active jobs (all non-completed are active)
+      // Poll every 10s if there are any active jobs
       const hasActive = query.state.data && query.state.data.length > 0;
       return hasActive ? 10000 : false;
     },
@@ -165,30 +174,53 @@ export function useVideoJobs() {
     },
   });
 
-  // Cancel video job mutation
+  // Cancel video job mutation with optimistic updates
   const cancelJob = useMutation({
     mutationFn: async (jobId: string) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('video_jobs')
         .update({ 
           status: 'failed',
-          error_message: 'Cancelled by user'
+          error_message: 'Cancelled by user',
+          updated_at: new Date().toISOString()
         })
         .eq('id', jobId)
         .in('status', [
           'pending', 'generating_script', 'awaiting_script_approval',
           'generating_voice', 'awaiting_voice_approval', 'fetching_video', 'assembling'
-        ]);
+        ])
+        .select('id');
       
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error('Unable to cancel this job as it may have already completed or been cancelled.');
+      }
+    },
+    onMutate: async (jobId: string) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['video-jobs'] });
+      
+      // Snapshot previous value
+      const previous = queryClient.getQueryData<VideoJob[]>(['video-jobs']);
+      
+      // Optimistically remove the job from the list
+      queryClient.setQueryData<VideoJob[]>(['video-jobs'], (old) => 
+        old ? old.filter(j => j.id !== jobId) : old
+      );
+      
+      return { previous };
+    },
+    onError: (error: any, _jobId, context) => {
+      // Rollback on error
+      if (context?.previous) {
+        queryClient.setQueryData(['video-jobs'], context.previous);
+      }
+      toast.error(error.message || 'Failed to cancel video job');
     },
     onSuccess: async () => {
       toast.success('Video job cancelled successfully');
-      // Force immediate refetch to update UI
+      // Refetch to ensure we're in sync
       await queryClient.refetchQueries({ queryKey: ['video-jobs'] });
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to cancel video job');
     },
   });
 

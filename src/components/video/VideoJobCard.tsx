@@ -137,9 +137,9 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     };
   }, [job.id]);
 
-  const handleToggleVoiceover = () => {
+  const handleToggleVoiceover = async () => {
     if (!voiceoverSignedUrl) {
-      toast.error('Voiceover URL not ready');
+      toast.error('Voiceover URL not ready yet');
       return;
     }
     
@@ -154,6 +154,22 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     if (audioRef.current && !isPlayingAudio) {
       audioRef.current.play();
       setIsPlayingAudio(true);
+      return;
+    }
+    
+    // Verify URL is accessible before creating audio instance
+    console.log('[VideoJobCard] Validating voiceover URL:', voiceoverSignedUrl);
+    try {
+      const testResponse = await fetch(voiceoverSignedUrl, { method: 'HEAD' });
+      if (!testResponse.ok) {
+        console.error('[VideoJobCard] Voiceover URL not accessible:', testResponse.status);
+        toast.error(`Voiceover file is not accessible (HTTP ${testResponse.status}). Please try again.`);
+        return;
+      }
+      console.log('[VideoJobCard] ✅ Voiceover URL validation passed');
+    } catch (err) {
+      console.error('[VideoJobCard] Failed to validate voiceover URL:', err);
+      toast.error('Unable to validate voiceover file. Please check your connection.');
       return;
     }
     
@@ -175,13 +191,18 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
       setCurrentTime(0);
     };
     
-    audio.onerror = () => {
+    audio.onerror = (e) => {
+      console.error('[VideoJobCard] Audio playback error:', e);
       setIsPlayingAudio(false);
       audioRef.current = null;
-      toast.error('Failed to play voiceover');
+      toast.error('Failed to play voiceover. The file may be corrupted or inaccessible.');
     };
     
-    audio.play();
+    audio.play().catch(err => {
+      console.error('[VideoJobCard] Failed to start audio playback:', err);
+      toast.error('Failed to start playback. Please try again.');
+      setIsPlayingAudio(false);
+    });
   };
 
   const handleRestartAudio = () => {

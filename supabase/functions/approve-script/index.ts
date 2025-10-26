@@ -266,7 +266,7 @@ Deno.serve(async (req) => {
     console.log(`[${job_id}] Voiceover stored at: ${voiceoverPublicUrl}`);
 
     // Update job with FULL PUBLIC URL, actual duration, and new status
-    await supabaseClient
+    const { error: updateError } = await supabaseClient
       .from('video_jobs')
       .update({
         voiceover_url: voiceoverPublicUrl, // Store full public URL
@@ -276,6 +276,34 @@ Deno.serve(async (req) => {
       })
       .eq('id', job_id);
 
+    if (updateError) {
+      console.error(`[${job_id}] Failed to update job with voiceover:`, updateError);
+      throw new Error(`Failed to update job with voiceover: ${updateError.message}`);
+    }
+
+    console.log(`[${job_id}] Job updated, verifying database storage...`);
+    
+    // Verify the URL was stored correctly
+    const { data: verifyJob, error: verifyError } = await supabaseClient
+      .from('video_jobs')
+      .select('voiceover_url')
+      .eq('id', job_id)
+      .single();
+
+    if (verifyError) {
+      console.error(`[${job_id}] Failed to verify voiceover URL:`, verifyError);
+      throw new Error('Failed to verify voiceover URL was saved');
+    }
+
+    console.log(`[${job_id}] Verification - Expected URL: ${voiceoverPublicUrl}`);
+    console.log(`[${job_id}] Verification - Actual URL in DB: ${verifyJob?.voiceover_url}`);
+
+    if (verifyJob?.voiceover_url !== voiceoverPublicUrl) {
+      console.error(`[${job_id}] URL MISMATCH! Database contains: ${verifyJob?.voiceover_url}`);
+      throw new Error('Voiceover URL was not stored correctly in database');
+    }
+
+    console.log(`[${job_id}] ✅ Verification passed - URL stored correctly`);
     console.log(`[${job_id}] Voiceover generated, awaiting approval`);
 
     return new Response(

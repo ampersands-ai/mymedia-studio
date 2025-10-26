@@ -35,7 +35,9 @@ export const useSignedUrlLazy = (
     const fetchSignedUrl = async () => {
       setIsLoading(true);
       try {
-        // If already an absolute URL, use it directly
+        let actualPath = storagePath;
+        
+        // Case 1: Already an absolute URL - use it directly
         if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
           console.log(`[useSignedUrlLazy] Using absolute URL directly: ${storagePath}`);
           setSignedUrl(storagePath);
@@ -44,19 +46,26 @@ export const useSignedUrlLazy = (
           return;
         }
 
-        // Extract the actual storage path if it's a full URL
-        let actualPath = storagePath;
-        
+        // Case 2: Full storage URL format (contains /storage/v1/object/public/)
         if (storagePath.includes('/storage/v1/object/public/')) {
           const pathMatch = storagePath.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)/);
           if (pathMatch) {
             actualPath = pathMatch[1];
+            console.log(`[useSignedUrlLazy] Extracted path from storage URL: ${actualPath}`);
           }
-        } else if (storagePath.includes(`/${bucket}/`)) {
+        } 
+        // Case 3: Relative path with bucket name
+        else if (storagePath.includes(`/${bucket}/`)) {
           const pathMatch = storagePath.split(`/${bucket}/`)[1];
           if (pathMatch) {
             actualPath = pathMatch;
+            console.log(`[useSignedUrlLazy] Extracted path from bucket reference: ${actualPath}`);
           }
+        }
+        // Case 4: Pure filename (no slashes, no http) - CRITICAL FIX
+        else if (!storagePath.includes('/')) {
+          actualPath = storagePath;
+          console.log(`[useSignedUrlLazy] Detected filename-only input: "${storagePath}"`);
         }
 
         console.log(`[useSignedUrlLazy] Fetching signed URL for bucket: ${bucket}, path: ${actualPath} (original: ${storagePath})`);

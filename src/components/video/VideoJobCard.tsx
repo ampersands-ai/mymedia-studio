@@ -137,6 +137,27 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     };
   }, [job.id]);
 
+  // Cleanup states when job becomes failed (cancelled or error)
+  useEffect(() => {
+    if (job.status === 'failed') {
+      // Stop audio if playing
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      setIsPlayingAudio(false);
+      setCurrentTime(0);
+      setDuration(0);
+      
+      // Reset editing states
+      setIsEditingScript(false);
+      setIsEditingVoiceoverScript(false);
+      
+      // Clear countdown
+      setTimeoutCountdown(null);
+    }
+  }, [job.status]);
+
   const handleToggleVoiceover = async () => {
     if (!voiceoverSignedUrl) {
       toast.error('Voiceover URL not ready yet');
@@ -244,6 +265,25 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
 
   const handleCancel = () => {
     if (confirm('Are you sure you want to cancel this video? This action cannot be undone.')) {
+      // Stop and cleanup audio immediately
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      setIsPlayingAudio(false);
+      setCurrentTime(0);
+      setDuration(0);
+      
+      // Reset all editing states
+      setIsEditingScript(false);
+      setIsEditingVoiceoverScript(false);
+      setEditedScript(job.script || '');
+      setEditedVoiceoverScript(job.script || '');
+      
+      // Clear countdown
+      setTimeoutCountdown(null);
+      
+      // Now cancel the job
       cancelJob.mutate(job.id);
     }
   };

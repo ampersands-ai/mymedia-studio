@@ -182,6 +182,7 @@ export function useVideoJobs() {
       if (error) throw error;
     },
     onSuccess: () => {
+      toast.success('Video job cancelled successfully');
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
     },
     onError: (error: any) => {

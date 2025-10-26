@@ -576,7 +576,36 @@ async function assembleVideo(
     }
   };
 
-  // Track 0: Background media (video or images)
+  // Track 0: Auto-generated captions (TOP LAYER - renders on top of video)
+  const captionAsset = {
+    type: 'caption',
+    src: 'alias://VOICEOVER' // Auto-sync to voiceover audio
+  };
+
+  edit.timeline.tracks.push({
+    clips: [{
+      asset: captionAsset,
+      start: 0,
+      length: 'auto'
+    }]
+  });
+
+  console.log('Using minimal auto-captions (validated to work with Shotstack)');
+
+  // Track 1: Audio with alias (for caption sync)
+  edit.timeline.tracks.push({
+    clips: [{
+      asset: {
+        type: 'audio',
+        src: assets.voiceoverUrl
+      },
+      start: 0,
+      length: 'auto',
+      alias: 'VOICEOVER' // Alias for caption generation
+    }]
+  });
+
+  // Track 2: Background media (BOTTOM LAYER - renders behind captions)
   if (backgroundMediaType === 'image' && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
     const clipDuration = Math.ceil(assets.duration / assets.backgroundImageUrls.length);
     const imageClips = assets.backgroundImageUrls.map((imageUrl, index) => ({
@@ -608,35 +637,6 @@ async function assembleVideo(
     edit.timeline.tracks.push({ clips: videoClips });
     console.log(`Added ${videoClips.length} background video clips`);
   }
-
-  // Track 1: Audio with alias (for auto-captions)
-  edit.timeline.tracks.push({
-    clips: [{
-      asset: {
-        type: 'audio',
-        src: assets.voiceoverUrl
-      },
-      start: 0,
-      length: 'auto',
-      alias: 'VOICEOVER' // Alias for caption generation
-    }]
-  });
-
-  // Track 2: Auto-generated captions using minimal config (styling causes validation errors)
-  const captionAsset = {
-    type: 'caption',
-    src: 'alias://VOICEOVER' // Auto-sync to voiceover audio
-  };
-
-  edit.timeline.tracks.push({
-    clips: [{
-      asset: captionAsset,
-      start: 0,
-      length: 'auto'
-    }]
-  });
-
-  console.log('Using minimal auto-captions (validated to work with Shotstack)');
 
   // Submit to Shotstack API
   const endpoint = 'https://api.shotstack.io/v1/render';

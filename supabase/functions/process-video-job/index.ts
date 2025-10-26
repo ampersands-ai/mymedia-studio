@@ -624,7 +624,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
       // Get job details to create generation
       const { data: job } = await supabase
         .from('video_jobs')
-        .select('user_id, topic, duration, style, voice_id')
+        .select('user_id, topic, duration, style, voice_id, cost_tokens')
         .eq('id', jobId)
         .single();
       
@@ -633,65 +633,76 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
       
       if (job) {
         try {
-          // Download video from Shotstack
-          console.log(`[${jobId}] Downloading video from Shotstack...`);
-          const videoResponse = await fetch(videoUrl);
-          if (!videoResponse.ok) {
-            throw new Error('Failed to download video from Shotstack');
-          }
+          // Check if generation already exists (idempotency)
+          const { data: existingGeneration } = await supabase
+            .from('generations')
+            .select('id')
+            .eq('settings->>video_job_id', jobId)
+            .single();
           
-          const videoBlob = await videoResponse.blob();
-          const videoBuffer = await videoBlob.arrayBuffer();
-          const videoData = new Uint8Array(videoBuffer);
-          
-          // Upload to generated-content bucket (using videoPath defined above)
-          console.log(`[${jobId}] Uploading video to storage: ${videoPath}`);
-          
-          const { error: uploadError } = await supabase.storage
-            .from('generated-content')
-            .upload(videoPath, videoData, {
-              contentType: 'video/mp4',
-              upsert: true
-            });
-          
-          if (uploadError) {
-            console.error(`[${jobId}] Storage upload error:`, uploadError);
-            throw uploadError;
-          }
-          
-          // Create generation record
-          console.log(`[${jobId}] Creating generation record...`);
-          const { data: generation, error: genError } = await supabase.from('generations').insert({
-            user_id: job.user_id,
-            type: 'video',
-            prompt: `Faceless Video: ${job.topic}`,
-            status: 'completed',
-            tokens_used: 15,
-            storage_path: videoPath,
-            model_id: 'faceless-video-generator',
-            file_size_bytes: videoData.length,
-            settings: {
-              duration: job.duration,
-              style: job.style,
-              voice_id: job.voice_id,
-              video_job_id: jobId
-            }
-          }).select('id').single();
-          
-          if (genError) {
-            console.error(`[${jobId}] Generation insert error:`, genError);
+          if (existingGeneration) {
+            console.log(`[${jobId}] Generation record already exists: ${existingGeneration.id}, skipping creation`);
           } else {
-            console.log(`[${jobId}] Generation record created: ${generation.id}`);
+            // Download video from Shotstack
+            console.log(`[${jobId}] Downloading video from Shotstack...`);
+            const videoResponse = await fetch(videoUrl);
+            if (!videoResponse.ok) {
+              throw new Error('Failed to download video from Shotstack');
+            }
             
-            // Link all API logs to this generation
-            try {
-              await supabase
-                .from('api_call_logs')
-                .update({ generation_id: generation.id })
-                .eq('video_job_id', jobId)
-                .is('generation_id', null);
-            } catch (error) {
-              console.error('Failed to link API logs to generation:', error);
+            const videoBlob = await videoResponse.blob();
+            const videoBuffer = await videoBlob.arrayBuffer();
+            const videoData = new Uint8Array(videoBuffer);
+            
+            // Upload to generated-content bucket (using videoPath defined above)
+            console.log(`[${jobId}] Uploading video to storage: ${videoPath}`);
+            
+            const { error: uploadError } = await supabase.storage
+              .from('generated-content')
+              .upload(videoPath, videoData, {
+                contentType: 'video/mp4',
+                upsert: true
+              });
+            
+            if (uploadError) {
+              console.error(`[${jobId}] Storage upload error:`, uploadError);
+              throw uploadError;
+            }
+            
+            // Create generation record with job's cost_tokens
+            console.log(`[${jobId}] Creating generation record with ${job.cost_tokens} tokens...`);
+            const { data: generation, error: genError } = await supabase.from('generations').insert({
+              user_id: job.user_id,
+              type: 'video',
+              prompt: `Faceless Video: ${job.topic}`,
+              status: 'completed',
+              tokens_used: job.cost_tokens,
+              storage_path: videoPath,
+              model_id: 'faceless-video-generator',
+              file_size_bytes: videoData.length,
+              settings: {
+                duration: job.duration,
+                style: job.style,
+                voice_id: job.voice_id,
+                video_job_id: jobId
+              }
+            }).select('id').single();
+            
+            if (genError) {
+              console.error(`[${jobId}] Generation insert error:`, genError);
+            } else {
+              console.log(`[${jobId}] Generation record created: ${generation.id}`);
+              
+              // Link all API logs to this generation
+              try {
+                await supabase
+                  .from('api_call_logs')
+                  .update({ generation_id: generation.id })
+                  .eq('video_job_id', jobId)
+                  .is('generation_id', null);
+              } catch (error) {
+                console.error('Failed to link API logs to generation:', error);
+              }
             }
           }
         } catch (error) {

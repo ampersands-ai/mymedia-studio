@@ -332,7 +332,7 @@ const History = () => {
           type: 'video',
           prompt: `Faceless Video: ${video.topic}`,
           output_url: video.final_video_url,
-          storage_path: null, // Use final_video_url directly, not synthetic storage path
+          storage_path: video.storage_path, // Use storage_path for deduplication
           status: video.status,
           tokens_used: video.cost_tokens,
           created_at: video.created_at,

@@ -1,15 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { VideoJob, VideoJobInput } from '@/types/video';
 
+const PINNED_JOB_KEY = 'pinnedVideoJobId';
+
 export function useVideoJobs() {
   const queryClient = useQueryClient();
+  const [pinnedJobId, setPinnedJobId] = useState<string | null>(() => 
+    localStorage.getItem(PINNED_JOB_KEY)
+  );
 
-  // Fetch user's latest active job only
+  // Fetch user's latest active job or pinned job
   const { data: jobs, isLoading } = useQuery({
-    queryKey: ['video-jobs'],
+    queryKey: ['video-jobs', pinnedJobId],
     queryFn: async () => {
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
       const activeStatuses = [
@@ -21,6 +26,8 @@ export function useVideoJobs() {
         'fetching_video',
         'assembling'
       ];
+      
+      // First try to fetch active jobs
       const { data, error } = await supabase
         .from('video_jobs')
         .select('*')
@@ -30,6 +37,23 @@ export function useVideoJobs() {
         .limit(1);
       
       if (error) throw error;
+      
+      // If no active jobs and we have a pinned job, fetch it
+      if ((!data || data.length === 0) && pinnedJobId) {
+        const { data: pinnedData, error: pinnedError } = await supabase
+          .from('video_jobs')
+          .select('*')
+          .eq('id', pinnedJobId)
+          .single();
+        
+        if (pinnedError) {
+          console.error('Error fetching pinned job:', pinnedError);
+          return [];
+        }
+        
+        return pinnedData ? [pinnedData] : [];
+      }
+      
       return (data || []) as VideoJob[];
     },
     refetchInterval: (query) => {
@@ -57,6 +81,19 @@ export function useVideoJobs() {
     };
   }, [queryClient]);
 
+  // Pin/unpin helpers
+  const pinJob = (jobId: string) => {
+    localStorage.setItem(PINNED_JOB_KEY, jobId);
+    setPinnedJobId(jobId);
+    queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
+  };
+
+  const clearPinnedJob = () => {
+    localStorage.removeItem(PINNED_JOB_KEY);
+    setPinnedJobId(null);
+    queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
+  };
+
   // Create video job mutation
   const createJob = useMutation({
     mutationFn: async (input: VideoJobInput) => {
@@ -68,7 +105,11 @@ export function useVideoJobs() {
       if (data.error) throw new Error(data.error);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Pin the newly created job
+      if (data.job?.id) {
+        pinJob(data.job.id);
+      }
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
       queryClient.invalidateQueries({ queryKey: ['user-tokens'] });
     },
@@ -302,7 +343,10 @@ export function useVideoJobs() {
 
   return { 
     jobs, 
-    isLoading, 
+    isLoading,
+    pinnedJobId,
+    pinJob,
+    clearPinnedJob,
     createJob,
     isCreating: createJob.isPending,
     approveScript,

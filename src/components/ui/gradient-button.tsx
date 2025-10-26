@@ -22,7 +22,7 @@ export const GradientButton = ({
   };
 
   const variantClasses = {
-    primary: 'bg-gradient-to-r from-primary-yellow to-primary-orange text-white shadow-primary hover:shadow-glow',
+    primary: 'bg-gradient-to-r from-primary-yellow to-primary-orange text-black shadow-primary hover:shadow-glow',
     secondary: 'bg-gradient-to-r from-accent-purple to-accent-pink text-white shadow-secondary hover:shadow-lg',
   };
 
@@ -30,7 +30,7 @@ export const GradientButton = ({
     <button
       disabled={disabled}
       className={cn(
-        "rounded-full font-semibold relative overflow-hidden",
+        "rounded-full font-semibold relative overflow-hidden group",
         "transition-all duration-300 hover:scale-105 active:scale-95",
         "disabled:opacity-50 disabled:cursor-not-allowed",
         sizeClasses[size],

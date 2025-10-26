@@ -45,12 +45,22 @@ All colors MUST be HSL.
   100% { transform: translateY(12px); opacity: 0; }
 }
 
+@keyframes gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
 
 .animate-scroll {
   animation: scroll-indicator 2s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 3s ease infinite;
 }
 
 @layer base {
@@ -650,5 +660,15 @@ All colors MUST be HSL.
     .hover-lift {
       transition: none;
     }
+  }
+
+  /* Ensure dropdowns and popovers have solid backgrounds and proper z-index */
+  [role="menu"],
+  [role="listbox"],
+  [data-radix-popper-content-wrapper] > div {
+    background: hsl(var(--popover)) !important;
+    color: hsl(var(--popover-foreground)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    z-index: 50 !important;
   }
 }

@@ -18,9 +18,9 @@ export const GlassCard = ({
       className={cn(
         "relative rounded-xl backdrop-blur-lg border shadow-lg",
         gradient 
-          ? "bg-gradient-to-br from-white/60 to-white/30 dark:from-gray-800/60 dark:to-gray-900/30" 
-          : "bg-white/70 dark:bg-gray-800/70",
-        "border-white/20 dark:border-gray-700/20",
+          ? "bg-gradient-to-br from-white/80 to-white/60 dark:from-gray-800/80 dark:to-gray-900/70" 
+          : "bg-white/90 dark:bg-gray-800/90",
+        "border-white/30 dark:border-gray-700/30",
         hover && "transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl",
         className
       )}

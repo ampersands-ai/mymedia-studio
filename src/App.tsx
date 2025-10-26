@@ -9,7 +9,6 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { Analytics } from "./components/Analytics";
 import { App as CapacitorApp } from '@capacitor/app';
 import { setStatusBarStyle, isNativePlatform } from "@/utils/capacitor-utils";
-import { initPostHog } from "@/lib/posthog";
 import { usePostHog } from "@/hooks/usePostHog";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
@@ -55,18 +54,13 @@ const TemplateAnalytics = lazy(() => import("./pages/admin/TemplateAnalytics"));
 const SharedContent = lazy(() => import("./pages/SharedContent"));
 
 const AppContent = () => {
-  // Initialize PostHog
-  useEffect(() => {
-    initPostHog();
-  }, []);
-
-  // Use PostHog tracking
+  // Use PostHog tracking (initialized in main.tsx)
   usePostHog();
 
   // Preload critical routes based on auth status
   useRoutePreload();
 
-  // Initialize performance monitoring
+  // Initialize performance monitoring (initialized in main.tsx)
   useEffect(() => {
     reportWebVitals();
     monitorPerformance();

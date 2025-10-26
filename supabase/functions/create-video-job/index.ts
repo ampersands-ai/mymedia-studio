@@ -43,8 +43,8 @@ serve(async (req) => {
       throw new Error('Topic must be at least 5 characters');
     }
 
-    if (duration < 30 || duration > 90) {
-      throw new Error('Duration must be between 30 and 90 seconds');
+    if (duration < 10 || duration > 180) {
+      throw new Error('Duration must be between 10 and 180 seconds');
     }
 
     // Check token balance

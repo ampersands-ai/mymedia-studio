@@ -576,7 +576,20 @@ async function assembleVideo(
     }
   };
 
-  // Track 0: Auto-generated captions (TOP LAYER - renders on top of video)
+  // Track 0: Audio with alias (for caption sync)
+  edit.timeline.tracks.push({
+    clips: [{
+      asset: {
+        type: 'audio',
+        src: assets.voiceoverUrl
+      },
+      start: 0,
+      length: 'auto',
+      alias: 'VOICEOVER' // Alias for caption generation
+    }]
+  });
+
+  // Track 1: Auto-generated captions (renders on top of video)
   const captionAsset = {
     type: 'caption',
     src: 'alias://VOICEOVER' // Auto-sync to voiceover audio
@@ -592,20 +605,7 @@ async function assembleVideo(
 
   console.log('Using minimal auto-captions (validated to work with Shotstack)');
 
-  // Track 1: Audio with alias (for caption sync)
-  edit.timeline.tracks.push({
-    clips: [{
-      asset: {
-        type: 'audio',
-        src: assets.voiceoverUrl
-      },
-      start: 0,
-      length: 'auto',
-      alias: 'VOICEOVER' // Alias for caption generation
-    }]
-  });
-
-  // Track 2: Background media (BOTTOM LAYER - renders behind captions)
+  // Track 2: Background media (bottom layer)
   if (backgroundMediaType === 'image' && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
     const clipDuration = Math.ceil(assets.duration / assets.backgroundImageUrls.length);
     const imageClips = assets.backgroundImageUrls.map((imageUrl, index) => ({
@@ -637,6 +637,10 @@ async function assembleVideo(
     edit.timeline.tracks.push({ clips: videoClips });
     console.log(`Added ${videoClips.length} background video clips`);
   }
+
+  // Debug: Log track order before submission
+  console.log('Track order:', edit.timeline.tracks.map((t: any) => t.clips?.[0]?.asset?.type));
+  console.log('Caption asset:', edit.timeline.tracks[1]?.clips?.[0]?.asset);
 
   // Submit to Shotstack API
   const endpoint = 'https://api.shotstack.io/v1/render';
@@ -709,10 +713,13 @@ async function assembleVideo(
       console.log('Retrying with minimal caption asset and auto length...');
       const fallbackEdit: any = JSON.parse(JSON.stringify(edit));
       try {
-        const captionTrack = fallbackEdit.timeline.tracks[2];
-        if (captionTrack?.clips?.[0]) {
-          captionTrack.clips[0].asset = { type: 'caption', src: 'alias://VOICEOVER' };
-          captionTrack.clips[0].length = 'auto';
+        // Dynamically find caption track instead of using hardcoded index
+        const captionTrackIndex = fallbackEdit.timeline.tracks.findIndex((t: any) => 
+          t.clips?.[0]?.asset?.type === 'caption' || t.clips?.[0]?.asset?.type === 'captions'
+        );
+        if (captionTrackIndex !== -1 && fallbackEdit.timeline.tracks[captionTrackIndex]?.clips?.[0]) {
+          fallbackEdit.timeline.tracks[captionTrackIndex].clips[0].asset = { type: 'caption', src: 'alias://VOICEOVER' };
+          fallbackEdit.timeline.tracks[captionTrackIndex].clips[0].length = 'auto';
         }
       } catch (_) {}
 
@@ -760,9 +767,12 @@ async function assembleVideo(
         console.log('Retrying with asset type "captions"...');
         const fallbackEdit2: any = JSON.parse(JSON.stringify(fallbackEdit));
         try {
-          const captionTrack2 = fallbackEdit2.timeline.tracks[2];
-          if (captionTrack2?.clips?.[0]) {
-            captionTrack2.clips[0].asset = { type: 'captions', src: 'alias://VOICEOVER' };
+          // Dynamically find caption track for second retry
+          const captionTrackIndex2 = fallbackEdit2.timeline.tracks.findIndex((t: any) => 
+            t.clips?.[0]?.asset?.type === 'caption' || t.clips?.[0]?.asset?.type === 'captions'
+          );
+          if (captionTrackIndex2 !== -1 && fallbackEdit2.timeline.tracks[captionTrackIndex2]?.clips?.[0]) {
+            fallbackEdit2.timeline.tracks[captionTrackIndex2].clips[0].asset = { type: 'captions', src: 'alias://VOICEOVER' };
           }
         } catch (_) {}
 

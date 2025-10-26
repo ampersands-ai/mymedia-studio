@@ -155,7 +155,7 @@ export function VideoCreator() {
           <div className="overflow-x-hidden px-1">
             <Slider
               id="duration"
-              min={10}
+              min={15}
               max={180}
               step={5}
               value={[duration]}
@@ -165,7 +165,7 @@ export function VideoCreator() {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Approximate only: final length of the video to be determined by the audio time (1s = 12 tokens)
+            Approximate only: final length of the video to be determined by the audio time (1s = 15 tokens)
           </p>
         </div>
 

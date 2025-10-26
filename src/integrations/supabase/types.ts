@@ -630,6 +630,66 @@ export type Database = {
         }
         Relationships: []
       }
+      share_tokens: {
+        Row: {
+          bucket_name: string
+          content_type: string
+          created_at: string
+          expires_at: string
+          generation_id: string | null
+          id: string
+          last_viewed_at: string | null
+          storage_path: string
+          token: string
+          user_id: string
+          video_job_id: string | null
+          view_count: number
+        }
+        Insert: {
+          bucket_name?: string
+          content_type: string
+          created_at?: string
+          expires_at?: string
+          generation_id?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          storage_path: string
+          token: string
+          user_id: string
+          video_job_id?: string | null
+          view_count?: number
+        }
+        Update: {
+          bucket_name?: string
+          content_type?: string
+          created_at?: string
+          expires_at?: string
+          generation_id?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          storage_path?: string
+          token?: string
+          user_id?: string
+          video_job_id?: string | null
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "share_tokens_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "share_tokens_video_job_id_fkey"
+            columns: ["video_job_id"]
+            isOneToOne: false
+            referencedRelation: "video_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       template_categories: {
         Row: {
           color: string | null

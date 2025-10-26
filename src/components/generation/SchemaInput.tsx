@@ -248,10 +248,10 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
             <DialogHeader>
               <DialogTitle>Choose a Voice</DialogTitle>
             </DialogHeader>
-            <VoiceSelector 
-              selectedValue={value || schema.default || 'Rachel'}
-              onSelectVoice={(voiceId, voiceName) => onChange(voiceName)}
-            />
+          <VoiceSelector 
+            selectedValue={value || schema.default || 'nPczCjzI2devNBz1zQrb'}
+            onSelectVoice={(voiceId, voiceName) => onChange(voiceName)}
+          />
           </DialogContent>
         </Dialog>
       </div>

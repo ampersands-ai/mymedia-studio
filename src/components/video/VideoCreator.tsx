@@ -20,8 +20,8 @@ export function VideoCreator() {
   const [topic, setTopic] = useState('');
   const [duration, setDuration] = useState(60);
   const [style, setStyle] = useState('modern');
-  const [voiceId, setVoiceId] = useState('21m00Tcm4TlvDq8ikWAM');
-  const [voiceName, setVoiceName] = useState('Rachel');
+  const [voiceId, setVoiceId] = useState('nPczCjzI2devNBz1zQrb');
+  const [voiceName, setVoiceName] = useState('Brian');
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
   const [isGeneratingTopic, setIsGeneratingTopic] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16' | '4:5' | '1:1'>('4:5');

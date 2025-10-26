@@ -1,8 +1,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Link as LinkIcon, Download } from "lucide-react";
+import { Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { trackEvent } from "@/lib/posthog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ShareModalProps {
   open: boolean;
@@ -11,6 +12,7 @@ interface ShareModalProps {
   caption?: string;
   hashtags?: string[];
   onDownload: () => void;
+  generationId?: string;
 }
 
 export const ShareModal = ({ 
@@ -19,16 +21,52 @@ export const ShareModal = ({
   imageUrl, 
   caption, 
   hashtags,
-  onDownload 
+  onDownload,
+  generationId 
 }: ShareModalProps) => {
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
-      toast.success('Link copied to clipboard!');
-      trackEvent('share_copy_link', { method: 'clipboard' });
+      // Extract storage path from imageUrl
+      let storagePath = imageUrl;
+      if (imageUrl.includes('/storage/v1/object/public/')) {
+        const parts = imageUrl.split('/storage/v1/object/public/generated-content/');
+        storagePath = parts[1] || imageUrl;
+      }
+
+      // Determine content type
+      const extension = storagePath.split('.').pop()?.toLowerCase() || '';
+      let contentType = 'image';
+      if (['mp4', 'mov', 'avi', 'webm'].includes(extension)) {
+        contentType = 'video';
+      } else if (['mp3', 'wav', 'ogg', 'm4a'].includes(extension)) {
+        contentType = 'audio';
+      }
+
+      // Call create-share-link edge function
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Please log in to share');
+        return;
+      }
+
+      const response = await supabase.functions.invoke('create-share-link', {
+        body: {
+          storage_path: storagePath,
+          content_type: contentType,
+          generation_id: generationId || null,
+          bucket_name: 'generated-content'
+        }
+      });
+
+      if (response.error) throw response.error;
+
+      const { share_url } = response.data;
+      await navigator.clipboard.writeText(share_url);
+      toast.success('Secure share link copied! Expires in 7 days.');
+      trackEvent('share_copy_link', { method: 'secure_token' });
     } catch (error) {
       console.error('Copy failed:', error);
-      toast.error('Failed to copy link');
+      toast.error('Failed to create share link');
     }
   };
   
@@ -43,11 +81,6 @@ export const ShareModal = ({
     trackEvent('share_linkedin');
   };
   
-  const handleDownloadForInstagram = () => {
-    onDownload();
-    toast.success('Download for Instagram ready!');
-    trackEvent('share_instagram_download');
-  };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -83,14 +116,6 @@ export const ShareModal = ({
               <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
             </svg>
             Share on LinkedIn
-          </Button>
-          <Button 
-            onClick={handleDownloadForInstagram} 
-            variant="outline" 
-            className="h-12 justify-start text-left border-2"
-          >
-            <Download className="h-4 w-4 mr-3" />
-            Download for Instagram
           </Button>
         </div>
       </DialogContent>

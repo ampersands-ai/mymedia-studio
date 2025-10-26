@@ -52,6 +52,7 @@ const TemplateLandingManager = lazy(() => import("./pages/admin/TemplateLandingM
 const TemplateLandingEditor = lazy(() => import("./pages/admin/TemplateLandingEditor"));
 const TemplateCategoriesManager = lazy(() => import("./pages/admin/TemplateCategoriesManager"));
 const TemplateAnalytics = lazy(() => import("./pages/admin/TemplateAnalytics"));
+const SharedContent = lazy(() => import("./pages/SharedContent"));
 
 const AppContent = () => {
   // Initialize PostHog
@@ -140,6 +141,7 @@ const AppContent = () => {
             <Route path="/features" element={<Features />} />
             <Route path="/templates" element={<Navigate to="/dashboard/templates" replace />} />
             <Route path="/templates/:category/:slug" element={<TemplateLanding />} />
+            <Route path="/share/:token" element={<SharedContent />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

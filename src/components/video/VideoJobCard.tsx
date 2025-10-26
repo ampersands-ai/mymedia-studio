@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, Download, Eye, Clock, AlertCircle, Play, XCircle, Volume2, Edit, Pause, RotateCcw, CheckCircle, Sparkles } from 'lucide-react';
+import { Loader2, Download, Eye, Clock, AlertCircle, Play, XCircle, Volume2, Edit, Pause, RotateCcw, CheckCircle, Sparkles, Coins } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useState, useEffect, useRef } from 'react';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
+import { useUserTokens } from '@/hooks/useUserTokens';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { useSignedUrlLazy } from '@/hooks/useSignedUrlLazy';
@@ -105,6 +106,11 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const [timeoutCountdown, setTimeoutCountdown] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling, recoverJob, isRecoveringJob, dismissError, isDismissingError, generateCaption, isGeneratingCaption } = useVideoJobs();
+  const { data: tokens } = useUserTokens();
+  
+  // Calculate voiceover regeneration cost (144 tokens per 1000 chars)
+  const voiceoverRegenerationCost = Math.ceil((editedVoiceoverScript.length / 1000) * 144);
+  const canAffordVoiceoverRegeneration = (tokens?.tokens_remaining ?? 0) >= voiceoverRegenerationCost;
   
   // Check if job is approaching 5-minute timeout
   const isApproachingTimeout = ['assembling', 'fetching_video'].includes(job.status);
@@ -493,11 +499,17 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
             
             {isEditingVoiceoverScript ? (
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <label className="text-xs font-medium text-muted-foreground">Edit Script to Regenerate Voiceover:</label>
-                  <Badge variant="secondary" className="text-xs">
-                    {editedVoiceoverScript.length} chars
-                  </Badge>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-medium text-muted-foreground">Edit Script to Regenerate Voiceover:</label>
+                    <Badge variant="secondary" className="text-xs">
+                      {editedVoiceoverScript.length} chars
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <Coins className="w-3 h-3 text-primary" />
+                    <span className="font-medium text-primary">{voiceoverRegenerationCost} tokens</span>
+                  </div>
                 </div>
                 <Textarea
                   value={editedVoiceoverScript}
@@ -505,6 +517,11 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                   className="min-h-[150px] text-sm font-mono"
                   placeholder="Edit the script here..."
                 />
+                {!canAffordVoiceoverRegeneration && (
+                  <p className="text-xs text-destructive font-medium">
+                    Insufficient tokens. You need {voiceoverRegenerationCost} tokens to regenerate this voiceover.
+                  </p>
+                )}
                 <div className="flex gap-2">
                   <Button
                     size="sm"
@@ -540,7 +557,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                       );
                     }}
                     className="flex-1"
-                    disabled={isApprovingScript || !editedVoiceoverScript.trim()}
+                    disabled={isApprovingScript || !editedVoiceoverScript.trim() || !canAffordVoiceoverRegeneration}
                   >
                     {isApprovingScript ? (
                       <>
@@ -550,7 +567,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                     ) : (
                       <>
                         <Volume2 className="w-4 h-4 mr-2" />
-                        Regenerate Voiceover
+                        Regenerate Voiceover ({voiceoverRegenerationCost} tokens)
                       </>
                     )}
                   </Button>

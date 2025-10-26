@@ -158,6 +158,41 @@ Deno.serve(async (req) => {
       throw new Error('No script available');
     }
 
+    // If regenerating voiceover (edited_script provided), calculate and deduct tokens
+    if (edited_script && edited_script !== job.script) {
+      const voiceoverCost = Math.ceil((edited_script.length / 1000) * 144);
+      console.log(`[${job_id}] Regenerating voiceover, cost: ${voiceoverCost} tokens`);
+
+      // Check token balance
+      const { data: subscription, error: subError } = await supabaseClient
+        .from('user_subscriptions')
+        .select('tokens_remaining')
+        .eq('user_id', user.id)
+        .single();
+
+      if (subError || !subscription) {
+        throw new Error('Could not fetch subscription data');
+      }
+
+      if (subscription.tokens_remaining < voiceoverCost) {
+        throw new Error(`Insufficient tokens. ${voiceoverCost} tokens required to regenerate voiceover.`);
+      }
+
+      // Deduct tokens atomically
+      const { error: deductError } = await supabaseClient
+        .from('user_subscriptions')
+        .update({ tokens_remaining: subscription.tokens_remaining - voiceoverCost })
+        .eq('user_id', user.id)
+        .eq('tokens_remaining', subscription.tokens_remaining);
+
+      if (deductError) {
+        console.error('Token deduction error:', deductError);
+        throw new Error('Failed to deduct tokens. Please try again.');
+      }
+
+      console.log(`[${job_id}] Deducted ${voiceoverCost} tokens for voiceover regeneration`);
+    }
+
     console.log(`[${job_id}] Script approved, generating voiceover...`);
 
     // Update status to generating_voice

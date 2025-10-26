@@ -32,6 +32,10 @@ export function VideoCreator() {
   const { createJob, isCreating, jobs } = useVideoJobs();
   const { data: tokens } = useUserTokens();
 
+  // Calculate dynamic cost based on duration (15 tokens per second)
+  const estimatedCost = duration * 15;
+  const maxAffordableDuration = Math.floor((tokens?.tokens_remaining ?? 0) / 15);
+
   const handleSurpriseMe = async () => {
     setIsGeneratingTopic(true);
     try {
@@ -94,7 +98,7 @@ export function VideoCreator() {
      'fetching_video', 'assembling'].includes(job.status)
   );
 
-  const canAfford = (tokens?.tokens_remaining ?? 0) >= 15;
+  const canAfford = (tokens?.tokens_remaining ?? 0) >= estimatedCost;
   const isDisabled = isCreating || isGeneratingTopic || hasActiveJob;
 
   return (
@@ -287,7 +291,7 @@ export function VideoCreator() {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <Coins className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-              <span className="font-bold text-sm md:text-base">Cost: 15 tokens</span>
+              <span className="font-bold text-sm md:text-base">Cost: {estimatedCost} tokens</span>
             </div>
             <div className="text-xs md:text-sm text-muted-foreground">
               Balance: {tokens?.tokens_remaining ?? 0} tokens
@@ -295,7 +299,7 @@ export function VideoCreator() {
           </div>
           {!canAfford && (
             <p className="mt-2 text-xs md:text-sm text-destructive font-medium">
-              Insufficient tokens. Please purchase more to continue.
+              Insufficient tokens. Reduce duration to {maxAffordableDuration}s or purchase more tokens.
             </p>
           )}
         </div>
@@ -313,7 +317,7 @@ export function VideoCreator() {
             </>
           ) : (
             <>
-              🎬 Create Video (15 tokens)
+              🎬 Create Video ({estimatedCost} tokens)
             </>
           )}
         </Button>

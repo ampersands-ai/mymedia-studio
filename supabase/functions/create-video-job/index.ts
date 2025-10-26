@@ -43,9 +43,12 @@ serve(async (req) => {
       throw new Error('Topic must be at least 5 characters');
     }
 
-    if (duration < 10 || duration > 180) {
-      throw new Error('Duration must be between 10 and 180 seconds');
+    if (duration < 15 || duration > 180) {
+      throw new Error('Duration must be between 15 and 180 seconds');
     }
+
+    // Calculate dynamic cost based on duration (15 tokens per second)
+    const costTokens = duration * 15;
 
     // Check token balance
     const { data: subscription, error: subError } = await supabaseClient
@@ -58,14 +61,14 @@ serve(async (req) => {
       throw new Error('Could not fetch subscription data');
     }
 
-    if (subscription.tokens_remaining < 15) {
-      throw new Error('Insufficient tokens. 15 tokens required for video generation.');
+    if (subscription.tokens_remaining < costTokens) {
+      throw new Error(`Insufficient tokens. ${costTokens} tokens required for ${duration}s video.`);
     }
 
     // Deduct tokens atomically
     const { error: deductError } = await supabaseClient
       .from('user_subscriptions')
-      .update({ tokens_remaining: subscription.tokens_remaining - 15 })
+      .update({ tokens_remaining: subscription.tokens_remaining - costTokens })
       .eq('user_id', user.id)
       .eq('tokens_remaining', subscription.tokens_remaining);
 

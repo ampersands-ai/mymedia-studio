@@ -6,11 +6,18 @@ import { VideoJob, VideoJobInput } from '@/types/video';
 
 const PINNED_JOB_KEY = 'pinnedVideoJobId';
 
+// Safe localStorage read helper
+const getPinnedJobId = (): string | null => {
+  try {
+    return localStorage.getItem(PINNED_JOB_KEY);
+  } catch {
+    return null;
+  }
+};
+
 export function useVideoJobs() {
   const queryClient = useQueryClient();
-  const [pinnedJobId, setPinnedJobId] = useState<string | null>(() => 
-    localStorage.getItem(PINNED_JOB_KEY)
-  );
+  const [pinnedJobId, setPinnedJobId] = useState<string | null>(getPinnedJobId());
 
   // Fetch user's latest active job or pinned job
   const { data: jobs, isLoading } = useQuery({

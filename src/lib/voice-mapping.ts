@@ -13,8 +13,8 @@ export interface VoiceData {
 
 // All 20 ElevenLabs voices with complete metadata
 export const VOICE_DATABASE: VoiceData[] = [
-  { voice_id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', gender: 'female', accent: 'American', use_case: 'narration', description: 'Calm and clear American female voice', hasPreview: true },
-  { voice_id: '9BWtsMINqrJLrRacOk9x', name: 'Aria', gender: 'female', accent: 'American', use_case: 'narration', description: 'Expressive and warm female voice', hasPreview: true },
+  { voice_id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', gender: 'female', accent: 'American', use_case: 'narration', description: 'Calm and clear American female voice', hasPreview: false },
+  { voice_id: '9BWtsMINqrJLrRacOk9x', name: 'Aria', gender: 'female', accent: 'American', use_case: 'narration', description: 'Expressive and warm female voice', hasPreview: false },
   { voice_id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger', gender: 'male', accent: 'American', use_case: 'narration', description: 'Confident and authoritative male voice', hasPreview: true },
   { voice_id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', gender: 'female', accent: 'American', use_case: 'narration', description: 'Soft and friendly female voice', hasPreview: true },
   { voice_id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura', gender: 'female', accent: 'American', use_case: 'narration', description: 'Professional and articulate female voice', hasPreview: true },

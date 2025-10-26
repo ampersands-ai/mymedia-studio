@@ -88,7 +88,6 @@ export function VoiceSelector({ selectedValue, onSelectVoice, mode, disabled }: 
     } catch (error) {
       console.error('Error playing voice preview:', error);
       setPlayingVoiceId(null);
-      toast.error('Preview unavailable');
     }
   };
 

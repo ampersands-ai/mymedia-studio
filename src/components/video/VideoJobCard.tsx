@@ -404,7 +404,12 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
             
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-muted-foreground">Generated Script:</label>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-muted-foreground">Generated Script:</label>
+                  <Badge variant="secondary" className="text-xs">
+                    {(isEditingScript ? editedScript : job.script || '').length} chars
+                  </Badge>
+                </div>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -488,7 +493,12 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
             
             {isEditingVoiceoverScript ? (
               <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground">Edit Script to Regenerate Voiceover:</label>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-muted-foreground">Edit Script to Regenerate Voiceover:</label>
+                  <Badge variant="secondary" className="text-xs">
+                    {editedVoiceoverScript.length} chars
+                  </Badge>
+                </div>
                 <Textarea
                   value={editedVoiceoverScript}
                   onChange={(e) => setEditedVoiceoverScript(e.target.value)}

@@ -440,19 +440,19 @@ const IndexV2 = () => {
       <section className="bg-primary-500 py-12 md:py-16 lg:py-24 border-y-4 border-black">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-neutral-900 px-2">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-neutral-900 dark:text-neutral-100 px-2">
               Ready to Start Creating?
             </h2>
-            <p className="text-base sm:text-lg md:text-xl text-neutral-900/90 max-w-2xl mx-auto px-2">
+            <p className="text-base sm:text-lg md:text-xl text-neutral-900/90 dark:text-neutral-100/90 max-w-2xl mx-auto px-2">
               Join 10,000+ creators making professional content with AI—no expensive
               subscriptions, no technical skills required.
             </p>
             <div className="px-2">
-              <Button asChild size="lg" className="text-sm sm:text-base md:text-lg lg:text-xl px-6 sm:px-8 md:px-12 py-4 sm:py-6 bg-white hover:bg-neutral-50 text-neutral-900 border-2 border-neutral-900 shadow-xl w-full sm:w-auto" {...usePrefetchOnHover('create')}>
+              <Button asChild size="lg" className="text-sm sm:text-base md:text-lg lg:text-xl px-6 sm:px-8 md:px-12 py-4 sm:py-6 bg-white hover:bg-neutral-50 dark:bg-card dark:hover:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border-2 border-neutral-900 dark:border-neutral-100 shadow-xl w-full sm:w-auto" {...usePrefetchOnHover('create')}>
                 <Link to="/auth">START FREE - GET 500 TOKENS</Link>
               </Button>
             </div>
-            <div className="flex flex-col gap-2 sm:gap-3 text-neutral-900/90 text-sm sm:text-base px-2">
+            <div className="flex flex-col gap-2 sm:gap-3 text-neutral-900/90 dark:text-neutral-100/90 text-sm sm:text-base px-2">
               <span className="flex items-center justify-center gap-2">
                 <Check className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 No credit card required

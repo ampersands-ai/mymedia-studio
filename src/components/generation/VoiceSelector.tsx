@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,29 +25,31 @@ export function VoiceSelector({ selectedValue, onSelectVoice, disabled }: VoiceS
   // Get all voices from central database
   const voices = VOICE_DATABASE;
   
-  // Filter logic based on search and filters, then sort by preview availability
-  const filteredVoices = voices
-    .filter(voice => {
-      const matchesSearch = voice.name.toLowerCase().includes(search.toLowerCase()) ||
-                           voice.description?.toLowerCase().includes(search.toLowerCase());
-      
-      const matchesFilter = filter === 'all' || 
-                           voice.gender === filter || 
-                           voice.accent.toLowerCase() === filter ||
-                           voice.use_case === filter;
-      
-      return matchesSearch && matchesFilter;
-    })
-    .sort((a, b) => {
-      // Sort voices with previews first, then those without
-      const aHasPreview = a.hasPreview !== false;
-      const bHasPreview = b.hasPreview !== false;
-      if (aHasPreview === bHasPreview) return 0;
-      return aHasPreview ? -1 : 1;
-    });
+  // Memoize filtered voices to prevent unnecessary recalculations
+  const filteredVoices = useMemo(() => {
+    return voices
+      .filter(voice => {
+        const matchesSearch = voice.name.toLowerCase().includes(search.toLowerCase()) ||
+                             voice.description?.toLowerCase().includes(search.toLowerCase());
+        
+        const matchesFilter = filter === 'all' || 
+                             voice.gender === filter || 
+                             voice.accent.toLowerCase() === filter ||
+                             voice.use_case === filter;
+        
+        return matchesSearch && matchesFilter;
+      })
+      .sort((a, b) => {
+        // Sort voices with previews first, then those without
+        const aHasPreview = a.hasPreview !== false;
+        const bHasPreview = b.hasPreview !== false;
+        if (aHasPreview === bHasPreview) return 0;
+        return aHasPreview ? -1 : 1;
+      });
+  }, [search, filter, voices]);
 
-  // Determine selected voice by ID
-  const selectedVoice = getVoiceById(selectedValue);
+  // Determine selected voice by ID (memoized)
+  const selectedVoice = useMemo(() => getVoiceById(selectedValue), [selectedValue]);
 
   const handleSelect = (voice: VoiceData) => {
     if (disabled) return;

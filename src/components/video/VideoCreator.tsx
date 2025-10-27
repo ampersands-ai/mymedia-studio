@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,9 +12,11 @@ import { useUserTokens } from '@/hooks/useUserTokens';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Coins, Sparkles, Volume2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
-import { VoiceSelector } from '../generation/VoiceSelector';
-import { BackgroundMediaSelector } from './BackgroundMediaSelector';
 import { captionPresets, aspectRatioConfig } from '@/config/captionStyles';
+
+// Lazy load heavy components for better initial load
+const VoiceSelector = lazy(() => import('../generation/VoiceSelector').then(m => ({ default: m.VoiceSelector })));
+const BackgroundMediaSelector = lazy(() => import('./BackgroundMediaSelector').then(m => ({ default: m.BackgroundMediaSelector })));
 
 export function VideoCreator() {
   const [topic, setTopic] = useState('');
@@ -199,10 +201,12 @@ export function VideoCreator() {
               <DialogHeader>
                 <DialogTitle className="text-lg md:text-xl">Choose a Voice</DialogTitle>
               </DialogHeader>
-              <VoiceSelector
-                selectedValue={voiceId}
-                onSelectVoice={handleSelectVoice}
-              />
+              <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+                <VoiceSelector
+                  selectedValue={voiceId}
+                  onSelectVoice={handleSelectVoice}
+                />
+              </Suspense>
             </DialogContent>
           </Dialog>
           <p className="text-xs text-muted-foreground">
@@ -251,18 +255,20 @@ export function VideoCreator() {
           </p>
         </div>
 
-        <BackgroundMediaSelector
-          style={style}
-          duration={duration}
-          aspectRatio={aspectRatio}
-          selectedMediaUrl={backgroundVideoUrl}
-          selectedMediaType={backgroundMediaType}
-          onSelectMedia={(url, thumbnail, type) => {
-            setBackgroundVideoUrl(url);
-            setBackgroundThumbnail(thumbnail);
-            setBackgroundMediaType(type);
-          }}
-        />
+        <Suspense fallback={<Button variant="outline" disabled className="w-full justify-start"><Loader2 className="h-4 w-4 mr-2 animate-spin" />Loading...</Button>}>
+          <BackgroundMediaSelector
+            style={style}
+            duration={duration}
+            aspectRatio={aspectRatio}
+            selectedMediaUrl={backgroundVideoUrl}
+            selectedMediaType={backgroundMediaType}
+            onSelectMedia={(url, thumbnail, type) => {
+              setBackgroundVideoUrl(url);
+              setBackgroundThumbnail(thumbnail);
+              setBackgroundMediaType(type);
+            }}
+          />
+        </Suspense>
 
         {hasActiveJob && (
           <Alert className="bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800">

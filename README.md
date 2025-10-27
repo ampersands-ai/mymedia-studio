@@ -97,25 +97,3 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
-
-## 🚀 Deployment Best Practices
-
-**Development vs Production:**
-- **Development**: Use `npm run dev` - Vite serves source files directly with hot reload
-- **Production**: Always build first with `npm run build`, then deploy the `dist/` folder
-
-**Common Deployment Issues:**
-- ❌ **Don't deploy the project root** - this serves raw source files that won't work
-- ✅ **Do deploy the `dist/` folder** - this contains the compiled, optimized app
-- The build guard script (`scripts/checkMisdeploy.js`) automatically verifies your build output
-
-**Platform-Specific Setup:**
-- **Netlify**: Set publish directory to `dist`
-- **Vercel**: Set output directory to `dist`
-- **GitHub Pages**: Deploy from the `dist` folder
-
-**Debugging Build Issues:**
-- If the app shows "Deployment Error" overlay: You're serving source files, not the built app
-- Clear build cache: `rm -rf dist node_modules/.vite && npm run build`
-- Test locally first: `npm run build && npm run preview`
-- Skip analytics during debug: Add `?no-analytics=1` to the URL

@@ -19,6 +19,7 @@ export interface PerformanceReport {
     fontCount: number;
   };
   caching: {
+    serviceWorkerActive: boolean;
     cacheCount: number;
     cachedItems: number;
   };
@@ -50,6 +51,7 @@ export async function runPerformanceAudit(): Promise<PerformanceReport> {
       fontCount: 0,
     },
     caching: {
+      serviceWorkerActive: false,
       cacheCount: 0,
       cachedItems: 0,
     },
@@ -73,6 +75,12 @@ export async function runPerformanceAudit(): Promise<PerformanceReport> {
     const paintEntries = performance.getEntriesByType('paint');
     const fcp = paintEntries.find(e => e.name === 'first-contentful-paint');
     if (fcp) report.metrics.fcp = fcp.startTime;
+  }
+
+  // Check service worker
+  if ('serviceWorker' in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    report.caching.serviceWorkerActive = registrations.length > 0;
   }
 
   // Check caches
@@ -131,6 +139,7 @@ function calculatePerformanceScore(report: PerformanceReport): number {
   if (report.metrics.ttfb && report.metrics.ttfb > 600) score -= 10;
 
   // Bonus for good practices
+  if (report.caching.serviceWorkerActive) score += 5;
   if (report.caching.cachedItems > 10) score += 5;
   if (report.performance.memory < 100) score += 5;
   if (report.performance.willChangeCount < 10) score += 5;
@@ -166,6 +175,7 @@ Fonts: ${report.bundle.fontCount} loaded
 
 💾 CACHING STATUS
 ──────────────────
+Service Worker: ${report.caching.serviceWorkerActive ? '✅ Active' : '❌ Inactive'}
 Cache Count: ${report.caching.cacheCount}
 Cached Items: ${report.caching.cachedItems}
 

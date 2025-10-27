@@ -116,9 +116,9 @@ export function PerformanceAuditPanel() {
             <div className="space-y-2 pt-2 border-t">
               <div className="font-semibold">Caching</div>
               <div className="flex items-center justify-between">
-                <span>Cache Count</span>
-                <Badge variant="secondary">
-                  {report.caching.cacheCount}
+                <span>Service Worker</span>
+                <Badge variant={report.caching.serviceWorkerActive ? 'default' : 'destructive'}>
+                  {report.caching.serviceWorkerActive ? 'Active' : 'Inactive'}
                 </Badge>
               </div>
               <div className="flex items-center justify-between">

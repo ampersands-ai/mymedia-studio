@@ -1,7 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
-import { createSafeErrorResponse } from '../_shared/error-handler.ts';
-import { validateWorkflowInput } from '../_shared/validation-schemas.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,24 +28,7 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const requestBody = await req.json();
-    const { workflow_template_id, user_inputs } = requestBody;
-
-    // SECURITY: Validate user inputs to prevent injection/DoS
-    if (user_inputs && Object.keys(user_inputs).length > 0) {
-      try {
-        validateWorkflowInput(user_inputs);
-      } catch (validationError: any) {
-        console.error('Invalid user inputs:', validationError);
-        return new Response(
-          JSON.stringify({ 
-            error: 'Invalid input parameters', 
-            details: validationError.errors?.[0]?.message || 'Input validation failed'
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    }
+    const { workflow_template_id, user_inputs } = await req.json();
 
     console.log('Executing workflow:', workflow_template_id, 'for user:', user.id);
 

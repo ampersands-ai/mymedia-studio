@@ -15,7 +15,6 @@ import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { reportWebVitals, monitorPerformance } from "@/lib/webVitals";
 import { queryClient } from "@/lib/queryClient";
 import { useRoutePreload } from "./hooks/useRoutePreload";
-import { DevTools } from "@/components/DevTools";
 
 // Lazy load pages for better performance
 const IndexV2 = lazy(() => import("./pages/IndexV2"));
@@ -93,7 +92,6 @@ const AppContent = () => {
     <ErrorBoundary>
       <div className="safe-area-container">
         <ScrollProgress />
-        <DevTools />
         <Suspense fallback={
           <div className="min-h-screen flex items-center justify-center bg-background">
             <div className="animate-pulse text-foreground">Loading...</div>

@@ -3,8 +3,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { callProvider } from "./providers/index.ts";
 import { calculateTokenCost } from "./utils/token-calculator.ts";
 import { uploadToStorage } from "./utils/storage.ts";
-import { createSafeErrorResponse } from '../_shared/error-handler.ts';
-import { validateGenerationSettings } from '../_shared/validation-schemas.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -55,7 +53,6 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const requestBody = await req.json();
     const { 
       template_id, 
       model_id, 
@@ -66,23 +63,7 @@ serve(async (req) => {
       enhancement_provider = 'lovable_ai',
       workflow_execution_id,
       workflow_step_number,
-    } = requestBody;
-
-    // SECURITY: Validate custom parameters to prevent injection/DoS
-    if (custom_parameters && Object.keys(custom_parameters).length > 0) {
-      try {
-        validateGenerationSettings(custom_parameters);
-      } catch (validationError: any) {
-        console.error('Invalid custom parameters:', validationError);
-        return new Response(
-          JSON.stringify({ 
-            error: 'Invalid parameters', 
-            details: validationError.errors?.[0]?.message || 'Parameters validation failed'
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    }
+    } = await req.json();
 
     console.log('Generation request:', { user_id: user.id, template_id, model_id, model_record_id, enhance_prompt });
 

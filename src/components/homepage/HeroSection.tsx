@@ -2,7 +2,6 @@ import { ArrowRight, Play, Sparkles } from 'lucide-react';
 import { GradientButton } from '@/components/ui/gradient-button';
 import { AnimatedBadge } from '@/components/ui/animated-badge';
 import { GlassCard } from '@/components/ui/glass-card';
-import { OptimizedVideo } from '@/components/ui/optimized-video';
 import { Link } from 'react-router-dom';
 
 export const HeroSection = () => {
@@ -84,18 +83,19 @@ export const HeroSection = () => {
             </div>
           </div>
 
-          {/* Right content - Video showcase */}
+          {/* Right content - Hero visual */}
           <div className="relative">
             <GlassCard gradient className="p-2">
-              <div className="rounded-lg overflow-hidden aspect-video bg-gray-200 dark:bg-gray-800">
-                <OptimizedVideo
-                  src="/demo-video.mp4"
-                  poster="/placeholder.svg"
-                  autoPlay
-                  loop
-                  muted
-                  className="w-full h-full object-cover"
-                />
+              <div className="rounded-lg overflow-hidden aspect-video bg-gradient-to-br from-primary-yellow/20 via-primary-orange/20 to-accent-purple/20 flex items-center justify-center">
+                <div className="text-center space-y-4 p-8">
+                  <div className="text-6xl">✨</div>
+                  <p className="text-lg font-semibold text-foreground">AI Content Generation</p>
+                  <div className="flex gap-2 justify-center">
+                    <div className="w-12 h-12 rounded-lg bg-primary-yellow/30 animate-pulse" style={{ animationDelay: '0s' }} />
+                    <div className="w-12 h-12 rounded-lg bg-primary-orange/30 animate-pulse" style={{ animationDelay: '0.2s' }} />
+                    <div className="w-12 h-12 rounded-lg bg-accent-purple/30 animate-pulse" style={{ animationDelay: '0.4s' }} />
+                  </div>
+                </div>
               </div>
             </GlassCard>
 

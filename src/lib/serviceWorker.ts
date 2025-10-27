@@ -6,31 +6,35 @@
 export function registerServiceWorker() {
   // ✅ ONLY register in production
   if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    // Register async after page load with additional delay
     window.addEventListener('load', () => {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .then((registration) => {
-          console.log('[SW] Registered successfully');
+      // Wait 2 seconds after page load to avoid blocking main thread
+      setTimeout(() => {
+        navigator.serviceWorker
+          .register('/sw.js')
+          .then((registration) => {
+            console.log('[SW] Registered successfully');
 
-          // Check for updates every hour
-          setInterval(() => {
-            registration.update();
-          }, 60 * 60 * 1000);
+            // Check for updates every hour
+            setInterval(() => {
+              registration.update();
+            }, 60 * 60 * 1000);
 
-          // Notify user when update is available
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            newWorker?.addEventListener('statechange', () => {
-              if (
-                newWorker.state === 'installed' &&
-                navigator.serviceWorker.controller
-              ) {
-                showUpdateNotification();
-              }
+            // Notify user when update is available
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              newWorker?.addEventListener('statechange', () => {
+                if (
+                  newWorker.state === 'installed' &&
+                  navigator.serviceWorker.controller
+                ) {
+                  showUpdateNotification();
+                }
+              });
             });
-          });
-        })
-        .catch((err) => console.error('[SW] Registration failed:', err));
+          })
+          .catch((err) => console.error('[SW] Registration failed:', err));
+      }, 2000);
     });
   }
 }

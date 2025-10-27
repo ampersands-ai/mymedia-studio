@@ -6,6 +6,12 @@ import { trackSession } from './lib/analytics';
 import { initPostHog } from './lib/posthog';
 import { unregisterServiceWorkers } from './utils/serviceWorkerCleanup';
 
+console.log('[Boot] main.tsx start');
+
+// Check for debug flags
+const params = new URLSearchParams(window.location.search);
+const noAnalytics = params.has('no-analytics');
+
 // Clean up any service workers and caches on app load
 unregisterServiceWorkers();
 
@@ -23,11 +29,18 @@ try {
   }
 }
 
-// Initialize PostHog for A/B testing and analytics
-initPostHog();
-
-// Track session metrics
-trackSession();
+// Initialize PostHog for A/B testing and analytics (skip if debugging)
+if (!noAnalytics) {
+  try {
+    console.log('[Boot] Initializing analytics');
+    initPostHog();
+    trackSession();
+  } catch (error) {
+    console.error('[Boot] Analytics initialization failed:', error);
+  }
+} else {
+  console.log('[Boot] Analytics disabled via ?no-analytics flag');
+}
 
 // Track Web Vitals
 function sendToAnalytics(metric: any) {
@@ -51,8 +64,17 @@ onLCP(sendToAnalytics);
 onTTFB(sendToAnalytics);
 
 const container = document.getElementById("root")!;
-if (container && container.hasChildNodes()) {
-  hydrateRoot(container, <App />);
-} else {
-  createRoot(container).render(<App />);
+const renderMethod = container && container.hasChildNodes() ? 'hydrateRoot' : 'createRoot';
+console.log('[Boot] Rendering with:', renderMethod);
+
+try {
+  if (container && container.hasChildNodes()) {
+    hydrateRoot(container, <App />);
+  } else {
+    createRoot(container).render(<App />);
+  }
+  console.log('[Boot] React render complete');
+} catch (error) {
+  console.error('[Boot] React render failed:', error);
+  throw error;
 }

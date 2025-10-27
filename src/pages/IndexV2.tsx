@@ -437,7 +437,7 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 12: Final CTA */}
-      <section className="bg-primary-500 py-12 md:py-16 lg:py-24 border-y-4 border-black">
+      <section className="bg-primary-500 py-12 md:py-16 lg:py-24 border-y-4 border-black text-neutral-900">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8">
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-neutral-900 px-2">

@@ -440,10 +440,10 @@ const IndexV2 = () => {
       <section className="bg-primary-500 py-12 md:py-16 lg:py-24 border-y-4 border-black">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-neutral-900 dark:text-neutral-100 px-2">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-neutral-900 px-2">
               Ready to Start Creating?
             </h2>
-            <p className="text-base sm:text-lg md:text-xl text-neutral-900/90 dark:text-neutral-100/90 max-w-2xl mx-auto px-2">
+            <p className="text-base sm:text-lg md:text-xl text-neutral-900/90 max-w-2xl mx-auto px-2">
               Join 10,000+ creators making professional content with AI—no expensive
               subscriptions, no technical skills required.
             </p>

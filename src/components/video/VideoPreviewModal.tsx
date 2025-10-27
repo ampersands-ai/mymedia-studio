@@ -10,10 +10,11 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Download, Share2, Sparkles, Copy, Check } from 'lucide-react';
+import { Download, Share2, Sparkles, Copy, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useSignedUrl } from '@/hooks/useSignedUrl';
 
 interface VideoPreviewModalProps {
   job: VideoJob;
@@ -26,6 +27,12 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
   const { generateCaption, isGeneratingCaption } = useVideoJobs();
   const [copiedCaption, setCopiedCaption] = useState(false);
   const [copiedHashtags, setCopiedHashtags] = useState(false);
+
+  // Fetch signed URL for the video
+  const { signedUrl: videoSignedUrl, isLoading: isLoadingVideoUrl } = useSignedUrl(
+    job.final_video_url,
+    'generated-content'
+  );
 
   const handleGenerateCaption = async () => {
     if (!job.script) {
@@ -59,7 +66,9 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
   };
 
   const handleShare = async () => {
-    if (navigator.share && job.final_video_url) {
+    const shareUrl = videoSignedUrl || job.final_video_url;
+    
+    if (navigator.share && shareUrl) {
       try {
         const shareText = job.ai_caption && job.ai_hashtags
           ? `${job.ai_caption}\n\n${job.ai_hashtags.join(' ')}`
@@ -68,17 +77,17 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
         await navigator.share({
           title: job.topic,
           text: shareText,
-          url: job.final_video_url,
+          url: shareUrl,
         });
       } catch (error) {
         // User cancelled share
       }
     } else {
       // Fallback: copy to clipboard
-      if (job.final_video_url) {
+      if (shareUrl) {
         const shareText = job.ai_caption && job.ai_hashtags
-          ? `${job.ai_caption}\n\n${job.ai_hashtags.join(' ')}\n\n${job.final_video_url}`
-          : job.final_video_url;
+          ? `${job.ai_caption}\n\n${job.ai_hashtags.join(' ')}\n\n${shareUrl}`
+          : shareUrl;
         
         navigator.clipboard.writeText(shareText);
         toast.success(job.ai_caption ? 'Caption, hashtags and URL copied!' : 'Video URL copied to clipboard');
@@ -87,12 +96,22 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
   };
 
   const handleDownload = async () => {
-    if (!job.final_video_url) return;
-    
     toast.loading('Preparing download...', { id: 'video-download' });
     
     try {
-      const response = await fetch(job.final_video_url);
+      const downloadUrl = videoSignedUrl || job.final_video_url;
+      
+      if (!downloadUrl) {
+        toast.error('Video URL not available', { id: 'video-download' });
+        return;
+      }
+      
+      const response = await fetch(downloadUrl);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -104,8 +123,8 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
       document.body.removeChild(a);
       toast.success('Download started!', { id: 'video-download' });
     } catch (error) {
-      console.error('Download error:', error);
-      toast.error('Failed to download video', { id: 'video-download' });
+      console.error('[VideoPreviewModal] Download error:', error);
+      toast.error(`Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'video-download' });
     }
   };
 
@@ -113,15 +132,25 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
     <div className="space-y-4">
       {job.final_video_url && (
         <div className="rounded-lg overflow-hidden bg-black">
-          <video
-            src={job.final_video_url}
-            controls
-            controlsList="nodownload"
-            className="w-full"
-            playsInline
-          >
-            Your browser does not support the video tag.
-          </video>
+          {isLoadingVideoUrl ? (
+            <div className="flex items-center justify-center bg-muted h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <video
+              src={videoSignedUrl || job.final_video_url}
+              controls
+              controlsList="nodownload"
+              className="w-full"
+              playsInline
+              onError={(e) => {
+                console.error('[VideoPreviewModal] Video load error:', e);
+                console.error('[VideoPreviewModal] Failed URL:', videoSignedUrl || job.final_video_url);
+              }}
+            >
+              Your browser does not support the video tag.
+            </video>
+          )}
         </div>
       )}
 

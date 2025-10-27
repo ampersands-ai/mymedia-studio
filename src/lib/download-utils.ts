@@ -7,13 +7,19 @@ export async function downloadMultipleOutputs(
   contentType: string,
   onDownloadSuccess?: () => void
 ) {
-  // Single output - direct download using public URL (no signed URL needed)
+  // Single output - direct download using signed URL
   if (outputs.length === 1) {
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const publicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${outputs[0].storage_path}`;
+      const { data, error } = await supabase.storage
+        .from('generated-content')
+        .createSignedUrl(outputs[0].storage_path, 60);
       
-      const response = await fetch(publicUrl);
+      if (error || !data?.signedUrl) {
+        toast.error('Failed to create download link');
+        return;
+      }
+      
+      const response = await fetch(data.signedUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -33,17 +39,23 @@ export async function downloadMultipleOutputs(
     return;
   }
 
-  // Multiple outputs - create ZIP using public URLs
+  // Multiple outputs - create ZIP using signed URLs
   try {
     const toastId = toast.loading(`Preparing ${outputs.length} files for download...`);
     
     const zip = new JSZip();
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     
-    // Download all files in parallel using public URLs
+    // Download all files in parallel using signed URLs
     const downloadPromises = outputs.map(async (output) => {
-      const publicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${output.storage_path}`;
-      const response = await fetch(publicUrl);
+      const { data, error } = await supabase.storage
+        .from('generated-content')
+        .createSignedUrl(output.storage_path, 60);
+      
+      if (error || !data?.signedUrl) {
+        throw new Error(`Failed to create signed URL for ${output.storage_path}`);
+      }
+      
+      const response = await fetch(data.signedUrl);
       const blob = await response.blob();
       const extension = output.storage_path.split('.').pop() || 'file';
       const filename = `output-${output.output_index + 1}.${extension}`;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { OptimizedGenerationImage } from "./OptimizedGenerationImage";
-import { Video, Music, Download, Share2 } from "lucide-react";
+import { Video, Music, Download, Share2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,8 @@ import { useNativeShare } from "@/hooks/useNativeShare";
 import { useNativeDownload } from "@/hooks/useNativeDownload";
 import { triggerHaptic } from "@/utils/capacitor-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSignedUrl } from "@/hooks/useSignedUrl";
+import { supabase } from "@/integrations/supabase/client";
 
 interface OptimizedGenerationPreviewProps {
   storagePath: string;
@@ -30,18 +32,68 @@ export const OptimizedGenerationPreview = ({
   const [videoError, setVideoError] = useState(false);
   const [audioError, setAudioError] = useState(false);
 
+  // Fetch signed URLs for audio and video
+  const { signedUrl: audioSignedUrl, isLoading: audioUrlLoading } = useSignedUrl(
+    contentType === "audio" ? storagePath : null,
+    'generated-content'
+  );
+  
+  const { signedUrl: videoSignedUrl, isLoading: videoUrlLoading } = useSignedUrl(
+    contentType === "video" ? storagePath : null,
+    'generated-content'
+  );
+
   const handleShare = async () => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const publicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${storagePath}`;
-    await shareFile(publicUrl, 'Check out my AI creation!');
-    await triggerHaptic('light');
+    try {
+      let shareUrl: string;
+      
+      if (contentType === "audio" && audioSignedUrl) {
+        shareUrl = audioSignedUrl;
+      } else if (contentType === "video" && videoSignedUrl) {
+        shareUrl = videoSignedUrl;
+      } else {
+        // Fallback to creating a signed URL on demand
+        const { data } = await supabase.storage
+          .from('generated-content')
+          .createSignedUrl(storagePath, 14400);
+        
+        if (!data?.signedUrl) {
+          toast.error('Failed to create share link');
+          return;
+        }
+        shareUrl = data.signedUrl;
+      }
+      
+      await shareFile(shareUrl, 'Check out my AI creation!');
+      await triggerHaptic('light');
+    } catch (error) {
+      console.error('Share failed:', error);
+      toast.error('Failed to share');
+    }
   };
 
   const handleDownload = async () => {
     try {
       await triggerHaptic('light');
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const publicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${storagePath}`;
+      
+      let downloadUrl: string;
+      
+      if (contentType === "audio" && audioSignedUrl) {
+        downloadUrl = audioSignedUrl;
+      } else if (contentType === "video" && videoSignedUrl) {
+        downloadUrl = videoSignedUrl;
+      } else {
+        // Create signed URL for download
+        const { data } = await supabase.storage
+          .from('generated-content')
+          .createSignedUrl(storagePath, 60);
+        
+        if (!data?.signedUrl) {
+          toast.error('Failed to create download link');
+          return;
+        }
+        downloadUrl = data.signedUrl;
+      }
       
       const ext = storagePath?.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1];
       let filename: string;
@@ -54,7 +106,7 @@ export const OptimizedGenerationPreview = ({
         filename = `image-${Date.now()}.${ext || 'jpg'}`;
       }
       
-      await downloadFile(publicUrl, filename);
+      await downloadFile(downloadUrl, filename);
     } catch (error) {
       console.error('Download failed:', error);
       toast.error('Download failed');
@@ -97,10 +149,15 @@ export const OptimizedGenerationPreview = ({
 
   // For audio - show audio player
   if (contentType === "audio") {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const publicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${storagePath}`;
+    if (audioUrlLoading) {
+      return (
+        <div className={`${className} flex items-center justify-center bg-muted`}>
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
 
-    if (audioError || !storagePath) {
+    if (audioError || !storagePath || !audioSignedUrl) {
       return (
         <div className={`${className} flex flex-col items-center justify-center bg-muted gap-3`}>
           <Music className="h-12 w-12 text-gray-600 dark:text-gray-400" />
@@ -127,7 +184,7 @@ export const OptimizedGenerationPreview = ({
           </div>
           
           <audio
-            src={publicUrl}
+            src={audioSignedUrl}
             className="w-full"
             controls
             preload="metadata"
@@ -152,16 +209,17 @@ export const OptimizedGenerationPreview = ({
     );
   }
 
-  // For video - use streaming edge function (existing logic)
+  // For video - use signed URL
   if (contentType === "video") {
-    const isIOS = typeof navigator !== 'undefined' && (
-      /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-    );
+    if (videoUrlLoading) {
+      return (
+        <div className={`${className} flex items-center justify-center bg-muted`}>
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
 
-    const streamUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stream-content?bucket=generated-content&path=${encodeURIComponent(storagePath)}`;
-
-    if (videoError || !storagePath) {
+    if (videoError || !storagePath || !videoSignedUrl) {
       return (
         <div className={`${className} flex flex-col items-center justify-center bg-muted gap-3`}>
           <Video className="h-12 w-12 text-muted-foreground" />
@@ -177,7 +235,7 @@ export const OptimizedGenerationPreview = ({
     return (
       <div className="relative group">
         <video
-          src={streamUrl}
+          src={videoSignedUrl}
           className={cn(className, "animate-fade-in")}
           controls
           preload="metadata"

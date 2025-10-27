@@ -12,6 +12,7 @@ import { useUserTokens } from '@/hooks/useUserTokens';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { useSignedUrlLazy } from '@/hooks/useSignedUrlLazy';
+import { useSignedUrl } from '@/hooks/useSignedUrl';
 import { Slider } from '@/components/ui/slider';
 import { GenerationProgress } from '@/components/generation/GenerationProgress';
 import { cn } from '@/lib/utils';
@@ -147,6 +148,12 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     job.status === 'awaiting_voice_approval' ? job.voiceover_url : null,
     'generated-content',
     { immediate: true }
+  );
+
+  // Fetch signed URL for completed video
+  const { signedUrl: videoSignedUrl, isLoading: isLoadingVideoUrl } = useSignedUrl(
+    job.status === 'completed' ? job.final_video_url : null,
+    'generated-content'
   );
 
   // Diagnostic logging for voiceover review
@@ -347,25 +354,35 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   };
 
   const handleDownload = async () => {
-    if (!job.final_video_url) return;
-    
     toast.loading('Preparing download...', { id: 'video-download' });
     
     try {
-      const response = await fetch(job.final_video_url);
+      const downloadUrl = videoSignedUrl || job.final_video_url;
+      
+      if (!downloadUrl) {
+        toast.error('Video URL not available', { id: 'video-download' });
+        return;
+      }
+      
+      const response = await fetch(downloadUrl);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;
-      a.download = `artifio-video-${Date.now()}.mp4`;
+      a.download = `artifio-${job.topic.slice(0, 30)}-${Date.now()}.mp4`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(blobUrl);
       document.body.removeChild(a);
       toast.success('Download started!', { id: 'video-download' });
     } catch (error) {
-      console.error('Download error:', error);
-      toast.error('Failed to download video', { id: 'video-download' });
+      console.error('[VideoJobCard] Download error:', error);
+      toast.error(`Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'video-download' });
     }
   };
 
@@ -803,15 +820,25 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
             
             {/* Inline Video Player */}
             <div className="rounded-lg overflow-hidden bg-black">
-              <video
-                src={job.final_video_url}
-                controls
-                controlsList="nodownload"
-                className="w-full"
-                playsInline
-              >
-                Your browser does not support the video tag.
-              </video>
+              {isLoadingVideoUrl ? (
+                <div className="flex items-center justify-center bg-muted h-48">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <video
+                  src={videoSignedUrl || job.final_video_url}
+                  controls
+                  controlsList="nodownload"
+                  className="w-full"
+                  playsInline
+                  onError={(e) => {
+                    console.error('[VideoJobCard] Video load error:', e);
+                    console.error('[VideoJobCard] Failed URL:', videoSignedUrl || job.final_video_url);
+                  }}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              )}
             </div>
 
             {/* Action Buttons */}

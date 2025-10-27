@@ -114,7 +114,7 @@ export const HeroSection = () => {
                     }
                   }}
                   autoplay={{
-                    delay: 2000,
+                    delay: 6000,
                     disableOnInteraction: false,
                   }}
                   effect="fade"
@@ -128,7 +128,6 @@ export const HeroSection = () => {
                   <SwiperSlide>
                     <video
                       src="/hero-demo.mp4"
-                      autoPlay
                       muted
                       playsInline
                       preload="auto"
@@ -138,7 +137,6 @@ export const HeroSection = () => {
                   <SwiperSlide>
                     <video
                       src="/hero-demo-2.mp4"
-                      autoPlay
                       muted
                       playsInline
                       preload="auto"
@@ -148,7 +146,6 @@ export const HeroSection = () => {
                   <SwiperSlide>
                     <video
                       src="/hero-demo-3.mp4"
-                      autoPlay
                       muted
                       playsInline
                       preload="auto"

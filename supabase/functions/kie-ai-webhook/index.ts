@@ -21,6 +21,27 @@ serve(async (req) => {
   }
 
   try {
+    console.log('✅ Webhook security layers initialized');
+    
+    // === LAYER 1: URL TOKEN VALIDATION ===
+    // Extract and validate the static URL token
+    const url = new URL(req.url);
+    const receivedToken = url.searchParams.get('token');
+    const expectedToken = Deno.env.get('KIE_WEBHOOK_URL_TOKEN');
+    
+    if (!receivedToken || receivedToken !== expectedToken) {
+      console.error('🚨 SECURITY LAYER 1 FAILED: Invalid or missing URL token', {
+        has_token: !!receivedToken,
+        token_preview: receivedToken?.substring(0, 8) + '...'
+      });
+      // Return 404 to make endpoint appear as if it doesn't exist
+      return new Response('Not Found', { 
+        status: 404,
+        headers: corsHeaders
+      });
+    }
+    
+    console.log('✅ Layer 1 passed: URL token validated');
     console.log('Kie.ai webhook received');
     
     const payload = await req.json();
@@ -43,11 +64,21 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // SECURITY: Verify the task exists in our database before processing
-    // This prevents malicious actors from sending fake webhook payloads
+    // === LAYER 2: VERIFY TOKEN VALIDATION ===
+    // Extract the per-generation verify token
+    const verifyToken = url.searchParams.get('verify');
+    if (!verifyToken) {
+      console.error('🚨 SECURITY LAYER 2 FAILED: Missing verify token');
+      return new Response(
+        JSON.stringify({ error: 'Bad Request' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // SECURITY: Verify the task exists in our database and fetch model metadata
     const { data: generation, error: findError } = await supabase
       .from('generations')
-      .select('*')
+      .select('*, ai_models(model_name, estimated_time_seconds)')
       .eq('provider_task_id', taskId)
       .single();
 
@@ -58,6 +89,34 @@ serve(async (req) => {
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    // Validate verify token matches the one stored during generation creation
+    const storedToken = generation.settings?._webhook_token;
+    if (!storedToken || storedToken !== verifyToken) {
+      console.error('🚨 SECURITY LAYER 2 FAILED: Invalid verify token', {
+        generation_id: generation.id,
+        task_id: taskId,
+        expected_preview: storedToken?.substring(0, 8) + '...',
+        received_preview: verifyToken.substring(0, 8) + '...'
+      });
+      
+      await supabase.from('audit_logs').insert({
+        user_id: generation.user_id,
+        action: 'webhook_rejected_token',
+        metadata: {
+          reason: 'invalid_verify_token',
+          generation_id: generation.id,
+          task_id: taskId
+        }
+      });
+      
+      return new Response(
+        JSON.stringify({ error: 'Forbidden' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log('✅ Layer 2 passed: Verify token validated');
 
     // Additional security: Only accept webhooks for pending/processing generations
     if (generation.status !== 'pending' && generation.status !== 'processing') {
@@ -67,8 +126,135 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    // === LAYER 3: DYNAMIC TIMING VALIDATION ===
+    const estimatedSeconds = generation.ai_models?.estimated_time_seconds || 300;
+    const MIN_PROCESSING_TIME = 2.85 * 1000; // 2.85 seconds (aggressive anti-replay)
+    const MAX_PROCESSING_TIME = estimatedSeconds * 2.5 * 1000; // 2.5x multiplier
 
-    console.log('Security: Valid webhook for generation:', generation.id);
+    const processingTime = Date.now() - new Date(generation.created_at).getTime();
+
+    console.log('⏱️ Timing analysis:', {
+      taskId,
+      model: generation.ai_models?.model_name,
+      estimated_seconds: estimatedSeconds,
+      actual_processing_seconds: Math.round(processingTime / 1000),
+      min_threshold_seconds: MIN_PROCESSING_TIME / 1000,
+      max_threshold_seconds: MAX_PROCESSING_TIME / 1000
+    });
+
+    // Reject impossibly fast webhooks (< 2.85s = replay/automation attack)
+    if (processingTime < MIN_PROCESSING_TIME) {
+      console.error('🚨 SECURITY LAYER 3 FAILED: Webhook too fast - possible replay attack', {
+        taskId,
+        generation_id: generation.id,
+        processing_ms: processingTime,
+        threshold_ms: MIN_PROCESSING_TIME,
+        model: generation.ai_models?.model_name
+      });
+      
+      await supabase.from('audit_logs').insert({
+        user_id: generation.user_id,
+        action: 'webhook_rejected_timing',
+        metadata: {
+          reason: 'too_fast',
+          generation_id: generation.id,
+          task_id: taskId,
+          processing_seconds: processingTime / 1000,
+          minimum_threshold: MIN_PROCESSING_TIME / 1000,
+          model_id: generation.model_id
+        }
+      });
+      
+      return new Response(
+        JSON.stringify({ 
+          error: 'Request processing too fast - potential security issue',
+          timestamp: new Date().toISOString()
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Log late webhooks (don't reject - might be legitimate queue delays)
+    if (processingTime > MAX_PROCESSING_TIME) {
+      const severityLevel = processingTime > (MAX_PROCESSING_TIME * 2) ? 'high' : 'medium';
+      
+      console.warn(`⏰ Late webhook detected [${severityLevel} severity]`, {
+        taskId,
+        generation_id: generation.id,
+        processing_seconds: Math.round(processingTime / 1000),
+        max_threshold_seconds: Math.round(MAX_PROCESSING_TIME / 1000),
+        model: generation.ai_models?.model_name
+      });
+      
+      await supabase.from('audit_logs').insert({
+        user_id: generation.user_id,
+        action: 'webhook_late_arrival',
+        metadata: {
+          severity: severityLevel,
+          generation_id: generation.id,
+          task_id: taskId,
+          expected_max_seconds: MAX_PROCESSING_TIME / 1000,
+          actual_seconds: processingTime / 1000,
+          variance_seconds: (processingTime - MAX_PROCESSING_TIME) / 1000,
+          model_id: generation.model_id
+        }
+      });
+    }
+    
+    console.log('✅ Layer 3 passed: Webhook timing validated');
+    
+    // === LAYER 4: IDEMPOTENCY PROTECTION ===
+    // Check if we've already processed this webhook (duplicate/replay)
+    const { data: existingEvent, error: eventCheckError } = await supabase
+      .from('webhook_events')
+      .select('id')
+      .eq('event_type', 'kie_ai_callback')
+      .eq('idempotency_key', taskId)
+      .maybeSingle();
+
+    if (existingEvent) {
+      console.warn('⚠️ SECURITY LAYER 4: Duplicate webhook detected (idempotency check)', {
+        taskId,
+        generation_id: generation.id,
+        previous_event_id: existingEvent.id
+      });
+      
+      await supabase.from('audit_logs').insert({
+        user_id: generation.user_id,
+        action: 'webhook_duplicate_blocked',
+        metadata: {
+          generation_id: generation.id,
+          task_id: taskId,
+          previous_event_id: existingEvent.id
+        }
+      });
+      
+      // Return 200 to Kie.ai (don't make them retry), but don't process
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Webhook already processed (idempotency)'
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Record this webhook event for idempotency tracking
+    const { error: eventInsertError } = await supabase
+      .from('webhook_events')
+      .insert({
+        event_type: 'kie_ai_callback',
+        idempotency_key: taskId
+      });
+
+    if (eventInsertError) {
+      console.error('Failed to record webhook event:', eventInsertError);
+      // Continue processing - idempotency is nice-to-have, not critical
+    }
+    
+    console.log('✅ Layer 4 passed: Idempotency check completed');
+    console.log('🔒 All security layers passed - processing webhook for generation:', generation.id);
 
     // Extract Kie.ai callback type and items array
     const callbackType = payload.data?.callbackType || payload.data?.callback_type;

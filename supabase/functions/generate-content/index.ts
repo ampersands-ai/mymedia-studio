@@ -422,7 +422,16 @@ serve(async (req) => {
       tokensDeducted = true;
       console.log('Tokens deducted:', tokenCost);
 
-      // Step 2: Create generation record
+      // Generate unique webhook verification token for security
+      const webhookToken = crypto.randomUUID();
+      console.log('Generated webhook verification token for security layer 2');
+
+      // Step 2: Create generation record with webhook token in settings
+      const generationSettings = {
+        ...parameters,
+        _webhook_token: webhookToken // Private field for webhook verification (Layer 2)
+      };
+      
       const { data: gen, error: genError } = await supabase
         .from('generations')
         .insert({
@@ -435,7 +444,7 @@ serve(async (req) => {
           original_prompt: originalPrompt,
           enhanced_prompt: enhance_prompt ? finalPrompt : null,
           enhancement_provider: usedEnhancementProvider,
-          settings: parameters,
+          settings: generationSettings,
           tokens_used: tokenCost,
           actual_token_cost: tokenCost,
           status: 'pending',
@@ -454,6 +463,7 @@ serve(async (req) => {
       generation = gen;
       generationCreated = true;
       console.log('Generation record created:', generation.id);
+      console.log('Webhook token stored securely in settings._webhook_token');
 
       // Validate prompt only if model has prompt field
       if (hasPromptField) {
@@ -576,9 +586,12 @@ serve(async (req) => {
         }
 
         console.log('Provider request:', JSON.stringify(providerRequest));
+        
+        // Get webhookToken from generation settings for Kie.ai provider
+        const webhookToken = generation.settings?._webhook_token;
 
         const providerResponse: any = await Promise.race([
-          callProvider(model.provider, providerRequest),
+          callProvider(model.provider, providerRequest, webhookToken),
           timeoutPromise
         ]);
 

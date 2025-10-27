@@ -17,13 +17,17 @@ export interface ProviderResponse {
 
 export async function callProvider(
   provider: string,
-  request: ProviderRequest
+  request: ProviderRequest,
+  webhookToken?: string
 ): Promise<ProviderResponse> {
   console.log(`Calling provider: ${provider}`);
 
   switch (provider) {
     case 'kie_ai':
-      return await callKieAI(request);
+      if (!webhookToken) {
+        throw new Error('webhookToken is required for kie_ai provider');
+      }
+      return await callKieAI(request, webhookToken);
     
     case 'json2video':
       throw new Error('JSON2Video provider not yet implemented. Please configure in providers/json2video.ts');

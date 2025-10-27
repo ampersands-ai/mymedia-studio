@@ -9,7 +9,10 @@ import { ProviderRequest, ProviderResponse } from "./index.ts";
     }
   };
 
-export async function callKieAI(request: ProviderRequest): Promise<ProviderResponse> {
+export async function callKieAI(
+  request: ProviderRequest,
+  webhookToken: string
+): Promise<ProviderResponse> {
   const KIE_AI_API_KEY = Deno.env.get('KIE_AI_API_KEY');
   
   if (!KIE_AI_API_KEY) {
@@ -21,9 +24,18 @@ export async function callKieAI(request: ProviderRequest): Promise<ProviderRespo
   
   console.log('Calling Kie.ai API - Model:', request.model, 'Payload Structure:', request.payload_structure || 'wrapper', 'Endpoint:', createTaskEndpoint);
 
-  // Build request payload with callback URL
+  // Build request payload with callback URL including security tokens
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const callbackUrl = `${supabaseUrl}/functions/v1/kie-ai-webhook`;
+  const urlToken = Deno.env.get('KIE_WEBHOOK_URL_TOKEN');
+  
+  if (!urlToken) {
+    throw new Error('KIE_WEBHOOK_URL_TOKEN not configured. Please add it to your Supabase secrets.');
+  }
+  
+  // Construct callback URL with both security tokens
+  const callbackUrl = `${supabaseUrl}/functions/v1/kie-ai-webhook?token=${urlToken}&verify=${webhookToken}`;
+  
+  console.log('Callback URL configured with security tokens (URL token + verify token)');
   
   const useFlatStructure = request.payload_structure === 'flat';
   let payload: any;

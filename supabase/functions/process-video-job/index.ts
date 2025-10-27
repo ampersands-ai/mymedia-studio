@@ -638,6 +638,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
       
       // Define videoPath here after we have job data
       const videoPath = job ? `${job.user_id}/${new Date().toISOString().split('T')[0]}/${jobId}.mp4` : '';
+      let finalVideoUrl = videoUrl; // Initialize with Shotstack URL as fallback
       
       if (job) {
         try {
@@ -683,7 +684,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
               .from('generated-content')
               .createSignedUrl(videoPath, 60 * 60 * 24 * 7);
             
-            let finalVideoUrl = videoUrl; // fallback to Shotstack URL
+            // Update finalVideoUrl if we successfully got a signed URL
             if (!signedUrlError && signedUrlData?.signedUrl) {
               finalVideoUrl = signedUrlData.signedUrl;
               console.log(`[${jobId}] Using signed storage URL`);

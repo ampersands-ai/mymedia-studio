@@ -54,7 +54,7 @@ export const StatCounter = ({ end, duration = 2000, suffix = "", label }: StatCo
 
   return (
     <div ref={elementRef} className="text-center">
-      <div className="text-4xl md:text-5xl font-black text-navy">
+      <div className="text-4xl md:text-5xl font-black text-navy dark:text-neutral-100">
         {count.toLocaleString()}{suffix}
       </div>
       <div className="text-sm md:text-base text-neutral-600 dark:text-neutral-400 mt-2 font-medium uppercase tracking-wide">

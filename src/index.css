@@ -576,11 +576,32 @@ All colors MUST be HSL.
   }
 
   .dark .bg-neutral-50 {
-    color: hsl(215 25% 17%);
+    background-color: hsl(215 25% 17%);
   }
 
   .dark .border-neutral-200 {
     border-color: hsl(215 25% 27%);
+  }
+
+  /* Additional dark mode overrides for text visibility */
+  .dark .text-gray-800 {
+    color: hsl(215 20% 75%);
+  }
+
+  .dark .text-gray-700 {
+    color: hsl(214 20% 75%);
+  }
+
+  .dark .text-neutral-900 {
+    color: hsl(210 40% 98%);
+  }
+
+  .dark .border-gray-300 {
+    border-color: hsl(215 25% 35%);
+  }
+
+  .dark .border-gray-400 {
+    border-color: hsl(215 25% 40%);
   }
   
   /* Technology Partners Marquee */

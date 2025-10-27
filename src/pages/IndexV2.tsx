@@ -151,7 +151,7 @@ const IndexV2 = () => {
             <h2 className="text-3xl md:text-5xl font-black">
               <span className="font-bold">artifio.ai</span> Solves This
             </h2>
-            <p className="text-xl text-gray-800 dark:text-gray-200 max-w-3xl mx-auto">
+            <p className="text-xl text-foreground max-w-3xl mx-auto">
               One Platform. Every Tool. Affordable Pricing.
             </p>
             <p className="text-lg max-w-2xl mx-auto">
@@ -186,7 +186,7 @@ const IndexV2 = () => {
       <WorkflowSteps />
 
       {/* Section 6: Feature Showcase */}
-      <section className="bg-neutral-50 py-16 md:py-24">
+      <section className="bg-neutral-50 dark:bg-neutral-900 py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-24">
             <Suspense fallback={<GallerySkeleton />}>
@@ -201,7 +201,7 @@ const IndexV2 = () => {
                 ctaText="Browse Templates →"
                 ctaLink="/dashboard/custom-creation"
                 visual={
-                  <div className="text-center text-gray-800 dark:text-gray-200">
+                  <div className="text-center text-foreground">
                     Template library interface preview
                   </div>
                 }
@@ -219,7 +219,7 @@ const IndexV2 = () => {
                 ctaLink="/pricing"
                 visual={
                   <div className="space-y-2">
-                    <div className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4">
+                    <div className="text-sm font-bold text-foreground mb-4">
                       Select AI Model:
                     </div>
                     {["Midjourney", "DALL-E 3", "Runway", "Flux"].map((model) => (
@@ -245,7 +245,7 @@ const IndexV2 = () => {
                 visual={
                   <div className="text-center space-y-4">
                     <div className="text-5xl font-black text-primary">10,000</div>
-                    <div className="text-gray-800 dark:text-gray-200">Tokens Remaining</div>
+                    <div className="text-foreground">Tokens Remaining</div>
                   </div>
                 }
               />
@@ -261,7 +261,7 @@ const IndexV2 = () => {
                 ctaText="Try Custom Mode →"
                 ctaLink="/dashboard/custom-creation"
                 visual={
-                  <div className="text-center text-gray-800 dark:text-gray-200">
+                  <div className="text-center text-foreground">
                     Custom creation interface preview
                   </div>
                 }
@@ -290,7 +290,7 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 8: Testimonials */}
-      <section className="bg-neutral-50 py-16 md:py-24">
+      <section className="bg-neutral-50 dark:bg-neutral-900 py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-12">
             <h2 className="text-3xl md:text-5xl font-black text-center">
@@ -310,7 +310,7 @@ const IndexV2 = () => {
             <h2 className="text-3xl md:text-5xl font-black">
               Made by Creators Like You
             </h2>
-            <p className="text-xl text-gray-800 dark:text-gray-200">
+            <p className="text-xl text-foreground">
               Join the community and share your creations
             </p>
           </div>
@@ -331,14 +331,14 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 10: Model Marketplace */}
-      <section className="bg-neutral-50 py-16 md:py-24">
+      <section className="bg-neutral-50 dark:bg-neutral-900 py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-12">
             <div className="text-center space-y-4">
               <h2 className="text-3xl md:text-5xl font-black">
                 Access 22+ AI Models
               </h2>
-              <p className="text-xl text-gray-800 dark:text-gray-200">
+              <p className="text-xl text-foreground">
                 All the best AI tools, one subscription
               </p>
             </div>

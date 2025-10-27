@@ -97,29 +97,7 @@
   </head>
 
   <body>
-    <div id="root"><div style="padding:12px;font-family:'Space Grotesk',system-ui">Booting…</div></div>
-    <script>
-      (function () {
-        try {
-          var KEY = 'sw_nuke_v3';
-          if (!localStorage.getItem(KEY)) {
-            localStorage.setItem(KEY, String(Date.now()));
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.getRegistrations()
-                .then(function (regs) { return Promise.all(regs.map(function (r) { return r.unregister(); })); })
-                .then(function () { return caches.keys().then(function (keys) { return Promise.all(keys.map(function (k) { return caches.delete(k); })); }); })
-                .then(function () {
-                  var url = new URL(location.href);
-                  url.searchParams.set('sw_cleanup', '1');
-                  url.searchParams.set('ts', String(Date.now()));
-                  location.replace(url.toString());
-                })
-                .catch(function () { /* no-op */ });
-            }
-          }
-        } catch (e) { /* no-op */ }
-      })();
-    </script>
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx" fetchpriority="high"></script>
   </body>
 </html>

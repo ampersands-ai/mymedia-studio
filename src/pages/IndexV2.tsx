@@ -64,9 +64,9 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 3: Problem/Solution */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
+      <section className="container mx-auto px-4 spacing-section">
         <div className="max-w-6xl mx-auto space-y-12">
-          <h2 className="text-3xl md:text-5xl font-black text-center">
+          <h2 className="text-heading-lg text-center">
             Sound Familiar?
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -89,13 +89,13 @@ const IndexV2 = () => {
           </div>
           
           <div className="text-center space-y-8 pt-8">
-            <h2 className="text-3xl md:text-5xl font-black">
+            <h2 className="text-heading-lg">
               <span className="font-bold">artifio.ai</span> Solves This
             </h2>
-            <p className="text-xl text-foreground max-w-3xl mx-auto">
+            <p className="text-body-lg text-foreground max-w-3xl mx-auto">
               One Platform. Every Tool. Affordable Pricing.
             </p>
-            <p className="text-lg max-w-2xl mx-auto">
+            <p className="text-body max-w-2xl mx-auto">
               <span className="font-bold">artifio.ai</span> brings all the AI models you need into one place,
               with templates that work and pricing that makes sense.
             </p>
@@ -127,7 +127,7 @@ const IndexV2 = () => {
       <WorkflowSteps />
 
       {/* Section 6: Feature Showcase */}
-      <section className="bg-neutral-50 dark:bg-neutral-900 py-16 md:py-24">
+      <section className="bg-neutral-50 dark:bg-neutral-900 spacing-section">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-24">
             <Suspense fallback={<GallerySkeleton />}>
@@ -231,10 +231,10 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 8: Testimonials */}
-      <section className="bg-neutral-50 dark:bg-neutral-900 py-16 md:py-24">
+      <section className="bg-neutral-50 dark:bg-neutral-900 spacing-section">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-12">
-            <h2 className="text-3xl md:text-5xl font-black text-center">
+            <h2 className="text-heading-lg text-center">
               Loved by 10,000+ Creators
             </h2>
             <Suspense fallback={<div className="h-64 skeleton rounded-xl" />}>
@@ -245,13 +245,13 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 9: Community Showcase */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
+      <section className="container mx-auto px-4 spacing-section">
         <div className="max-w-6xl mx-auto space-y-12">
           <div className="text-center space-y-4">
-            <h2 className="text-3xl md:text-5xl font-black">
+            <h2 className="text-heading-lg">
               Made by Creators Like You
             </h2>
-            <p className="text-xl text-foreground">
+            <p className="text-body-lg text-foreground">
               Join the community and share your creations
             </p>
           </div>
@@ -272,21 +272,21 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 10: Model Marketplace */}
-      <section className="bg-white dark:bg-white py-16 md:py-24">
+      <section className="bg-white dark:bg-white spacing-section">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-12">
             <div className="text-center space-y-4">
-              <h2 className="text-3xl md:text-5xl font-black text-black">
+              <h2 className="text-heading-lg text-black">
                 Access 30+ AI Models
               </h2>
-              <p className="text-xl text-black">
+              <p className="text-body-lg text-black">
                 All the best AI tools, one subscription
               </p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-4">
-                <h3 className="text-2xl font-black flex items-center gap-2 text-black">
+                <h3 className="text-heading-sm flex items-center gap-2 text-black">
                   <Video className="w-6 h-6 text-secondary-600" />
                   VIDEO GENERATION
                 </h3>
@@ -297,7 +297,7 @@ const IndexV2 = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-2xl font-black flex items-center gap-2 text-black">
+                <h3 className="text-heading-sm flex items-center gap-2 text-black">
                   <Image className="w-6 h-6 text-secondary-600" />
                   IMAGE GENERATION
                 </h3>
@@ -308,7 +308,7 @@ const IndexV2 = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-2xl font-black flex items-center gap-2 text-black">
+                <h3 className="text-heading-sm flex items-center gap-2 text-black">
                   <Music className="w-6 h-6 text-secondary-600" />
                   AUDIO GENERATION
                 </h3>
@@ -319,7 +319,7 @@ const IndexV2 = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-2xl font-black flex items-center gap-2 text-black">
+                <h3 className="text-heading-sm flex items-center gap-2 text-black">
                   <FileText className="w-6 h-6 text-secondary-600" />
                   TEXT GENERATION
                 </h3>
@@ -341,9 +341,9 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 11: FAQ */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
+      <section className="container mx-auto px-4 spacing-section">
         <div className="max-w-4xl mx-auto space-y-12">
-          <h2 className="text-3xl md:text-5xl font-black text-center">
+          <h2 className="text-heading-lg text-center">
             Frequently Asked Questions
           </h2>
           <Suspense fallback={<div className="space-y-4">
@@ -358,10 +358,10 @@ const IndexV2 = () => {
       <section className="bg-primary-500 py-12 md:py-16 lg:py-24 border-y-4 border-black text-neutral-900">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black !text-neutral-900 dark:!text-neutral-900 px-2">
+            <h2 className="text-heading-lg !text-neutral-900 dark:!text-neutral-900 px-2">
               Ready to Start Creating?
             </h2>
-            <p className="text-base sm:text-lg md:text-xl text-neutral-900/90 max-w-2xl mx-auto px-2">
+            <p className="text-body text-neutral-900/90 max-w-2xl mx-auto px-2">
               Join 10,000+ creators making professional content with AI—no expensive
               subscriptions, no technical skills required.
             </p>

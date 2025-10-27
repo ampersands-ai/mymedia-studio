@@ -30,17 +30,17 @@ export const TemplateCarousel = ({ templates }: TemplateCarouselProps) => {
   if (!templates || templates.length === 0) return null;
 
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section className="spacing-section relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+          <h2 className="text-heading-lg mb-4">
             Explore{' '}
             <span className="bg-gradient-to-r from-primary-yellow to-primary-orange bg-clip-text text-transparent">
               Templates
             </span>
           </h2>
-          <p className="text-xl text-gray-800 dark:text-gray-200">
+          <p className="text-body-lg text-gray-800 dark:text-gray-200">
             Get inspired by thousands of AI-generated creations
           </p>
         </div>
@@ -72,7 +72,7 @@ export const TemplateCarousel = ({ templates }: TemplateCarouselProps) => {
           loop={true}
           className="template-carousel"
         >
-          {templates.slice(0, 12).map((template) => (
+          {templates.slice(0, 12).map((template, index) => (
             <SwiperSlide key={template.id}>
               <GlassCard hover className="overflow-hidden group h-full">
                 {/* Thumbnail/Video */}
@@ -88,6 +88,9 @@ export const TemplateCarousel = ({ templates }: TemplateCarouselProps) => {
                     <OptimizedImage
                       src={template.thumbnail_url}
                       alt={template.name}
+                      width={405}
+                      height={720}
+                      priority={index < 3}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       isSupabaseImage={template.thumbnail_url.includes('supabase')}
                     />
@@ -122,10 +125,13 @@ export const TemplateCarousel = ({ templates }: TemplateCarouselProps) => {
                   {/* Author attribution */}
                   {template.author && (
                     <div className="flex items-center space-x-2">
-                      <img
+                      <OptimizedImage
                         src={template.author.avatar}
                         alt={template.author.name}
+                        width={32}
+                        height={32}
                         className="w-8 h-8 rounded-full object-cover"
+                        isSupabaseImage={template.author.avatar.includes('supabase')}
                       />
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         {template.author.name}

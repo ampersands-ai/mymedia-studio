@@ -5,9 +5,14 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { OptimizedVideo } from '@/components/ui/optimized-video';
 import { Link } from 'react-router-dom';
 import { useScrollY } from '@/hooks/useScrollY';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const HeroSection = () => {
   const scrollY = useScrollY();
+  const isMobile = useIsMobile();
+  
+  // Disable parallax on mobile for better performance
+  const parallaxY = isMobile ? 0 : scrollY;
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -104,8 +109,8 @@ export const HeroSection = () => {
 
             {/* Floating badges with parallax */}
             <div 
-              className="absolute -left-4 top-1/4 transform -translate-y-1/2 hidden lg:block"
-              style={{ transform: `translateY(${scrollY * 0.1}px)` }}
+              className="absolute top-1/4 transform -translate-y-1/2 hidden lg:block left-[-5%] xl:left-[-2%]"
+              style={{ transform: `translateY(${parallaxY * 0.1}px)` }}
             >
               <GlassCard className="p-4 animate-float">
                 <div className="flex items-center space-x-3">
@@ -122,10 +127,10 @@ export const HeroSection = () => {
 
             {/* Cost savings badge */}
             <div 
-              className="absolute -right-8 top-1/3 hidden lg:block animate-float" 
+              className="absolute top-1/3 hidden lg:block animate-float right-[-6%] xl:right-[-3%]" 
               style={{ 
                 animationDelay: '1s',
-                transform: `translateY(${scrollY * 0.15}px)` 
+                transform: `translateY(${parallaxY * 0.15}px)` 
               }}
             >
               <GlassCard className="p-3">
@@ -143,10 +148,10 @@ export const HeroSection = () => {
 
             {/* User count badge */}
             <div 
-              className="absolute -left-6 bottom-1/4 hidden lg:block animate-float" 
+              className="absolute bottom-1/4 hidden lg:block animate-float left-[-4%] xl:left-[-1%]" 
               style={{ 
                 animationDelay: '0.5s',
-                transform: `translateY(${scrollY * 0.2}px)` 
+                transform: `translateY(${parallaxY * 0.2}px)` 
               }}
             >
               <GlassCard className="p-3">
@@ -164,10 +169,10 @@ export const HeroSection = () => {
 
             {/* Success rate badge */}
             <div 
-              className="absolute -right-4 bottom-1/3 hidden lg:block animate-float" 
+              className="absolute bottom-1/3 hidden lg:block animate-float right-[-3%] xl:right-[-1%]" 
               style={{ 
                 animationDelay: '1.5s',
-                transform: `translateY(${scrollY * 0.08}px)` 
+                transform: `translateY(${parallaxY * 0.08}px)` 
               }}
             >
               <GlassCard className="p-3">

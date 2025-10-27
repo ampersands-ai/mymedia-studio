@@ -257,6 +257,82 @@ All colors MUST be HSL.
   }
 }
 
+/* ========================================
+   DESIGN TOKEN UTILITY CLASSES
+   ======================================== */
+
+/* Typography tokens */
+.text-heading-xl { 
+  @apply text-5xl sm:text-6xl lg:text-7xl leading-tight font-bold tracking-tight; 
+}
+
+.text-heading-lg { 
+  @apply text-4xl md:text-5xl leading-tight font-semibold tracking-tight; 
+}
+
+.text-heading-md { 
+  @apply text-3xl md:text-4xl leading-tight font-semibold; 
+}
+
+.text-heading-sm { 
+  @apply text-2xl md:text-3xl leading-snug font-semibold; 
+}
+
+.text-body-lg { 
+  @apply text-xl leading-relaxed; 
+}
+
+.text-body { 
+  @apply text-lg leading-relaxed; 
+}
+
+.text-body-sm { 
+  @apply text-base leading-normal; 
+}
+
+/* Spacing tokens */
+.spacing-section { 
+  @apply py-16 md:py-24; 
+}
+
+.spacing-section-lg { 
+  @apply py-20 md:py-32; 
+}
+
+.spacing-xl { 
+  @apply p-12 md:p-16; 
+}
+
+.spacing-lg { 
+  @apply p-8 md:p-12; 
+}
+
+.spacing-md { 
+  @apply p-6 md:p-8; 
+}
+
+.spacing-sm { 
+  @apply p-4 md:p-6; 
+}
+
+/* Border radius tokens */
+.rounded-card { 
+  @apply rounded-lg md:rounded-xl; 
+}
+
+.rounded-button { 
+  @apply rounded-full; 
+}
+
+/* Shadow tokens */
+.shadow-card { 
+  @apply shadow-lg hover:shadow-xl transition-shadow; 
+}
+
+.shadow-glass { 
+  @apply shadow-md backdrop-blur-lg; 
+}
+
 @layer base {
   * {
     @apply border-border;

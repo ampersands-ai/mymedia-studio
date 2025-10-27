@@ -32,10 +32,10 @@ export const FeatureShowcase = ({
       )}
     >
       <div className={cn("space-y-6", reversed && "md:col-start-2")}>
-        <h3 className="text-3xl md:text-4xl font-black text-foreground">
+        <h3 className="text-heading-md text-foreground">
           {title}
         </h3>
-        <p className="text-lg text-muted-foreground">{description}</p>
+        <p className="text-body text-muted-foreground">{description}</p>
         <ul className="space-y-3">
           {benefits.map((benefit, idx) => (
             <li key={idx} className="flex items-start gap-3">

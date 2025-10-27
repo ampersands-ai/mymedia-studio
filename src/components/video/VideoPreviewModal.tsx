@@ -22,15 +22,28 @@ interface VideoPreviewModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Helper to extract storage path from public URL
+const getStoragePathFromUrl = (url: string | null): string | null => {
+  if (!url) return null;
+  
+  // If it's already a storage path, return it
+  if (!url.startsWith('http')) return url;
+  
+  // Extract path from public URL
+  const match = url.match(/\/storage\/v1\/object\/public\/generated-content\/(.+)/);
+  return match ? match[1] : null;
+};
+
 export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModalProps) {
   const isMobile = useIsMobile();
   const { generateCaption, isGeneratingCaption } = useVideoJobs();
   const [copiedCaption, setCopiedCaption] = useState(false);
   const [copiedHashtags, setCopiedHashtags] = useState(false);
 
-  // Fetch signed URL for the video
+  // Extract storage path and fetch signed URL for the video
+  const videoStoragePath = getStoragePathFromUrl(job.final_video_url);
   const { signedUrl: videoSignedUrl, isLoading: isLoadingVideoUrl } = useSignedUrl(
-    job.final_video_url,
+    videoStoragePath,
     'generated-content'
   );
 

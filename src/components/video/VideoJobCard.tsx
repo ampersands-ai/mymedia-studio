@@ -55,6 +55,18 @@ const StepIndicator = ({
   </div>
 );
 
+// Helper to extract storage path from public URL
+const getStoragePathFromUrl = (url: string | null): string | null => {
+  if (!url) return null;
+  
+  // If it's already a storage path, return it
+  if (!url.startsWith('http')) return url;
+  
+  // Extract path from public URL
+  const match = url.match(/\/storage\/v1\/object\/public\/generated-content\/(.+)/);
+  return match ? match[1] : null;
+};
+
 export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const getStatusColor = (status: VideoJob['status']) => {
     const colors = {
@@ -150,9 +162,10 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     { immediate: true }
   );
 
-  // Fetch signed URL for completed video
+  // Extract storage path from the public URL and fetch signed URL for completed video
+  const videoStoragePath = getStoragePathFromUrl(job.final_video_url);
   const { signedUrl: videoSignedUrl, isLoading: isLoadingVideoUrl } = useSignedUrl(
-    job.status === 'completed' ? job.final_video_url : null,
+    job.status === 'completed' ? videoStoragePath : null,
     'generated-content'
   );
 

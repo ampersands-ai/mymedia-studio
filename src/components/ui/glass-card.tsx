@@ -18,10 +18,10 @@ export const GlassCard = ({
       className={cn(
         "relative rounded-xl backdrop-blur-lg border shadow-lg",
         gradient 
-          ? "bg-gradient-to-br from-white/80 to-white/60 dark:from-gray-800/80 dark:to-gray-900/70" 
-          : "bg-white/90 dark:bg-gray-800/90",
-        "border-white/30 dark:border-gray-700/30",
-        hover && "transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl",
+          ? "bg-gradient-to-br from-card/90 to-card/70 dark:from-card/90 dark:to-card/70" 
+          : "bg-card/95 dark:bg-card/95",
+        "border-border/30",
+        hover && "transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/20",
         className
       )}
     >

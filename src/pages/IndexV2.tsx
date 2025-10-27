@@ -7,15 +7,13 @@ import { ProblemCard } from "@/components/homepage/ProblemCard";
 import { useTemplates } from "@/hooks/useTemplates";
 import { lazy, Suspense, useState } from "react";
 import { Check, Frown, Clock, HelpCircle, DollarSign, Palette, Edit, Download, Video, Image, Music, FileText } from "lucide-react";
-import { MobileMenu } from "@/components/MobileMenu";
-import { useUserTokens } from "@/hooks/useUserTokens";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { GallerySkeleton, PricingSkeleton } from "@/components/ui/skeletons";
 import { usePrefetchOnHover } from "@/hooks/useRoutePreload";
 import { HeroSection } from "@/components/homepage/HeroSection";
 import { TemplateCarousel } from "@/components/homepage/TemplateCarousel";
 import { WorkflowSteps } from "@/components/homepage/WorkflowSteps";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { GlobalHeader } from "@/components/GlobalHeader";
 
 // Lazy load heavy components
 const FeatureShowcase = lazy(() => import("@/components/homepage/FeatureShowcase").then(m => ({ default: m.FeatureShowcase })));
@@ -24,7 +22,6 @@ const FAQAccordion = lazy(() => import("@/components/homepage/FAQAccordion").the
 const ComparisonTable = lazy(() => import("@/components/homepage/ComparisonTable").then(m => ({ default: m.ComparisonTable })));
 
 // Import assets
-import logoImage from "@/assets/logo.png";
 import midjourney from "@/assets/partners/midjourney-alt.webp";
 import openai from "@/assets/partners/openai.png";
 import claude from "@/assets/partners/claude.svg";
@@ -37,8 +34,6 @@ import pika from "@/assets/partners/hailuo.png";
 const IndexV2 = () => {
   const { user } = useAuth();
   const { data: templates } = useTemplates();
-  const { data: tokenData } = useUserTokens();
-  const tokenBalance = tokenData?.tokens_remaining ?? undefined;
   const [templateFilter, setTemplateFilter] = useState("all");
 
   const filteredTemplates = templates?.filter((template) => {
@@ -51,61 +46,7 @@ const IndexV2 = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header/Navigation */}
-      <header className="sticky top-0 z-50 bg-background border-b-4 border-black dark:border-neutral-700">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center justify-between gap-4">
-            {/* Logo - Left side */}
-            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <OptimizedImage 
-                src={logoImage} 
-                alt="artifio.ai logo" 
-                className="h-6 md:h-8 object-contain" 
-                width={32}
-                height={32}
-                priority
-              />
-              <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
-            </Link>
-
-            {/* Desktop Navigation - Center/Right */}
-            <div className="hidden md:flex items-center gap-6">
-              <Link to="/features" className="font-bold text-neutral-900 dark:text-neutral-100 hover:text-secondary-600 transition-colors">
-                Features
-              </Link>
-              <Link to="/dashboard/templates" className="font-bold text-neutral-900 dark:text-neutral-100 hover:text-secondary-600 transition-colors">
-                Templates
-              </Link>
-              <Link to="/pricing" className="font-bold text-neutral-900 dark:text-neutral-100 hover:text-secondary-600 transition-colors">
-                Pricing
-              </Link>
-              <Link to="/community" className="font-bold text-neutral-900 dark:text-neutral-100 hover:text-secondary-600 transition-colors">
-                Community
-              </Link>
-            </div>
-
-            {/* Auth Buttons - Right side */}
-            <div className="flex items-center gap-3">
-              <ThemeToggle />
-              {user ? (
-                <Button asChild variant="default">
-                  <Link to="/dashboard/custom-creation">Go to Dashboard</Link>
-                </Button>
-              ) : (
-                <>
-                  <Button asChild variant="secondary" className="font-bold">
-                    <Link to="/auth">Login</Link>
-                  </Button>
-                  <Button asChild variant="default" className="hidden sm:inline-flex">
-                    <Link to="/auth">Sign Up</Link>
-                  </Button>
-                </>
-              )}
-              <MobileMenu tokenBalance={tokenBalance} />
-            </div>
-          </nav>
-        </div>
-      </header>
+      <GlobalHeader />
 
       {/* Hero Section - New Design */}
       <HeroSection />

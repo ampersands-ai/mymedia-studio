@@ -1,10 +1,13 @@
 import { createRoot, hydrateRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { registerServiceWorker, unregisterServiceWorker } from "./lib/serviceWorker";
+import { registerServiceWorker, unregisterServiceWorker, forceUnregisterServiceWorker } from "./lib/serviceWorker";
 import { onCLS, onINP, onFCP, onLCP, onTTFB } from 'web-vitals';
 import { trackSession } from './lib/analytics';
 import { initPostHog } from './lib/posthog';
+
+// Force-clear any stale service workers and caches immediately
+forceUnregisterServiceWorker();
 
 // Initialize theme before first render to prevent flash
 const stored = localStorage.getItem('theme');
@@ -19,7 +22,7 @@ initPostHog();
 // Service worker temporarily disabled to prevent cache issues
 // registerServiceWorker();
 
-// Auto-unregister in dev mode and clear any existing SW
+// Auto-unregister in dev mode
 unregisterServiceWorker();
 
 // Track session metrics

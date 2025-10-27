@@ -55,6 +55,28 @@ export function unregisterServiceWorker() {
 }
 
 /**
+ * Force-unregister ALL service workers and clear caches
+ * Used temporarily to fix stale cache issues across all devices
+ */
+export async function forceUnregisterServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    try {
+      // Unregister all service workers
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((reg) => reg.unregister()));
+      
+      // Clear all caches
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map((name) => caches.delete(name)));
+      
+      console.log('[SW] Force-cleared all service workers and caches');
+    } catch (err) {
+      console.error('[SW] Error during force cleanup:', err);
+    }
+  }
+}
+
+/**
  * Show update notification banner
  */
 function showUpdateNotification() {

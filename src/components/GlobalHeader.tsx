@@ -11,6 +11,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import { OptimizedImage } from "@/components/ui/optimized-image";
+import logoImage from "@/assets/logo.png";
 
 export const GlobalHeader = () => {
   const navigate = useNavigate();
@@ -63,10 +65,16 @@ export const GlobalHeader = () => {
 
           {/* Left Side - Logo */}
           <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-yellow to-primary-orange flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-xl">a</span>
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-primary-yellow to-primary-orange bg-clip-text text-transparent">
+            <OptimizedImage 
+              src={logoImage} 
+              alt="artifio.ai logo" 
+              width={32}
+              height={32}
+              className="h-6 md:h-8 object-contain"
+              priority={true}
+              isSupabaseImage={false}
+            />
+            <span className="text-xl font-bold text-foreground">
               artifio.ai
             </span>
           </Link>

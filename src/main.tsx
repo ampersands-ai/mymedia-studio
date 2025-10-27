@@ -5,6 +5,13 @@ import { onCLS, onINP, onFCP, onLCP, onTTFB } from 'web-vitals';
 import { trackSession } from './lib/analytics';
 import { initPostHog } from './lib/posthog';
 
+// Quietly unregister any old service workers
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    registrations.forEach(registration => registration.unregister());
+  });
+}
+
 // Initialize theme before first render to prevent flash
 try {
   const stored = localStorage.getItem('theme');

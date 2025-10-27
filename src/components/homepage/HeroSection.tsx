@@ -104,31 +104,12 @@ export const HeroSection = () => {
               <div className="rounded-lg overflow-hidden aspect-video bg-gray-200 dark:bg-gray-800">
                 <Swiper
                   modules={[Autoplay, EffectFade]}
-                  onSwiper={(swiper) => {
-                    setSwiperInstance(swiper);
-                    // Play first video on load
-                    const firstSlide = swiper.slides[0];
-                    const firstVideo = firstSlide?.querySelector('video') as HTMLVideoElement;
-                    if (firstVideo) {
-                      firstVideo.currentTime = 0;
-                      firstVideo.play().catch(err => console.warn('Video play failed:', err));
-                    }
-                  }}
-                  onSlideChangeTransitionStart={(swiper) => {
-                    // Pause and reset all videos
-                    swiper.slides.forEach((slide) => {
-                      const video = slide.querySelector('video') as HTMLVideoElement;
-                      if (video) {
-                        video.pause();
-                        video.currentTime = 0;
-                      }
-                    });
-                  }}
-                  onSlideChangeTransitionEnd={(swiper) => {
-                    // Play only the active video
+                  onSwiper={setSwiperInstance}
+                  onSlideChange={(swiper) => {
                     const activeSlide = swiper.slides[swiper.activeIndex];
-                    const video = activeSlide?.querySelector('video') as HTMLVideoElement;
+                    const video = activeSlide?.querySelector('video');
                     if (video) {
+                      video.currentTime = 0;
                       video.play().catch(err => console.warn('Video play failed:', err));
                     }
                   }}

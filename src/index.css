@@ -243,9 +243,23 @@ All colors MUST be HSL.
     }
   }
   
-  /* Custom scrollbar */
+  /* Custom scrollbar styling with dark mode support */
   ::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--bg-surface, hsl(var(--background)));
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #FDB022 0%, #FB923C 100%);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #FB923C 0%, #FDB022 100%);
   }
   
   ::-webkit-scrollbar-track {
@@ -712,6 +726,7 @@ All colors MUST be HSL.
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
     }
     
     .partners-track {
@@ -723,6 +738,59 @@ All colors MUST be HSL.
     .hover-lift {
       transition: none;
     }
+  }
+
+  /* Swiper Template Carousel Custom Styles */
+  .template-carousel {
+    padding: 40px 0;
+  }
+
+  .template-carousel .swiper-slide {
+    width: 380px;
+    transition: transform 0.3s ease;
+  }
+
+  .template-carousel .swiper-slide-active {
+    transform: scale(1.1);
+    z-index: 10;
+  }
+
+  /* Glassmorphic navigation buttons */
+  .template-carousel .swiper-button-next,
+  .template-carousel .swiper-button-prev {
+    color: var(--text-primary, hsl(var(--foreground)));
+    background: var(--glass, rgba(255, 255, 255, 0.7));
+    backdrop-filter: blur(10px);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.2));
+    transition: all 0.3s ease;
+  }
+
+  .template-carousel .swiper-button-next:hover,
+  .template-carousel .swiper-button-prev:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .template-carousel .swiper-button-next::after,
+  .template-carousel .swiper-button-prev::after {
+    font-size: 20px;
+  }
+
+  /* Gradient pagination bullets */
+  .template-carousel .swiper-pagination-bullet {
+    background: hsl(var(--muted-foreground));
+    opacity: 0.5;
+    transition: all 0.3s ease;
+  }
+
+  .template-carousel .swiper-pagination-bullet-active {
+    background: linear-gradient(90deg, #FDB022 0%, #FB923C 100%);
+    opacity: 1;
+    width: 32px;
+    border-radius: 4px;
   }
 
   /* Ensure dropdowns and popovers have solid backgrounds and proper z-index */

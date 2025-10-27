@@ -99,7 +99,7 @@ export const HeroSection = () => {
               </div>
             </GlassCard>
 
-            {/* Floating badge */}
+            {/* Floating badges */}
             <div className="absolute -left-4 top-1/4 transform -translate-y-1/2 hidden lg:block">
               <GlassCard className="p-4 animate-float">
                 <div className="flex items-center space-x-3">
@@ -109,6 +109,51 @@ export const HeroSection = () => {
                   <div>
                     <div className="text-sm font-semibold">18 seconds</div>
                     <div className="text-xs text-gray-700 dark:text-gray-300">Generation time</div>
+                  </div>
+                </div>
+              </GlassCard>
+            </div>
+
+            {/* Cost savings badge */}
+            <div className="absolute -right-8 top-1/3 hidden lg:block animate-float" style={{ animationDelay: '1s' }}>
+              <GlassCard className="p-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white text-sm font-bold">
+                    $
+                  </div>
+                  <div>
+                    <div className="font-bold text-sm">$79</div>
+                    <div className="text-xs text-gray-700 dark:text-gray-300">Saved/month</div>
+                  </div>
+                </div>
+              </GlassCard>
+            </div>
+
+            {/* User count badge */}
+            <div className="absolute -left-6 bottom-1/4 hidden lg:block animate-float" style={{ animationDelay: '0.5s' }}>
+              <GlassCard className="p-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-yellow to-primary-orange flex items-center justify-center text-white text-sm font-bold">
+                    👥
+                  </div>
+                  <div>
+                    <div className="font-bold text-sm">10K+</div>
+                    <div className="text-xs text-gray-700 dark:text-gray-300">Users</div>
+                  </div>
+                </div>
+              </GlassCard>
+            </div>
+
+            {/* Success rate badge */}
+            <div className="absolute -right-4 bottom-1/3 hidden lg:block animate-float" style={{ animationDelay: '1.5s' }}>
+              <GlassCard className="p-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold">
+                    ⭐
+                  </div>
+                  <div>
+                    <div className="font-bold text-sm">99.9%</div>
+                    <div className="text-xs text-gray-700 dark:text-gray-300">Success rate</div>
                   </div>
                 </div>
               </GlassCard>

@@ -10,6 +10,7 @@ interface OptimizedVideoProps {
   muted?: boolean;
   controls?: boolean;
   className?: string;
+  onHoverPlay?: boolean; // Play video on hover
 }
 
 export function OptimizedVideo({
@@ -20,7 +21,8 @@ export function OptimizedVideo({
   loop = true,
   muted = true,
   controls = false,
-  className = ''
+  className = '',
+  onHoverPlay = false
 }: OptimizedVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isHovering, setIsHovering] = useState(false);
@@ -71,6 +73,21 @@ export function OptimizedVideo({
 
     return () => clearInterval(interval);
   }, [isHovering, hoverFrames]);
+
+  // Hover to play functionality
+  useEffect(() => {
+    if (!onHoverPlay || !videoRef.current || !isLoaded) return;
+
+    if (isHovering) {
+      videoRef.current.play()
+        .then(() => setIsPlaying(true))
+        .catch(err => console.warn('Hover play blocked:', err));
+    } else {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+      setIsPlaying(false);
+    }
+  }, [isHovering, onHoverPlay, isLoaded]);
 
   const handlePlayPause = () => {
     if (!videoRef.current) return;

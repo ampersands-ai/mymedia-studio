@@ -21,7 +21,6 @@ export default defineConfig(({ mode }) => ({
       jpeg: { quality: 80 },
       jpg: { quality: 80 },
       webp: { quality: 80 },
-      avif: { quality: 75 }, // AVIF support
     }),
     viteImagemin({
       gifsicle: { optimizationLevel: 3 },
@@ -34,19 +33,16 @@ export default defineConfig(({ mode }) => ({
         ]
       }
     }),
-    // Brotli compression (best compression ratio)
+    // Brotli compression
     viteCompression({
       algorithm: 'brotliCompress',
       ext: '.br',
-      threshold: 512, // Compress files > 512 bytes
-      deleteOriginFile: false,
+      threshold: 1024,
     }),
-    // Gzip fallback (wider browser support)
+    // Gzip fallback
     viteCompression({
       algorithm: 'gzip',
       ext: '.gz',
-      threshold: 512,
-      deleteOriginFile: false,
     }),
     // Bundle analyzer (production only)
     mode === 'production' && visualizer({
@@ -54,7 +50,6 @@ export default defineConfig(({ mode }) => ({
       gzipSize: true,
       brotliSize: true,
       filename: 'dist/stats.html',
-      template: 'treemap', // Visual treemap of bundle
     }),
   ].filter(Boolean),
   resolve: {
@@ -86,106 +81,32 @@ export default defineConfig(({ mode }) => ({
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: mode === 'production',
+        drop_console: true,
         drop_debugger: true,
-        passes: 2, // Multiple passes for better compression
-      },
-      mangle: {
-        safari10: true, // Safari 10+ compatibility
       },
     },
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // Core React libraries
-          if (id.includes('node_modules/react') || 
-              id.includes('node_modules/react-dom') || 
-              id.includes('node_modules/react-router-dom')) {
-            return 'react-vendor';
-          }
-          
-          // Supabase
-          if (id.includes('@supabase/supabase-js')) {
-            return 'supabase';
-          }
-          
-          // React Query
-          if (id.includes('@tanstack/react-query')) {
-            return 'query-vendor';
-          }
-          
-          // Lucide icons (heavy)
-          if (id.includes('lucide-react')) {
-            return 'icons';
-          }
-          
-          // Radix UI components (group by type)
-          if (id.includes('@radix-ui/react-dialog') || 
-              id.includes('@radix-ui/react-alert-dialog')) {
-            return 'radix-dialog';
-          }
-          
-          if (id.includes('@radix-ui/react-dropdown-menu') ||
-              id.includes('@radix-ui/react-menubar') ||
-              id.includes('@radix-ui/react-navigation-menu')) {
-            return 'radix-menu';
-          }
-          
-          if (id.includes('@radix-ui/react-select') ||
-              id.includes('@radix-ui/react-tabs') ||
-              id.includes('@radix-ui/react-accordion')) {
-            return 'radix-form';
-          }
-          
-          if (id.includes('@radix-ui/react-toast')) {
-            return 'radix-toast';
-          }
-          
-          // Admin-only components (lazy loaded)
-          if (id.includes('@radix-ui/react-slider') ||
-              id.includes('@radix-ui/react-popover') ||
-              id.includes('@xyflow/react')) {
-            return 'admin-vendor';
-          }
-          
-          // Chart libraries (heavy, only used on analytics pages)
-          if (id.includes('recharts')) {
-            return 'charts';
-          }
-          
-          // Other node_modules
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'supabase': ['@supabase/supabase-js'],
+          'query-vendor': ['@tanstack/react-query'],
+          'radix-dialog': ['@radix-ui/react-dialog'],
+          'radix-dropdown': ['@radix-ui/react-dropdown-menu'],
+          'radix-select': ['@radix-ui/react-select'],
+          'radix-tabs': ['@radix-ui/react-tabs'],
+          'radix-accordion': ['@radix-ui/react-accordion'],
+          'radix-toast': ['@radix-ui/react-toast'],
+          'admin-vendor': [
+            '@radix-ui/react-slider',
+            '@radix-ui/react-popover',
+          ],
         },
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
-        assetFileNames: (assetInfo) => {
-          if (!assetInfo.name) return 'assets/[name]-[hash][extname]';
-          
-          const info = assetInfo.name.split('.');
-          const ext = info[info.length - 1];
-          
-          // Organize by file type
-          if (/png|jpe?g|svg|gif|tiff|bmp|ico|webp|avif/i.test(ext)) {
-            return `assets/images/[name]-[hash][extname]`;
-          }
-          if (/woff|woff2|eot|ttf|otf/i.test(ext)) {
-            return `assets/fonts/[name]-[hash][extname]`;
-          }
-          return `assets/[ext]/[name]-[hash][extname]`;
-        },
-      },
-      // Tree shaking for better optimization
-      treeshake: {
-        moduleSideEffects: false,
-        propertyReadSideEffects: false,
+        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
       },
     },
     chunkSizeWarningLimit: 1000,
-    // Enable source maps only in development
-    sourcemap: mode === 'development',
-    // Improve build performance
-    reportCompressedSize: false,
   },
 }));

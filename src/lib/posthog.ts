@@ -14,11 +14,6 @@ export const initPostHog = () => {
       },
       capture_pageview: false, // We'll handle this manually with router
       autocapture: false, // Manual tracking for better control
-      enable_recording_console_log: true, // Record console logs in session replays
-      session_recording: {
-        recordCrossOriginIframes: true,
-      },
-      advanced_disable_decide: false, // Enable feature flags
     });
   }
 };
@@ -56,21 +51,6 @@ export const resetPostHog = () => {
   if (posthog.__loaded) {
     posthog.reset();
   }
-};
-
-// Feature flags
-export const getFeatureFlag = (flagKey: string): string | boolean | undefined => {
-  if (posthog.__loaded) {
-    return posthog.getFeatureFlag(flagKey);
-  }
-  return undefined;
-};
-
-export const isFeatureEnabled = (flagKey: string): boolean => {
-  if (posthog.__loaded) {
-    return posthog.isFeatureEnabled(flagKey) ?? false;
-  }
-  return false;
 };
 
 export { posthog };

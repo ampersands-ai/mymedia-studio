@@ -23,41 +23,7 @@ All colors MUST be HSL.
 }
 
 /* Dark mode support */
-.dark {
-  /* Background and foreground */
-  --background: 222 47% 11%;
-  --foreground: 210 40% 98%;
-
-  /* Card colors */
-  --card: 215 25% 15%;
-  --card-foreground: 210 40% 98%;
-
-  /* Popover colors */
-  --popover: 215 25% 15%;
-  --popover-foreground: 210 40% 98%;
-
-  /* Primary colors - keep golden yellow */
-  --primary: 38 92% 50%;
-  --primary-foreground: 222 47% 11%;
-
-  /* Secondary colors - keep purple */
-  --secondary: 271 81% 56%;
-  --secondary-foreground: 0 0% 100%;
-
-  /* Muted colors */
-  --muted: 215 25% 20%;
-  --muted-foreground: 215 20% 75%;
-
-  /* Accent colors */
-  --accent: 199 89% 48%;
-  --accent-foreground: 0 0% 100%;
-
-  /* Border and input */
-  --border: 215 25% 25%;
-  --input: 215 25% 25%;
-  --ring: 271 81% 56%;
-
-  /* Custom variables for backward compatibility */
+[data-theme='dark'] {
   --bg-primary: hsl(240, 10%, 12%);
   --bg-surface: hsl(240, 10%, 15%);
   --text-primary: hsl(210, 40%, 98%);

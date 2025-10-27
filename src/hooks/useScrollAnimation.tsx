@@ -4,7 +4,6 @@ interface ScrollAnimationOptions {
   threshold?: number;
   rootMargin?: string;
   triggerOnce?: boolean;
-  delay?: number; // Delay before animation starts
 }
 
 export function useScrollAnimation(options: ScrollAnimationOptions = {}) {
@@ -15,11 +14,7 @@ export function useScrollAnimation(options: ScrollAnimationOptions = {}) {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          if (options.delay) {
-            setTimeout(() => setIsVisible(true), options.delay);
-          } else {
-            setIsVisible(true);
-          }
+          setIsVisible(true);
           // Unobserve after first view for performance
           if (options.triggerOnce !== false) {
             observer.unobserve(entry.target);
@@ -46,37 +41,7 @@ export function useScrollAnimation(options: ScrollAnimationOptions = {}) {
       }
       observer.disconnect();
     };
-  }, [options.threshold, options.rootMargin, options.triggerOnce, options.delay]);
+  }, [options.threshold, options.rootMargin, options.triggerOnce]);
 
   return { ref, isVisible };
-}
-
-/**
- * Scroll progress hook for progress bars
- */
-export function useScrollProgress() {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-          const scrolled = window.scrollY;
-          const newProgress = Math.min((scrolled / scrollHeight) * 100, 100);
-          
-          setProgress(newProgress);
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  return progress;
 }

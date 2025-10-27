@@ -47,16 +47,11 @@ export function getOptimizedImageUrl(
  */
 export function getResponsiveSrcSet(
   bucketPath: string,
-  sizes: number[] = [640, 750, 828, 1080, 1200, 1920],
-  format: 'webp' | 'avif' | 'jpeg' = 'webp'
+  sizes: number[] = [640, 750, 828, 1080, 1200, 1920]
 ): string {
   return sizes
     .map((width) => {
-      const url = getOptimizedImageUrl(bucketPath, { 
-        width, 
-        quality: width > 1200 ? 75 : 85, // Lower quality for larger sizes
-        format 
-      });
+      const url = getOptimizedImageUrl(bucketPath, { width });
       return `${url} ${width}w`;
     })
     .join(', ');

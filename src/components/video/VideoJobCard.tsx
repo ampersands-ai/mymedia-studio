@@ -55,17 +55,6 @@ const StepIndicator = ({
   </div>
 );
 
-// Helper to extract storage path from public URL
-const getStoragePathFromUrl = (url: string | null): string | null => {
-  if (!url) return null;
-  
-  // If it's already a storage path, return it
-  if (!url.startsWith('http')) return url;
-  
-  // Extract path from public URL
-  const match = url.match(/\/storage\/v1\/object\/public\/generated-content\/(.+)/);
-  return match ? match[1] : null;
-};
 
 export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const getStatusColor = (status: VideoJob['status']) => {
@@ -117,6 +106,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [timeoutCountdown, setTimeoutCountdown] = useState<number | null>(null);
+  const [videoError, setVideoError] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling, recoverJob, isRecoveringJob, dismissError, isDismissingError, generateCaption, isGeneratingCaption } = useVideoJobs();
   const { data: tokens } = useUserTokens();
@@ -151,6 +141,12 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     return () => clearInterval(interval);
   }, [job.created_at, isNearTimeout, timeoutMs]);
   
+  // Reset video error when job changes
+  useEffect(() => {
+    setVideoError(false);
+    setTimeoutCountdown(null);
+  }, [job.id, job.status]);
+  
   // Check if job is stuck in assembling for >5 minutes
   const isStuckAssembling = job.status === 'assembling' && 
     (Date.now() - new Date(job.updated_at).getTime()) > 5 * 60 * 1000;
@@ -162,10 +158,9 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     { immediate: true }
   );
 
-  // Extract storage path from the public URL and fetch signed URL for completed video
-  const videoStoragePath = getStoragePathFromUrl(job.final_video_url);
-  const { signedUrl: videoSignedUrl, isLoading: isLoadingVideoUrl } = useSignedUrl(
-    job.status === 'completed' ? videoStoragePath : null,
+  // Fetch signed URL for completed video (pass raw URL directly, let hook handle extraction)
+  const { signedUrl: videoSignedUrl, isLoading: isLoadingVideoUrl, error: videoUrlError } = useSignedUrl(
+    job.status === 'completed' ? job.final_video_url : null,
     'generated-content'
   );
 
@@ -370,14 +365,14 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     toast.loading('Preparing download...', { id: 'video-download' });
     
     try {
-      const downloadUrl = videoSignedUrl || job.final_video_url;
-      
-      if (!downloadUrl) {
-        toast.error('Video URL not available', { id: 'video-download' });
+      if (!videoSignedUrl) {
+        console.error('[VideoJobCard] Download failed: No signed URL available');
+        toast.error('Download unavailable - video URL not ready', { id: 'video-download' });
         return;
       }
       
-      const response = await fetch(downloadUrl);
+      console.log('[VideoJobCard] Downloading from signed URL:', videoSignedUrl);
+      const response = await fetch(videoSignedUrl);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -395,7 +390,10 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
       toast.success('Download started!', { id: 'video-download' });
     } catch (error) {
       console.error('[VideoJobCard] Download error:', error);
-      toast.error(`Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'video-download' });
+      toast.error(
+        `Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 
+        { id: 'video-download' }
+      );
     }
   };
 
@@ -837,16 +835,38 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                 <div className="flex items-center justify-center bg-muted h-48">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
+              ) : videoUrlError || videoError || !videoSignedUrl ? (
+                <div className="flex flex-col items-center justify-center bg-muted/50 h-48 p-4 text-center">
+                  <AlertCircle className="h-12 w-12 text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Video Preview Unavailable
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownload}
+                    disabled={!videoSignedUrl}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Video
+                  </Button>
+                </div>
               ) : (
                 <video
-                  src={videoSignedUrl || job.final_video_url}
+                  src={videoSignedUrl}
                   controls
                   controlsList="nodownload"
                   className="w-full"
                   playsInline
                   onError={(e) => {
-                    console.error('[VideoJobCard] Video load error:', e);
-                    console.error('[VideoJobCard] Failed URL:', videoSignedUrl || job.final_video_url);
+                    console.error('[VideoJobCard] Video playback failed');
+                    console.error('[VideoJobCard] Signed URL:', videoSignedUrl);
+                    console.error('[VideoJobCard] Error:', e);
+                    setVideoError(true);
+                  }}
+                  onLoadedData={() => {
+                    console.log('[VideoJobCard] Video loaded successfully:', videoSignedUrl);
+                    setVideoError(false);
                   }}
                 >
                   Your browser does not support the video tag.

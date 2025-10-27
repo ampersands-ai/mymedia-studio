@@ -1,7 +1,6 @@
 import { createRoot, hydrateRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { registerServiceWorker, unregisterServiceWorker } from "./lib/serviceWorker";
 import { onCLS, onINP, onFCP, onLCP, onTTFB } from 'web-vitals';
 import { trackSession } from './lib/analytics';
 import { initPostHog } from './lib/posthog';
@@ -22,12 +21,6 @@ try {
 
 // Initialize PostHog for A/B testing and analytics
 initPostHog();
-
-// Register service worker (production only)
-registerServiceWorker();
-
-// Auto-unregister in dev mode
-unregisterServiceWorker();
 
 // Track session metrics
 trackSession();

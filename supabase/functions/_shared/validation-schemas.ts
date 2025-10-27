@@ -51,8 +51,8 @@ export const presetParametersSchema = z.record(
     z.number(),
     z.boolean(),
   ])
-).strict().refine(
-  (data) => {
+).refine(
+  (data: Record<string, any>) => {
     const size = JSON.stringify(data).length;
     return size < 10000; // 10KB
   },

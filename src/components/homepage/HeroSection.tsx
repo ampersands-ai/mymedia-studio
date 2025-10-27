@@ -8,12 +8,14 @@ import { useScrollY } from '@/hooks/useScrollY';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade } from 'swiper/modules';
+import { useState } from 'react';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 
 export const HeroSection = () => {
   const scrollY = useScrollY();
   const isMobile = useIsMobile();
+  const [swiperInstance, setSwiperInstance] = useState<any>(null);
   
   // Disable parallax on mobile for better performance
   const parallaxY = isMobile ? 0 : scrollY;
@@ -102,8 +104,17 @@ export const HeroSection = () => {
               <div className="rounded-lg overflow-hidden aspect-video bg-gray-200 dark:bg-gray-800">
                 <Swiper
                   modules={[Autoplay, EffectFade]}
+                  onSwiper={setSwiperInstance}
+                  onSlideChange={(swiper) => {
+                    const activeSlide = swiper.slides[swiper.activeIndex];
+                    const video = activeSlide?.querySelector('video');
+                    if (video) {
+                      video.currentTime = 0;
+                      video.play().catch(err => console.warn('Video play failed:', err));
+                    }
+                  }}
                   autoplay={{
-                    delay: 5000,
+                    delay: 8000,
                     disableOnInteraction: false,
                   }}
                   effect="fade"
@@ -111,33 +122,36 @@ export const HeroSection = () => {
                     crossFade: true
                   }}
                   loop={true}
-                  speed={1000}
+                  speed={500}
                   className="w-full h-full"
                 >
                   <SwiperSlide>
-                    <OptimizedVideo
+                    <video
                       src="/hero-demo.mp4"
                       autoPlay
-                      loop
                       muted
+                      playsInline
+                      preload="auto"
                       className="w-full h-full object-cover"
                     />
                   </SwiperSlide>
                   <SwiperSlide>
-                    <OptimizedVideo
+                    <video
                       src="/hero-demo-2.mp4"
                       autoPlay
-                      loop
                       muted
+                      playsInline
+                      preload="auto"
                       className="w-full h-full object-cover"
                     />
                   </SwiperSlide>
                   <SwiperSlide>
-                    <OptimizedVideo
+                    <video
                       src="/hero-demo-3.mp4"
                       autoPlay
-                      loop
                       muted
+                      playsInline
+                      preload="auto"
                       className="w-full h-full object-cover"
                     />
                   </SwiperSlide>

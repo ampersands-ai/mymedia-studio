@@ -76,8 +76,9 @@ const AppContent = () => {
   useEffect(() => {
     if (!isNativePlatform()) return;
 
-    // Set status bar style for mobile
-    setStatusBarStyle('dark');
+    // Set status bar style for mobile based on theme
+    const isDark = document.documentElement.classList.contains('dark');
+    setStatusBarStyle(isDark ? 'dark' : 'light');
 
     // Listen for app state changes
     let appStateListener: any;

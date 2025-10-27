@@ -49,9 +49,9 @@ export const HeroSection = () => {
                 </GradientButton>
               </Link>
               
-              <button className="px-8 py-4 rounded-full border-2 border-gray-300 dark:border-gray-700 hover:border-primary-orange transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105">
+              <button className="px-8 py-4 rounded-full border-2 border-gray-300 dark:border-gray-600 hover:border-primary-orange dark:hover:border-primary-yellow transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 text-foreground">
                 <Play className="w-5 h-5" />
-                <span>Watch Demo</span>
+                <span className="font-semibold">Watch Demo</span>
               </button>
             </div>
 
@@ -119,8 +119,8 @@ export const HeroSection = () => {
 
       {/* Scroll indicator */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 rounded-full border-2 border-gray-400 flex items-start justify-center p-2">
-          <div className="w-1 h-3 bg-gray-400 rounded-full animate-scroll" />
+        <div className="w-6 h-10 rounded-full border-2 border-gray-400 dark:border-gray-600 flex items-start justify-center p-2">
+          <div className="w-1 h-3 bg-gray-400 dark:bg-gray-600 rounded-full animate-scroll" />
         </div>
       </div>
     </section>

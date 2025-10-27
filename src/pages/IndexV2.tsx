@@ -52,7 +52,7 @@ const IndexV2 = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header/Navigation */}
-      <header className="sticky top-0 z-50 bg-background border-b-4 border-black">
+      <header className="sticky top-0 z-50 bg-background border-b-4 border-black dark:border-neutral-700">
         <div className="container mx-auto px-4 py-4">
           <nav className="flex items-center justify-between gap-4">
             {/* Logo - Left side */}

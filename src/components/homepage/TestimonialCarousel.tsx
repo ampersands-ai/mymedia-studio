@@ -59,17 +59,17 @@ export const TestimonialCarousel = () => {
               <span key={i}>⭐</span>
             ))}
           </div>
-          <blockquote className="text-xl md:text-2xl font-medium text-navy leading-relaxed">
+          <blockquote className="text-xl md:text-2xl font-medium text-neutral-900 leading-relaxed">
             "{testimonials[current].quote}"
           </blockquote>
           <div className="space-y-2">
-            <div className="font-black text-lg text-navy">
+            <div className="font-black text-lg text-neutral-900">
               {testimonials[current].author}
             </div>
-            <div className="text-neutral-600 dark:text-neutral-400">
+            <div className="text-neutral-600">
               {testimonials[current].handle}
             </div>
-            <div className="text-sm text-neutral-500 dark:text-neutral-400">
+            <div className="text-sm text-neutral-500">
               {testimonials[current].role}
             </div>
           </div>

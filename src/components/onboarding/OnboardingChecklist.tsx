@@ -106,7 +106,7 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
             {allComplete && !progress.bonusAwarded && (
               <Button
                 onClick={onComplete}
-                className="w-full bg-primary-500 hover:bg-primary-600 text-navy font-bold animate-pulse"
+                className="w-full bg-primary-500 hover:bg-primary-600 text-neutral-900 font-bold animate-pulse"
               >
                 <Trophy className="h-4 w-4 mr-2" />
                 Claim 100 Bonus Tokens

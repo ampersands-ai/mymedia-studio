@@ -184,8 +184,8 @@ export const GlobalHeader = () => {
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="brutal-card-sm px-4 py-2 bg-primary-500 border-2 border-primary-600 flex items-center gap-2 hover:bg-primary-600 transition-colors cursor-pointer">
-                    <Coins className="h-5 w-5 text-navy" />
-                    <span className="font-black text-base text-navy">
+                    <Coins className="h-5 w-5 text-neutral-900" />
+                    <span className="font-black text-base text-neutral-900">
                       {tokenBalance.toLocaleString()}
                     </span>
                   </button>
@@ -280,8 +280,8 @@ export const GlobalHeader = () => {
           {/* Mobile - Token Balance Only */}
           {tokenBalance !== null && (
             <div className="md:hidden brutal-card-sm px-3 py-1.5 bg-primary-500 border-2 border-primary-600 flex items-center gap-1.5 whitespace-nowrap">
-              <Coins className="h-4 w-4 text-navy flex-shrink-0" />
-              <span className="font-black text-sm text-navy tabular-nums">{tokenBalance.toLocaleString()}</span>
+              <Coins className="h-4 w-4 text-neutral-900 flex-shrink-0" />
+              <span className="font-black text-sm text-neutral-900 tabular-nums">{tokenBalance.toLocaleString()}</span>
             </div>
           )}
         </div>

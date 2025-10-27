@@ -530,23 +530,6 @@ All colors MUST be HSL.
   .bg-accent-600 { background-color: hsl(var(--accent-600)); }
   .border-accent-600 { border-color: hsl(var(--accent-600)); }
   
-  /* Always navy text - bypasses dark mode overrides */
-  .text-navy {
-    color: hsl(var(--neutral-900)) !important;
-  }
-  
-  .dark .text-navy {
-    color: hsl(var(--neutral-900)) !important;
-  }
-  
-  .text-navy-90 {
-    color: hsl(var(--neutral-900) / 0.9) !important;
-  }
-  
-  .dark .text-navy-90 {
-    color: hsl(var(--neutral-900) / 0.9) !important;
-  }
-
   /* Gradient text */
   .gradient-text {
     background: var(--gradient-primary);

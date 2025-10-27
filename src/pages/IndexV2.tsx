@@ -223,7 +223,7 @@ const IndexV2 = () => {
                       Select AI Model:
                     </div>
                     {["Midjourney", "DALL-E 3", "Runway", "Flux"].map((model) => (
-                      <div key={model} className="p-3 bg-background border-2 border-black">
+                      <div key={model} className="p-3 bg-background border-2 border-neutral-300 dark:border-white hover:border-primary-orange dark:hover:border-primary-orange transition-colors cursor-pointer">
                         {model}
                       </div>
                     ))}

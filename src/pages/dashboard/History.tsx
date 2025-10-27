@@ -161,15 +161,14 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoError, setVideoError] = useState(false);
   
-  // For video jobs, use output_url directly instead of storage_path
-  const videoUrl = generation.is_video_job && generation.output_url 
-    ? generation.output_url
-    : generation.storage_path 
-      ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stream-content?bucket=generated-content&path=${encodeURIComponent(generation.storage_path)}`
-      : null;
+  // Build a source and sign it for browser-friendly playback
+  const sourceForSigning = generation.storage_path
+    ? generation.storage_path
+    : (generation.is_video_job ? generation.output_url : null);
+  const { signedUrl: videoSignedUrl, isLoading: isLoadingVideoUrl } = useSignedUrl(sourceForSigning);
 
-  // Show download fallback if we encounter playback error or no video URL
-  if (!videoUrl || videoError) {
+  // Show download fallback if we encounter playback error or no signed URL
+  if (!videoSignedUrl || videoError) {
     return (
       <div className={`${className} flex flex-col items-center justify-center bg-muted gap-2 p-4`}>
         <Video className="h-8 w-8 text-muted-foreground" />
@@ -179,16 +178,40 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
           variant="outline"
           onClick={async (e) => {
             e.stopPropagation();
-            const downloadUrl = generation.is_video_job && generation.output_url 
-              ? generation.output_url 
-              : generation.storage_path;
-              
-            if (downloadUrl) {
-              toast.loading('Preparing your download...', { id: 'video-download' });
-              try {
-                if (generation.is_video_job && generation.output_url) {
-                  // Direct URL download for video jobs
-                  const response = await fetch(generation.output_url);
+            toast.loading('Preparing your download...', { id: 'video-download' });
+            try {
+              if (videoSignedUrl) {
+                const response = await fetch(videoSignedUrl);
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = `artifio-video-${Date.now()}.mp4`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(blobUrl);
+                document.body.removeChild(a);
+                toast.success('Download started successfully!', { id: 'video-download' });
+              } else if (generation.is_video_job && generation.output_url) {
+                // Fallback: direct URL download for video jobs
+                const response = await fetch(generation.output_url);
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = `artifio-video-${Date.now()}.mp4`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(blobUrl);
+                document.body.removeChild(a);
+                toast.success('Download started successfully!', { id: 'video-download' });
+              } else if (generation.storage_path) {
+                // Last resort: create a short-lived signed URL on the fly
+                const { data } = await supabase.storage
+                  .from('generated-content')
+                  .createSignedUrl(generation.storage_path, 60);
+                if (data?.signedUrl) {
+                  const response = await fetch(data.signedUrl);
                   const blob = await response.blob();
                   const blobUrl = window.URL.createObjectURL(blob);
                   const a = document.createElement('a');
@@ -199,28 +222,10 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
                   window.URL.revokeObjectURL(blobUrl);
                   document.body.removeChild(a);
                   toast.success('Download started successfully!', { id: 'video-download' });
-                } else {
-                  // Storage path download for regular videos
-                  const { data } = await supabase.storage
-                    .from('generated-content')
-                    .createSignedUrl(generation.storage_path!, 60);
-                  if (data?.signedUrl) {
-                    const response = await fetch(data.signedUrl);
-                    const blob = await response.blob();
-                    const blobUrl = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = blobUrl;
-                    a.download = `artifio-video-${Date.now()}.mp4`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(blobUrl);
-                    document.body.removeChild(a);
-                    toast.success('Download started successfully!', { id: 'video-download' });
-                  }
                 }
-              } catch (error) {
-                toast.error('Failed to download', { id: 'video-download' });
               }
+            } catch (error) {
+              toast.error('Failed to download', { id: 'video-download' });
             }
           }}
         >
@@ -249,7 +254,7 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
   return (
     <video
       ref={videoRef}
-      src={videoUrl}
+      src={videoSignedUrl || undefined}
       className={className}
       preload="metadata"
       controls={showControls}
@@ -260,10 +265,10 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onError={() => {
-        console.error('Video playback error for:', videoUrl);
+        console.error('Video playback error for:', videoSignedUrl);
         setVideoError(true);
       }}
-      onLoadedMetadata={() => console.log('Video loaded successfully:', videoUrl)}
+      onLoadedMetadata={() => console.log('Video loaded successfully:', videoSignedUrl)}
     />
   );
 };

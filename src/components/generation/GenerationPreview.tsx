@@ -124,7 +124,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
   }
 
   // Show download fallback for videos only when playback fails
-  if (contentType === "video" && (videoError || !storagePath)) {
+  if (contentType === "video" && (videoError || !signedUrl)) {
     return (
       <div className={`${className} flex flex-col items-center justify-center bg-muted gap-3`}>
         <Video className="h-12 w-12 text-muted-foreground" />
@@ -265,8 +265,8 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
     const ext = storagePath?.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1] ?? 'mp4';
     const mime = ext === 'webm' ? 'video/webm' : 'video/mp4';
     
-    // iOS uses direct signed URL, Android uses streaming proxy for better Range/CORS
-    const videoSrc = isIOS ? signedUrl : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stream-content?bucket=generated-content&path=${encodeURIComponent(storagePath)}`;
+    // Always use the signed URL for playback
+    const videoSrc = signedUrl || "";
     
     // Check if browser can play this format
     const canPlay = typeof document !== 'undefined' && document.createElement('video').canPlayType(mime);

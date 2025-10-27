@@ -1,9 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { verifyWebhookSignature, validateWebhookTimestamp, createSafeErrorResponse } from '../_shared/error-handler.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-kie-signature, x-kie-timestamp',
 };
 
 serve(async (req) => {
@@ -21,9 +22,52 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Kie.ai webhook received');
+    // SECURITY: Verify webhook signature from Kie.ai
+    const signature = req.headers.get('x-kie-signature');
+    const timestamp = req.headers.get('x-kie-timestamp');
+    const webhookSecret = Deno.env.get('KIE_WEBHOOK_SECRET');
+
+    if (!webhookSecret) {
+      console.error('KIE_WEBHOOK_SECRET not configured');
+      return new Response(
+        JSON.stringify({ error: 'Webhook not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!signature || !timestamp) {
+      console.error('Missing webhook signature or timestamp');
+      return new Response(
+        JSON.stringify({ error: 'Invalid webhook request' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate timestamp (prevent replay attacks - max 5 minutes old)
+    const timestampNum = parseInt(timestamp, 10);
+    if (!validateWebhookTimestamp(timestampNum, 5)) {
+      console.error('Webhook timestamp expired or invalid');
+      return new Response(
+        JSON.stringify({ error: 'Webhook expired' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verify signature using constant-time comparison
+    const bodyText = await req.text();
+    const isValid = await verifyWebhookSignature(bodyText, signature, webhookSecret);
     
-    const payload = await req.json();
+    if (!isValid) {
+      console.error('Invalid webhook signature');
+      return new Response(
+        JSON.stringify({ error: 'Invalid signature' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Kie.ai webhook signature verified successfully');
+    
+    const payload = JSON.parse(bodyText);
     console.log('Webhook payload:', JSON.stringify(payload));
 
     // Validate payload structure - support both camelCase and snake_case
@@ -412,11 +456,7 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('Webhook error:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createSafeErrorResponse(error, 'kie-ai-webhook', corsHeaders);
   }
 });
 

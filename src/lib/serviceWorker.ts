@@ -6,35 +6,31 @@
 export function registerServiceWorker() {
   // ✅ ONLY register in production
   if ('serviceWorker' in navigator && import.meta.env.PROD) {
-    // Register async after page load with additional delay
     window.addEventListener('load', () => {
-      // Wait 2 seconds after page load to avoid blocking main thread
-      setTimeout(() => {
-        navigator.serviceWorker
-          .register('/sw.js')
-          .then((registration) => {
-            console.log('[SW] Registered successfully');
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((registration) => {
+          console.log('[SW] Registered successfully');
 
-            // Check for updates every hour
-            setInterval(() => {
-              registration.update();
-            }, 60 * 60 * 1000);
+          // Check for updates every hour
+          setInterval(() => {
+            registration.update();
+          }, 60 * 60 * 1000);
 
-            // Notify user when update is available
-            registration.addEventListener('updatefound', () => {
-              const newWorker = registration.installing;
-              newWorker?.addEventListener('statechange', () => {
-                if (
-                  newWorker.state === 'installed' &&
-                  navigator.serviceWorker.controller
-                ) {
-                  showUpdateNotification();
-                }
-              });
+          // Notify user when update is available
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            newWorker?.addEventListener('statechange', () => {
+              if (
+                newWorker.state === 'installed' &&
+                navigator.serviceWorker.controller
+              ) {
+                showUpdateNotification();
+              }
             });
-          })
-          .catch((err) => console.error('[SW] Registration failed:', err));
-      }, 2000);
+          });
+        })
+        .catch((err) => console.error('[SW] Registration failed:', err));
     });
   }
 }
@@ -51,28 +47,6 @@ export function unregisterServiceWorker() {
         registrations.forEach((reg) => reg.unregister());
       }
     });
-  }
-}
-
-/**
- * Force-unregister ALL service workers and clear caches
- * Used temporarily to fix stale cache issues across all devices
- */
-export async function forceUnregisterServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    try {
-      // Unregister all service workers
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map((reg) => reg.unregister()));
-      
-      // Clear all caches
-      const cacheNames = await caches.keys();
-      await Promise.all(cacheNames.map((name) => caches.delete(name)));
-      
-      console.log('[SW] Force-cleared all service workers and caches');
-    } catch (err) {
-      console.error('[SW] Error during force cleanup:', err);
-    }
   }
 }
 

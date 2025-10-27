@@ -46,10 +46,12 @@ export function BackgroundMediaSelector({
   const [searchQuery, setSearchQuery] = useState('');
   const [mediaType, setMediaType] = useState<'video' | 'image'>('video');
   const [selectedThumbnail, setSelectedThumbnail] = useState<string>('');
-  const [hasSearched, setHasSearched] = useState(false);
 
-  // Don't auto-search on dialog open - wait for user to search or refresh
-  // This prevents unnecessary API calls and improves initial load time
+  useEffect(() => {
+    if (open && mediaItems.length === 0) {
+      searchMedia(getDefaultQuery(style), mediaType);
+    }
+  }, [open]);
 
   const getDefaultQuery = (style: string): string => {
     const styleQueries: Record<string, string> = {
@@ -127,22 +129,11 @@ export function BackgroundMediaSelector({
   const handleCustomSearch = () => {
     if (searchQuery.trim()) {
       searchMedia(searchQuery, mediaType);
-      setHasSearched(true);
     }
   };
 
   const handleRefresh = () => {
     searchMedia(getDefaultQuery(style), mediaType);
-    setHasSearched(true);
-  };
-
-  const handleOpenChange = (open: boolean) => {
-    setOpen(open);
-    // Load default search when dialog opens for first time
-    if (open && !hasSearched && mediaItems.length === 0) {
-      searchMedia(getDefaultQuery(style), mediaType);
-      setHasSearched(true);
-    }
   };
 
   const handleMediaTypeChange = (newType: 'video' | 'image') => {
@@ -171,7 +162,7 @@ export function BackgroundMediaSelector({
         )}
       </Button>
 
-      <Dialog open={open} onOpenChange={handleOpenChange}>
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-4xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle>Select Background Media</DialogTitle>

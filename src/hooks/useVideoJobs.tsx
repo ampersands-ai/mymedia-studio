@@ -19,13 +19,9 @@ export function useVideoJobs() {
   const queryClient = useQueryClient();
   const [pinnedJobId, setPinnedJobId] = useState<string | null>(getPinnedJobId());
 
-  // Fetch user's latest active job or pinned job with optimized settings
+  // Fetch user's latest active job or pinned job
   const { data: jobs, isLoading } = useQuery({
     queryKey: ['video-jobs', pinnedJobId],
-    staleTime: 30 * 1000, // 30 seconds - fresher data for active jobs
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnMount: true, // Always fetch fresh data
-    refetchOnWindowFocus: false, // Avoid unnecessary refetch on focus
     queryFn: async () => {
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
       const activeStatuses = [

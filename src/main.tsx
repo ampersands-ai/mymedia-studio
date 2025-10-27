@@ -1,15 +1,54 @@
-import { createRoot } from "react-dom/client";
-import App from "./App";
+import { createRoot, hydrateRoot } from "react-dom/client";
+import App from "./App.tsx";
 import "./index.css";
-import { forceUnregisterServiceWorker } from "./lib/serviceWorker";
+import { registerServiceWorker, unregisterServiceWorker } from "./lib/serviceWorker";
+import { onCLS, onINP, onFCP, onLCP, onTTFB } from 'web-vitals';
+import { trackSession } from './lib/analytics';
+import { initPostHog } from './lib/posthog';
 
-// Force cleanup of any legacy service worker and caches before boot
-forceUnregisterServiceWorker().catch(() => {});
+// Initialize theme before first render to prevent flash
+const stored = localStorage.getItem('theme');
+const isDark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+if (isDark) {
+  document.documentElement.classList.add('dark');
+}
 
-const container = document.getElementById("root");
-if (!container) throw new Error("Root element not found");
+// Initialize PostHog for A/B testing and analytics
+initPostHog();
 
-const root = createRoot(container);
-root.render(<App />);
+// Register service worker (production only)
+registerServiceWorker();
 
-(window as any).__APP_MOUNTED = true;
+// Auto-unregister in dev mode
+unregisterServiceWorker();
+
+// Track session metrics
+trackSession();
+
+// Track Web Vitals
+function sendToAnalytics(metric: any) {
+  if (import.meta.env.DEV) {
+    console.log('Web Vital:', metric.name, metric.value, metric.rating);
+  }
+  // Send to PostHog if available
+  if (typeof window !== 'undefined' && (window as any).posthog) {
+    (window as any).posthog.capture('web_vital', {
+      metric_name: metric.name,
+      value: metric.value,
+      rating: metric.rating
+    });
+  }
+}
+
+onCLS(sendToAnalytics);
+onINP(sendToAnalytics); // Replaces FID in web-vitals v4
+onFCP(sendToAnalytics);
+onLCP(sendToAnalytics);
+onTTFB(sendToAnalytics);
+
+const container = document.getElementById("root")!;
+if (container && container.hasChildNodes()) {
+  hydrateRoot(container, <App />);
+} else {
+  createRoot(container).render(<App />);
+}

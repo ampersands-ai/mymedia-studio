@@ -10,9 +10,9 @@
     <!-- Preconnect to Supabase for faster asset loading -->
     <link rel="preconnect" href="https://gzlwkvmivbfcvczoqphq.supabase.co">
     <link rel="dns-prefetch" href="https://gzlwkvmivbfcvczoqphq.supabase.co">
-    <!-- DNS prefetch for analytics domains -->
-    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
-    <link rel="dns-prefetch" href="https://www.google-analytics.com">
+    <!-- Preload only critical font weights for faster initial render -->
+    <link rel="preload" as="font" type="font/woff2" href="https://fonts.gstatic.com/s/spacegrotesk/v16/V8mDoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj62UUsjNsFjTDJK.woff2" crossorigin>
+    <link rel="preload" as="font" type="font/woff2" href="https://fonts.gstatic.com/s/spacegrotesk/v16/V8mDoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj7oUUsjNsFjTDJK.woff2" crossorigin>
     <!-- Load critical weights (400, 700) immediately for mobile -->
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet"></noscript>
@@ -46,26 +46,7 @@
       .loading-spinner { animation: spin 1s linear infinite; }
     </style>
     
-    <!-- Boot fallback: reload once with cache-bust if app fails to mount -->
-    <script>
-      (function () {
-        try {
-          var mountedCheckDelay = 5000; // 5s
-          var url = new URL(window.location.href);
-          var hasRetried = url.searchParams.get('boot_retry') === '1';
-          setTimeout(function () {
-            if (!window.__APP_MOUNTED && !hasRetried) {
-              url.searchParams.set('boot_retry', '1');
-              url.searchParams.set('ts', String(Date.now()));
-              window.location.replace(url.toString());
-            }
-          }, mountedCheckDelay);
-        } catch (e) {
-          // no-op
-        }
-      })();
-    </script>
-    
+    <link rel="modulepreload" href="/src/main.tsx">
     
     <!-- Primary Meta Tags -->
     <title>artifio.ai - Create AI Videos, Images & Content in Seconds</title>
@@ -77,9 +58,11 @@
     <meta name="language" content="English" />
     
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://esm.sh https://*.supabase.co https://cdn.gpteng.co https://*.lovable.app https://*.lovableproject.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; media-src 'self' blob: https://gzlwkvmivbfcvczoqphq.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://us.i.posthog.com; worker-src 'self' blob:;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://esm.sh https://*.supabase.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; media-src 'self' blob: https://gzlwkvmivbfcvczoqphq.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none';" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />

@@ -10,12 +10,7 @@ export const Analytics = () => {
   useEffect(() => {
     // Defer Google Analytics initialization to improve initial load performance
     if (typeof window !== 'undefined') {
-      let hasLoaded = false;
-      
       const loadAnalytics = () => {
-        if (hasLoaded) return;
-        hasLoaded = true;
-        
         // Load GA script
         const script = document.createElement('script');
         script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
@@ -36,31 +31,11 @@ export const Analytics = () => {
         (window as any).gtag = gtag;
       };
 
-      // Wait for page load + 5 seconds OR first user interaction
-      const handleInteraction = () => {
-        loadAnalytics();
-        window.removeEventListener('scroll', handleInteraction);
-        window.removeEventListener('click', handleInteraction);
-      };
-
-      if (document.readyState === 'complete') {
-        // Page already loaded, defer 5s or until interaction
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(loadAnalytics, { timeout: 5000 });
-        } else {
-          setTimeout(loadAnalytics, 5000);
-        }
-        window.addEventListener('scroll', handleInteraction, { once: true, passive: true });
-        window.addEventListener('click', handleInteraction, { once: true });
+      // Use requestIdleCallback or setTimeout to defer loading until browser is idle
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(loadAnalytics, { timeout: 3000 });
       } else {
-        // Wait for page load
-        window.addEventListener('load', () => {
-          if ('requestIdleCallback' in window) {
-            requestIdleCallback(loadAnalytics, { timeout: 5000 });
-          } else {
-            setTimeout(loadAnalytics, 5000);
-          }
-        });
+        setTimeout(loadAnalytics, 3000);
       }
     }
   }, []);

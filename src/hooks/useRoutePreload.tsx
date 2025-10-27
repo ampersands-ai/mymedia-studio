@@ -3,28 +3,13 @@ import { prefetchOnIdle } from '@/utils/routePreload';
 
 /**
  * Hook to prefetch critical routes on idle
- * Delays prefetching until page is fully loaded and user has been idle
  */
 export function useRoutePreload() {
   useEffect(() => {
-    let hasLoaded = false;
-    
-    const handleLoad = () => {
-      hasLoaded = true;
-      // Wait 3 seconds after page load before starting prefetch
-      setTimeout(() => {
-        prefetchOnIdle(() => import('../pages/Create'), 5000);
-        prefetchOnIdle(() => import('../pages/Templates'), 7000);
-        prefetchOnIdle(() => import('../pages/Pricing'), 10000);
-      }, 3000);
-    };
-
-    if (document.readyState === 'complete') {
-      handleLoad();
-    } else {
-      window.addEventListener('load', handleLoad);
-      return () => window.removeEventListener('load', handleLoad);
-    }
+    // Prefetch likely routes after initial render
+    prefetchOnIdle(() => import('../pages/Create'));
+    prefetchOnIdle(() => import('../pages/Templates'), 3000);
+    prefetchOnIdle(() => import('../pages/Pricing'), 4000);
   }, []);
 }
 

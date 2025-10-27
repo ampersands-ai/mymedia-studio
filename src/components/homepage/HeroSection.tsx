@@ -152,6 +152,54 @@ export const HeroSection = () => {
                       className="w-full h-full object-cover"
                     />
                   </SwiperSlide>
+                  <SwiperSlide>
+                    <div className="relative w-full h-full">
+                      <video
+                        src="/hero-demo-4.mp4"
+                        muted
+                        playsInline
+                        preload="auto"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-lg">
+                        <span className="text-sm font-semibold text-white">
+                          made on artifio.ai
+                        </span>
+                      </div>
+                    </div>
+                  </SwiperSlide>
+                  <SwiperSlide>
+                    <div className="relative w-full h-full">
+                      <video
+                        src="/hero-demo-5.mp4"
+                        muted
+                        playsInline
+                        preload="auto"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-lg">
+                        <span className="text-sm font-semibold text-white">
+                          made on artifio.ai
+                        </span>
+                      </div>
+                    </div>
+                  </SwiperSlide>
+                  <SwiperSlide>
+                    <div className="relative w-full h-full">
+                      <video
+                        src="/hero-demo-6.mp4"
+                        muted
+                        playsInline
+                        preload="auto"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-lg">
+                        <span className="text-sm font-semibold text-white">
+                          made on artifio.ai
+                        </span>
+                      </div>
+                    </div>
+                  </SwiperSlide>
                 </Swiper>
               </div>
             </GlassCard>

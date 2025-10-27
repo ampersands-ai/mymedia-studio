@@ -1,20 +1,16 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Settings, Coins, LogOut, Shield, Clock, ChevronDown } from "lucide-react";
+import { Sparkles, Coins, Shield, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { toast } from "sonner";
-import logo from "@/assets/logo.png";
 import { MobileMenu } from "@/components/MobileMenu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
 
 export const GlobalHeader = () => {
   const navigate = useNavigate();
@@ -23,6 +19,15 @@ export const GlobalHeader = () => {
   const { isAdmin } = useAdminRole();
   const { data: tokenData } = useUserTokens();
   const tokenBalance = tokenData?.tokens_remaining ?? null;
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -47,145 +52,63 @@ export const GlobalHeader = () => {
   const isSettingsPage = location.pathname === "/dashboard/settings";
 
   return (
-    <header className="border-b-4 border-black bg-card sticky top-0 z-50">
-      <nav className="container mx-auto px-4 py-4 md:py-6">
+    <header className={cn(
+      "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+      isScrolled 
+        ? "backdrop-blur-xl bg-card/80 shadow-lg border-b border-border/30" 
+        : "bg-transparent"
+    )}>
+      <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
 
-          {/* Left Side - Logo + Navigation */}
-          <div className="flex items-center gap-3 md:gap-4">
-            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <img 
-                src={logo} 
-                alt="artifio.ai logo" 
-                className="h-6 md:h-8 object-contain"
-                loading="eager"
-              />
-              <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
-            </Link>
+          {/* Left Side - Logo */}
+          <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-yellow to-primary-orange flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-xl">a</span>
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-primary-yellow to-primary-orange bg-clip-text text-transparent">
+              artifio.ai
+            </span>
+          </Link>
 
-            {/* Always show Product and Resources navigation */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="default"
-                  className="hidden lg:inline-flex font-black text-base"
-                >
-                  Product <ChevronDown className="h-4 w-4 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-popover border-2 border-secondary-600 dark:border-secondary-500">
-                <DropdownMenuItem onClick={() => navigate("/features")} className="font-bold cursor-pointer">
-                  Features
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/dashboard/templates")} className="font-bold cursor-pointer">
-                  Workflow Templates
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/pricing")} className="font-bold cursor-pointer">
-                  Pricing
-                </DropdownMenuItem>
-                {user && (
-                  <>
-                    <DropdownMenuItem onClick={() => navigate("/dashboard/custom-creation")} className="font-bold cursor-pointer">
-                      Dashboard
-                    </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/dashboard/history")} className="font-bold cursor-pointer">
-                  My Creations
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/dashboard/video-studio")} className="font-bold cursor-pointer">
-                  Faceless Videos
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="default"
-                  className="hidden lg:inline-flex font-black text-base"
-                >
-                  Resources <ChevronDown className="h-4 w-4 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-popover border-2 border-secondary-600 dark:border-secondary-500">
-                <DropdownMenuItem onClick={() => navigate("/about")} className="font-bold cursor-pointer">
-                  About
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/blog")} className="font-bold cursor-pointer">
-                  Blog
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/faq")} className="font-bold cursor-pointer">
-                  FAQ
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <Button
-              variant="ghost"
-              size="default"
-              onClick={() => navigate("/community")}
-              className="hidden lg:inline-flex font-black text-base"
+          {/* Center - Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-8">
+            <button 
+              onClick={() => navigate("/features")}
+              className="text-foreground/80 hover:text-primary-orange transition-colors font-medium"
             >
-              Community
-            </Button>
-          </div>
+              Features
+            </button>
+            <button 
+              onClick={() => navigate("/dashboard/templates")}
+              className="text-foreground/80 hover:text-primary-orange transition-colors font-medium"
+            >
+              Templates
+            </button>
+            <button 
+              onClick={() => navigate("/pricing")}
+              className="text-foreground/80 hover:text-primary-orange transition-colors font-medium"
+            >
+              Pricing
+            </button>
+            <button 
+              onClick={() => navigate("/blog")}
+              className="text-foreground/80 hover:text-primary-orange transition-colors font-medium"
+            >
+              Blog
+            </button>
+          </nav>
 
-          {/* Right Side - Desktop Only Navigation */}
-          <div className="hidden lg:flex items-center gap-2 lg:gap-3">
-            {/* Settings page navigation */}
-            {isSettingsPage && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="default"
-                  onClick={() => navigate("/pricing")}
-                  className="hidden sm:inline-flex font-black text-base"
-                >
-                  Pricing
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="default"
-                  onClick={() => navigate("/dashboard/custom-creation")}
-                  className="hidden sm:inline-flex font-black text-base"
-                >
-                  Dashboard
-                </Button>
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={() => navigate("/dashboard/custom-creation")}
-                  className="brutal-card-sm font-black hidden sm:flex"
-                >
-                  <Sparkles className="h-5 w-5 mr-2" />
-                  Custom Creation
-                </Button>
-              </>
-            )}
-
-            {/* Context-aware navigation buttons */}
-            {isCustomCreation && (
-              <>
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={() => navigate("/dashboard/custom-creation")}
-                  className="brutal-card-sm font-black hidden sm:flex"
-                >
-                  Dashboard
-                </Button>
-              </>
-            )}
+          {/* Right Side - Actions */}
+          <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
 
             {tokenBalance !== null && (
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="brutal-card-sm px-4 py-2 bg-primary-500 border-2 border-primary-600 flex items-center gap-2 hover:bg-primary-600 transition-colors cursor-pointer">
-                    <Coins className="h-5 w-5 text-neutral-900" />
-                    <span className="font-black text-base text-neutral-900">
+                  <button className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 flex items-center gap-2 hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md">
+                    <Coins className="h-5 w-5 text-primary-orange" />
+                    <span className="font-bold text-base">
                       {tokenBalance.toLocaleString()}
                     </span>
                   </button>
@@ -263,27 +186,20 @@ export const GlobalHeader = () => {
             )}
 
             {isAdmin && (
-              <Button
-                variant="outline"
-                size="default"
+              <button
                 onClick={() => navigate("/admin/dashboard")}
-                className="brutal-card-sm font-black"
+                className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 flex items-center gap-2 hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md font-semibold"
               >
-                <Shield className="h-5 w-5 mr-2" />
+                <Shield className="h-5 w-5" />
                 Admin
-              </Button>
+              </button>
             )}
-            
-            <MobileMenu tokenBalance={tokenBalance ?? undefined} />
           </div>
 
-          {/* Mobile - Token Balance Only */}
-          {tokenBalance !== null && (
-            <div className="md:hidden brutal-card-sm px-3 py-1.5 bg-primary-500 border-2 border-primary-600 flex items-center gap-1.5 whitespace-nowrap">
-              <Coins className="h-4 w-4 text-neutral-900 flex-shrink-0" />
-              <span className="font-black text-sm text-neutral-900 tabular-nums">{tokenBalance.toLocaleString()}</span>
-            </div>
-          )}
+          {/* Mobile Menu */}
+          <div className="md:hidden">
+            <MobileMenu tokenBalance={tokenBalance ?? undefined} />
+          </div>
         </div>
       </nav>
     </header>

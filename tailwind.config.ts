@@ -19,6 +19,10 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        'primary-yellow': 'hsl(var(--color-primary-yellow))',
+        'primary-orange': 'hsl(var(--color-primary-orange))',
+        'accent-purple': 'hsl(var(--color-accent-purple))',
+        'accent-pink': 'hsl(var(--color-accent-pink))',
         neutral: {
           50: "hsl(var(--neutral-50))",
           100: "hsl(var(--neutral-100))",
@@ -126,6 +130,16 @@ export default {
       },
       borderWidth: {
         '3': '3px',
+      },
+      spacing: {
+        'xs': 'var(--spacing-xs)',
+        'sm': 'var(--spacing-sm)',
+        'md': 'var(--spacing-md)',
+        'lg': 'var(--spacing-lg)',
+        'xl': 'var(--spacing-xl)',
+        'xxl': 'var(--spacing-xxl)',
+        'xxxl': 'var(--spacing-xxxl)',
+        'section': 'var(--spacing-section)',
       },
       borderRadius: {
         lg: "var(--radius)",

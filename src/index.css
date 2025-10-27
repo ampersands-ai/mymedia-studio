@@ -2,6 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Design Token CSS Variables */
+:root {
+  /* Brand Colors */
+  --color-primary-yellow: 43 94% 56%;
+  --color-primary-orange: 28 100% 62%;
+  --color-accent-purple: 266 100% 68%;
+  --color-accent-pink: 329 93% 70%;
+  
+  /* Spacing */
+  --spacing-xs: 8px;
+  --spacing-sm: 16px;
+  --spacing-md: 24px;
+  --spacing-lg: 32px;
+  --spacing-xl: 48px;
+  --spacing-xxl: 64px;
+  --spacing-xxxl: 96px;
+  --spacing-section: 120px;
+  
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+  --shadow-glow: 0 0 24px rgba(253, 176, 34, 0.3);
+  --shadow-glow-hover: 0 0 32px rgba(253, 176, 34, 0.5);
+  
+  /* Animations */
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
@@ -79,6 +116,15 @@ All colors MUST be HSL.
   50% { background-position: 100% 50%; }
 }
 
+@keyframes shine {
+  0% {
+    transform: translateX(-200%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
@@ -90,6 +136,10 @@ All colors MUST be HSL.
 .animate-gradient {
   background-size: 200% 200%;
   animation: gradient 3s ease infinite;
+}
+
+.animate-shine {
+  animation: shine 1s ease-in-out;
 }
 
 @layer base {

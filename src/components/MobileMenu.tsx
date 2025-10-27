@@ -57,9 +57,9 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[280px] sm:w-[320px] flex flex-col p-0 pb-safe">
-        <SheetHeader className="px-6 pt-6 pb-4 border-b">
-          <SheetTitle className="text-left font-black text-xl">Navigation</SheetTitle>
+      <SheetContent side="right" className="w-[280px] sm:w-[320px] flex flex-col p-0 pb-safe backdrop-blur-xl bg-card/95 border-l border-border/30">
+        <SheetHeader className="px-6 pt-6 pb-4 border-b border-border/20 backdrop-blur-lg">
+          <SheetTitle className="text-left font-bold text-xl">Navigation</SheetTitle>
         </SheetHeader>
 
         <ScrollArea className="flex-1 px-6">
@@ -71,10 +71,10 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                 
                 <button
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
                     isActive("/dashboard/custom-creation") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-muted-foreground hover:bg-card/50 hover:text-foreground font-medium backdrop-blur-sm"
                   )}
                   onClick={() => handleNavigation("/dashboard/custom-creation")}
                 >
@@ -84,10 +84,10 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
 
                 <button
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
                     isActive("/dashboard/templates") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-muted-foreground hover:bg-card/50 hover:text-foreground font-medium backdrop-blur-sm"
                   )}
                   onClick={() => handleNavigation("/dashboard/templates")}
                 >

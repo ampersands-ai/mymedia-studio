@@ -4,8 +4,11 @@ import { AnimatedBadge } from '@/components/ui/animated-badge';
 import { GlassCard } from '@/components/ui/glass-card';
 import { OptimizedVideo } from '@/components/ui/optimized-video';
 import { Link } from 'react-router-dom';
+import { useScrollY } from '@/hooks/useScrollY';
 
 export const HeroSection = () => {
+  const scrollY = useScrollY();
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Animated background gradient */}
@@ -99,8 +102,11 @@ export const HeroSection = () => {
               </div>
             </GlassCard>
 
-            {/* Floating badges */}
-            <div className="absolute -left-4 top-1/4 transform -translate-y-1/2 hidden lg:block">
+            {/* Floating badges with parallax */}
+            <div 
+              className="absolute -left-4 top-1/4 transform -translate-y-1/2 hidden lg:block"
+              style={{ transform: `translateY(${scrollY * 0.1}px)` }}
+            >
               <GlassCard className="p-4 animate-float">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center text-white font-bold">
@@ -115,7 +121,13 @@ export const HeroSection = () => {
             </div>
 
             {/* Cost savings badge */}
-            <div className="absolute -right-8 top-1/3 hidden lg:block animate-float" style={{ animationDelay: '1s' }}>
+            <div 
+              className="absolute -right-8 top-1/3 hidden lg:block animate-float" 
+              style={{ 
+                animationDelay: '1s',
+                transform: `translateY(${scrollY * 0.15}px)` 
+              }}
+            >
               <GlassCard className="p-3">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white text-sm font-bold">
@@ -130,7 +142,13 @@ export const HeroSection = () => {
             </div>
 
             {/* User count badge */}
-            <div className="absolute -left-6 bottom-1/4 hidden lg:block animate-float" style={{ animationDelay: '0.5s' }}>
+            <div 
+              className="absolute -left-6 bottom-1/4 hidden lg:block animate-float" 
+              style={{ 
+                animationDelay: '0.5s',
+                transform: `translateY(${scrollY * 0.2}px)` 
+              }}
+            >
               <GlassCard className="p-3">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-yellow to-primary-orange flex items-center justify-center text-white text-sm font-bold">
@@ -145,7 +163,13 @@ export const HeroSection = () => {
             </div>
 
             {/* Success rate badge */}
-            <div className="absolute -right-4 bottom-1/3 hidden lg:block animate-float" style={{ animationDelay: '1.5s' }}>
+            <div 
+              className="absolute -right-4 bottom-1/3 hidden lg:block animate-float" 
+              style={{ 
+                animationDelay: '1.5s',
+                transform: `translateY(${scrollY * 0.08}px)` 
+              }}
+            >
               <GlassCard className="p-3">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold">

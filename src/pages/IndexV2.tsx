@@ -350,14 +350,8 @@ const IndexV2 = () => {
                   VIDEO GENERATION
                 </h3>
                 <div className="flex flex-wrap gap-4">
-                  {[runway, pika].map((logo, i) => (
-                    <img
-                      key={i}
-                      src={logo}
-                      alt="AI Model"
-                      className="h-12 object-contain"
-                    />
-                  ))}
+                  <OptimizedImage src={runway} alt="Runway AI" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
+                  <OptimizedImage src={pika} alt="Hailuo AI" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
                 </div>
               </div>
 
@@ -367,14 +361,8 @@ const IndexV2 = () => {
                   IMAGE GENERATION
                 </h3>
                 <div className="flex flex-wrap gap-4">
-                  {[midjourney, openai].map((logo, i) => (
-                    <img
-                      key={i}
-                      src={logo}
-                      alt="AI Model"
-                      className="h-12 object-contain"
-                    />
-                  ))}
+                  <OptimizedImage src={midjourney} alt="Midjourney AI" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
+                  <OptimizedImage src={openai} alt="OpenAI" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
                 </div>
               </div>
 
@@ -384,14 +372,8 @@ const IndexV2 = () => {
                   AUDIO GENERATION
                 </h3>
                 <div className="flex flex-wrap gap-4">
-                  {[elevenlabs, suno].map((logo, i) => (
-                    <img
-                      key={i}
-                      src={logo}
-                      alt="AI Model"
-                      className="h-12 object-contain"
-                    />
-                  ))}
+                  <OptimizedImage src={elevenlabs} alt="ElevenLabs" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
+                  <OptimizedImage src={suno} alt="Suno AI" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
                 </div>
               </div>
 
@@ -401,14 +383,9 @@ const IndexV2 = () => {
                   TEXT GENERATION
                 </h3>
                 <div className="flex flex-wrap gap-4">
-                  {[openai, claude, gemini].map((logo, i) => (
-                    <img
-                      key={i}
-                      src={logo}
-                      alt="AI Model"
-                      className="h-12 object-contain"
-                    />
-                  ))}
+                  <OptimizedImage src={openai} alt="OpenAI" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
+                  <OptimizedImage src={claude} alt="Claude AI" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
+                  <OptimizedImage src={gemini} alt="Google Gemini" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
                 </div>
               </div>
             </div>

@@ -208,11 +208,11 @@ const IndexV2 = () => {
               />
 
               <FeatureShowcase
-                title="22+ AI Models in One Place"
+                title="30+ AI Models in One Place"
                 description="Not happy with the result? Switch models instantly. Access Midjourney, Runway, DALL-E, and more."
                 benefits={[
                   "Compare outputs side-by-side",
-                  "No need for 22 separate subscriptions",
+                  "No need for 30 separate subscriptions",
                   "Always get the best tool for the job",
                 ]}
                 ctaText="See All Models →"
@@ -331,21 +331,21 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 10: Model Marketplace */}
-      <section className="bg-neutral-50 dark:bg-neutral-900 py-16 md:py-24">
+      <section className="bg-white dark:bg-white py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-12">
             <div className="text-center space-y-4">
-              <h2 className="text-3xl md:text-5xl font-black">
-                Access 22+ AI Models
+              <h2 className="text-3xl md:text-5xl font-black text-neutral-900">
+                Access 30+ AI Models
               </h2>
-              <p className="text-xl text-foreground">
+              <p className="text-xl text-neutral-900">
                 All the best AI tools, one subscription
               </p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-4">
-                <h3 className="text-2xl font-black flex items-center gap-2">
+                <h3 className="text-2xl font-black flex items-center gap-2 text-neutral-900">
                   <Video className="w-6 h-6 text-secondary-600" />
                   VIDEO GENERATION
                 </h3>
@@ -362,7 +362,7 @@ const IndexV2 = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-2xl font-black flex items-center gap-2">
+                <h3 className="text-2xl font-black flex items-center gap-2 text-neutral-900">
                   <Image className="w-6 h-6 text-secondary-600" />
                   IMAGE GENERATION
                 </h3>
@@ -379,7 +379,7 @@ const IndexV2 = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-2xl font-black flex items-center gap-2">
+                <h3 className="text-2xl font-black flex items-center gap-2 text-neutral-900">
                   <Music className="w-6 h-6 text-secondary-600" />
                   AUDIO GENERATION
                 </h3>
@@ -396,7 +396,7 @@ const IndexV2 = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-2xl font-black flex items-center gap-2">
+                <h3 className="text-2xl font-black flex items-center gap-2 text-neutral-900">
                   <FileText className="w-6 h-6 text-secondary-600" />
                   TEXT GENERATION
                 </h3>
@@ -414,8 +414,8 @@ const IndexV2 = () => {
             </div>
 
             <div className="text-center">
-              <p className="text-lg font-bold text-gray-800 dark:text-gray-200">
-                + 12 more models
+              <p className="text-lg font-bold text-neutral-900">
+                + 21 more models
               </p>
             </div>
           </div>
@@ -463,7 +463,7 @@ const IndexV2 = () => {
               </span>
               <span className="flex items-center justify-center gap-2">
                 <Check className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                Try all 22 AI models
+                Try all 30 AI models
               </span>
             </div>
           </div>

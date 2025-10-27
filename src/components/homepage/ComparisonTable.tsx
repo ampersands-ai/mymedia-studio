@@ -36,7 +36,7 @@ export const ComparisonTable = () => {
         <div className="space-y-4 mb-6 h-[200px] flex flex-col justify-center">
           <div className="text-center space-y-3">
             <div className="text-neutral-900 dark:text-neutral-100 font-bold">✅ All of the above</div>
-            <div className="text-neutral-900 dark:text-neutral-100 font-bold">✅ + 18 more AI models</div>
+            <div className="text-neutral-900 dark:text-neutral-100 font-bold">✅ + 26 more AI models</div>
             <div className="text-neutral-900 dark:text-neutral-100 font-bold">✅ + 200 templates</div>
           </div>
         </div>

@@ -34,8 +34,6 @@
       .loading-spinner { animation: spin 1s linear infinite; }
     </style>
     
-    <link rel="modulepreload" href="/src/main.tsx">
-    
     <!-- Primary Meta Tags -->
     <title>artifio.ai - Create AI Videos, Images & Content in Seconds</title>
     <meta name="title" content="artifio.ai - Create AI Videos, Images & Content in Seconds" />
@@ -67,6 +65,32 @@
 
   <body>
     <div id="root"></div>
+    
+    <!-- One-time kill switch for stale service workers and caches -->
+    <script>
+      (function() {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            registrations.forEach(function(registration) {
+              registration.unregister();
+            });
+          });
+        }
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            names.forEach(function(name) {
+              caches.delete(name);
+            });
+          });
+        }
+        // Reload once if page was SW-controlled
+        if (navigator.serviceWorker && navigator.serviceWorker.controller && !sessionStorage.getItem('sw_killed_once')) {
+          sessionStorage.setItem('sw_killed_once', '1');
+          location.reload();
+        }
+      })();
+    </script>
+    
     <script type="module" src="/src/main.tsx" fetchpriority="high"></script>
   </body>
 </html>

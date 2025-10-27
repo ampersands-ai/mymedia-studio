@@ -6,6 +6,10 @@ import { OptimizedVideo } from '@/components/ui/optimized-video';
 import { Link } from 'react-router-dom';
 import { useScrollY } from '@/hooks/useScrollY';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, EffectFade } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/effect-fade';
 
 export const HeroSection = () => {
   const scrollY = useScrollY();
@@ -96,13 +100,48 @@ export const HeroSection = () => {
           <div className="relative">
             <GlassCard gradient className="p-2">
               <div className="rounded-lg overflow-hidden aspect-video bg-gray-200 dark:bg-gray-800">
-                <OptimizedVideo
-                  src="/hero-demo.mp4"
-                  autoPlay
-                  loop
-                  muted
-                  className="w-full h-full object-cover"
-                />
+                <Swiper
+                  modules={[Autoplay, EffectFade]}
+                  autoplay={{
+                    delay: 5000,
+                    disableOnInteraction: false,
+                  }}
+                  effect="fade"
+                  fadeEffect={{
+                    crossFade: true
+                  }}
+                  loop={true}
+                  speed={1000}
+                  className="w-full h-full"
+                >
+                  <SwiperSlide>
+                    <OptimizedVideo
+                      src="/hero-demo.mp4"
+                      autoPlay
+                      loop
+                      muted
+                      className="w-full h-full object-cover"
+                    />
+                  </SwiperSlide>
+                  <SwiperSlide>
+                    <OptimizedVideo
+                      src="/hero-demo-2.mp4"
+                      autoPlay
+                      loop
+                      muted
+                      className="w-full h-full object-cover"
+                    />
+                  </SwiperSlide>
+                  <SwiperSlide>
+                    <OptimizedVideo
+                      src="/hero-demo-3.mp4"
+                      autoPlay
+                      loop
+                      muted
+                      className="w-full h-full object-cover"
+                    />
+                  </SwiperSlide>
+                </Swiper>
               </div>
             </GlassCard>
 

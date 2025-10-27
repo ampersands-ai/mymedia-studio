@@ -46,6 +46,25 @@
       .loading-spinner { animation: spin 1s linear infinite; }
     </style>
     
+    <!-- Boot fallback: reload once with cache-bust if app fails to mount -->
+    <script>
+      (function () {
+        try {
+          var mountedCheckDelay = 5000; // 5s
+          var url = new URL(window.location.href);
+          var hasRetried = url.searchParams.get('boot_retry') === '1';
+          setTimeout(function () {
+            if (!window.__APP_MOUNTED && !hasRetried) {
+              url.searchParams.set('boot_retry', '1');
+              url.searchParams.set('ts', String(Date.now()));
+              window.location.replace(url.toString());
+            }
+          }, mountedCheckDelay);
+        } catch (e) {
+          // no-op
+        }
+      })();
+    </script>
     
     
     <!-- Primary Meta Tags -->

@@ -97,8 +97,7 @@ export const HeroSection = () => {
             <GlassCard gradient className="p-2">
               <div className="rounded-lg overflow-hidden aspect-video bg-gray-200 dark:bg-gray-800">
                 <OptimizedVideo
-                  src="/demo-video.mp4"
-                  poster="/placeholder.svg"
+                  src="/hero-demo.mp4"
                   autoPlay
                   loop
                   muted

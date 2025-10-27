@@ -570,6 +570,19 @@ All colors MUST be HSL.
     will-change: auto;
   }
   
+  /* Dark mode text and background overrides for better visibility */
+  .dark .text-neutral-700 {
+    color: hsl(214 20% 75%);
+  }
+
+  .dark .bg-neutral-50 {
+    color: hsl(215 25% 17%);
+  }
+
+  .dark .border-neutral-200 {
+    border-color: hsl(215 25% 27%);
+  }
+  
   /* Technology Partners Marquee */
   @keyframes partners-scroll {
     0% {

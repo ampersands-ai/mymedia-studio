@@ -10,11 +10,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-neutral-900 font-semibold border-2 border-primary-600 shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200",
-        secondary: "bg-white hover:bg-secondary-50 active:bg-secondary-100 text-secondary-600 hover:text-secondary-700 font-semibold border-2 border-secondary-600 hover:border-secondary-700 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200",
-        outline: "bg-white hover:bg-neutral-50 text-neutral-700 hover:text-neutral-900 font-medium border-2 border-neutral-300 hover:border-neutral-400 transition-all duration-200",
-        ghost: "bg-transparent hover:bg-secondary-50 text-secondary-600 hover:text-secondary-700 font-medium transition-colors duration-200",
+        secondary: "bg-white dark:bg-card hover:bg-secondary-50 dark:hover:bg-secondary-900/20 active:bg-secondary-100 dark:active:bg-secondary-900/30 text-secondary-600 dark:text-secondary-400 hover:text-secondary-700 dark:hover:text-secondary-300 font-semibold border-2 border-secondary-600 dark:border-secondary-500 hover:border-secondary-700 dark:hover:border-secondary-400 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200",
+        outline: "bg-white dark:bg-card hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 font-medium border-2 border-neutral-300 dark:border-neutral-600 hover:border-neutral-400 dark:hover:border-neutral-500 transition-all duration-200",
+        ghost: "bg-transparent hover:bg-secondary-50 dark:hover:bg-secondary-900/20 text-secondary-600 dark:text-secondary-400 hover:text-secondary-700 dark:hover:text-secondary-300 font-medium transition-colors duration-200",
         destructive: "bg-error hover:bg-error/90 text-white font-semibold border-2 border-error shadow-md hover:shadow-lg transition-all",
-        link: "text-secondary-600 hover:text-secondary-700 underline-offset-4 hover:underline transition-colors",
+        link: "text-secondary-600 dark:text-secondary-400 hover:text-secondary-700 dark:hover:text-secondary-300 underline-offset-4 hover:underline transition-colors",
         neon: "bg-primary-500 hover:bg-primary-600 text-neutral-900 font-bold border-2 border-primary-600 shadow-lg shadow-primary-500/30 hover:shadow-xl transition-all",
         pink: "bg-secondary-600 hover:bg-secondary-700 text-white font-bold border-2 border-secondary-700 shadow-md transition-all",
         blue: "bg-accent-500 hover:bg-accent-600 text-white font-bold border-2 border-accent-600 shadow-md transition-all",

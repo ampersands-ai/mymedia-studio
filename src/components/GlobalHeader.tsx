@@ -74,7 +74,7 @@ export const GlobalHeader = () => {
                   Product <ChevronDown className="h-4 w-4 ml-1" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-card border-2 border-secondary-600">
+              <DropdownMenuContent className="bg-popover border-2 border-secondary-600 dark:border-secondary-500">
                 <DropdownMenuItem onClick={() => navigate("/features")} className="font-bold cursor-pointer">
                   Features
                 </DropdownMenuItem>
@@ -110,7 +110,7 @@ export const GlobalHeader = () => {
                   Resources <ChevronDown className="h-4 w-4 ml-1" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-card border-2 border-secondary-600">
+              <DropdownMenuContent className="bg-popover border-2 border-secondary-600 dark:border-secondary-500">
                 <DropdownMenuItem onClick={() => navigate("/about")} className="font-bold cursor-pointer">
                   About
                 </DropdownMenuItem>
@@ -191,24 +191,24 @@ export const GlobalHeader = () => {
                   </button>
                 </PopoverTrigger>
                 <PopoverContent 
-                  className="w-80 bg-white border-2 border-secondary-600 shadow-lg p-4 animate-in fade-in-0 zoom-in-95 duration-200"
+                  className="w-80 bg-popover border-2 border-secondary-600 dark:border-secondary-500 shadow-lg p-4 animate-in fade-in-0 zoom-in-95 duration-200"
                   align="end"
                   sideOffset={8}
                 >
                   <div className="space-y-4">
                     {/* Token Balance Header */}
                     <div className="border-b-2 border-neutral-200 pb-3">
-                      <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+                      <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
                         Token Balance
                       </p>
-                      <p className="text-3xl font-black text-neutral-900 mt-1">
+                      <p className="text-3xl font-black text-foreground mt-1">
                         {tokenBalance.toLocaleString()}
                       </p>
                     </div>
 
                     {/* Conversion Estimates */}
                     <div className="space-y-3">
-                      <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+                      <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
                         Approximate Creations
                       </p>
                       <div className="space-y-2">
@@ -216,24 +216,24 @@ export const GlobalHeader = () => {
                           const conversions = getTokenConversions(tokenBalance);
                           return (
                             <>
-                              <div className="flex items-center justify-between py-2 px-3 bg-neutral-50 rounded-lg border border-neutral-200">
-                                <span className="text-sm font-semibold text-neutral-700">
+                              <div className="flex items-center justify-between py-2 px-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
+                                <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                                   Videos
                                 </span>
                                 <span className="text-base font-black text-secondary-700">
                                   ~{conversions.videos}
                                 </span>
                               </div>
-                              <div className="flex items-center justify-between py-2 px-3 bg-neutral-50 rounded-lg border border-neutral-200">
-                                <span className="text-sm font-semibold text-neutral-700">
+                              <div className="flex items-center justify-between py-2 px-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
+                                <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                                   Images
                                 </span>
                                 <span className="text-base font-black text-secondary-700">
                                   ~{conversions.images}
                                 </span>
                               </div>
-                              <div className="flex items-center justify-between py-2 px-3 bg-neutral-50 rounded-lg border border-neutral-200">
-                                <span className="text-sm font-semibold text-neutral-700">
+                              <div className="flex items-center justify-between py-2 px-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
+                                <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                                   Audio
                                 </span>
                                 <span className="text-base font-black text-secondary-700">

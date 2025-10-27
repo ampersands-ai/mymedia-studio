@@ -59,7 +59,7 @@ const IndexV2 = () => {
       <HeroSection />
 
       {/* Section 2: Social Proof Bar */}
-      <section className="border-y-4 border-black bg-neutral-50 dark:bg-neutral-900 py-12">
+      <section className="border-y-4 border-black bg-neutral-50 py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <StatCounter end={10000} suffix="+" label="Creators" />
@@ -99,7 +99,7 @@ const IndexV2 = () => {
             <h2 className="text-3xl md:text-5xl font-black">
               <span className="font-bold">artifio.ai</span> Solves This
             </h2>
-            <p className="text-xl text-foreground/90 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-800 dark:text-gray-200 max-w-3xl mx-auto">
               One Platform. Every Tool. Affordable Pricing.
             </p>
             <p className="text-lg max-w-2xl mx-auto">
@@ -134,7 +134,7 @@ const IndexV2 = () => {
       <WorkflowSteps />
 
       {/* Section 6: Feature Showcase */}
-      <section className="bg-neutral-50 dark:bg-neutral-900 py-16 md:py-24">
+      <section className="bg-neutral-50 py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-24">
             <Suspense fallback={<GallerySkeleton />}>
@@ -238,7 +238,7 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 8: Testimonials */}
-      <section className="bg-neutral-50 dark:bg-neutral-900 py-16 md:py-24">
+      <section className="bg-neutral-50 py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-12">
             <h2 className="text-3xl md:text-5xl font-black text-center">
@@ -279,7 +279,7 @@ const IndexV2 = () => {
       </section>
 
       {/* Section 10: Model Marketplace */}
-      <section className="bg-neutral-50 dark:bg-neutral-900 py-16 md:py-24">
+      <section className="bg-neutral-50 py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-12">
             <div className="text-center space-y-4">

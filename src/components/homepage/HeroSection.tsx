@@ -9,7 +9,7 @@ export const HeroSection = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Animated background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 dark:from-gray-950 dark:via-purple-950/30 dark:to-gray-950">
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-gray-900">
         {/* Animated orbs */}
         <div className="gradient-blob blob-1" />
         <div className="gradient-blob blob-2" />
@@ -35,7 +35,7 @@ export const HeroSection = () => {
             </h1>
 
             {/* Subheadline */}
-            <p className="text-xl text-foreground/90 max-w-xl">
+            <p className="text-xl text-gray-800 dark:text-gray-200 max-w-xl">
               30+ AI models for video, image, and audio generation. 
               One platform, unlimited creativity. No design skills needed.
             </p>
@@ -49,7 +49,7 @@ export const HeroSection = () => {
                 </GradientButton>
               </Link>
               
-              <button className="px-8 py-4 rounded-full border-2 border-gray-300 dark:border-gray-600 bg-transparent hover:bg-muted hover:border-primary-orange transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105">
+              <button className="px-8 py-4 rounded-full border-2 border-gray-300 dark:border-gray-700 hover:border-primary-orange transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105">
                 <Play className="w-5 h-5" />
                 <span>Watch Demo</span>
               </button>
@@ -61,7 +61,7 @@ export const HeroSection = () => {
                 <div className="text-3xl font-bold bg-gradient-to-r from-primary-yellow to-primary-orange bg-clip-text text-transparent">
                   1M+
                 </div>
-                <div className="text-sm text-foreground/70">
+                <div className="text-sm text-gray-700 dark:text-gray-300">
                   Generations Created
                 </div>
               </div>
@@ -69,7 +69,7 @@ export const HeroSection = () => {
                 <div className="text-3xl font-bold bg-gradient-to-r from-primary-yellow to-primary-orange bg-clip-text text-transparent">
                   30+
                 </div>
-                <div className="text-sm text-foreground/70">
+                <div className="text-sm text-gray-700 dark:text-gray-300">
                   AI Models
                 </div>
               </div>
@@ -77,7 +77,7 @@ export const HeroSection = () => {
                 <div className="text-3xl font-bold bg-gradient-to-r from-primary-yellow to-primary-orange bg-clip-text text-transparent">
                   $79
                 </div>
-                <div className="text-sm text-foreground/70">
+                <div className="text-sm text-gray-700 dark:text-gray-300">
                   Saved per Month
                 </div>
               </div>
@@ -107,8 +107,8 @@ export const HeroSection = () => {
                     ✓
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-foreground">18 seconds</div>
-                    <div className="text-xs text-foreground/70">Generation time</div>
+                    <div className="text-sm font-semibold">18 seconds</div>
+                    <div className="text-xs text-gray-700 dark:text-gray-300">Generation time</div>
                   </div>
                 </div>
               </GlassCard>

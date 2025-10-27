@@ -452,7 +452,7 @@ const IndexV2 = () => {
                 <Link to="/auth">START FREE - GET 500 TOKENS</Link>
               </Button>
             </div>
-            <div className="flex flex-col gap-2 sm:gap-3 text-neutral-900/90 dark:text-neutral-100/90 text-sm sm:text-base px-2">
+            <div className="flex flex-col gap-2 sm:gap-3 text-neutral-900/90 text-sm sm:text-base px-2">
               <span className="flex items-center justify-center gap-2">
                 <Check className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 No credit card required

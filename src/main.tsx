@@ -16,10 +16,10 @@ if (isDark) {
 // Initialize PostHog for A/B testing and analytics
 initPostHog();
 
-// Register service worker (production only)
-registerServiceWorker();
+// Service worker temporarily disabled to prevent cache issues
+// registerServiceWorker();
 
-// Auto-unregister in dev mode
+// Auto-unregister in dev mode and clear any existing SW
 unregisterServiceWorker();
 
 // Track session metrics
@@ -46,9 +46,26 @@ onFCP(sendToAnalytics);
 onLCP(sendToAnalytics);
 onTTFB(sendToAnalytics);
 
+// Global chunk error handler - recover from failed dynamic imports
+window.addEventListener('error', (e) => {
+  const msg = String((e as any).message || '');
+  if (msg.includes('Loading chunk') || msg.includes('import()') || msg.includes('dynamically imported')) {
+    console.warn('[Boot] Chunk load failed, reloading with cache-bust');
+    const u = new URL(window.location.href);
+    u.searchParams.set('v', String(Date.now()));
+    window.location.replace(u.toString());
+  }
+});
+
 const container = document.getElementById("root")!;
+console.log('[Boot] Rendering React app');
+
 if (container && container.hasChildNodes()) {
   hydrateRoot(container, <App />);
 } else {
   createRoot(container).render(<App />);
 }
+
+// Signal successful boot
+console.log('[Boot] React render complete');
+(window as any).__APP_MOUNTED = true;

@@ -22,7 +22,7 @@ export const GradientButton = ({
   };
 
   const variantClasses = {
-    primary: 'bg-gradient-to-r from-primary-yellow to-primary-orange text-black shadow-primary hover:shadow-glow',
+    primary: 'bg-gradient-to-r from-yellow-400 via-orange-400 to-orange-500 hover:from-yellow-500 hover:via-orange-500 hover:to-orange-600 text-neutral-900 font-black shadow-[0_0_30px_rgba(251,146,60,0.5)] hover:shadow-[0_0_40px_rgba(251,146,60,0.7)]',
     secondary: 'bg-gradient-to-r from-accent-purple to-accent-pink text-white shadow-secondary hover:shadow-lg',
   };
 

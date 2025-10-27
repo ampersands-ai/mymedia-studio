@@ -88,15 +88,15 @@ const IndexV2 = () => {
             <div className="flex items-center gap-3">
               <ThemeToggle />
               {user ? (
-                <Button asChild variant="default">
+                <Button asChild className="bg-gradient-to-r from-yellow-400 via-orange-400 to-orange-500 hover:from-yellow-500 hover:via-orange-500 hover:to-orange-600 text-neutral-900 font-black border-0 shadow-[0_0_20px_rgba(251,146,60,0.4)] hover:shadow-[0_0_30px_rgba(251,146,60,0.6)]">
                   <Link to="/dashboard/custom-creation">Go to Dashboard</Link>
                 </Button>
               ) : (
                 <>
-                  <Button asChild variant="secondary" className="font-bold">
+                  <Button asChild className="bg-gradient-to-r from-yellow-400 via-orange-400 to-orange-500 hover:from-yellow-500 hover:via-orange-500 hover:to-orange-600 text-neutral-900 font-black border-0 shadow-[0_0_20px_rgba(251,146,60,0.4)] hover:shadow-[0_0_30px_rgba(251,146,60,0.6)]">
                     <Link to="/auth">Login</Link>
                   </Button>
-                  <Button asChild variant="default" className="hidden sm:inline-flex">
+                  <Button asChild className="hidden sm:inline-flex bg-gradient-to-r from-yellow-400 via-orange-400 to-orange-500 hover:from-yellow-500 hover:via-orange-500 hover:to-orange-600 text-neutral-900 font-black border-0 shadow-[0_0_20px_rgba(251,146,60,0.4)] hover:shadow-[0_0_30px_rgba(251,146,60,0.6)]">
                     <Link to="/auth">Sign Up</Link>
                   </Button>
                 </>
@@ -172,7 +172,7 @@ const IndexV2 = () => {
                 <span>No more breaking the bank</span>
               </div>
             </div>
-            <Button asChild variant="default" size="lg">
+            <Button asChild size="lg" className="bg-gradient-to-r from-yellow-400 via-orange-400 to-orange-500 hover:from-yellow-500 hover:via-orange-500 hover:to-orange-600 text-neutral-900 font-black border-0 shadow-[0_0_30px_rgba(251,146,60,0.5)] hover:shadow-[0_0_40px_rgba(251,146,60,0.7)]">
               <Link to="/auth">Start Creating Free</Link>
             </Button>
           </div>
@@ -208,11 +208,11 @@ const IndexV2 = () => {
               />
 
               <FeatureShowcase
-                title="22+ AI Models in One Place"
+                title="30+ AI Models in One Place"
                 description="Not happy with the result? Switch models instantly. Access Midjourney, Runway, DALL-E, and more."
                 benefits={[
                   "Compare outputs side-by-side",
-                  "No need for 22 separate subscriptions",
+                  "No need for 30+ separate subscriptions",
                   "Always get the best tool for the job",
                 ]}
                 ctaText="See All Models →"
@@ -282,7 +282,7 @@ const IndexV2 = () => {
             <ComparisonTable />
           </Suspense>
           <div className="text-center">
-            <Button asChild variant="default" size="lg" {...usePrefetchOnHover('pricing')}>
+            <Button asChild size="lg" className="bg-gradient-to-r from-yellow-400 via-orange-400 to-orange-500 hover:from-yellow-500 hover:via-orange-500 hover:to-orange-600 text-neutral-900 font-black border-0 shadow-[0_0_30px_rgba(251,146,60,0.5)] hover:shadow-[0_0_40px_rgba(251,146,60,0.7)]" {...usePrefetchOnHover('pricing')}>
               <Link to="/pricing">Start Saving Now →</Link>
             </Button>
           </div>
@@ -323,7 +323,7 @@ const IndexV2 = () => {
             ))}
           </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild variant="outline" size="lg">
+            <Button asChild size="lg" className="bg-gradient-to-r from-yellow-400 via-orange-400 to-orange-500 hover:from-yellow-500 hover:via-orange-500 hover:to-orange-600 text-neutral-900 font-black border-0 shadow-[0_0_30px_rgba(251,146,60,0.5)] hover:shadow-[0_0_40px_rgba(251,146,60,0.7)]">
               <Link to="/community">Browse Gallery →</Link>
             </Button>
           </div>
@@ -336,7 +336,9 @@ const IndexV2 = () => {
           <div className="max-w-6xl mx-auto space-y-12">
             <div className="text-center space-y-4">
               <h2 className="text-3xl md:text-5xl font-black">
-                Access 22+ AI Models
+                <span className="bg-white text-neutral-900 px-4 py-2 rounded-lg inline-block">
+                  Access 30+ AI Models
+                </span>
               </h2>
               <p className="text-xl text-foreground">
                 All the best AI tools, one subscription
@@ -448,7 +450,7 @@ const IndexV2 = () => {
               subscriptions, no technical skills required.
             </p>
             <div className="px-2">
-              <Button asChild size="lg" className="text-sm sm:text-base md:text-lg lg:text-xl px-6 sm:px-8 md:px-12 py-4 sm:py-6 bg-white hover:bg-neutral-50 dark:bg-card dark:hover:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border-2 border-neutral-900 dark:border-neutral-100 shadow-xl w-full sm:w-auto" {...usePrefetchOnHover('create')}>
+              <Button asChild size="lg" className="text-sm sm:text-base md:text-lg lg:text-xl px-6 sm:px-8 md:px-12 py-4 sm:py-6 bg-gradient-to-r from-yellow-400 via-orange-400 to-orange-500 hover:from-yellow-500 hover:via-orange-500 hover:to-orange-600 text-neutral-900 font-black border-0 shadow-[0_0_30px_rgba(251,146,60,0.5)] hover:shadow-[0_0_40px_rgba(251,146,60,0.7)] w-full sm:w-auto transition-all" {...usePrefetchOnHover('create')}>
                 <Link to="/auth">START FREE - GET 500 TOKENS</Link>
               </Button>
             </div>
@@ -463,7 +465,7 @@ const IndexV2 = () => {
               </span>
               <span className="flex items-center justify-center gap-2">
                 <Check className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                Try all 22 AI models
+                Try all 30+ AI models
               </span>
             </div>
           </div>

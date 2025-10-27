@@ -4,13 +4,10 @@ import "./index.css";
 import { onCLS, onINP, onFCP, onLCP, onTTFB } from 'web-vitals';
 import { trackSession } from './lib/analytics';
 import { initPostHog } from './lib/posthog';
+import { unregisterServiceWorkers } from './utils/serviceWorkerCleanup';
 
-// Quietly unregister any old service workers
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(registrations => {
-    registrations.forEach(registration => registration.unregister());
-  });
-}
+// Clean up any service workers and caches on app load
+unregisterServiceWorkers();
 
 // Initialize theme before first render to prevent flash
 try {

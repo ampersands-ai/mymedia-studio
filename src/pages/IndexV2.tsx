@@ -335,17 +335,17 @@ const IndexV2 = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto space-y-12">
             <div className="text-center space-y-4">
-              <h2 className="text-3xl md:text-5xl font-black text-neutral-900 dark:text-neutral-900">
+              <h2 className="text-3xl md:text-5xl font-black text-black">
                 Access 30+ AI Models
               </h2>
-              <p className="text-xl text-neutral-900 dark:text-neutral-900">
+              <p className="text-xl text-black">
                 All the best AI tools, one subscription
               </p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-4">
-                <h3 className="text-2xl font-black flex items-center gap-2 text-neutral-900 dark:text-neutral-900">
+                <h3 className="text-2xl font-black flex items-center gap-2 text-black">
                   <Video className="w-6 h-6 text-secondary-600" />
                   VIDEO GENERATION
                 </h3>
@@ -362,7 +362,7 @@ const IndexV2 = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-2xl font-black flex items-center gap-2 text-neutral-900 dark:text-neutral-900">
+                <h3 className="text-2xl font-black flex items-center gap-2 text-black">
                   <Image className="w-6 h-6 text-secondary-600" />
                   IMAGE GENERATION
                 </h3>
@@ -379,7 +379,7 @@ const IndexV2 = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-2xl font-black flex items-center gap-2 text-neutral-900 dark:text-neutral-900">
+                <h3 className="text-2xl font-black flex items-center gap-2 text-black">
                   <Music className="w-6 h-6 text-secondary-600" />
                   AUDIO GENERATION
                 </h3>
@@ -396,7 +396,7 @@ const IndexV2 = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-2xl font-black flex items-center gap-2 text-neutral-900 dark:text-neutral-900">
+                <h3 className="text-2xl font-black flex items-center gap-2 text-black">
                   <FileText className="w-6 h-6 text-secondary-600" />
                   TEXT GENERATION
                 </h3>
@@ -414,7 +414,7 @@ const IndexV2 = () => {
             </div>
 
             <div className="text-center">
-              <p className="text-lg font-bold text-neutral-900 dark:text-neutral-900">
+              <p className="text-lg font-bold text-black">
                 + 21 more models
               </p>
             </div>

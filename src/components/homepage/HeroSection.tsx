@@ -126,31 +126,52 @@ export const HeroSection = () => {
                   className="w-full h-full"
                 >
                   <SwiperSlide>
-                    <video
-                      src="/hero-demo.mp4"
-                      muted
-                      playsInline
-                      preload="auto"
-                      className="w-full h-full object-cover"
-                    />
+                    <div className="relative w-full h-full">
+                      <video
+                        src="/hero-demo.mp4"
+                        muted
+                        playsInline
+                        preload="auto"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-lg">
+                        <span className="text-sm font-semibold text-white">
+                          made on artifio.ai
+                        </span>
+                      </div>
+                    </div>
                   </SwiperSlide>
                   <SwiperSlide>
-                    <video
-                      src="/hero-demo-2.mp4"
-                      muted
-                      playsInline
-                      preload="auto"
-                      className="w-full h-full object-cover"
-                    />
+                    <div className="relative w-full h-full">
+                      <video
+                        src="/hero-demo-2.mp4"
+                        muted
+                        playsInline
+                        preload="auto"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-lg">
+                        <span className="text-sm font-semibold text-white">
+                          made on artifio.ai
+                        </span>
+                      </div>
+                    </div>
                   </SwiperSlide>
                   <SwiperSlide>
-                    <video
-                      src="/hero-demo-3.mp4"
-                      muted
-                      playsInline
-                      preload="auto"
-                      className="w-full h-full object-cover"
-                    />
+                    <div className="relative w-full h-full">
+                      <video
+                        src="/hero-demo-3.mp4"
+                        muted
+                        playsInline
+                        preload="auto"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-lg">
+                        <span className="text-sm font-semibold text-white">
+                          made on artifio.ai
+                        </span>
+                      </div>
+                    </div>
                   </SwiperSlide>
                   <SwiperSlide>
                     <div className="relative w-full h-full">

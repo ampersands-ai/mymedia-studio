@@ -68,7 +68,7 @@ export const FAQAccordion = () => {
           value={`item-${idx}`}
           className="brutalist-card px-6 py-2"
         >
-          <AccordionTrigger className="text-left font-bold text-lg text-neutral-900 hover:text-secondary-600 hover:no-underline transition-colors">
+          <AccordionTrigger className="text-left font-bold text-lg text-navy hover:text-secondary-600 hover:no-underline transition-colors">
             {faq.question}
           </AccordionTrigger>
           <AccordionContent className="text-neutral-600 whitespace-pre-line">

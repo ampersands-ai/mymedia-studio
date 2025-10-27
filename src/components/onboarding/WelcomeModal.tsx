@@ -93,7 +93,7 @@ export const WelcomeModal = ({ isOpen, onClose, onSelectTemplate }: WelcomeModal
                     {template.description || 'Create amazing content with AI'}
                   </p>
                   <Button 
-                    className="w-full bg-primary-500 hover:bg-primary-600 text-neutral-900 font-bold"
+                    className="w-full bg-primary-500 hover:bg-primary-600 text-navy font-bold"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleSelectTemplate(template);

@@ -73,7 +73,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/dashboard/custom-creation") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/dashboard/custom-creation")}
@@ -86,7 +86,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/dashboard/templates") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/dashboard/templates")}
@@ -99,7 +99,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/dashboard/history") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/dashboard/history")}
@@ -112,7 +112,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/dashboard/video-studio") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/dashboard/video-studio")}
@@ -127,7 +127,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/about") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/about")}
@@ -140,7 +140,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/blog") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/blog")}
@@ -153,7 +153,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/faq") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/faq")}
@@ -166,7 +166,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/community") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/community")}
@@ -182,7 +182,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/")}
@@ -197,7 +197,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/features") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/features")}
@@ -210,7 +210,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/dashboard/templates") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/dashboard/templates")}
@@ -223,7 +223,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/pricing") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/pricing")}
@@ -236,7 +236,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/dashboard/video-studio") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/dashboard/video-studio")}
@@ -251,7 +251,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/about") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/about")}
@@ -264,7 +264,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/blog") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/blog")}
@@ -277,7 +277,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/faq") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/faq")}
@@ -290,7 +290,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/community") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/community")}
@@ -310,7 +310,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/dashboard/settings") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                   )}
                   onClick={() => handleNavigation("/dashboard/settings")}
@@ -324,7 +324,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                     className={cn(
                       "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                       isActive("/admin/dashboard") 
-                        ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                        ? "bg-primary-500 text-navy font-semibold border-2 border-primary-600" 
                         : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
                     )}
                     onClick={() => handleNavigation("/admin/dashboard")}

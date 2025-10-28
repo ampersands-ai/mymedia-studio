@@ -23,9 +23,12 @@ const ImageWithOptimizedLoading = ({ generation, className }: { generation: Gene
     return <Skeleton className={className} />;
   }
   
+  // Add version parameter to bust cache, similar to video implementation
+  const versionedPath = `${generation.storage_path}${generation.storage_path.includes('?') ? '&' : '?'}v=${encodeURIComponent(generation.created_at)}`;
+  
   return (
     <OptimizedGenerationImage
-      storagePath={generation.storage_path}
+      storagePath={versionedPath}
       alt="Generated content"
       className={className}
     />

@@ -99,9 +99,9 @@ export const HeroSection = () => {
           </div>
 
           {/* Right content - Video showcase */}
-          <div className="relative mx-auto lg:mx-0">
+          <div className="relative mx-auto lg:mx-0 w-full max-w-md lg:max-w-none">
             <GlassCard gradient className="p-2">
-              <div className="rounded-lg overflow-hidden aspect-video max-h-[25vh] md:max-h-none bg-gray-200 dark:bg-gray-800">
+              <div className="rounded-lg overflow-hidden w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-none aspect-video bg-gray-200 dark:bg-gray-800">
                 <Swiper
                   modules={[Autoplay, EffectFade]}
                   onSwiper={setSwiperInstance}

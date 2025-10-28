@@ -333,6 +333,8 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   };
 
   const handleApproveVoiceover = () => {
+    console.log('[VideoJobCard] Approving voiceover for job:', job.id);
+    console.log('[VideoJobCard] Job voiceover URL:', job.voiceover_url);
     approveVoiceover.mutate(job.id);
   };
 

@@ -166,40 +166,9 @@ Deno.serve(async (req) => {
     // Step 4: Assemble video
     await updateJobStatus(supabaseClient, job_id, 'assembling');
     
-    // Get voiceover URL - handle both full URLs and storage paths
-    let voiceoverPublicUrl: string;
-    if (job.voiceover_url.startsWith('http://') || job.voiceover_url.startsWith('https://')) {
-      // Already a full URL
-      voiceoverPublicUrl = job.voiceover_url;
-    } else {
-      // Storage path - construct full public URL
-      voiceoverPublicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${job.voiceover_url}`;
-    }
-    console.log('Using voiceover URL:', voiceoverPublicUrl);
-    
-    // Validate assets before submission using GET with Range header (more reliable than HEAD)
-    console.log('Validating asset accessibility...');
-    
-    // Test voiceover with GET Range probe (accepts 200 or 206)
-    const testVoiceover = await fetch(voiceoverPublicUrl, { 
-      headers: { 'Range': 'bytes=0-0' } 
-    });
-    if (!testVoiceover.ok && testVoiceover.status !== 206) {
-      console.error(`Voiceover validation failed: ${testVoiceover.status} for URL: ${voiceoverPublicUrl}`);
-      throw new Error(`Voiceover URL is not accessible: ${testVoiceover.status}. URL tested: ${voiceoverPublicUrl}`);
-    }
-    
-    // Test first background media with GET Range probe
-    const bgMediaUrl = backgroundVideoUrls[0] || backgroundImageUrls[0];
-    const testBgMedia = await fetch(bgMediaUrl, { 
-      headers: { 'Range': 'bytes=0-0' } 
-    });
-    if (!testBgMedia.ok && testBgMedia.status !== 206) {
-      console.error(`Background media validation failed: ${testBgMedia.status} for URL: ${bgMediaUrl}`);
-      throw new Error(`Background media URL is not accessible: ${testBgMedia.status}. URL tested: ${bgMediaUrl}`);
-    }
-    
-    console.log('Assets validated successfully');
+    // Use voiceover URL directly from database (already stored as full public URL)
+    const voiceoverPublicUrl = job.voiceover_url;
+    console.log('Using voiceover URL from database:', voiceoverPublicUrl);
     
     const renderId = await assembleVideo(
       supabaseClient,

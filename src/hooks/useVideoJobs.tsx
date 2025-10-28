@@ -186,33 +186,75 @@ export function useVideoJobs() {
   // Approve voiceover mutation
   const approveVoiceover = useMutation({
     mutationFn: async (jobId: string) => {
+      console.log('[useVideoJobs] Starting voiceover approval for job:', jobId);
+      
+      // Check session before calling function
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Please sign in to continue');
+      }
       
-      const { data, error } = await supabase.functions.invoke('approve-voiceover', {
-        body: { job_id: jobId },
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      });
+      console.log('[useVideoJobs] Session valid, invoking approve-voiceover function...');
       
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
-      return data;
+      // Retry helper for transient failures
+      const invokeWithRetry = async (attempt = 1): Promise<any> => {
+        try {
+          const { data, error } = await supabase.functions.invoke('approve-voiceover', {
+            body: { job_id: jobId },
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          });
+
+          console.log('[useVideoJobs] Function response:', { data, error, attempt });
+          
+          if (error) {
+            console.error('[useVideoJobs] Function invocation error:', error);
+            throw error;
+          }
+          if (data?.error) {
+            console.error('[useVideoJobs] Function returned error:', data.error);
+            throw new Error(data.error);
+          }
+          
+          console.log('[useVideoJobs] ✅ Voiceover approval successful');
+          return data;
+        } catch (err: any) {
+          const errorMsg = err?.message || String(err);
+          console.error('[useVideoJobs] Attempt', attempt, 'failed:', errorMsg);
+          
+          // Retry once on "Failed to send" or 503 errors
+          if (attempt === 1 && (errorMsg.includes('Failed to send a request to the Edge Function') || errorMsg.includes('503'))) {
+            console.log('[useVideoJobs] Retrying after transient error...');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            return invokeWithRetry(2);
+          }
+          throw err;
+        }
+      };
+
+      return invokeWithRetry();
     },
     onSuccess: async () => {
+      console.log('[useVideoJobs] Mutation successful, refetching jobs...');
       // Force immediate refetch to update UI
       await queryClient.refetchQueries({ queryKey: ['video-jobs'] });
     },
     onError: (error: any) => {
+      console.error('[useVideoJobs] Mutation error:', error);
       const message = error.message || 'Failed to approve voiceover';
       
       // Parse specific error types for better user feedback
-      if (message.includes('Shotstack')) {
+      if (message.includes('sign in')) {
+        toast.error('Please sign in to continue');
+      } else if (message.includes('Shotstack')) {
         toast.error('Video assembly failed. Please try again or contact support.');
-      } else if (message.includes('validation')) {
-        toast.error('Video validation failed. Please try again.');
+      } else if (message.includes('Pixabay')) {
+        toast.error('Failed to fetch background media. Please try again.');
       } else if (message.includes('timeout') || message.includes('timed out')) {
         toast.error('Request timed out. Please try again.');
+      } else if (message.includes('429') || message.includes('rate limit')) {
+        toast.error('Service temporarily busy. Please try again in a moment.');
       } else {
         toast.error(message);
       }

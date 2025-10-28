@@ -117,12 +117,25 @@ export function useVideoJobs() {
     };
   }, [queryClient]);
 
+  // Sync pinned job across multiple hook instances
+  useEffect(() => {
+    const sync = () => setPinnedJobId(getPinnedJobId());
+    window.addEventListener('videojobs:pin-change', sync as any);
+    window.addEventListener('storage', sync as any);
+    return () => {
+      window.removeEventListener('videojobs:pin-change', sync as any);
+      window.removeEventListener('storage', sync as any);
+    };
+  }, []);
+
   // Pin/unpin helpers
   const pinJob = (jobId: string) => {
     try {
       localStorage.setItem(PINNED_JOB_KEY, jobId);
       setCleared(false);
       setPinnedJobId(jobId);
+      // Notify other hook instances in this document
+      window.dispatchEvent(new CustomEvent('videojobs:pin-change'));
     } catch {}
     queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
   };
@@ -132,10 +145,11 @@ export function useVideoJobs() {
       localStorage.removeItem(PINNED_JOB_KEY);
       setCleared(true);
       setPinnedJobId(null);
+      // Notify other hook instances in this document
+      window.dispatchEvent(new CustomEvent('videojobs:pin-change'));
     } catch {}
     queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
   };
-
   // Create video job mutation
   const createJob = useMutation({
     mutationFn: async (input: VideoJobInput) => {
@@ -150,7 +164,10 @@ export function useVideoJobs() {
     onMutate: async () => {
       // Cancel outgoing refetches to prevent race conditions
       await queryClient.cancelQueries({ queryKey: ['video-jobs'] });
-      
+
+      // Ensure cleared flag is off so query won't hide results
+      setCleared(false);
+
       // Don't clear anything - let old job stay visible until new one appears
       // This prevents the blank state flash
     },

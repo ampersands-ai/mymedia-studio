@@ -21,7 +21,7 @@ export const HeroSection = () => {
   const parallaxY = isMobile ? 0 : scrollY;
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[80vh] md:min-h-screen flex items-center justify-center overflow-hidden">
       {/* Animated background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-gray-900">
         {/* Animated orbs */}
@@ -30,17 +30,17 @@ export const HeroSection = () => {
         <div className="gradient-blob blob-3" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-12 md:pb-20">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left content */}
-          <div className="space-y-8">
+          <div className="space-y-6 md:space-y-8">
             {/* Badge */}
             <AnimatedBadge icon={Sparkles}>
               Trusted by 10,000+ creators
             </AnimatedBadge>
 
             {/* Main headline */}
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-tight">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold leading-tight">
               Create Professional{' '}
               <span className="bg-gradient-to-r from-primary-yellow via-primary-orange to-accent-purple bg-clip-text text-transparent animate-gradient">
                 AI Content
@@ -70,7 +70,7 @@ export const HeroSection = () => {
             </div>
 
             {/* Stats */}
-            <div className="flex flex-wrap gap-8 pt-4">
+            <div className="flex flex-wrap gap-6 md:gap-8 pt-4">
               <div>
                 <div className="text-3xl font-bold bg-gradient-to-r from-primary-yellow to-primary-orange bg-clip-text text-transparent">
                   1M+
@@ -101,7 +101,7 @@ export const HeroSection = () => {
           {/* Right content - Video showcase */}
           <div className="relative">
             <GlassCard gradient className="p-2">
-              <div className="rounded-lg overflow-hidden aspect-video bg-gray-200 dark:bg-gray-800">
+              <div className="rounded-lg overflow-hidden aspect-video max-h-[40vh] md:max-h-none bg-gray-200 dark:bg-gray-800">
                 <Swiper
                   modules={[Autoplay, EffectFade]}
                   onSwiper={setSwiperInstance}

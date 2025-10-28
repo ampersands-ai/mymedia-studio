@@ -86,22 +86,29 @@ export function VideoJobsList() {
             </div>
           )}
           <div className="space-y-3 md:space-y-4">
-            {!jobs || jobs.length === 0 ? (
-              <div className="text-center py-8 md:py-12">
-                <div className="text-4xl md:text-6xl mb-3 md:mb-4">🎬</div>
-                <p className="text-sm md:text-base text-muted-foreground">
-                  No active generation. Create your first video!
-                </p>
-              </div>
-            ) : (
-              jobs.map(job => (
-                <VideoJobCard 
-                  key={job.id} 
-                  job={job}
-                  onPreview={setPreviewJob}
-                />
-              ))
-            )}
+            {(() => {
+              // Only show the pinned job if one exists
+              const jobsToDisplay = pinnedJobId && jobs 
+                ? jobs.filter(job => job.id === pinnedJobId)
+                : jobs;
+              
+              return !jobsToDisplay || jobsToDisplay.length === 0 ? (
+                <div className="text-center py-8 md:py-12">
+                  <div className="text-4xl md:text-6xl mb-3 md:mb-4">🎬</div>
+                  <p className="text-sm md:text-base text-muted-foreground">
+                    No active generation. Create your first video!
+                  </p>
+                </div>
+              ) : (
+                jobsToDisplay.map(job => (
+                  <VideoJobCard 
+                    key={job.id} 
+                    job={job as VideoJob}
+                    onPreview={setPreviewJob}
+                  />
+                ))
+              );
+            })()}
           </div>
         </CardContent>
       </Card>

@@ -33,14 +33,14 @@ export const HeroSection = () => {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 md:pt-32 pb-12 md:pb-20">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left content */}
-          <div className="space-y-4 md:space-y-8">
+          <div className="space-y-4 md:space-y-8 flex flex-col items-center lg:items-start">
             {/* Badge */}
             <AnimatedBadge icon={Sparkles}>
               Trusted by 10,000+ creators
             </AnimatedBadge>
 
             {/* Main headline */}
-            <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold leading-tight">
+            <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold leading-tight text-center lg:text-left">
               Create Professional{' '}
               <span className="bg-gradient-to-r from-primary-yellow via-primary-orange to-accent-purple bg-clip-text text-transparent animate-gradient">
                 AI Content
@@ -49,13 +49,13 @@ export const HeroSection = () => {
             </h1>
 
             {/* Subheadline */}
-            <p className="text-lg md:text-xl text-gray-800 dark:text-gray-200 max-w-xl">
+            <p className="text-lg md:text-xl text-gray-800 dark:text-gray-200 max-w-xl text-center lg:text-left">
               30+ AI models for video, image, and audio generation. 
               One platform, unlimited creativity. No design skills needed.
             </p>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Link to="/create">
                 <GradientButton size="lg" className="group w-full sm:w-auto">
                   Start Creating Free
@@ -70,7 +70,7 @@ export const HeroSection = () => {
             </div>
 
             {/* Stats */}
-            <div className="flex flex-wrap gap-4 md:gap-8 pt-2">
+            <div className="flex flex-wrap gap-4 md:gap-8 pt-2 justify-center lg:justify-start">
               <div>
                 <div className="text-3xl font-bold bg-gradient-to-r from-primary-yellow to-primary-orange bg-clip-text text-transparent">
                   1M+
@@ -99,7 +99,7 @@ export const HeroSection = () => {
           </div>
 
           {/* Right content - Video showcase */}
-          <div className="relative">
+          <div className="relative mx-auto lg:mx-0">
             <GlassCard gradient className="p-2">
               <div className="rounded-lg overflow-hidden aspect-video max-h-[25vh] md:max-h-none bg-gray-200 dark:bg-gray-800">
                 <Swiper

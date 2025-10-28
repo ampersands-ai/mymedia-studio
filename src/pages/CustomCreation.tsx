@@ -1260,14 +1260,17 @@ const CustomCreation = () => {
               )}
 
 
-              {/* Primary Input Fields (Text & Voice) */}
+              {/* Primary Input Fields (Text & Voice) - Exclude prompt as it's rendered above */}
               {selectedModel && filteredModels && (() => {
                 const currentModel = filteredModels.find(m => m.record_id === selectedModel);
                 if (!currentModel?.input_schema?.properties) return null;
                 
                 const properties = currentModel.input_schema.properties as Record<string, any>;
-                const textKey = findPrimaryTextKey(properties);
+                let textKey = findPrimaryTextKey(properties);
                 const voiceKey = findPrimaryVoiceKey(properties, currentModel.id);
+
+                // Exclude "prompt" as it's already rendered above
+                if (textKey === 'prompt') textKey = null;
 
                 console.debug('[Primary Inputs]', { textKey, voiceKey, modelId: currentModel.id });
                 if (!textKey && !voiceKey) return null;

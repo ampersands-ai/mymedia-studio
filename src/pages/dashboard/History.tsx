@@ -362,10 +362,16 @@ const History = () => {
 
       const uniqueMap = new Map<string, Generation>();
       for (const item of all) {
-        const key = item.output_url
-          ? `url:${item.output_url}`
-          : (item.storage_path ? `storage:${item.storage_path}` : `id:${item.id}`);
+        // Create compound key from both output_url and storage_path for better deduplication
+        const keyParts = [
+          item.output_url ? `url:${item.output_url}` : '',
+          item.storage_path ? `path:${item.storage_path}` : '',
+          !item.output_url && !item.storage_path ? `id:${item.id}` : ''
+        ].filter(Boolean);
+        
+        const key = keyParts.join('|');
         const existing = uniqueMap.get(key);
+        
         if (!existing) {
           uniqueMap.set(key, item);
         } else {

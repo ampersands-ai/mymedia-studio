@@ -170,6 +170,23 @@ Deno.serve(async (req) => {
     const voiceoverPublicUrl = job.voiceover_url;
     console.log('Using voiceover URL from database:', voiceoverPublicUrl);
     
+    // Validate voiceover URL is accessible
+    console.log('[4.1] Validating voiceover URL accessibility');
+    try {
+      const headResponse = await fetch(voiceoverPublicUrl, { method: 'HEAD' });
+      if (!headResponse.ok) {
+        console.error('Voiceover URL not accessible:', {
+          url: voiceoverPublicUrl,
+          status: headResponse.status
+        });
+        throw new Error(`Voiceover not accessible: ${headResponse.status}`);
+      }
+      console.log('✅ Voiceover URL validated successfully');
+    } catch (validateError) {
+      console.error('Voiceover validation failed:', validateError);
+      throw new Error('Failed to access voiceover file');
+    }
+    
     const renderId = await assembleVideo(
       supabaseClient,
       {

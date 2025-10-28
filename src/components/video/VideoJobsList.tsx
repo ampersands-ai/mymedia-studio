@@ -2,19 +2,23 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Loader2, Clock, RotateCcw } from 'lucide-react';
+import { Loader2, Clock, RotateCcw, ExternalLink } from 'lucide-react';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { VideoJobCard } from './VideoJobCard';
 import { VideoPreviewModal } from './VideoPreviewModal';
 import { VideoJob } from '@/types/video';
+import { OptimizedGenerationPreview } from '@/components/generation/OptimizedGenerationPreview';
+import { useNavigate } from 'react-router-dom';
 
 export function VideoJobsList() {
   const { jobs, isLoading, pinnedJobId, clearPinnedJob } = useVideoJobs();
   const [previewJob, setPreviewJob] = useState<VideoJob | null>(null);
+  const navigate = useNavigate();
   
   const currentJob = jobs && jobs.length > 0 ? jobs[0] : null;
   const isPinnedJob = currentJob && pinnedJobId === currentJob.id;
   const isJobFinished = currentJob && (currentJob.status === 'completed' || currentJob.status === 'failed');
+  const showCompletedVideo = isPinnedJob && currentJob?.status === 'completed' && currentJob.final_video_url;
 
   if (isLoading) {
     return (
@@ -47,18 +51,38 @@ export function VideoJobsList() {
               <Clock className="h-4 w-4 text-green-600 dark:text-green-400" />
               <AlertTitle className="text-green-900 dark:text-green-100">Generation Complete</AlertTitle>
               <AlertDescription className="text-green-800 dark:text-green-200 text-sm flex items-center justify-between">
-                <span>Your video is ready! Click Reset to create a new one.</span>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={clearPinnedJob}
-                  className="ml-4"
-                >
-                  <RotateCcw className="h-3 w-3 mr-1" />
-                  Reset
-                </Button>
+                <span>Your video is ready! View it below or in My Creations.</span>
+                <div className="flex gap-2 ml-4">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => navigate('/dashboard/history')}
+                  >
+                    <ExternalLink className="h-3 w-3 mr-1" />
+                    My Creations
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={clearPinnedJob}
+                  >
+                    <RotateCcw className="h-3 w-3 mr-1" />
+                    Reset
+                  </Button>
+                </div>
               </AlertDescription>
             </Alert>
+          )}
+          
+          {showCompletedVideo && (
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold mb-3">Your Completed Video</h3>
+              <OptimizedGenerationPreview
+                storagePath={currentJob.final_video_url}
+                contentType="video"
+                className="rounded-lg overflow-hidden"
+              />
+            </div>
           )}
           <div className="space-y-3 md:space-y-4">
             {!jobs || jobs.length === 0 ? (

@@ -151,17 +151,13 @@ export function useVideoJobs() {
       // Cancel outgoing refetches to prevent race conditions
       await queryClient.cancelQueries({ queryKey: ['video-jobs'] });
       
-      // Clear the old state BEFORE the mutation starts
-      setCleared(false);
-      try {
-        localStorage.removeItem(PINNED_JOB_KEY);
-        setPinnedJobId(null);
-      } catch {}
-      
-      // Optimistically set empty jobs array to clear UI immediately
-      queryClient.setQueryData(['video-jobs'], []);
+      // Don't clear anything - let old job stay visible until new one appears
+      // This prevents the blank state flash
     },
     onSuccess: (data) => {
+      // Clear the cleared flag now that we have a new job
+      setCleared(false);
+      
       // Pin the newly created job and show it immediately
       if (data.job?.id) {
         pinJob(data.job.id);

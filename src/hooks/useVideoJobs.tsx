@@ -360,8 +360,9 @@ export function useVideoJobs() {
       toast.error(error.message || 'Failed to cancel video job');
     },
     onSuccess: async () => {
+      // Clear the pinned job so it doesn't reappear in UI
+      clearPinnedJob();
       toast.success('Video job cancelled successfully');
-      // Refetch to ensure we're in sync
       await queryClient.refetchQueries({ queryKey: ['video-jobs'] });
     },
   });

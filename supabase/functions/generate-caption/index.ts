@@ -32,7 +32,9 @@ serve(async (req) => {
 Content Type: ${content_type}
 What the ${content_type === 'video' ? 'video' : 'image'} shows: ${prompt}
 
-Create a caption (2-3 sentences) that:
+Create a caption (150-280 characters, 2-3 complete sentences) that:
+- CRITICAL: Caption MUST end with proper punctuation (. ! or ?)
+- NO incomplete thoughts or cut-off sentences
 - Describes what's actually IN the ${content_type === 'video' ? 'video' : 'image'}
 - Is engaging and works well on Instagram, Twitter, TikTok, or other social media
 - Does NOT mention AI, models, or the generation process
@@ -54,6 +56,7 @@ IMPORTANT: Each hashtag MUST include the # symbol (e.g., #Fashion, #Style).`;
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
+        max_completion_tokens: 250,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: 'Generate a captivating caption and exactly 15 popular hashtags for this content.' }
@@ -108,6 +111,17 @@ IMPORTANT: Each hashtag MUST include the # symbol (e.g., #Fashion, #Style).`;
 
     if (!caption || !Array.isArray(hashtags) || hashtags.length !== 15) {
       throw new Error('Invalid response format from AI');
+    }
+
+    // Validate caption is complete
+    const trimmedCaption = caption.trim();
+    if (!trimmedCaption.match(/[.!?]$/)) {
+      console.error('Incomplete caption received:', caption);
+      throw new Error('Caption is incomplete - does not end with proper punctuation');
+    }
+    if (trimmedCaption.length < 50) {
+      console.error('Caption too short:', caption);
+      throw new Error('Caption is too short - minimum 50 characters required');
     }
 
     // Ensure all hashtags have # symbol

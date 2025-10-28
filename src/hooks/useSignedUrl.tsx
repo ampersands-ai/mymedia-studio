@@ -3,6 +3,13 @@ import { createSignedUrl } from '@/lib/storage-utils';
 import { getOptimizedVideoUrl, getProxiedVideoUrl } from '@/lib/supabase-videos';
 
 /**
+ * @deprecated Use content-specific hooks from @/hooks/media instead:
+ * - useImageUrl for images
+ * - useVideoUrl for videos
+ * - useAudioUrl for audio
+ * 
+ * This hook will be removed in a future version.
+ * 
  * Hook to fetch a signed URL for a storage file
  * @param storagePath - Path to the file in storage
  * @param bucket - Storage bucket name
@@ -12,6 +19,18 @@ export const useSignedUrl = (storagePath: string | null, bucket: string = 'gener
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
+
+  // Deprecation warning in development
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.warn(
+        '⚠️ useSignedUrl is deprecated. Use content-specific hooks from @/hooks/media instead:\n' +
+        '  - useImageUrl for images\n' +
+        '  - useVideoUrl for videos\n' +
+        '  - useAudioUrl for audio'
+      );
+    }
+  }, []);
 
   useEffect(() => {
     if (!storagePath) {

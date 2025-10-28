@@ -4,6 +4,13 @@ import { createSignedUrl } from '@/lib/storage-utils';
 import { getOptimizedVideoUrl } from '@/lib/supabase-videos';
 
 /**
+ * @deprecated Use content-specific hooks from @/hooks/media instead:
+ * - useImageUrl for images (supports lazy loading)
+ * - useVideoUrl for videos (supports lazy loading)
+ * - useAudioUrl for audio
+ * 
+ * This hook will be removed in a future version.
+ * 
  * Hook to lazily fetch a signed URL when the element enters the viewport
  * @param storagePath - Path to the file in storage
  * @param bucket - Storage bucket name
@@ -22,6 +29,18 @@ export const useSignedUrlLazy = (
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
+
+  // Deprecation warning in development
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.warn(
+        '⚠️ useSignedUrlLazy is deprecated. Use content-specific hooks from @/hooks/media instead:\n' +
+        '  - useImageUrl for images (supports lazy loading)\n' +
+        '  - useVideoUrl for videos (supports lazy loading)\n' +
+        '  - useAudioUrl for audio'
+      );
+    }
+  }, []);
 
   useEffect(() => {
     if (!storagePath) {

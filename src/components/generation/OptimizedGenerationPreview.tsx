@@ -174,7 +174,10 @@ export const OptimizedGenerationPreview = ({
             <Button
               variant="secondary"
               size="icon"
-              onClick={handleShare}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleShare();
+              }}
               className="h-8 w-8"
             >
               <Share2 className="h-4 w-4" />
@@ -183,7 +186,10 @@ export const OptimizedGenerationPreview = ({
           <Button
             variant="secondary"
             size="icon"
-            onClick={handleDownload}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDownload();
+            }}
             className="h-8 w-8"
           >
             <Download className="h-4 w-4" />
@@ -235,12 +241,18 @@ export const OptimizedGenerationPreview = ({
           {/* Action buttons */}
           <div className="flex gap-2 justify-end">
             {canShare && (
-              <Button variant="outline" size="sm" onClick={handleShare}>
+              <Button variant="outline" size="sm" onClick={(e) => {
+                e.stopPropagation();
+                handleShare();
+              }}>
                 <Share2 className="h-4 w-4 mr-2" />
                 Share
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={handleDownload}>
+            <Button variant="outline" size="sm" onClick={(e) => {
+              e.stopPropagation();
+              handleDownload();
+            }}>
               <Download className="h-4 w-4 mr-2" />
               Download
             </Button>
@@ -300,7 +312,10 @@ export const OptimizedGenerationPreview = ({
             <Button
               variant="secondary"
               size="icon"
-              onClick={handleShare}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleShare();
+              }}
               className="h-8 w-8"
             >
               <Share2 className="h-4 w-4" />
@@ -309,7 +324,10 @@ export const OptimizedGenerationPreview = ({
           <Button
             variant="secondary"
             size="icon"
-            onClick={handleDownload}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDownload();
+            }}
             className="h-8 w-8"
           >
             <Download className="h-4 w-4" />

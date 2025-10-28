@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Trash2, Clock, Sparkles, Image as ImageIcon, Video, Music, FileText, RefreshCw, X, AlertCircle, Flag } from "lucide-react";
+import { Download, Trash2, Clock, Sparkles, Image as ImageIcon, Video, Music, FileText, RefreshCw, X, AlertCircle, Flag, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -283,6 +283,31 @@ const History = () => {
   const queryClient = useQueryClient();
   const { progress, updateProgress } = useOnboarding();
 
+  // SECURITY: Check if generation already has a dispute
+  const { data: disputeStatus } = useQuery({
+    queryKey: ['dispute-status', previewGeneration?.id],
+    queryFn: async () => {
+      if (!previewGeneration?.id) return null;
+      
+      // Check both active reports and history
+      const [active, history] = await Promise.all([
+        supabase
+          .from('token_dispute_reports')
+          .select('id, status')
+          .eq('generation_id', previewGeneration.id)
+          .maybeSingle(),
+        supabase
+          .from('token_dispute_history')
+          .select('id, status, refund_amount')
+          .eq('generation_id', previewGeneration.id)
+          .maybeSingle()
+      ]);
+      
+      return active.data || history.data;
+    },
+    enabled: !!previewGeneration?.id
+  });
+
   // Track viewing result
   useEffect(() => {
     if (previewGeneration && progress && !progress.checklist.viewedResult) {
@@ -417,6 +442,32 @@ const History = () => {
 
   const reportTokenIssueMutation = useMutation({
     mutationFn: async ({ generationId, reason, generation }: { generationId: string; reason: string; generation: Generation }) => {
+      // SECURITY: Check if dispute already exists in active reports
+      const { data: existingDispute } = await supabase
+        .from('token_dispute_reports')
+        .select('id')
+        .eq('generation_id', generationId)
+        .maybeSingle();
+
+      if (existingDispute) {
+        throw new Error('A dispute report already exists for this generation');
+      }
+
+      // SECURITY: Check history table for already-refunded generations
+      const { data: historyDispute } = await supabase
+        .from('token_dispute_history')
+        .select('id, refund_amount')
+        .eq('generation_id', generationId)
+        .maybeSingle();
+
+      if (historyDispute) {
+        if (historyDispute.refund_amount && historyDispute.refund_amount > 0) {
+          throw new Error('This generation was already refunded');
+        } else {
+          throw new Error('A dispute was already processed for this generation');
+        }
+      }
+
       // Check if this is a failed generation - auto-refund tokens
       if (generation.status === 'failed') {
         const { data: { session } } = await supabase.auth.getSession();
@@ -976,10 +1027,20 @@ const History = () => {
                     e.stopPropagation();
                     handleReportTokenIssue(previewGeneration);
                   }}
+                  disabled={!!disputeStatus}
                   className="w-full sm:flex-1"
                 >
-                  <Flag className="h-4 w-4 mr-2" />
-                  Report Token Issue
+                  {disputeStatus ? (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Already Reported
+                    </>
+                  ) : (
+                    <>
+                      <Flag className="h-4 w-4 mr-2" />
+                      Report Token Issue
+                    </>
+                  )}
                 </Button>
                 <Button
                   variant="destructive"

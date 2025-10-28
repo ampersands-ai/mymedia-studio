@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
       throw updateError;
     }
 
-    // Log to audit trail
+    // Log to audit trail with enhanced metadata for security monitoring
     await supabaseAdmin.from('audit_logs').insert({
       user_id: user.id, // Admin who made the change
       action: `tokens_${action}`,
@@ -140,6 +140,8 @@ Deno.serve(async (req) => {
         new_tokens_remaining: newTokensRemaining,
         previous_tokens_total: subscription.tokens_total,
         new_tokens_total: newTokensTotal,
+        timestamp: new Date().toISOString(),
+        source: 'manual_admin_action'
       }
     });
 

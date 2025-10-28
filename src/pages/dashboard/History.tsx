@@ -385,27 +385,35 @@ const History = () => {
         };
       });
 
-      // Filter out generation entries that correspond to video jobs (to prevent duplicates)
-      const videoJobIds = new Set((videoData || []).map(vj => vj.id));
-      const regularGenerations = enrichedGenerations.filter(gen => !videoJobIds.has(gen.id));
+      // Filter out generation entries that have the same storage_path as video jobs
+      const videoStoragePaths = new Set(
+        (videoData || [])
+          .map(vj => vj.storage_path)
+          .filter(Boolean) // Remove null/undefined
+      );
+      
+      const regularGenerations = enrichedGenerations.filter(gen => 
+        !gen.storage_path || !videoStoragePaths.has(gen.storage_path)
+      );
 
       // Combine only regular generations with video generations (no duplicates)
       const all: Generation[] = ([...regularGenerations, ...videoGenerations] as unknown) as Generation[];
 
       const uniqueMap = new Map<string, Generation>();
       for (const item of all) {
-        // For video jobs without storage_path, use output_url as the unique key
-        // For other items, create compound key from both output_url and storage_path
+        // Use storage_path as primary key for deduplication
         let key: string;
-        if (item.is_video_job && item.output_url) {
-          key = `video:${item.output_url}`;
+        
+        if (item.storage_path) {
+          // Normalize storage_path by removing query parameters
+          const cleanPath = item.storage_path.split('?')[0];
+          key = `path:${cleanPath}`;
+        } else if (item.output_url) {
+          // Extract path from URL if no storage_path
+          const match = item.output_url.match(/\/object\/public\/[^/]+\/(.+?)(?:\?|$)/);
+          key = match ? `path:${match[1]}` : `url:${item.output_url}`;
         } else {
-          const keyParts = [
-            item.output_url ? `url:${item.output_url}` : '',
-            item.storage_path ? `path:${item.storage_path}` : '',
-            !item.output_url && !item.storage_path ? `id:${item.id}` : ''
-          ].filter(Boolean);
-          key = keyParts.join('|');
+          key = `id:${item.id}`;
         }
         
         const existing = uniqueMap.get(key);
@@ -413,7 +421,7 @@ const History = () => {
         if (!existing) {
           uniqueMap.set(key, item);
         } else {
-          // Prefer the video job variant when duplicate output exists
+          // Always prefer video_job entries over generation entries
           if (!existing.is_video_job && item.is_video_job) {
             uniqueMap.set(key, item);
           }

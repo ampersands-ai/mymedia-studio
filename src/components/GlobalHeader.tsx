@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Coins, Shield, Clock } from "lucide-react";
+import { Sparkles, Coins, Shield, Clock, Layout } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -110,6 +110,16 @@ export const GlobalHeader = () => {
           {/* Right Side - Actions */}
           <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
+
+            {user && (
+              <button
+                onClick={() => navigate("/dashboard/templates")}
+                className="px-4 py-2 rounded-full backdrop-blur-lg bg-gradient-to-r from-primary-yellow to-primary-orange text-white border border-border/30 flex items-center gap-2 hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-md font-semibold"
+              >
+                <Layout className="h-5 w-5" />
+                Dashboard
+              </button>
+            )}
 
             {tokenBalance !== null && (
               <Popover>

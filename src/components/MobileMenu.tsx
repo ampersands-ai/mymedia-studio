@@ -206,6 +206,21 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   <span>Features</span>
                 </button>
 
+                {user && (
+                  <button
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
+                      isDashboard
+                        ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg"
+                        : "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg hover:opacity-90"
+                    )}
+                    onClick={() => handleNavigation("/dashboard/templates")}
+                  >
+                    <Layout className="h-5 w-5" />
+                    <span>Dashboard</span>
+                  </button>
+                )}
+
                 <button
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",

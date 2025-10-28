@@ -170,3 +170,93 @@ export function getVideoThumbnail(
   // For now, return null and let video poster attribute handle it
   return null;
 }
+
+/**
+ * Bandwidth detection utilities for adaptive video loading
+ */
+
+export type ConnectionSpeed = 'slow' | 'medium' | 'fast';
+
+/**
+ * Detect user's connection speed using Network Information API
+ * @returns ConnectionSpeed estimate
+ */
+export function detectConnectionSpeed(): ConnectionSpeed {
+  // Check if Network Information API is available
+  if ('connection' in navigator) {
+    const connection = (navigator as any).connection;
+    
+    if (connection) {
+      // effectiveType: 'slow-2g', '2g', '3g', '4g'
+      const effectiveType = connection.effectiveType;
+      
+      if (effectiveType === 'slow-2g' || effectiveType === '2g') {
+        return 'slow';
+      } else if (effectiveType === '3g') {
+        return 'medium';
+      } else {
+        return 'fast'; // 4g or better
+      }
+    }
+  }
+  
+  // Fallback: assume medium if API not available
+  return 'medium';
+}
+
+/**
+ * Get optimal preload strategy based on connection speed
+ * @param speed - Connection speed
+ * @returns Preload strategy ('none', 'metadata', 'auto')
+ */
+export function getPreloadStrategy(speed: ConnectionSpeed): 'none' | 'metadata' | 'auto' {
+  const strategies = {
+    slow: 'none' as const,      // Don't preload on slow connections
+    medium: 'metadata' as const, // Preload metadata only
+    fast: 'metadata' as const    // Still use metadata for optimal performance
+  };
+  
+  return strategies[speed];
+}
+
+/**
+ * Calculate optimal intersection observer rootMargin based on connection speed
+ * @param speed - Connection speed
+ * @returns Root margin value (e.g., "200px")
+ */
+export function getPreloadMargin(speed: ConnectionSpeed): string {
+  const margins = {
+    slow: '50px',   // Start loading just before visible
+    medium: '200px', // Standard preload distance
+    fast: '400px'    // Aggressive preload for fast connections
+  };
+  
+  return margins[speed];
+}
+
+/**
+ * Check if device is likely mobile (for bandwidth considerations)
+ * @returns Boolean indicating if mobile
+ */
+export function isMobileDevice(): boolean {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  );
+}
+
+/**
+ * Get recommended video quality based on connection and device
+ * @returns Quality recommendation
+ */
+export function getRecommendedQuality(): 'low' | 'medium' | 'high' {
+  const speed = detectConnectionSpeed();
+  const isMobile = isMobileDevice();
+  
+  if (speed === 'slow' || (isMobile && speed === 'medium')) {
+    return 'low';
+  } else if (speed === 'medium') {
+    return 'medium';
+  } else {
+    return 'high';
+  }
+}

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
+import { detectConnectionSpeed, getPreloadStrategy, getPreloadMargin } from '@/lib/supabase-videos';
 
 interface OptimizedVideoProps {
   src: string;
@@ -31,8 +32,14 @@ export function OptimizedVideo({
   const [loadError, setLoadError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   
+  // Detect connection speed for adaptive loading
+  const connectionSpeed = detectConnectionSpeed();
+  const preloadStrategy = getPreloadStrategy(connectionSpeed);
+  const rootMargin = getPreloadMargin(connectionSpeed);
+  
   const { ref, inView } = useInView({
     threshold: 0.25,
+    rootMargin,
     triggerOnce: false
   });
 
@@ -132,14 +139,14 @@ export function OptimizedVideo({
         </div>
       )}
 
-      {/* Video element */}
+      {/* Video element with adaptive preload */}
       <video
         ref={videoRef}
         poster={poster}
         loop={loop}
         muted={muted}
         playsInline
-        preload="metadata"
+        preload={preloadStrategy}
         controls={controls}
         onLoadedData={() => setIsLoaded(true)}
         onError={(e) => {

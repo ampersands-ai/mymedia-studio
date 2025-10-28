@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { OptimizedGenerationImage } from "./OptimizedGenerationImage";
 import { Video, Music, Download, Share2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,9 @@ import { triggerHaptic } from "@/utils/capacitor-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { supabase } from "@/integrations/supabase/client";
-import { getOptimizedVideoUrl, getOptimizedAudioUrl } from "@/lib/supabase-videos";
+import { getOptimizedVideoUrl, getOptimizedAudioUrl, detectConnectionSpeed } from "@/lib/supabase-videos";
+import { useVideoPreload } from "@/hooks/useVideoPreload";
+import { extractPosterFrame, PosterCache } from "@/utils/video-poster";
 
 interface OptimizedGenerationPreviewProps {
   storagePath: string;
@@ -32,6 +34,8 @@ export const OptimizedGenerationPreview = ({
   const isMobile = useIsMobile();
   const [videoError, setVideoError] = useState(false);
   const [audioError, setAudioError] = useState(false);
+  const [posterUrl, setPosterUrl] = useState<string | null>(null);
+  const [connectionSpeed, setConnectionSpeed] = useState<'slow' | 'medium' | 'fast'>('medium');
 
   // Use direct public URLs for videos/audio (CDN-optimized, no signed URL delay)
   // Fallback to signed URL only if public URL fails
@@ -43,11 +47,49 @@ export const OptimizedGenerationPreview = ({
     ? getOptimizedAudioUrl(storagePath, 'generated-content')
     : null;
 
+  // Smart video preloading based on connection speed
+  const { ref: preloadRef, isPreloaded } = useVideoPreload({
+    src: videoUrl || '',
+    enabled: contentType === "video" && !!videoUrl,
+  });
+
   // Keep signed URL hook for fallback only (not used in primary render)
   const { signedUrl: fallbackSignedUrl } = useSignedUrl(
     (contentType === "video" || contentType === "audio") && videoError || audioError ? storagePath : null,
     'generated-content'
   );
+
+  // Detect connection speed on mount
+  useEffect(() => {
+    const speed = detectConnectionSpeed();
+    setConnectionSpeed(speed);
+  }, []);
+
+  // Extract poster frame for videos (with caching)
+  useEffect(() => {
+    if (contentType !== "video" || !videoUrl) {
+      return;
+    }
+
+    // Check cache first
+    const cachedPoster = PosterCache.get(videoUrl);
+    if (cachedPoster) {
+      setPosterUrl(cachedPoster);
+      return;
+    }
+
+    // Extract poster frame (only for fast connections to save bandwidth)
+    if (connectionSpeed === 'fast') {
+      extractPosterFrame(videoUrl, 0.5).then(posterDataUrl => {
+        if (posterDataUrl) {
+          setPosterUrl(posterDataUrl);
+          PosterCache.set(videoUrl, posterDataUrl);
+        }
+      }).catch(error => {
+        console.warn('Failed to extract poster frame:', error);
+      });
+    }
+  }, [videoUrl, contentType, connectionSpeed]);
 
   const handleShare = async () => {
     try {
@@ -228,12 +270,13 @@ export const OptimizedGenerationPreview = ({
     }
     
     return (
-      <div className="relative group">
+      <div ref={preloadRef} className="relative group">
         <video
           src={videoError && fallbackSignedUrl ? fallbackSignedUrl : videoUrl}
+          poster={posterUrl || undefined}
           className={cn(className, "animate-fade-in")}
           controls
-          preload="metadata"
+          preload={connectionSpeed === 'slow' ? 'none' : 'metadata'}
           playsInline
           muted
           onError={(e) => {
@@ -245,6 +288,12 @@ export const OptimizedGenerationPreview = ({
             }
           }}
         />
+        {/* Show preload indicator for fast connections */}
+        {isPreloaded && connectionSpeed === 'fast' && (
+          <div className="absolute top-2 left-2 text-xs bg-green-500/80 text-white px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+            ⚡ Preloaded
+          </div>
+        )}
         {/* Action buttons overlay */}
         <div className={cn(
           "absolute top-2 right-2 flex gap-2 transition-opacity",

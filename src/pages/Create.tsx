@@ -12,7 +12,7 @@ import { useGeneration } from "@/hooks/useGeneration";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { formatEstimatedTime } from "@/lib/time-utils";
-import { GenerationPreview } from "@/components/generation/GenerationPreview";
+import { OptimizedGenerationPreview } from "@/components/generation/OptimizedGenerationPreview";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
 
 import { SessionWarning } from "@/components/SessionWarning";
@@ -537,7 +537,7 @@ const Create = () => {
                     {generatedOutput && (
                       <div className="space-y-3 pt-2">
                         <div className="aspect-video relative overflow-hidden bg-background rounded-lg border">
-                          <GenerationPreview
+                          <OptimizedGenerationPreview
                             storagePath={generatedOutput}
                             contentType={selectedTemplate?.ai_models?.content_type || "image"}
                             className="w-full h-full object-contain"

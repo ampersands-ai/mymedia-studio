@@ -12,6 +12,33 @@ export interface ImageTransformOptions {
 }
 
 /**
+ * Clean storage path from full URLs
+ */
+function cleanImagePath(bucketPath: string, bucket: string = 'generated-content'): string {
+  let cleanPath = bucketPath;
+  
+  // Extract path if it's already a full URL
+  if (bucketPath.includes('/storage/v1/object/public/')) {
+    const pathMatch = bucketPath.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)/);
+    if (pathMatch) {
+      cleanPath = pathMatch[1];
+    }
+  } else if (bucketPath.includes(`/${bucket}/`)) {
+    const pathMatch = bucketPath.split(`/${bucket}/`)[1];
+    if (pathMatch) {
+      cleanPath = pathMatch;
+    }
+  } else if (bucketPath.includes('/storage/v1/render/image/')) {
+    const pathMatch = bucketPath.match(/\/storage\/v1\/render\/image\/[^/]+\/(.+?)(?:\?|$)/);
+    if (pathMatch) {
+      cleanPath = pathMatch[1];
+    }
+  }
+  
+  return cleanPath;
+}
+
+/**
  * Generate optimized image URL using Supabase Storage transformations
  */
 export function getOptimizedImageUrl(
@@ -26,6 +53,9 @@ export function getOptimizedImageUrl(
     resize = 'cover',
   } = options;
 
+  // Clean the path first
+  const cleanPath = cleanImagePath(bucketPath, 'generated-content');
+
   // Build transformation URL
   const params = new URLSearchParams();
 
@@ -39,7 +69,7 @@ export function getOptimizedImageUrl(
   const baseUrl = import.meta.env.VITE_SUPABASE_URL;
   const bucket = 'generated-content'; // Using generated-content bucket for user creations
 
-  return `${baseUrl}/storage/v1/render/image/${bucket}/${bucketPath}?${params.toString()}`;
+  return `${baseUrl}/storage/v1/render/image/${bucket}/${cleanPath}?${params.toString()}`;
 }
 
 /**

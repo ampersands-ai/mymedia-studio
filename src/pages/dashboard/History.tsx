@@ -387,14 +387,20 @@ const History = () => {
 
       const uniqueMap = new Map<string, Generation>();
       for (const item of all) {
-        // Create compound key from both output_url and storage_path for better deduplication
-        const keyParts = [
-          item.output_url ? `url:${item.output_url}` : '',
-          item.storage_path ? `path:${item.storage_path}` : '',
-          !item.output_url && !item.storage_path ? `id:${item.id}` : ''
-        ].filter(Boolean);
+        // For video jobs without storage_path, use output_url as the unique key
+        // For other items, create compound key from both output_url and storage_path
+        let key: string;
+        if (item.is_video_job && item.output_url) {
+          key = `video:${item.output_url}`;
+        } else {
+          const keyParts = [
+            item.output_url ? `url:${item.output_url}` : '',
+            item.storage_path ? `path:${item.storage_path}` : '',
+            !item.output_url && !item.storage_path ? `id:${item.id}` : ''
+          ].filter(Boolean);
+          key = keyParts.join('|');
+        }
         
-        const key = keyParts.join('|');
         const existing = uniqueMap.get(key);
         
         if (!existing) {

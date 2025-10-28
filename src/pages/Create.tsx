@@ -538,6 +538,7 @@ const Create = () => {
                       <div className="space-y-3 pt-2">
                         <div className="aspect-video relative overflow-hidden bg-background rounded-lg border">
                           <OptimizedGenerationPreview
+                            key={`generation-${generatedOutput}`}
                             storagePath={generatedOutput}
                             contentType={selectedTemplate?.ai_models?.content_type || "image"}
                             className="w-full h-full object-contain"

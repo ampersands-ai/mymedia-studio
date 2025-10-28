@@ -78,6 +78,7 @@ export function VideoJobsList() {
             <div className="mb-4">
               <h3 className="text-lg font-semibold mb-3">Your Completed Video</h3>
               <OptimizedGenerationPreview
+                key={`video-${currentJob.id}-${currentJob.updated_at}`}
                 storagePath={currentJob.final_video_url}
                 contentType="video"
                 className="rounded-lg overflow-hidden"

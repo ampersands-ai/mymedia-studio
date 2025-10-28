@@ -25,6 +25,8 @@ export const OptimizedGenerationImage = ({
 }: OptimizedGenerationImageProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 2;
   
   // Lazy load images unless priority
   const { ref, inView } = useInView({
@@ -92,14 +94,29 @@ export const OptimizedGenerationImage = ({
         <source srcSet={webpUrl} type="image/webp" />
         <source srcSet={jpegUrl} type="image/jpeg" />
         <img
+          key={retryCount}
           src={jpegUrl}
           alt={alt}
           className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
           loading={priority ? "eager" : "lazy"}
           onLoad={() => setIsLoading(false)}
           onError={() => {
-            console.error('Image load error:', storagePath);
-            setHasError(true);
+            console.error('Image load failed:', {
+              storagePath,
+              webpUrl,
+              jpegUrl,
+              retryCount
+            });
+            
+            if (retryCount < MAX_RETRIES) {
+              // Retry with a slight delay
+              setTimeout(() => {
+                setRetryCount(prev => prev + 1);
+                setIsLoading(true);
+              }, 1000 * (retryCount + 1));
+            } else {
+              setHasError(true);
+            }
           }}
         />
       </picture>

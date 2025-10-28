@@ -71,14 +71,10 @@ export const OptimizedGenerationPreview = ({
       return;
     }
 
-    // Check cache first
-    const cachedPoster = PosterCache.get(videoUrl);
-    if (cachedPoster) {
-      setPosterUrl(cachedPoster);
-      return;
-    }
+    // Clear old cache entry first to prevent showing stale poster
+    PosterCache.remove(videoUrl);
 
-    // Extract poster frame (only for fast connections to save bandwidth)
+    // Extract fresh poster frame (only for fast connections to save bandwidth)
     if (connectionSpeed === 'fast') {
       extractPosterFrame(videoUrl, 0.5).then(posterDataUrl => {
         if (posterDataUrl) {
@@ -272,6 +268,7 @@ export const OptimizedGenerationPreview = ({
     return (
       <div ref={preloadRef} className="relative group">
         <video
+          key={videoUrl}
           src={videoError && fallbackSignedUrl ? fallbackSignedUrl : videoUrl}
           poster={posterUrl || undefined}
           className={cn(className, "animate-fade-in")}

@@ -382,8 +382,12 @@ const History = () => {
         };
       });
 
-      // Combine, deduplicate (prefer video jobs), and sort by created_at
-      const all: Generation[] = ([...enrichedGenerations, ...videoGenerations] as unknown) as Generation[];
+      // Filter out generation entries that correspond to video jobs (to prevent duplicates)
+      const videoJobIds = new Set((videoData || []).map(vj => vj.id));
+      const regularGenerations = enrichedGenerations.filter(gen => !videoJobIds.has(gen.id));
+
+      // Combine only regular generations with video generations (no duplicates)
+      const all: Generation[] = ([...regularGenerations, ...videoGenerations] as unknown) as Generation[];
 
       const uniqueMap = new Map<string, Generation>();
       for (const item of all) {

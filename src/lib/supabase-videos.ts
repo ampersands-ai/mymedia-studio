@@ -8,18 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
  */
 
 /**
- * Get optimized public video URL with CDN caching
- * @param storagePath - Path to video file in storage bucket
- * @param bucket - Storage bucket name (default: 'generated-content')
- * @returns Direct public URL for video
+ * Clean storage path helper (shared logic)
  */
-export function getOptimizedVideoUrl(
-  storagePath: string,
-  bucket: string = 'generated-content'
-): string {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  
-  // Clean the storage path
+function cleanStoragePath(storagePath: string, bucket: string = 'generated-content'): string {
   let cleanPath = storagePath;
   
   // Extract path if it's already a full URL
@@ -34,6 +25,22 @@ export function getOptimizedVideoUrl(
       cleanPath = pathMatch;
     }
   }
+  
+  return cleanPath;
+}
+
+/**
+ * Get optimized public video URL with CDN caching
+ * @param storagePath - Path to video file in storage bucket
+ * @param bucket - Storage bucket name (default: 'generated-content')
+ * @returns Direct public URL for video
+ */
+export function getOptimizedVideoUrl(
+  storagePath: string,
+  bucket: string = 'generated-content'
+): string {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const cleanPath = cleanStoragePath(storagePath, bucket);
   
   // Return direct public URL - Supabase Storage CDN handles caching
   return `${supabaseUrl}/storage/v1/object/public/${bucket}/${cleanPath}`;
@@ -51,6 +58,25 @@ export function getOptimizedAudioUrl(
 ): string {
   // Reuse video URL logic since both are media files
   return getOptimizedVideoUrl(storagePath, bucket);
+}
+
+/**
+ * Get proxied video URL through stream-content edge function (fallback option)
+ * Use this for private buckets or when you need guaranteed CDN caching
+ * Primary method should still be direct public URLs (faster)
+ * @param storagePath - Path to video file in storage bucket
+ * @param bucket - Storage bucket name (default: 'generated-content')
+ * @returns Proxied URL through edge function with aggressive caching
+ */
+export function getProxiedVideoUrl(
+  storagePath: string,
+  bucket: string = 'generated-content'
+): string {
+  const cleanPath = cleanStoragePath(storagePath, bucket);
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  
+  // Use stream-content edge function for proxied access with aggressive caching
+  return `${supabaseUrl}/functions/v1/stream-content?bucket=${encodeURIComponent(bucket)}&path=${encodeURIComponent(cleanPath)}`;
 }
 
 /**

@@ -1,9 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 
 const corsHeaders: HeadersInit = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, range",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, range, if-none-match, if-modified-since",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
 
@@ -41,11 +42,28 @@ serve(async (req) => {
       });
     }
 
+    // Check for conditional requests
+    const ifNoneMatch = req.headers.get("if-none-match");
+    const ifModifiedSince = req.headers.get("if-modified-since");
+
     // Forward Range header for proper streaming support
     const range = req.headers.get("range");
+    const upstreamHeaders: HeadersInit = {};
+    if (range) upstreamHeaders["Range"] = range;
+    if (ifNoneMatch) upstreamHeaders["If-None-Match"] = ifNoneMatch;
+    if (ifModifiedSince) upstreamHeaders["If-Modified-Since"] = ifModifiedSince;
+
     const upstreamRes = await fetch(data.signedUrl, {
-      headers: range ? { Range: range } : undefined,
+      headers: Object.keys(upstreamHeaders).length > 0 ? upstreamHeaders : undefined,
     });
+
+    // If not modified, return 304
+    if (upstreamRes.status === 304) {
+      return new Response(null, {
+        status: 304,
+        headers: new Headers(corsHeaders),
+      });
+    }
 
     // Copy essential headers for media streaming
     const headers = new Headers(corsHeaders);
@@ -54,7 +72,6 @@ serve(async (req) => {
       "content-length",
       "content-range",
       "accept-ranges",
-      "cache-control",
       "etag",
       "last-modified",
     ];
@@ -64,19 +81,48 @@ serve(async (req) => {
       if (v) headers.set(h, v);
     });
 
+    // Generate ETag if not present
+    if (!headers.has("etag")) {
+      const etag = `"${path.replace(/\//g, '-')}-${Date.now()}"`;
+      headers.set("etag", etag);
+    }
+
+    // Add Last-Modified if not present
+    if (!headers.has("last-modified")) {
+      headers.set("last-modified", new Date().toUTCString());
+    }
+
     // Ensure Accept-Ranges is present for seeking
     if (!headers.has("accept-ranges")) headers.set("accept-ranges", "bytes");
-    headers.set("Cross-Origin-Resource-Policy", "cross-origin");
+
+    // Aggressive CDN caching for immutable video content (1 year)
+    const isVideo = headers.get("content-type")?.startsWith("video/");
+    const isAudio = headers.get("content-type")?.startsWith("audio/");
+    
+    if (isVideo || isAudio) {
+      // Immutable content - cache for 1 year
+      headers.set("cache-control", "public, max-age=31536000, immutable");
+      headers.set("cdn-cache-control", "public, max-age=31536000");
+      headers.set("surrogate-control", "public, max-age=31536000");
+    } else {
+      // Other content - cache for 24 hours
+      headers.set("cache-control", "public, max-age=86400");
+      headers.set("cdn-cache-control", "public, max-age=86400");
+    }
+
+    // Performance optimization headers
+    headers.set("connection", "keep-alive");
+    headers.set("cross-origin-resource-policy", "cross-origin");
+    
+    // Log cache status for monitoring
+    const cacheStatus = upstreamRes.headers.get("cf-cache-status") || "UNKNOWN";
+    console.log(`[Stream] ${path} - Cache: ${cacheStatus}, Range: ${range ? "Yes" : "No"}`);
 
     return new Response(upstreamRes.body, {
       status: upstreamRes.status,
       headers,
     });
   } catch (err) {
-    console.error("Streaming proxy error:", err);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return createSafeErrorResponse(err, "stream-content", corsHeaders);
   }
 });

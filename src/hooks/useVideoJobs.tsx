@@ -24,49 +24,50 @@ export function useVideoJobs() {
     queryKey: ['video-jobs', pinnedJobId],
     queryFn: async () => {
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
-      const activeStatuses = [
-        'pending',
-        'generating_script',
-        'awaiting_script_approval',
-        'generating_voice',
-        'awaiting_voice_approval',
-        'fetching_video',
-        'assembling'
-      ];
       
-      // First try to fetch active jobs
-      const { data, error } = await supabase
-        .from('video_jobs')
-        .select('*')
-        .in('status', activeStatuses)
-        .gte('updated_at', twoHoursAgo)
-        .order('updated_at', { ascending: false })
-        .limit(1);
-      
-      if (error) throw error;
-      
-      // If no active jobs and we have a pinned job, fetch it
-      if ((!data || data.length === 0) && pinnedJobId) {
+      // If we have a pinned job, fetch it first (regardless of status)
+      if (pinnedJobId) {
         const { data: pinnedData, error: pinnedError } = await supabase
           .from('video_jobs')
           .select('*')
           .eq('id', pinnedJobId)
           .single();
         
-        if (pinnedError) {
-          console.error('Error fetching pinned job:', pinnedError);
-          return [];
+        if (!pinnedError && pinnedData) {
+          return [pinnedData];
         }
         
-        return pinnedData ? [pinnedData] : [];
+        // If pinned job doesn't exist, clear the pin and fall through
+        console.warn('Pinned job not found, clearing pin');
+        clearPinnedJob();
       }
       
+      // Otherwise fetch the most recent job (within last 2 hours, any status)
+      const { data, error } = await supabase
+        .from('video_jobs')
+        .select('*')
+        .gte('updated_at', twoHoursAgo)
+        .order('updated_at', { ascending: false })
+        .limit(1);
+      
+      if (error) throw error;
       return (data || []) as VideoJob[];
     },
     refetchInterval: (query) => {
-      // Poll every 10s if there are any active jobs
-      const hasActive = query.state.data && query.state.data.length > 0;
-      return hasActive ? 10000 : false;
+      const jobs = query.state.data || [];
+      if (jobs.length === 0) return false;
+      
+      const firstJob = jobs[0];
+      const activeStatuses = [
+        'pending', 'generating_script', 'awaiting_script_approval',
+        'generating_voice', 'awaiting_voice_approval', 'fetching_video', 'assembling'
+      ];
+      
+      // Continue polling if job is active OR if it's completed/failed but pinned
+      const isActive = activeStatuses.includes(firstJob.status);
+      const isPinnedAndRecent = pinnedJobId === firstJob.id;
+      
+      return (isActive || isPinnedAndRecent) ? 10000 : false;
     },
   });
 
@@ -104,6 +105,11 @@ export function useVideoJobs() {
   // Create video job mutation
   const createJob = useMutation({
     mutationFn: async (input: VideoJobInput) => {
+      // Clear any old pinned job before creating a new one
+      if (pinnedJobId) {
+        clearPinnedJob();
+      }
+      
       const { data, error } = await supabase.functions.invoke('create-video-job', {
         body: input,
       });

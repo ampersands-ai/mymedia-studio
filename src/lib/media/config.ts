@@ -14,7 +14,7 @@ export const MEDIA_CONFIG = {
   defaults: {
     image: 'public-cdn' as const,
     video: 'public-direct' as const,
-    audio: 'public-direct' as const,
+    audio: 'signed-short' as const,  // Voice previews require signed URLs
   },
   
   // Cache settings

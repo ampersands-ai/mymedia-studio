@@ -102,13 +102,23 @@ const Templates = () => {
       const getSignedUrl = async (url: string | null): Promise<string | null> => {
         if (!url) return null;
         
-        if (url.startsWith('http')) {
-          const match = url.match(/generated-content\/(.+)$/);
-          if (match) {
-            return createSignedUrl('generated-content', match[1]);
+        try {
+          if (url.startsWith('http')) {
+            // Parse URL to extract path after bucket name
+            const urlObj = new URL(url);
+            const pathMatch = urlObj.pathname.match(/\/generated-content\/(.+)$/);
+            if (pathMatch) {
+              // Extract clean path without query strings
+              const cleanPath = pathMatch[1].split('?')[0];
+              return createSignedUrl('generated-content', cleanPath);
+            }
+          } else {
+            // Remove any query strings and leading slashes
+            const cleanPath = url.split('?')[0].replace(/^\/+/, '');
+            return createSignedUrl('generated-content', cleanPath);
           }
-        } else {
-          return createSignedUrl('generated-content', url);
+        } catch (error) {
+          console.warn('Failed to generate signed URL for:', url, error);
         }
         return null;
       };
@@ -278,13 +288,20 @@ const Templates = () => {
                             className="w-full h-full"
                           />
                         ) : signedUrls[template.id]?.before || signedUrls[template.id]?.after ? (
-                          <OptimizedImage 
+                          <img 
                             src={(signedUrls[template.id]?.after || signedUrls[template.id]?.before)!}
                             alt={template.name || ''}
                             className="w-full h-full object-cover"
-                            width={400}
-                            height={400}
-                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => {
+                              // Fallback to thumbnail if signed URL fails
+                              if (template.thumbnail_url) {
+                                e.currentTarget.src = template.thumbnail_url;
+                              } else {
+                                e.currentTarget.style.display = 'none';
+                              }
+                            }}
                           />
                         ) : template.thumbnail_url ? (
                           <OptimizedImage 

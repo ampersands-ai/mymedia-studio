@@ -8,7 +8,7 @@ import { useNativeShare } from "@/hooks/useNativeShare";
 import { useNativeDownload } from "@/hooks/useNativeDownload";
 import { triggerHaptic } from "@/utils/capacitor-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useSignedUrl } from "@/hooks/useSignedUrl";
+import { useVideoUrl } from "@/hooks/media";
 import { supabase } from "@/integrations/supabase/client";
 import { getOptimizedVideoUrl, getOptimizedAudioUrl, detectConnectionSpeed } from "@/lib/supabase-videos";
 import { useVideoPreload } from "@/hooks/useVideoPreload";
@@ -53,10 +53,10 @@ export const OptimizedGenerationPreview = ({
     enabled: contentType === "video" && !!videoUrl,
   });
 
-  // Keep signed URL hook for fallback only (not used in primary render)
-  const { signedUrl: fallbackSignedUrl } = useSignedUrl(
-    (contentType === "video" || contentType === "audio") && videoError || audioError ? storagePath : null,
-    'generated-content'
+  // Use video URL hook for fallback with signed strategy
+  const { url: fallbackSignedUrl } = useVideoUrl(
+    (contentType === "video" || contentType === "audio") && (videoError || audioError) ? storagePath : null,
+    { strategy: 'signed-short', bucket: 'generated-content' }
   );
 
   // Detect connection speed on mount

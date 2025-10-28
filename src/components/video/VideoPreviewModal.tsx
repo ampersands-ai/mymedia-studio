@@ -14,7 +14,7 @@ import { Download, Share2, Sparkles, Copy, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useSignedUrl } from '@/hooks/useSignedUrl';
+import { useVideoUrl } from '@/hooks/media';
 
 interface VideoPreviewModalProps {
   job: VideoJob;
@@ -40,11 +40,11 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
   const [copiedCaption, setCopiedCaption] = useState(false);
   const [copiedHashtags, setCopiedHashtags] = useState(false);
 
-  // Extract storage path and fetch signed URL for the video
+  // Extract storage path and fetch video URL using new architecture
   const videoStoragePath = getStoragePathFromUrl(job.final_video_url);
-  const { signedUrl: videoSignedUrl, isLoading: isLoadingVideoUrl } = useSignedUrl(
+  const { url: videoSignedUrl, isLoading: isLoadingVideoUrl } = useVideoUrl(
     videoStoragePath,
-    'generated-content'
+    { strategy: 'public-direct', bucket: 'generated-content' }
   );
 
   const handleGenerateCaption = async () => {

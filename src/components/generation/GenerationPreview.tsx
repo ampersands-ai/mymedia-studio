@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useSignedUrl } from "@/hooks/useSignedUrl";
+import { useVideoUrl, useImageUrl, useAudioUrl } from "@/hooks/media";
 import { ImageIcon, Video, Download, Share2, Music, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -18,17 +18,37 @@ interface GenerationPreviewProps {
 }
 
 export const GenerationPreview = ({ storagePath, contentType, className }: GenerationPreviewProps) => {
-  const { signedUrl, isLoading, error } = useSignedUrl(storagePath);
+  // Use content-type-specific hooks from new architecture
+  const { url: imageUrl, isLoading: imageLoading, error: imageError } = useImageUrl(
+    contentType === 'image' ? storagePath : null,
+    { strategy: 'public-cdn', bucket: 'generated-content' }
+  );
+  
+  const { url: videoUrl, isLoading: videoLoading, error: videoError } = useVideoUrl(
+    contentType === 'video' ? storagePath : null,
+    { strategy: 'public-direct', bucket: 'generated-content' }
+  );
+  
+  const { url: audioUrl, isLoading: audioLoading, error: audioError } = useAudioUrl(
+    contentType === 'audio' ? storagePath : null,
+    { strategy: 'public-direct', bucket: 'generated-content' }
+  );
+  
+  // Combine states for backward compatibility
+  const signedUrl = contentType === 'image' ? imageUrl : contentType === 'video' ? videoUrl : audioUrl;
+  const isLoading = imageLoading || videoLoading || audioLoading;
+  const error = imageError || videoError || audioError;
+  
   const { shareFile, canShare } = useNativeShare();
   const { downloadFile, isNative } = useNativeDownload();
   const isMobile = useIsMobile();
-  const [videoError, setVideoError] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const [audioError, setAudioError] = useState(false);
+  const [videoPlaybackError, setVideoPlaybackError] = useState(false);
+  const [imageDisplayError, setImageDisplayError] = useState(false);
+  const [audioPlaybackError, setAudioPlaybackError] = useState(false);
   
-  // For video thumbnails
+  // For video thumbnails using new architecture
   const thumbPath = contentType === 'video' && storagePath ? storagePath.replace(/\.[^/.]+$/, '.jpg') : null;
-  const { signedUrl: thumbUrl } = useSignedUrl(thumbPath);
+  const { url: thumbUrl } = useImageUrl(thumbPath, { strategy: 'public-direct' });
   const videoRef = useRef<HTMLVideoElement>(null);
   const [thumbnailGenerated, setThumbnailGenerated] = useState(false);
   
@@ -124,7 +144,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
   }
 
   // Show download fallback for videos only when playback fails
-  if (contentType === "video" && (videoError || !signedUrl)) {
+  if (contentType === "video" && (videoPlaybackError || !signedUrl)) {
     return (
       <div className={`${className} flex flex-col items-center justify-center bg-muted gap-3`}>
         <Video className="h-12 w-12 text-muted-foreground" />
@@ -162,7 +182,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
   }
 
   // Show error fallback for images
-  if (contentType === "image" && (error || !signedUrl || imageError)) {
+  if (contentType === "image" && (error || !signedUrl || imageDisplayError)) {
     return (
       <div className={`${className} flex items-center justify-center bg-muted`}>
         <ImageIcon className="h-8 w-8 text-muted-foreground" />
@@ -172,7 +192,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
 
   if (contentType === "audio") {
     // Show error fallback for audio
-    if (audioError || !signedUrl) {
+    if (audioPlaybackError || !signedUrl) {
       return (
         <div className={`${className} flex flex-col items-center justify-center bg-muted gap-3`}>
           <Music className="h-12 w-12 text-gray-600 dark:text-gray-400" />
@@ -229,7 +249,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
             preload="metadata"
             onError={() => {
               console.error('Audio playback error for:', storagePath);
-              setAudioError(true);
+              setAudioPlaybackError(true);
             }}
             onLoadedMetadata={() => console.log('Audio loaded successfully:', storagePath)}
           />
@@ -321,7 +341,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
           onLoadedData={generateThumbnail}
           onError={() => {
             console.error('Video playback error for:', storagePath);
-            setVideoError(true);
+            setVideoPlaybackError(true);
           }}
           onLoadedMetadata={() => console.log('Video loaded successfully:', storagePath)}
         >
@@ -361,7 +381,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
         src={signedUrl} 
         alt="Generated content" 
         className={cn(className, "animate-fade-in")}
-        onError={() => setImageError(true)}
+        onError={() => setImageDisplayError(true)}
       />
       {/* Action buttons overlay */}
       <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

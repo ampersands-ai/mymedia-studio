@@ -11,8 +11,7 @@ import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { useSignedUrlLazy } from '@/hooks/useSignedUrlLazy';
-import { useSignedUrl } from '@/hooks/useSignedUrl';
+import { useVideoUrl, useAudioUrl } from '@/hooks/media';
 import { Slider } from '@/components/ui/slider';
 import { GenerationProgress } from '@/components/generation/GenerationProgress';
 import { cn } from '@/lib/utils';
@@ -151,17 +150,16 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const isStuckAssembling = job.status === 'assembling' && 
     (Date.now() - new Date(job.updated_at).getTime()) > 5 * 60 * 1000;
 
-  // Fetch signed URL for voiceover (only when needed)
-  const { signedUrl: voiceoverSignedUrl, isLoading: isLoadingVoiceUrl, error: voiceUrlError } = useSignedUrlLazy(
+  // Fetch audio URL for voiceover using new architecture
+  const { url: voiceoverSignedUrl, isLoading: isLoadingVoiceUrl, error: voiceUrlError } = useAudioUrl(
     job.status === 'awaiting_voice_approval' ? job.voiceover_url : null,
-    'generated-content',
-    { immediate: true }
+    { strategy: 'public-direct', bucket: 'generated-content' }
   );
 
-  // Fetch signed URL for completed video (pass raw URL directly, let hook handle extraction)
-  const { signedUrl: videoSignedUrl, isLoading: isLoadingVideoUrl, error: videoUrlError } = useSignedUrl(
+  // Fetch video URL for completed video using new architecture
+  const { url: videoSignedUrl, isLoading: isLoadingVideoUrl, error: videoUrlError } = useVideoUrl(
     job.status === 'completed' ? job.final_video_url : null,
-    'generated-content'
+    { strategy: 'public-direct', bucket: 'generated-content' }
   );
 
   // Diagnostic logging for voiceover review

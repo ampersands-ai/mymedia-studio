@@ -14,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { AlertCircle, CheckCircle, Clock, XCircle, Image as ImageIcon, Video, Music, FileText, Bot, User } from "lucide-react";
-import { useSignedUrl } from "@/hooks/useSignedUrl";
+import { useImageUrl, useVideoUrl } from "@/hooks/media";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface TokenDispute {
@@ -72,7 +72,18 @@ const getStatusBadge = (status: string) => {
 };
 
 const GenerationPreview = ({ generation }: { generation: TokenDispute['generation'] }) => {
-  const { signedUrl, isLoading } = useSignedUrl(generation.storage_path);
+  // Use content-type-specific hooks
+  const { url: imageUrl, isLoading: imageLoading } = useImageUrl(
+    generation.type === 'image' ? generation.storage_path : null,
+    { strategy: 'public-cdn', bucket: 'generated-content' }
+  );
+  const { url: videoUrl, isLoading: videoLoading } = useVideoUrl(
+    generation.type === 'video' ? generation.storage_path : null,
+    { strategy: 'public-direct', bucket: 'generated-content' }
+  );
+  
+  const signedUrl = generation.type === 'image' ? imageUrl : videoUrl;
+  const isLoading = imageLoading || videoLoading;
 
   if (generation.status === 'failed') {
     return (

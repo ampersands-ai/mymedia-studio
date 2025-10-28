@@ -21,7 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { useSignedUrl } from "@/hooks/useSignedUrl";
+import { useImageUrl, useVideoUrl } from "@/hooks/media";
 
 interface Generation {
   id: string;
@@ -63,7 +63,18 @@ const getContentIcon = (type: string) => {
 };
 
 const PreviewCell = ({ gen, onClick }: { gen: Generation; onClick: () => void }) => {
-  const { signedUrl, isLoading } = useSignedUrl(gen.storage_path);
+  // Use content-type-specific hooks
+  const { url: imageUrl, isLoading: imageLoading } = useImageUrl(
+    gen.type === 'image' ? gen.storage_path : null,
+    { strategy: 'public-cdn', bucket: 'generated-content' }
+  );
+  const { url: videoUrl, isLoading: videoLoading } = useVideoUrl(
+    gen.type === 'video' ? gen.storage_path : null,
+    { strategy: 'public-direct', bucket: 'generated-content' }
+  );
+  
+  const signedUrl = gen.type === 'image' ? imageUrl : videoUrl;
+  const isLoading = imageLoading || videoLoading;
 
   if (!gen.output_url && !gen.storage_path) {
     return <div className="w-16 h-16 bg-muted rounded flex items-center justify-center text-xs">No preview</div>;
@@ -98,7 +109,18 @@ const PreviewCell = ({ gen, onClick }: { gen: Generation; onClick: () => void })
 };
 
 const PreviewContent = ({ gen }: { gen: Generation }) => {
-  const { signedUrl, isLoading } = useSignedUrl(gen.storage_path);
+  // Use content-type-specific hooks
+  const { url: imageUrl, isLoading: imageLoading } = useImageUrl(
+    gen.type === 'image' ? gen.storage_path : null,
+    { strategy: 'public-cdn', bucket: 'generated-content' }
+  );
+  const { url: videoUrl, isLoading: videoLoading } = useVideoUrl(
+    gen.type === 'video' ? gen.storage_path : null,
+    { strategy: 'public-direct', bucket: 'generated-content' }
+  );
+  
+  const signedUrl = gen.type === 'image' ? imageUrl : videoUrl;
+  const isLoading = imageLoading || videoLoading;
   
   if (isLoading) {
     return <Loader2 className="h-8 w-8 animate-spin" />;

@@ -48,7 +48,7 @@ import { SchemaInput } from "@/components/generation/SchemaInput";
 import { formatEstimatedTime } from "@/lib/time-utils";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
-import { useSignedUrl } from "@/hooks/useSignedUrl";
+import { useImageUrl, useVideoUrl, useAudioUrl } from "@/hooks/media";
 import { createSignedUrl } from "@/lib/storage-utils";
 import { OutputGrid } from "@/components/generation/OutputGrid";
 import { OutputLightbox } from "@/components/generation/OutputLightbox";

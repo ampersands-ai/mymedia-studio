@@ -6,6 +6,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense, useEffect } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
+import { MediaProvider } from "./contexts/MediaContext";
 import { Analytics } from "./components/Analytics";
 import { App as CapacitorApp } from '@capacitor/app';
 import { setStatusBarStyle, isNativePlatform } from "@/utils/capacitor-utils";
@@ -156,13 +157,15 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     {import.meta.env.DEV && <ReactQueryDevtools />}
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
-      </TooltipProvider>
+      <MediaProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </TooltipProvider>
+      </MediaProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

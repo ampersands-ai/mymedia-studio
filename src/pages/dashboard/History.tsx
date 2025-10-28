@@ -9,7 +9,7 @@ import { Download, Trash2, Clock, Sparkles, Image as ImageIcon, Video, Music, Fi
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useSignedUrl } from "@/hooks/useSignedUrl";
+import { useImageUrl, useVideoUrl, useAudioUrl } from "@/hooks/media";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -35,13 +35,16 @@ const ImageWithOptimizedLoading = ({ generation, className }: { generation: Gene
   );
 };
 
-// Component to render audio with signed URL
+// Component to render audio with audio URL from new architecture
 const AudioWithSignedUrl = ({ generation, className, showControls = false }: { 
   generation: Generation; 
   className?: string;
   showControls?: boolean;
 }) => {
-  const { signedUrl, isLoading, error } = useSignedUrl(generation.storage_path);
+  const { url: signedUrl, isLoading, error } = useAudioUrl(
+    generation.storage_path,
+    { strategy: 'public-direct', bucket: 'generated-content' }
+  );
   const [audioError, setAudioError] = useState(false);
 
   // Show download fallback if we encounter error or no path
@@ -164,11 +167,14 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoError, setVideoError] = useState(false);
   
-  // Build a source and sign it for browser-friendly playback
+  // Build a source and get video URL using new architecture
   const sourceForSigning = generation.storage_path
     ? generation.storage_path
     : (generation.is_video_job ? generation.output_url : null);
-  const { signedUrl: videoSignedUrl, isLoading: isLoadingVideoUrl } = useSignedUrl(sourceForSigning);
+  const { url: videoSignedUrl, isLoading: isLoadingVideoUrl } = useVideoUrl(
+    sourceForSigning,
+    { strategy: 'public-direct', bucket: 'generated-content' }
+  );
 
   // Show download fallback if we encounter playback error or no signed URL
   if (!videoSignedUrl || videoError) {

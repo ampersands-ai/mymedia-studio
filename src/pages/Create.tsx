@@ -538,8 +538,8 @@ const Create = () => {
                       <div className="space-y-3 pt-2">
                         <div className="aspect-video relative overflow-hidden bg-background rounded-lg border">
                           <OptimizedGenerationPreview
-                            key={`generation-${generatedOutput}-${Date.now()}`}
-                            storagePath={`${generatedOutput}${generatedOutput.includes('?') ? '&' : '?'}v=${Date.now()}`}
+                            key={`generation-${generatedOutput}-${generationCompleteTime}`}
+                            storagePath={`${generatedOutput}${generatedOutput.includes('?') ? '&' : '?'}v=${generationCompleteTime}`}
                             contentType={selectedTemplate?.ai_models?.content_type || "image"}
                             className="w-full h-full object-contain"
                           />

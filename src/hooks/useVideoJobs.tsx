@@ -112,11 +112,6 @@ export function useVideoJobs() {
   // Create video job mutation
   const createJob = useMutation({
     mutationFn: async (input: VideoJobInput) => {
-      // Reset cleared flag and manually clear any old pin
-      setIsCleared(false);
-      localStorage.removeItem(PINNED_JOB_KEY);
-      setPinnedJobId(null);
-      
       const { data, error } = await supabase.functions.invoke('create-video-job', {
         body: input,
       });
@@ -124,6 +119,18 @@ export function useVideoJobs() {
       if (error) throw error;
       if (data.error) throw new Error(data.error);
       return data;
+    },
+    onMutate: async () => {
+      // Cancel outgoing refetches to prevent race conditions
+      await queryClient.cancelQueries({ queryKey: ['video-jobs'] });
+      
+      // Clear the old state BEFORE the mutation starts
+      setIsCleared(false);
+      localStorage.removeItem(PINNED_JOB_KEY);
+      setPinnedJobId(null);
+      
+      // Optimistically set empty jobs array to clear UI immediately
+      queryClient.setQueryData(['video-jobs', null, false], []);
     },
     onSuccess: (data) => {
       // Pin the newly created job
@@ -135,6 +142,8 @@ export function useVideoJobs() {
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to create video job');
+      // Refetch to restore accurate state after error
+      queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
     },
   });
 

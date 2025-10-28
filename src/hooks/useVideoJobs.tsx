@@ -5,8 +5,9 @@ import { toast } from 'sonner';
 import { VideoJob, VideoJobInput } from '@/types/video';
 
 const PINNED_JOB_KEY = 'pinnedVideoJobId';
+const CLEARED_FLAG_KEY = 'videoJobsCleared';
 
-// Safe localStorage read helper
+// Safe localStorage helpers
 const getPinnedJobId = (): string | null => {
   try {
     return localStorage.getItem(PINNED_JOB_KEY);
@@ -15,37 +16,57 @@ const getPinnedJobId = (): string | null => {
   }
 };
 
+const getCleared = (): boolean => {
+  try {
+    return localStorage.getItem(CLEARED_FLAG_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+
+const setCleared = (value: boolean): void => {
+  try {
+    if (value) {
+      localStorage.setItem(CLEARED_FLAG_KEY, '1');
+    } else {
+      localStorage.removeItem(CLEARED_FLAG_KEY);
+    }
+  } catch {}
+};
+
 export function useVideoJobs() {
   const queryClient = useQueryClient();
   const [pinnedJobId, setPinnedJobId] = useState<string | null>(getPinnedJobId());
-  const [isCleared, setIsCleared] = useState(false);
 
   // Fetch user's latest active job or pinned job
   const { data: jobs, isLoading } = useQuery({
-    queryKey: ['video-jobs', pinnedJobId, isCleared],
+    queryKey: ['video-jobs'],
     queryFn: async () => {
       // Return empty if user cleared the generation
-      if (isCleared) {
+      if (getCleared()) {
         return [];
       }
       
+      const pinnedId = getPinnedJobId();
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
       
       // If we have a pinned job, fetch it first (regardless of status)
-      if (pinnedJobId) {
+      if (pinnedId) {
         const { data: pinnedData, error: pinnedError } = await supabase
           .from('video_jobs')
           .select('*')
-          .eq('id', pinnedJobId)
+          .eq('id', pinnedId)
           .single();
         
         if (!pinnedError && pinnedData) {
           return [pinnedData];
         }
         
-        // If pinned job doesn't exist, clear the pin and fall through
-        console.warn('Pinned job not found, clearing pin');
-        clearPinnedJob();
+        // If pinned job doesn't exist, clear the pin silently and fall through
+        try {
+          localStorage.removeItem(PINNED_JOB_KEY);
+          setPinnedJobId(null);
+        } catch {}
       }
       
       // Otherwise fetch the most recent job (within last 2 hours, any status)
@@ -71,7 +92,8 @@ export function useVideoJobs() {
       
       // Continue polling if job is active OR if it's completed/failed but pinned
       const isActive = activeStatuses.includes(firstJob.status);
-      const isPinnedAndRecent = pinnedJobId === firstJob.id;
+      const pinnedId = getPinnedJobId();
+      const isPinnedAndRecent = pinnedId === firstJob.id;
       
       return (isActive || isPinnedAndRecent) ? 10000 : false;
     },
@@ -97,15 +119,20 @@ export function useVideoJobs() {
 
   // Pin/unpin helpers
   const pinJob = (jobId: string) => {
-    localStorage.setItem(PINNED_JOB_KEY, jobId);
-    setPinnedJobId(jobId);
+    try {
+      localStorage.setItem(PINNED_JOB_KEY, jobId);
+      setCleared(false);
+      setPinnedJobId(jobId);
+    } catch {}
     queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
   };
 
   const clearPinnedJob = () => {
-    localStorage.removeItem(PINNED_JOB_KEY);
-    setPinnedJobId(null);
-    setIsCleared(true);
+    try {
+      localStorage.removeItem(PINNED_JOB_KEY);
+      setCleared(true);
+      setPinnedJobId(null);
+    } catch {}
     queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
   };
 
@@ -125,17 +152,20 @@ export function useVideoJobs() {
       await queryClient.cancelQueries({ queryKey: ['video-jobs'] });
       
       // Clear the old state BEFORE the mutation starts
-      setIsCleared(false);
-      localStorage.removeItem(PINNED_JOB_KEY);
-      setPinnedJobId(null);
+      setCleared(false);
+      try {
+        localStorage.removeItem(PINNED_JOB_KEY);
+        setPinnedJobId(null);
+      } catch {}
       
       // Optimistically set empty jobs array to clear UI immediately
-      queryClient.setQueryData(['video-jobs', null, false], []);
+      queryClient.setQueryData(['video-jobs'], []);
     },
     onSuccess: (data) => {
-      // Pin the newly created job
+      // Pin the newly created job and show it immediately
       if (data.job?.id) {
         pinJob(data.job.id);
+        queryClient.setQueryData(['video-jobs'], [data.job]);
       }
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
       queryClient.invalidateQueries({ queryKey: ['user-tokens'] });

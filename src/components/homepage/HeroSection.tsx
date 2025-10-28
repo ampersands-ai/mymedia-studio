@@ -108,30 +108,42 @@ export const HeroSection = () => {
                   onSlideChange={(swiper) => {
                     const activeSlide = swiper.slides[swiper.activeIndex];
                     const video = activeSlide?.querySelector('video');
-                    if (video) {
-                      video.currentTime = 0;
+                    
+                    // Preload next video
+                    const nextIndex = (swiper.activeIndex + 1) % swiper.slides.length;
+                    const nextVideo = swiper.slides[nextIndex]?.querySelector('video');
+                    if (nextVideo && !nextVideo.src) {
+                      const dataSrc = nextVideo.getAttribute('data-src');
+                      if (dataSrc) {
+                        nextVideo.src = dataSrc;
+                        nextVideo.load();
+                      }
+                    }
+                    
+                    if (video?.paused) {
                       video.play().catch(err => console.warn('Video play failed:', err));
                     }
                   }}
                   autoplay={{
-                    delay: 6000,
+                    delay: 8000,
                     disableOnInteraction: false,
+                    waitForTransition: true,
                   }}
                   effect="fade"
                   fadeEffect={{
                     crossFade: true
                   }}
                   loop={true}
-                  speed={500}
+                  speed={800}
                   className="w-full h-full"
                 >
                   <SwiperSlide>
                     <div className="relative w-full h-full">
-                      <video
+                      <OptimizedVideo
                         src="/hero-demo.mp4"
-                        muted
-                        playsInline
-                        preload="auto"
+                        autoPlay={true}
+                        loop={true}
+                        muted={true}
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-lg">
@@ -142,12 +154,13 @@ export const HeroSection = () => {
                     </div>
                   </SwiperSlide>
                   <SwiperSlide>
-                    <div className="relative w-full h-full">
+                    <div className="relative w-full h-full swiper-lazy">
                       <video
-                        src="/hero-demo-2.mp4"
+                        data-src="/hero-demo-2.mp4"
                         muted
                         playsInline
-                        preload="auto"
+                        preload="metadata"
+                        loop
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-lg">
@@ -158,12 +171,13 @@ export const HeroSection = () => {
                     </div>
                   </SwiperSlide>
                   <SwiperSlide>
-                    <div className="relative w-full h-full">
+                    <div className="relative w-full h-full swiper-lazy">
                       <video
-                        src="/hero-demo-3.mp4"
+                        data-src="/hero-demo-3.mp4"
                         muted
                         playsInline
-                        preload="auto"
+                        preload="metadata"
+                        loop
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-lg">
@@ -174,12 +188,13 @@ export const HeroSection = () => {
                     </div>
                   </SwiperSlide>
                   <SwiperSlide>
-                    <div className="relative w-full h-full">
+                    <div className="relative w-full h-full swiper-lazy">
                       <video
-                        src="/hero-demo-4.mp4"
+                        data-src="/hero-demo-4.mp4"
                         muted
                         playsInline
-                        preload="auto"
+                        preload="metadata"
+                        loop
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-lg">
@@ -190,12 +205,13 @@ export const HeroSection = () => {
                     </div>
                   </SwiperSlide>
                   <SwiperSlide>
-                    <div className="relative w-full h-full">
+                    <div className="relative w-full h-full swiper-lazy">
                       <video
-                        src="/hero-demo-5.mp4"
+                        data-src="/hero-demo-5.mp4"
                         muted
                         playsInline
-                        preload="auto"
+                        preload="metadata"
+                        loop
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-lg">
@@ -206,12 +222,13 @@ export const HeroSection = () => {
                     </div>
                   </SwiperSlide>
                   <SwiperSlide>
-                    <div className="relative w-full h-full">
+                    <div className="relative w-full h-full swiper-lazy">
                       <video
-                        src="/hero-demo-6.mp4"
+                        data-src="/hero-demo-6.mp4"
                         muted
                         playsInline
-                        preload="auto"
+                        preload="metadata"
+                        loop
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-lg">

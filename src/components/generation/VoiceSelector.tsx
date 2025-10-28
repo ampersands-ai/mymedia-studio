@@ -128,8 +128,8 @@ export function VoiceSelector({ selectedValue, onSelectVoice, disabled }: VoiceS
       </div>
 
       {/* Voice grid */}
-      <ScrollArea className="h-[400px]">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-4">
+      <ScrollArea className="h-[500px] pr-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
           {filteredVoices.map(voice => (
             <Card 
               key={voice.voice_id} 
@@ -180,7 +180,10 @@ export function VoiceSelector({ selectedValue, onSelectVoice, disabled }: VoiceS
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handlePreview(voice.voice_id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePreview(voice.voice_id);
+                      }}
                       className="flex-1 text-xs"
                       disabled={disabled}
                     >
@@ -199,9 +202,12 @@ export function VoiceSelector({ selectedValue, onSelectVoice, disabled }: VoiceS
                   )}
                   <Button
                     size="sm"
-                    onClick={() => handleSelect(voice)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelect(voice);
+                    }}
                     disabled={disabled || selectedVoice?.voice_id === voice.voice_id}
-                    className="text-xs min-w-[88px] whitespace-nowrap shrink-0"
+                    className="text-xs min-w-[80px] whitespace-nowrap shrink-0"
                   >
                     {selectedVoice?.voice_id === voice.voice_id ? 'Selected' : 'Select'}
                   </Button>

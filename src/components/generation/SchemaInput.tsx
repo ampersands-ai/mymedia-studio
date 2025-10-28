@@ -244,14 +244,14 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
               {value || schema.default || 'Select voice'}
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
+          <DialogContent className="max-w-5xl max-h-[85vh] p-6">
+            <DialogHeader className="pb-4">
               <DialogTitle>Choose a Voice</DialogTitle>
             </DialogHeader>
-          <VoiceSelector 
-            selectedValue={value || schema.default || 'nPczCjzI2devNBz1zQrb'}
-            onSelectVoice={(voiceId, voiceName) => onChange(voiceName)}
-          />
+            <VoiceSelector 
+              selectedValue={value || schema.default || 'nPczCjzI2devNBz1zQrb'}
+              onSelectVoice={(voiceId, voiceName) => onChange(voiceName)}
+            />
           </DialogContent>
         </Dialog>
       </div>

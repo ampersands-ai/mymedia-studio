@@ -112,13 +112,10 @@ export function useVideoJobs() {
   // Create video job mutation
   const createJob = useMutation({
     mutationFn: async (input: VideoJobInput) => {
-      // Reset cleared flag when creating new job
+      // Reset cleared flag and manually clear any old pin
       setIsCleared(false);
-      
-      // Clear any old pinned job before creating a new one
-      if (pinnedJobId) {
-        clearPinnedJob();
-      }
+      localStorage.removeItem(PINNED_JOB_KEY);
+      setPinnedJobId(null);
       
       const { data, error } = await supabase.functions.invoke('create-video-job', {
         body: input,

@@ -18,11 +18,17 @@ const getPinnedJobId = (): string | null => {
 export function useVideoJobs() {
   const queryClient = useQueryClient();
   const [pinnedJobId, setPinnedJobId] = useState<string | null>(getPinnedJobId());
+  const [isCleared, setIsCleared] = useState(false);
 
   // Fetch user's latest active job or pinned job
   const { data: jobs, isLoading } = useQuery({
-    queryKey: ['video-jobs', pinnedJobId],
+    queryKey: ['video-jobs', pinnedJobId, isCleared],
     queryFn: async () => {
+      // Return empty if user cleared the generation
+      if (isCleared) {
+        return [];
+      }
+      
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
       
       // If we have a pinned job, fetch it first (regardless of status)
@@ -99,12 +105,16 @@ export function useVideoJobs() {
   const clearPinnedJob = () => {
     localStorage.removeItem(PINNED_JOB_KEY);
     setPinnedJobId(null);
+    setIsCleared(true);
     queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
   };
 
   // Create video job mutation
   const createJob = useMutation({
     mutationFn: async (input: VideoJobInput) => {
+      // Reset cleared flag when creating new job
+      setIsCleared(false);
+      
       // Clear any old pinned job before creating a new one
       if (pinnedJobId) {
         clearPinnedJob();

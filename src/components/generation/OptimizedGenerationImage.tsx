@@ -26,9 +26,7 @@ export const OptimizedGenerationImage = ({
 }: OptimizedGenerationImageProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
   const [fallbackUrl, setFallbackUrl] = useState<string | null>(null);
-  const MAX_RETRIES = 2;
   
   // Lazy load images unless priority
   const { ref, inView } = useInView({
@@ -95,7 +93,7 @@ export const OptimizedGenerationImage = ({
       {/* Main optimized image with modern formats, with robust fallbacks */}
       {fallbackUrl ? (
         <img
-          key={`fallback-${retryCount}`}
+          key="fallback"
           src={fallbackUrl}
           alt={alt}
           className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
@@ -122,30 +120,35 @@ export const OptimizedGenerationImage = ({
           <source srcSet={webpUrl} type="image/webp" />
           <source srcSet={jpegUrl} type="image/jpeg" />
           <img
-            key={retryCount}
+            key="optimized"
             src={jpegUrl}
             alt={alt}
             className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
             loading={priority ? "eager" : "lazy"}
             onLoad={() => setIsLoading(false)}
-            onError={() => {
-              console.error('Optimized image load failed, will retry/fallback:', {
+            onError={async () => {
+              console.warn('Optimized image load failed, using fallback:', {
                 storagePath,
-                webpUrl,
-                jpegUrl,
-                retryCount
+                jpegUrl
               });
               
-              if (retryCount < MAX_RETRIES) {
-                // Retry with a slight delay
-                setTimeout(() => {
-                  setRetryCount(prev => prev + 1);
-                  setIsLoading(true);
-                }, 1000 * (retryCount + 1));
-              } else {
+              // Immediately try public URL (no retry delay)
+              if (!fallbackUrl) {
                 console.warn('Falling back to public object URL for image');
                 setFallbackUrl(publicUrl);
                 setIsLoading(true);
+              } else if (fallbackUrl === publicUrl) {
+                // If public URL also failed, try signed URL
+                const signed = await createSignedUrl('generated-content', storageRelativePath);
+                if (signed) {
+                  console.warn('Using signed URL fallback for image');
+                  setFallbackUrl(signed);
+                  setIsLoading(true);
+                } else {
+                  setHasError(true);
+                }
+              } else {
+                setHasError(true);
               }
             }}
           />

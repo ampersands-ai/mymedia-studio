@@ -16,25 +16,33 @@ export interface ImageTransformOptions {
  */
 function cleanImagePath(bucketPath: string, bucket: string = 'generated-content'): string {
   let cleanPath = bucketPath;
-  
-  // Extract path if it's already a full URL
-  if (bucketPath.includes('/storage/v1/object/public/')) {
-    const pathMatch = bucketPath.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)/);
-    if (pathMatch) {
-      cleanPath = pathMatch[1];
-    }
-  } else if (bucketPath.includes(`/${bucket}/`)) {
-    const pathMatch = bucketPath.split(`/${bucket}/`)[1];
-    if (pathMatch) {
-      cleanPath = pathMatch;
-    }
-  } else if (bucketPath.includes('/storage/v1/render/image/')) {
-    const pathMatch = bucketPath.match(/\/storage\/v1\/render\/image\/[^/]+\/(.+?)(?:\?|$)/);
-    if (pathMatch) {
-      cleanPath = pathMatch[1];
-    }
+
+  // Strip query strings and hashes first
+  try {
+    const asUrl = new URL(bucketPath);
+    cleanPath = asUrl.pathname; // drop ?query and #hash
+  } catch {
+    cleanPath = bucketPath.split('?')[0].split('#')[0];
   }
-  
+
+  // Handle various Supabase URL patterns
+  if (cleanPath.includes('/storage/v1/object/public/')) {
+    const m = cleanPath.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)/);
+    if (m) cleanPath = m[1];
+  } else if (cleanPath.includes('/storage/v1/render/image/')) {
+    const m = cleanPath.match(/\/storage\/v1\/render\/image\/[^/]+\/(.+)/);
+    if (m) cleanPath = m[1];
+  } else if (cleanPath.includes(`/${bucket}/`)) {
+    const part = cleanPath.split(`/${bucket}/`)[1];
+    if (part) cleanPath = part;
+  }
+
+  // Normalize and decode
+  cleanPath = cleanPath.replace(/^\/+/, '');
+  try {
+    cleanPath = decodeURI(cleanPath);
+  } catch {}
+
   return cleanPath;
 }
 
@@ -69,7 +77,25 @@ export function getOptimizedImageUrl(
   const baseUrl = import.meta.env.VITE_SUPABASE_URL;
   const bucket = 'generated-content'; // Using generated-content bucket for user creations
 
-  return `${baseUrl}/storage/v1/render/image/${bucket}/${cleanPath}?${params.toString()}`;
+  const encodedPath = encodeURI(cleanPath);
+  return `${baseUrl}/storage/v1/render/image/${bucket}/${encodedPath}?${params.toString()}`;
+}
+
+export function getPublicImageUrl(
+  bucketPath: string,
+  bucket: string = 'generated-content'
+): string {
+  const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const cleanPath = cleanImagePath(bucketPath, bucket);
+  const encodedPath = encodeURI(cleanPath);
+  return `${baseUrl}/storage/v1/object/public/${bucket}/${encodedPath}`;
+}
+
+export function getStorageRelativePath(
+  bucketPath: string,
+  bucket: string = 'generated-content'
+): string {
+  return cleanImagePath(bucketPath, bucket);
 }
 
 /**

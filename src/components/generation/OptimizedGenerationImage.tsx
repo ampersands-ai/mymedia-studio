@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useInView } from "react-intersection-observer";
-import { getOptimizedImageUrl, getBlurPlaceholder } from "@/lib/supabase-images";
+import { getOptimizedImageUrl, getBlurPlaceholder, getPublicImageUrl, getStorageRelativePath } from "@/lib/supabase-images";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageIcon } from "lucide-react";
+import { createSignedUrl } from "@/lib/storage-utils";
 
 interface OptimizedGenerationImageProps {
   storagePath: string;
@@ -26,6 +27,7 @@ export const OptimizedGenerationImage = ({
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [fallbackUrl, setFallbackUrl] = useState<string | null>(null);
   const MAX_RETRIES = 2;
   
   // Lazy load images unless priority
@@ -57,7 +59,9 @@ export const OptimizedGenerationImage = ({
   });
 
   const blurUrl = getBlurPlaceholder(storagePath);
-
+  const publicUrl = getPublicImageUrl(storagePath);
+  const storageRelativePath = getStorageRelativePath(storagePath);
+  
   // Error fallback
   if (hasError) {
     return (
@@ -88,39 +92,66 @@ export const OptimizedGenerationImage = ({
         />
       )}
 
-      {/* Main optimized image with modern formats */}
-      <picture>
-        <source srcSet={avifUrl} type="image/avif" />
-        <source srcSet={webpUrl} type="image/webp" />
-        <source srcSet={jpegUrl} type="image/jpeg" />
+      {/* Main optimized image with modern formats, with robust fallbacks */}
+      {fallbackUrl ? (
         <img
-          key={retryCount}
-          src={jpegUrl}
+          key={`fallback-${retryCount}`}
+          src={fallbackUrl}
           alt={alt}
           className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
           loading={priority ? "eager" : "lazy"}
           onLoad={() => setIsLoading(false)}
-          onError={() => {
-            console.error('Image load failed:', {
-              storagePath,
-              webpUrl,
-              jpegUrl,
-              retryCount
-            });
-            
-            if (retryCount < MAX_RETRIES) {
-              // Retry with a slight delay
-              setTimeout(() => {
-                setRetryCount(prev => prev + 1);
+          onError={async () => {
+            console.warn('Fallback image failed to load:', { fallbackUrl });
+            // If public URL failed, try signed URL
+            if (fallbackUrl === publicUrl) {
+              const signed = await createSignedUrl('generated-content', storageRelativePath);
+              if (signed) {
+                console.warn('Using signed URL fallback for image');
+                setFallbackUrl(signed);
                 setIsLoading(true);
-              }, 1000 * (retryCount + 1));
-            } else {
-              setHasError(true);
+                return;
+              }
             }
+            setHasError(true);
           }}
         />
-      </picture>
-
+      ) : (
+        <picture>
+          <source srcSet={avifUrl} type="image/avif" />
+          <source srcSet={webpUrl} type="image/webp" />
+          <source srcSet={jpegUrl} type="image/jpeg" />
+          <img
+            key={retryCount}
+            src={jpegUrl}
+            alt={alt}
+            className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+            loading={priority ? "eager" : "lazy"}
+            onLoad={() => setIsLoading(false)}
+            onError={() => {
+              console.error('Optimized image load failed, will retry/fallback:', {
+                storagePath,
+                webpUrl,
+                jpegUrl,
+                retryCount
+              });
+              
+              if (retryCount < MAX_RETRIES) {
+                // Retry with a slight delay
+                setTimeout(() => {
+                  setRetryCount(prev => prev + 1);
+                  setIsLoading(true);
+                }, 1000 * (retryCount + 1));
+              } else {
+                console.warn('Falling back to public object URL for image');
+                setFallbackUrl(publicUrl);
+                setIsLoading(true);
+              }
+            }}
+          />
+        </picture>
+      )}
+ 
       {/* Loading skeleton overlay */}
       {isLoading && <Skeleton className="absolute inset-0" />}
     </div>

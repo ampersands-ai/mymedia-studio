@@ -39,25 +39,13 @@ export const useSignedUrl = (storagePath: string | null, bucket: string = 'gener
           }
         }
 
-        // For generated-content bucket with video files, use proxied streaming
+        // For generated-content bucket, prefer public URL (CDN-optimized)
         if (bucket === 'generated-content') {
-          const isVideo = actualPath.endsWith('.mp4') || actualPath.endsWith('.webm') || actualPath.endsWith('.mov');
-          
-          if (isVideo) {
-            // Use proxied streaming for better caching and reliability
-            const proxiedUrl = getProxiedVideoUrl(actualPath, bucket);
-            setSignedUrl(proxiedUrl);
-            setError(false);
-            setIsLoading(false);
-            return;
-          } else {
-            // For non-video content (images, audio), use direct public URL
-            const publicUrl = getOptimizedVideoUrl(actualPath, bucket);
-            setSignedUrl(publicUrl);
-            setError(false);
-            setIsLoading(false);
-            return;
-          }
+          const publicUrl = getOptimizedVideoUrl(actualPath, bucket);
+          setSignedUrl(publicUrl);
+          setError(false);
+          setIsLoading(false);
+          return;
         }
 
         // For other buckets, use signed URLs

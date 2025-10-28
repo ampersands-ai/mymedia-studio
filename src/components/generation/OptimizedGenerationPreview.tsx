@@ -10,6 +10,7 @@ import { triggerHaptic } from "@/utils/capacitor-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { supabase } from "@/integrations/supabase/client";
+import { getOptimizedVideoUrl, getOptimizedAudioUrl } from "@/lib/supabase-videos";
 
 interface OptimizedGenerationPreviewProps {
   storagePath: string;
@@ -32,14 +33,19 @@ export const OptimizedGenerationPreview = ({
   const [videoError, setVideoError] = useState(false);
   const [audioError, setAudioError] = useState(false);
 
-  // Fetch signed URLs for audio and video
-  const { signedUrl: audioSignedUrl, isLoading: audioUrlLoading } = useSignedUrl(
-    contentType === "audio" ? storagePath : null,
-    'generated-content'
-  );
+  // Use direct public URLs for videos/audio (CDN-optimized, no signed URL delay)
+  // Fallback to signed URL only if public URL fails
+  const videoUrl = contentType === "video" && storagePath 
+    ? getOptimizedVideoUrl(storagePath, 'generated-content')
+    : null;
   
-  const { signedUrl: videoSignedUrl, isLoading: videoUrlLoading } = useSignedUrl(
-    contentType === "video" ? storagePath : null,
+  const audioUrl = contentType === "audio" && storagePath
+    ? getOptimizedAudioUrl(storagePath, 'generated-content')
+    : null;
+
+  // Keep signed URL hook for fallback only (not used in primary render)
+  const { signedUrl: fallbackSignedUrl } = useSignedUrl(
+    (contentType === "video" || contentType === "audio") && videoError || audioError ? storagePath : null,
     'generated-content'
   );
 
@@ -47,10 +53,11 @@ export const OptimizedGenerationPreview = ({
     try {
       let shareUrl: string;
       
-      if (contentType === "audio" && audioSignedUrl) {
-        shareUrl = audioSignedUrl;
-      } else if (contentType === "video" && videoSignedUrl) {
-        shareUrl = videoSignedUrl;
+      // Use direct URLs for sharing (faster, CDN-cached)
+      if (contentType === "audio" && audioUrl) {
+        shareUrl = audioUrl;
+      } else if (contentType === "video" && videoUrl) {
+        shareUrl = videoUrl;
       } else {
         // Fallback to creating a signed URL on demand
         const { data } = await supabase.storage
@@ -78,12 +85,13 @@ export const OptimizedGenerationPreview = ({
       
       let downloadUrl: string;
       
-      if (contentType === "audio" && audioSignedUrl) {
-        downloadUrl = audioSignedUrl;
-      } else if (contentType === "video" && videoSignedUrl) {
-        downloadUrl = videoSignedUrl;
+      // Use direct URLs for download (faster)
+      if (contentType === "audio" && audioUrl) {
+        downloadUrl = audioUrl;
+      } else if (contentType === "video" && videoUrl) {
+        downloadUrl = videoUrl;
       } else {
-        // Create signed URL for download
+        // Create signed URL for download (short expiry for security)
         const { data } = await supabase.storage
           .from('generated-content')
           .createSignedUrl(storagePath, 60);
@@ -147,17 +155,9 @@ export const OptimizedGenerationPreview = ({
     );
   }
 
-  // For audio - show audio player
+  // For audio - show audio player with direct public URL
   if (contentType === "audio") {
-    if (audioUrlLoading) {
-      return (
-        <div className={`${className} flex items-center justify-center bg-muted`}>
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      );
-    }
-
-    if (audioError || !storagePath || !audioSignedUrl) {
+    if (!audioUrl || !storagePath) {
       return (
         <div className={`${className} flex flex-col items-center justify-center bg-muted gap-3`}>
           <Music className="h-12 w-12 text-gray-600 dark:text-gray-400" />
@@ -184,11 +184,14 @@ export const OptimizedGenerationPreview = ({
           </div>
           
           <audio
-            src={audioSignedUrl}
+            src={audioUrl}
             className="w-full"
             controls
             preload="metadata"
-            onError={() => setAudioError(true)}
+            onError={() => {
+              console.warn('Audio load failed, trying fallback URL');
+              setAudioError(true);
+            }}
           />
           
           {/* Action buttons */}
@@ -209,17 +212,9 @@ export const OptimizedGenerationPreview = ({
     );
   }
 
-  // For video - use signed URL
+  // For video - use direct public URL with CDN
   if (contentType === "video") {
-    if (videoUrlLoading) {
-      return (
-        <div className={`${className} flex items-center justify-center bg-muted`}>
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      );
-    }
-
-    if (videoError || !storagePath || !videoSignedUrl) {
+    if (!videoUrl || !storagePath) {
       return (
         <div className={`${className} flex flex-col items-center justify-center bg-muted gap-3`}>
           <Video className="h-12 w-12 text-muted-foreground" />
@@ -235,13 +230,20 @@ export const OptimizedGenerationPreview = ({
     return (
       <div className="relative group">
         <video
-          src={videoSignedUrl}
+          src={videoError && fallbackSignedUrl ? fallbackSignedUrl : videoUrl}
           className={cn(className, "animate-fade-in")}
           controls
           preload="metadata"
           playsInline
           muted
-          onError={() => setVideoError(true)}
+          onError={(e) => {
+            console.warn('Video load failed, trying fallback URL');
+            if (!videoError) {
+              setVideoError(true);
+            } else {
+              console.error('Video failed to load even with fallback');
+            }
+          }}
         />
         {/* Action buttons overlay */}
         <div className={cn(

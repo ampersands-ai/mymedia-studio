@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createSignedUrl } from '@/lib/storage-utils';
+import { getOptimizedVideoUrl } from '@/lib/supabase-videos';
 
 /**
  * Hook to fetch a signed URL for a storage file
@@ -38,13 +39,22 @@ export const useSignedUrl = (storagePath: string | null, bucket: string = 'gener
           }
         }
 
+        // For generated-content bucket, prefer public URL (CDN-optimized)
+        if (bucket === 'generated-content') {
+          const publicUrl = getOptimizedVideoUrl(actualPath, bucket);
+          setSignedUrl(publicUrl);
+          setError(false);
+          setIsLoading(false);
+          return;
+        }
+
+        // For other buckets, use signed URLs
         const url = await createSignedUrl(bucket, actualPath, 14400);
         
         if (!url) {
           console.warn('Failed to create signed URL, trying public URL:', actualPath);
           // Fallback to public URL if bucket is public
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${actualPath}`;
+          const publicUrl = getOptimizedVideoUrl(actualPath, bucket);
           setSignedUrl(publicUrl);
           setError(false);
         } else {

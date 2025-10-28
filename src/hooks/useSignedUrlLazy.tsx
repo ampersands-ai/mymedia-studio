@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { createSignedUrl } from '@/lib/storage-utils';
+import { getOptimizedVideoUrl } from '@/lib/supabase-videos';
 
 /**
  * Hook to lazily fetch a signed URL when the element enters the viewport
@@ -68,13 +69,22 @@ export const useSignedUrlLazy = (
           console.log(`[useSignedUrlLazy] Detected filename-only input: "${storagePath}"`);
         }
 
+        // For generated-content bucket, prefer public URL (CDN-optimized)
+        if (bucket === 'generated-content') {
+          const publicUrl = getOptimizedVideoUrl(actualPath, bucket);
+          console.log(`[useSignedUrlLazy] Using optimized public URL: ${publicUrl}`);
+          setSignedUrl(publicUrl);
+          setError(false);
+          setIsLoading(false);
+          return;
+        }
+
         console.log(`[useSignedUrlLazy] Fetching signed URL for bucket: ${bucket}, path: ${actualPath} (original: ${storagePath})`);
         const url = await createSignedUrl(bucket, actualPath, 14400);
         
         if (!url) {
           // Fallback to public URL construction
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${actualPath}`;
+          const publicUrl = getOptimizedVideoUrl(actualPath, bucket);
           console.log(`[useSignedUrlLazy] Signed URL generation failed, using public URL: ${publicUrl}`);
           setSignedUrl(publicUrl);
           setError(false);
@@ -85,7 +95,6 @@ export const useSignedUrlLazy = (
       } catch (error) {
         console.error('Error fetching signed URL:', error);
         // Fallback to public URL construction on error
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         let actualPath = storagePath;
         
         if (storagePath.includes('/storage/v1/object/public/')) {
@@ -100,7 +109,7 @@ export const useSignedUrlLazy = (
           }
         }
         
-        const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${actualPath}`;
+        const publicUrl = getOptimizedVideoUrl(actualPath, bucket);
         console.log(`[useSignedUrlLazy] Error caught, using public URL fallback: ${publicUrl}`);
         setSignedUrl(publicUrl);
         setError(false);

@@ -16,6 +16,12 @@ import { useStoryboard } from '@/hooks/useStoryboard';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import hyperRealisticImg from '@/assets/styles/hyper-realistic.jpg';
+import cinematicImg from '@/assets/styles/cinematic.jpg';
+import animatedImg from '@/assets/styles/animated.jpg';
+import cartoonImg from '@/assets/styles/cartoon.jpg';
+import naturalImg from '@/assets/styles/natural.jpg';
+import sketchImg from '@/assets/styles/sketch.jpg';
 
 const VOICES = [
   { id: 'en-US-AndrewMultilingualNeural', name: 'Andrew (US Male)' },
@@ -27,12 +33,42 @@ const VOICES = [
 ];
 
 const STYLES = [
-  'hyper-realistic',
-  'cinematic',
-  'animated',
-  'cartoon',
-  'natural',
-  'sketch',
+  {
+    value: 'hyper-realistic',
+    label: 'Hyper Realistic',
+    image: hyperRealisticImg,
+    description: 'Ultra-realistic, photo-quality visuals'
+  },
+  {
+    value: 'cinematic',
+    label: 'Cinematic',
+    image: cinematicImg,
+    description: 'Movie-like dramatic lighting & composition'
+  },
+  {
+    value: 'animated',
+    label: 'Animated',
+    image: animatedImg,
+    description: '3D rendered, Pixar-style animation'
+  },
+  {
+    value: 'cartoon',
+    label: 'Cartoon',
+    image: cartoonImg,
+    description: '2D illustrated, playful cartoon style'
+  },
+  {
+    value: 'natural',
+    label: 'Natural',
+    image: naturalImg,
+    description: 'Natural photography, authentic look'
+  },
+  {
+    value: 'sketch',
+    label: 'Sketch',
+    image: sketchImg,
+    description: 'Hand-drawn, artistic pencil sketch'
+  },
 ];
 
 const TONES = [
@@ -230,76 +266,143 @@ export const StoryboardInput = () => {
           </RadioGroup>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Style */}
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold">Video Style</Label>
-            <Select value={style} onValueChange={setStyle} disabled={isGenerating}>
-              <SelectTrigger className="bg-background/50">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STYLES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Style */}
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold">Video Style</Label>
+          
+          <RadioGroup
+            value={style}
+            onValueChange={setStyle}
+            className="grid grid-cols-2 md:grid-cols-3 gap-3"
+            disabled={isGenerating}
+          >
+            {STYLES.map((styleOption) => (
+              <div key={styleOption.value} className="relative group">
+                <RadioGroupItem 
+                  value={styleOption.value} 
+                  id={`style-${styleOption.value}`} 
+                  className="peer sr-only" 
+                />
+                <Label
+                  htmlFor={`style-${styleOption.value}`}
+                  className={cn(
+                    "block cursor-pointer rounded-lg overflow-hidden transition-all",
+                    "border-2 border-muted hover:border-primary/50",
+                    "peer-data-[state=checked]:border-primary peer-data-[state=checked]:ring-4 peer-data-[state=checked]:ring-primary/20",
+                    "transform hover:scale-105 active:scale-95"
+                  )}
+                >
+                  {/* Image Container */}
+                  <div className="relative aspect-video overflow-hidden bg-muted">
+                    <img
+                      src={styleOption.image}
+                      alt={styleOption.label}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                    
+                    {/* Overlay Gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    
+                    {/* Selected Checkmark */}
+                    {style === styleOption.value && (
+                      <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center animate-in zoom-in-50">
+                        <svg className="w-4 h-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                    
+                    {/* Style Name */}
+                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                      <p className="text-white font-bold text-sm leading-tight">
+                        {styleOption.label}
+                      </p>
+                      <p className="text-white/70 text-xs mt-0.5 line-clamp-1">
+                        {styleOption.description}
+                      </p>
+                    </div>
+                  </div>
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+        </div>
 
-          {/* Voice */}
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold flex items-center gap-2">
-              <Volume2 className="w-4 h-4" />
-              Voice
-            </Label>
-            <div className="space-y-3">
-              <Select value={voiceID} onValueChange={setVoiceID} disabled={isGenerating}>
-                <SelectTrigger className="bg-background/50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {VOICES.map((v) => (
-                    <SelectItem key={v.id} value={v.id}>
-                      {v.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              {/* Voice Preview Grid */}
-              <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-background/30 border border-primary/10">
-                <div className="col-span-2 text-xs font-semibold text-muted-foreground mb-1">
-                  Quick Preview:
-                </div>
-                {VOICES.slice(0, 4).map((v) => (
+        {/* Voice */}
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold flex items-center gap-2">
+            <Volume2 className="w-4 h-4" />
+            Voice Selection
+          </Label>
+          
+          <RadioGroup
+            value={voiceID}
+            onValueChange={setVoiceID}
+            className="space-y-2"
+            disabled={isGenerating}
+          >
+            {VOICES.map((voice) => (
+              <div key={voice.id} className="relative group">
+                <RadioGroupItem 
+                  value={voice.id} 
+                  id={`voice-${voice.id}`} 
+                  className="peer sr-only" 
+                />
+                <Label
+                  htmlFor={`voice-${voice.id}`}
+                  className={cn(
+                    "flex items-center justify-between p-4 rounded-lg border-2 cursor-pointer transition-all",
+                    "bg-background/50 hover:bg-accent/50 hover:border-primary/30",
+                    "peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10",
+                    "peer-data-[state=checked]:shadow-lg peer-data-[state=checked]:shadow-primary/20"
+                  )}
+                >
+                  {/* Voice Name */}
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "w-2 h-2 rounded-full transition-colors",
+                      voiceID === voice.id ? "bg-primary animate-pulse" : "bg-muted"
+                    )} />
+                    <span className="font-medium text-sm">{voice.name}</span>
+                  </div>
+                  
+                  {/* Play Button */}
                   <Button
-                    key={v.id}
                     type="button"
-                    variant={voiceID === v.id ? "default" : "outline"}
                     size="sm"
-                    onClick={() => {
-                      setVoiceID(v.id);
-                      handlePlayVoicePreview(v.id, v.name);
+                    variant={playingVoice === voice.id ? "default" : "ghost"}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handlePlayVoicePreview(voice.id, voice.name);
                     }}
                     disabled={isGenerating}
                     className={cn(
-                      "gap-2 text-xs h-8 justify-start",
-                      playingVoice === v.id && "animate-pulse"
+                      "gap-2 h-8 px-3",
+                      playingVoice === voice.id && "animate-pulse"
                     )}
                   >
-                    <Play className="w-3 h-3" />
-                    {v.name.split(' ')[0]}
+                    {playingVoice === voice.id ? (
+                      <>
+                        <Volume2 className="w-3.5 h-3.5" />
+                        Playing...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-3.5 h-3.5" />
+                        Preview
+                      </>
+                    )}
                   </Button>
-                ))}
+                </Label>
               </div>
-              
-              <p className="text-xs text-muted-foreground">
-                💡 Click any voice to preview. Note: Preview uses browser voices (actual video uses Azure AI).
-              </p>
-            </div>
-          </div>
+            ))}
+          </RadioGroup>
+          
+          <p className="text-xs text-muted-foreground mt-2">
+            💡 Click "Preview" to hear each voice. Note: Preview uses browser voices (actual video uses Azure AI).
+          </p>
         </div>
 
         {/* Tone */}

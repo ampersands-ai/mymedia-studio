@@ -37,7 +37,6 @@ const plans = [
     features: [
       "No watermark",
       "Global availability",
-      "Priority rendering",
       "Advanced features",
     ],
     popular: false,
@@ -56,8 +55,6 @@ const plans = [
     features: [
       "No watermark",
       "Unlimited image & text gens",
-      "Priority rendering",
-      "API access",
       "Dedicated support",
     ],
     popular: true,
@@ -76,9 +73,6 @@ const plans = [
     features: [
       "No watermark",
       "Commercial license",
-      "Fastest rendering priority",
-      "API access",
-      "White-label options",
       "24/7 premium support",
     ],
     popular: false,
@@ -97,9 +91,6 @@ const plans = [
     features: [
       "No watermark",
       "Commercial license",
-      "Fastest rendering priority",
-      "API access",
-      "White-label options",
       "24/7 premium support",
       "Early access to new features",
     ],
@@ -373,14 +364,14 @@ const Pricing = () => {
           </div>
 
           {/* All Plans Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto pt-8 mb-16">
           {plans.map((plan) => (
             <Card
               key={plan.name}
               className={`relative hover-lift ${plan.popular ? "ring-4 ring-primary" : ""}`}
             >
                 {plan.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary px-4 py-1.5 rounded-full text-sm font-black text-black shadow-lg border-2 border-black">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary px-4 py-1.5 rounded-full text-sm font-black text-black shadow-lg border-2 border-black">
                     {plan.badge}
                   </div>
                 )}

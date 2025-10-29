@@ -401,7 +401,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     <Card className="border-2 hover:border-primary/50 transition-colors w-full overflow-hidden">
       <CardContent className="p-3 md:p-4 space-y-2 md:space-y-3">
         <div className="flex items-start justify-between gap-2 md:gap-3">
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 overflow-hidden">
             <h4 className="font-bold text-base md:text-lg truncate">
               {getStyleEmoji(job.style)} {job.topic}
             </h4>

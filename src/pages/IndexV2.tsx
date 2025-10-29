@@ -12,7 +12,6 @@ import { GallerySkeleton, PricingSkeleton } from "@/components/ui/skeletons";
 import { usePrefetchOnHover } from "@/hooks/useRoutePreload";
 import { HeroSection } from "@/components/homepage/HeroSection";
 import { TemplateCarousel } from "@/components/homepage/TemplateCarousel";
-import { BentoTemplateGrid } from "@/components/homepage/BentoTemplateGrid";
 import { WorkflowSteps } from "@/components/homepage/WorkflowSteps";
 import { GlobalHeader } from "@/components/GlobalHeader";
 
@@ -123,9 +122,6 @@ const IndexV2 = () => {
 
       {/* Template Carousel - New Design */}
       <TemplateCarousel templates={filteredTemplates || []} />
-
-      {/* Bento Template Grid - Interactive Showcase */}
-      <BentoTemplateGrid />
 
       {/* Workflow Steps - New Design */}
       <WorkflowSteps />

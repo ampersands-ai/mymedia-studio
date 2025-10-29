@@ -24,65 +24,83 @@ export async function callRunware(
 
   const apiUrl = 'https://api.runware.ai/v1';
   
-  // Clean model ID (remove any trailing quotes or whitespace)
+  // Generate unique task UUID
+  const taskUUID = crypto.randomUUID();
+  
+  // Clean model ID
   const cleanModel = request.model.replace(/["'\s]+$/g, '');
   
-  console.log('[Runware] Calling API - Model:', cleanModel);
+  console.log('[Runware] Calling API - Model:', cleanModel, 'TaskUUID:', taskUUID);
 
-  // Build task payload with proper parameter mapping
-  const taskPayload: any = {
-    taskType: "imageInference",
-    model: cleanModel,
-    ...request.parameters,
-  };
+  // Normalize numeric parameters
+  const params = request.parameters || {};
+  
+  // Build request payload with authentication and task
+  const requestBody = [
+    {
+      taskType: "authentication",
+      apiKey: RUNWARE_API_KEY
+    },
+    {
+      taskType: "imageInference",
+      taskUUID,
+      model: cleanModel,
+      positivePrompt: request.prompt,
+      width: Number(params.width ?? 1024),
+      height: Number(params.height ?? 1024),
+      numberResults: Number(params.numberResults ?? 1),
+      outputFormat: params.outputFormat ?? "WEBP",
+      steps: Number(params.steps ?? 4),
+      CFGScale: Number(params.CFGScale ?? 1),
+      scheduler: params.scheduler ?? "FlowMatchEulerDiscreteScheduler",
+      checkNSFW: true,
+      includeCost: true,
+      outputType: ["URL"],
+      outputQuality: Number(params.outputQuality ?? 85),
+      ...(params.seed && { seed: Number(params.seed) }),
+      ...(params.strength && { strength: Number(params.strength) }),
+      ...(params.lora && { lora: params.lora })
+    }
+  ];
 
-  // Ensure positivePrompt is set from prompt if not in parameters
-  if (request.prompt && !taskPayload.positivePrompt) {
-    taskPayload.positivePrompt = request.prompt;
-  }
-
-  console.log('[Runware] Task payload:', JSON.stringify(taskPayload, null, 2));
+  console.log('[Runware] Request body:', JSON.stringify(requestBody, null, 2));
 
   try {
-    // Call Runware API
+    // Call Runware API (no Authorization header, auth is in body)
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${RUNWARE_API_KEY}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify([taskPayload])
+      body: JSON.stringify(requestBody)
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[Runware] API error:', response.status, errorText);
-      
-      // Parse error for better user messaging
-      let errorMessage = `Runware API failed: ${response.status}`;
-      try {
-        const errorData = JSON.parse(errorText);
-        if (errorData.errors?.[0]?.message) {
-          errorMessage = errorData.errors[0].message;
-        }
-      } catch {
-        // Use status text if JSON parsing fails
-      }
-      
-      throw new Error(errorMessage);
-    }
 
     const responseData = await response.json();
     console.log('[Runware] Response received:', JSON.stringify(responseData, null, 2));
 
+    // Check for errors in response
+    if (responseData.errors && responseData.errors.length > 0) {
+      const error = responseData.errors[0];
+      throw new Error(error.message || `Runware API error: ${error.code}`);
+    }
+
+    if (!response.ok) {
+      throw new Error(`Runware API failed: ${response.status}`);
+    }
+
     // Validate response structure
-    if (!Array.isArray(responseData) || responseData.length === 0) {
+    if (!responseData.data || !Array.isArray(responseData.data) || responseData.data.length === 0) {
       throw new Error('Invalid response from Runware API');
     }
 
-    const result = responseData[0];
+    // Find the imageInference result (skip authentication result)
+    const result = responseData.data.find((item: any) => item.taskType === 'imageInference');
+    
+    if (!result) {
+      throw new Error('No image inference result in Runware response');
+    }
 
-    // Check for errors
+    // Check for errors in result
     if (result.error) {
       throw new Error(`Runware generation failed: ${result.error}`);
     }
@@ -105,7 +123,7 @@ export async function callRunware(
     const uint8Data = new Uint8Array(imageData);
 
     // Determine file extension
-    const outputFormat = taskPayload.outputFormat?.toLowerCase() || 'webp';
+    const outputFormat = params.outputFormat?.toLowerCase() || 'webp';
     const fileExtension = determineFileExtension(outputFormat, imageUrl);
 
     console.log(`[Runware] Downloaded: ${uint8Data.length} bytes, extension: ${fileExtension}`);

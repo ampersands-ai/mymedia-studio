@@ -19,14 +19,14 @@ const plans = [
     tokens: "500",
     perToken: "Always Free",
     features: [
-      "500 tokens included",
+      "500 credits included",
       "Watermark on videos",
       "Limited access",
       "Basic support",
     ],
     popular: false,
     color: "bg-muted",
-    description: "Always free. Always accessible. Try before you buy—no credit card, no commitments.",
+    description: "Always free. Always accessible. Try before you buy—no commitment required.",
   },
   {
     name: "Explorer",
@@ -34,9 +34,9 @@ const plans = [
     annualPrice: "$7.99",
     period: "/mo",
     tokens: "100",
-    perToken: "$0.08 per token",
+    perToken: "$0.08 per credit",
     features: [
-      "100 tokens",
+      "100 credits",
       "No watermark",
       "Global availability",
       "Priority rendering",
@@ -45,7 +45,7 @@ const plans = [
     popular: false,
     color: "bg-neon-pink",
     badge: "FOR CREATORS",
-    description: "The indie creator's choice. 100 tokens for just $7.99/mo—competitors charge $30-50 for similar plans.",
+    description: "The indie creator's choice. 100 credits for just $7.99/mo—competitors charge $30-50 for similar plans.",
     savings: "Save $22-42/mo vs competitors",
   },
   {
@@ -54,9 +54,9 @@ const plans = [
     annualPrice: "$19.99",
     period: "/mo",
     tokens: "325",
-    perToken: "$0.061 per token",
+    perToken: "$0.061 per credit",
     features: [
-      "325 tokens",
+      "325 credits",
       "No watermark",
       "Unlimited image & text gens",
       "Priority rendering",
@@ -66,7 +66,7 @@ const plans = [
     popular: true,
     color: "bg-primary",
     badge: "MOST POPULAR",
-    description: "All the tools you need for less than $20/mo. 325 tokens + unlimited image & text. Save $100s every year.",
+    description: "All the tools you need for less than $20/mo. 325 credits + unlimited image & text. Save $100s every year.",
     savings: "Save $80-105/mo vs competitors",
   },
   {
@@ -75,9 +75,9 @@ const plans = [
     annualPrice: "$39.99",
     period: "/mo",
     tokens: "750",
-    perToken: "$0.053 per token",
+    perToken: "$0.053 per credit",
     features: [
-      "750 tokens",
+      "750 credits",
       "No watermark",
       "Commercial license",
       "Fastest rendering priority",
@@ -88,7 +88,7 @@ const plans = [
     popular: false,
     badge: "BEST VALUE",
     color: "bg-neon-red",
-    description: "Enterprise power at freelancer prices. 750 tokens for just $39.99/mo—competitors charge $99+ for less.",
+    description: "Enterprise power at freelancer prices. 750 credits for just $39.99/mo—competitors charge $99+ for less.",
     savings: "Save $60-85/mo vs competitors",
   },
   {
@@ -97,9 +97,9 @@ const plans = [
     annualPrice: "$89.99",
     period: "/mo",
     tokens: "2,000",
-    perToken: "$0.045 per token",
+    perToken: "$0.045 per credit",
     features: [
-      "2,000 tokens",
+      "2,000 credits",
       "No watermark",
       "Commercial license",
       "Fastest rendering priority",
@@ -111,8 +111,8 @@ const plans = [
     popular: false,
     badge: "PREMIUM",
     color: "bg-accent",
-    description: "Ultimate power for professionals and agencies. 2,000 tokens at the best rate—unmatched value for serious creators.",
-    savings: "Best per-token pricing available",
+    description: "Ultimate power for professionals and agencies. 2,000 credits at the best rate—unmatched value for serious creators.",
+    savings: "Best per-credit pricing available",
   },
 ];
 
@@ -229,7 +229,7 @@ const Pricing = () => {
           "name": "What is the cheapest AI video creation plan?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Artifio.ai Explorer plan is the cheapest at $7.99/mo (annual billing) with 100 tokens, perfect for APAC and LATAM creators."
+            "text": "Artifio.ai Explorer plan is the cheapest at $7.99/mo (annual billing) with 100 credits, perfect for APAC and LATAM creators."
           }
         },
         {
@@ -237,7 +237,7 @@ const Pricing = () => {
           "name": "Does Artifio.ai offer a free plan?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes, Artifio.ai offers a Freemium plan with 500 free tokens. No credit card required. Perfect for testing the platform before upgrading."
+            "text": "Yes, Artifio.ai offers a Freemium plan with 500 free credits. No credit card required. Perfect for testing the platform before upgrading."
           }
         }
       ]
@@ -414,7 +414,7 @@ const Pricing = () => {
                     )}
                   </div>
                   <div className="text-xs text-muted-foreground pt-2">
-                    {plan.tokens} tokens{plan.perToken && ` • ${plan.perToken}`}
+                    {plan.tokens} credits{plan.perToken && ` • ${plan.perToken}`}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -454,7 +454,7 @@ const Pricing = () => {
                       <tr className="border-b-2 border-black">
                         <th className="py-4 px-4 text-left font-black">Plan</th>
                         <th className="py-4 px-4 text-center font-black">Price</th>
-                        <th className="py-4 px-4 text-center font-black">Tokens</th>
+                        <th className="py-4 px-4 text-center font-black">Credits</th>
                         <th className="py-4 px-4 text-center font-black">Best For</th>
                       </tr>
                     </thead>

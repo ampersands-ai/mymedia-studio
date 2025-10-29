@@ -7,9 +7,10 @@ interface ModelParameterFormProps {
   currentValues?: Record<string, any>;
   excludeFields?: string[];
   modelId?: string;
+  provider?: string;
 }
 
-export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, excludeFields = [], modelId }: ModelParameterFormProps) => {
+export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, excludeFields = [], modelId, provider }: ModelParameterFormProps) => {
   // Initialize with defaults immediately to avoid timing issues
   const [parameters, setParameters] = useState<Record<string, any>>(() => {
     if (!modelSchema?.properties) return currentValues;
@@ -129,6 +130,7 @@ export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, 
             allValues={parameters}
             modelSchema={modelSchema}
             modelId={modelId}
+            provider={provider}
           />
         );
       })}

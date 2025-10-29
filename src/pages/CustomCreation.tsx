@@ -1334,6 +1334,7 @@ const CustomCreation = () => {
                           currentValues={modelParameters}
                           excludeFields={exclude}
                           modelId={currentModel.id}
+                          provider={currentModel.provider}
                         />
                       );
                     })() : (

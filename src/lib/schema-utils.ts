@@ -12,6 +12,7 @@ export interface Parameter {
   maxLength?: number;
   items?: { type: string; format?: string };
   format?: string;
+  showToUser?: boolean; // Control visibility in end-user forms (default: true)
 }
 
 /**
@@ -44,7 +45,8 @@ export function parseSchema(schema: Record<string, any>): Parameter[] {
       minLength: prop.minLength,
       maxLength: prop.maxLength,
       items: prop.items,
-      format: prop.format
+      format: prop.format,
+      showToUser: prop.showToUser !== undefined ? prop.showToUser : true // Default to true for backward compatibility
     });
   });
 
@@ -98,6 +100,11 @@ export function generateSchema(parameters: Parameter[]): Record<string, any> {
 
     if (param.type === 'array' && param.items) {
       property.items = param.items;
+    }
+
+    // Save showToUser flag (only if explicitly set to false, to keep backward compatibility)
+    if (param.showToUser === false) {
+      property.showToUser = false;
     }
 
     schema.properties[param.name] = property;

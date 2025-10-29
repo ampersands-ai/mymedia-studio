@@ -22,10 +22,16 @@ interface SchemaInputProps {
   modelSchema?: any;
   rows?: number;
   modelId?: string;
+  provider?: string;
 }
 
-export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema, rows, modelId }: SchemaInputProps) => {
+export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema, rows, modelId, provider }: SchemaInputProps) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  // Check if showToUser flag should hide this field (only for runware provider)
+  if (provider === 'runware' && schema.showToUser === false) {
+    return null;
+  }
   
   // Check if this field should be visible based on conditional dependencies
   const shouldShowField = () => {

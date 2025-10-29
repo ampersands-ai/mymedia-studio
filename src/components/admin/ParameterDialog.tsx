@@ -44,6 +44,7 @@ export function ParameterDialog({
     description: '',
     type: 'string',
     required: false,
+    showToUser: true,
   });
   const [enumInput, setEnumInput] = useState('');
   const [enumList, setEnumList] = useState<any[]>([]);
@@ -59,6 +60,7 @@ export function ParameterDialog({
         description: '',
         type: 'string',
         required: false,
+        showToUser: true,
       });
       setEnumList([]);
     }
@@ -229,6 +231,25 @@ export function ParameterDialog({
                 </label>
               </div>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="block">Visibility</Label>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="showToUser"
+                checked={formData.showToUser !== false}
+                onCheckedChange={(checked) => 
+                  setFormData({ ...formData, showToUser: checked as boolean })
+                }
+              />
+              <label htmlFor="showToUser" className="text-sm cursor-pointer">
+                Show to end users
+              </label>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              When unchecked, this parameter will be hidden from users (applies to runware models only)
+            </p>
           </div>
 
           <div className="space-y-2">

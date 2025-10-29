@@ -19,7 +19,6 @@ const plans = [
     tokens: "5",
     perToken: "Always Free",
     features: [
-      "5 credits included",
       "Watermark on videos",
       "Limited access",
       "Basic support",
@@ -36,7 +35,6 @@ const plans = [
     tokens: "100",
     perToken: "$0.08 per credit",
     features: [
-      "100 credits",
       "No watermark",
       "Global availability",
       "Priority rendering",
@@ -56,7 +54,6 @@ const plans = [
     tokens: "325",
     perToken: "$0.061 per credit",
     features: [
-      "325 credits",
       "No watermark",
       "Unlimited image & text gens",
       "Priority rendering",
@@ -77,7 +74,6 @@ const plans = [
     tokens: "750",
     perToken: "$0.053 per credit",
     features: [
-      "750 credits",
       "No watermark",
       "Commercial license",
       "Fastest rendering priority",
@@ -99,7 +95,6 @@ const plans = [
     tokens: "2,000",
     perToken: "$0.045 per credit",
     features: [
-      "2,000 credits",
       "No watermark",
       "Commercial license",
       "Fastest rendering priority",

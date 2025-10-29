@@ -7,14 +7,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Slider } from '@/components/ui/slider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Coins, Sparkles, Volume2, Clock } from 'lucide-react';
+import { Loader2, Coins, Sparkles, Volume2, Clock, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { VoiceSelector } from '../generation/VoiceSelector';
 import { BackgroundMediaSelector } from './BackgroundMediaSelector';
 import { captionPresets, aspectRatioConfig } from '@/config/captionStyles';
+import { CaptionStyle } from '@/types/video';
 
 export function VideoCreator() {
   const [topic, setTopic] = useState('');
@@ -26,6 +29,8 @@ export function VideoCreator() {
   const [isGeneratingTopic, setIsGeneratingTopic] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16' | '4:5' | '1:1'>('4:5');
   const [captionStyle, setCaptionStyle] = useState<string>('modern');
+  const [customCaptionStyle, setCustomCaptionStyle] = useState<CaptionStyle>(captionPresets.modern);
+  const [captionCustomizationOpen, setCaptionCustomizationOpen] = useState(true);
   const [backgroundVideoUrl, setBackgroundVideoUrl] = useState<string>('');
   const [backgroundThumbnail, setBackgroundThumbnail] = useState<string>('');
   const [backgroundMediaType, setBackgroundMediaType] = useState<'video' | 'image'>('video');
@@ -76,7 +81,7 @@ export function VideoCreator() {
       background_video_url: backgroundVideoUrl || undefined,
       background_video_thumbnail: backgroundThumbnail || undefined,
       background_media_type: backgroundMediaType,
-      caption_style: captionPresets[captionStyle],
+      caption_style: customCaptionStyle,
     });
 
     // Don't reset form - keep current generation visible until user explicitly cancels/resets
@@ -231,25 +236,271 @@ export function VideoCreator() {
           </p>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="captionStyle" className="text-sm font-bold">
-            Caption Style
-          </Label>
-          <Select value={captionStyle} onValueChange={setCaptionStyle} disabled={isDisabled}>
-            <SelectTrigger id="captionStyle">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="modern">Modern (Large, Bold, Centered)</SelectItem>
-              <SelectItem value="minimal">Minimal (Bottom, Clean)</SelectItem>
-              <SelectItem value="bold">Bold (Gold, Impact Font)</SelectItem>
-              <SelectItem value="elegant">Elegant (Serif, Bottom)</SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            Animated word-by-word captions
-          </p>
-        </div>
+        <Collapsible 
+          open={captionCustomizationOpen} 
+          onOpenChange={setCaptionCustomizationOpen}
+          className="space-y-2"
+        >
+          <CollapsibleTrigger className="flex items-center justify-between w-full group">
+            <Label className="text-sm font-bold">Customize Captions</Label>
+            <ChevronDown 
+              className={`h-4 w-4 transition-transform ${captionCustomizationOpen ? 'rotate-180' : ''}`} 
+            />
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent className="space-y-4 pt-2">
+            {/* Preset selector */}
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Start with a Preset</Label>
+              <Select 
+                value={captionStyle} 
+                onValueChange={(value) => {
+                  setCaptionStyle(value);
+                  setCustomCaptionStyle(captionPresets[value]);
+                }} 
+                disabled={isDisabled}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="modern">Modern</SelectItem>
+                  <SelectItem value="minimal">Minimal</SelectItem>
+                  <SelectItem value="bold">Bold</SelectItem>
+                  <SelectItem value="elegant">Elegant</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Text Color Picker */}
+            <div className="space-y-2">
+              <Label className="text-xs">Text Color</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start gap-2"
+                    disabled={isDisabled}
+                  >
+                    <div 
+                      className="w-6 h-6 rounded border-2" 
+                      style={{ backgroundColor: customCaptionStyle.textColor }}
+                    />
+                    {customCaptionStyle.textColor}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64">
+                  <Input
+                    type="color"
+                    value={customCaptionStyle.textColor}
+                    onChange={(e) => setCustomCaptionStyle({
+                      ...customCaptionStyle,
+                      textColor: e.target.value
+                    })}
+                    className="h-10 cursor-pointer"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Background Color Picker */}
+            <div className="space-y-2">
+              <Label className="text-xs">Background Color</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start gap-2"
+                    disabled={isDisabled}
+                  >
+                    <div 
+                      className="w-6 h-6 rounded border-2" 
+                      style={{ backgroundColor: customCaptionStyle.backgroundColor }}
+                    />
+                    {customCaptionStyle.backgroundColor}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64">
+                  <Input
+                    type="color"
+                    value={customCaptionStyle.backgroundColor}
+                    onChange={(e) => setCustomCaptionStyle({
+                      ...customCaptionStyle,
+                      backgroundColor: e.target.value
+                    })}
+                    className="h-10 cursor-pointer"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Font Size Slider */}
+            <div className="space-y-2">
+              <Label className="text-xs">
+                Font Size: {customCaptionStyle.fontSize}px
+              </Label>
+              <Slider
+                min={30}
+                max={80}
+                step={1}
+                value={[customCaptionStyle.fontSize]}
+                onValueChange={(value) => setCustomCaptionStyle({
+                  ...customCaptionStyle,
+                  fontSize: value[0]
+                })}
+                disabled={isDisabled}
+              />
+            </div>
+
+            {/* Line Height Slider */}
+            <div className="space-y-2">
+              <Label className="text-xs">
+                Line Height: {customCaptionStyle.lineHeight?.toFixed(1) ?? 1.3}
+              </Label>
+              <Slider
+                min={1.0}
+                max={2.0}
+                step={0.1}
+                value={[customCaptionStyle.lineHeight ?? 1.3]}
+                onValueChange={(value) => setCustomCaptionStyle({
+                  ...customCaptionStyle,
+                  lineHeight: value[0]
+                })}
+                disabled={isDisabled}
+              />
+            </div>
+
+            {/* Background Opacity Slider */}
+            <div className="space-y-2">
+              <Label className="text-xs">
+                Background Opacity: {((customCaptionStyle.backgroundOpacity ?? 0.95) * 100).toFixed(0)}%
+              </Label>
+              <Slider
+                min={0}
+                max={100}
+                step={5}
+                value={[(customCaptionStyle.backgroundOpacity ?? 0.95) * 100]}
+                onValueChange={(value) => setCustomCaptionStyle({
+                  ...customCaptionStyle,
+                  backgroundOpacity: value[0] / 100
+                })}
+                disabled={isDisabled}
+              />
+            </div>
+
+            {/* Background Padding Slider */}
+            <div className="space-y-2">
+              <Label className="text-xs">
+                Background Padding: {customCaptionStyle.backgroundPadding ?? 15}px
+              </Label>
+              <Slider
+                min={0}
+                max={30}
+                step={1}
+                value={[customCaptionStyle.backgroundPadding ?? 15]}
+                onValueChange={(value) => setCustomCaptionStyle({
+                  ...customCaptionStyle,
+                  backgroundPadding: value[0]
+                })}
+                disabled={isDisabled}
+              />
+            </div>
+
+            {/* Border Radius Slider */}
+            <div className="space-y-2">
+              <Label className="text-xs">
+                Border Radius: {customCaptionStyle.backgroundBorderRadius ?? 8}px
+              </Label>
+              <Slider
+                min={0}
+                max={20}
+                step={1}
+                value={[customCaptionStyle.backgroundBorderRadius ?? 8]}
+                onValueChange={(value) => setCustomCaptionStyle({
+                  ...customCaptionStyle,
+                  backgroundBorderRadius: value[0]
+                })}
+                disabled={isDisabled}
+              />
+            </div>
+
+            {/* Horizontal Alignment */}
+            <div className="space-y-2">
+              <Label className="text-xs">Horizontal Alignment</Label>
+              <Select 
+                value={customCaptionStyle.horizontalAlignment ?? 'center'} 
+                onValueChange={(value: 'left' | 'center' | 'right') => 
+                  setCustomCaptionStyle({
+                    ...customCaptionStyle,
+                    horizontalAlignment: value
+                  })
+                } 
+                disabled={isDisabled}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Vertical Alignment */}
+            <div className="space-y-2">
+              <Label className="text-xs">Vertical Alignment</Label>
+              <Select 
+                value={customCaptionStyle.verticalAlignment ?? 'center'} 
+                onValueChange={(value: 'top' | 'center' | 'bottom') => 
+                  setCustomCaptionStyle({
+                    ...customCaptionStyle,
+                    verticalAlignment: value
+                  })
+                } 
+                disabled={isDisabled}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="top">Top</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="bottom">Bottom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Preview Box */}
+            <div 
+              className="mt-4 p-4 rounded-lg border-2 border-dashed relative"
+              style={{ minHeight: '100px' }}
+            >
+              <div className="text-xs text-muted-foreground mb-2">Caption Preview</div>
+              <div 
+                className="inline-block px-3 py-2 rounded"
+                style={{
+                  backgroundColor: customCaptionStyle.backgroundColor,
+                  opacity: customCaptionStyle.backgroundOpacity ?? 0.95,
+                  padding: `${customCaptionStyle.backgroundPadding ?? 15}px`,
+                  borderRadius: `${customCaptionStyle.backgroundBorderRadius ?? 8}px`
+                }}
+              >
+                <span 
+                  style={{
+                    color: customCaptionStyle.textColor,
+                    fontSize: `${Math.min(customCaptionStyle.fontSize / 2, 24)}px`,
+                    fontWeight: customCaptionStyle.fontWeight,
+                    lineHeight: customCaptionStyle.lineHeight ?? 1.3
+                  }}
+                >
+                  Sample Caption Text
+                </span>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         <BackgroundMediaSelector
           style={style}

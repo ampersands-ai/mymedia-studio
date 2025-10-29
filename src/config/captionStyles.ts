@@ -2,15 +2,21 @@ import { CaptionStyle } from '@/types/video';
 
 export const captionPresets: Record<string, CaptionStyle> = {
   modern: {
-    position: 'center',
-    animation: 'zoom',
-    fontSize: 48, // Optimized for Shotstack
+    position: 'bottom',
+    animation: 'fade',
+    fontSize: 55,
     fontWeight: 'black',
-    fontFamily: 'Montserrat ExtraBold',
-    textColor: '#FFFFFF',
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    strokeColor: '#000000',
-    strokeWidth: 3
+    fontFamily: 'Space Grotesk Bold',
+    fontUrl: 'https://github.com/floriankarsten/space-grotesk/raw/master/fonts/SpaceGrotesk-Bold.ttf',
+    textColor: '#000000',
+    backgroundColor: '#FF9947',
+    backgroundOpacity: 0.95,
+    backgroundPadding: 15,
+    backgroundBorderRadius: 8,
+    lineHeight: 1.3,
+    offsetY: 0.15,
+    horizontalAlignment: 'center',
+    verticalAlignment: 'center'
   },
   minimal: {
     position: 'bottom',
@@ -19,7 +25,14 @@ export const captionPresets: Record<string, CaptionStyle> = {
     fontWeight: 'bold',
     fontFamily: 'Clear Sans',
     textColor: '#FFFFFF',
-    backgroundColor: 'rgba(0,0,0,0.85)'
+    backgroundColor: '#000000',
+    backgroundOpacity: 0.85,
+    backgroundPadding: 12,
+    backgroundBorderRadius: 6,
+    lineHeight: 1.2,
+    offsetY: 0.1,
+    horizontalAlignment: 'center',
+    verticalAlignment: 'center'
   },
   bold: {
     position: 'center',
@@ -28,7 +41,12 @@ export const captionPresets: Record<string, CaptionStyle> = {
     fontWeight: 'black',
     fontFamily: 'Permanent Marker',
     textColor: '#FFD700',
-    backgroundColor: 'rgba(0,0,0,0)',
+    backgroundColor: '#000000',
+    backgroundOpacity: 0,
+    lineHeight: 1.4,
+    offsetY: 0,
+    horizontalAlignment: 'center',
+    verticalAlignment: 'center',
     strokeColor: '#000000',
     strokeWidth: 4
   },
@@ -39,7 +57,14 @@ export const captionPresets: Record<string, CaptionStyle> = {
     fontWeight: 'normal',
     fontFamily: 'Didact Gothic',
     textColor: '#FFFFFF',
-    backgroundColor: 'rgba(30,30,60,0.85)'
+    backgroundColor: '#1E1E3C',
+    backgroundOpacity: 0.85,
+    backgroundPadding: 10,
+    backgroundBorderRadius: 4,
+    lineHeight: 1.3,
+    offsetY: 0.08,
+    horizontalAlignment: 'center',
+    verticalAlignment: 'center'
   }
 };
 

@@ -7,8 +7,16 @@ export interface CaptionStyle {
   fontSize: number;
   fontWeight: 'normal' | 'bold' | 'black';
   fontFamily: string;
+  fontUrl?: string;
   textColor: string;
   backgroundColor: string;
+  backgroundOpacity?: number;
+  backgroundPadding?: number;
+  backgroundBorderRadius?: number;
+  lineHeight?: number;
+  offsetY?: number;
+  horizontalAlignment?: 'left' | 'center' | 'right';
+  verticalAlignment?: 'top' | 'center' | 'bottom';
   strokeColor?: string;
   strokeWidth?: number;
 }

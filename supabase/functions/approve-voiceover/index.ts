@@ -547,20 +547,28 @@ async function assembleVideo(
   console.log(`Assembling video with Shotstack - ${config.width}x${config.height} (${aspectRatio})`);
 
   // Build Shotstack JSON using official format
-  const edit = {
+  const edit: any = {
     timeline: {
       background: '#000000',
       tracks: [] as any[]
     },
     output: {
       format: 'mp4',
-      fps: 30, // Increased from 25 for smoother playback
+      fps: 30,
       size: {
         width: config.width,
         height: config.height
       }
     }
   };
+
+  // Add fonts array if custom font URL provided
+  if (style?.fontUrl) {
+    edit.timeline.fonts = [{
+      src: style.fontUrl
+    }];
+    console.log('Added custom font:', style.fontUrl);
+  }
 
   // Track 0: Audio with alias (for caption sync)
   edit.timeline.tracks.push({
@@ -571,25 +579,46 @@ async function assembleVideo(
       },
       start: 0,
       length: 'auto',
-      alias: 'VOICEOVER' // Alias for caption generation
+      alias: 'VOICEOVER'
     }]
   });
 
-  // Track 1: Auto-generated captions (renders on top of video)
-  const captionAsset = {
-    type: 'caption',
-    src: 'alias://VOICEOVER' // Auto-sync to voiceover audio
+  // Track 1: Rich caption with custom styling
+  const captionClip: any = {
+    start: 0,
+    length: 'auto',
+    position: style?.position || 'bottom',
+    asset: {
+      type: 'caption',
+      trim: 0,
+      src: 'alias://VOICEOVER',
+      alignment: {
+        horizontal: style?.horizontalAlignment || 'center',
+        vertical: style?.verticalAlignment || 'center'
+      },
+      background: {
+        padding: style?.backgroundPadding ?? 15,
+        color: style?.backgroundColor || '#FF9947',
+        borderRadius: style?.backgroundBorderRadius ?? 8,
+        opacity: style?.backgroundOpacity ?? 0.95
+      },
+      font: {
+        lineHeight: style?.lineHeight ?? 1.3,
+        family: style?.fontFamily || 'Space Grotesk Bold',
+        size: style?.fontSize || 55,
+        color: style?.textColor || '#000000'
+      }
+    },
+    offset: {
+      y: style?.offsetY ?? 0.15
+    }
   };
 
   edit.timeline.tracks.push({
-    clips: [{
-      asset: captionAsset,
-      start: 0,
-      length: 'auto'
-    }]
+    clips: [captionClip]
   });
 
-  console.log('Using minimal auto-captions (validated to work with Shotstack)');
+  console.log('Using rich caption styling with custom font and alignment');
 
   // Track 2: Background media (bottom layer)
   if (backgroundMediaType === 'image' && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {

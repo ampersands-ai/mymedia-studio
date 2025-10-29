@@ -240,6 +240,7 @@ export function ModelFormDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="kie_ai">Kie.ai</SelectItem>
+                  <SelectItem value="runware">Runware</SelectItem>
                   <SelectItem value="json2video">JSON2Video</SelectItem>
                   <SelectItem value="shotstack">Shotstack</SelectItem>
                   <SelectItem value="comfyui">ComfyUI</SelectItem>

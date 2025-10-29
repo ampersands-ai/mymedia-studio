@@ -29,6 +29,9 @@ export async function callProvider(
       }
       return await callKieAI(request, webhookToken);
     
+    case 'runware':
+      throw new Error('Runware provider not yet implemented. Please configure in providers/runware.ts');
+    
     case 'json2video':
       throw new Error('JSON2Video provider not yet implemented. Please configure in providers/json2video.ts');
     

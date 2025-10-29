@@ -16,10 +16,10 @@ const plans = [
     price: "FREE",
     monthlyPrice: "FREE",
     annualPrice: "FREE",
-    tokens: "500",
+    tokens: "5",
     perToken: "Always Free",
     features: [
-      "500 credits included",
+      "5 credits included",
       "Watermark on videos",
       "Limited access",
       "Basic support",
@@ -237,7 +237,7 @@ const Pricing = () => {
           "name": "Does Artifio.ai offer a free plan?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes, Artifio.ai offers a Freemium plan with 500 free credits. No credit card required. Perfect for testing the platform before upgrading."
+            "text": "Yes, Artifio.ai offers a Freemium plan with 5 free credits. No credit card required. Perfect for testing the platform before upgrading."
           }
         }
       ]

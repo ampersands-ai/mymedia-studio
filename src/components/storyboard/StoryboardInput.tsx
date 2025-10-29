@@ -1,27 +1,15 @@
-import { useState, useRef } from 'react';
-import { Card } from '@/components/ui/card';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Loader2, Film, Coins, Sparkles, Play, Volume2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { useUserTokens } from '@/hooks/useUserTokens';
+import { Sparkles, Film, Coins, Volume2, Play, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import hyperRealisticImg from '@/assets/styles/hyper-realistic.jpg';
-import cinematicImg from '@/assets/styles/cinematic.jpg';
-import animatedImg from '@/assets/styles/animated.jpg';
-import cartoonImg from '@/assets/styles/cartoon.jpg';
-import naturalImg from '@/assets/styles/natural.jpg';
-import sketchImg from '@/assets/styles/sketch.jpg';
 
 const VOICES = [
   { id: 'en-US-AndrewMultilingualNeural', name: 'Andrew (US Male)' },
@@ -33,42 +21,12 @@ const VOICES = [
 ];
 
 const STYLES = [
-  {
-    value: 'hyper-realistic',
-    label: 'Hyper Realistic',
-    image: hyperRealisticImg,
-    description: 'Ultra-realistic, photo-quality visuals'
-  },
-  {
-    value: 'cinematic',
-    label: 'Cinematic',
-    image: cinematicImg,
-    description: 'Movie-like dramatic lighting & composition'
-  },
-  {
-    value: 'animated',
-    label: 'Animated',
-    image: animatedImg,
-    description: '3D rendered, Pixar-style animation'
-  },
-  {
-    value: 'cartoon',
-    label: 'Cartoon',
-    image: cartoonImg,
-    description: '2D illustrated, playful cartoon style'
-  },
-  {
-    value: 'natural',
-    label: 'Natural',
-    image: naturalImg,
-    description: 'Natural photography, authentic look'
-  },
-  {
-    value: 'sketch',
-    label: 'Sketch',
-    image: sketchImg,
-    description: 'Hand-drawn, artistic pencil sketch'
-  },
+  { value: 'hyper-realistic', label: 'Hyper Realistic', emoji: '📷' },
+  { value: 'cinematic', label: 'Cinematic', emoji: '🎬' },
+  { value: 'animated', label: 'Animated', emoji: '✨' },
+  { value: 'cartoon', label: 'Cartoon', emoji: '🎨' },
+  { value: 'natural', label: 'Natural', emoji: '🍃' },
+  { value: 'sketch', label: 'Sketch', emoji: '✏️' },
 ];
 
 const TONES = [
@@ -102,17 +60,17 @@ const TOPIC_SUGGESTIONS = [
   'The science behind love at first sight',
 ];
 
-export const StoryboardInput = () => {
-  const { generateStoryboard, isGenerating } = useStoryboard();
-  const { data: tokenData } = useUserTokens();
-
+export function StoryboardInput() {
   const [topic, setTopic] = useState('');
-  const [duration, setDuration] = useState<number>(30);
+  const [duration, setDuration] = useState(60);
   const [style, setStyle] = useState('hyper-realistic');
   const [tone, setTone] = useState('engaging');
-  const [voiceID, setVoiceID] = useState(VOICES[0].id);
+  const [voiceID, setVoiceID] = useState('en-US-AndrewMultilingualNeural');
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
-  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
+
+  const { generateStoryboard, isGenerating } = useStoryboard();
+  const { data: tokenData } = useUserTokens();
 
   const estimatedCost = 250;
   const canGenerate = topic.length >= 5 && topic.length <= 500 && (tokenData?.tokens_remaining || 0) >= estimatedCost;
@@ -124,24 +82,19 @@ export const StoryboardInput = () => {
   };
 
   const handlePlayVoicePreview = (voiceId: string, voiceName: string) => {
-    // Stop any currently playing voice
-    if (speechSynthesisRef.current) {
-      window.speechSynthesis.cancel();
-    }
-
     if (playingVoice === voiceId) {
+      window.speechSynthesis.cancel();
       setPlayingVoice(null);
       return;
     }
 
+    window.speechSynthesis.cancel();
     setPlayingVoice(voiceId);
 
-    // Create speech synthesis utterance
     const utterance = new SpeechSynthesisUtterance(
       'Hello! This is a preview of how your video voiceover will sound. I will narrate your storyboard with this voice.'
     );
 
-    // Try to match voice characteristics
     const voices = window.speechSynthesis.getVoices();
     const genderMatch = voiceName.toLowerCase().includes('male') && !voiceName.toLowerCase().includes('female') ? 'male' : 'female';
     const regionMatch = voiceName.includes('US') ? 'en-US' : voiceName.includes('UK') ? 'en-GB' : voiceName.includes('AU') ? 'en-AU' : 'en-US';
@@ -158,12 +111,8 @@ export const StoryboardInput = () => {
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
+    utterance.onend = () => setPlayingVoice(null);
 
-    utterance.onend = () => {
-      setPlayingVoice(null);
-    };
-
-    speechSynthesisRef.current = utterance;
     window.speechSynthesis.speak(utterance);
   };
 
@@ -192,224 +141,144 @@ export const StoryboardInput = () => {
   };
 
   return (
-    <Card className="relative overflow-hidden bg-gradient-to-br from-background via-background to-primary/5 backdrop-blur-xl border-primary/20">
-      <div className="absolute inset-0 bg-grid-white/[0.02] pointer-events-none" />
+    <Card className="relative overflow-hidden bg-card border-2">
+      <CardHeader className="space-y-2">
+        <CardTitle className="text-xl font-black flex items-center gap-2">
+          <Film className="w-5 h-5" />
+          CREATE STORYBOARD
+        </CardTitle>
+        <CardDescription className="text-sm">
+          Generate AI-powered video scripts with full editing control
+        </CardDescription>
+      </CardHeader>
       
-      <div className="relative p-6 md:p-8 space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-            <Film className="w-8 h-8 text-primary" />
-          </div>
-          <h2 className="text-3xl font-black">AI STORYBOARD GENERATOR</h2>
-          <p className="text-muted-foreground">
-            Describe your topic and let AI create an engaging video script
-          </p>
-        </div>
-
+      <CardContent className="space-y-4">
         {/* Topic Input */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="topic" className="text-sm font-semibold">
-              Video Topic
-            </Label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleSurpriseMe}
-              disabled={isGenerating}
-              className="gap-2 h-8 text-xs"
-            >
-              <Sparkles className="w-3 h-3" />
-              Surprise Me
-            </Button>
-          </div>
+          <Label htmlFor="topic" className="text-sm font-medium">
+            Video Topic *
+          </Label>
           <Textarea
             id="topic"
-            placeholder="e.g., Why octopuses have 3 hearts, The science behind lucid dreaming, How ancient pyramids were built..."
+            placeholder="e.g., 'The Science Behind Dreams' or 'Top 5 Ancient Civilizations'"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            className="min-h-[120px] resize-none bg-background/50"
-            maxLength={500}
+            className="min-h-[80px] resize-none"
             disabled={isGenerating}
           />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{topic.length}/500 characters</span>
-            {topic.length < 5 && <span className="text-destructive">Minimum 5 characters</span>}
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleSurpriseMe}
+            disabled={isGenerating}
+            className="gap-2"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Surprise Me
+          </Button>
         </div>
 
         {/* Duration */}
         <div className="space-y-2">
-          <Label className="text-sm font-semibold">Video Duration</Label>
-          <RadioGroup
-            value={duration.toString()}
-            onValueChange={(value) => setDuration(Number(value))}
-            className="grid grid-cols-4 gap-3"
-            disabled={isGenerating}
-          >
-            {[30, 60, 90, 120].map((d) => (
-              <div key={d} className="relative">
-                <RadioGroupItem value={d.toString()} id={`duration-${d}`} className="peer sr-only" />
-                <Label
-                  htmlFor={`duration-${d}`}
-                  className={cn(
-                    "flex items-center justify-center rounded-lg border-2 border-muted bg-background p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 cursor-pointer transition-all",
-                    "font-semibold"
-                  )}
-                >
-                  {d < 60 ? `${d}s` : `${d / 60}m`}
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
+          <Label className="text-sm font-medium">Video Duration</Label>
+          <Select value={duration.toString()} onValueChange={(value) => setDuration(parseInt(value))} disabled={isGenerating}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="30">30 seconds (~4 scenes)</SelectItem>
+              <SelectItem value="60">60 seconds (~8 scenes)</SelectItem>
+              <SelectItem value="90">90 seconds (~12 scenes)</SelectItem>
+              <SelectItem value="120">120 seconds (~16 scenes)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Style */}
         <div className="space-y-2">
-          <Label className="text-sm font-semibold">Video Style</Label>
-          
-          <RadioGroup
-            value={style}
-            onValueChange={setStyle}
-            className="grid grid-cols-2 md:grid-cols-3 gap-3"
-            disabled={isGenerating}
-          >
-            {STYLES.map((styleOption) => (
-              <div key={styleOption.value} className="relative group">
-                <RadioGroupItem 
-                  value={styleOption.value} 
-                  id={`style-${styleOption.value}`} 
-                  className="peer sr-only" 
-                />
-                <Label
-                  htmlFor={`style-${styleOption.value}`}
-                  className={cn(
-                    "block cursor-pointer rounded-lg overflow-hidden transition-all",
-                    "border-2 border-muted hover:border-primary/50",
-                    "peer-data-[state=checked]:border-primary peer-data-[state=checked]:ring-4 peer-data-[state=checked]:ring-primary/20",
-                    "transform hover:scale-105 active:scale-95"
-                  )}
-                >
-                  {/* Image Container */}
-                  <div className="relative aspect-video overflow-hidden bg-muted">
-                    <img
-                      src={styleOption.image}
-                      alt={styleOption.label}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      loading="lazy"
-                    />
-                    
-                    {/* Overlay Gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    
-                    {/* Selected Checkmark */}
-                    {style === styleOption.value && (
-                      <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center animate-in zoom-in-50">
-                        <svg className="w-4 h-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    )}
-                    
-                    {/* Style Name */}
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <p className="text-white font-bold text-sm leading-tight">
-                        {styleOption.label}
-                      </p>
-                      <p className="text-white/70 text-xs mt-0.5 line-clamp-1">
-                        {styleOption.description}
-                      </p>
-                    </div>
-                  </div>
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
+          <Label className="text-sm font-medium">Video Style</Label>
+          <Select value={style} onValueChange={setStyle} disabled={isGenerating}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STYLES.map((styleOption) => (
+                <SelectItem key={styleOption.value} value={styleOption.value}>
+                  {styleOption.emoji} {styleOption.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Voice */}
+        {/* Voice Selection */}
         <div className="space-y-2">
-          <Label className="text-sm font-semibold flex items-center gap-2">
-            <Volume2 className="w-4 h-4" />
-            Voice Selection
-          </Label>
-          
-          <RadioGroup
-            value={voiceID}
-            onValueChange={setVoiceID}
-            className="space-y-2"
-            disabled={isGenerating}
-          >
-            {VOICES.map((voice) => (
-              <div key={voice.id} className="relative group">
-                <RadioGroupItem 
-                  value={voice.id} 
-                  id={`voice-${voice.id}`} 
-                  className="peer sr-only" 
-                />
-                <Label
-                  htmlFor={`voice-${voice.id}`}
-                  className={cn(
-                    "flex items-center justify-between p-4 rounded-lg border-2 cursor-pointer transition-all",
-                    "bg-background/50 hover:bg-accent/50 hover:border-primary/30",
-                    "peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10",
-                    "peer-data-[state=checked]:shadow-lg peer-data-[state=checked]:shadow-primary/20"
-                  )}
-                >
-                  {/* Voice Name */}
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-2 h-2 rounded-full transition-colors",
-                      voiceID === voice.id ? "bg-primary animate-pulse" : "bg-muted"
-                    )} />
-                    <span className="font-medium text-sm">{voice.name}</span>
-                  </div>
-                  
-                  {/* Play Button */}
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={playingVoice === voice.id ? "default" : "ghost"}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handlePlayVoicePreview(voice.id, voice.name);
-                    }}
-                    disabled={isGenerating}
+          <Label className="text-sm font-medium">Voiceover</Label>
+          <Dialog open={voiceDialogOpen} onOpenChange={setVoiceDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full justify-start" disabled={isGenerating}>
+                <Volume2 className="w-4 h-4 mr-2" />
+                {VOICES.find(v => v.id === voiceID)?.name}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Choose a Voice</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                {VOICES.map((voice) => (
+                  <div
+                    key={voice.id}
                     className={cn(
-                      "gap-2 h-8 px-3",
-                      playingVoice === voice.id && "animate-pulse"
+                      "flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all",
+                      voiceID === voice.id
+                        ? "border-primary bg-primary/10"
+                        : "border-muted hover:border-primary/50 hover:bg-accent/50"
                     )}
+                    onClick={() => {
+                      setVoiceID(voice.id);
+                      setVoiceDialogOpen(false);
+                    }}
                   >
-                    {playingVoice === voice.id ? (
-                      <>
-                        <Volume2 className="w-3.5 h-3.5" />
-                        Playing...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-3.5 h-3.5" />
-                        Preview
-                      </>
-                    )}
-                  </Button>
-                </Label>
+                    <span className="font-medium text-sm">{voice.name}</span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlayVoicePreview(voice.id, voice.name);
+                      }}
+                      className="gap-2"
+                    >
+                      {playingVoice === voice.id ? (
+                        <>
+                          <Volume2 className="w-3.5 h-3.5" />
+                          Playing
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-3.5 h-3.5" />
+                          Preview
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ))}
               </div>
-            ))}
-          </RadioGroup>
-          
-          <p className="text-xs text-muted-foreground mt-2">
-            💡 Click "Preview" to hear each voice. Note: Preview uses browser voices (actual video uses Azure AI).
-          </p>
+              <p className="text-xs text-muted-foreground">
+                💡 Preview uses browser voices. Actual video uses Azure AI voices.
+              </p>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Tone */}
         <div className="space-y-2">
-          <Label className="text-sm font-semibold">Tone</Label>
+          <Label htmlFor="tone" className="text-sm font-medium">Tone & Style</Label>
           <Select value={tone} onValueChange={setTone} disabled={isGenerating}>
-            <SelectTrigger className="bg-background/50">
+            <SelectTrigger id="tone">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -422,54 +291,43 @@ export const StoryboardInput = () => {
           </Select>
         </div>
 
-        {/* Token Cost */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20">
-          <div className="flex items-center gap-2">
-            <Coins className="w-5 h-5 text-primary" />
-            <span className="text-sm font-semibold">Cost:</span>
-            <span className="text-sm text-muted-foreground">{estimatedCost} tokens</span>
+        {/* Token Cost Display */}
+        <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border">
+          <div className="flex items-center gap-2 text-sm">
+            <Coins className="w-4 h-4 text-primary" />
+            <span>Cost: <span className="font-bold">{estimatedCost}</span> tokens</span>
           </div>
-          <div className="text-sm text-muted-foreground">
-            Balance: <span className="font-semibold text-foreground">{tokenData?.tokens_remaining || 0}</span>
-          </div>
+          <span className="text-sm">
+            Balance: <span className="font-bold">{tokenData?.tokens_remaining || 0}</span>
+          </span>
         </div>
 
         {/* Generate Button */}
         <Button
           onClick={handleGenerate}
           disabled={!canGenerate || isGenerating}
-          className="w-full h-12 text-lg font-bold bg-gradient-to-r from-primary via-primary to-primary/80 hover:scale-105 transition-transform"
+          className="w-full"
         >
           {isGenerating ? (
             <>
-              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-              Generating Storyboard...
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Generating...
             </>
           ) : (
             <>
               Generate Storyboard
-              <Film className="w-5 h-5 ml-2" />
+              <Film className="w-4 h-4 ml-2" />
             </>
           )}
         </Button>
 
+        {/* Generation Status */}
         {isGenerating && (
-          <div className="space-y-3 pt-4">
-            <div className="flex items-center gap-3 text-sm">
-              <Loader2 className="w-4 h-4 animate-spin text-primary" />
-              <span className="font-medium">🎨 Researching topic...</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm opacity-70">
-              <div className="w-4 h-4" />
-              <span className="font-medium">✍️ Writing scenes...</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm opacity-50">
-              <div className="w-4 h-4" />
-              <span className="font-medium">🎬 Building storyboard...</span>
-            </div>
-          </div>
+          <p className="text-sm text-center text-muted-foreground">
+            ✨ AI is crafting your video script...
+          </p>
         )}
-      </div>
+      </CardContent>
     </Card>
   );
-};
+}

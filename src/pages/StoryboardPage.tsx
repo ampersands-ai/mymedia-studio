@@ -1,19 +1,22 @@
+import { useState, useEffect } from 'react';
 import { StoryboardInput } from '@/components/storyboard/StoryboardInput';
 import { StoryboardEditor } from '@/components/storyboard/StoryboardEditor';
 import { useStoryboard } from '@/hooks/useStoryboard';
-import { Film, Sparkles, Edit3, Video } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-
-const InfoCard = ({ icon, title, description }: { icon: string; title: string; description: string }) => (
-  <Card className="p-6 text-center hover:scale-105 transition-transform bg-white/5 backdrop-blur-xl border-white/20">
-    <div className="text-4xl mb-3">{icon}</div>
-    <h3 className="font-bold text-lg mb-2">{title}</h3>
-    <p className="text-sm text-muted-foreground">{description}</p>
-  </Card>
-);
+import { Film, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 
 export default function StoryboardPage() {
   const { storyboard } = useStoryboard();
+  const [showInputForm, setShowInputForm] = useState(true);
+
+  // Auto-collapse form when storyboard is generated
+  useEffect(() => {
+    if (storyboard) {
+      setShowInputForm(false);
+    }
+  }, [storyboard]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -33,33 +36,27 @@ export default function StoryboardPage() {
           </p>
         </div>
 
-        {/* Main Content - Conditional Rendering */}
-        {!storyboard ? (
-          <StoryboardInput />
-        ) : (
-          <StoryboardEditor />
-        )}
+        {/* Collapsible Input Form */}
+        <Collapsible open={showInputForm} onOpenChange={setShowInputForm} className="mb-6">
+          {storyboard && (
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full mb-4">
+                {showInputForm ? 'Hide Input Form' : 'Show Input Form'}
+                <ChevronDown className={cn(
+                  "ml-2 h-4 w-4 transition-transform",
+                  showInputForm && "rotate-180"
+                )} />
+              </Button>
+            </CollapsibleTrigger>
+          )}
+          
+          <CollapsibleContent>
+            <StoryboardInput />
+          </CollapsibleContent>
+        </Collapsible>
 
-        {/* Info Cards */}
-        {!storyboard && (
-          <div className="mt-12 grid sm:grid-cols-3 gap-6">
-            <InfoCard
-              icon="🎨"
-              title="AI-Powered Generation"
-              description="AI generates engaging scripts tailored to your topic"
-            />
-            <InfoCard
-              icon="✏️"
-              title="Full Editing Control"
-              description="Edit every scene's script and visuals before rendering"
-            />
-            <InfoCard
-              icon="🎬"
-              title="Professional Results"
-              description="High-quality videos with natural voiceover and visuals"
-            />
-          </div>
-        )}
+        {/* Storyboard Editor */}
+        {storyboard && <StoryboardEditor />}
       </div>
     </div>
   );

@@ -78,15 +78,17 @@ export const useGeneration = () => {
         }
       }
 
-      // Client-side prompt validation
-      if (!params.prompt || params.prompt.trim().length < 2) {
+      // Client-side prompt validation and mapping
+      const effectivePromptClient = (params.prompt || params.custom_parameters?.positivePrompt || params.custom_parameters?.prompt || '').trim();
+      if (effectivePromptClient.length < 2) {
         toast.error("Please enter a prompt at least 2 characters long.");
         throw new Error("Prompt is required");
       }
 
       // STEP 2: Proceed with generation using appropriate endpoint
+      const bodyToSend = { ...params, prompt: effectivePromptClient } as any;
       const { data, error } = await supabase.functions.invoke(functionName, {
-        body: params,
+        body: bodyToSend,
       });
 
       if (error) {

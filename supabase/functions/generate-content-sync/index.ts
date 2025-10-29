@@ -48,8 +48,14 @@ serve(async (req) => {
       workflow_step_number,
     } = await req.json();
 
-    // Validate prompt early (before any token deduction)
-    if (!prompt || prompt.trim().length < 2) {
+    // Compute effective prompt with fallbacks and validate early
+    const effectivePrompt = (
+      (prompt ?? '') ||
+      (custom_parameters?.positivePrompt ?? '') ||
+      (custom_parameters?.prompt ?? '')
+    ).toString().trim();
+
+    if (effectivePrompt.length < 2) {
       return new Response(
         JSON.stringify({ error: 'Prompt is required and must be at least 2 characters.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -213,8 +219,8 @@ serve(async (req) => {
         model_id: model.id,
         model_record_id: model.record_id,
         type: model.content_type,
-        prompt: prompt || '',
-        original_prompt: prompt || '',
+        prompt: effectivePrompt,
+        original_prompt: effectivePrompt,
         settings: parameters,
         tokens_used: tokenCost,
         actual_token_cost: tokenCost,
@@ -240,7 +246,7 @@ serve(async (req) => {
       // Call Runware provider synchronously
       const providerRequest = {
         model: model.id,
-        prompt: prompt || '',
+        prompt: effectivePrompt,
         parameters: parameters,
         api_endpoint: model.api_endpoint,
         payload_structure: model.payload_structure || 'flat'

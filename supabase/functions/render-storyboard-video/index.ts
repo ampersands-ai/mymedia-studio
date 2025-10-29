@@ -90,36 +90,81 @@ serve(async (req) => {
       throw new Error('Failed to deduct tokens');
     }
 
-    // Build payload for rendering service (json2video format)
+    // Build JSON2Video payload
+    const json2videoApiKey = Deno.env.get('JSON2VIDEO_API_KEY');
+    if (!json2videoApiKey) {
+      throw new Error('JSON2VIDEO_API_KEY not configured');
+    }
+
+    const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/json2video-webhook`;
+    
     const renderPayload = {
-      template: storyboard.template_id || 'default',
+      template: 'hae1en4rQdJHFgFS3545',
       variables: {
-        introImagePrompt: storyboard.intro_image_prompt,
-        introVoiceoverText: storyboard.intro_voiceover_text,
         scenes: scenes.map(s => ({
-          voiceOverText: s.voice_over_text,
           imagePrompt: s.image_prompt,
+          voiceOverText: s.voice_over_text,
         })),
+        voiceModel: storyboard.voice_model || 'azure',
+        imageModel: storyboard.image_model || 'freepik-classic',
+        subtitlesModel: storyboard.subtitles_model || 'default',
+        fontFamily: storyboard.font_family || 'Oswald Bold',
         voiceID: storyboard.voice_id,
-        style: storyboard.style,
+        introImagePrompt: storyboard.intro_image_prompt,
+        introText: storyboard.intro_voiceover_text,
       },
+      webhook: webhookUrl,
+      project: storyboardId
     };
 
-    // For now, simulate job creation (replace with actual API call)
-    const mockJobId = `storyboard_${storyboardId}_${Date.now()}`;
-    
+    console.log('[render-storyboard-video] Calling JSON2Video API with payload:', JSON.stringify(renderPayload, null, 2));
+
+    // Call JSON2Video API
+    const json2videoResponse = await fetch('https://api.json2video.com/v2/movies', {
+      method: 'POST',
+      headers: {
+        'x-api-key': json2videoApiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(renderPayload)
+    });
+
+    if (!json2videoResponse.ok) {
+      const errorText = await json2videoResponse.text();
+      console.error('[render-storyboard-video] JSON2Video API error:', json2videoResponse.status, errorText);
+      
+      // Refund tokens on API error
+      await supabaseClient.rpc('increment_tokens', {
+        user_id_param: user.id,
+        amount: tokenCost
+      });
+      
+      if (json2videoResponse.status === 429) {
+        throw new Error('JSON2Video rate limit exceeded. Please try again later.');
+      } else if (json2videoResponse.status === 401 || json2videoResponse.status === 403) {
+        throw new Error('JSON2Video API authentication failed. Please contact support.');
+      }
+      
+      throw new Error(`JSON2Video API error: ${json2videoResponse.status}`);
+    }
+
+    const json2videoData = await json2videoResponse.json();
+    const renderJobId = json2videoData.project || json2videoData.id;
+
+    console.log('[render-storyboard-video] JSON2Video render started:', renderJobId);
+
     // Update storyboard status
     const { error: updateError } = await supabaseClient
       .from('storyboards')
       .update({
         status: 'rendering',
-        render_job_id: mockJobId,
+        render_job_id: renderJobId,
         updated_at: new Date().toISOString()
       })
       .eq('id', storyboardId);
 
     if (updateError) {
-      console.error('Status update error:', updateError);
+      console.error('[render-storyboard-video] Status update error:', updateError);
       // Refund tokens
       await supabaseClient.rpc('increment_tokens', {
         user_id_param: user.id,
@@ -128,13 +173,12 @@ serve(async (req) => {
       throw new Error('Failed to update storyboard status');
     }
 
-    // TODO: Integrate with actual rendering service (json2video or similar)
-    // For now, return mock job ID
     return new Response(
       JSON.stringify({
-        jobId: mockJobId,
-        estimatedTime: 60,
-        payload: renderPayload
+        jobId: renderJobId,
+        estimatedTime: 180, // 3 minutes typical for JSON2Video
+        webhookConfigured: true,
+        message: 'Video rendering started. You will be notified when complete.'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

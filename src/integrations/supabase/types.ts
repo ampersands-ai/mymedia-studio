@@ -736,16 +736,21 @@ export type Database = {
       }
       storyboards: {
         Row: {
+          background_music_url: string | null
+          background_music_volume: number | null
           completed_at: string | null
           created_at: string | null
           duration: number
           estimated_render_cost: number | null
+          font_family: string | null
           id: string
+          image_model: string | null
           intro_image_prompt: string | null
           intro_voiceover_text: string | null
           render_job_id: string | null
           status: string
           style: string
+          subtitles_model: string | null
           template_id: string | null
           tokens_cost: number | null
           tone: string
@@ -755,19 +760,25 @@ export type Database = {
           video_storage_path: string | null
           video_url: string | null
           voice_id: string
+          voice_model: string | null
           voice_name: string
         }
         Insert: {
+          background_music_url?: string | null
+          background_music_volume?: number | null
           completed_at?: string | null
           created_at?: string | null
           duration: number
           estimated_render_cost?: number | null
+          font_family?: string | null
           id?: string
+          image_model?: string | null
           intro_image_prompt?: string | null
           intro_voiceover_text?: string | null
           render_job_id?: string | null
           status?: string
           style: string
+          subtitles_model?: string | null
           template_id?: string | null
           tokens_cost?: number | null
           tone: string
@@ -777,19 +788,25 @@ export type Database = {
           video_storage_path?: string | null
           video_url?: string | null
           voice_id: string
+          voice_model?: string | null
           voice_name: string
         }
         Update: {
+          background_music_url?: string | null
+          background_music_volume?: number | null
           completed_at?: string | null
           created_at?: string | null
           duration?: number
           estimated_render_cost?: number | null
+          font_family?: string | null
           id?: string
+          image_model?: string | null
           intro_image_prompt?: string | null
           intro_voiceover_text?: string | null
           render_job_id?: string | null
           status?: string
           style?: string
+          subtitles_model?: string | null
           template_id?: string | null
           tokens_cost?: number | null
           tone?: string
@@ -799,6 +816,7 @@ export type Database = {
           video_storage_path?: string | null
           video_url?: string | null
           voice_id?: string
+          voice_model?: string | null
           voice_name?: string
         }
         Relationships: []

@@ -1,5 +1,20 @@
 project_id = "gzlwkvmivbfcvczoqphq"
 
+[functions.generate-storyboard]
+verify_jwt = true
+
+[functions.render-storyboard-video]
+verify_jwt = true
+
+[functions.poll-storyboard-status]
+verify_jwt = true
+
+[functions.regenerate-storyboard-scene]
+verify_jwt = true
+
+[functions.json2video-webhook]
+verify_jwt = false
+
 [functions.session-manager]
 verify_jwt = true
 

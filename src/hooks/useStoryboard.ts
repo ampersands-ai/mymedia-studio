@@ -179,7 +179,7 @@ export const useStoryboard = () => {
     },
   });
 
-  // Poll render status
+  // Poll render status (reduced to 5 seconds for better UX)
   useEffect(() => {
     if (!isRendering || !currentStoryboardId) return;
 
@@ -196,20 +196,20 @@ export const useStoryboard = () => {
         if (data.status === 'complete') {
           setIsRendering(false);
           queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
-          toast.success('Video ready!');
+          toast.success('🎉 Video ready! Check the preview below.');
         } else if (data.status === 'failed') {
           setIsRendering(false);
-          toast.error('Video rendering failed');
+          toast.error('Video rendering failed. Tokens have been refunded.');
         }
       } catch (error) {
         console.error('Poll error:', error);
       }
-    }, 10000); // Poll every 10 seconds
+    }, 5000); // Poll every 5 seconds
 
     return () => clearInterval(interval);
   }, [isRendering, currentStoryboardId, queryClient]);
 
-  // Realtime subscription for storyboard updates
+  // Realtime subscription for storyboard updates (webhook notifications)
   useEffect(() => {
     if (!currentStoryboardId) return;
 
@@ -221,14 +221,25 @@ export const useStoryboard = () => {
         table: 'storyboards',
         filter: `id=eq.${currentStoryboardId}`
       }, (payload) => {
-        queryClient.setQueryData(['storyboard', currentStoryboardId], payload.new);
+        const updatedStoryboard = payload.new as Storyboard;
+        queryClient.setQueryData(['storyboard', currentStoryboardId], updatedStoryboard);
+        
+        // Show notification when webhook updates status
+        if (updatedStoryboard.status === 'complete' && isRendering) {
+          setIsRendering(false);
+          setRenderProgress(100);
+          toast.success('🎉 Video ready! (Webhook notification)');
+        } else if (updatedStoryboard.status === 'failed' && isRendering) {
+          setIsRendering(false);
+          toast.error('Video rendering failed. Tokens refunded.');
+        }
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentStoryboardId, queryClient]);
+  }, [currentStoryboardId, queryClient, isRendering]);
 
   const generateStoryboard = useCallback(async (input: StoryboardInput) => {
     setIsGenerating(true);

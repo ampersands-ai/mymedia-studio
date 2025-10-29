@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { callRunware } from "./providers/runware.ts";
-import { calculateTokenCost } from "../generate-content/utils/token-calculator.ts";
-import { uploadToStorage } from "../generate-content/utils/storage.ts";
+import { calculateTokenCost } from "./utils/token-calculator.ts";
+import { uploadToStorage } from "./utils/storage.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 
 const corsHeaders = {

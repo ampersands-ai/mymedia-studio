@@ -37,6 +37,7 @@ const Features = lazy(() => import("./pages/Features"));
 const Templates = lazy(() => import("./pages/Templates"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const VideoStudio = lazy(() => import("./pages/VideoStudio"));
+const StoryboardPage = lazy(() => import("./pages/StoryboardPage"));
 const DashboardLayout = lazy(() => import("./layouts/DashboardLayout").then(m => ({ default: m.DashboardLayout })));
 const AdminLayout = lazy(() => import("./layouts/AdminLayout").then(m => ({ default: m.AdminLayout })));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -116,6 +117,7 @@ const AppContent = () => {
               <Route path="templates" element={<Templates />} />
               <Route path="history" element={<History />} />
               <Route path="video-studio" element={<VideoStudio />} />
+              <Route path="storyboard" element={<StoryboardPage />} />
               <Route path="settings" element={<Settings />} />
             </Route>
             <Route path="/admin" element={<AdminLayout />}>

@@ -97,6 +97,20 @@ export const DashboardLayout = () => {
                   Faceless Videos
                 </Button>
               </Link>
+              <Link to="/dashboard/storyboard">
+                <Button
+                  variant={isActive("/dashboard/storyboard") ? "default" : "ghost"}
+                  className={cn(
+                    "text-base px-6 py-5 rounded-full",
+                    isActive("/dashboard/storyboard") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                >
+                  <span className="mr-2">🎬</span>
+                  Storyboard
+                </Button>
+              </Link>
             </nav>
 
             <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">

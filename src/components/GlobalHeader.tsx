@@ -94,6 +94,12 @@ export const GlobalHeader = () => {
               Templates
             </button>
             <button 
+              onClick={() => navigate("/dashboard/storyboard")}
+              className="text-foreground/80 hover:text-primary-orange transition-colors font-medium flex items-center gap-1"
+            >
+              🎬 Storyboard
+            </button>
+            <button 
               onClick={() => navigate("/pricing")}
               className="text-foreground/80 hover:text-primary-orange transition-colors font-medium"
             >

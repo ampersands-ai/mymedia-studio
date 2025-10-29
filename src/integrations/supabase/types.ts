@@ -690,6 +690,119 @@ export type Database = {
           },
         ]
       }
+      storyboard_scenes: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_preview_url: string | null
+          image_prompt: string
+          is_edited: boolean | null
+          order_number: number
+          storyboard_id: string
+          updated_at: string | null
+          voice_over_text: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_preview_url?: string | null
+          image_prompt: string
+          is_edited?: boolean | null
+          order_number: number
+          storyboard_id: string
+          updated_at?: string | null
+          voice_over_text: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_preview_url?: string | null
+          image_prompt?: string
+          is_edited?: boolean | null
+          order_number?: number
+          storyboard_id?: string
+          updated_at?: string | null
+          voice_over_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storyboard_scenes_storyboard_id_fkey"
+            columns: ["storyboard_id"]
+            isOneToOne: false
+            referencedRelation: "storyboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      storyboards: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          duration: number
+          estimated_render_cost: number | null
+          id: string
+          intro_image_prompt: string | null
+          intro_voiceover_text: string | null
+          render_job_id: string | null
+          status: string
+          style: string
+          template_id: string | null
+          tokens_cost: number | null
+          tone: string
+          topic: string
+          updated_at: string | null
+          user_id: string
+          video_storage_path: string | null
+          video_url: string | null
+          voice_id: string
+          voice_name: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          duration: number
+          estimated_render_cost?: number | null
+          id?: string
+          intro_image_prompt?: string | null
+          intro_voiceover_text?: string | null
+          render_job_id?: string | null
+          status?: string
+          style: string
+          template_id?: string | null
+          tokens_cost?: number | null
+          tone: string
+          topic: string
+          updated_at?: string | null
+          user_id: string
+          video_storage_path?: string | null
+          video_url?: string | null
+          voice_id: string
+          voice_name: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          duration?: number
+          estimated_render_cost?: number | null
+          id?: string
+          intro_image_prompt?: string | null
+          intro_voiceover_text?: string | null
+          render_job_id?: string | null
+          status?: string
+          style?: string
+          template_id?: string | null
+          tokens_cost?: number | null
+          tone?: string
+          topic?: string
+          updated_at?: string | null
+          user_id?: string
+          video_storage_path?: string | null
+          video_url?: string | null
+          voice_id?: string
+          voice_name?: string
+        }
+        Relationships: []
+      }
       template_categories: {
         Row: {
           color: string | null

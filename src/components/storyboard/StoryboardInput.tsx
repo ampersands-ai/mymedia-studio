@@ -5,11 +5,18 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Slider } from '@/components/ui/slider';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { Sparkles, Film, Coins, Volume2, Play, Loader2 } from 'lucide-react';
+import { Sparkles, Film, Coins, Volume2, Play, Loader2, Palette } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import hyperRealisticImg from '@/assets/styles/hyper-realistic.jpg';
+import cinematicImg from '@/assets/styles/cinematic.jpg';
+import animatedImg from '@/assets/styles/animated.jpg';
+import cartoonImg from '@/assets/styles/cartoon.jpg';
+import naturalImg from '@/assets/styles/natural.jpg';
+import sketchImg from '@/assets/styles/sketch.jpg';
 
 const VOICES = [
   { id: 'en-US-AndrewMultilingualNeural', name: 'Andrew (US Male)' },
@@ -21,12 +28,48 @@ const VOICES = [
 ];
 
 const STYLES = [
-  { value: 'hyper-realistic', label: 'Hyper Realistic', emoji: '📷' },
-  { value: 'cinematic', label: 'Cinematic', emoji: '🎬' },
-  { value: 'animated', label: 'Animated', emoji: '✨' },
-  { value: 'cartoon', label: 'Cartoon', emoji: '🎨' },
-  { value: 'natural', label: 'Natural', emoji: '🍃' },
-  { value: 'sketch', label: 'Sketch', emoji: '✏️' },
+  { 
+    value: 'hyper-realistic', 
+    label: 'Hyper Realistic', 
+    emoji: '📷',
+    image: hyperRealisticImg,
+    description: 'Ultra-realistic, photo-quality visuals'
+  },
+  { 
+    value: 'cinematic', 
+    label: 'Cinematic', 
+    emoji: '🎬',
+    image: cinematicImg,
+    description: 'Movie-like dramatic lighting & composition'
+  },
+  { 
+    value: 'animated', 
+    label: 'Animated', 
+    emoji: '✨',
+    image: animatedImg,
+    description: '3D rendered, Pixar-style animation'
+  },
+  { 
+    value: 'cartoon', 
+    label: 'Cartoon', 
+    emoji: '🎨',
+    image: cartoonImg,
+    description: '2D illustrated, playful cartoon style'
+  },
+  { 
+    value: 'natural', 
+    label: 'Natural', 
+    emoji: '🍃',
+    image: naturalImg,
+    description: 'Natural photography, authentic look'
+  },
+  { 
+    value: 'sketch', 
+    label: 'Sketch', 
+    emoji: '✏️',
+    image: sketchImg,
+    description: 'Hand-drawn, artistic pencil sketch'
+  },
 ];
 
 const TONES = [
@@ -68,6 +111,7 @@ export function StoryboardInput() {
   const [voiceID, setVoiceID] = useState('en-US-AndrewMultilingualNeural');
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
+  const [styleDialogOpen, setStyleDialogOpen] = useState(false);
 
   const { generateStoryboard, isGenerating } = useStoryboard();
   const { data: tokenData } = useUserTokens();
@@ -179,37 +223,93 @@ export function StoryboardInput() {
           </Button>
         </div>
 
-        {/* Duration */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Video Duration</Label>
-          <Select value={duration.toString()} onValueChange={(value) => setDuration(parseInt(value))} disabled={isGenerating}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="30">30 seconds (~4 scenes)</SelectItem>
-              <SelectItem value="60">60 seconds (~8 scenes)</SelectItem>
-              <SelectItem value="90">90 seconds (~12 scenes)</SelectItem>
-              <SelectItem value="120">120 seconds (~16 scenes)</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Duration Slider */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">Video Duration</Label>
+            <span className="text-sm font-bold text-primary">
+              {duration}s (~{Math.round(duration / 5)} scenes)
+            </span>
+          </div>
+          <Slider
+            value={[duration]}
+            onValueChange={(values) => setDuration(values[0])}
+            min={15}
+            max={120}
+            step={5}
+            disabled={isGenerating}
+            className="w-full"
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>15s</span>
+            <span>120s</span>
+          </div>
         </div>
 
-        {/* Style */}
+        {/* Style Selection */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Video Style</Label>
-          <Select value={style} onValueChange={setStyle} disabled={isGenerating}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STYLES.map((styleOption) => (
-                <SelectItem key={styleOption.value} value={styleOption.value}>
-                  {styleOption.emoji} {styleOption.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Dialog open={styleDialogOpen} onOpenChange={setStyleDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full justify-start" disabled={isGenerating}>
+                <Palette className="w-4 h-4 mr-2" />
+                {STYLES.find(s => s.value === style)?.emoji} {STYLES.find(s => s.value === style)?.label}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Choose a Style</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto">
+                {STYLES.map((styleOption) => (
+                  <div
+                    key={styleOption.value}
+                    className={cn(
+                      "relative cursor-pointer rounded-lg overflow-hidden transition-all border-2",
+                      style === styleOption.value
+                        ? "border-primary ring-4 ring-primary/20"
+                        : "border-muted hover:border-primary/50"
+                    )}
+                    onClick={() => {
+                      setStyle(styleOption.value);
+                      setStyleDialogOpen(false);
+                    }}
+                  >
+                    <div className="relative aspect-video overflow-hidden bg-muted">
+                      <img
+                        src={styleOption.image}
+                        alt={styleOption.label}
+                        className="w-full h-full object-cover transition-transform hover:scale-110"
+                        loading="lazy"
+                      />
+                      
+                      {/* Overlay Gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      
+                      {/* Selected Checkmark */}
+                      {style === styleOption.value && (
+                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                          <svg className="w-4 h-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                      
+                      {/* Style Info */}
+                      <div className="absolute bottom-0 left-0 right-0 p-3">
+                        <p className="text-white font-bold text-sm leading-tight">
+                          {styleOption.emoji} {styleOption.label}
+                        </p>
+                        <p className="text-white/70 text-xs mt-0.5 line-clamp-1">
+                          {styleOption.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Voice Selection */}

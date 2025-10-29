@@ -414,7 +414,7 @@ const Pricing = () => {
                     )}
                   </div>
                   <div className="text-xs text-muted-foreground pt-2">
-                    {plan.tokens} credits{plan.perToken && ` • ${plan.perToken}`}
+                    {plan.tokens} credits
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">

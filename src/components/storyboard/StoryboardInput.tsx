@@ -256,11 +256,11 @@ export function StoryboardInput() {
                 {STYLES.find(s => s.value === style)?.emoji} {STYLES.find(s => s.value === style)?.label}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl">
+            <DialogContent className="max-w-5xl">
               <DialogHeader>
                 <DialogTitle>Choose a Style</DialogTitle>
               </DialogHeader>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-h-[60vh] overflow-y-auto">
                 {STYLES.map((styleOption) => (
                   <div
                     key={styleOption.value}
@@ -275,7 +275,7 @@ export function StoryboardInput() {
                       setStyleDialogOpen(false);
                     }}
                   >
-                    <div className="relative aspect-video overflow-hidden bg-muted">
+                    <div className="relative aspect-video overflow-hidden bg-muted min-h-[200px]">
                       <img
                         src={styleOption.image}
                         alt={styleOption.label}
@@ -288,19 +288,19 @@ export function StoryboardInput() {
                       
                       {/* Selected Checkmark */}
                       {style === styleOption.value && (
-                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                          <svg className="w-4 h-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                          <svg className="w-5 h-5 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
                       )}
                       
                       {/* Style Info */}
-                      <div className="absolute bottom-0 left-0 right-0 p-3">
-                        <p className="text-white font-bold text-sm leading-tight">
+                      <div className="absolute bottom-0 left-0 right-0 p-4">
+                        <p className="text-white font-bold text-base leading-tight">
                           {styleOption.emoji} {styleOption.label}
                         </p>
-                        <p className="text-white/70 text-xs mt-0.5 line-clamp-1">
+                        <p className="text-white/70 text-sm mt-0.5 line-clamp-2">
                           {styleOption.description}
                         </p>
                       </div>

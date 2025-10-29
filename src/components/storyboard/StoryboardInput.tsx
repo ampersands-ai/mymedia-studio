@@ -256,19 +256,19 @@ export function StoryboardInput() {
                 {STYLES.find(s => s.value === style)?.emoji} {STYLES.find(s => s.value === style)?.label}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[90vw]">
+            <DialogContent className="max-w-3xl">
               <DialogHeader>
-                <DialogTitle className="text-2xl">Choose a Style</DialogTitle>
+                <DialogTitle>Choose a Style</DialogTitle>
               </DialogHeader>
-              <div className="grid grid-cols-3 gap-6 max-h-[65vh] overflow-y-auto p-2">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto">
                 {STYLES.map((styleOption) => (
                   <div
                     key={styleOption.value}
                     className={cn(
-                      "relative cursor-pointer rounded-2xl overflow-hidden transition-all border-4",
+                      "relative cursor-pointer rounded-lg overflow-hidden transition-all border-2",
                       style === styleOption.value
-                        ? "border-primary ring-8 ring-primary/20 scale-105"
-                        : "border-muted hover:border-primary/50 hover:scale-105"
+                        ? "border-primary ring-4 ring-primary/20"
+                        : "border-muted hover:border-primary/50"
                     )}
                     onClick={() => {
                       setStyle(styleOption.value);
@@ -288,19 +288,19 @@ export function StoryboardInput() {
                       
                       {/* Selected Checkmark */}
                       {style === styleOption.value && (
-                        <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg">
-                          <svg className="w-8 h-8 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                          <svg className="w-4 h-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
                       )}
                       
                       {/* Style Info */}
-                      <div className="absolute bottom-0 left-0 right-0 p-6">
-                        <p className="text-white font-bold text-xl leading-tight">
+                      <div className="absolute bottom-0 left-0 right-0 p-3">
+                        <p className="text-white font-bold text-sm leading-tight">
                           {styleOption.emoji} {styleOption.label}
                         </p>
-                        <p className="text-white/80 text-sm mt-1 line-clamp-2">
+                        <p className="text-white/70 text-xs mt-0.5 line-clamp-1">
                           {styleOption.description}
                         </p>
                       </div>

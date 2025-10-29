@@ -33,10 +33,10 @@ const plans = [
     monthlyPrice: "$9.99",
     annualPrice: "$7.99",
     period: "/mo",
-    tokens: "10,000",
-    perToken: "$0.0008 per token",
+    tokens: "100",
+    perToken: "$0.08 per token",
     features: [
-      "10,000 tokens",
+      "100 tokens",
       "No watermark",
       "Global availability",
       "Priority rendering",
@@ -45,7 +45,7 @@ const plans = [
     popular: false,
     color: "bg-neon-pink",
     badge: "FOR CREATORS",
-    description: "The indie creator's choice. 10,000 tokens for just $7.99/mo—competitors charge $30-50 for similar plans.",
+    description: "The indie creator's choice. 100 tokens for just $7.99/mo—competitors charge $30-50 for similar plans.",
     savings: "Save $22-42/mo vs competitors",
   },
   {
@@ -53,10 +53,10 @@ const plans = [
     monthlyPrice: "$24.99",
     annualPrice: "$19.99",
     period: "/mo",
-    tokens: "32,500",
-    perToken: "$0.0006 per token",
+    tokens: "325",
+    perToken: "$0.061 per token",
     features: [
-      "32,500 tokens",
+      "325 tokens",
       "No watermark",
       "Unlimited image & text gens",
       "Priority rendering",
@@ -66,7 +66,7 @@ const plans = [
     popular: true,
     color: "bg-primary",
     badge: "MOST POPULAR",
-    description: "All the tools you need for less than $20/mo. 32,500 tokens + unlimited image & text. Save $100s every year.",
+    description: "All the tools you need for less than $20/mo. 325 tokens + unlimited image & text. Save $100s every year.",
     savings: "Save $80-105/mo vs competitors",
   },
   {
@@ -74,10 +74,10 @@ const plans = [
     monthlyPrice: "$49.99",
     annualPrice: "$39.99",
     period: "/mo",
-    tokens: "75,000",
-    perToken: "$0.00053 per token",
+    tokens: "750",
+    perToken: "$0.053 per token",
     features: [
-      "75,000 tokens",
+      "750 tokens",
       "No watermark",
       "Commercial license",
       "Fastest rendering priority",
@@ -88,7 +88,7 @@ const plans = [
     popular: false,
     badge: "BEST VALUE",
     color: "bg-neon-red",
-    description: "Enterprise power at freelancer prices. 75,000 tokens for just $39.99/mo—competitors charge $99+ for less.",
+    description: "Enterprise power at freelancer prices. 750 tokens for just $39.99/mo—competitors charge $99+ for less.",
     savings: "Save $60-85/mo vs competitors",
   },
   {
@@ -96,10 +96,10 @@ const plans = [
     monthlyPrice: "$119.99",
     annualPrice: "$89.99",
     period: "/mo",
-    tokens: "200,000",
-    perToken: "$0.00045 per token",
+    tokens: "2,000",
+    perToken: "$0.045 per token",
     features: [
-      "200,000 tokens",
+      "2,000 tokens",
       "No watermark",
       "Commercial license",
       "Fastest rendering priority",
@@ -111,7 +111,7 @@ const plans = [
     popular: false,
     badge: "PREMIUM",
     color: "bg-accent",
-    description: "Ultimate power for professionals and agencies. 200,000 tokens at the best rate—unmatched value for serious creators.",
+    description: "Ultimate power for professionals and agencies. 2,000 tokens at the best rate—unmatched value for serious creators.",
     savings: "Best per-token pricing available",
   },
 ];
@@ -229,7 +229,7 @@ const Pricing = () => {
           "name": "What is the cheapest AI video creation plan?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Artifio.ai Explorer plan is the cheapest at $7.99/mo (annual billing) with 4,000 tokens, perfect for APAC and LATAM creators."
+            "text": "Artifio.ai Explorer plan is the cheapest at $7.99/mo (annual billing) with 100 tokens, perfect for APAC and LATAM creators."
           }
         },
         {

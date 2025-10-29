@@ -364,17 +364,17 @@ const Pricing = () => {
           </div>
 
           {/* All Plans Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto pt-8 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto pt-12 mb-16">
           {plans.map((plan) => (
-            <Card
-              key={plan.name}
-              className={`relative hover-lift ${plan.popular ? "ring-4 ring-primary" : ""}`}
-            >
+            <div key={plan.name} className="relative">
                 {plan.badge && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary px-4 py-1.5 rounded-full text-sm font-black text-black shadow-lg border-2 border-black">
+                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-50 bg-primary px-4 py-1.5 rounded-full text-sm font-black text-black shadow-lg border-2 border-black whitespace-nowrap">
                     {plan.badge}
                   </div>
                 )}
+            <Card
+              className={`hover-lift ${plan.popular ? "ring-4 ring-primary" : ""}`}
+            >
               <CardHeader>
                 <CardTitle className="text-2xl font-black">{plan.name}</CardTitle>
                   <div className="pt-3">
@@ -426,7 +426,8 @@ const Pricing = () => {
                   </Button>
                 </CardContent>
               </Card>
-            ))}
+            </div>
+          ))}
           </div>
 
           {/* All Plans Comparison */}

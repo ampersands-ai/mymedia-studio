@@ -51,8 +51,35 @@ export const useGeneration = () => {
         throw new Error("SESSION_EXPIRED");
       }
 
-      // STEP 2: Proceed with generation using refreshed session
-      const { data, error } = await supabase.functions.invoke("generate-content", {
+      // Determine which endpoint to use based on provider
+      let functionName = 'generate-content'; // Default: async (Kie.ai)
+      
+      // Check if this is a Runware model (uses sync endpoint)
+      if (params.model_record_id || params.model_id) {
+        try {
+          const query = supabase
+            .from('ai_models')
+            .select('provider');
+          
+          if (params.model_record_id) {
+            query.eq('record_id', params.model_record_id);
+          } else if (params.model_id) {
+            query.eq('id', params.model_id);
+          }
+          
+          const { data: model } = await query.single();
+          
+          if (model?.provider === 'runware') {
+            functionName = 'generate-content-sync';
+            console.log('Using sync endpoint for Runware model');
+          }
+        } catch (e) {
+          console.warn('Could not determine provider, using default endpoint:', e);
+        }
+      }
+
+      // STEP 2: Proceed with generation using appropriate endpoint
+      const { data, error } = await supabase.functions.invoke(functionName, {
         body: params,
       });
 

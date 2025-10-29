@@ -1,4 +1,17 @@
-import { ProviderRequest, ProviderResponse } from "./index.ts";
+export interface ProviderRequest {
+  model: string;
+  prompt: string;
+  parameters: Record<string, any>;
+  api_endpoint?: string;
+  payload_structure?: string;
+}
+
+export interface ProviderResponse {
+  output_data: Uint8Array;
+  file_extension: string;
+  file_size: number;
+  metadata: Record<string, any>;
+}
 
 export async function callRunware(
   request: ProviderRequest
@@ -128,7 +141,6 @@ export async function callRunware(
 }
 
 function determineFileExtension(format: string, url: string): string {
-  // Try to get extension from format first
   const formatMap: Record<string, string> = {
     'webp': 'webp',
     'png': 'png',
@@ -146,6 +158,5 @@ function determineFileExtension(format: string, url: string): string {
     if (match) return match[1];
   }
 
-  // Default to webp
   return 'webp';
 }

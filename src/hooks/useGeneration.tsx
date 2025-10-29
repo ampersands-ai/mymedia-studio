@@ -78,6 +78,12 @@ export const useGeneration = () => {
         }
       }
 
+      // Client-side prompt validation
+      if (!params.prompt || params.prompt.trim().length < 2) {
+        toast.error("Please enter a prompt at least 2 characters long.");
+        throw new Error("Prompt is required");
+      }
+
       // STEP 2: Proceed with generation using appropriate endpoint
       const { data, error } = await supabase.functions.invoke(functionName, {
         body: params,
@@ -123,9 +129,14 @@ export const useGeneration = () => {
         }
         
         if (error.message?.includes("400")) {
-          // Extract specific error message from server response
-          const errorMsg = error.message || "Invalid request";
-          throw new Error(errorMsg);
+          // Try to extract specific error from edge function response
+          try {
+            const errorMatch = error.message.match(/error['":\s]+([^"'}]+)/i);
+            const specificError = errorMatch ? errorMatch[1] : error.message;
+            throw new Error(specificError);
+          } catch {
+            throw new Error(error.message || "Invalid request");
+          }
         }
         
         throw error;

@@ -48,6 +48,14 @@ serve(async (req) => {
       workflow_step_number,
     } = await req.json();
 
+    // Validate prompt early (before any token deduction)
+    if (!prompt || prompt.trim().length < 2) {
+      return new Response(
+        JSON.stringify({ error: 'Prompt is required and must be at least 2 characters.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('[sync] Generation request:', { user_id: user.id, model_record_id, model_id });
 
     // Load model configuration

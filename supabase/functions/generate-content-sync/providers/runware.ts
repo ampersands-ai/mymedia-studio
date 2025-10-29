@@ -35,6 +35,24 @@ export async function callRunware(
   // Normalize numeric parameters
   const params = request.parameters || {};
   
+  // Compute effective prompt with fallbacks
+  const effectivePrompt = (
+    request.prompt || 
+    params.positivePrompt || 
+    params.prompt || 
+    ''
+  ).trim();
+  
+  // Validate prompt length (Runware requires 2-3000 characters)
+  if (!effectivePrompt || effectivePrompt.length < 2) {
+    throw new Error('Prompt is required and must be at least 2 characters.');
+  }
+  if (effectivePrompt.length > 3000) {
+    throw new Error('Prompt must be less than 3000 characters.');
+  }
+  
+  console.log('[Runware] Using prompt:', effectivePrompt.substring(0, 100) + (effectivePrompt.length > 100 ? '...' : ''));
+  
   // Build request payload with authentication and task
   const requestBody = [
     {
@@ -45,7 +63,7 @@ export async function callRunware(
       taskType: "imageInference",
       taskUUID,
       model: cleanModel,
-      positivePrompt: request.prompt,
+      positivePrompt: effectivePrompt,
       width: Number(params.width ?? 1024),
       height: Number(params.height ?? 1024),
       numberResults: Number(params.numberResults ?? 1),
@@ -63,7 +81,15 @@ export async function callRunware(
     }
   ];
 
-  console.log('[Runware] Request body:', JSON.stringify(requestBody, null, 2));
+  // Redact API key in logs for security
+  const logSafeRequestBody = requestBody.map(task => {
+    if (task.taskType === 'authentication') {
+      return { ...task, apiKey: '***' };
+    }
+    return task;
+  });
+  
+  console.log('[Runware] Request body:', JSON.stringify(logSafeRequestBody, null, 2));
 
   try {
     // Call Runware API (no Authorization header, auth is in body)

@@ -1,4 +1,5 @@
 import { callKieAI } from "./kie-ai.ts";
+import { callRunware } from "./runware.ts";
 
 export interface ProviderRequest {
   model: string;
@@ -30,7 +31,7 @@ export async function callProvider(
       return await callKieAI(request, webhookToken);
     
     case 'runware':
-      throw new Error('Runware provider not yet implemented. Please configure in providers/runware.ts');
+      return await callRunware(request);
     
     case 'json2video':
       throw new Error('JSON2Video provider not yet implemented. Please configure in providers/json2video.ts');

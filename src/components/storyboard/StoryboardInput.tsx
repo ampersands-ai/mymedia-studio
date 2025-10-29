@@ -279,7 +279,7 @@ export function StoryboardInput() {
                       <img
                         src={styleOption.image}
                         alt={styleOption.label}
-                        className="w-full h-full object-contain transition-transform hover:scale-105"
+                        className="w-full h-full object-cover transition-transform hover:scale-110"
                         loading="lazy"
                       />
                       

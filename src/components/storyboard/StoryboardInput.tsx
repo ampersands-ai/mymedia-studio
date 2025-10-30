@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { Sparkles, Film, Coins, Volume2, Play, Loader2, Palette, Image as ImageIcon, Video as VideoIcon, Wand2, Music } from 'lucide-react';
@@ -270,37 +271,39 @@ export function StoryboardInput() {
                 {STYLES.find(s => s.value === style)?.emoji} {STYLES.find(s => s.value === style)?.label}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-3xl lg:max-w-6xl max-h-[90vh] overflow-hidden p-4 sm:p-6">
+            <DialogContent className="max-w-[95vw] sm:max-w-3xl lg:max-w-6xl max-h-[90vh] flex flex-col p-4 sm:p-6">
               <DialogHeader>
           <DialogTitle className="text-base sm:text-lg">Choose a Style</DialogTitle>
         </DialogHeader>
 
         {/* Mobile Compact Grid */}
-        <div className="grid grid-cols-2 gap-2 sm:hidden max-h-[70vh] overflow-y-auto p-1">
-          {STYLES.map((styleOption) => (
-            <button
-              key={styleOption.value}
-              onClick={() => {
-                setStyle(styleOption.value);
-                setStyleDialogOpen(false);
-              }}
-              className={cn(
-                "group relative flex flex-col gap-1.5 p-2 rounded-lg border-2 transition-all bg-card text-left",
-                style === styleOption.value 
-                  ? "border-primary ring-2 ring-primary/20" 
-                  : "border-muted hover:border-primary/50"
-              )}
-            >
-              <div className="w-full aspect-[4/3] rounded overflow-hidden">
-                <img src={styleOption.image} alt={styleOption.label} className="w-full h-full object-cover" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold truncate">{styleOption.emoji} {styleOption.label}</p>
-                <p className="text-[10px] text-muted-foreground line-clamp-1">{styleOption.description}</p>
-              </div>
-            </button>
-          ))}
-        </div>
+        <ScrollArea className="sm:hidden h-[70vh] -mx-4 px-4 overscroll-contain">
+          <div className="grid grid-cols-2 gap-2 p-1 pb-4">
+            {STYLES.map((styleOption) => (
+              <button
+                key={styleOption.value}
+                onClick={() => {
+                  setStyle(styleOption.value);
+                  setStyleDialogOpen(false);
+                }}
+                className={cn(
+                  "group relative flex flex-col gap-1.5 p-2 rounded-lg border-2 transition-all bg-card text-left",
+                  style === styleOption.value 
+                    ? "border-primary ring-2 ring-primary/20" 
+                    : "border-muted hover:border-primary/50"
+                )}
+              >
+                <div className="w-full aspect-[4/3] rounded overflow-hidden">
+                  <img src={styleOption.image} alt={styleOption.label} className="w-full h-full object-cover" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold truncate">{styleOption.emoji} {styleOption.label}</p>
+                  <p className="text-[10px] text-muted-foreground line-clamp-1">{styleOption.description}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </ScrollArea>
 
               {/* Desktop Card Grid */}
               <div className="hidden sm:grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[calc(90vh-140px)] overflow-y-auto px-2 py-1">

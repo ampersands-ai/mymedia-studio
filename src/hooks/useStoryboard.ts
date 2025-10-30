@@ -51,11 +51,26 @@ interface StoryboardInput {
 export const useStoryboard = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [currentStoryboardId, setCurrentStoryboardId] = useState<string | null>(null);
+  
+  // Initialize from localStorage on mount
+  const [currentStoryboardId, setCurrentStoryboardId] = useState<string | null>(() => {
+    return localStorage.getItem('currentStoryboardId');
+  });
+  
   const [activeSceneId, setActiveSceneId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
+
+  // Wrapper to persist storyboard ID to localStorage
+  const setAndPersistStoryboardId = useCallback((id: string | null) => {
+    setCurrentStoryboardId(id);
+    if (id) {
+      localStorage.setItem('currentStoryboardId', id);
+    } else {
+      localStorage.removeItem('currentStoryboardId');
+    }
+  }, []);
 
   // Fetch current storyboard
   const { data: storyboard, isLoading: isLoadingStoryboard } = useQuery({
@@ -104,7 +119,7 @@ export const useStoryboard = () => {
       return data;
     },
     onSuccess: (data) => {
-      setCurrentStoryboardId(data.storyboard.id);
+      setAndPersistStoryboardId(data.storyboard.id);
       queryClient.invalidateQueries({ queryKey: ['storyboard', data.storyboard.id] });
       queryClient.invalidateQueries({ queryKey: ['storyboard-scenes', data.storyboard.id] });
       toast.success(`Storyboard created! ${data.scenes.length} scenes generated`);
@@ -279,12 +294,12 @@ export const useStoryboard = () => {
   }, [renderVideoMutation]);
 
   const clearStoryboard = useCallback(() => {
-    setCurrentStoryboardId(null);
+    setAndPersistStoryboardId(null);
     setActiveSceneId(null);
     setIsGenerating(false);
     setIsRendering(false);
     setRenderProgress(0);
-  }, []);
+  }, [setAndPersistStoryboardId]);
 
   // Set first scene as active when scenes load
   useEffect(() => {

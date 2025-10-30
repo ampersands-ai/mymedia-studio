@@ -116,9 +116,11 @@ serve(async (req) => {
       webhook: webhookUrl,
       project: storyboardId,
       // Apply customization settings
-      resolution: mapAspectRatio(storyboard.aspect_ratio || 'instagram-story').resolution,
-      width: mapAspectRatio(storyboard.aspect_ratio || 'instagram-story').width,
-      height: mapAspectRatio(storyboard.aspect_ratio || 'instagram-story').height,
+      ...mapAspectRatio(
+        storyboard.aspect_ratio || 'full-hd',
+        storyboard.custom_width,
+        storyboard.custom_height
+      ),
       quality: storyboard.video_quality || 'medium',
       fps: storyboard.fps || 25,
       cache: storyboard.enable_cache ?? true,
@@ -150,15 +152,34 @@ serve(async (req) => {
       imageAnimationSettings: storyboard.image_animation_settings || { zoom: 2, position: 'center-center' }
     };
 
-    // Helper function to map aspect ratios
-    function mapAspectRatio(ratio: string) {
-      const ratioMap: Record<string, { resolution: string; width: number; height: number }> = {
-        'instagram-story': { resolution: 'instagram-story', width: 1080, height: 1920 },
-        'youtube': { resolution: 'landscape', width: 1920, height: 1080 },
-        'square': { resolution: 'square', width: 1080, height: 1080 },
-        'tiktok': { resolution: 'instagram-story', width: 1080, height: 1920 },
+    // Helper function to map resolution presets
+    function mapAspectRatio(ratio: string, customWidth?: number, customHeight?: number) {
+      // For custom resolution, width and height are required
+      if (ratio === 'custom') {
+        if (!customWidth || !customHeight) {
+          throw new Error('Custom resolution requires width and height');
+        }
+        return {
+          resolution: 'custom',
+          width: customWidth,
+          height: customHeight
+        };
+      }
+      
+      // For preset resolutions, only resolution is needed (API sets dimensions)
+      // But we include width/height for completeness
+      const presetMap: Record<string, { resolution: string; width?: number; height?: number }> = {
+        'sd': { resolution: 'sd' },
+        'hd': { resolution: 'hd' },
+        'full-hd': { resolution: 'full-hd' },
+        'squared': { resolution: 'squared' },
+        'instagram-story': { resolution: 'instagram-story' },
+        'instagram-feed': { resolution: 'instagram-feed' },
+        'twitter-landscape': { resolution: 'twitter-landscape' },
+        'twitter-portrait': { resolution: 'twitter-portrait' },
       };
-      return ratioMap[ratio] || ratioMap['instagram-story'];
+      
+      return presetMap[ratio] || presetMap['full-hd']; // Default to Full HD
     }
 
     console.log('[render-storyboard-video] Calling JSON2Video API with payload:', JSON.stringify(renderPayload, null, 2));

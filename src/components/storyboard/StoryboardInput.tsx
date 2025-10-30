@@ -154,9 +154,11 @@ export function StoryboardInput() {
   const [showResetDialog, setShowResetDialog] = useState(false);
   
   // Advanced video settings
-  const [aspectRatio, setAspectRatio] = useState(draft?.aspectRatio || 'instagram-story');
+  const [aspectRatio, setAspectRatio] = useState(draft?.aspectRatio || 'full-hd');
   const [videoQuality, setVideoQuality] = useState(draft?.videoQuality || 'medium');
   const [fps, setFps] = useState(draft?.fps || 25);
+  const [customWidth, setCustomWidth] = useState(draft?.customWidth || 1920);
+  const [customHeight, setCustomHeight] = useState(draft?.customHeight || 1080);
   
   // Subtitle settings
   const [subtitlePosition, setSubtitlePosition] = useState(draft?.subtitlePosition || 'mid-bottom-center');
@@ -187,7 +189,8 @@ export function StoryboardInput() {
         topic, duration, style, tone, voiceID, mediaType, backgroundMusicUrl,
         backgroundMusicVolume, aspectRatio, videoQuality, fps, subtitlePosition,
         subtitleFontSize, subtitleOutlineColor, subtitleOutlineWidth, musicVolume,
-        musicFadeIn, musicFadeOut, imageZoom, imagePosition, enableCache, draftMode
+        musicFadeIn, musicFadeOut, imageZoom, imagePosition, enableCache, draftMode,
+        customWidth, customHeight
       };
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
     }, 500);
@@ -195,7 +198,7 @@ export function StoryboardInput() {
   }, [topic, duration, style, tone, voiceID, mediaType, backgroundMusicUrl, backgroundMusicVolume,
       aspectRatio, videoQuality, fps, subtitlePosition, subtitleFontSize, subtitleOutlineColor,
       subtitleOutlineWidth, musicVolume, musicFadeIn, musicFadeOut, imageZoom, imagePosition,
-      enableCache, draftMode]);
+      enableCache, draftMode, customWidth, customHeight]);
 
   const estimatedCost = 250;
   const canGenerate = topic.length >= 5 && topic.length <= 500 && (tokenData?.tokens_remaining || 0) >= estimatedCost;
@@ -279,9 +282,11 @@ export function StoryboardInput() {
     setMediaType('image');
     setBackgroundMusicUrl('');
     setBackgroundMusicVolume(5);
-    setAspectRatio('instagram-story');
+    setAspectRatio('full-hd');
     setVideoQuality('medium');
     setFps(25);
+    setCustomWidth(1920);
+    setCustomHeight(1080);
     setSubtitlePosition('mid-bottom-center');
     setSubtitleFontSize(140);
     setSubtitleOutlineColor('#000000');
@@ -329,6 +334,8 @@ export function StoryboardInput() {
       aspectRatio,
       videoQuality,
       fps,
+      customWidth: aspectRatio === 'custom' ? customWidth : undefined,
+      customHeight: aspectRatio === 'custom' ? customHeight : undefined,
       subtitleSettings: {
         position: subtitlePosition,
         fontSize: subtitleFontSize,
@@ -654,25 +661,62 @@ export function StoryboardInput() {
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-6 pt-4 border-t">
             {/* Aspect Ratio & Quality */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Aspect Ratio</Label>
-                <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                <Label>Resolution</Label>
+                <Select value={aspectRatio} onValueChange={setAspectRatio} disabled={isGenerating}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="instagram-story">Instagram Story (9:16)</SelectItem>
-                    <SelectItem value="youtube">YouTube (16:9)</SelectItem>
-                    <SelectItem value="square">Square (1:1)</SelectItem>
-                    <SelectItem value="tiktok">TikTok/Shorts (9:16)</SelectItem>
+                    <SelectItem value="sd">SD - 640×480 (4:3)</SelectItem>
+                    <SelectItem value="hd">HD - 1280×720 (16:9)</SelectItem>
+                    <SelectItem value="full-hd">Full HD - 1920×1080 (16:9)</SelectItem>
+                    <SelectItem value="squared">Square - 1080×1080 (1:1)</SelectItem>
+                    <SelectItem value="instagram-story">Instagram Story - 1080×1920 (9:16)</SelectItem>
+                    <SelectItem value="instagram-feed">Instagram Feed - 1080×1350 (4:5)</SelectItem>
+                    <SelectItem value="twitter-landscape">Twitter Landscape - 1920×1200 (16:10)</SelectItem>
+                    <SelectItem value="twitter-portrait">Twitter Portrait - 1200×1920 (10:16)</SelectItem>
+                    <SelectItem value="custom">Custom (Specify dimensions)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
+              {/* Custom Dimensions */}
+              {aspectRatio === 'custom' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="customWidth">Width (pixels)</Label>
+                    <Input
+                      id="customWidth"
+                      type="number"
+                      value={customWidth}
+                      onChange={(e) => setCustomWidth(parseInt(e.target.value) || 1920)}
+                      min={320}
+                      max={3840}
+                      disabled={isGenerating}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="customHeight">Height (pixels)</Label>
+                    <Input
+                      id="customHeight"
+                      type="number"
+                      value={customHeight}
+                      onChange={(e) => setCustomHeight(parseInt(e.target.value) || 1080)}
+                      min={240}
+                      max={2160}
+                      disabled={isGenerating}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Video Quality</Label>
-                <Select value={videoQuality} onValueChange={setVideoQuality}>
+                <Select value={videoQuality} onValueChange={setVideoQuality} disabled={isGenerating}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -680,6 +724,20 @@ export function StoryboardInput() {
                     <SelectItem value="draft">Draft (Fast)</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="high">High Quality</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>FPS (Frames Per Second)</Label>
+                <Select value={fps.toString()} onValueChange={(v) => setFps(parseInt(v))} disabled={isGenerating}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="24">24 FPS</SelectItem>
+                    <SelectItem value="25">25 FPS</SelectItem>
+                    <SelectItem value="30">30 FPS</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

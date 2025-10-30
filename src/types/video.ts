@@ -82,4 +82,6 @@ export interface StoryboardInput {
   mediaType?: MediaType;
   backgroundMusicUrl?: string;
   backgroundMusicVolume?: number;
+  customWidth?: number;
+  customHeight?: number;
 }

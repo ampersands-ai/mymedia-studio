@@ -52,6 +52,8 @@ interface StoryboardInput {
   aspectRatio?: string;
   videoQuality?: string;
   fps?: number;
+  customWidth?: number;
+  customHeight?: number;
   subtitleSettings?: {
     position: string;
     fontSize: number;
@@ -171,9 +173,11 @@ export const useStoryboard = () => {
           media_type: input.mediaType || 'image',
           background_music_url: input.backgroundMusicUrl || null,
           background_music_volume: input.backgroundMusicVolume || 5,
-          aspect_ratio: input.aspectRatio || 'instagram-story',
+          aspect_ratio: input.aspectRatio || 'full-hd',
           video_quality: input.videoQuality || 'medium',
           fps: input.fps || 25,
+          custom_width: input.customWidth,
+          custom_height: input.customHeight,
           subtitle_settings: input.subtitleSettings || {
             position: 'mid-bottom-center',
             fontSize: 140,

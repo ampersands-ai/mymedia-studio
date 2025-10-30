@@ -748,6 +748,8 @@ export type Database = {
           background_music_volume: number | null
           completed_at: string | null
           created_at: string | null
+          custom_height: number | null
+          custom_width: number | null
           draft_mode: boolean | null
           duration: number
           enable_cache: boolean | null
@@ -787,6 +789,8 @@ export type Database = {
           background_music_volume?: number | null
           completed_at?: string | null
           created_at?: string | null
+          custom_height?: number | null
+          custom_width?: number | null
           draft_mode?: boolean | null
           duration: number
           enable_cache?: boolean | null
@@ -826,6 +830,8 @@ export type Database = {
           background_music_volume?: number | null
           completed_at?: string | null
           created_at?: string | null
+          custom_height?: number | null
+          custom_width?: number | null
           draft_mode?: boolean | null
           duration?: number
           enable_cache?: boolean | null

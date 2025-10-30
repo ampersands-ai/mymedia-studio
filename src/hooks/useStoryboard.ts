@@ -46,6 +46,9 @@ interface StoryboardInput {
   tone: string;
   voiceID: string;
   voiceName: string;
+  mediaType?: 'image' | 'video' | 'animated';
+  backgroundMusicUrl?: string;
+  backgroundMusicVolume?: number;
 }
 
 export const useStoryboard = () => {

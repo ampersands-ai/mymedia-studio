@@ -697,9 +697,11 @@ export type Database = {
           image_preview_url: string | null
           image_prompt: string
           is_edited: boolean | null
+          motion_effect: Json | null
           order_number: number
           storyboard_id: string
           updated_at: string | null
+          video_url: string | null
           voice_over_text: string
         }
         Insert: {
@@ -708,9 +710,11 @@ export type Database = {
           image_preview_url?: string | null
           image_prompt: string
           is_edited?: boolean | null
+          motion_effect?: Json | null
           order_number: number
           storyboard_id: string
           updated_at?: string | null
+          video_url?: string | null
           voice_over_text: string
         }
         Update: {
@@ -719,9 +723,11 @@ export type Database = {
           image_preview_url?: string | null
           image_prompt?: string
           is_edited?: boolean | null
+          motion_effect?: Json | null
           order_number?: number
           storyboard_id?: string
           updated_at?: string | null
+          video_url?: string | null
           voice_over_text?: string
         }
         Relationships: [
@@ -747,6 +753,7 @@ export type Database = {
           image_model: string | null
           intro_image_prompt: string | null
           intro_voiceover_text: string | null
+          media_type: string | null
           render_job_id: string | null
           status: string
           style: string
@@ -757,6 +764,7 @@ export type Database = {
           topic: string
           updated_at: string | null
           user_id: string
+          video_search_query: string | null
           video_storage_path: string | null
           video_url: string | null
           voice_id: string
@@ -775,6 +783,7 @@ export type Database = {
           image_model?: string | null
           intro_image_prompt?: string | null
           intro_voiceover_text?: string | null
+          media_type?: string | null
           render_job_id?: string | null
           status?: string
           style: string
@@ -785,6 +794,7 @@ export type Database = {
           topic: string
           updated_at?: string | null
           user_id: string
+          video_search_query?: string | null
           video_storage_path?: string | null
           video_url?: string | null
           voice_id: string
@@ -803,6 +813,7 @@ export type Database = {
           image_model?: string | null
           intro_image_prompt?: string | null
           intro_voiceover_text?: string | null
+          media_type?: string | null
           render_job_id?: string | null
           status?: string
           style?: string
@@ -813,6 +824,7 @@ export type Database = {
           topic?: string
           updated_at?: string | null
           user_id?: string
+          video_search_query?: string | null
           video_storage_path?: string | null
           video_url?: string | null
           voice_id?: string

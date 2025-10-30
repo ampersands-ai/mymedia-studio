@@ -8,9 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Slider } from '@/components/ui/slider';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { Sparkles, Film, Coins, Volume2, Play, Loader2, Palette } from 'lucide-react';
+import { Sparkles, Film, Coins, Volume2, Play, Loader2, Palette, Image as ImageIcon, Video as VideoIcon, Wand2, Music } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { BackgroundMusicSelector } from './BackgroundMusicSelector';
+import type { MediaType } from '@/types/video';
 import hyperRealisticImg from '@/assets/styles/hyper-realistic.jpg';
 import cinematicImg from '@/assets/styles/cinematic.jpg';
 import animatedImg from '@/assets/styles/animated.jpg';
@@ -103,12 +105,21 @@ const TOPIC_SUGGESTIONS = [
   'The science behind love at first sight',
 ];
 
+const MEDIA_TYPES = [
+  { value: 'image' as MediaType, label: 'Static Images', icon: ImageIcon, description: 'AI-generated images' },
+  { value: 'video' as MediaType, label: 'Video Clips', icon: VideoIcon, description: 'Stock video footage' },
+  { value: 'animated' as MediaType, label: 'Animated', icon: Wand2, description: 'Images with motion effects' },
+];
+
 export function StoryboardInput() {
   const [topic, setTopic] = useState('');
   const [duration, setDuration] = useState(60);
   const [style, setStyle] = useState('hyper-realistic');
   const [tone, setTone] = useState('engaging');
   const [voiceID, setVoiceID] = useState('en-US-AndrewMultilingualNeural');
+  const [mediaType, setMediaType] = useState<MediaType>('image');
+  const [backgroundMusicUrl, setBackgroundMusicUrl] = useState('');
+  const [backgroundMusicVolume, setBackgroundMusicVolume] = useState(5);
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
   const [styleDialogOpen, setStyleDialogOpen] = useState(false);
@@ -181,6 +192,9 @@ export function StoryboardInput() {
       tone,
       voiceID,
       voiceName,
+      mediaType,
+      backgroundMusicUrl,
+      backgroundMusicVolume,
     });
   };
 
@@ -389,6 +403,49 @@ export function StoryboardInput() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Media Type Selection */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Media Type</Label>
+          <div className="grid grid-cols-3 gap-2">
+            {MEDIA_TYPES.map((type) => {
+              const Icon = type.icon;
+              return (
+                <button
+                  key={type.value}
+                  type="button"
+                  onClick={() => setMediaType(type.value)}
+                  disabled={isGenerating}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all",
+                    mediaType === type.value
+                      ? "border-primary bg-primary/10"
+                      : "border-muted hover:border-primary/50"
+                  )}
+                >
+                  <Icon className="w-5 h-5" />
+                  <div className="text-center">
+                    <p className="text-xs font-medium">{type.label}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{type.description}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Background Music */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Background Music</Label>
+          <BackgroundMusicSelector
+            selectedMusicUrl={backgroundMusicUrl}
+            selectedMusicVolume={backgroundMusicVolume}
+            onSelectMusic={(url, volume) => {
+              setBackgroundMusicUrl(url);
+              setBackgroundMusicVolume(volume);
+            }}
+          />
         </div>
 
         {/* Token Cost Display */}

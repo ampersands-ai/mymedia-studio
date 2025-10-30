@@ -1,6 +1,8 @@
 // Type definitions for Faceless Video Creator
 // Completely isolated from existing generation types
 
+export type MediaType = 'image' | 'video' | 'animated';
+
 export interface CaptionStyle {
   position: 'top' | 'center' | 'bottom';
   animation: 'fade' | 'zoom' | 'slide' | 'bounce';
@@ -68,4 +70,16 @@ export interface VideoAssets {
   script: string;
   voiceoverUrl: string;
   backgroundVideoUrl: string;
+}
+
+export interface StoryboardInput {
+  topic: string;
+  duration: number;
+  style: string;
+  tone: string;
+  voiceID: string;
+  voiceName: string;
+  mediaType?: MediaType;
+  backgroundMusicUrl?: string;
+  backgroundMusicVolume?: number;
 }

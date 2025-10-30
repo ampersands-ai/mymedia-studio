@@ -27,7 +27,7 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { topic, duration, style, tone, voiceID, voiceName } = await req.json();
+    const { topic, duration, style, tone, voiceID, voiceName, mediaType = 'image', backgroundMusicUrl = '', backgroundMusicVolume = 5 } = await req.json();
 
     // Validate inputs
     if (!topic || topic.length < 5 || topic.length > 500) {
@@ -60,37 +60,80 @@ serve(async (req) => {
       );
     }
 
-    // Prepare AI prompt
-    const systemPrompt = `You are a viral faceless video creator specializing in engaging, educational content.
+    // Style-specific guidelines for enhanced prompts
+    const STYLE_GUIDELINES: Record<string, string> = {
+      'hyper-realistic': 'Ultra-realistic photography, 8K resolution, photorealistic lighting, professional camera, sharp focus, natural textures, high detail',
+      'cinematic': 'Cinematic composition, dramatic lighting, film grain, color grading, wide-angle lens, movie-quality depth of field, professional cinematography',
+      'animated': 'Pixar-style 3D animation, vibrant colors, soft lighting, high-quality CGI, rounded shapes, detailed textures, animated movie quality',
+      'cartoon': '2D cartoon illustration, bold outlines, flat colors, playful proportions, hand-drawn aesthetic, expressive characters',
+      'natural': 'Natural photography, authentic lighting, real-world setting, documentary style, genuine atmosphere, organic composition',
+      'sketch': 'Pencil sketch drawing, hand-drawn lines, artistic shading, paper texture, monochrome or light color wash, sketch art style'
+    };
+
+    const styleGuideline = STYLE_GUIDELINES[style] || STYLE_GUIDELINES['hyper-realistic'];
+
+    // Prepare AI prompt with enhanced narrative structure
+    const systemPrompt = `You are a viral faceless video creator specializing in engaging, educational content that tells compelling stories.
 
 OUTPUT FORMAT (strict JSON only):
 {
   "comment": "Creative direction note",
   "variables": {
-    "introImagePrompt": "${style} image prompt",
-    "introVoiceoverText": "Title\\nHook line",
+    "introImagePrompt": "${style} image prompt with detailed description",
+    "introVoiceoverText": "Attention-grabbing title\\nCompelling hook line",
     "scenes": [
       {
-        "voiceOverText": "One sentence max",
-        "imagePrompt": "${style} detailed image prompt"
+        "voiceOverText": "Natural speaking sentence",
+        ${mediaType === 'video' ? '"videoSearchQuery": "specific video search keywords",' : '"imagePrompt": "' + style + ' detailed visual description"'}
       }
     ]
   }
 }
 
-RULES:
+CRITICAL RULES:
 - Generate exactly ${sceneCount} scenes
-- Each scene = 1 sentence voiceover (5-8 words)
-- Image prompts MUST start with "${style}" style tag
+- Each scene voiceover = 10-15 words (takes ~5 seconds to speak naturally)
+- Write voiceover that flows naturally when spoken aloud
 - Tone: ${tone}
-- Build narrative arc: hook → build tension → reveal insight → memorable conclusion
-- Use 6th-8th grade language
-- Make it emotionally engaging
-- Keep voiceover text concise and punchy`;
+
+NARRATIVE STRUCTURE (CRITICAL):
+- Scene 1: HOOK - Start with a surprising fact or question that grabs attention immediately
+- Scenes 2-${sceneCount-1}: BUILD - Each scene reveals the next piece of the puzzle
+  * Use transitional phrases: "But here's the twist...", "This is where it gets interesting...", "What happened next changed everything..."
+  * Build suspense and curiosity that propels viewer forward
+  * Each scene should naturally flow from the previous one
+  * Create a progressive revelation of information
+- Scene ${sceneCount}: PAYOFF - Satisfying conclusion that ties everything together with a memorable insight
+
+STORY FLOW:
+- NOT a list of disconnected facts
+- YES a cohesive narrative journey with beginning, middle, and satisfying end
+- Create emotional engagement through storytelling
+- Use connective language between scenes
+- Build momentum toward the conclusion
+
+${mediaType === 'image' ? `IMAGE PROMPTS:
+- MUST start with "${style}" 
+- Then add: "${styleGuideline}"
+- Then describe the specific scene content
+- Example: "${style} ${styleGuideline}, showing [specific scene description]"
+- Be highly detailed and specific` : ''}
+
+${mediaType === 'video' ? `VIDEO SEARCH QUERIES:
+- Provide 3-5 specific keywords for video stock footage
+- Match the visual style and narrative beat
+- Example: "aerial mountain sunrise cinematic"` : ''}
+
+LANGUAGE:
+- Use 6th-8th grade reading level
+- Make it emotionally engaging and memorable
+- Natural conversational tone`;
 
     const userPrompt = `Topic: ${topic}
-Duration: ${duration}s
-Create ${sceneCount} micro-scenes that teach/reveal something fascinating about this topic.`;
+Duration: ${duration}s (${sceneCount} scenes)
+Media Type: ${mediaType === 'image' ? 'Static Images' : mediaType === 'video' ? 'Video Clips' : 'Animated Images'}
+
+Create a compelling STORY (not just facts) about this topic. Each scene should flow naturally into the next, building curiosity and leading to a satisfying conclusion.`;
 
     // Call Lovable AI Gateway
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
@@ -164,7 +207,11 @@ Create ${sceneCount} micro-scenes that teach/reveal something fascinating about 
         intro_image_prompt: introImagePrompt,
         intro_voiceover_text: introVoiceoverText,
         tokens_cost: tokenCost,
-        status: 'draft'
+        status: 'draft',
+        media_type: mediaType,
+        video_search_query: mediaType === 'video' ? topic : null,
+        background_music_url: backgroundMusicUrl || null,
+        background_music_volume: backgroundMusicUrl ? backgroundMusicVolume / 100 : 0.05
       })
       .select()
       .single();
@@ -184,7 +231,8 @@ Create ${sceneCount} micro-scenes that teach/reveal something fascinating about 
       storyboard_id: storyboard.id,
       order_number: index + 1,
       voice_over_text: scene.voiceOverText,
-      image_prompt: scene.imagePrompt,
+      image_prompt: mediaType === 'image' || mediaType === 'animated' ? scene.imagePrompt : null,
+      video_url: null, // Will be populated later via video search
       is_edited: false
     }));
 

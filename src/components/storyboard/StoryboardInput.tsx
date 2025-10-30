@@ -272,46 +272,35 @@ export function StoryboardInput() {
             </DialogTrigger>
             <DialogContent className="max-w-[95vw] sm:max-w-3xl lg:max-w-6xl max-h-[90vh] overflow-hidden p-4 sm:p-6">
               <DialogHeader>
-                <DialogTitle className="text-base sm:text-lg">Choose a Style</DialogTitle>
-              </DialogHeader>
-              
-              {/* Mobile Preview */}
-              <div className="sm:hidden sticky top-0 z-10 bg-card/90 backdrop-blur p-2 -mx-4 mb-4">
-                <div className="mx-auto rounded-[22px] border border-muted overflow-hidden shadow-lg w-[220px] aspect-[9/16]">
-                  <img 
-                    src={STYLES.find(s => s.value === style)?.image} 
-                    alt={STYLES.find(s => s.value === style)?.label} 
-                    className="w-full h-full object-cover" 
-                  />
-                </div>
-              </div>
+          <DialogTitle className="text-base sm:text-lg">Choose a Style</DialogTitle>
+        </DialogHeader>
 
-              {/* Mobile Compact Buttons */}
-              <div className="grid grid-cols-2 gap-3 sm:hidden">
-                {STYLES.map((styleOption) => (
-                  <button
-                    key={styleOption.value}
-                    onClick={() => {
-                      setStyle(styleOption.value);
-                      setStyleDialogOpen(false);
-                    }}
-                    className={cn(
-                      "group relative flex flex-col items-start gap-2 p-2 rounded-xl border-2 transition-all bg-card",
-                      style === styleOption.value 
-                        ? "border-primary ring-2 ring-primary/20" 
-                        : "border-muted hover:border-primary/50"
-                    )}
-                  >
-                    <div className="w-full aspect-video rounded-lg overflow-hidden">
-                      <img src={styleOption.image} alt={styleOption.label} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="w-full">
-                      <p className="text-sm font-semibold truncate">{styleOption.emoji} {styleOption.label}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-2">{styleOption.description}</p>
-                    </div>
-                  </button>
-                ))}
+        {/* Mobile Compact Grid */}
+        <div className="grid grid-cols-2 gap-2 sm:hidden max-h-[70vh] overflow-y-auto p-1">
+          {STYLES.map((styleOption) => (
+            <button
+              key={styleOption.value}
+              onClick={() => {
+                setStyle(styleOption.value);
+                setStyleDialogOpen(false);
+              }}
+              className={cn(
+                "group relative flex flex-col gap-1.5 p-2 rounded-lg border-2 transition-all bg-card text-left",
+                style === styleOption.value 
+                  ? "border-primary ring-2 ring-primary/20" 
+                  : "border-muted hover:border-primary/50"
+              )}
+            >
+              <div className="w-full aspect-[4/3] rounded overflow-hidden">
+                <img src={styleOption.image} alt={styleOption.label} className="w-full h-full object-cover" />
               </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold truncate">{styleOption.emoji} {styleOption.label}</p>
+                <p className="text-[10px] text-muted-foreground line-clamp-1">{styleOption.description}</p>
+              </div>
+            </button>
+          ))}
+        </div>
 
               {/* Desktop Card Grid */}
               <div className="hidden sm:grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[calc(90vh-140px)] overflow-y-auto px-2 py-1">
@@ -475,8 +464,8 @@ export function StoryboardInput() {
           </div>
         </div>
 
-        {/* Background Music */}
-        <div className="space-y-2">
+        {/* Background Music - Temporarily Hidden */}
+        {/* <div className="space-y-2">
           <Label className="text-sm font-medium">Background Music</Label>
           <BackgroundMusicSelector
             selectedMusicUrl={backgroundMusicUrl}
@@ -486,7 +475,7 @@ export function StoryboardInput() {
               setBackgroundMusicVolume(volume);
             }}
           />
-        </div>
+        </div> */}
 
         {/* Token Cost Display */}
         <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border">

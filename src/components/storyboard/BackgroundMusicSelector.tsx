@@ -53,6 +53,7 @@ export function BackgroundMusicSelector({
   const [selectedPreviewAudio, setSelectedPreviewAudio] = useState<PixabayAudio | null>(null);
   const [isSelectedPlaying, setIsSelectedPlaying] = useState(false);
   const selectedAudioRef = useRef<HTMLAudioElement | null>(null);
+  const hasShownAutoplayWarning = useRef(false);
 
   useEffect(() => {
     if (open && audioItems.length === 0) {
@@ -71,6 +72,7 @@ export function BackgroundMusicSelector({
         selectedAudioRef.current = null;
         setIsSelectedPlaying(false);
       }
+      hasShownAutoplayWarning.current = false;
     };
   }, [open]);
 
@@ -152,7 +154,10 @@ export function BackgroundMusicSelector({
       await newAudio.play();
     } catch (error) {
       console.error('Error playing audio:', error);
-      toast.error('Unable to play preview. Tap again to allow audio.');
+      if (!hasShownAutoplayWarning.current) {
+        toast.error('Unable to play preview. Tap again to allow audio.');
+        hasShownAutoplayWarning.current = true;
+      }
       return;
     }
 
@@ -206,7 +211,10 @@ export function BackgroundMusicSelector({
       setIsSelectedPlaying(true);
     } catch (error) {
       console.error('Error playing audio:', error);
-      toast.error('Unable to play preview. Tap again to allow audio.');
+      if (!hasShownAutoplayWarning.current) {
+        toast.error('Unable to play preview. Tap again to allow audio.');
+        hasShownAutoplayWarning.current = true;
+      }
       selectedAudioRef.current = null;
       setIsSelectedPlaying(false);
       return;

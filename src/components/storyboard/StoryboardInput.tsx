@@ -274,7 +274,47 @@ export function StoryboardInput() {
               <DialogHeader>
                 <DialogTitle className="text-base sm:text-lg">Choose a Style</DialogTitle>
               </DialogHeader>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[calc(90vh-140px)] overflow-y-auto px-2 py-1">
+              
+              {/* Mobile Preview */}
+              <div className="sm:hidden sticky top-0 z-10 bg-card/90 backdrop-blur p-2 -mx-4 mb-4">
+                <div className="mx-auto rounded-[22px] border border-muted overflow-hidden shadow-lg w-[220px] aspect-[9/16]">
+                  <img 
+                    src={STYLES.find(s => s.value === style)?.image} 
+                    alt={STYLES.find(s => s.value === style)?.label} 
+                    className="w-full h-full object-cover" 
+                  />
+                </div>
+              </div>
+
+              {/* Mobile Compact Buttons */}
+              <div className="grid grid-cols-2 gap-3 sm:hidden">
+                {STYLES.map((styleOption) => (
+                  <button
+                    key={styleOption.value}
+                    onClick={() => {
+                      setStyle(styleOption.value);
+                      setStyleDialogOpen(false);
+                    }}
+                    className={cn(
+                      "group relative flex flex-col items-start gap-2 p-2 rounded-xl border-2 transition-all bg-card",
+                      style === styleOption.value 
+                        ? "border-primary ring-2 ring-primary/20" 
+                        : "border-muted hover:border-primary/50"
+                    )}
+                  >
+                    <div className="w-full aspect-video rounded-lg overflow-hidden">
+                      <img src={styleOption.image} alt={styleOption.label} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="w-full">
+                      <p className="text-sm font-semibold truncate">{styleOption.emoji} {styleOption.label}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{styleOption.description}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Desktop Card Grid */}
+              <div className="hidden sm:grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[calc(90vh-140px)] overflow-y-auto px-2 py-1">
                 {STYLES.map((styleOption) => (
                   <div
                     key={styleOption.value}

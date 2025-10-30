@@ -68,6 +68,7 @@ export function BackgroundMusicSelector({
       if (selectedAudioRef.current) {
         selectedAudioRef.current.pause();
         selectedAudioRef.current.currentTime = 0;
+        selectedAudioRef.current = null;
         setIsSelectedPlaying(false);
       }
     };
@@ -119,7 +120,7 @@ export function BackgroundMusicSelector({
     // Don't close dialog - let user keep browsing
   };
 
-  const handlePlayPreview = (audio: PixabayAudio) => {
+  const handlePlayPreview = async (audio: PixabayAudio) => {
     if (playingId === audio.id) {
       // Stop current audio
       if (playingAudio) {
@@ -137,10 +138,24 @@ export function BackgroundMusicSelector({
       playingAudio.currentTime = 0;
     }
 
+    const src = audio.previewURL || audio.audioURL;
+    if (!src) {
+      toast.error('No preview available');
+      return;
+    }
+
     // Play new audio
-    const newAudio = new Audio(audio.previewURL);
+    const newAudio = new Audio(src);
     newAudio.volume = volume / 100;
-    newAudio.play();
+    
+    try {
+      await newAudio.play();
+    } catch (error) {
+      console.error('Error playing audio:', error);
+      toast.error('Unable to play preview. Tap again to allow audio.');
+      return;
+    }
+
     newAudio.onended = () => {
       setPlayingAudio(null);
       setPlayingId(null);
@@ -163,7 +178,7 @@ export function BackgroundMusicSelector({
     }
   };
 
-  const handlePlaySelectedMusic = () => {
+  const handlePlaySelectedMusic = async () => {
     if (!selectedMusicUrl) return;
 
     if (selectedAudioRef.current) {
@@ -185,13 +200,23 @@ export function BackgroundMusicSelector({
     // Play selected music
     const audio = new Audio(selectedMusicUrl);
     audio.volume = volume / 100;
-    audio.play();
+    
+    try {
+      await audio.play();
+      setIsSelectedPlaying(true);
+    } catch (error) {
+      console.error('Error playing audio:', error);
+      toast.error('Unable to play preview. Tap again to allow audio.');
+      selectedAudioRef.current = null;
+      setIsSelectedPlaying(false);
+      return;
+    }
+
     audio.onended = () => {
       selectedAudioRef.current = null;
       setIsSelectedPlaying(false);
     };
     selectedAudioRef.current = audio;
-    setIsSelectedPlaying(true);
   };
 
   const handleRemoveMusic = () => {
@@ -231,7 +256,7 @@ export function BackgroundMusicSelector({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col overscroll-contain">
           <DialogHeader>
             <DialogTitle>Select Background Music</DialogTitle>
             <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
@@ -247,7 +272,7 @@ export function BackgroundMusicSelector({
             </div>
           </DialogHeader>
 
-          <div className="space-y-4 overflow-y-auto flex-1 px-1">
+          <div className="space-y-4 overflow-y-auto flex-1 px-1 touch-pan-y">
             {/* Current Selection Preview */}
             {selectedMusicUrl && selectedPreviewAudio && (
               <div className="p-4 bg-primary/10 rounded-lg border-2 border-primary">
@@ -258,11 +283,13 @@ export function BackgroundMusicSelector({
                       <span className="text-sm font-bold text-primary">Selected Music</span>
                     </div>
                     <p className="font-medium text-sm truncate">{selectedPreviewAudio.name}</p>
-                    <div className="flex gap-2 mt-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {Math.round(selectedPreviewAudio.duration)}s
-                      </Badge>
-                      {selectedPreviewAudio.genre && (
+                    <div className="flex gap-2 mt-2 flex-wrap">
+                      {Number.isFinite(selectedPreviewAudio.duration) && selectedPreviewAudio.duration > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          {Math.round(selectedPreviewAudio.duration)}s
+                        </Badge>
+                      )}
+                      {selectedPreviewAudio.genre && selectedPreviewAudio.genre !== 'Unknown' && (
                         <Badge variant="secondary" className="text-xs">
                           {selectedPreviewAudio.genre}
                         </Badge>
@@ -360,13 +387,13 @@ export function BackgroundMusicSelector({
 
 
             {/* Music List */}
-            <div className="max-h-[300px] overflow-y-auto rounded-md border p-4">
+            <div className="rounded-md border p-4">
               {loading ? (
-                <div className="flex items-center justify-center h-full">
+                <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : audioItems.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center">
+                <div className="flex flex-col items-center justify-center py-8 text-center">
                   <Music className="h-12 w-12 text-muted-foreground mb-2" />
                   <p className="text-muted-foreground">No music found</p>
                   <p className="text-sm text-muted-foreground">Try a different search term or genre</p>
@@ -376,50 +403,49 @@ export function BackgroundMusicSelector({
                   {audioItems.map((audio) => (
                     <div
                       key={audio.id}
-                      className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
+                      className={`flex items-center gap-3 w-full min-w-0 p-3 rounded-lg border-2 transition-all cursor-pointer ${
                         selectedMusicUrl === audio.audioURL
                           ? 'border-primary bg-primary/10'
                           : 'border-muted hover:border-primary/50'
                       }`}
+                      onClick={() => handleSelectMusic(audio)}
                     >
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{audio.name}</p>
-                        <div className="flex gap-2 mt-1">
-                          <Badge variant="secondary" className="text-xs">
-                            {Math.round(audio.duration)}s
-                          </Badge>
-                          {audio.genre && (
+                        <div className="flex gap-2 mt-1 flex-wrap">
+                          {Number.isFinite(audio.duration) && audio.duration > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {Math.round(audio.duration)}s
+                            </Badge>
+                          )}
+                          {audio.genre && audio.genre !== 'Unknown' && (
                             <Badge variant="secondary" className="text-xs">
                               {audio.genre}
                             </Badge>
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handlePlayPreview(audio)}
-                        >
-                          {playingId === audio.id ? (
-                            <>
-                              <Pause className="w-3.5 h-3.5 mr-1" />
-                              Stop
-                            </>
-                          ) : (
-                            <>
-                              <Play className="w-3.5 h-3.5 mr-1" />
-                              Preview
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => handleSelectMusic(audio)}
-                        >
-                          Select
-                        </Button>
-                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePlayPreview(audio);
+                        }}
+                        className="shrink-0"
+                      >
+                        {playingId === audio.id ? (
+                          <>
+                            <Pause className="w-3.5 h-3.5 mr-1" />
+                            Stop
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-3.5 h-3.5 mr-1" />
+                            Preview
+                          </>
+                        )}
+                      </Button>
                     </div>
                   ))}
                 </div>

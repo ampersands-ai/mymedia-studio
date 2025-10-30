@@ -28,7 +28,6 @@ serve(async (req) => {
     const url = new URL('https://pixabay.com/api/');
     url.searchParams.append('key', PIXABAY_API_KEY);
     url.searchParams.append('q', query);
-    url.searchParams.append('audio_type', 'music');
     url.searchParams.append('per_page', per_page.toString());
 
     const response = await fetch(url.toString());
@@ -40,16 +39,24 @@ serve(async (req) => {
 
     const data = await response.json();
     
-    // Transform Pixabay audio response to our format
-    const items = (data.hits || []).map((hit: any) => ({
-      id: hit.id,
-      name: hit.name || `Track ${hit.id}`,
-      tags: hit.tags,
-      duration: hit.duration,
-      previewURL: hit.previewURL,
-      audioURL: hit.url_m || hit.url,
-      genre: hit.genre || 'Unknown',
-    }));
+    // Transform Pixabay response with robust key mapping
+    const items = (data.hits || []).map((hit: any) => {
+      const name = hit.name || hit.title || `Track ${hit.id}`;
+      const duration = Number(hit.duration) || 0;
+      const previewURL = hit.previewURL || hit.preview_url || hit.preview?.url || '';
+      const audioURL = hit.audioURL || hit.audio_url || hit.url || '';
+      const genre = (hit.genre && hit.genre !== 'Unknown') ? hit.genre : (hit.category || '');
+      
+      return {
+        id: hit.id,
+        name,
+        tags: hit.tags || '',
+        duration,
+        previewURL: previewURL || audioURL,
+        audioURL: audioURL || previewURL,
+        genre,
+      };
+    });
 
     console.log('[search-pixabay-audio] Found:', items.length, 'tracks');
 

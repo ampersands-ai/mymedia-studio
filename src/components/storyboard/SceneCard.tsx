@@ -140,7 +140,7 @@ export const SceneCard = ({
             value={imagePrompt}
             onChange={(e) => setImagePrompt(e.target.value)}
             onClick={(e) => e.stopPropagation()}
-            className="min-h-[80px] text-sm bg-background/50"
+            className="min-h-[160px] sm:min-h-[200px] text-sm bg-background/50 resize-y"
             maxLength={2000}
           />
         </div>

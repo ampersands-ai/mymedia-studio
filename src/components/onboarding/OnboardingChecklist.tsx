@@ -109,13 +109,13 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
                 className="w-full bg-primary-500 hover:bg-primary-600 text-neutral-900 font-bold animate-pulse"
               >
                 <Trophy className="h-4 w-4 mr-2" />
-                Claim 100 Bonus Tokens
+                Claim 2 Bonus Credits
               </Button>
             )}
 
             {!allComplete && (
               <p className="text-xs text-neutral-500 text-center">
-                Complete all steps to earn 100 bonus tokens!
+                Complete all steps to earn 2 bonus credits!
               </p>
             )}
           </div>

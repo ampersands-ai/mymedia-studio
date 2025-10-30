@@ -85,7 +85,7 @@ export default function UsersManager() {
 
     const amount = parseInt(tokenAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error("Please enter a valid token amount");
+      toast.error("Please enter a valid credit amount");
       return;
     }
 

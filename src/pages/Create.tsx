@@ -64,7 +64,7 @@ const Create = () => {
         "@type": "Offer",
         "price": "0",
         "priceCurrency": "USD",
-        "description": "Start with 500 free tokens"
+        "description": "Start with 5 free credits"
       }
     };
 
@@ -111,7 +111,7 @@ const Create = () => {
     document.title = "Start Creating - artifio.ai | AI Content Generator";
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Create stunning AI-generated videos, images, music, and text in the artifio.ai studio. Start creating with 500 free tokens.');
+      metaDescription.setAttribute('content', 'Create stunning AI-generated videos, images, music, and text in the artifio.ai studio. Start creating with 5 free credits.');
     }
 
     return () => {

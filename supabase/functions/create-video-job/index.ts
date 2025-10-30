@@ -47,10 +47,10 @@ serve(async (req) => {
       throw new Error('Duration must be between 15 and 180 seconds');
     }
 
-    // Calculate dynamic cost based on duration (15 tokens per second)
+    // Calculate dynamic cost based on duration (15 credits per second)
     const costTokens = duration * 15;
 
-    // Check token balance
+    // Check credit balance
     const { data: subscription, error: subError } = await supabaseClient
       .from('user_subscriptions')
       .select('tokens_remaining')
@@ -65,7 +65,7 @@ serve(async (req) => {
       throw new Error(`Insufficient credits. ${costTokens} credits required for ${duration}s video.`);
     }
 
-    // Deduct tokens atomically
+    // Deduct credits atomically
     const { error: deductError } = await supabaseClient
       .from('user_subscriptions')
       .update({ tokens_remaining: subscription.tokens_remaining - costTokens })
@@ -73,8 +73,8 @@ serve(async (req) => {
       .eq('tokens_remaining', subscription.tokens_remaining);
 
     if (deductError) {
-      console.error('Token deduction error:', deductError);
-      throw new Error('Failed to deduct tokens. Please try again.');
+      console.error('Credit deduction error:', deductError);
+      throw new Error('Failed to deduct credits. Please try again.');
     }
 
     // Create video job
@@ -98,7 +98,7 @@ serve(async (req) => {
 
     if (jobError) {
       console.error('Job creation error:', jobError);
-      // Refund tokens on failure
+      // Refund credits on failure
       await supabaseClient
         .from('user_subscriptions')
         .update({ tokens_remaining: subscription.tokens_remaining })

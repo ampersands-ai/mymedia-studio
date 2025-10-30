@@ -307,9 +307,9 @@ const Auth = () => {
         
         const hasAllFields = phoneNumber && zipcode;
         if (hasAllFields) {
-          toast.success("Account created! You've received 500 free tokens. Email auto-confirmed!");
+          toast.success("Account created! You've received 5 free credits. Email auto-confirmed!");
         } else {
-          toast.success("Account created! You've received 500 free tokens. Complete your profile for 100 bonus tokens!");
+          toast.success("Account created! You've received 5 free credits. Complete your profile for 2 bonus credits!");
         }
         navigate("/dashboard/custom-creation");
       }
@@ -370,7 +370,7 @@ const Auth = () => {
           <CardDescription className="text-base font-medium">
             {isLogin
               ? "Sign in to continue creating"
-              : "Start with 500 free tokens + 100 bonus tokens when you verify your email and complete your profile"}
+              : "Start with 5 free credits + 2 bonus credits when you verify your email and complete your profile"}
           </CardDescription>
           {!isLogin && (
             <p className="text-xs text-muted-foreground mt-2">

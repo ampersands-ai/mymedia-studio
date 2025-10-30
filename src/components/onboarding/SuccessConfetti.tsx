@@ -41,7 +41,7 @@ export const SuccessConfetti = ({
           </div>
           <h2 className="text-2xl font-bold text-neutral-900">{message}</h2>
           <p className="text-neutral-600">
-            Keep going to complete your onboarding checklist and earn 100 bonus tokens!
+            Keep going to complete your onboarding checklist and earn 2 bonus credits!
           </p>
         </div>
       </Card>

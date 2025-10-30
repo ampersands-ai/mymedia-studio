@@ -693,7 +693,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
             }
             
             // Create generation record with job's cost_tokens
-            console.log(`[${jobId}] Creating generation record with ${job.cost_tokens} tokens...`);
+            console.log(`[${jobId}] Creating generation record with ${job.cost_tokens} credits...`);
             const { data: generation, error: genError } = await supabase.from('generations').insert({
               user_id: job.user_id,
               type: 'video',

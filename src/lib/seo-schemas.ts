@@ -41,7 +41,7 @@ export const generateSchemas = () => {
         "name": "How much does artifio.ai cost?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "artifio.ai offers plans starting at just $7.99/month, which is 50-80% less than competitors. You also get 500 free tokens to start with no credit card required."
+          "text": "artifio.ai offers plans starting at just $7.99/month, which is 50-80% less than competitors. You also get 5 free credits to start with no credit card required."
         }
       },
       {

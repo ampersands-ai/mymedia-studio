@@ -255,7 +255,7 @@ export const useStoryboard = () => {
           toast.success('🎉 Video ready! Check the preview below.');
         } else if (data.status === 'failed') {
           setIsRendering(false);
-          toast.error('Video rendering failed. Tokens have been refunded.');
+          toast.error('Video rendering failed. Credits have been refunded.');
         }
       } catch (error) {
         console.error('Poll error:', error);
@@ -287,7 +287,7 @@ export const useStoryboard = () => {
           toast.success('🎉 Video ready! (Webhook notification)');
         } else if (updatedStoryboard.status === 'failed' && isRendering) {
           setIsRendering(false);
-          toast.error('Video rendering failed. Tokens refunded.');
+          toast.error('Video rendering failed. Credits refunded.');
         }
       })
       .subscribe();

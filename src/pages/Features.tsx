@@ -176,7 +176,7 @@ const Features = () => {
                 <Link to="/dashboard/custom-creation">Start Creating</Link>
               </Button>
               <p className="text-sm text-muted-foreground mt-4">
-                500 free tokens • No credit card required
+                5 free credits • No credit card required
               </p>
             </CardContent>
           </Card>

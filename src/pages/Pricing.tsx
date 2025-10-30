@@ -264,7 +264,7 @@ const Pricing = () => {
     document.title = "Pricing - Artifio.ai | AI Content Creation from $7.99/mo";
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Affordable AI content creation plans starting at $7.99/mo. 50-80% cheaper than Midjourney, Runway & Jasper. Free plan available with 500 credits. Compare and save today.');
+      metaDescription.setAttribute('content', 'Affordable AI content creation plans starting at $7.99/mo. 50-80% cheaper than Midjourney, Runway & Jasper. Free plan available with 5 credits. Compare and save today.');
     }
 
     return () => {
@@ -496,7 +496,7 @@ const Pricing = () => {
                       </tr>
                       <tr className="border-b border-border">
                         <td className="py-3 px-4 font-medium">Free Tier</td>
-                        <td className="py-3 px-4 font-black text-primary">✅ 500 credits</td>
+                        <td className="py-3 px-4 font-black text-primary">✅ 5 credits</td>
                         <td className="py-3 px-4">❌</td>
                         <td className="py-3 px-4">❌</td>
                         <td className="py-3 px-4">❌</td>

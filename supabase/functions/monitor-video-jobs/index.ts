@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
         .from('video_jobs')
         .update({
           status: 'failed',
-          error_message: 'Video generation exceeded 45 minutes. Tokens refunded automatically.',
+          error_message: 'Video generation exceeded 45 minutes. Credits refunded automatically.',
           error_details: {
             timeout: true,
             duration_minutes: 45,
@@ -78,14 +78,14 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Refund tokens using the existing function
+      // Refund credits using the existing function
       const { error: refundError } = await supabase.rpc('increment_tokens', {
         user_id_param: job.user_id,
         amount: job.cost_tokens
       });
 
       if (refundError) {
-        console.error(`Failed to refund tokens for job ${job.id}:`, refundError);
+        console.error(`Failed to refund credits for job ${job.id}:`, refundError);
         continue;
       }
 
@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
         tokens_refunded: job.cost_tokens
       });
 
-      console.log(`Successfully processed job ${job.id} - Refunded ${job.cost_tokens} tokens`);
+      console.log(`Successfully processed job ${job.id} - Refunded ${job.cost_tokens} credits`);
     }
 
     console.log(`Monitoring complete: ${refundedJobs.length}/${stuckJobs.length} jobs processed`);

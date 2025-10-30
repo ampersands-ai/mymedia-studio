@@ -74,10 +74,10 @@ const Terms = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-black mb-4 text-foreground">4. Token System and Payments</h2>
+              <h2 className="text-2xl font-black mb-4 text-foreground">4. Credit System and Payments</h2>
               <h3 className="text-xl font-bold mb-3 text-foreground">Free Tier</h3>
               <p className="leading-relaxed mb-3">
-                New users receive 500 free tokens upon registration. Free tokens do not expire but are subject to fair use policies.
+                New users receive 5 free credits upon registration. Free credits do not expire but are subject to fair use policies.
               </p>
               
               <h3 className="text-xl font-bold mb-3 text-foreground">Paid Plans</h3>

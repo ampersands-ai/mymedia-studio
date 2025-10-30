@@ -142,8 +142,8 @@ export const useOnboarding = () => {
 
       if (error) throw error;
 
-      toast.success('🎉 Congratulations! You earned 100 bonus tokens!', {
-        description: 'Complete your profile for another 100 tokens.',
+      toast.success('🎉 Congratulations! You earned 2 bonus credits!', {
+        description: 'Complete your profile for another 2 credits.',
         duration: 5000,
       });
     },

@@ -31,7 +31,7 @@ serve(async (req) => {
 
     const tokenCost = 800;
 
-    // Check user token balance
+    // Check user credit balance
     const { data: subscription, error: subError } = await supabaseClient
       .from('user_subscriptions')
       .select('tokens_remaining')
@@ -79,15 +79,15 @@ serve(async (req) => {
       }
     }
 
-    // Deduct tokens
+    // Deduct credits
     const { error: deductError } = await supabaseClient.rpc('increment_tokens', {
       user_id_param: user.id,
       amount: -tokenCost
     });
 
     if (deductError) {
-      console.error('Token deduction error:', deductError);
-      throw new Error('Failed to deduct tokens');
+      console.error('Credit deduction error:', deductError);
+      throw new Error('Failed to deduct credits');
     }
 
     // Build JSON2Video payload
@@ -133,7 +133,7 @@ serve(async (req) => {
       const errorText = await json2videoResponse.text();
       console.error('[render-storyboard-video] JSON2Video API error:', json2videoResponse.status, errorText);
       
-      // Refund tokens on API error
+      // Refund credits on API error
       await supabaseClient.rpc('increment_tokens', {
         user_id_param: user.id,
         amount: tokenCost
@@ -165,7 +165,7 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('[render-storyboard-video] Status update error:', updateError);
-      // Refund tokens
+      // Refund credits
       await supabaseClient.rpc('increment_tokens', {
         user_id_param: user.id,
         amount: tokenCost

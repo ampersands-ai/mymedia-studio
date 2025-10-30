@@ -10,9 +10,9 @@ const faqs = [
     question: "How does the credit system work?",
     answer: `Each generation costs credits based on complexity:
     
-• Simple image: ~50 credits
-• Video (5s): ~100 credits
-• High-quality image: ~75 credits
+• Simple image: ~0.5 credits
+• Video (5s): ~1 credit
+• High-quality image: ~0.75 credits
 
 Your plan includes a monthly credit allocation. Unused credits roll over to next month.`,
   },
@@ -46,7 +46,7 @@ You'll get alerts at 80% and 95% usage.`,
   },
   {
     question: "Which plan should I choose?",
-    answer: `Start with Free (500 credits) to try it. Most creators upgrade to Explorer ($7.99) or Professional ($19.99).
+    answer: `Start with Free (5 credits) to try it. Most creators upgrade to Explorer ($7.99) or Professional ($19.99).
 
 Rule of thumb:
 • 1-10 creations/week → Explorer

@@ -53,7 +53,7 @@ const Playground = () => {
         "@type": "Offer",
         "price": "0",
         "priceCurrency": "USD",
-        "description": "Start with 500 free tokens"
+        "description": "Start with 5 free credits"
       }
     };
 
@@ -90,7 +90,7 @@ const Playground = () => {
     document.title = "Playground - Artifio.ai | Create AI Content Now";
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Create stunning AI-generated videos, images, music, and text in the Artifio.ai Playground. Start creating with 500 free tokens.');
+      metaDescription.setAttribute('content', 'Create stunning AI-generated videos, images, music, and text in the Artifio.ai Playground. Start creating with 5 free credits.');
     }
 
     return () => {
@@ -239,7 +239,7 @@ const Playground = () => {
               <div className="brutal-card-sm px-4 py-2 bg-neon-yellow">
                 <div className="flex items-center gap-2">
                   <Coins className="h-5 w-5 text-black" />
-                  <span className="font-black text-black">{tokensRemaining} tokens</span>
+                  <span className="font-black text-black">{tokensRemaining} credits</span>
                 </div>
               </div>
               <Button

@@ -51,7 +51,7 @@ export const WelcomeModal = ({ isOpen, onClose, onSelectTemplate }: WelcomeModal
             </Button>
           </div>
           <DialogDescription className="text-base pt-2">
-            Get started with 500 free tokens + earn <span className="font-bold text-primary-500">100 bonus tokens</span> by completing your first creation!
+            Get started with 5 free credits + earn <span className="font-bold text-primary-500">2 bonus credits</span> by completing your first creation!
           </DialogDescription>
         </DialogHeader>
 

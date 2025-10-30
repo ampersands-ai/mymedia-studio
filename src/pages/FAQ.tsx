@@ -64,7 +64,7 @@ const FAQ = () => {
                   <div>
                     <h3 className="font-bold text-lg mb-2">How do I get started?</h3>
                     <p className="text-muted-foreground">
-                      Simply sign up for a free account and you'll get 500 tokens to start exploring. Choose a template or model, enter your prompt, and create. It's that easy!
+                      Simply sign up for a free account and you'll get 5 credits to start exploring. Choose a template or model, enter your prompt, and create. It's that easy!
                     </p>
                   </div>
                   

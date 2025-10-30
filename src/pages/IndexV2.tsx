@@ -367,7 +367,7 @@ const IndexV2 = () => {
             </p>
             <div className="px-2">
               <Button asChild size="lg" className="text-sm sm:text-base md:text-lg lg:text-xl px-6 sm:px-8 md:px-12 py-4 sm:py-6 bg-white hover:bg-neutral-50 dark:bg-card dark:hover:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border-2 border-neutral-900 dark:border-neutral-100 shadow-xl w-full sm:w-auto" {...usePrefetchOnHover('create')}>
-                <Link to="/auth">START FREE - GET 500 TOKENS</Link>
+                <Link to="/auth">START FREE - GET 5 CREDITS</Link>
               </Button>
             </div>
             <div className="flex flex-col gap-2 sm:gap-3 text-neutral-900/90 text-sm sm:text-base px-2">

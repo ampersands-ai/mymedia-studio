@@ -110,7 +110,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling, recoverJob, isRecoveringJob, dismissError, isDismissingError, generateCaption, isGeneratingCaption } = useVideoJobs();
   const { data: tokens } = useUserTokens();
   
-  // Calculate voiceover regeneration cost (144 tokens per 1000 chars)
+  // Calculate voiceover regeneration cost (144 credits per 1000 chars)
   const voiceoverRegenerationCost = Math.ceil((editedVoiceoverScript.length / 1000) * 144);
   const canAffordVoiceoverRegeneration = (tokens?.tokens_remaining ?? 0) >= voiceoverRegenerationCost;
   
@@ -536,7 +536,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                   </div>
                   <div className="flex items-center gap-1.5 text-xs">
                     <Coins className="w-3 h-3 text-primary" />
-                    <span className="font-medium text-primary">{voiceoverRegenerationCost} tokens</span>
+                    <span className="font-medium text-primary">{voiceoverRegenerationCost} credits</span>
                   </div>
                 </div>
                 <Textarea
@@ -547,7 +547,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                 />
                 {!canAffordVoiceoverRegeneration && (
                   <p className="text-xs text-destructive font-medium">
-                    Insufficient tokens. You need {Number(voiceoverRegenerationCost).toFixed(2)} tokens to regenerate this voiceover.
+                    Insufficient credits. You need {Number(voiceoverRegenerationCost).toFixed(2)} credits to regenerate this voiceover.
                   </p>
                 )}
                 <div className="flex gap-2">

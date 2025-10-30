@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { Sparkles, Film, Coins, Volume2, Play, Loader2, Palette, Image as ImageIcon, Video as VideoIcon, Wand2, Music, ChevronDown } from 'lucide-react';
+import { Sparkles, Film, Coins, Volume2, Play, Loader2, Palette, Image as ImageIcon, Video as VideoIcon, Wand2, Music, ChevronDown, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { BackgroundMusicSelector } from './BackgroundMusicSelector';
@@ -198,6 +198,32 @@ export function StoryboardInput() {
     window.speechSynthesis.speak(utterance);
   };
 
+  const handleReset = () => {
+    setTopic('');
+    setDuration(60);
+    setStyle('hyper-realistic');
+    setTone('engaging');
+    setVoiceID('en-US-AndrewMultilingualNeural');
+    setMediaType('image');
+    setBackgroundMusicUrl('');
+    setBackgroundMusicVolume(5);
+    setAspectRatio('instagram-story');
+    setVideoQuality('medium');
+    setFps(25);
+    setSubtitlePosition('mid-bottom-center');
+    setSubtitleFontSize(140);
+    setSubtitleOutlineColor('#000000');
+    setSubtitleOutlineWidth(8);
+    setMusicVolume(0.05);
+    setMusicFadeIn(2);
+    setMusicFadeOut(2);
+    setImageZoom(2);
+    setImagePosition('center-center');
+    setEnableCache(true);
+    setDraftMode(false);
+    toast.success('Form reset to defaults');
+  };
+
   const handleGenerate = async () => {
     if (!canGenerate) {
       if (topic.length < 5) {
@@ -249,10 +275,23 @@ export function StoryboardInput() {
   return (
     <Card className="relative overflow-hidden bg-card border-2">
       <CardHeader className="space-y-2">
-        <CardTitle className="text-xl font-black flex items-center gap-2">
-          <Film className="w-5 h-5" />
-          CREATE STORYBOARD
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xl font-black flex items-center gap-2">
+            <Film className="w-5 h-5" />
+            CREATE STORYBOARD
+          </CardTitle>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleReset}
+            disabled={isGenerating}
+            className="gap-2"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Reset
+          </Button>
+        </div>
         <CardDescription className="text-sm">
           Generate AI-powered video scripts with full editing control
         </CardDescription>

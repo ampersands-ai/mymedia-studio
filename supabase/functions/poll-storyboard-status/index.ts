@@ -106,7 +106,7 @@ serve(async (req) => {
             progress = 100;
             videoUrl = statusData.movie.url;
 
-            // Update database
+            // Update database with video URL and quota info
             await supabaseClient
               .from('storyboards')
               .update({
@@ -114,11 +114,13 @@ serve(async (req) => {
                 video_url: videoUrl,
                 video_storage_path: videoUrl,
                 completed_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
+                api_quota_remaining: statusData.remaining_quota?.time || null
               })
               .eq('id', storyboardId);
               
             console.log('[poll-storyboard-status] Storyboard completed:', videoUrl);
+            console.log('[poll-storyboard-status] API quota remaining:', statusData.remaining_quota?.time);
             
           } else if (statusData.movie?.status === 'error' || statusData.movie?.status === 'failed') {
             status = 'failed';

@@ -81,7 +81,8 @@ serve(async (req) => {
           video_url: statusData.movie.url,
           video_storage_path: statusData.movie.url,
           completed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          api_quota_remaining: statusData.remaining_quota?.time || null
         })
         .eq('id', storyboard.id);
 
@@ -89,7 +90,8 @@ serve(async (req) => {
         throw updateError;
       }
 
-      console.log('[fetch-video-status] Video fetched successfully:', statusData.url);
+      console.log('[fetch-video-status] Video fetched successfully:', statusData.movie.url);
+      console.log('[fetch-video-status] API quota remaining:', statusData.remaining_quota?.time);
 
       return new Response(
         JSON.stringify({

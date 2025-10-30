@@ -742,6 +742,7 @@ export type Database = {
       }
       storyboards: {
         Row: {
+          api_quota_remaining: number | null
           aspect_ratio: string | null
           background_music_url: string | null
           background_music_volume: number | null
@@ -780,6 +781,7 @@ export type Database = {
           voice_name: string
         }
         Insert: {
+          api_quota_remaining?: number | null
           aspect_ratio?: string | null
           background_music_url?: string | null
           background_music_volume?: number | null
@@ -818,6 +820,7 @@ export type Database = {
           voice_name: string
         }
         Update: {
+          api_quota_remaining?: number | null
           aspect_ratio?: string | null
           background_music_url?: string | null
           background_music_volume?: number | null

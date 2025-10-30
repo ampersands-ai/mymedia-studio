@@ -270,16 +270,16 @@ export function StoryboardInput() {
                 {STYLES.find(s => s.value === style)?.emoji} {STYLES.find(s => s.value === style)?.label}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
+            <DialogContent className="max-w-[95vw] sm:max-w-3xl lg:max-w-6xl max-h-[90vh] overflow-hidden p-4 sm:p-6">
               <DialogHeader>
-                <DialogTitle>Choose a Style</DialogTitle>
+                <DialogTitle className="text-base sm:text-lg">Choose a Style</DialogTitle>
               </DialogHeader>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 max-h-[calc(90vh-120px)] overflow-y-auto px-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[calc(90vh-140px)] overflow-y-auto px-2 py-1">
                 {STYLES.map((styleOption) => (
                   <div
                     key={styleOption.value}
                     className={cn(
-                      "relative cursor-pointer rounded-lg overflow-hidden transition-all border-2",
+                      "relative cursor-pointer rounded-lg overflow-hidden transition-all border-2 max-w-md mx-auto md:max-w-none w-full",
                       style === styleOption.value
                         ? "border-primary ring-4 ring-primary/20"
                         : "border-muted hover:border-primary/50"
@@ -289,7 +289,7 @@ export function StoryboardInput() {
                       setStyleDialogOpen(false);
                     }}
                   >
-                    <div className="relative aspect-video md:aspect-[21/9] overflow-hidden bg-muted">
+                    <div className="relative aspect-[16/10] sm:aspect-video md:aspect-[21/9] overflow-hidden bg-muted min-h-[180px] sm:min-h-0">
                       <img
                         src={styleOption.image}
                         alt={styleOption.label}
@@ -302,19 +302,19 @@ export function StoryboardInput() {
                       
                       {/* Selected Checkmark */}
                       {style === styleOption.value && (
-                        <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                          <svg className="w-5 h-5 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="absolute top-2 right-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary flex items-center justify-center shadow-lg">
+                          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
                       )}
                       
                       {/* Style Info */}
-                      <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <p className="text-white font-bold text-base leading-tight">
+                      <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+                        <p className="text-white font-bold text-sm sm:text-base leading-tight">
                           {styleOption.emoji} {styleOption.label}
                         </p>
-                        <p className="text-white/70 text-sm mt-0.5 leading-relaxed">
+                        <p className="text-white/80 text-xs sm:text-sm mt-0.5 leading-relaxed">
                           {styleOption.description}
                         </p>
                       </div>

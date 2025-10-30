@@ -250,6 +250,19 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                 <button
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/dashboard/custom-creation") 
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                  )}
+                  onClick={() => handleNavigation("/dashboard/custom-creation")}
+                >
+                  <Wand2 className="h-5 w-5" />
+                  <span>Custom Creation</span>
+                </button>
+
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/pricing") 
                       ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
                       : "text-foreground hover:bg-muted hover:text-foreground font-medium"

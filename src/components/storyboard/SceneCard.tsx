@@ -46,6 +46,12 @@ export const SceneCard = ({
   const [isSaving, setIsSaving] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
 
+  // Sync local state when scene prop changes (e.g., from regeneration)
+  useEffect(() => {
+    setVoiceOverText(scene.voice_over_text);
+    setImagePrompt(scene.image_prompt);
+  }, [scene.voice_over_text, scene.image_prompt]);
+
   // Debounced save
   useEffect(() => {
     const timer = setTimeout(() => {

@@ -263,6 +263,19 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                 <button
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/dashboard/storyboard") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
+                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                  )}
+                  onClick={() => handleNavigation("/dashboard/storyboard")}
+                >
+                  <span className="text-xl">🎬</span>
+                  <span>Storyboard</span>
+                </button>
+
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/dashboard/video-studio") 
                       ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
                       : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"

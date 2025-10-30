@@ -122,7 +122,6 @@ serve(async (req) => {
         storyboard.custom_height
       ),
       quality: (['low', 'medium', 'high'].includes(storyboard.video_quality) ? storyboard.video_quality : 'high'),
-      fps: storyboard.fps || 25,
       cache: storyboard.enable_cache ?? true,
       draft: storyboard.draft_mode ?? false,
       elements: [

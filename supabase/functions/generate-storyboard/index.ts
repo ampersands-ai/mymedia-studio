@@ -39,7 +39,6 @@ serve(async (req) => {
       background_music_volume: backgroundMusicVolume = 5,
       aspect_ratio: aspectRatio = 'full-hd',
       video_quality: videoQuality = 'medium',
-      fps = 25,
       custom_width: customWidth,
       custom_height: customHeight,
       subtitle_settings: subtitleSettings,
@@ -234,7 +233,6 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
         background_music_volume: backgroundMusicUrl ? backgroundMusicVolume / 100 : 0.05,
         aspect_ratio: aspectRatio,
         video_quality: videoQuality,
-        fps,
         custom_width: customWidth,
         custom_height: customHeight,
         subtitle_settings: subtitleSettings || {

@@ -156,7 +156,6 @@ export function StoryboardInput() {
   // Advanced video settings
   const [aspectRatio, setAspectRatio] = useState(draft?.aspectRatio || 'full-hd');
   const [videoQuality, setVideoQuality] = useState(draft?.videoQuality || 'high');
-  const [fps, setFps] = useState(draft?.fps || 25);
   const [customWidth, setCustomWidth] = useState(draft?.customWidth || 1920);
   const [customHeight, setCustomHeight] = useState(draft?.customHeight || 1080);
   
@@ -187,7 +186,7 @@ export function StoryboardInput() {
     const timer = setTimeout(() => {
       const draftData = {
         topic, duration, style, tone, voiceID, mediaType, backgroundMusicUrl,
-        backgroundMusicVolume, aspectRatio, videoQuality, fps, subtitlePosition,
+        backgroundMusicVolume, aspectRatio, videoQuality, subtitlePosition,
         subtitleFontSize, subtitleOutlineColor, subtitleOutlineWidth, musicVolume,
         musicFadeIn, musicFadeOut, imageZoom, imagePosition, enableCache, draftMode,
         customWidth, customHeight
@@ -196,7 +195,7 @@ export function StoryboardInput() {
     }, 500);
     return () => clearTimeout(timer);
   }, [topic, duration, style, tone, voiceID, mediaType, backgroundMusicUrl, backgroundMusicVolume,
-      aspectRatio, videoQuality, fps, subtitlePosition, subtitleFontSize, subtitleOutlineColor,
+      aspectRatio, videoQuality, subtitlePosition, subtitleFontSize, subtitleOutlineColor,
       subtitleOutlineWidth, musicVolume, musicFadeIn, musicFadeOut, imageZoom, imagePosition,
       enableCache, draftMode, customWidth, customHeight]);
 
@@ -284,7 +283,6 @@ export function StoryboardInput() {
     setBackgroundMusicVolume(5);
     setAspectRatio('full-hd');
     setVideoQuality('high');
-    setFps(25);
     setCustomWidth(1920);
     setCustomHeight(1080);
     setSubtitlePosition('mid-bottom-center');
@@ -333,7 +331,6 @@ export function StoryboardInput() {
       backgroundMusicVolume,
       aspectRatio,
       videoQuality,
-      fps,
       customWidth: aspectRatio === 'custom' ? customWidth : undefined,
       customHeight: aspectRatio === 'custom' ? customHeight : undefined,
       subtitleSettings: {
@@ -713,54 +710,21 @@ export function StoryboardInput() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Video Quality</Label>
-                <Select value={videoQuality} onValueChange={setVideoQuality} disabled={isGenerating}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low (Fastest rendering)</SelectItem>
-                    <SelectItem value="medium">Medium (Balanced)</SelectItem>
-                    <SelectItem value="high">High (Best quality, slower)</SelectItem>
-                  </SelectContent>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Lower quality = faster rendering. High quality = best visuals (recommended).
-                  </p>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>FPS (Frames Per Second)</Label>
-                <Select value={fps.toString()} onValueChange={(v) => setFps(parseInt(v))} disabled={isGenerating}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="24">24 FPS</SelectItem>
-                    <SelectItem value="25">25 FPS</SelectItem>
-                    <SelectItem value="30">30 FPS</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* FPS Selection */}
             <div className="space-y-2">
-              <Label>FPS (Frames Per Second): {fps}</Label>
-              <Slider
-                value={[fps]}
-                onValueChange={([value]) => setFps(value)}
-                min={24}
-                max={60}
-                step={1}
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>24 (Cinematic)</span>
-                <span>30 (Standard)</span>
-                <span>60 (Smooth)</span>
-              </div>
+              <Label>Video Quality</Label>
+              <Select value={videoQuality} onValueChange={setVideoQuality} disabled={isGenerating}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low (Fastest rendering)</SelectItem>
+                  <SelectItem value="medium">Medium (Balanced)</SelectItem>
+                  <SelectItem value="high">High (Best quality, slower)</SelectItem>
+                </SelectContent>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Lower quality = faster rendering. High quality = best visuals (recommended).
+                </p>
+              </Select>
             </div>
 
             {/* Subtitle Customization */}

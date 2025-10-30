@@ -755,7 +755,6 @@ export type Database = {
           enable_cache: boolean | null
           estimated_render_cost: number | null
           font_family: string | null
-          fps: number | null
           id: string
           image_animation_settings: Json | null
           image_model: string | null
@@ -796,7 +795,6 @@ export type Database = {
           enable_cache?: boolean | null
           estimated_render_cost?: number | null
           font_family?: string | null
-          fps?: number | null
           id?: string
           image_animation_settings?: Json | null
           image_model?: string | null
@@ -837,7 +835,6 @@ export type Database = {
           enable_cache?: boolean | null
           estimated_render_cost?: number | null
           font_family?: string | null
-          fps?: number | null
           id?: string
           image_animation_settings?: Json | null
           image_model?: string | null

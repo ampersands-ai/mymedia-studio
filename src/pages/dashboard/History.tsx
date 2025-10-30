@@ -515,7 +515,7 @@ const History = () => {
         });
 
         if (!refundResponse.ok) {
-          throw new Error('Failed to refund tokens');
+          throw new Error('Failed to refund credits');
         }
 
         // Create dispute record as auto-resolved
@@ -551,7 +551,7 @@ const History = () => {
       
       if (!hasOutput) {
         // No output = instant refund
-        toast.success(`Report submitted! ${variables.generation.tokens_used} tokens will be refunded to your account.`);
+        toast.success(`Report submitted! ${(Number(variables.generation.tokens_used)/100).toFixed(2)} credits will be refunded to your account.`);
       } else {
         // Has output = needs review
         toast.success("Report submitted! Our team will review it and respond shortly.");
@@ -861,7 +861,7 @@ const History = () => {
                   {generation.is_batch_output && generation.tokens_used === 0 ? (
                     <span className="text-green-600 dark:text-green-400 font-medium">Batch output</span>
                   ) : (
-                    <span>{generation.tokens_used} tokens</span>
+                    <span>{Number(generation.tokens_used/100).toFixed(2)} credits</span>
                   )}
                 </div>
 
@@ -919,7 +919,7 @@ const History = () => {
                          "An error occurred while generating your content. Please try again with different parameters."}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {previewGeneration.tokens_used} tokens were deducted for this generation attempt.
+                        {Number(previewGeneration.tokens_used/100).toFixed(2)} credits were deducted for this generation attempt.
                       </p>
                     </div>
                   </div>
@@ -1065,7 +1065,7 @@ const History = () => {
                   ) : (
                     <>
                       <Flag className="h-4 w-4 mr-2" />
-                      Report Token Issue
+                      Report Credit Issue
                     </>
                   )}
                 </Button>
@@ -1093,7 +1093,7 @@ const History = () => {
           <DialogHeader>
             <DialogTitle className="font-black flex items-center gap-2">
               <Flag className="h-5 w-5" />
-              Report Token Issue
+              Report Credit Issue
             </DialogTitle>
           </DialogHeader>
           
@@ -1101,18 +1101,18 @@ const History = () => {
             <div className="bg-muted p-3 rounded-lg text-sm">
               <p className="font-medium mb-1">Generation Details:</p>
               <p className="text-muted-foreground text-xs">
-                Type: {reportingGeneration?.type} | Tokens: {reportingGeneration?.tokens_used}
+                Type: {reportingGeneration?.type} | Credits: {Number((reportingGeneration?.tokens_used ?? 0) / 100).toFixed(2)}
               </p>
             </div>
 
             <div>
               <label className="text-sm font-medium mb-2 block">
-                Why do you think the token cost was incorrect?
+                Why do you think the credit cost was incorrect?
               </label>
               <Textarea
                 value={reportReason}
                 onChange={(e) => setReportReason(e.target.value)}
-                placeholder="Please explain why you believe the token consumption was incorrect. For example: 'Generation failed but tokens were still deducted' or 'Tokens charged don't match the model's cost'..."
+                placeholder="Please explain why you believe the credit consumption was incorrect. For example: 'Generation failed but credits were still deducted' or 'Credits charged don't match the model's cost'..."
                 rows={5}
                 className="resize-none"
               />
@@ -1120,9 +1120,9 @@ const History = () => {
 
             <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-3 rounded-lg text-xs text-muted-foreground">
               {!reportingGeneration?.output_url && !reportingGeneration?.storage_path ? (
-                <p>Since no output was recorded, your tokens will be automatically refunded upon submission.</p>
+                <p>Since no output was recorded, your credits will be automatically refunded upon submission.</p>
               ) : (
-                <p>Our team will review your report and investigate the token consumption. If we find an error, we'll refund the tokens to your account.</p>
+                <p>Our team will review your report and investigate the credit consumption. If we find an error, we'll refund the credits to your account.</p>
               )}
             </div>
 

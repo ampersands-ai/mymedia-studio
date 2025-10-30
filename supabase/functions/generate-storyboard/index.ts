@@ -34,12 +34,12 @@ serve(async (req) => {
       throw new Error('Topic must be between 5 and 500 characters');
     }
 
-    if (![30, 60, 90, 120].includes(duration)) {
-      throw new Error('Invalid duration');
+    if (!duration || duration < 15 || duration > 120 || duration % 5 !== 0) {
+      throw new Error('Duration must be between 15 and 120 seconds in 5-second increments');
     }
 
-    // Calculate scene count (approximately 8 seconds per scene)
-    const sceneCount = Math.floor(duration / 8);
+    // Calculate scene count (approximately 5 seconds per scene)
+    const sceneCount = Math.floor(duration / 5);
     const tokenCost = 250;
 
     // Check user token balance
@@ -80,7 +80,7 @@ OUTPUT FORMAT (strict JSON only):
 
 RULES:
 - Generate exactly ${sceneCount} scenes
-- Each scene = 1 sentence voiceover (8-12 words)
+- Each scene = 1 sentence voiceover (5-8 words)
 - Image prompts MUST start with "${style}" style tag
 - Tone: ${tone}
 - Build narrative arc: hook → build tension → reveal insight → memorable conclusion

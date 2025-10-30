@@ -138,7 +138,7 @@ export const StoryboardEditor = () => {
           <div className="flex items-center gap-3 text-sm">
             <Coins className="w-5 h-5 text-primary" />
             <span className="text-muted-foreground">
-              Balance: <span className="font-semibold text-foreground">{tokenData?.tokens_remaining || 0}</span>
+              Balance: <span className="font-semibold text-foreground">{Number(tokenData?.tokens_remaining || 0).toFixed(2)}</span>
             </span>
           </div>
 
@@ -173,7 +173,7 @@ export const StoryboardEditor = () => {
                     Cost: {renderCost} tokens • Est. time: ~60 seconds
                   </p>
                   <p className="text-xs">
-                    Current balance: {tokenData?.tokens_remaining || 0} tokens
+                    Current balance: {Number(tokenData?.tokens_remaining || 0).toFixed(2)} tokens
                   </p>
                 </AlertDialogDescription>
               </AlertDialogHeader>

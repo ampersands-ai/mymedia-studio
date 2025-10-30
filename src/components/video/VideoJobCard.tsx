@@ -547,7 +547,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                 />
                 {!canAffordVoiceoverRegeneration && (
                   <p className="text-xs text-destructive font-medium">
-                    Insufficient tokens. You need {voiceoverRegenerationCost} tokens to regenerate this voiceover.
+                    Insufficient tokens. You need {Number(voiceoverRegenerationCost).toFixed(2)} tokens to regenerate this voiceover.
                   </p>
                 )}
                 <div className="flex gap-2">

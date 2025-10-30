@@ -46,7 +46,7 @@ export function TemplateLandingHero({
               {tokenCost && (
                 <Badge variant="outline" className="px-4 py-2">
                   <Coins className="w-4 h-4 mr-2" />
-                  {tokenCost} tokens
+                  {Number(tokenCost).toFixed(2)} tokens
                 </Badge>
               )}
             </div>

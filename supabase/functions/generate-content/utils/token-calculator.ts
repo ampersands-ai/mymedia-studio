@@ -36,5 +36,6 @@ export function calculateTokenCost(
     }
   }
   
-  return Math.ceil(totalCost);
+  // Round to 2 decimal places
+  return Math.round(totalCost * 100) / 100;
 }

@@ -39,7 +39,7 @@ export const TokenCostPreview = ({
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-neutral-600">Base cost:</span>
-            <span className="font-semibold">{baseCost} tokens</span>
+            <span className="font-semibold">{Number(baseCost).toFixed(2)} tokens</span>
           </div>
 
           {breakdown.length > 0 && (
@@ -47,7 +47,7 @@ export const TokenCostPreview = ({
               {breakdown.map((item, index) => (
                 <div key={index} className="flex items-center justify-between text-sm pl-4">
                   <span className="text-neutral-500">+ {item.parameter}:</span>
-                  <span className="text-neutral-600">×{item.multiplier.toFixed(1)}</span>
+                  <span className="text-neutral-600">×{item.multiplier.toFixed(2)}</span>
                 </div>
               ))}
             </>
@@ -56,7 +56,7 @@ export const TokenCostPreview = ({
           <div className="pt-2 border-t border-neutral-200">
             <div className="flex items-center justify-between font-bold">
               <span>Total cost:</span>
-              <span className="text-lg text-primary-500">{totalCost} tokens</span>
+              <span className="text-lg text-primary-500">{Number(totalCost).toFixed(2)} tokens</span>
             </div>
           </div>
         </div>
@@ -70,7 +70,7 @@ export const TokenCostPreview = ({
               <Coins className="h-4 w-4" />
               Your balance:
             </span>
-            <span className="font-semibold">{userTokens} tokens</span>
+            <span className="font-semibold">{Number(userTokens).toFixed(2)} tokens</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-neutral-600">After generation:</span>
@@ -78,7 +78,7 @@ export const TokenCostPreview = ({
               "font-bold",
               hasEnoughTokens ? "text-green-600" : "text-red-600"
             )}>
-              {hasEnoughTokens ? tokensAfter : 0} tokens
+              {hasEnoughTokens ? Number(tokensAfter).toFixed(2) : '0.00'} tokens
             </span>
           </div>
         </div>

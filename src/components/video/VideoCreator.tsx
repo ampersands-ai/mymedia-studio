@@ -532,10 +532,10 @@ export function VideoCreator() {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <Coins className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-              <span className="font-bold text-sm md:text-base">Cost: {estimatedCost} tokens</span>
+              <span className="font-bold text-sm md:text-base">Cost: {Number(estimatedCost).toFixed(2)} tokens</span>
             </div>
             <div className="text-xs md:text-sm text-muted-foreground">
-              Balance: {tokens?.tokens_remaining ?? 0} tokens
+              Balance: {Number(tokens?.tokens_remaining || 0).toFixed(2)} tokens
             </div>
           </div>
           {!canAfford && (
@@ -558,7 +558,7 @@ export function VideoCreator() {
             </>
           ) : (
             <>
-              🎬 Create Video ({estimatedCost} tokens)
+              🎬 Create Video ({Number(estimatedCost).toFixed(2)} tokens)
             </>
           )}
         </Button>

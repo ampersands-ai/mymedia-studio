@@ -59,7 +59,7 @@ export function TemplateRelatedCards({ templates }: TemplateRelatedCardsProps) {
                 {template.token_cost && (
                   <Badge variant="outline" className="text-xs">
                     <Coins className="w-3 h-3 mr-1" />
-                    {template.token_cost} tokens
+                    {Number(template.token_cost).toFixed(2)} tokens
                   </Badge>
                 )}
               </div>

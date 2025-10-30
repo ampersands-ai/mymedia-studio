@@ -75,10 +75,10 @@ export const useWorkflowTokenCost = (
             }
           }
 
-          totalCost += Math.ceil(stepCost);
+          totalCost += Math.round(stepCost * 100) / 100;
         }
 
-        setEstimatedTokens(totalCost);
+        setEstimatedTokens(Math.round(totalCost * 100) / 100);
       } catch (error) {
         console.error("Error calculating workflow token cost:", error);
         setEstimatedTokens(50);

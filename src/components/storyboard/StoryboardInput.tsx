@@ -484,10 +484,10 @@ export function StoryboardInput() {
         <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border">
           <div className="flex items-center gap-2 text-sm">
             <Coins className="w-4 h-4 text-primary" />
-            <span>Cost: <span className="font-bold">{estimatedCost}</span> tokens</span>
+            <span>Cost: <span className="font-bold">{Number(estimatedCost).toFixed(2)}</span> tokens</span>
           </div>
           <span className="text-sm">
-            Balance: <span className="font-bold">{tokenData?.tokens_remaining || 0}</span>
+            Balance: <span className="font-bold">{Number(tokenData?.tokens_remaining || 0).toFixed(2)}</span>
           </span>
         </div>
 

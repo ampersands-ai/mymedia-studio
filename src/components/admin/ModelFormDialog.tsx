@@ -158,7 +158,7 @@ export function ModelFormDialog({
         provider: formData.provider,
         model_name: formData.model_name,
         content_type: formData.content_type,
-        base_token_cost: parseInt(formData.base_token_cost),
+        base_token_cost: parseFloat(formData.base_token_cost),
         payload_structure: formData.payload_structure,
         cost_multipliers: costMultipliers,
         input_schema: inputSchema,
@@ -309,6 +309,7 @@ export function ModelFormDialog({
               <Input
                 id="base_token_cost"
                 type="number"
+                step="0.01"
                 value={formData.base_token_cost}
                 onChange={(e) =>
                   setFormData({ ...formData, base_token_cost: e.target.value })

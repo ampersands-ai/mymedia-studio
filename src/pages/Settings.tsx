@@ -513,7 +513,7 @@ const Settings = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-semibold text-muted-foreground">Tokens Remaining</p>
-                            <p className="text-3xl font-black text-foreground">{subscription.tokens_remaining.toLocaleString()}</p>
+                            <p className="text-3xl font-black text-foreground">{Number(subscription.tokens_remaining).toFixed(2)}</p>
                           </div>
                           <Coins className="h-8 w-8 text-primary" />
                         </div>
@@ -661,7 +661,7 @@ const Settings = () => {
                     Current Token Balance
                   </p>
                   <p className="text-6xl font-black text-foreground mb-2">
-                    {subscription?.tokens_remaining?.toLocaleString() || 0}
+                    {Number(subscription?.tokens_remaining || 0).toFixed(2)}
                   </p>
                   <p className="text-sm text-primary flex items-center justify-center gap-1">
                     <Sparkles className="h-4 w-4" />

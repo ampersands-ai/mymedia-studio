@@ -172,7 +172,7 @@ export default function UsersManager() {
                       <div className="flex items-center gap-2">
                         <Coins className="h-4 w-4 text-primary" />
                         <span className="font-bold">
-                          {(user.subscription?.tokens_remaining || 0).toLocaleString()}
+                          {Number(user.subscription?.tokens_remaining || 0).toFixed(2)}
                         </span>
                       </div>
                     </TableCell>
@@ -234,7 +234,7 @@ export default function UsersManager() {
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground mb-2">
-                Current balance: {(selectedUser?.subscription?.tokens_remaining || 0).toLocaleString()} tokens
+                Current balance: {Number(selectedUser?.subscription?.tokens_remaining || 0).toFixed(2)} tokens
               </p>
               <Input
                 type="number"

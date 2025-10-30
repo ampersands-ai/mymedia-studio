@@ -24,7 +24,7 @@ export function TemplateBottomCTA({ title, tokenCost, onTryTemplate }: TemplateB
         {tokenCost && (
           <Badge variant="secondary" className="px-6 py-3 text-lg">
             <Coins className="w-5 h-5 mr-2" />
-            Only {tokenCost} tokens per creation
+            Only {Number(tokenCost).toFixed(2)} tokens per creation
           </Badge>
         )}
 

@@ -38,7 +38,7 @@ function createErrorResponse(error: any, headers: any, context: string, metadata
 }
 
 const deductTokensSchema = z.object({
-  tokens_to_deduct: z.number().int().min(1).max(100000),
+  tokens_to_deduct: z.number().min(0.01).max(100000),
 });
 
 serve(async (req) => {

@@ -7,13 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { Sparkles, Film, Coins, Volume2, Play, Loader2, Palette, Image as ImageIcon, Video as VideoIcon, Wand2, Music } from 'lucide-react';
+import { Sparkles, Film, Coins, Volume2, Play, Loader2, Palette, Image as ImageIcon, Video as VideoIcon, Wand2, Music, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { BackgroundMusicSelector } from './BackgroundMusicSelector';
 import type { MediaType } from '@/types/video';
+import { Input } from '@/components/ui/input';
 import hyperRealisticImg from '@/assets/styles/hyper-realistic.jpg';
 import cinematicImg from '@/assets/styles/cinematic.jpg';
 import animatedImg from '@/assets/styles/animated.jpg';
@@ -124,6 +126,30 @@ export function StoryboardInput() {
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
   const [styleDialogOpen, setStyleDialogOpen] = useState(false);
+  
+  // Advanced video settings
+  const [aspectRatio, setAspectRatio] = useState('instagram-story');
+  const [videoQuality, setVideoQuality] = useState('medium');
+  const [fps, setFps] = useState(25);
+  
+  // Subtitle settings
+  const [subtitlePosition, setSubtitlePosition] = useState('mid-bottom-center');
+  const [subtitleFontSize, setSubtitleFontSize] = useState(140);
+  const [subtitleOutlineColor, setSubtitleOutlineColor] = useState('#000000');
+  const [subtitleOutlineWidth, setSubtitleOutlineWidth] = useState(8);
+  
+  // Audio settings
+  const [musicVolume, setMusicVolume] = useState(0.05);
+  const [musicFadeIn, setMusicFadeIn] = useState(2);
+  const [musicFadeOut, setMusicFadeOut] = useState(2);
+  
+  // Image animation settings
+  const [imageZoom, setImageZoom] = useState(2);
+  const [imagePosition, setImagePosition] = useState('center-center');
+  
+  // Advanced options
+  const [enableCache, setEnableCache] = useState(true);
+  const [draftMode, setDraftMode] = useState(false);
 
   const { generateStoryboard, isGenerating } = useStoryboard();
   const { data: tokenData } = useUserTokens();
@@ -196,6 +222,27 @@ export function StoryboardInput() {
       mediaType,
       backgroundMusicUrl,
       backgroundMusicVolume,
+      aspectRatio,
+      videoQuality,
+      fps,
+      subtitleSettings: {
+        position: subtitlePosition,
+        fontSize: subtitleFontSize,
+        outlineColor: subtitleOutlineColor,
+        outlineWidth: subtitleOutlineWidth,
+      },
+      musicSettings: {
+        volume: musicVolume,
+        fadeIn: musicFadeIn,
+        fadeOut: musicFadeOut,
+        duration: -2,
+      },
+      imageAnimationSettings: {
+        zoom: imageZoom,
+        position: imagePosition,
+      },
+      enableCache,
+      draftMode,
     });
   };
 
@@ -479,6 +526,233 @@ export function StoryboardInput() {
             }}
           />
         </div> */}
+
+        {/* Advanced Settings */}
+        <Collapsible className="space-y-4">
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" className="w-full justify-between" type="button">
+              <span className="font-semibold">⚙️ Advanced Settings</span>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-6 pt-4 border-t">
+            {/* Aspect Ratio & Quality */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Aspect Ratio</Label>
+                <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="instagram-story">Instagram Story (9:16)</SelectItem>
+                    <SelectItem value="youtube">YouTube (16:9)</SelectItem>
+                    <SelectItem value="square">Square (1:1)</SelectItem>
+                    <SelectItem value="tiktok">TikTok/Shorts (9:16)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Video Quality</Label>
+                <Select value={videoQuality} onValueChange={setVideoQuality}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft (Fast)</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High Quality</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* FPS Selection */}
+            <div className="space-y-2">
+              <Label>FPS (Frames Per Second): {fps}</Label>
+              <Slider
+                value={[fps]}
+                onValueChange={([value]) => setFps(value)}
+                min={24}
+                max={60}
+                step={1}
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>24 (Cinematic)</span>
+                <span>30 (Standard)</span>
+                <span>60 (Smooth)</span>
+              </div>
+            </div>
+
+            {/* Subtitle Customization */}
+            <Collapsible className="space-y-3 border-t pt-4">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-full justify-between" type="button">
+                  <span className="text-sm font-medium">📝 Subtitle Settings</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Position</Label>
+                  <Select value={subtitlePosition} onValueChange={setSubtitlePosition}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="top-center">Top Center</SelectItem>
+                      <SelectItem value="mid-center">Mid Center</SelectItem>
+                      <SelectItem value="mid-bottom-center">Mid-Bottom Center</SelectItem>
+                      <SelectItem value="bottom-center">Bottom Center</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Font Size: {subtitleFontSize}px</Label>
+                  <Slider
+                    value={[subtitleFontSize]}
+                    onValueChange={([value]) => setSubtitleFontSize(value)}
+                    min={100}
+                    max={200}
+                    step={10}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Outline Color</Label>
+                    <Input
+                      type="color"
+                      value={subtitleOutlineColor}
+                      onChange={(e) => setSubtitleOutlineColor(e.target.value)}
+                      className="h-10"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Outline Width: {subtitleOutlineWidth}px</Label>
+                    <Slider
+                      value={[subtitleOutlineWidth]}
+                      onValueChange={([value]) => setSubtitleOutlineWidth(value)}
+                      min={4}
+                      max={12}
+                      step={1}
+                    />
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Audio Settings */}
+            <Collapsible className="space-y-3 border-t pt-4">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-full justify-between" type="button">
+                  <span className="text-sm font-medium">🎵 Audio Settings</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Background Music Volume: {Math.round(musicVolume * 100)}%</Label>
+                  <Slider
+                    value={[musicVolume * 100]}
+                    onValueChange={([value]) => setMusicVolume(value / 100)}
+                    min={0}
+                    max={100}
+                    step={5}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Fade In: {musicFadeIn}s</Label>
+                    <Slider
+                      value={[musicFadeIn]}
+                      onValueChange={([value]) => setMusicFadeIn(value)}
+                      min={0}
+                      max={5}
+                      step={0.5}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Fade Out: {musicFadeOut}s</Label>
+                    <Slider
+                      value={[musicFadeOut]}
+                      onValueChange={([value]) => setMusicFadeOut(value)}
+                      min={0}
+                      max={5}
+                      step={0.5}
+                    />
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Image Animation */}
+            <Collapsible className="space-y-3 border-t pt-4">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-full justify-between" type="button">
+                  <span className="text-sm font-medium">🎬 Image Animation</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Zoom Level: {imageZoom.toFixed(1)}x</Label>
+                  <Slider
+                    value={[imageZoom]}
+                    onValueChange={([value]) => setImageZoom(value)}
+                    min={1}
+                    max={3}
+                    step={0.1}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Image Position</Label>
+                  <Select value={imagePosition} onValueChange={setImagePosition}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="center-center">Center</SelectItem>
+                      <SelectItem value="top-center">Top</SelectItem>
+                      <SelectItem value="bottom-center">Bottom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Expert Options */}
+            <div className="space-y-3 border-t pt-4">
+              <Label className="text-sm font-medium">🔧 Expert Options</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="cache" className="text-sm text-muted-foreground">Enable Caching (Faster regeneration)</Label>
+                <input
+                  id="cache"
+                  type="checkbox"
+                  checked={enableCache}
+                  onChange={(e) => setEnableCache(e.target.checked)}
+                  className="h-4 w-4"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="draft" className="text-sm text-muted-foreground">Draft Mode (Faster preview)</Label>
+                <input
+                  id="draft"
+                  type="checkbox"
+                  checked={draftMode}
+                  onChange={(e) => setDraftMode(e.target.checked)}
+                  className="h-4 w-4"
+                />
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Token Cost Display */}
         <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border">

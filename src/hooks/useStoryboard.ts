@@ -49,6 +49,27 @@ interface StoryboardInput {
   mediaType?: 'image' | 'video' | 'animated';
   backgroundMusicUrl?: string;
   backgroundMusicVolume?: number;
+  aspectRatio?: string;
+  videoQuality?: string;
+  fps?: number;
+  subtitleSettings?: {
+    position: string;
+    fontSize: number;
+    outlineColor: string;
+    outlineWidth: number;
+  };
+  musicSettings?: {
+    volume: number;
+    fadeIn: number;
+    fadeOut: number;
+    duration: number;
+  };
+  imageAnimationSettings?: {
+    zoom: number;
+    position: string;
+  };
+  enableCache?: boolean;
+  draftMode?: boolean;
 }
 
 export const useStoryboard = () => {
@@ -139,7 +160,38 @@ export const useStoryboard = () => {
   const generateMutation = useMutation({
     mutationFn: async (input: StoryboardInput) => {
       const { data, error } = await supabase.functions.invoke('generate-storyboard', {
-        body: input,
+        body: {
+          topic: input.topic,
+          duration: input.duration,
+          style: input.style,
+          tone: input.tone,
+          voice_id: input.voiceID,
+          voice_name: input.voiceName,
+          media_type: input.mediaType || 'image',
+          background_music_url: input.backgroundMusicUrl || null,
+          background_music_volume: input.backgroundMusicVolume || 5,
+          aspect_ratio: input.aspectRatio || 'instagram-story',
+          video_quality: input.videoQuality || 'medium',
+          fps: input.fps || 25,
+          subtitle_settings: input.subtitleSettings || {
+            position: 'mid-bottom-center',
+            fontSize: 140,
+            outlineColor: '#000000',
+            outlineWidth: 8,
+          },
+          music_settings: input.musicSettings || {
+            volume: 0.05,
+            fadeIn: 2,
+            fadeOut: 2,
+            duration: -2,
+          },
+          image_animation_settings: input.imageAnimationSettings || {
+            zoom: 2,
+            position: 'center-center',
+          },
+          enable_cache: input.enableCache ?? true,
+          draft_mode: input.draftMode ?? false,
+        },
       });
 
       if (error) throw error;

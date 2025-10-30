@@ -27,7 +27,25 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { topic, duration, style, tone, voiceID, voiceName, mediaType = 'image', backgroundMusicUrl = '', backgroundMusicVolume = 5 } = await req.json();
+    const { 
+      topic, 
+      duration, 
+      style, 
+      tone, 
+      voice_id: voiceID, 
+      voice_name: voiceName, 
+      media_type: mediaType = 'image', 
+      background_music_url: backgroundMusicUrl = '',
+      background_music_volume: backgroundMusicVolume = 5,
+      aspect_ratio: aspectRatio = 'instagram-story',
+      video_quality: videoQuality = 'medium',
+      fps = 25,
+      subtitle_settings: subtitleSettings,
+      music_settings: musicSettings,
+      image_animation_settings: imageAnimationSettings,
+      enable_cache: enableCache = true,
+      draft_mode: draftMode = false,
+    } = await req.json();
 
     // Validate inputs
     if (!topic || topic.length < 5 || topic.length > 500) {
@@ -211,7 +229,28 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
         media_type: mediaType,
         video_search_query: mediaType === 'video' ? topic : null,
         background_music_url: backgroundMusicUrl || null,
-        background_music_volume: backgroundMusicUrl ? backgroundMusicVolume / 100 : 0.05
+        background_music_volume: backgroundMusicUrl ? backgroundMusicVolume / 100 : 0.05,
+        aspect_ratio: aspectRatio,
+        video_quality: videoQuality,
+        fps,
+        subtitle_settings: subtitleSettings || {
+          position: 'mid-bottom-center',
+          fontSize: 140,
+          outlineColor: '#000000',
+          outlineWidth: 8,
+        },
+        music_settings: musicSettings || {
+          volume: 0.05,
+          fadeIn: 2,
+          fadeOut: 2,
+          duration: -2,
+        },
+        image_animation_settings: imageAnimationSettings || {
+          zoom: 2,
+          position: 'center-center',
+        },
+        enable_cache: enableCache,
+        draft_mode: draftMode,
       })
       .select()
       .single();

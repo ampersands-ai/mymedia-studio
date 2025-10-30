@@ -742,21 +742,28 @@ export type Database = {
       }
       storyboards: {
         Row: {
+          aspect_ratio: string | null
           background_music_url: string | null
           background_music_volume: number | null
           completed_at: string | null
           created_at: string | null
+          draft_mode: boolean | null
           duration: number
+          enable_cache: boolean | null
           estimated_render_cost: number | null
           font_family: string | null
+          fps: number | null
           id: string
+          image_animation_settings: Json | null
           image_model: string | null
           intro_image_prompt: string | null
           intro_voiceover_text: string | null
           media_type: string | null
+          music_settings: Json | null
           render_job_id: string | null
           status: string
           style: string
+          subtitle_settings: Json | null
           subtitles_model: string | null
           template_id: string | null
           tokens_cost: number | null
@@ -764,6 +771,7 @@ export type Database = {
           topic: string
           updated_at: string | null
           user_id: string
+          video_quality: string | null
           video_search_query: string | null
           video_storage_path: string | null
           video_url: string | null
@@ -772,21 +780,28 @@ export type Database = {
           voice_name: string
         }
         Insert: {
+          aspect_ratio?: string | null
           background_music_url?: string | null
           background_music_volume?: number | null
           completed_at?: string | null
           created_at?: string | null
+          draft_mode?: boolean | null
           duration: number
+          enable_cache?: boolean | null
           estimated_render_cost?: number | null
           font_family?: string | null
+          fps?: number | null
           id?: string
+          image_animation_settings?: Json | null
           image_model?: string | null
           intro_image_prompt?: string | null
           intro_voiceover_text?: string | null
           media_type?: string | null
+          music_settings?: Json | null
           render_job_id?: string | null
           status?: string
           style: string
+          subtitle_settings?: Json | null
           subtitles_model?: string | null
           template_id?: string | null
           tokens_cost?: number | null
@@ -794,6 +809,7 @@ export type Database = {
           topic: string
           updated_at?: string | null
           user_id: string
+          video_quality?: string | null
           video_search_query?: string | null
           video_storage_path?: string | null
           video_url?: string | null
@@ -802,21 +818,28 @@ export type Database = {
           voice_name: string
         }
         Update: {
+          aspect_ratio?: string | null
           background_music_url?: string | null
           background_music_volume?: number | null
           completed_at?: string | null
           created_at?: string | null
+          draft_mode?: boolean | null
           duration?: number
+          enable_cache?: boolean | null
           estimated_render_cost?: number | null
           font_family?: string | null
+          fps?: number | null
           id?: string
+          image_animation_settings?: Json | null
           image_model?: string | null
           intro_image_prompt?: string | null
           intro_voiceover_text?: string | null
           media_type?: string | null
+          music_settings?: Json | null
           render_job_id?: string | null
           status?: string
           style?: string
+          subtitle_settings?: Json | null
           subtitles_model?: string | null
           template_id?: string | null
           tokens_cost?: number | null
@@ -824,6 +847,7 @@ export type Database = {
           topic?: string
           updated_at?: string | null
           user_id?: string
+          video_quality?: string | null
           video_search_query?: string | null
           video_storage_path?: string | null
           video_url?: string | null

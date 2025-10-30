@@ -114,8 +114,52 @@ serve(async (req) => {
         introText: storyboard.intro_voiceover_text,
       },
       webhook: webhookUrl,
-      project: storyboardId
+      project: storyboardId,
+      // Apply customization settings
+      resolution: mapAspectRatio(storyboard.aspect_ratio || 'instagram-story').resolution,
+      width: mapAspectRatio(storyboard.aspect_ratio || 'instagram-story').width,
+      height: mapAspectRatio(storyboard.aspect_ratio || 'instagram-story').height,
+      quality: storyboard.video_quality || 'medium',
+      fps: storyboard.fps || 25,
+      cache: storyboard.enable_cache ?? true,
+      draft: storyboard.draft_mode ?? false,
+      elements: [
+        {
+          type: 'subtitles',
+          model: storyboard.subtitles_model || 'default',
+          language: 'auto',
+          settings: storyboard.subtitle_settings || {
+            'font-size': 140,
+            'font-family': storyboard.font_family || 'Oswald Bold',
+            'position': 'mid-bottom-center',
+            'outline-color': '#000000',
+            'outline-width': 8
+          },
+        },
+        {
+          type: 'audio',
+          src: 'https://assets.json2video.com/clients/JugBn84wBL/uploads/dramatic-epic-background-305293.mp3',
+          ...(storyboard.music_settings || {
+            volume: 0.05,
+            'fade-in': 2,
+            'fade-out': 2,
+            duration: -2
+          })
+        }
+      ],
+      imageAnimationSettings: storyboard.image_animation_settings || { zoom: 2, position: 'center-center' }
     };
+
+    // Helper function to map aspect ratios
+    function mapAspectRatio(ratio: string) {
+      const ratioMap: Record<string, { resolution: string; width: number; height: number }> = {
+        'instagram-story': { resolution: 'instagram-story', width: 1080, height: 1920 },
+        'youtube': { resolution: 'landscape', width: 1920, height: 1080 },
+        'square': { resolution: 'square', width: 1080, height: 1080 },
+        'tiktok': { resolution: 'instagram-story', width: 1080, height: 1920 },
+      };
+      return ratioMap[ratio] || ratioMap['instagram-story'];
+    }
 
     console.log('[render-storyboard-video] Calling JSON2Video API with payload:', JSON.stringify(renderPayload, null, 2));
 

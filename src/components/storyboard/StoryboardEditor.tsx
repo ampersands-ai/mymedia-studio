@@ -1,12 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SceneCard } from './SceneCard';
 import { StoryboardPreview } from './StoryboardPreview';
 import { useStoryboard } from '@/hooks/useStoryboard';
-import { Play, ArrowLeft, Coins, Loader2 } from 'lucide-react';
+import { Play, ArrowLeft, Coins, Loader2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +28,7 @@ export const StoryboardEditor = () => {
     activeSceneId,
     isRendering,
     renderProgress,
+    renderingStartTime,
     updateScene,
     regenerateScene,
     setActiveScene,
@@ -35,10 +37,33 @@ export const StoryboardEditor = () => {
     clearStoryboard,
   } = useStoryboard();
   const { data: tokenData } = useUserTokens();
+  const [renderStatusMessage, setRenderStatusMessage] = useState('');
 
   const activeScene = scenes.find(s => s.id === activeSceneId) || scenes[0];
   const estimatedDuration = storyboard ? storyboard.duration : 0;
   const renderCost = 800;
+
+  // Phase 5: Dynamic status messages based on rendering time
+  useEffect(() => {
+    if (!isRendering || !renderingStartTime) {
+      setRenderStatusMessage('');
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const elapsedSeconds = Math.floor((Date.now() - renderingStartTime) / 1000);
+      
+      if (elapsedSeconds < 120) {
+        setRenderStatusMessage(`Rendering started... (typically 1-2 minutes)`);
+      } else if (elapsedSeconds < 300) {
+        setRenderStatusMessage(`Taking longer than usual... still checking status`);
+      } else {
+        setRenderStatusMessage(`This is taking much longer than expected. Auto-recovery will attempt shortly.`);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isRendering, renderingStartTime]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -84,6 +109,16 @@ export const StoryboardEditor = () => {
 
   return (
     <div className="space-y-6">
+      {/* Phase 5: Rendering Status Alert */}
+      {isRendering && renderStatusMessage && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {renderStatusMessage}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header Bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

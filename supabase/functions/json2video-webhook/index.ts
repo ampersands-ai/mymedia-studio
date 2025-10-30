@@ -7,12 +7,30 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Phase 3: Add health check endpoint for webhook diagnostics
+  if (req.method === 'GET') {
+    console.log('[json2video-webhook] Health check requested');
+    return new Response(
+      JSON.stringify({ 
+        status: 'OK', 
+        service: 'json2video-webhook',
+        timestamp: new Date().toISOString(),
+        webhookUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/json2video-webhook`
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('[json2video-webhook] Received webhook request');
+    // Enhanced logging for webhook diagnostics
+    console.log('[json2video-webhook] === WEBHOOK REQUEST RECEIVED ===');
+    console.log('[json2video-webhook] Method:', req.method);
+    console.log('[json2video-webhook] Headers:', Object.fromEntries(req.headers.entries()));
+    console.log('[json2video-webhook] URL:', req.url);
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -20,9 +38,11 @@ serve(async (req) => {
     );
 
     const payload = await req.json();
-    console.log('[json2video-webhook] Payload:', JSON.stringify(payload));
+    console.log('[json2video-webhook] === PAYLOAD RECEIVED ===');
+    console.log('[json2video-webhook] Full Payload:', JSON.stringify(payload, null, 2));
 
     const { project, status, url, error, progress } = payload;
+    console.log('[json2video-webhook] Parsed Values:', { project, status, url, error, progress });
 
     if (!project) {
       console.error('[json2video-webhook] Missing project ID in payload');

@@ -85,6 +85,7 @@ export const useStoryboard = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
+  const [renderingStartTime, setRenderingStartTime] = useState<number | null>(null);
 
   // Wrapper to persist storyboard ID to localStorage
   const setAndPersistStoryboardId = useCallback((id: string | null) => {
@@ -280,6 +281,7 @@ export const useStoryboard = () => {
     },
     onSuccess: () => {
       setIsRendering(true);
+      setRenderingStartTime(Date.now());
       toast.success('Video rendering started!');
     },
     onError: (error: any) => {
@@ -287,15 +289,16 @@ export const useStoryboard = () => {
     },
   });
 
-  // Poll render status (reduced to 5 seconds for better UX)
+  // Poll render status with timeout detection and auto-recovery
   useEffect(() => {
     if (!isRendering || !currentStoryboardId) return;
 
     const interval = setInterval(async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('poll-storyboard-status', {
-          body: { storyboardId: currentStoryboardId },
-        });
+        // Phase 1: Fix polling call to use query params
+        const { data, error } = await supabase.functions.invoke(
+          `poll-storyboard-status?storyboardId=${currentStoryboardId}`
+        );
 
         if (error) throw error;
 
@@ -303,19 +306,49 @@ export const useStoryboard = () => {
 
         if (data.status === 'complete') {
           setIsRendering(false);
+          setRenderingStartTime(null);
           queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
           toast.success('🎉 Video ready! Check the preview below.');
         } else if (data.status === 'failed') {
           setIsRendering(false);
+          setRenderingStartTime(null);
           toast.error('Video rendering failed. Credits have been refunded.');
         }
+
+        // Phase 4: Timeout detection (10 minutes)
+        if (renderingStartTime && Date.now() - renderingStartTime > 10 * 60 * 1000) {
+          console.warn('[useStoryboard] Rendering timeout detected, attempting manual fetch...');
+          
+          // Try manual fetch from JSON2Video
+          const { data: storyboardData } = await supabase
+            .from('storyboards')
+            .select('render_job_id')
+            .eq('id', currentStoryboardId)
+            .single();
+
+          if (storyboardData?.render_job_id) {
+            const { data: fetchData, error: fetchError } = await supabase.functions.invoke(
+              'fetch-video-status',
+              { body: { renderJobId: storyboardData.render_job_id } }
+            );
+
+            if (!fetchError && fetchData?.success) {
+              toast.success('🎉 Video recovered successfully!');
+              setIsRendering(false);
+              setRenderingStartTime(null);
+              queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
+            } else {
+              toast.error('Rendering is taking longer than usual. Please try manual fetch or contact support.');
+            }
+          }
+        }
       } catch (error) {
-        console.error('Poll error:', error);
+        console.error('[useStoryboard] Poll error:', error);
       }
     }, 5000); // Poll every 5 seconds
 
     return () => clearInterval(interval);
-  }, [isRendering, currentStoryboardId, queryClient]);
+  }, [isRendering, currentStoryboardId, queryClient, renderingStartTime]);
 
   // Realtime subscription for storyboard updates (webhook notifications)
   useEffect(() => {
@@ -396,6 +429,7 @@ export const useStoryboard = () => {
     setIsGenerating(false);
     setIsRendering(false);
     setRenderProgress(0);
+    setRenderingStartTime(null);
   }, [setAndPersistStoryboardId]);
 
   // Set first scene as active when scenes load
@@ -412,6 +446,7 @@ export const useStoryboard = () => {
     isGenerating,
     isRendering,
     renderProgress,
+    renderingStartTime,
     isLoading: isLoadingStoryboard || isLoadingScenes,
     generateStoryboard,
     updateScene,

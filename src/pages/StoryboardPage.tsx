@@ -50,7 +50,7 @@ export default function StoryboardPage() {
             </CollapsibleTrigger>
           )}
           
-          <CollapsibleContent>
+          <CollapsibleContent forceMount className={cn(!showInputForm && "hidden")}>
             <StoryboardInput />
           </CollapsibleContent>
         </Collapsible>

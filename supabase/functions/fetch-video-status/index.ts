@@ -45,7 +45,7 @@ serve(async (req) => {
     }
 
     const statusResponse = await fetch(
-      `https://api.json2video.com/v2/movies/${renderJobId}`,
+      `https://api.json2video.com/v2/movies?project=${renderJobId}`,
       {
         headers: {
           'x-api-key': json2videoApiKey
@@ -115,7 +115,8 @@ serve(async (req) => {
         .from('storyboards')
         .update({
           status: 'failed',
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          api_quota_remaining: statusData.remaining_quota?.time || null
         })
         .eq('id', storyboard.id);
 

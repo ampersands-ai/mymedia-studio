@@ -89,7 +89,7 @@ serve(async (req) => {
         console.log('[poll-storyboard-status] Checking JSON2Video status for:', storyboard.render_job_id);
         
         const statusResponse = await fetch(
-          `https://api.json2video.com/v2/movies/${storyboard.render_job_id}`,
+          `https://api.json2video.com/v2/movies?project=${storyboard.render_job_id}`,
           {
             headers: {
               'x-api-key': json2videoApiKey

@@ -346,6 +346,16 @@ const History = () => {
         .order("created_at", { ascending: false });
 
       if (videoError) console.error("Error fetching video jobs:", videoError);
+      
+      // Get storyboards (complete, failed, or rendering)
+      const { data: storyboardData, error: storyboardError } = await supabase
+        .from("storyboards")
+        .select("*")
+        .eq("user_id", user!.id)
+        .in("status", ["complete", "failed", "rendering"])
+        .order("created_at", { ascending: false });
+
+      if (storyboardError) console.error("Error fetching storyboards:", storyboardError);
 
       // Then get all disputes for this user
       const { data: disputes, error: disputeError } = await supabase
@@ -390,20 +400,54 @@ const History = () => {
           video_job_data: video
         };
       });
+      
+      // Convert storyboards to generation-like format
+      const storyboardGenerations = (storyboardData || []).map(sb => {
+        return {
+          id: sb.id,
+          type: 'video',
+          prompt: `Storyboard: ${sb.topic}`,
+          output_url: sb.video_url,
+          storage_path: sb.video_storage_path,
+          status: sb.status,
+          tokens_used: sb.tokens_cost || sb.estimated_render_cost || 0,
+          created_at: sb.created_at,
+          enhanced_prompt: null,
+          ai_caption: null,
+          ai_hashtags: null,
+          caption_generated_at: null,
+          provider_response: undefined,
+          has_dispute: false,
+          dispute_status: undefined,
+          parent_generation_id: null,
+          output_index: 0,
+          is_batch_output: false,
+          workflow_execution_id: null,
+          is_video_job: false,
+          video_job_data: null
+        };
+      });
 
-      // Filter out generation entries that have the same storage_path as video jobs
+      // Filter out generation entries that have the same storage_path as video jobs or storyboards
       const videoStoragePaths = new Set(
         (videoData || [])
           .map(vj => vj.storage_path)
           .filter(Boolean) // Remove null/undefined
       );
       
+      const storyboardStoragePaths = new Set(
+        (storyboardData || [])
+          .map(sb => sb.video_storage_path)
+          .filter(Boolean)
+      );
+      
       const regularGenerations = enrichedGenerations.filter(gen => 
-        !gen.storage_path || !videoStoragePaths.has(gen.storage_path)
+        !gen.storage_path || 
+        (!videoStoragePaths.has(gen.storage_path) && !storyboardStoragePaths.has(gen.storage_path))
       );
 
-      // Combine only regular generations with video generations (no duplicates)
-      const all: Generation[] = ([...regularGenerations, ...videoGenerations] as unknown) as Generation[];
+      // Combine regular generations, video jobs, and storyboards (no duplicates)
+      const all: Generation[] = ([...regularGenerations, ...videoGenerations, ...storyboardGenerations] as unknown) as Generation[];
 
       const uniqueMap = new Map<string, Generation>();
       for (const item of all) {

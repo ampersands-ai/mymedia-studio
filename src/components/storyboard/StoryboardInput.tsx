@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,17 @@ import { Sparkles, Film, Coins, Volume2, Play, Loader2, Palette, Image as ImageI
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { BackgroundMusicSelector } from './BackgroundMusicSelector';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import type { MediaType } from '@/types/video';
 import { Input } from '@/components/ui/input';
 import hyperRealisticImg from '@/assets/styles/hyper-realistic.jpg';
@@ -114,45 +125,77 @@ const MEDIA_TYPES = [
   { value: 'animated' as MediaType, label: 'Animated', icon: Wand2, description: 'Images with motion effects' },
 ];
 
+const DRAFT_KEY = 'storyboardInputDraft';
+
 export function StoryboardInput() {
-  const [topic, setTopic] = useState('');
-  const [duration, setDuration] = useState(60);
-  const [style, setStyle] = useState('hyper-realistic');
-  const [tone, setTone] = useState('engaging');
-  const [voiceID, setVoiceID] = useState('en-US-AndrewMultilingualNeural');
-  const [mediaType, setMediaType] = useState<MediaType>('image');
-  const [backgroundMusicUrl, setBackgroundMusicUrl] = useState('');
-  const [backgroundMusicVolume, setBackgroundMusicVolume] = useState(5);
+  // Load from localStorage or use defaults
+  const loadDraft = () => {
+    try {
+      const draft = localStorage.getItem(DRAFT_KEY);
+      return draft ? JSON.parse(draft) : null;
+    } catch {
+      return null;
+    }
+  };
+  
+  const draft = loadDraft();
+  
+  const [topic, setTopic] = useState(draft?.topic || '');
+  const [duration, setDuration] = useState(draft?.duration || 60);
+  const [style, setStyle] = useState(draft?.style || 'hyper-realistic');
+  const [tone, setTone] = useState(draft?.tone || 'engaging');
+  const [voiceID, setVoiceID] = useState(draft?.voiceID || 'en-US-AndrewMultilingualNeural');
+  const [mediaType, setMediaType] = useState<MediaType>(draft?.mediaType || 'image');
+  const [backgroundMusicUrl, setBackgroundMusicUrl] = useState(draft?.backgroundMusicUrl || '');
+  const [backgroundMusicVolume, setBackgroundMusicVolume] = useState(draft?.backgroundMusicVolume || 5);
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
   const [styleDialogOpen, setStyleDialogOpen] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
   
   // Advanced video settings
-  const [aspectRatio, setAspectRatio] = useState('instagram-story');
-  const [videoQuality, setVideoQuality] = useState('medium');
-  const [fps, setFps] = useState(25);
+  const [aspectRatio, setAspectRatio] = useState(draft?.aspectRatio || 'instagram-story');
+  const [videoQuality, setVideoQuality] = useState(draft?.videoQuality || 'medium');
+  const [fps, setFps] = useState(draft?.fps || 25);
   
   // Subtitle settings
-  const [subtitlePosition, setSubtitlePosition] = useState('mid-bottom-center');
-  const [subtitleFontSize, setSubtitleFontSize] = useState(140);
-  const [subtitleOutlineColor, setSubtitleOutlineColor] = useState('#000000');
-  const [subtitleOutlineWidth, setSubtitleOutlineWidth] = useState(8);
+  const [subtitlePosition, setSubtitlePosition] = useState(draft?.subtitlePosition || 'mid-bottom-center');
+  const [subtitleFontSize, setSubtitleFontSize] = useState(draft?.subtitleFontSize || 140);
+  const [subtitleOutlineColor, setSubtitleOutlineColor] = useState(draft?.subtitleOutlineColor || '#000000');
+  const [subtitleOutlineWidth, setSubtitleOutlineWidth] = useState(draft?.subtitleOutlineWidth || 8);
   
   // Audio settings
-  const [musicVolume, setMusicVolume] = useState(0.05);
-  const [musicFadeIn, setMusicFadeIn] = useState(2);
-  const [musicFadeOut, setMusicFadeOut] = useState(2);
+  const [musicVolume, setMusicVolume] = useState(draft?.musicVolume || 0.05);
+  const [musicFadeIn, setMusicFadeIn] = useState(draft?.musicFadeIn || 2);
+  const [musicFadeOut, setMusicFadeOut] = useState(draft?.musicFadeOut || 2);
   
   // Image animation settings
-  const [imageZoom, setImageZoom] = useState(2);
-  const [imagePosition, setImagePosition] = useState('center-center');
+  const [imageZoom, setImageZoom] = useState(draft?.imageZoom || 2);
+  const [imagePosition, setImagePosition] = useState(draft?.imagePosition || 'center-center');
   
   // Advanced options
-  const [enableCache, setEnableCache] = useState(true);
-  const [draftMode, setDraftMode] = useState(false);
+  const [enableCache, setEnableCache] = useState(draft?.enableCache ?? true);
+  const [draftMode, setDraftMode] = useState(draft?.draftMode ?? false);
 
-  const { generateStoryboard, isGenerating } = useStoryboard();
+  const { generateStoryboard, isGenerating, storyboard, clearStoryboard } = useStoryboard();
   const { data: tokenData } = useUserTokens();
+  
+  // Save draft to localStorage (debounced)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const draftData = {
+        topic, duration, style, tone, voiceID, mediaType, backgroundMusicUrl,
+        backgroundMusicVolume, aspectRatio, videoQuality, fps, subtitlePosition,
+        subtitleFontSize, subtitleOutlineColor, subtitleOutlineWidth, musicVolume,
+        musicFadeIn, musicFadeOut, imageZoom, imagePosition, enableCache, draftMode
+      };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [topic, duration, style, tone, voiceID, mediaType, backgroundMusicUrl, backgroundMusicVolume,
+      aspectRatio, videoQuality, fps, subtitlePosition, subtitleFontSize, subtitleOutlineColor,
+      subtitleOutlineWidth, musicVolume, musicFadeIn, musicFadeOut, imageZoom, imagePosition,
+      enableCache, draftMode]);
 
   const estimatedCost = 250;
   const canGenerate = topic.length >= 5 && topic.length <= 500 && (tokenData?.tokens_remaining || 0) >= estimatedCost;
@@ -198,7 +241,36 @@ export function StoryboardInput() {
     window.speechSynthesis.speak(utterance);
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
+    // If there's an active storyboard, show confirmation dialog
+    if (storyboard?.id) {
+      setShowResetDialog(true);
+      return;
+    }
+    
+    // Just reset inputs if no storyboard
+    performReset();
+  };
+  
+  const performReset = async (deleteStoryboard = false) => {
+    // Delete storyboard if requested
+    if (deleteStoryboard && storyboard?.id) {
+      try {
+        const { error } = await supabase.functions.invoke('delete-storyboard', {
+          body: { storyboardId: storyboard.id }
+        });
+        
+        if (error) throw error;
+        
+        clearStoryboard();
+        toast.success('Storyboard deleted and form reset');
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to delete storyboard');
+        return;
+      }
+    }
+    
+    // Reset all fields
     setTopic('');
     setDuration(60);
     setStyle('hyper-realistic');
@@ -221,7 +293,13 @@ export function StoryboardInput() {
     setImagePosition('center-center');
     setEnableCache(true);
     setDraftMode(false);
-    toast.success('Form reset to defaults');
+    
+    // Clear localStorage draft
+    localStorage.removeItem(DRAFT_KEY);
+    
+    if (!deleteStoryboard) {
+      toast.success('Form reset to defaults');
+    }
   };
 
   const handleGenerate = async () => {
@@ -830,6 +908,30 @@ export function StoryboardInput() {
           </p>
         )}
       </CardContent>
+      
+      {/* Reset Confirmation Dialog */}
+      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Storyboard?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete your current storyboard and all scenes, and reset the form to defaults. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                performReset(true);
+                setShowResetDialog(false);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Reset & Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

@@ -295,9 +295,10 @@ export const useStoryboard = () => {
 
     const interval = setInterval(async () => {
       try {
-        // Phase 1: Fix polling call to use query params
+        // Pass storyboardId in body for better compatibility
         const { data, error } = await supabase.functions.invoke(
-          `poll-storyboard-status?storyboardId=${currentStoryboardId}`
+          'poll-storyboard-status',
+          { body: { storyboardId: currentStoryboardId } }
         );
 
         if (error) throw error;

@@ -67,7 +67,7 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
             {/* Dashboard Context */}
             {isDashboard ? (
               <>
-                <div className="text-xs font-bold text-muted-foreground mb-2 px-2">DASHBOARD</div>
+                <div className="text-xs font-bold text-foreground/60 mb-2 px-2">DASHBOARD</div>
                 
                 <button
                   className={cn(
@@ -99,8 +99,8 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/dashboard/history") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/dashboard/history")}
                 >
@@ -112,8 +112,8 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/dashboard/video-studio") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/dashboard/video-studio")}
                 >
@@ -125,8 +125,8 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/dashboard/storyboard") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/dashboard/storyboard")}
                 >
@@ -134,14 +134,14 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   <span>Storyboard</span>
                 </button>
 
-                <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">RESOURCES</div>
+                <div className="text-xs font-bold text-foreground/60 mt-4 mb-2 px-2">RESOURCES</div>
                 
                 <button
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/about") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/about")}
                 >
@@ -153,8 +153,8 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/blog") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/blog")}
                 >
@@ -166,8 +166,8 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/faq") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/faq")}
                 >
@@ -179,8 +179,8 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/community") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/community")}
                 >
@@ -193,10 +193,10 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                 {/* Public Pages Context */}
                 <button
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
                     isActive("/") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/")}
                 >
@@ -204,14 +204,14 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   <span>Home</span>
                 </button>
 
-                <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">PRODUCT</div>
+                <div className="text-xs font-bold text-foreground/60 mt-4 mb-2 px-2">PRODUCT</div>
                 
                 <button
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/features") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/features")}
                 >
@@ -238,8 +238,8 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/dashboard/templates") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/dashboard/templates")}
                 >
@@ -251,8 +251,8 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/pricing") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/pricing")}
                 >
@@ -264,8 +264,8 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/dashboard/storyboard") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/dashboard/storyboard")}
                 >
@@ -277,8 +277,8 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/dashboard/video-studio") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/dashboard/video-studio")}
                 >
@@ -286,14 +286,14 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   <span>Faceless Videos</span>
                 </button>
 
-                <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">RESOURCES</div>
+                <div className="text-xs font-bold text-foreground/60 mt-4 mb-2 px-2">RESOURCES</div>
                 
                 <button
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/about") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/about")}
                 >
@@ -305,8 +305,8 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/blog") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/blog")}
                 >
@@ -318,8 +318,8 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/faq") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/faq")}
                 >
@@ -331,8 +331,8 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/community") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/community")}
                 >
@@ -345,14 +345,14 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
             {/* Account Section - Always visible when logged in */}
             {user && (
               <>
-                <div className="text-xs font-bold text-muted-foreground mt-4 mb-2 px-2">ACCOUNT</div>
+                <div className="text-xs font-bold text-foreground/60 mt-4 mb-2 px-2">ACCOUNT</div>
                 
                 <button
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                     isActive("/dashboard/settings") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                   onClick={() => handleNavigation("/dashboard/settings")}
                 >
@@ -365,8 +365,8 @@ export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
                     className={cn(
                       "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
                       isActive("/admin/dashboard") 
-                        ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600" 
-                        : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                        ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                     )}
                     onClick={() => handleNavigation("/admin/dashboard")}
                   >

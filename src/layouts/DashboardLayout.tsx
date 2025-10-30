@@ -48,7 +48,7 @@ export const DashboardLayout = () => {
                     "text-base px-6 py-5 rounded-full",
                     isActive("/dashboard/templates") 
                       ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                 >
                   <Sparkles className="h-5 w-5 mr-2" />
@@ -62,7 +62,7 @@ export const DashboardLayout = () => {
                     "text-base px-6 py-5 rounded-full",
                     isActive("/dashboard/custom-creation") 
                       ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                 >
                   <Sparkles className="h-5 w-5 mr-2" />
@@ -76,7 +76,7 @@ export const DashboardLayout = () => {
                     "text-base px-6 py-5 rounded-full",
                     isActive("/dashboard/history") 
                       ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                 >
                   <History className="h-5 w-5 mr-2" />
@@ -90,7 +90,7 @@ export const DashboardLayout = () => {
                     "text-base px-6 py-5 rounded-full",
                     isActive("/dashboard/video-studio") 
                       ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                 >
                   <Video className="h-5 w-5 mr-2" />
@@ -104,7 +104,7 @@ export const DashboardLayout = () => {
                     "text-base px-6 py-5 rounded-full",
                     isActive("/dashboard/storyboard") 
                       ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
-                      : "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-700 font-medium"
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
                   )}
                 >
                   <span className="mr-2">🎬</span>

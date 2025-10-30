@@ -93,15 +93,22 @@ Next scene: ${nextSceneText || 'This is the last scene'}
 
 Create a scene that bridges these naturally.`;
 
-    // Call Lovable AI
-    const aiResponse = await fetch('https://api.openrouter.ai/api/v1/chat/completions', {
+    // Call Lovable AI Gateway
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    if (!lovableApiKey) {
+      throw new Error('LOVABLE_API_KEY not configured');
+    }
+
+    console.log('[regenerate-scene] Calling Lovable AI Gateway...');
+    
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
+        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free',
+        model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -112,8 +119,15 @@ Create a scene that bridges these naturally.`;
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('AI API error:', errorText);
-      throw new Error('AI generation failed');
+      console.error('[regenerate-scene] AI API error:', aiResponse.status, errorText);
+      
+      if (aiResponse.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+      } else if (aiResponse.status === 402) {
+        throw new Error('AI credits exhausted. Please contact support.');
+      }
+      
+      throw new Error(`AI generation failed: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();

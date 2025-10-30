@@ -155,7 +155,7 @@ export function StoryboardInput() {
   
   // Advanced video settings
   const [aspectRatio, setAspectRatio] = useState(draft?.aspectRatio || 'full-hd');
-  const [videoQuality, setVideoQuality] = useState(draft?.videoQuality || 'medium');
+  const [videoQuality, setVideoQuality] = useState(draft?.videoQuality || 'high');
   const [fps, setFps] = useState(draft?.fps || 25);
   const [customWidth, setCustomWidth] = useState(draft?.customWidth || 1920);
   const [customHeight, setCustomHeight] = useState(draft?.customHeight || 1080);
@@ -283,7 +283,7 @@ export function StoryboardInput() {
     setBackgroundMusicUrl('');
     setBackgroundMusicVolume(5);
     setAspectRatio('full-hd');
-    setVideoQuality('medium');
+    setVideoQuality('high');
     setFps(25);
     setCustomWidth(1920);
     setCustomHeight(1080);
@@ -721,10 +721,13 @@ export function StoryboardInput() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="draft">Draft (Fast)</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High Quality</SelectItem>
+                    <SelectItem value="low">Low (Fastest rendering)</SelectItem>
+                    <SelectItem value="medium">Medium (Balanced)</SelectItem>
+                    <SelectItem value="high">High (Best quality, slower)</SelectItem>
                   </SelectContent>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Lower quality = faster rendering. High quality = best visuals (recommended).
+                  </p>
                 </Select>
               </div>
 

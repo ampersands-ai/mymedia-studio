@@ -73,13 +73,13 @@ serve(async (req) => {
     }
 
     // Update based on status
-    if (statusData.status === 'done' || statusData.status === 'success') {
+    if (statusData.movie?.status === 'done' || statusData.movie?.status === 'success') {
       const { error: updateError } = await supabaseClient
         .from('storyboards')
         .update({
           status: 'complete',
-          video_url: statusData.url,
-          video_storage_path: statusData.url,
+          video_url: statusData.movie.url,
+          video_storage_path: statusData.movie.url,
           completed_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -95,13 +95,13 @@ serve(async (req) => {
         JSON.stringify({
           success: true,
           status: 'complete',
-          videoUrl: statusData.url,
+          videoUrl: statusData.movie.url,
           storyboardId: storyboard.id
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
 
-    } else if (statusData.status === 'error' || statusData.status === 'failed') {
+    } else if (statusData.movie?.status === 'error' || statusData.movie?.status === 'failed') {
       // Mark as failed and refund
       const tokenCost = storyboard.estimated_render_cost || 800;
       await supabaseClient.rpc('increment_tokens', {
@@ -123,20 +123,20 @@ serve(async (req) => {
         JSON.stringify({
           success: false,
           status: 'failed',
-          error: statusData.error || 'Rendering failed'
+          error: statusData.movie?.message || statusData.movie?.error || 'Rendering failed'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
 
     } else {
       // Still processing
-      console.log('[fetch-video-status] Video still processing:', statusData.status);
+      console.log('[fetch-video-status] Video still processing:', statusData.movie?.status);
 
       return new Response(
         JSON.stringify({
           success: false,
-          status: statusData.status,
-          progress: statusData.progress || 50,
+          status: statusData.movie?.status || 'processing',
+          progress: statusData.movie?.progress || 50,
           message: 'Video is still being processed'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

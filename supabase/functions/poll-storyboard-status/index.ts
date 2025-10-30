@@ -101,10 +101,10 @@ serve(async (req) => {
           const statusData = await statusResponse.json();
           console.log('[poll-storyboard-status] JSON2Video status:', statusData);
 
-          if (statusData.status === 'done' || statusData.status === 'success') {
+          if (statusData.movie?.status === 'done' || statusData.movie?.status === 'success') {
             status = 'complete';
             progress = 100;
-            videoUrl = statusData.url;
+            videoUrl = statusData.movie.url;
 
             // Update database
             await supabaseClient
@@ -120,7 +120,7 @@ serve(async (req) => {
               
             console.log('[poll-storyboard-status] Storyboard completed:', videoUrl);
             
-          } else if (statusData.status === 'error' || statusData.status === 'failed') {
+          } else if (statusData.movie?.status === 'error' || statusData.movie?.status === 'failed') {
             status = 'failed';
             progress = 0;
 
@@ -142,9 +142,9 @@ serve(async (req) => {
               
             console.error('[poll-storyboard-status] Storyboard rendering failed');
             
-          } else if (statusData.status === 'rendering' || statusData.status === 'processing') {
+          } else if (statusData.movie?.status === 'rendering' || statusData.movie?.status === 'processing') {
             status = 'rendering';
-            progress = statusData.progress || 50;
+            progress = statusData.movie.progress || 50;
             console.log('[poll-storyboard-status] Rendering in progress:', progress);
           }
         } else {

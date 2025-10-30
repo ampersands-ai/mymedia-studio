@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
       }
     });
 
-    console.log(`[SUCCESS] Tokens ${action} completed: ${amount} for user ${user_id}`);
+    console.log(`[SUCCESS] Credits ${action} completed: ${amount} for user ${user_id}`);
 
     return new Response(
       JSON.stringify({ 

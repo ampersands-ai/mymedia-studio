@@ -398,11 +398,11 @@ serve(async (req) => {
       if (subscription.tokens_remaining < tokenCost) {
         return new Response(
           JSON.stringify({ 
-            error: 'Insufficient tokens',
+            error: 'Insufficient credits',
             type: 'INSUFFICIENT_TOKENS',
             required: tokenCost,
             available: subscription.tokens_remaining,
-            message: `You need ${tokenCost} tokens but only have ${subscription.tokens_remaining} tokens available.`
+            message: `You need ${tokenCost} credits but only have ${subscription.tokens_remaining} credits available.`
           }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
@@ -766,7 +766,7 @@ serve(async (req) => {
           amount: tokenCost
         });
 
-        console.log(`Tokens refunded: ${tokenCost} tokens returned to user ${user.id} due to ${isTimeout ? 'timeout' : 'provider failure'}`);
+        console.log(`Credits refunded: ${tokenCost} credits returned to user ${user.id} due to ${isTimeout ? 'timeout' : 'provider failure'}`);
 
         await supabase.from('audit_logs').insert({
           user_id: user.id,

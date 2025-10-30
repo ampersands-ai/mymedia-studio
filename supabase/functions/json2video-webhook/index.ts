@@ -63,7 +63,7 @@ serve(async (req) => {
     } else if (status === 'error' || status === 'failed') {
       updates.status = 'failed';
       
-      // Refund tokens to user
+      // Refund credits to user
       const tokenCost = storyboard.estimated_render_cost || 800;
       const { error: refundError } = await supabaseClient.rpc('increment_tokens', {
         user_id_param: storyboard.user_id,
@@ -71,9 +71,9 @@ serve(async (req) => {
       });
       
       if (refundError) {
-        console.error('[json2video-webhook] Token refund failed:', refundError);
+        console.error('[json2video-webhook] Credit refund failed:', refundError);
       } else {
-        console.log('[json2video-webhook] Refunded tokens:', tokenCost);
+        console.log('[json2video-webhook] Refunded credits:', tokenCost);
       }
       
       console.error('[json2video-webhook] Video rendering failed:', error);

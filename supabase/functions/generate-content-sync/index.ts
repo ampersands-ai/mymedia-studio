@@ -189,7 +189,7 @@ serve(async (req) => {
     if (subscription.tokens_remaining < tokenCost) {
       return new Response(
         JSON.stringify({ 
-          error: 'Insufficient tokens',
+          error: 'Insufficient credits',
           type: 'INSUFFICIENT_TOKENS',
           required: tokenCost,
           available: subscription.tokens_remaining,

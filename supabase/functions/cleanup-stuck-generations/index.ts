@@ -59,9 +59,9 @@ serve(async (req) => {
       throw updateError;
     }
 
-    // Refund tokens for each stuck generation
+    // Refund credits for each stuck generation
     for (const gen of stuckGenerations) {
-      console.log(`Refunding ${gen.tokens_used} tokens to user ${gen.user_id}`);
+      console.log(`Refunding ${gen.tokens_used} credits to user ${gen.user_id}`);
       
       const { error: refundError } = await supabase.rpc('increment_tokens', {
         user_id_param: gen.user_id,

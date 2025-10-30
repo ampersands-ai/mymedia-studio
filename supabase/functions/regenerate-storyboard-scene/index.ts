@@ -44,7 +44,7 @@ serve(async (req) => {
 
     if (subscription.tokens_remaining < tokenCost) {
       return new Response(
-        JSON.stringify({ error: 'Insufficient tokens' }),
+        JSON.stringify({ error: 'Insufficient credits' }),
         { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

@@ -95,19 +95,19 @@ serve(async (req) => {
 
         if (fetchError) {
           logError('deduct-tokens', fetchError, { user_id: user.id });
-          throw new Error('Failed to fetch token balance');
+          throw new Error('Failed to fetch credit balance');
         }
 
         if (!subscription) {
           throw new Error('User subscription not found');
         }
 
-        // Check if user has enough tokens
+        // Check if user has enough credits
         if (subscription.tokens_remaining < tokens_to_deduct) {
-          throw new Error('Insufficient tokens');
+          throw new Error('Insufficient credits');
         }
 
-        // Deduct tokens with optimistic locking (compare-and-swap)
+        // Deduct credits with optimistic locking (compare-and-swap)
         const { data: updatedSubscription, error: updateError } = await supabase
           .from('user_subscriptions')
           .update({ 
@@ -122,9 +122,9 @@ serve(async (req) => {
           // Race condition detected - retry
           retries--;
           if (retries === 0) {
-            throw new Error('Token deduction failed after retries - please try again');
+            throw new Error('Credit deduction failed after retries - please try again');
           }
-          console.log(`[RETRY] Token deduction retry ${3 - retries}/3 for user ${user.id}`);
+          console.log(`[RETRY] Credit deduction retry ${3 - retries}/3 for user ${user.id}`);
           await new Promise(resolve => setTimeout(resolve, 50)); // Small delay before retry
           continue;
         }
@@ -138,7 +138,7 @@ serve(async (req) => {
       }
     }
 
-    // Log token usage for security monitoring
+    // Log credit usage for security monitoring
     try {
       await supabase.from('audit_logs').insert({
         user_id: user.id,
@@ -152,7 +152,7 @@ serve(async (req) => {
       logError('deduct-tokens', logErrorObj, { context: 'audit_log_failed' });
     }
 
-    console.log(`[SUCCESS] Deducted ${tokens_to_deduct} tokens for user ${user.id}`);
+    console.log(`[SUCCESS] Deducted ${tokens_to_deduct} credits for user ${user.id}`);
 
     return new Response(
       JSON.stringify({ 

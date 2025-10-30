@@ -62,7 +62,7 @@ serve(async (req) => {
     }
 
     if (subscription.tokens_remaining < costTokens) {
-      throw new Error(`Insufficient tokens. ${costTokens} tokens required for ${duration}s video.`);
+      throw new Error(`Insufficient credits. ${costTokens} credits required for ${duration}s video.`);
     }
 
     // Deduct tokens atomically

@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
       }
 
       if (subscription.tokens_remaining < voiceoverCost) {
-        throw new Error(`Insufficient tokens. ${voiceoverCost} tokens required to regenerate voiceover.`);
+        throw new Error(`Insufficient credits. ${voiceoverCost} credits required to regenerate voiceover.`);
       }
 
       // Deduct tokens atomically

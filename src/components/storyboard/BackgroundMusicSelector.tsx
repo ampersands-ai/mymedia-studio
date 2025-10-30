@@ -5,11 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Search, Loader2, Music, RefreshCw, Play, Pause, Volume2, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface PixabayAudio {
   id: number;
@@ -52,6 +51,7 @@ export function BackgroundMusicSelector({
   const [playingAudio, setPlayingAudio] = useState<HTMLAudioElement | null>(null);
   const [playingId, setPlayingId] = useState<number | null>(null);
   const [selectedPreviewAudio, setSelectedPreviewAudio] = useState<PixabayAudio | null>(null);
+  const [isSelectedPlaying, setIsSelectedPlaying] = useState(false);
   const selectedAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -68,6 +68,7 @@ export function BackgroundMusicSelector({
       if (selectedAudioRef.current) {
         selectedAudioRef.current.pause();
         selectedAudioRef.current.currentTime = 0;
+        setIsSelectedPlaying(false);
       }
     };
   }, [open]);
@@ -170,6 +171,7 @@ export function BackgroundMusicSelector({
       selectedAudioRef.current.pause();
       selectedAudioRef.current.currentTime = 0;
       selectedAudioRef.current = null;
+      setIsSelectedPlaying(false);
       return;
     }
 
@@ -186,8 +188,10 @@ export function BackgroundMusicSelector({
     audio.play();
     audio.onended = () => {
       selectedAudioRef.current = null;
+      setIsSelectedPlaying(false);
     };
     selectedAudioRef.current = audio;
+    setIsSelectedPlaying(true);
   };
 
   const handleRemoveMusic = () => {
@@ -201,6 +205,7 @@ export function BackgroundMusicSelector({
     if (selectedAudioRef.current) {
       selectedAudioRef.current.pause();
       selectedAudioRef.current = null;
+      setIsSelectedPlaying(false);
     }
     toast.success('Background music removed');
   };
@@ -226,7 +231,7 @@ export function BackgroundMusicSelector({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh]">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Select Background Music</DialogTitle>
             <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
@@ -242,7 +247,7 @@ export function BackgroundMusicSelector({
             </div>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto flex-1 px-1">
             {/* Current Selection Preview */}
             {selectedMusicUrl && selectedPreviewAudio && (
               <div className="p-4 bg-primary/10 rounded-lg border-2 border-primary">
@@ -274,7 +279,7 @@ export function BackgroundMusicSelector({
                       onClick={handlePlaySelectedMusic}
                       className="gap-2"
                     >
-                      {selectedAudioRef.current ? (
+                      {isSelectedPlaying ? (
                         <>
                           <Pause className="w-3.5 h-3.5" />
                           Stop
@@ -319,21 +324,22 @@ export function BackgroundMusicSelector({
               />
             </div>
 
-            {/* Genre Tabs */}
-            <Tabs value={selectedGenre} onValueChange={handleGenreChange}>
-              <TabsList className="w-full h-auto flex-wrap">
-                {MUSIC_GENRES.map((genre) => (
-                  <TabsTrigger 
-                    key={genre.value} 
-                    value={genre.value}
-                    className="text-xs px-2 py-1.5"
-                    disabled={loading}
-                  >
-                    {genre.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+            {/* Genre Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Genre</Label>
+              <Select value={selectedGenre} onValueChange={handleGenreChange} disabled={loading}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a genre" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MUSIC_GENRES.map((genre) => (
+                    <SelectItem key={genre.value} value={genre.value}>
+                      {genre.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Search Bar */}
             <div className="flex gap-2">
@@ -354,7 +360,7 @@ export function BackgroundMusicSelector({
 
 
             {/* Music List */}
-            <ScrollArea className="h-[400px] rounded-md border p-4">
+            <div className="max-h-[300px] overflow-y-auto rounded-md border p-4">
               {loading ? (
                 <div className="flex items-center justify-center h-full">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -418,7 +424,7 @@ export function BackgroundMusicSelector({
                   ))}
                 </div>
               )}
-            </ScrollArea>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

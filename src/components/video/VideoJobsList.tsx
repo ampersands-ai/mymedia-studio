@@ -50,25 +50,29 @@ export function VideoJobsList() {
             <Alert className="mb-4 bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
               <Clock className="h-4 w-4 text-green-600 dark:text-green-400" />
               <AlertTitle className="text-green-900 dark:text-green-100">Generation Complete</AlertTitle>
-              <AlertDescription className="text-green-800 dark:text-green-200 text-sm flex items-center justify-between">
-                <span>Your video is ready! View it below or in My Creations.</span>
-                <div className="flex gap-2 ml-4">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => navigate('/dashboard/history')}
-                  >
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    My Creations
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={clearPinnedJob}
-                  >
-                    <RotateCcw className="h-3 w-3 mr-1" />
-                    Reset
-                  </Button>
+              <AlertDescription className="text-green-800 dark:text-green-200 text-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <span className="flex-1">Your video is ready! View it below or in My Creations.</span>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => navigate('/dashboard/history')}
+                      className="text-xs"
+                    >
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      My Creations
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={clearPinnedJob}
+                      className="text-xs"
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      Reset
+                    </Button>
+                  </div>
                 </div>
               </AlertDescription>
             </Alert>

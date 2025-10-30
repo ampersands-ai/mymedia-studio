@@ -880,19 +880,19 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                 <Button
                   variant="default"
                   size="sm"
-                  className="flex-1"
+                  className="flex-1 text-xs sm:text-sm"
                   onClick={handleDownload}
                 >
-                  <Download className="h-4 w-4 mr-2" />
+                  <Download className="h-4 w-4 mr-1 sm:mr-2" />
                   Download
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1"
+                  className="flex-1 text-xs sm:text-sm"
                   onClick={() => onPreview?.(job)}
                 >
-                  <Play className="h-4 w-4 mr-2" />
+                  <Play className="h-4 w-4 mr-1 sm:mr-2" />
                   Full View
                 </Button>
               </div>
@@ -907,10 +907,15 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                   script: job.script || ''
                 })}
                 disabled={isGeneratingCaption || !job.script}
-                className="w-full"
+                className="w-full text-xs sm:text-sm"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                {isGeneratingCaption ? 'Generating...' : 'Generate Caption & Hashtags'}
+                <span className="hidden sm:inline">
+                  {isGeneratingCaption ? 'Generating...' : 'Generate Caption & Hashtags'}
+                </span>
+                <span className="sm:hidden">
+                  {isGeneratingCaption ? 'Generating...' : 'Caption & Tags'}
+                </span>
               </Button>
             </div>
 

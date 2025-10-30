@@ -88,24 +88,6 @@ export const GlobalHeader = () => {
               Features
             </button>
             <button 
-              onClick={() => navigate("/dashboard/templates")}
-              className="text-foreground/80 hover:text-primary-orange transition-colors font-medium"
-            >
-              Templates
-            </button>
-            <button 
-              onClick={() => navigate("/dashboard/custom-creation")}
-              className="text-foreground/80 hover:text-primary-orange transition-colors font-medium"
-            >
-              Custom Creation
-            </button>
-            <button 
-              onClick={() => navigate("/dashboard/storyboard")}
-              className="text-foreground/80 hover:text-primary-orange transition-colors font-medium flex items-center gap-1"
-            >
-              🎬 Storyboard
-            </button>
-            <button 
               onClick={() => navigate("/pricing")}
               className="text-foreground/80 hover:text-primary-orange transition-colors font-medium"
             >

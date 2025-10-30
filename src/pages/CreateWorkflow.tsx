@@ -206,7 +206,7 @@ const CreateWorkflow = () => {
                       </div>
                       <div className="flex items-center justify-between bg-muted/30 p-4 rounded-lg">
                         <p className="text-sm text-muted-foreground">
-                          Tokens used: <span className="font-medium text-foreground">{result.tokens}</span>
+                          Credits used: <span className="font-medium text-foreground">{result.tokens}</span>
                         </p>
                         <button
                           onClick={handleDownload}

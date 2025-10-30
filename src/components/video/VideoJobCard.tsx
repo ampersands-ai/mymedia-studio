@@ -595,7 +595,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                     ) : (
                       <>
                         <Volume2 className="w-4 h-4 mr-2" />
-                        Regenerate Voiceover ({voiceoverRegenerationCost} tokens)
+                        Regenerate Voiceover ({voiceoverRegenerationCost} credits)
                       </>
                     )}
                   </Button>

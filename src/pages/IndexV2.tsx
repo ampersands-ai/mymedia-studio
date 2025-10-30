@@ -183,10 +183,10 @@ const IndexV2 = () => {
                 ]}
                 ctaText="See Pricing →"
                 ctaLink="/pricing"
-                visual={
+              visual={
                   <div className="text-center space-y-4">
                     <div className="text-5xl font-black text-primary">10,000</div>
-                    <div className="text-foreground">Tokens Remaining</div>
+                    <div className="text-foreground">Credits Remaining</div>
                   </div>
                 }
               />

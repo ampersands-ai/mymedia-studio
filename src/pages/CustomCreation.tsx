@@ -670,11 +670,11 @@ const CustomCreation = () => {
     
     setLocalGenerating(true);
     
-    // Preemptive token balance check
+    // Preemptive credit balance check
     if (tokenBalance && estimatedTokens > tokenBalance) {
       setLocalGenerating(false);
-      toast.error("Insufficient tokens", {
-        description: `This creation requires ${estimatedTokens} tokens, but you only have ${tokenBalance}. Upgrade to continue.`,
+      toast.error("Insufficient credits", {
+        description: `This creation requires ${estimatedTokens} credits, but you only have ${tokenBalance}. Upgrade to continue.`,
         duration: 10000,
         action: {
           label: "View Plans",

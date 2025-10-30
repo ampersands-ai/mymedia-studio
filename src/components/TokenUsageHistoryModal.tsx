@@ -64,7 +64,7 @@ export const TokenUsageHistoryModal = ({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-black gradient-text">
-            Token Usage History
+            Credit Usage History
           </DialogTitle>
         </DialogHeader>
 
@@ -92,7 +92,7 @@ export const TokenUsageHistoryModal = ({
                 </div>
                 <div className="p-6 bg-gradient-to-br from-secondary/10 to-secondary/5 rounded-lg border-2 border-secondary/30">
                   <p className="text-sm font-semibold text-secondary-foreground uppercase tracking-wide">
-                    Total Tokens Used
+                    Total Credits Used
                   </p>
                   <p className="text-4xl font-black text-foreground mt-2">
                     {allTimeStats.totalTokens.toLocaleString()}
@@ -116,7 +116,7 @@ export const TokenUsageHistoryModal = ({
                         {allTimeStats.byType[type].count}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {allTimeStats.byType[type].tokens.toLocaleString()} tokens
+                        {allTimeStats.byType[type].tokens.toLocaleString()} credits
                       </p>
                     </div>
                   ))}
@@ -157,7 +157,7 @@ export const TokenUsageHistoryModal = ({
                         <p className="text-2xl font-black text-primary">
                           {month.totalTokens.toLocaleString()}
                         </p>
-                        <p className="text-xs text-muted-foreground">tokens</p>
+                        <p className="text-xs text-muted-foreground">credits</p>
                       </div>
                     </div>
                   </div>
@@ -181,7 +181,7 @@ export const TokenUsageHistoryModal = ({
                     </div>
                   </div>
                   <Badge variant="outline" className="font-mono">
-                    {gen.tokens_used} tokens
+                    {gen.tokens_used} credits
                   </Badge>
                 </div>
               ))}

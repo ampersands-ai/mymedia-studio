@@ -1031,7 +1031,7 @@ const History = () => {
                 {previewGeneration.is_batch_output && previewGeneration.tokens_used === 0 ? (
                   <span className="text-primary font-medium">Part of batch generation</span>
                 ) : (
-                  <span>{previewGeneration.tokens_used} tokens used</span>
+                  <span>{previewGeneration.tokens_used} credits used</span>
                 )}
               </div>
 

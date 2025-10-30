@@ -37,7 +37,7 @@ export function VideoCreator() {
   const { createJob, isCreating, jobs } = useVideoJobs();
   const { data: tokens } = useUserTokens();
 
-  // Calculate dynamic cost based on duration (15 tokens per second)
+  // Calculate dynamic cost based on duration (15 credits per second)
   const estimatedCost = duration * 15;
   const maxAffordableDuration = Math.floor((tokens?.tokens_remaining ?? 0) / 15);
 
@@ -164,7 +164,7 @@ export function VideoCreator() {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Approximate only: final length of the video to be determined by the audio time (1s = 15 tokens)
+            Approximate only: final length of the video to be determined by the audio time (1s = 15 credits)
           </p>
         </div>
 
@@ -558,7 +558,7 @@ export function VideoCreator() {
             </>
           ) : (
             <>
-              🎬 Create Video ({Number(estimatedCost).toFixed(2)} tokens)
+              🎬 Create Video ({Number(estimatedCost).toFixed(2)} credits)
             </>
           )}
         </Button>

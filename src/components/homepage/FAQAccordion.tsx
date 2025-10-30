@@ -7,18 +7,18 @@ import {
 
 const faqs = [
   {
-    question: "How does the token system work?",
-    answer: `Each generation costs tokens based on complexity:
+    question: "How does the credit system work?",
+    answer: `Each generation costs credits based on complexity:
     
-• Simple image: ~50 tokens
-• Video (5s): ~100 tokens
-• High-quality image: ~75 tokens
+• Simple image: ~50 credits
+• Video (5s): ~100 credits
+• High-quality image: ~75 credits
 
-Your plan includes a monthly token allocation. Unused tokens roll over to next month.`,
+Your plan includes a monthly credit allocation. Unused credits roll over to next month.`,
   },
   {
     question: "Can I cancel anytime?",
-    answer: "Yes! No contracts, no commitments. Cancel with one click from your dashboard. Keep your tokens until they expire (12 months).",
+    answer: "Yes! No contracts, no commitments. Cancel with one click from your dashboard. Keep your credits until they expire (12 months).",
   },
   {
     question: "What's the quality like compared to Midjourney/Runway?",
@@ -31,11 +31,11 @@ Quality = identical to using those tools directly. Benefit = You get them all in
     answer: "Yes! You have full commercial rights to everything you generate. Use it for client work, sell it, post it anywhere. (Subject to individual AI model terms, which we comply with)",
   },
   {
-    question: "What if I run out of tokens?",
+    question: "What if I run out of credits?",
     answer: `Three options:
 
 1. Wait until next month (resets automatically)
-2. Buy token top-up ($5 for 1,000 tokens)
+2. Buy credit top-up ($5 for 1,000 credits)
 3. Upgrade to higher plan
 
 You'll get alerts at 80% and 95% usage.`,
@@ -46,7 +46,7 @@ You'll get alerts at 80% and 95% usage.`,
   },
   {
     question: "Which plan should I choose?",
-    answer: `Start with Free (500 tokens) to try it. Most creators upgrade to Explorer ($7.99) or Professional ($19.99).
+    answer: `Start with Free (500 credits) to try it. Most creators upgrade to Explorer ($7.99) or Professional ($19.99).
 
 Rule of thumb:
 • 1-10 creations/week → Explorer
@@ -55,7 +55,7 @@ Rule of thumb:
   },
   {
     question: "Can I use this for my agency/team?",
-    answer: "Yes! Team plans coming soon (5 users, shared tokens). For now, you can create separate accounts or contact us for custom enterprise pricing.",
+    answer: "Yes! Team plans coming soon (5 users, shared credits). For now, you can create separate accounts or contact us for custom enterprise pricing.",
   },
 ];
 

@@ -67,7 +67,7 @@ export const StoryboardEditor = () => {
     }
 
     if ((tokenData?.tokens_remaining || 0) < renderCost) {
-      toast.error('Insufficient tokens');
+      toast.error('Insufficient credits');
       return;
     }
 
@@ -157,7 +157,7 @@ export const StoryboardEditor = () => {
                 ) : (
                   <>
                     <Play className="w-5 h-5 mr-2" />
-                    Render Video (800 tokens)
+                    Render Video (800 credits)
                   </>
                 )}
               </Button>
@@ -170,10 +170,10 @@ export const StoryboardEditor = () => {
                     This will create your final video with {scenes.length} scenes.
                   </p>
                   <p className="font-semibold">
-                    Cost: {renderCost} tokens • Est. time: ~60 seconds
+                    Cost: {renderCost} credits • Est. time: ~60 seconds
                   </p>
                   <p className="text-xs">
-                    Current balance: {Number(tokenData?.tokens_remaining || 0).toFixed(2)} tokens
+                    Current balance: {Number(tokenData?.tokens_remaining || 0).toFixed(2)} credits
                   </p>
                 </AlertDialogDescription>
               </AlertDialogHeader>

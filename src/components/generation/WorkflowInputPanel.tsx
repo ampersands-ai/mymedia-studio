@@ -344,19 +344,19 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting }:
           ))}
         </div>
 
-        {/* Token Cost Info */}
+        {/* Credit Cost Info */}
         <div className="p-4 bg-muted/50 rounded-lg space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium flex items-center gap-2">
               <Coins className="h-4 w-4 text-primary" />
               Estimated Cost
             </span>
-            <Badge variant="secondary">{Number(estimatedTokens).toFixed(2)} tokens</Badge>
+            <Badge variant="secondary">{Number(estimatedTokens).toFixed(2)} credits</Badge>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Your balance:</span>
             <span className={hasEnoughTokens ? "text-green-600 font-semibold" : "text-destructive font-semibold"}>
-              {Number(tokenBalance).toFixed(2)} tokens
+              {Number(tokenBalance).toFixed(2)} credits
             </span>
           </div>
         </div>

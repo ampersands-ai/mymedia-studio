@@ -512,7 +512,7 @@ const Settings = () => {
                       <div className="p-4 bg-card rounded-lg border-[3px] border-primary">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm font-semibold text-muted-foreground">Tokens Remaining</p>
+                            <p className="text-sm font-semibold text-muted-foreground">Credits Remaining</p>
                             <p className="text-3xl font-black text-foreground">{Number(subscription.tokens_remaining).toFixed(2)}</p>
                           </div>
                           <Coins className="h-8 w-8 text-primary" />
@@ -521,7 +521,7 @@ const Settings = () => {
                       <div className="p-4 bg-card rounded-lg border-[3px] border-secondary">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm font-semibold text-muted-foreground">Total Tokens</p>
+                            <p className="text-sm font-semibold text-muted-foreground">Total Credits</p>
                             <p className="text-3xl font-black text-foreground">{subscription.tokens_total.toLocaleString()}</p>
                           </div>
                           <Sparkles className="h-8 w-8 text-secondary" />
@@ -651,21 +651,21 @@ const Settings = () => {
           <TabsContent value="usage" className="space-y-4 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Token Usage</CardTitle>
-                <CardDescription>Track your token consumption and creation statistics</CardDescription>
+                <CardTitle>Credit Usage</CardTitle>
+                <CardDescription>Track your credit consumption and creation statistics</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Current Balance */}
                 <div className="text-center p-8 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg border-2 border-primary/30">
                   <p className="text-sm font-semibold text-primary uppercase tracking-wide mb-2">
-                    Current Token Balance
+                    Current Credit Balance
                   </p>
                   <p className="text-6xl font-black text-foreground mb-2">
                     {Number(subscription?.tokens_remaining || 0).toFixed(2)}
                   </p>
                   <p className="text-sm text-primary flex items-center justify-center gap-1">
                     <Sparkles className="h-4 w-4" />
-                    Tokens never expire
+                    Credits never expire
                   </p>
                 </div>
 
@@ -694,7 +694,7 @@ const Settings = () => {
                         </div>
                         <div className="p-4 bg-card rounded-lg border">
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                            Tokens Used
+                            Credits Used
                           </p>
                           <p className="text-3xl font-black text-foreground mt-1">
                             {currentMonth.totalTokens.toLocaleString()}

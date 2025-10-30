@@ -33,13 +33,13 @@ export const TokenCostPreview = ({
           ) : (
             <AlertCircle className="h-5 w-5 text-red-600" />
           )}
-          <h3 className="font-bold text-base">Token Cost</h3>
+          <h3 className="font-bold text-base">Credit Cost</h3>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-neutral-600">Base cost:</span>
-            <span className="font-semibold">{Number(baseCost).toFixed(2)} tokens</span>
+            <span className="font-semibold">{Number(baseCost).toFixed(2)} credits</span>
           </div>
 
           {breakdown.length > 0 && (
@@ -56,7 +56,7 @@ export const TokenCostPreview = ({
           <div className="pt-2 border-t border-neutral-200">
             <div className="flex items-center justify-between font-bold">
               <span>Total cost:</span>
-              <span className="text-lg text-primary-500">{Number(totalCost).toFixed(2)} tokens</span>
+              <span className="text-lg text-primary-500">{Number(totalCost).toFixed(2)} credits</span>
             </div>
           </div>
         </div>
@@ -70,7 +70,7 @@ export const TokenCostPreview = ({
               <Coins className="h-4 w-4" />
               Your balance:
             </span>
-            <span className="font-semibold">{Number(userTokens).toFixed(2)} tokens</span>
+            <span className="font-semibold">{Number(userTokens).toFixed(2)} credits</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-neutral-600">After generation:</span>
@@ -78,7 +78,7 @@ export const TokenCostPreview = ({
               "font-bold",
               hasEnoughTokens ? "text-green-600" : "text-red-600"
             )}>
-              {hasEnoughTokens ? Number(tokensAfter).toFixed(2) : '0.00'} tokens
+              {hasEnoughTokens ? Number(tokensAfter).toFixed(2) : '0.00'} credits
             </span>
           </div>
         </div>
@@ -86,7 +86,7 @@ export const TokenCostPreview = ({
         {!hasEnoughTokens && (
           <div className="text-xs text-red-600 flex items-center gap-1">
             <AlertCircle className="h-3 w-3" />
-            Not enough tokens. Please purchase more to continue.
+            Not enough credits. Please purchase more to continue.
           </div>
         )}
       </div>

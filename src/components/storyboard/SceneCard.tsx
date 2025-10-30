@@ -157,14 +157,14 @@ export const SceneCard = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Regenerate Scene {sceneNumber}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will use AI to create a new version of this scene. It will cost 50 tokens.
+              This will use AI to create a new version of this scene. It will cost 50 credits.
               Your edits will be replaced with the new content.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleRegenerate}>
-              Regenerate (50 tokens)
+              Regenerate (50 credits)
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -143,10 +143,10 @@ export const GlobalHeader = () => {
                   sideOffset={8}
                 >
                   <div className="space-y-4">
-                    {/* Token Balance Header */}
+                    {/* Credit Balance Header */}
                     <div className="border-b-2 border-neutral-200 pb-3">
                       <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
-                        Token Balance
+                        Credit Balance
                       </p>
                       <p className="text-3xl font-black text-foreground mt-1">
                         {tokenBalance.toLocaleString()}

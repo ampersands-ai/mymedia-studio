@@ -270,11 +270,11 @@ export function StoryboardInput() {
                 {STYLES.find(s => s.value === style)?.emoji} {STYLES.find(s => s.value === style)?.label}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-6xl">
+            <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
               <DialogHeader>
                 <DialogTitle>Choose a Style</DialogTitle>
               </DialogHeader>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 max-h-[calc(90vh-120px)] overflow-y-auto px-1">
                 {STYLES.map((styleOption) => (
                   <div
                     key={styleOption.value}
@@ -289,11 +289,11 @@ export function StoryboardInput() {
                       setStyleDialogOpen(false);
                     }}
                   >
-                    <div className="relative aspect-[21/9] overflow-hidden bg-muted min-h-[160px]">
+                    <div className="relative aspect-video md:aspect-[21/9] overflow-hidden bg-muted">
                       <img
                         src={styleOption.image}
                         alt={styleOption.label}
-                        className="w-full h-full object-fill"
+                        className="w-full h-full object-cover"
                         loading="lazy"
                       />
                       

@@ -119,9 +119,19 @@ export const useStoryboard = () => {
       return data;
     },
     onSuccess: (data) => {
-      setAndPersistStoryboardId(data.storyboard.id);
-      queryClient.invalidateQueries({ queryKey: ['storyboard', data.storyboard.id] });
-      queryClient.invalidateQueries({ queryKey: ['storyboard-scenes', data.storyboard.id] });
+      const newStoryboardId = data.storyboard.id;
+      
+      // First, remove old queries from cache
+      queryClient.removeQueries({ queryKey: ['storyboard'] });
+      queryClient.removeQueries({ queryKey: ['storyboard-scenes'] });
+      
+      // Then set the new ID (triggers new queries)
+      setAndPersistStoryboardId(newStoryboardId);
+      
+      // Invalidate to force refetch
+      queryClient.invalidateQueries({ queryKey: ['storyboard', newStoryboardId] });
+      queryClient.invalidateQueries({ queryKey: ['storyboard-scenes', newStoryboardId] });
+      
       toast.success(`Storyboard created! ${data.scenes.length} scenes generated`);
     },
     onError: (error: any) => {
@@ -258,12 +268,16 @@ export const useStoryboard = () => {
 
   const generateStoryboard = useCallback(async (input: StoryboardInput) => {
     setIsGenerating(true);
+    // Clear the old storyboard ID BEFORE generating
+    setAndPersistStoryboardId(null);
+    setActiveSceneId(null);
+    
     try {
       await generateMutation.mutateAsync(input);
     } finally {
       setIsGenerating(false);
     }
-  }, [generateMutation]);
+  }, [generateMutation, setAndPersistStoryboardId]);
 
   const updateScene = useCallback((sceneId: string, field: string, value: string) => {
     updateSceneMutation.mutate({ sceneId, field, value });

@@ -70,6 +70,30 @@ export const useStoryboard = () => {
     } else {
       localStorage.removeItem('currentStoryboardId');
     }
+    // Notify other hook instances in the same tab
+    window.dispatchEvent(new CustomEvent('storyboard-id-changed', { detail: id }));
+  }, []);
+
+  // Sync storyboard ID across all hook instances (same tab and cross-tab)
+  useEffect(() => {
+    const onCustomEvent = (e: Event) => {
+      const ce = e as CustomEvent<string | null>;
+      setCurrentStoryboardId(ce.detail ?? null);
+    };
+    
+    const onStorageEvent = (e: StorageEvent) => {
+      if (e.key === 'currentStoryboardId') {
+        setCurrentStoryboardId(e.newValue);
+      }
+    };
+    
+    window.addEventListener('storyboard-id-changed', onCustomEvent as EventListener);
+    window.addEventListener('storage', onStorageEvent);
+    
+    return () => {
+      window.removeEventListener('storyboard-id-changed', onCustomEvent as EventListener);
+      window.removeEventListener('storage', onStorageEvent);
+    };
   }, []);
 
   // Fetch current storyboard
@@ -120,6 +144,10 @@ export const useStoryboard = () => {
     },
     onSuccess: (data) => {
       const newStoryboardId = data.storyboard.id;
+      
+      // Prime caches so UI can show instantly
+      queryClient.setQueryData(['storyboard', newStoryboardId], data.storyboard);
+      queryClient.setQueryData(['storyboard-scenes', newStoryboardId], data.scenes);
       
       // First, remove old queries from cache
       queryClient.removeQueries({ queryKey: ['storyboard'] });

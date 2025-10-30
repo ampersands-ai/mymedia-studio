@@ -792,7 +792,7 @@ const History = () => {
               <div className="aspect-square relative overflow-hidden bg-muted">
                 {generation.is_batch_output && generation.output_index !== undefined && (
                   <div className="absolute top-1 right-1 z-10">
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 bg-background/90 backdrop-blur-sm border shadow-sm">
+                    <Badge className="text-[10px] px-1.5 py-0.5 bg-secondary text-secondary-foreground backdrop-blur-sm border border-secondary shadow-sm">
                       #{generation.output_index + 1}
                     </Badge>
                   </div>

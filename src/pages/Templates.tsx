@@ -317,7 +317,7 @@ const Templates = () => {
                             <Icon className="h-12 w-12 text-primary/30" />
                           </div>
                         )}
-                        <Badge variant="secondary" className="absolute top-1 right-1 backdrop-blur-sm bg-background/80 text-xs px-1.5 py-0">
+                        <Badge className="absolute top-1 right-1 backdrop-blur-sm bg-secondary text-secondary-foreground font-bold text-xs px-1.5 py-0.5 border border-secondary">
                           {contentType}
                         </Badge>
                       </div>

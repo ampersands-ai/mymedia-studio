@@ -243,7 +243,7 @@ const Community = () => {
                   )}
 
                   {/* Content Type Badge */}
-                  <Badge className={`absolute top-3 left-3 ${getContentTypeColor(creation.content_type)} text-white font-bold`}>
+                  <Badge className={`absolute top-3 left-3 ${getContentTypeColor(creation.content_type)} text-white font-bold border border-white/20`}>
                     {creation.content_type}
                   </Badge>
                 </div>

@@ -106,7 +106,7 @@ const Features = () => {
                           <div className="space-y-3">
                             <div className="flex items-center justify-between text-sm">
                               <span className="text-muted-foreground">Base cost:</span>
-                              <span className="font-semibold">{model.base_token_cost} tokens</span>
+                              <span className="font-semibold">{model.base_token_cost} credits</span>
                             </div>
                             
                             {model.estimated_time_seconds && (
@@ -148,7 +148,7 @@ const Features = () => {
                 <Zap className="h-10 w-10 mx-auto mb-4 text-primary" />
                 <h3 className="text-xl font-bold mb-2">Transparent Pricing</h3>
                 <p className="text-muted-foreground">
-                  Know exactly what you'll pay before you create. Simple token-based pricing with no hidden fees.
+                  Know exactly what you'll pay before you create. Simple credit-based pricing with no hidden fees.
                 </p>
               </CardContent>
             </Card>

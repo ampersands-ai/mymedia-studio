@@ -861,7 +861,7 @@ const History = () => {
                   {generation.is_batch_output && generation.tokens_used === 0 ? (
                     <span className="text-green-600 dark:text-green-400 font-medium">Batch output</span>
                   ) : (
-                    <span>{Number(generation.tokens_used/100).toFixed(2)} credits</span>
+                    <span>{Number(generation.tokens_used).toFixed(2)} credits</span>
                   )}
                 </div>
 
@@ -919,7 +919,7 @@ const History = () => {
                          "An error occurred while generating your content. Please try again with different parameters."}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {Number(previewGeneration.tokens_used/100).toFixed(2)} credits were deducted for this generation attempt.
+                        {Number(previewGeneration.tokens_used).toFixed(2)} credits were deducted for this generation attempt.
                       </p>
                     </div>
                   </div>

@@ -376,6 +376,7 @@ const CustomCreation = () => {
 
           setGeneratedOutputs(allOutputs);
           setGeneratedOutput(parentData.storage_path); // For backward compat
+          setSelectedOutputIndex(0); // Reset to newest generation
           setGenerationCompleteTime(Date.now());
           
           // Auto-scroll to output section on mobile
@@ -884,7 +885,7 @@ const CustomCreation = () => {
       tokens += uploadedImages.length * multipliers.uploaded_image;
     }
     
-    return Math.ceil(tokens);
+    return Math.round(tokens * 100) / 100; // Round to 2 decimal places instead of ceiling
   };
 
   useEffect(() => {
@@ -1393,7 +1394,7 @@ const CustomCreation = () => {
                         </div>
                          <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded md:absolute md:right-2">
                            <Coins className="h-4 w-4" />
-                           <span className="text-sm font-bold">(-{estimatedTokens}<span className="hidden md:inline"> tokens</span>)</span>
+                           <span className="text-sm font-bold">(-{estimatedTokens.toFixed(2)}<span className="hidden md:inline"> credits</span>)</span>
                          </div>
                       </div>
                     )}
@@ -1441,7 +1442,7 @@ const CustomCreation = () => {
                       <span>Generate</span>
                       <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded">
                         <Coins className="h-4 w-4" />
-                        <span className="text-sm font-bold">-{estimatedTokens}</span>
+                        <span className="text-sm font-bold">-{estimatedTokens.toFixed(2)}</span>
                       </div>
                     </div>
                   )}

@@ -418,49 +418,44 @@ export const StoryboardEditor = () => {
       {/* Voice & Advanced Settings - Editable Before Rendering */}
       {!isRendering && (
         <Card className="p-6 space-y-6">
-          <h3 className="text-lg font-bold">🎙️ Voice & Advanced Settings</h3>
-          <p className="text-sm text-muted-foreground">
-            Customize your video settings before rendering. Changes are saved automatically.
-          </p>
-          
-          {/* Voice Selection - Editable */}
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold">Voiceover Voice</Label>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-full justify-start">
-                  <Volume2 className="w-4 h-4 mr-2" />
-                  {storyboard?.voice_name || 'Select Voice'}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh]">
-                <DialogHeader>
-                  <DialogTitle>Select Voice</DialogTitle>
-                </DialogHeader>
-                <VoiceSelector
-                  selectedValue={storyboard?.voice_id || ''}
-                  onSelectVoice={(voiceId, voiceName) => {
-                    updateRenderSettings?.({
-                      voice_id: voiceId,
-                      voice_name: voiceName,
-                    });
-                  }}
-                  showElevenLabs={false}
-                  showAzureVoices={true}
-                />
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {/* Advanced Settings - Now Editable */}
-          <Collapsible className="space-y-4" defaultOpen>
+          <Collapsible defaultOpen>
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between -ml-4" type="button">
-                <span className="font-semibold">⚙️ Advanced Render Settings</span>
+                <span className="text-lg font-bold">🎙️ Voice & Advanced Settings</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-6 pt-4 border-t">
+            <CollapsibleContent className="space-y-6 pt-4">
+              <p className="text-sm text-muted-foreground">
+                Customize your video settings before rendering. Changes are saved automatically.
+              </p>
+              
+              {/* Voice Selection - Editable */}
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Voiceover Voice</Label>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start" type="button">
+                      <Volume2 className="w-4 h-4 mr-2" />
+                      <span className="truncate">
+                        {storyboard?.voice_name || 'Select Voice'}
+                      </span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Select Voiceover Voice</DialogTitle>
+                    </DialogHeader>
+                    <VoiceSelector
+                      selectedValue={storyboard?.voice_id || ''}
+                      onSelectVoice={(voiceId, voiceName) => {
+                        updateRenderSettings?.({ voice_id: voiceId, voice_name: voiceName });
+                      }}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
+
               {/* Video Quality */}
               <div className="space-y-2">
                 <Label className="text-sm font-semibold">Video Quality</Label>

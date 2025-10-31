@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { Sparkles, Film, Coins, Volume2, Play, Loader2, Palette, Image as ImageIcon, Video as VideoIcon, Wand2, Music, ChevronDown, RotateCcw } from 'lucide-react';
+import { Sparkles, Film, Coins, Volume2, Play, Loader2, Palette, Image as ImageIcon, Video as VideoIcon, Wand2, Music, ChevronDown, RotateCcw, Minus, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { BackgroundMusicSelector } from './BackgroundMusicSelector';
@@ -826,17 +826,73 @@ export function StoryboardInput() {
                   </div>
                 </div>
 
-                {/* Layout - Sliders and Controls */}
-                <div className="space-y-2">
-                  <Label className="text-xs">Font Size: {subtitleFontSize}px</Label>
-                  <Slider
-                    value={[subtitleFontSize]}
-                    onValueChange={([value]) => setSubtitleFontSize(value)}
-                    min={90}
-                    max={200}
-                    step={10}
-                    className="py-1"
-                  />
+                {/* Layout - Font Size and Max Words */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Font Size</Label>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        type="button"
+                        variant="outline" 
+                        size="sm" 
+                        className="h-9 w-9 p-0"
+                        onClick={() => setSubtitleFontSize(Math.max(90, subtitleFontSize - 10))}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <Input 
+                        type="number" 
+                        value={subtitleFontSize}
+                        onChange={(e) => setSubtitleFontSize(Number(e.target.value))}
+                        min={90}
+                        max={200}
+                        step={10}
+                        className="h-9 text-center"
+                      />
+                      <Button 
+                        type="button"
+                        variant="outline" 
+                        size="sm" 
+                        className="h-9 w-9 p-0"
+                        onClick={() => setSubtitleFontSize(Math.min(200, subtitleFontSize + 10))}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Max Words/Line</Label>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        type="button"
+                        variant="outline" 
+                        size="sm" 
+                        className="h-9 w-9 p-0"
+                        onClick={() => setSubtitleMaxWordsPerLine(Math.max(1, subtitleMaxWordsPerLine - 1))}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <Input 
+                        type="number" 
+                        value={subtitleMaxWordsPerLine}
+                        onChange={(e) => setSubtitleMaxWordsPerLine(Number(e.target.value))}
+                        min={1}
+                        max={10}
+                        step={1}
+                        className="h-9 text-center"
+                      />
+                      <Button 
+                        type="button"
+                        variant="outline" 
+                        size="sm" 
+                        className="h-9 w-9 p-0"
+                        onClick={() => setSubtitleMaxWordsPerLine(Math.min(10, subtitleMaxWordsPerLine + 1))}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -873,59 +929,47 @@ export function StoryboardInput() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-xs">Max Words/Line: {subtitleMaxWordsPerLine}</Label>
-                  <Slider
-                    value={[subtitleMaxWordsPerLine]}
-                    onValueChange={([value]) => setSubtitleMaxWordsPerLine(value)}
-                    min={1}
-                    max={10}
-                    step={1}
-                    className="py-1"
-                  />
-                </div>
-
                 {/* Colors - 2x2 Grid */}
                 <div className="pt-2 border-t">
                   <Label className="text-xs font-semibold mb-2 block">Colors</Label>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Current Word</Label>
+                      <Label className="text-[10px] text-muted-foreground">Current Word</Label>
                       <Input
                         type="color"
                         value={subtitleWordColor}
                         onChange={(e) => setSubtitleWordColor(e.target.value)}
-                        className="h-8 p-1"
+                        className="h-7 p-0.5 cursor-pointer"
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Other Words</Label>
+                      <Label className="text-[10px] text-muted-foreground">Other Words</Label>
                       <Input
                         type="color"
                         value={subtitleLineColor}
                         onChange={(e) => setSubtitleLineColor(e.target.value)}
-                        className="h-8 p-1"
+                        className="h-7 p-0.5 cursor-pointer"
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Background</Label>
+                      <Label className="text-[10px] text-muted-foreground">Background</Label>
                       <Input
                         type="color"
                         value={subtitleBoxColor}
                         onChange={(e) => setSubtitleBoxColor(e.target.value)}
-                        className="h-8 p-1"
+                        className="h-7 p-0.5 cursor-pointer"
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Outline</Label>
+                      <Label className="text-[10px] text-muted-foreground">Outline</Label>
                       <Input
                         type="color"
                         value={subtitleOutlineColor}
                         onChange={(e) => setSubtitleOutlineColor(e.target.value)}
-                        className="h-8 p-1"
+                        className="h-7 p-0.5 cursor-pointer"
                       />
                     </div>
                   </div>
@@ -934,41 +978,86 @@ export function StoryboardInput() {
                 {/* Effects */}
                 <div className="pt-2 border-t space-y-2">
                   <Label className="text-xs font-semibold">Effects</Label>
-                  <div className="space-y-2">
-                    <div>
-                      <Label className="text-xs">Outline: {subtitleOutlineWidth}px</Label>
-                      <Slider
-                        value={[subtitleOutlineWidth]}
-                        onValueChange={([value]) => setSubtitleOutlineWidth(value)}
-                        min={0}
-                        max={12}
-                        step={1}
-                        className="py-1"
-                      />
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Outline Width */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Outline</Label>
+                      <div className="flex items-center gap-1">
+                        <Button 
+                          type="button"
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 w-8 p-0"
+                          onClick={() => setSubtitleOutlineWidth(Math.max(0, subtitleOutlineWidth - 1))}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <Input 
+                          type="number" 
+                          value={subtitleOutlineWidth}
+                          onChange={(e) => setSubtitleOutlineWidth(Number(e.target.value))}
+                          min={0}
+                          max={12}
+                          step={1}
+                          className="h-8 text-center text-xs"
+                        />
+                        <Button 
+                          type="button"
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 w-8 p-0"
+                          onClick={() => setSubtitleOutlineWidth(Math.min(12, subtitleOutlineWidth + 1))}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Shadow</Label>
-                        <Input
-                          type="color"
-                          value={subtitleShadowColor}
-                          onChange={(e) => setSubtitleShadowColor(e.target.value)}
-                          className="h-8 p-1"
-                        />
-                      </div>
+                    {/* Shadow Color */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Shadow</Label>
+                      <Input
+                        type="color"
+                        value={subtitleShadowColor}
+                        onChange={(e) => setSubtitleShadowColor(e.target.value)}
+                        className="h-8 p-0.5 cursor-pointer"
+                      />
+                    </div>
+                  </div>
 
-                      <div className="space-y-1">
-                        <Label className="text-xs">Offset: {subtitleShadowOffset}px</Label>
-                        <Slider
-                          value={[subtitleShadowOffset]}
-                          onValueChange={([value]) => setSubtitleShadowOffset(value)}
-                          min={0}
-                          max={20}
-                          step={1}
-                          className="py-1"
-                        />
-                      </div>
+                  {/* Shadow Offset - Full Width Below */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Shadow Offset</Label>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        type="button"
+                        variant="outline" 
+                        size="sm" 
+                        className="h-8 w-8 p-0"
+                        onClick={() => setSubtitleShadowOffset(Math.max(0, subtitleShadowOffset - 1))}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <Input 
+                        type="number" 
+                        value={subtitleShadowOffset}
+                        onChange={(e) => setSubtitleShadowOffset(Number(e.target.value))}
+                        min={0}
+                        max={20}
+                        step={1}
+                        className="h-8 text-center text-xs"
+                      />
+                      <Button 
+                        type="button"
+                        variant="outline" 
+                        size="sm" 
+                        className="h-8 w-8 p-0"
+                        onClick={() => setSubtitleShadowOffset(Math.min(20, subtitleShadowOffset + 1))}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                      <span className="text-xs text-muted-foreground">{subtitleShadowOffset}px</span>
                     </div>
                   </div>
                 </div>

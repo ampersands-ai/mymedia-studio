@@ -137,6 +137,9 @@ serve(async (req) => {
             videoUrl: storyboard.video_url,
             userId: storyboard.user_id,
           },
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
 
         if (downloadResult.error) {

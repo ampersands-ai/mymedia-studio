@@ -210,7 +210,8 @@ export function StoryboardInput() {
       subtitleShadowOffset, subtitleMaxWordsPerLine, musicVolume, musicFadeIn, musicFadeOut,
       imageZoom, imagePosition, enableCache, draftMode, customWidth, customHeight]);
 
-  const estimatedCost = 250;
+  // Calculate cost dynamically: 0.25 credits per second
+  const estimatedCost = Math.max(1, Math.ceil(duration * 0.25));
   const canGenerate = topic.length >= 5 && topic.length <= 500 && (tokenData?.tokens_remaining || 0) >= estimatedCost;
 
   const handleSurpriseMe = () => {

@@ -29,7 +29,8 @@ serve(async (req) => {
 
     const { storyboardId, sceneId, previousSceneText, nextSceneText } = await req.json();
 
-    const tokenCost = 50;
+    // Cost for regenerating a single scene (small fixed cost)
+    const tokenCost = 5;
 
     // Check user token balance
     const { data: subscription, error: subError } = await supabaseClient

@@ -8,6 +8,9 @@ import { useNavigate } from 'react-router-dom';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +33,7 @@ export const StoryboardEditor = () => {
     renderProgress,
     renderingStartTime,
     updateScene,
+    updateIntroScene,
     regenerateScene,
     setActiveScene,
     navigateScene,
@@ -39,6 +43,35 @@ export const StoryboardEditor = () => {
   } = useStoryboard();
   const { data: tokenData } = useUserTokens();
   const [renderStatusMessage, setRenderStatusMessage] = useState('');
+  const [introVoiceOverText, setIntroVoiceOverText] = useState(storyboard?.intro_voiceover_text || '');
+  const [introImagePrompt, setIntroImagePrompt] = useState(storyboard?.intro_image_prompt || '');
+
+  // Sync intro fields with storyboard
+  useEffect(() => {
+    if (storyboard) {
+      setIntroVoiceOverText(storyboard.intro_voiceover_text || '');
+      setIntroImagePrompt(storyboard.intro_image_prompt || '');
+    }
+  }, [storyboard?.intro_voiceover_text, storyboard?.intro_image_prompt]);
+
+  // Debounced save for intro fields
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (storyboard && introVoiceOverText !== storyboard.intro_voiceover_text) {
+        updateIntroScene('intro_voiceover_text', introVoiceOverText);
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [introVoiceOverText, storyboard?.intro_voiceover_text, updateIntroScene]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (storyboard && introImagePrompt !== storyboard.intro_image_prompt) {
+        updateIntroScene('intro_image_prompt', introImagePrompt);
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [introImagePrompt, storyboard?.intro_image_prompt, updateIntroScene]);
 
   const activeScene = scenes.find(s => s.id === activeSceneId) || scenes[0];
   const estimatedDuration = storyboard ? storyboard.duration : 0;
@@ -171,6 +204,38 @@ export const StoryboardEditor = () => {
         {/* Scene Cards */}
         <div className="space-y-4">
           <h3 className="text-lg font-bold">📋 Scenes</h3>
+          
+          {/* Title/Intro Scene (Scene 0) */}
+          <Card className="relative p-4 bg-primary/5 backdrop-blur-xl border-2 border-primary/30">
+            <div className="flex items-center justify-between mb-4">
+              <div className="px-2 py-1 rounded-md bg-primary/30 text-primary text-xs font-bold">
+                Scene 0 - Title
+              </div>
+            </div>
+
+            <div className="space-y-2 mb-4">
+              <Label className="text-xs font-semibold text-muted-foreground">🎤 Voiceover</Label>
+              <Textarea
+                value={introVoiceOverText}
+                onChange={(e) => setIntroVoiceOverText(e.target.value)}
+                className="min-h-[80px] text-sm bg-background/50"
+                maxLength={1000}
+                placeholder="Title voiceover text..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-muted-foreground">🖼️ Image Prompt</Label>
+              <Textarea
+                value={introImagePrompt}
+                onChange={(e) => setIntroImagePrompt(e.target.value)}
+                className="min-h-[160px] sm:min-h-[200px] text-sm bg-background/50 resize-y"
+                maxLength={2000}
+                placeholder="Title scene visual description..."
+              />
+            </div>
+          </Card>
+
           {scenes.map((scene, idx) => (
             <SceneCard
               key={scene.id}

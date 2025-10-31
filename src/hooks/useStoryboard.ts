@@ -254,6 +254,26 @@ export const useStoryboard = () => {
     },
   });
 
+  // Update intro scene mutation
+  const updateIntroSceneMutation = useMutation({
+    mutationFn: async ({ field, value }: { field: string; value: string }) => {
+      if (!currentStoryboardId) throw new Error('No storyboard selected');
+      
+      const { data, error } = await supabase
+        .from('storyboards')
+        .update({ [field]: value })
+        .eq('id', currentStoryboardId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
+    },
+  });
+
   // Regenerate scene mutation
   const regenerateSceneMutation = useMutation({
     mutationFn: async ({ sceneId, previousSceneText, nextSceneText }: {
@@ -413,6 +433,10 @@ export const useStoryboard = () => {
     updateSceneMutation.mutate({ sceneId, field, value });
   }, [updateSceneMutation]);
 
+  const updateIntroScene = useCallback((field: string, value: string) => {
+    updateIntroSceneMutation.mutate({ field, value });
+  }, [updateIntroSceneMutation]);
+
   const regenerateScene = useCallback((sceneId: string) => {
     const sceneIndex = scenes.findIndex(s => s.id === sceneId);
     const previousSceneText = sceneIndex > 0 ? scenes[sceneIndex - 1].voice_over_text : '';
@@ -512,6 +536,7 @@ export const useStoryboard = () => {
     isLoading: isLoadingStoryboard || isLoadingScenes,
     generateStoryboard,
     updateScene,
+    updateIntroScene,
     regenerateScene,
     setActiveScene: setActiveSceneId,
     navigateScene,

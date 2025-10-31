@@ -701,278 +701,275 @@ export function StoryboardInput() {
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-4">
-                {/* Language */}
-                <div className="space-y-2">
-                  <Label>Language</Label>
-                  <Select value={subtitleLanguage} onValueChange={setSubtitleLanguage}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
-                      <SelectItem value="auto">Auto-detect</SelectItem>
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="en-US">English (US)</SelectItem>
-                      <SelectItem value="en-GB">English (UK)</SelectItem>
-                      <SelectItem value="en-AU">English (Australia)</SelectItem>
-                      <SelectItem value="es">Spanish</SelectItem>
-                      <SelectItem value="es-419">Spanish (Latin America)</SelectItem>
-                      <SelectItem value="fr">French</SelectItem>
-                      <SelectItem value="de">German</SelectItem>
-                      <SelectItem value="de-CH">German (Switzerland)</SelectItem>
-                      <SelectItem value="it">Italian</SelectItem>
-                      <SelectItem value="pt">Portuguese</SelectItem>
-                      <SelectItem value="pt-BR">Portuguese (Brazil)</SelectItem>
-                      <SelectItem value="zh">Chinese (Simplified)</SelectItem>
-                      <SelectItem value="zh-TW">Chinese (Traditional)</SelectItem>
-                      <SelectItem value="ja">Japanese</SelectItem>
-                      <SelectItem value="ko">Korean</SelectItem>
-                      <SelectItem value="hi">Hindi</SelectItem>
-                      <SelectItem value="hi-Latn">Hindi (Latin)</SelectItem>
-                      <SelectItem value="ru">Russian</SelectItem>
-                      <SelectItem value="bg">Bulgarian</SelectItem>
-                      <SelectItem value="ca">Catalan</SelectItem>
-                      <SelectItem value="cs">Czech</SelectItem>
-                      <SelectItem value="da">Danish</SelectItem>
-                      <SelectItem value="nl">Dutch</SelectItem>
-                      <SelectItem value="nl-BE">Dutch (Belgium)</SelectItem>
-                      <SelectItem value="et">Estonian</SelectItem>
-                      <SelectItem value="fi">Finnish</SelectItem>
-                      <SelectItem value="el">Greek</SelectItem>
-                      <SelectItem value="hu">Hungarian</SelectItem>
-                      <SelectItem value="id">Indonesian</SelectItem>
-                      <SelectItem value="lv">Latvian</SelectItem>
-                      <SelectItem value="lt">Lithuanian</SelectItem>
-                      <SelectItem value="ms">Malay</SelectItem>
-                      <SelectItem value="no">Norwegian</SelectItem>
-                      <SelectItem value="pl">Polish</SelectItem>
-                      <SelectItem value="ro">Romanian</SelectItem>
-                      <SelectItem value="sk">Slovak</SelectItem>
-                      <SelectItem value="sv">Swedish</SelectItem>
-                      <SelectItem value="th">Thai</SelectItem>
-                      <SelectItem value="tr">Turkish</SelectItem>
-                      <SelectItem value="uk">Ukrainian</SelectItem>
-                      <SelectItem value="vi">Vietnamese</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Auto-detect recommended for best accuracy
-                  </p>
+              <CollapsibleContent className="space-y-3">
+                {/* Basic Settings - 2 Column Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Language</Label>
+                    <Select value={subtitleLanguage} onValueChange={setSubtitleLanguage}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        <SelectItem value="auto">Auto-detect</SelectItem>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="en-US">English (US)</SelectItem>
+                        <SelectItem value="en-GB">English (UK)</SelectItem>
+                        <SelectItem value="en-AU">English (Australia)</SelectItem>
+                        <SelectItem value="es">Spanish</SelectItem>
+                        <SelectItem value="es-419">Spanish (Latin America)</SelectItem>
+                        <SelectItem value="fr">French</SelectItem>
+                        <SelectItem value="de">German</SelectItem>
+                        <SelectItem value="de-CH">German (Switzerland)</SelectItem>
+                        <SelectItem value="it">Italian</SelectItem>
+                        <SelectItem value="pt">Portuguese</SelectItem>
+                        <SelectItem value="pt-BR">Portuguese (Brazil)</SelectItem>
+                        <SelectItem value="zh">Chinese (Simplified)</SelectItem>
+                        <SelectItem value="zh-TW">Chinese (Traditional)</SelectItem>
+                        <SelectItem value="ja">Japanese</SelectItem>
+                        <SelectItem value="ko">Korean</SelectItem>
+                        <SelectItem value="hi">Hindi</SelectItem>
+                        <SelectItem value="hi-Latn">Hindi (Latin)</SelectItem>
+                        <SelectItem value="ru">Russian</SelectItem>
+                        <SelectItem value="bg">Bulgarian</SelectItem>
+                        <SelectItem value="ca">Catalan</SelectItem>
+                        <SelectItem value="cs">Czech</SelectItem>
+                        <SelectItem value="da">Danish</SelectItem>
+                        <SelectItem value="nl">Dutch</SelectItem>
+                        <SelectItem value="nl-BE">Dutch (Belgium)</SelectItem>
+                        <SelectItem value="et">Estonian</SelectItem>
+                        <SelectItem value="fi">Finnish</SelectItem>
+                        <SelectItem value="el">Greek</SelectItem>
+                        <SelectItem value="hu">Hungarian</SelectItem>
+                        <SelectItem value="id">Indonesian</SelectItem>
+                        <SelectItem value="lv">Latvian</SelectItem>
+                        <SelectItem value="lt">Lithuanian</SelectItem>
+                        <SelectItem value="ms">Malay</SelectItem>
+                        <SelectItem value="no">Norwegian</SelectItem>
+                        <SelectItem value="pl">Polish</SelectItem>
+                        <SelectItem value="ro">Romanian</SelectItem>
+                        <SelectItem value="sk">Slovak</SelectItem>
+                        <SelectItem value="sv">Swedish</SelectItem>
+                        <SelectItem value="th">Thai</SelectItem>
+                        <SelectItem value="tr">Turkish</SelectItem>
+                        <SelectItem value="uk">Ukrainian</SelectItem>
+                        <SelectItem value="vi">Vietnamese</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Model</Label>
+                    <Select value={subtitleModel} onValueChange={setSubtitleModel}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Default</SelectItem>
+                        <SelectItem value="whisper">Whisper</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                {/* Model */}
-                <div className="space-y-2">
-                  <Label>Transcription Model</Label>
-                  <Select value={subtitleModel} onValueChange={setSubtitleModel}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="default">Default (Fast & accurate)</SelectItem>
-                      <SelectItem value="whisper">Whisper (OpenAI model)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                {/* Typography - 2 Column Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Style</Label>
+                    <Select value={subtitleStyle} onValueChange={setSubtitleStyle}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="classic">Classic</SelectItem>
+                        <SelectItem value="classic-progressive">Progressive</SelectItem>
+                        <SelectItem value="classic-one-word">One Word</SelectItem>
+                        <SelectItem value="boxed-line">Boxed Line</SelectItem>
+                        <SelectItem value="boxed-word">Boxed Word ⭐</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Font</Label>
+                    <Select value={subtitleFontFamily} onValueChange={setSubtitleFontFamily}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        <SelectItem value="Arial">Arial</SelectItem>
+                        <SelectItem value="Arial Bold">Arial Bold</SelectItem>
+                        <SelectItem value="Oswald">Oswald</SelectItem>
+                        <SelectItem value="Oswald Bold">Oswald Bold ⭐</SelectItem>
+                        <SelectItem value="Roboto">Roboto</SelectItem>
+                        <SelectItem value="Nunito">Nunito</SelectItem>
+                        <SelectItem value="Lobster">Lobster</SelectItem>
+                        <SelectItem value="Pacifico">Pacifico</SelectItem>
+                        <SelectItem value="Permanent Marker">Permanent Marker</SelectItem>
+                        <SelectItem value="Comic Neue">Comic Neue</SelectItem>
+                        <SelectItem value="Fredericka the Great">Fredericka</SelectItem>
+                        <SelectItem value="Libre Baskerville">Libre Baskerville</SelectItem>
+                        <SelectItem value="Luckiest Guy">Luckiest Guy</SelectItem>
+                        <SelectItem value="Nanum Pen Script">Nanum Pen</SelectItem>
+                        <SelectItem value="Orelega One">Orelega One</SelectItem>
+                        <SelectItem value="Shrikhand">Shrikhand</SelectItem>
+                        <SelectItem value="Katibeh">Katibeh</SelectItem>
+                        <SelectItem value="Lalezar">Lalezar</SelectItem>
+                        <SelectItem value="NotoSans Bold">NotoSans Bold</SelectItem>
+                        <SelectItem value="Simplified Chinese">Chinese (S)</SelectItem>
+                        <SelectItem value="Traditional Chinese">Chinese (T)</SelectItem>
+                        <SelectItem value="Japanese">Japanese</SelectItem>
+                        <SelectItem value="Korean">Korean</SelectItem>
+                        <SelectItem value="Korean Bold">Korean Bold</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                {/* Style */}
+                {/* Layout - Sliders and Controls */}
                 <div className="space-y-2">
-                  <Label>Subtitle Style</Label>
-                  <Select value={subtitleStyle} onValueChange={setSubtitleStyle}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="classic">Classic (Simple text)</SelectItem>
-                      <SelectItem value="classic-progressive">Classic Progressive (Word by word)</SelectItem>
-                      <SelectItem value="classic-one-word">Classic One Word (One word at a time)</SelectItem>
-                      <SelectItem value="boxed-line">Boxed Line (Full line in box)</SelectItem>
-                      <SelectItem value="boxed-word">Boxed Word (Each word in box) ⭐</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Boxed styles highlight words as they're spoken
-                  </p>
-                </div>
-
-                {/* Font Family */}
-                <div className="space-y-2">
-                  <Label>Font Family</Label>
-                  <Select value={subtitleFontFamily} onValueChange={setSubtitleFontFamily}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
-                      <SelectItem value="Arial">Arial</SelectItem>
-                      <SelectItem value="Arial Bold">Arial Bold</SelectItem>
-                      <SelectItem value="Oswald">Oswald</SelectItem>
-                      <SelectItem value="Oswald Bold">Oswald Bold ⭐</SelectItem>
-                      <SelectItem value="Roboto">Roboto</SelectItem>
-                      <SelectItem value="Nunito">Nunito</SelectItem>
-                      <SelectItem value="Lobster">Lobster</SelectItem>
-                      <SelectItem value="Pacifico">Pacifico</SelectItem>
-                      <SelectItem value="Permanent Marker">Permanent Marker</SelectItem>
-                      <SelectItem value="Comic Neue">Comic Neue</SelectItem>
-                      <SelectItem value="Fredericka the Great">Fredericka the Great</SelectItem>
-                      <SelectItem value="Libre Baskerville">Libre Baskerville</SelectItem>
-                      <SelectItem value="Luckiest Guy">Luckiest Guy</SelectItem>
-                      <SelectItem value="Nanum Pen Script">Nanum Pen Script</SelectItem>
-                      <SelectItem value="Orelega One">Orelega One</SelectItem>
-                      <SelectItem value="Shrikhand">Shrikhand</SelectItem>
-                      <SelectItem value="Katibeh">Katibeh</SelectItem>
-                      <SelectItem value="Lalezar">Lalezar</SelectItem>
-                      <SelectItem value="NotoSans Bold">NotoSans Bold</SelectItem>
-                      <SelectItem value="Simplified Chinese">Simplified Chinese</SelectItem>
-                      <SelectItem value="Traditional Chinese">Traditional Chinese</SelectItem>
-                      <SelectItem value="Japanese">Japanese</SelectItem>
-                      <SelectItem value="Korean">Korean</SelectItem>
-                      <SelectItem value="Korean Bold">Korean Bold</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Font Size */}
-                <div className="space-y-2">
-                  <Label>Font Size: {subtitleFontSize}px</Label>
+                  <Label className="text-xs">Font Size: {subtitleFontSize}px</Label>
                   <Slider
                     value={[subtitleFontSize]}
                     onValueChange={([value]) => setSubtitleFontSize(value)}
                     min={90}
                     max={200}
                     step={10}
+                    className="py-1"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Typical sizes: 90-150px
-                  </p>
                 </div>
 
-                {/* Position */}
-                <div className="space-y-2">
-                  <Label>Position</Label>
-                  <Select value={subtitlePosition} onValueChange={setSubtitlePosition}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="top-left">Top Left</SelectItem>
-                      <SelectItem value="top-center">Top Center</SelectItem>
-                      <SelectItem value="top-right">Top Right</SelectItem>
-                      <SelectItem value="mid-top-center">Mid-Top Center</SelectItem>
-                      <SelectItem value="center-left">Center Left</SelectItem>
-                      <SelectItem value="center-center">Center Center</SelectItem>
-                      <SelectItem value="center-right">Center Right</SelectItem>
-                      <SelectItem value="mid-bottom-center">Mid-Bottom Center ⭐</SelectItem>
-                      <SelectItem value="bottom-left">Bottom Left</SelectItem>
-                      <SelectItem value="bottom-center">Bottom Center</SelectItem>
-                      <SelectItem value="bottom-right">Bottom Right</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Position</Label>
+                    <Select value={subtitlePosition} onValueChange={setSubtitlePosition}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="top-left">Top Left</SelectItem>
+                        <SelectItem value="top-center">Top Center</SelectItem>
+                        <SelectItem value="top-right">Top Right</SelectItem>
+                        <SelectItem value="mid-top-center">Mid-Top</SelectItem>
+                        <SelectItem value="center-left">Center Left</SelectItem>
+                        <SelectItem value="center-center">Center</SelectItem>
+                        <SelectItem value="center-right">Center Right</SelectItem>
+                        <SelectItem value="mid-bottom-center">Mid-Bottom ⭐</SelectItem>
+                        <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                        <SelectItem value="bottom-center">Bottom Center</SelectItem>
+                        <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center justify-between p-2 border rounded-lg">
+                    <Label className="text-xs cursor-pointer">Uppercase</Label>
+                    <input
+                      type="checkbox"
+                      checked={subtitleAllCaps}
+                      onChange={(e) => setSubtitleAllCaps(e.target.checked)}
+                      className="h-4 w-4 cursor-pointer"
+                    />
+                  </div>
                 </div>
 
-                {/* Max Words Per Line */}
                 <div className="space-y-2">
-                  <Label>Max Words Per Line: {subtitleMaxWordsPerLine}</Label>
+                  <Label className="text-xs">Max Words/Line: {subtitleMaxWordsPerLine}</Label>
                   <Slider
                     value={[subtitleMaxWordsPerLine]}
                     onValueChange={([value]) => setSubtitleMaxWordsPerLine(value)}
                     min={1}
                     max={10}
                     step={1}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Set to 1 for one word at a time
-                  </p>
-                </div>
-
-                {/* All Caps Toggle */}
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <Label className="cursor-pointer">Uppercase Text</Label>
-                  <input
-                    type="checkbox"
-                    checked={subtitleAllCaps}
-                    onChange={(e) => setSubtitleAllCaps(e.target.checked)}
-                    className="h-4 w-4 cursor-pointer"
+                    className="py-1"
                   />
                 </div>
 
-                {/* Color Settings */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Current Word Color</Label>
-                    <Input
-                      type="color"
-                      value={subtitleWordColor}
-                      onChange={(e) => setSubtitleWordColor(e.target.value)}
-                      className="h-10"
-                    />
-                    <p className="text-xs text-muted-foreground">Word being spoken</p>
-                  </div>
+                {/* Colors - 2x2 Grid */}
+                <div className="pt-2 border-t">
+                  <Label className="text-xs font-semibold mb-2 block">Colors</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Current Word</Label>
+                      <Input
+                        type="color"
+                        value={subtitleWordColor}
+                        onChange={(e) => setSubtitleWordColor(e.target.value)}
+                        className="h-8 p-1"
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Other Words Color</Label>
-                    <Input
-                      type="color"
-                      value={subtitleLineColor}
-                      onChange={(e) => setSubtitleLineColor(e.target.value)}
-                      className="h-10"
-                    />
-                    <p className="text-xs text-muted-foreground">Rest of sentence</p>
-                  </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Other Words</Label>
+                      <Input
+                        type="color"
+                        value={subtitleLineColor}
+                        onChange={(e) => setSubtitleLineColor(e.target.value)}
+                        className="h-8 p-1"
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Box/Background Color</Label>
-                    <Input
-                      type="color"
-                      value={subtitleBoxColor}
-                      onChange={(e) => setSubtitleBoxColor(e.target.value)}
-                      className="h-10"
-                    />
-                    <p className="text-xs text-muted-foreground">Behind subtitles</p>
-                  </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Background</Label>
+                      <Input
+                        type="color"
+                        value={subtitleBoxColor}
+                        onChange={(e) => setSubtitleBoxColor(e.target.value)}
+                        className="h-8 p-1"
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Outline Color</Label>
-                    <Input
-                      type="color"
-                      value={subtitleOutlineColor}
-                      onChange={(e) => setSubtitleOutlineColor(e.target.value)}
-                      className="h-10"
-                    />
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Outline</Label>
+                      <Input
+                        type="color"
+                        value={subtitleOutlineColor}
+                        onChange={(e) => setSubtitleOutlineColor(e.target.value)}
+                        className="h-8 p-1"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* Outline Width */}
-                <div className="space-y-2">
-                  <Label>Outline Width: {subtitleOutlineWidth}px</Label>
-                  <Slider
-                    value={[subtitleOutlineWidth]}
-                    onValueChange={([value]) => setSubtitleOutlineWidth(value)}
-                    min={0}
-                    max={12}
-                    step={1}
-                  />
-                </div>
-
-                {/* Shadow Settings */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* Effects */}
+                <div className="pt-2 border-t space-y-2">
+                  <Label className="text-xs font-semibold">Effects</Label>
                   <div className="space-y-2">
-                    <Label>Shadow Color</Label>
-                    <Input
-                      type="color"
-                      value={subtitleShadowColor}
-                      onChange={(e) => setSubtitleShadowColor(e.target.value)}
-                      className="h-10"
-                    />
-                  </div>
+                    <div>
+                      <Label className="text-xs">Outline: {subtitleOutlineWidth}px</Label>
+                      <Slider
+                        value={[subtitleOutlineWidth]}
+                        onValueChange={([value]) => setSubtitleOutlineWidth(value)}
+                        min={0}
+                        max={12}
+                        step={1}
+                        className="py-1"
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Shadow Offset: {subtitleShadowOffset}px</Label>
-                    <Slider
-                      value={[subtitleShadowOffset]}
-                      onValueChange={([value]) => setSubtitleShadowOffset(value)}
-                      min={0}
-                      max={20}
-                      step={1}
-                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Shadow</Label>
+                        <Input
+                          type="color"
+                          value={subtitleShadowColor}
+                          onChange={(e) => setSubtitleShadowColor(e.target.value)}
+                          className="h-8 p-1"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-xs">Offset: {subtitleShadowOffset}px</Label>
+                        <Slider
+                          value={[subtitleShadowOffset]}
+                          onValueChange={([value]) => setSubtitleShadowOffset(value)}
+                          min={0}
+                          max={20}
+                          step={1}
+                          className="py-1"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CollapsibleContent>

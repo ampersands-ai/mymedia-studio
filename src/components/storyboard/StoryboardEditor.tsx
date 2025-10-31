@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { SceneCard } from './SceneCard';
 import { StoryboardPreview } from './StoryboardPreview';
 import { useStoryboard } from '@/hooks/useStoryboard';
-import { Play, ArrowLeft, Coins, Loader2, AlertCircle } from 'lucide-react';
+import { Play, ArrowLeft, Coins, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { toast } from 'sonner';
@@ -35,6 +35,7 @@ export const StoryboardEditor = () => {
     navigateScene,
     renderVideo,
     clearStoryboard,
+    refreshStatus,
   } = useStoryboard();
   const { data: tokenData } = useUserTokens();
   const [renderStatusMessage, setRenderStatusMessage] = useState('');
@@ -113,8 +114,36 @@ export const StoryboardEditor = () => {
       {isRendering && renderStatusMessage && (
         <Alert>
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {renderStatusMessage}
+          <AlertDescription className="flex items-center justify-between">
+            <span>{renderStatusMessage}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refreshStatus}
+              className="ml-4"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Check Status
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Show Refresh button for stuck videos */}
+      {storyboard?.status === 'rendering' && !isRendering && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>Video rendering was interrupted. Click to check if it completed.</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refreshStatus}
+              className="ml-4"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Check Status
+            </Button>
           </AlertDescription>
         </Alert>
       )}

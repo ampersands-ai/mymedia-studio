@@ -41,22 +41,27 @@ serve(async (req) => {
     console.log('[json2video-webhook] === PAYLOAD RECEIVED ===');
     console.log('[json2video-webhook] Full Payload:', JSON.stringify(payload, null, 2));
 
-    const { project, status, url, error, progress } = payload;
-    console.log('[json2video-webhook] Parsed Values:', { project, status, url, error, progress });
+    const { project, status, url, error, progress, id } = payload;
+    console.log('[json2video-webhook] Parsed Values:', { project, status, url, error, progress, id });
 
-    if (!project) {
-      console.error('[json2video-webhook] Missing project ID in payload');
+    // JSON2Video sends the render job ID in the 'id' field
+    const renderJobId = id || project;
+    
+    if (!renderJobId) {
+      console.error('[json2video-webhook] Missing render job ID in payload');
       return new Response(
-        JSON.stringify({ error: 'Missing project ID' }),
+        JSON.stringify({ error: 'Missing render job ID' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Find storyboard by render_job_id or project ID
+    console.log('[json2video-webhook] Looking up storyboard by render_job_id:', renderJobId);
+
+    // Find storyboard by render_job_id (which matches the JSON2Video project ID)
     const { data: storyboard, error: fetchError } = await supabaseClient
       .from('storyboards')
       .select('*')
-      .or(`id.eq.${project},render_job_id.eq.${project}`)
+      .eq('render_job_id', renderJobId)
       .single();
 
     if (fetchError || !storyboard) {
@@ -79,7 +84,8 @@ serve(async (req) => {
       updates.video_url = url;
       updates.video_storage_path = url; // JSON2Video hosts the video
       updates.completed_at = new Date().toISOString();
-      console.log('[json2video-webhook] Video rendering completed:', url);
+      console.log('[json2video-webhook] ✅ Video rendering completed successfully!');
+      console.log('[json2video-webhook] Video URL stored:', url);
     } else if (status === 'error' || status === 'failed') {
       updates.status = 'failed';
       

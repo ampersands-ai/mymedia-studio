@@ -446,6 +446,54 @@ export const useStoryboard = () => {
     setRenderingStartTime(null);
   }, [setAndPersistStoryboardId]);
 
+  // Manual refresh status for stuck videos
+  const refreshStatus = useCallback(async () => {
+    if (!currentStoryboardId) return;
+
+    try {
+      const { data: storyboardData } = await supabase
+        .from('storyboards')
+        .select('render_job_id, status')
+        .eq('id', currentStoryboardId)
+        .single();
+
+      if (!storyboardData?.render_job_id) {
+        toast.error('No render job ID found');
+        return;
+      }
+
+      if (storyboardData.status === 'complete') {
+        toast.info('Video already complete!');
+        queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
+        return;
+      }
+
+      toast.loading('Checking video status...', { id: 'refresh-status' });
+
+      const { data, error } = await supabase.functions.invoke(
+        'fetch-video-status',
+        { body: { renderJobId: storyboardData.render_job_id } }
+      );
+
+      if (error) throw error;
+
+      if (data.status === 'complete') {
+        toast.success('🎉 Video is ready!', { id: 'refresh-status' });
+        setIsRendering(false);
+        setRenderingStartTime(null);
+        queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
+      } else if (data.status === 'failed') {
+        toast.error('Video rendering failed', { id: 'refresh-status' });
+        setIsRendering(false);
+        setRenderingStartTime(null);
+      } else {
+        toast.info('Still rendering...', { id: 'refresh-status' });
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to check status', { id: 'refresh-status' });
+    }
+  }, [currentStoryboardId, queryClient]);
+
   // Set first scene as active when scenes load
   useEffect(() => {
     if (scenes.length > 0 && !activeSceneId) {
@@ -469,5 +517,6 @@ export const useStoryboard = () => {
     navigateScene,
     renderVideo,
     clearStoryboard,
+    refreshStatus,
   };
 };

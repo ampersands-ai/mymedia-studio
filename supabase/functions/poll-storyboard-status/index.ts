@@ -27,11 +27,24 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
+    // Accept storyboardId from both query params AND request body
     const url = new URL(req.url);
-    const storyboardId = url.searchParams.get('storyboardId');
+    let storyboardId = url.searchParams.get('storyboardId');
+    
+    // If not in query params, try body
+    if (!storyboardId && req.method === 'POST') {
+      try {
+        const body = await req.json();
+        storyboardId = body.storyboardId;
+      } catch (e) {
+        // Body parsing failed, continue with null
+      }
+    }
+
+    console.log('[poll-storyboard-status] storyboardId received:', storyboardId);
 
     if (!storyboardId) {
-      throw new Error('Missing storyboardId parameter');
+      throw new Error('Missing storyboardId parameter (checked both query params and body)');
     }
 
     // Fetch storyboard

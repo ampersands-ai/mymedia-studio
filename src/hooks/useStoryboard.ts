@@ -340,6 +340,29 @@ export const useStoryboard = () => {
     },
   });
 
+  // Cancel render mutation
+  const cancelRenderMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('cancel-render', {
+        body: { storyboardId: currentStoryboardId },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      setIsRendering(false);
+      setRenderProgress(0);
+      setRenderingStartTime(null);
+      queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
+      toast.success('Render canceled. Status updated to draft.');
+    },
+    onError: (error: any) => {
+      console.error('[useStoryboard] Cancel render error:', error);
+      toast.error(`Failed to cancel render: ${error.message}`);
+    },
+  });
+
   // Poll render status with timeout detection and auto-recovery
   useEffect(() => {
     if (!isRendering || !currentStoryboardId) return;
@@ -486,6 +509,10 @@ export const useStoryboard = () => {
     await renderVideoMutation.mutateAsync();
   }, [renderVideoMutation]);
 
+  const cancelRender = useCallback(() => {
+    cancelRenderMutation.mutate();
+  }, [cancelRenderMutation]);
+
   const clearStoryboard = useCallback(() => {
     setAndPersistStoryboardId(null);
     setActiveSceneId(null);
@@ -566,6 +593,8 @@ export const useStoryboard = () => {
     setActiveScene: setActiveSceneId,
     navigateScene,
     renderVideo,
+    cancelRender,
+    isCancelingRender: cancelRenderMutation.isPending,
     clearStoryboard,
     refreshStatus,
     updateSceneImage: updateSceneImageMutation.mutate,

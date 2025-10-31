@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { SceneCard } from './SceneCard';
 import { ScenePreviewGenerator } from './ScenePreviewGenerator';
 import { useStoryboard } from '@/hooks/useStoryboard';
-import { Play, ArrowLeft, Coins, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Play, ArrowLeft, Coins, Loader2, AlertCircle, RefreshCw, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { toast } from 'sonner';
@@ -38,6 +38,8 @@ export const StoryboardEditor = () => {
     setActiveScene,
     navigateScene,
     renderVideo,
+    cancelRender,
+    isCancelingRender,
     clearStoryboard,
     refreshStatus,
     updateSceneImage,
@@ -220,15 +222,53 @@ export const StoryboardEditor = () => {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
             <span>{renderStatusMessage}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={refreshStatus}
-              className="ml-4"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Check Status
-            </Button>
+            <div className="flex gap-2 ml-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refreshStatus}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Check Status
+              </Button>
+              
+              {/* Cancel Render Button */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={isCancelingRender}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel Render
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancel Video Rendering?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure? Your tokens will NOT be refunded as the job has already started.
+                      
+                      <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-md">
+                        <p className="text-sm text-amber-600 dark:text-amber-400">
+                          ⚠️ The video may still complete on the server, but it won't be saved to your account.
+                        </p>
+                      </div>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep Rendering</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={cancelRender}
+                      className="bg-destructive hover:bg-destructive/90"
+                    >
+                      Cancel Anyway
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </AlertDescription>
         </Alert>
       )}

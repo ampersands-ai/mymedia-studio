@@ -107,3 +107,6 @@ verify_jwt = false
 
 [functions.json2video-webhook]
 verify_jwt = false  # Webhook endpoint called by JSON2Video
+
+[functions.proxy-video-download]
+verify_jwt = true

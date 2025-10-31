@@ -907,18 +907,43 @@ export const StoryboardEditor = () => {
 
                   toast.loading('Downloading video...', { id: 'download-video' });
                   
-                  const response = await fetch(finalVideoUrl);
-                  if (!response.ok) throw new Error('Download failed');
-                  
-                  const blob = await response.blob();
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `storyboard-${storyboard.id}.mp4`;
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                  window.URL.revokeObjectURL(url);
+                  // Use proxy for external videos to avoid CORS issues
+                  if (isExternalVideo) {
+                    const { supabase } = await import('@/integrations/supabase/client');
+                    const { data, error } = await supabase.functions.invoke('proxy-video-download', {
+                      body: { 
+                        videoUrl: finalVideoUrl,
+                        filename: `storyboard-${storyboard.id}.mp4`
+                      }
+                    });
+
+                    if (error) throw error;
+
+                    // Create blob from response and trigger download
+                    const blob = new Blob([data], { type: 'video/mp4' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `storyboard-${storyboard.id}.mp4`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                  } else {
+                    // Direct download for Supabase-hosted videos
+                    const response = await fetch(finalVideoUrl);
+                    if (!response.ok) throw new Error('Download failed');
+                    
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `storyboard-${storyboard.id}.mp4`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                  }
                   
                   toast.success('Video downloaded!', { id: 'download-video' });
                 } catch (error) {

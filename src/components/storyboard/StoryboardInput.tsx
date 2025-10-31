@@ -1145,30 +1145,6 @@ export function StoryboardInput() {
               </CollapsibleContent>
             </Collapsible>
 
-            {/* Expert Options */}
-            <div className="space-y-3 border-t pt-4">
-              <Label className="text-sm font-medium">🔧 Expert Options</Label>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="cache" className="text-sm text-muted-foreground">Enable Caching (Faster regeneration)</Label>
-                <input
-                  id="cache"
-                  type="checkbox"
-                  checked={enableCache}
-                  onChange={(e) => setEnableCache(e.target.checked)}
-                  className="h-4 w-4"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="draft" className="text-sm text-muted-foreground">Draft Mode (Faster preview)</Label>
-                <input
-                  id="draft"
-                  type="checkbox"
-                  checked={draftMode}
-                  onChange={(e) => setDraftMode(e.target.checked)}
-                  className="h-4 w-4"
-                />
-              </div>
-            </div>
           </CollapsibleContent>
         </Collapsible>
 

@@ -29,7 +29,51 @@ serve(async (req) => {
 
     const { storyboardId } = await req.json();
 
-    const tokenCost = 800;
+    // Fetch storyboard first to calculate cost
+    const { data: storyboard, error: storyboardError } = await supabaseClient
+      .from('storyboards')
+      .select('*, intro_image_preview_url, intro_voiceover_text')
+      .eq('id', storyboardId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (storyboardError || !storyboard) {
+      throw new Error('Storyboard not found or unauthorized');
+    }
+
+    // Fetch scenes to calculate total duration
+    const { data: scenes, error: scenesError } = await supabaseClient
+      .from('storyboard_scenes')
+      .select('id, order_number, voice_over_text, image_prompt, image_preview_url')
+      .eq('storyboard_id', storyboardId)
+      .order('order_number', { ascending: true });
+
+    if (scenesError || !scenes || scenes.length === 0) {
+      throw new Error('No scenes found');
+    }
+
+    // Validate all scenes have required data
+    for (const scene of scenes) {
+      if (!scene.voice_over_text || !scene.image_prompt) {
+        throw new Error('All scenes must have voiceover and image prompt');
+      }
+    }
+
+    // Calculate estimated duration based on voice-over text
+    // Estimate: ~2.5 words per second for text-to-speech
+    const countWords = (text: string) => text.trim().split(/\s+/).filter(w => w.length > 0).length;
+    
+    const introWords = storyboard.intro_voiceover_text ? countWords(storyboard.intro_voiceover_text) : 0;
+    const sceneWords = scenes.reduce((sum, scene) => sum + countWords(scene.voice_over_text), 0);
+    const totalWords = introWords + sceneWords;
+    
+    // Estimate duration in seconds (2.5 words per second)
+    const estimatedDuration = Math.ceil(totalWords / 2.5);
+    
+    // Cost: 0.25 credits per second, minimum 5 credits
+    const tokenCost = Math.max(5, estimatedDuration * 0.25);
+    
+    console.log(`[render-storyboard-video] Estimated duration: ${estimatedDuration}s (${totalWords} words), Cost: ${tokenCost} credits`);
 
     // Check user credit balance
     const { data: subscription, error: subError } = await supabaseClient
@@ -47,36 +91,6 @@ serve(async (req) => {
         JSON.stringify({ error: 'Insufficient credits' }),
         { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    }
-
-    // Fetch storyboard
-    const { data: storyboard, error: storyboardError } = await supabaseClient
-      .from('storyboards')
-      .select('*, intro_image_preview_url')
-      .eq('id', storyboardId)
-      .eq('user_id', user.id)
-      .single();
-
-    if (storyboardError || !storyboard) {
-      throw new Error('Storyboard not found or unauthorized');
-    }
-
-    // Fetch scenes in order (include image_preview_url)
-    const { data: scenes, error: scenesError } = await supabaseClient
-      .from('storyboard_scenes')
-      .select('id, order_number, voice_over_text, image_prompt, image_preview_url')
-      .eq('storyboard_id', storyboardId)
-      .order('order_number', { ascending: true });
-
-    if (scenesError || !scenes || scenes.length === 0) {
-      throw new Error('No scenes found');
-    }
-
-    // Validate all scenes have required data
-    for (const scene of scenes) {
-      if (!scene.voice_over_text || !scene.image_prompt) {
-        throw new Error('All scenes must have voiceover and image prompt');
-      }
     }
 
     // Deduct credits

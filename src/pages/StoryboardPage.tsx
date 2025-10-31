@@ -11,10 +11,12 @@ export default function StoryboardPage() {
   const { storyboard } = useStoryboard();
   const [showInputForm, setShowInputForm] = useState(true);
 
-  // Auto-collapse form when storyboard is generated
+  // Auto-collapse form when storyboard is generated, re-expand when cleared
   useEffect(() => {
     if (storyboard) {
       setShowInputForm(false);
+    } else {
+      setShowInputForm(true);
     }
   }, [storyboard]);
 

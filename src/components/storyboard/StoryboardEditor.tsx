@@ -277,7 +277,7 @@ export const StoryboardEditor = () => {
             <Card className="relative p-4 bg-primary/5 backdrop-blur-xl border-2 border-primary/30">
               <div className="flex items-center justify-between mb-4">
                 <div className="px-2 py-1 rounded-md bg-primary/30 text-primary text-xs font-bold">
-                  Scene 0 - Title
+                  Scene 1 - Title
                 </div>
               </div>
 
@@ -309,7 +309,7 @@ export const StoryboardEditor = () => {
                 image_prompt: introImagePrompt,
                 image_preview_url: storyboard.intro_image_preview_url,
               }}
-              sceneNumber={0}
+              sceneNumber={1}
               onImageGenerated={handleImageGenerated}
             />
           </div>
@@ -318,7 +318,7 @@ export const StoryboardEditor = () => {
             <div key={scene.id} className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
               <SceneCard
                 scene={scene}
-                sceneNumber={idx + 1}
+                sceneNumber={idx + 2}
                 isActive={activeSceneId === scene.id}
                 onUpdate={updateScene}
                 onRegenerate={regenerateScene}
@@ -326,7 +326,7 @@ export const StoryboardEditor = () => {
               />
               <ScenePreviewGenerator
                 scene={scene}
-                sceneNumber={idx + 1}
+                sceneNumber={idx + 2}
                 onImageGenerated={handleImageGenerated}
               />
             </div>

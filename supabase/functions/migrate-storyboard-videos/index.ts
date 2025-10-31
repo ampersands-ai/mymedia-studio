@@ -131,12 +131,13 @@ serve(async (req) => {
         }
 
         // Call download-storyboard-video function
+        const payload = {
+          storyboardId: storyboard.id,
+          videoUrl: storyboard.video_url,
+          userId: storyboard.user_id,
+        };
         const downloadResult = await supabaseClient.functions.invoke('download-storyboard-video', {
-          body: {
-            storyboardId: storyboard.id,
-            videoUrl: storyboard.video_url,
-            userId: storyboard.user_id,
-          },
+          body: JSON.stringify(payload),
           headers: {
             'Content-Type': 'application/json',
           },

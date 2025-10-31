@@ -54,9 +54,10 @@ export const StoryboardEditor = () => {
   } = useStoryboard();
   const { data: tokenData } = useUserTokens();
   
-  // Fetch signed/proxied URL for the completed video
+  // Only fetch signed URL for Supabase-hosted videos
+  const isSupabaseVideo = storyboard?.video_storage_path?.startsWith('storyboard-videos/');
   const { url: videoSignedUrl, isLoading: isLoadingVideo } = useVideoUrl(
-    storyboard?.status === 'complete' && storyboard?.video_storage_path 
+    storyboard?.status === 'complete' && isSupabaseVideo && storyboard?.video_storage_path 
       ? storyboard.video_storage_path 
       : null,
     { strategy: 'signed-short', bucket: 'generated-content' }
@@ -172,13 +173,6 @@ export const StoryboardEditor = () => {
       setShowScenes(false);
     }
   }, [isRendering]);
-
-  // Re-expand scenes when rendering completes or is canceled
-  useEffect(() => {
-    if (!isRendering && storyboard?.status === 'complete') {
-      setShowScenes(true);
-    }
-  }, [isRendering, storyboard?.status]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -547,14 +541,15 @@ export const StoryboardEditor = () => {
               <video
                 controls
                 className="w-full aspect-video"
-                src={videoSignedUrl || storyboard.video_url}
+                src={isSupabaseVideo ? (videoSignedUrl || storyboard.video_url) : storyboard.video_url}
                 preload="metadata"
-                crossOrigin="anonymous"
+                {...(isSupabaseVideo ? { crossOrigin: "anonymous" } : {})}
                 onError={(e) => {
                   console.error('[StoryboardEditor] Video load error:', e, {
-                    src: videoSignedUrl || storyboard.video_url,
+                    src: isSupabaseVideo ? (videoSignedUrl || storyboard.video_url) : storyboard.video_url,
+                    isSupabaseVideo,
                     videoSignedUrl,
-                    storageVideoUrl: storyboard.video_url
+                    directUrl: storyboard.video_url
                   });
                 }}
               >
@@ -568,8 +563,10 @@ export const StoryboardEditor = () => {
               size="sm"
               className="flex-1"
               onClick={() => {
-                const urlToOpen = videoSignedUrl || storyboard.video_url;
-                window.open(urlToOpen, '_blank');
+                const finalVideoUrl = isSupabaseVideo 
+                  ? (videoSignedUrl || storyboard.video_url) 
+                  : storyboard.video_url;
+                window.open(finalVideoUrl, '_blank');
               }}
             >
               Open in New Tab
@@ -580,16 +577,18 @@ export const StoryboardEditor = () => {
               className="flex-1"
               onClick={async () => {
                 try {
-                  const downloadUrl = videoSignedUrl || storyboard.video_url;
+                  const finalVideoUrl = isSupabaseVideo 
+                    ? (videoSignedUrl || storyboard.video_url) 
+                    : storyboard.video_url;
                   
-                  if (!downloadUrl) {
+                  if (!finalVideoUrl) {
                     toast.error('Video URL not available');
                     return;
                   }
 
                   toast.loading('Downloading video...', { id: 'download-video' });
                   
-                  const response = await fetch(downloadUrl);
+                  const response = await fetch(finalVideoUrl);
                   if (!response.ok) throw new Error('Download failed');
                   
                   const blob = await response.blob();

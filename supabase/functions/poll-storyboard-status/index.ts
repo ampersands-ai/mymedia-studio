@@ -140,7 +140,7 @@ serve(async (req) => {
             progress = 0;
 
             // Refund tokens
-            const tokenCost = storyboard.estimated_render_cost || 800;
+            const tokenCost = storyboard.estimated_render_cost || 0;
             await supabaseClient.rpc('increment_tokens', {
               user_id_param: user.id,
               amount: tokenCost

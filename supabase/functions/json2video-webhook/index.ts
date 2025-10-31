@@ -90,7 +90,7 @@ serve(async (req) => {
       updates.status = 'failed';
       
       // Refund credits to user
-      const tokenCost = storyboard.estimated_render_cost || 800;
+      const tokenCost = storyboard.estimated_render_cost || 0;
       const { error: refundError } = await supabaseClient.rpc('increment_tokens', {
         user_id_param: storyboard.user_id,
         amount: tokenCost

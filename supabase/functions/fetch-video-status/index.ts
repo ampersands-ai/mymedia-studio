@@ -105,7 +105,7 @@ serve(async (req) => {
 
     } else if (statusData.movie?.status === 'error' || statusData.movie?.status === 'failed') {
       // Mark as failed and refund
-      const tokenCost = storyboard.estimated_render_cost || 800;
+      const tokenCost = storyboard.estimated_render_cost || 0;
       await supabaseClient.rpc('increment_tokens', {
         user_id_param: user.id,
         amount: tokenCost

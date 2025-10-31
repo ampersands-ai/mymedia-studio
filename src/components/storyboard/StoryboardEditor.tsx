@@ -77,7 +77,27 @@ export const StoryboardEditor = () => {
 
   const activeScene = scenes.find(s => s.id === activeSceneId) || scenes[0];
   const estimatedDuration = storyboard ? storyboard.duration : 0;
-  const renderCost = 800;
+  
+  // Calculate dynamic render cost based on voiceover text (0.25 credits per second)
+  const calculateRenderCost = useCallback(() => {
+    if (!storyboard) return 0;
+    
+    const countWords = (text: string) => text?.trim().split(/\s+/).filter(w => w.length > 0).length || 0;
+    
+    const introWords = countWords(storyboard.intro_voiceover_text || '');
+    const sceneWords = scenes.reduce((sum, scene) => sum + countWords(scene.voice_over_text || ''), 0);
+    const totalWords = introWords + sceneWords;
+    
+    // Estimate duration in seconds (2.5 words per second)
+    const estimatedDuration = Math.ceil(totalWords / 2.5);
+    
+    // Cost: 0.25 credits per second, minimum 1 credit
+    const cost = Math.max(1, Math.ceil(estimatedDuration * 0.25));
+    
+    return cost;
+  }, [storyboard, scenes]);
+  
+  const renderCost = calculateRenderCost();
 
   // Phase 5: Dynamic status messages based on rendering time
   useEffect(() => {
@@ -378,7 +398,7 @@ export const StoryboardEditor = () => {
                 ) : (
                   <>
                     <Play className="w-5 h-5 mr-2" />
-                    Render Video (800 credits)
+                    Render Video ({renderCost} credits)
                   </>
                 )}
               </Button>

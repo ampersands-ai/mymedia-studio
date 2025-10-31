@@ -70,8 +70,8 @@ serve(async (req) => {
     // Estimate duration in seconds (2.5 words per second)
     const estimatedDuration = Math.ceil(totalWords / 2.5);
     
-    // Cost: 0.25 credits per second, minimum 5 credits
-    const tokenCost = Math.max(5, estimatedDuration * 0.25);
+    // Cost: 0.25 credits per second
+    const tokenCost = estimatedDuration * 0.25;
     
     console.log(`[render-storyboard-video] Estimated duration: ${estimatedDuration}s (${totalWords} words), Cost: ${tokenCost} credits`);
 
@@ -91,6 +91,16 @@ serve(async (req) => {
         JSON.stringify({ error: 'Insufficient credits' }),
         { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Store the estimated cost in the storyboard for accurate refunds
+    const { error: updateCostError } = await supabaseClient
+      .from('storyboards')
+      .update({ estimated_render_cost: tokenCost })
+      .eq('id', storyboardId);
+
+    if (updateCostError) {
+      console.error('[render-storyboard-video] Failed to update estimated cost:', updateCostError);
     }
 
     // Deduct credits

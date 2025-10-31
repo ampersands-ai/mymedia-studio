@@ -257,7 +257,7 @@ export function StoryboardInput() {
     
     // Reset all fields
     setTopic('');
-    setDuration(60);
+    setDuration(15);
     setStyle('hyper-realistic');
     setTone('engaging');
     setVoiceID('en-US-AndrewMultilingualNeural');

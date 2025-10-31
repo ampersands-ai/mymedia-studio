@@ -147,7 +147,7 @@ export function StoryboardInput() {
   const [showResetDialog, setShowResetDialog] = useState(false);
   
   // Advanced video settings
-  const [aspectRatio, setAspectRatio] = useState(draft?.aspectRatio || 'full-hd');
+  const [aspectRatio, setAspectRatio] = useState(draft?.aspectRatio || 'instagram-story');
   // Migrate old/invalid quality values to 'high'
   const validQualities = ['low', 'medium', 'high'];
   const draftQuality = draft?.videoQuality && validQualities.includes(draft.videoQuality) ? draft.videoQuality : 'high';
@@ -265,7 +265,7 @@ export function StoryboardInput() {
     setMediaType('image');
     setBackgroundMusicUrl('');
     setBackgroundMusicVolume(5);
-    setAspectRatio('full-hd');
+    setAspectRatio('instagram-story');
     setVideoQuality('high');
     setCustomWidth(1920);
     setCustomHeight(1080);

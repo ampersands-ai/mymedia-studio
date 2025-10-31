@@ -137,8 +137,8 @@ export function StoryboardInput() {
   const [duration, setDuration] = useState(draft?.duration || 60);
   const [style, setStyle] = useState(draft?.style || 'hyper-realistic');
   const [tone, setTone] = useState(draft?.tone || 'engaging');
-  const [voiceID, setVoiceID] = useState(draft?.voiceID || 'en-US-AndrewMultilingualNeural');
-  const [voiceName, setVoiceName] = useState(draft?.voiceName || 'Andrew');
+  const [voiceID, setVoiceID] = useState(draft?.voiceID || 'en-US-TonyNeural');
+  const [voiceName, setVoiceName] = useState(draft?.voiceName || 'Tony');
   const [mediaType, setMediaType] = useState<MediaType>(draft?.mediaType || 'image');
   const [backgroundMusicUrl, setBackgroundMusicUrl] = useState(draft?.backgroundMusicUrl || '');
   const [backgroundMusicVolume, setBackgroundMusicVolume] = useState(draft?.backgroundMusicVolume || 5);

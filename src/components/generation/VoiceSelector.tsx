@@ -133,11 +133,11 @@ const VoiceCard = ({ voice, isSelected, isPlaying, onSelect, onPreview, disabled
 };
 
 export function VoiceSelector({ selectedValue, onSelectVoice, disabled, showAzureVoices = false, showElevenLabs = true }: VoiceSelectorProps) {
-  const [provider, setProvider] = useState<'elevenlabs' | 'azure'>('elevenlabs');
+  const [provider, setProvider] = useState<'elevenlabs' | 'azure'>('azure');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
-  const [languageFilter, setLanguageFilter] = useState<string>('all');
-  const [countryFilter, setCountryFilter] = useState<string>('all');
+  const [languageFilter, setLanguageFilter] = useState<string>('English');
+  const [countryFilter, setCountryFilter] = useState<string>('United States');
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 

@@ -425,6 +425,99 @@ export const StoryboardEditor = () => {
                 </div>
               </div>
             ))}
+
+            {/* Render Video Button - inside scenes section */}
+            {!isRendering && (
+              <Card className="p-6 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 text-sm">
+                    <Coins className="w-5 h-5 text-primary" />
+                    <span className="text-muted-foreground">
+                      Balance: <span className="font-semibold text-foreground">{Number(tokenData?.tokens_remaining || 0).toFixed(2)}</span>
+                    </span>
+                  </div>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="lg"
+                        disabled={isRendering || (actualRenderCost > initialEstimate && (tokenData?.tokens_remaining || 0) < (actualRenderCost - initialEstimate))}
+                        className="bg-gradient-to-r from-primary via-primary to-primary/80 hover:scale-105 transition-transform font-bold w-full sm:w-auto"
+                      >
+                        <Play className="w-5 h-5 mr-2" />
+                        Render Video ({displayPrice.toFixed(2)} credits)
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Render Video?</AlertDialogTitle>
+                        <AlertDialogDescription className="space-y-2">
+                          <p>
+                            This will create your final video with {scenes.length} scenes.
+                          </p>
+                          <div className="space-y-2">
+                            {showSavings ? (
+                              <>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-muted-foreground">Originally charged:</span>
+                                  <span className="line-through text-muted-foreground">{initialEstimate.toFixed(2)} credits</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="font-semibold">Final price:</span>
+                                  <span className="font-bold text-green-600">{actualRenderCost.toFixed(2)} credits</span>
+                                </div>
+                                <p className="text-xs text-green-600">
+                                  {Math.abs(costDifference).toFixed(2)} credits refund - script shortened!
+                                </p>
+                              </>
+                            ) : actualRenderCost > initialEstimate ? (
+                              <>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-muted-foreground">Originally charged:</span>
+                                  <span>{initialEstimate.toFixed(2)} credits</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-muted-foreground">Script increase charge:</span>
+                                  <span className="text-amber-600">+{costDifference.toFixed(2)} credits</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-2 border-t">
+                                  <span className="font-semibold">Total price:</span>
+                                  <span className="font-bold">{actualRenderCost.toFixed(2)} credits</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  Script expanded by {Math.floor(Math.abs(costDifference / 0.25) * 100)}+ characters
+                                </p>
+                              </>
+                            ) : (
+                              <>
+                                <div className="flex justify-between items-center">
+                                  <span className="font-semibold">Final price:</span>
+                                  <span className="font-bold">{displayPrice.toFixed(2)} credits</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  Same as original - already charged.
+                                </p>
+                              </>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground pt-2 border-t">
+                            {actualRenderCost > initialEstimate && costDifference > (tokenData?.tokens_remaining || 0) 
+                              ? `Insufficient balance. Need ${costDifference.toFixed(2)} more credits.`
+                              : `Current balance: ${Number(tokenData?.tokens_remaining || 0).toFixed(2)} credits`} • Est. time: ~60s
+                          </p>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleRender}>
+                          Render Video
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </Card>
+            )}
           </div>
         </CollapsibleContent>
       </Collapsible>
@@ -455,9 +548,14 @@ export const StoryboardEditor = () => {
                 controls
                 className="w-full aspect-video"
                 src={videoSignedUrl || storyboard.video_url}
+                preload="metadata"
+                crossOrigin="anonymous"
                 onError={(e) => {
-                  console.error('[StoryboardEditor] Video load error:', e);
-                  toast.error('Failed to load video. Try downloading instead.');
+                  console.error('[StoryboardEditor] Video load error:', e, {
+                    src: videoSignedUrl || storyboard.video_url,
+                    videoSignedUrl,
+                    storageVideoUrl: storyboard.video_url
+                  });
                 }}
               >
                 Your browser does not support the video tag.
@@ -519,110 +617,6 @@ export const StoryboardEditor = () => {
         </div>
       )}
 
-      {/* Render Dialog - only show when NOT rendering */}
-      {!isRendering && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-card/95 backdrop-blur border-t z-50">
-        <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3 text-sm">
-            <Coins className="w-5 h-5 text-primary" />
-            <span className="text-muted-foreground">
-              Balance: <span className="font-semibold text-foreground">{Number(tokenData?.tokens_remaining || 0).toFixed(2)}</span>
-            </span>
-          </div>
-
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                size="lg"
-                disabled={isRendering || (actualRenderCost > initialEstimate && (tokenData?.tokens_remaining || 0) < (actualRenderCost - initialEstimate))}
-                className="bg-gradient-to-r from-primary via-primary to-primary/80 hover:scale-105 transition-transform font-bold"
-              >
-                {isRendering ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Rendering... {renderProgress}%
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-5 h-5 mr-2" />
-                    Render Video ({displayPrice.toFixed(2)} credits)
-                  </>
-                )}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Render Video?</AlertDialogTitle>
-                <AlertDialogDescription className="space-y-2">
-                  <p>
-                    This will create your final video with {scenes.length} scenes.
-                  </p>
-                  <div className="space-y-2">
-                    {showSavings ? (
-                      <>
-                        <div className="flex justify-between items-center">
-                          <span className="text-muted-foreground">Originally charged:</span>
-                          <span className="line-through text-muted-foreground">{initialEstimate.toFixed(2)} credits</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold">Final price:</span>
-                          <span className="font-bold text-green-600">{actualRenderCost.toFixed(2)} credits</span>
-                        </div>
-                        <p className="text-xs text-green-600">
-                          {Math.abs(costDifference).toFixed(2)} credits refund - script shortened!
-                        </p>
-                      </>
-                    ) : actualRenderCost > initialEstimate ? (
-                      <>
-                        <div className="flex justify-between items-center">
-                          <span className="text-muted-foreground">Originally charged:</span>
-                          <span>{initialEstimate.toFixed(2)} credits</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-muted-foreground">Script increase charge:</span>
-                          <span className="text-amber-600">+{costDifference.toFixed(2)} credits</span>
-                        </div>
-                        <div className="flex justify-between items-center pt-2 border-t">
-                          <span className="font-semibold">Total price:</span>
-                          <span className="font-bold">{actualRenderCost.toFixed(2)} credits</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Script expanded by {Math.floor(Math.abs(costDifference / 0.25) * 100)}+ characters
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold">Final price:</span>
-                          <span className="font-bold">{displayPrice.toFixed(2)} credits</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Same as original - already charged.
-                        </p>
-                      </>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground pt-2 border-t">
-                    {actualRenderCost > initialEstimate && costDifference > (tokenData?.tokens_remaining || 0) 
-                      ? `Insufficient balance. Need ${costDifference.toFixed(2)} more credits.`
-                      : `Current balance: ${Number(tokenData?.tokens_remaining || 0).toFixed(2)} credits`} • Est. time: ~60s
-                  </p>
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleRender}>
-                  Render Video
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-        </div>
-      )}
-
-      {/* Add padding to prevent content from being hidden by fixed bar */}
-      {!isRendering && <div className="h-24" />}
     </div>
   );
 };

@@ -6,6 +6,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Generate a unique random ID for JSON2Video project identifier
+const generateUniqueRenderJobId = (): string => {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from({ length: 8 }, () => 
+    chars[Math.floor(Math.random() * chars.length)]
+  ).join('');
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -28,6 +36,10 @@ serve(async (req) => {
     }
 
     const { storyboardId } = await req.json();
+
+    // Generate unique render job ID for this request
+    const uniqueRenderJobId = generateUniqueRenderJobId();
+    console.log(`[render-storyboard-video] Generated unique render job ID: ${uniqueRenderJobId}`);
 
     // Fetch storyboard first to calculate cost and get initial estimate
     const { data: storyboard, error: storyboardError } = await supabaseClient
@@ -204,7 +216,7 @@ serve(async (req) => {
         ),
         introText: storyboard.intro_voiceover_text,
       },
-      project: storyboardId,
+      project: uniqueRenderJobId,
       exports: [
         {
           destinations: [
@@ -322,16 +334,17 @@ serve(async (req) => {
     }
 
     const json2videoData = await json2videoResponse.json();
-    const renderJobId = json2videoData.project || json2videoData.id;
+    console.log('[render-storyboard-video] JSON2Video response:', json2videoData);
 
-    console.log('[render-storyboard-video] JSON2Video render started:', renderJobId);
+    // Use our generated unique ID as the render job ID
+    console.log('[render-storyboard-video] JSON2Video render started with ID:', uniqueRenderJobId);
 
     // Update storyboard status
     const { error: updateError } = await supabaseClient
       .from('storyboards')
       .update({
         status: 'rendering',
-        render_job_id: renderJobId,
+        render_job_id: uniqueRenderJobId,
         updated_at: new Date().toISOString()
       })
       .eq('id', storyboardId);
@@ -348,7 +361,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        jobId: renderJobId,
+        jobId: uniqueRenderJobId,
         estimatedTime: 180, // 3 minutes typical for JSON2Video
         webhookConfigured: true,
         message: 'Video rendering started. You will be notified when complete.'

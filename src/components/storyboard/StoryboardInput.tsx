@@ -14,6 +14,7 @@ import { Sparkles, Film, Coins, Volume2, Play, Loader2, Palette, Image as ImageI
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { BackgroundMusicSelector } from './BackgroundMusicSelector';
+import { VoiceSelector } from '@/components/generation/VoiceSelector';
 import { supabase } from '@/integrations/supabase/client';
 import {
   AlertDialog,
@@ -34,14 +35,6 @@ import cartoonImg from '@/assets/styles/cartoon.jpg';
 import naturalImg from '@/assets/styles/natural.jpg';
 import sketchImg from '@/assets/styles/sketch.jpg';
 
-const VOICES = [
-  { id: 'en-US-AndrewMultilingualNeural', name: 'Andrew (US Male)' },
-  { id: 'en-US-EmmaMultilingualNeural', name: 'Emma (US Female)' },
-  { id: 'en-GB-RyanNeural', name: 'Ryan (UK Male)' },
-  { id: 'en-AU-NatashaNeural', name: 'Natasha (AU Female)' },
-  { id: 'en-US-BrianNeural', name: 'Brian (US Male)' },
-  { id: 'en-US-JennyNeural', name: 'Jenny (US Female)' },
-];
 
 const STYLES = [
   { 
@@ -145,10 +138,10 @@ export function StoryboardInput() {
   const [style, setStyle] = useState(draft?.style || 'hyper-realistic');
   const [tone, setTone] = useState(draft?.tone || 'engaging');
   const [voiceID, setVoiceID] = useState(draft?.voiceID || 'en-US-AndrewMultilingualNeural');
+  const [voiceName, setVoiceName] = useState(draft?.voiceName || 'Andrew');
   const [mediaType, setMediaType] = useState<MediaType>(draft?.mediaType || 'image');
   const [backgroundMusicUrl, setBackgroundMusicUrl] = useState(draft?.backgroundMusicUrl || '');
   const [backgroundMusicVolume, setBackgroundMusicVolume] = useState(draft?.backgroundMusicVolume || 5);
-  const [playingVoice, setPlayingVoice] = useState<string | null>(null);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
   const [styleDialogOpen, setStyleDialogOpen] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -199,7 +192,7 @@ export function StoryboardInput() {
   useEffect(() => {
     const timer = setTimeout(() => {
       const draftData = {
-        topic, duration, style, tone, voiceID, mediaType, backgroundMusicUrl,
+        topic, duration, style, tone, voiceID, voiceName, mediaType, backgroundMusicUrl,
         backgroundMusicVolume, aspectRatio, videoQuality, subtitleLanguage, subtitleModel,
         subtitleStyle, subtitleFontFamily, subtitlePosition, subtitleFontSize, subtitleAllCaps,
         subtitleBoxColor, subtitleLineColor, subtitleWordColor, subtitleOutlineColor,
@@ -210,7 +203,7 @@ export function StoryboardInput() {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
     }, 500);
     return () => clearTimeout(timer);
-  }, [topic, duration, style, tone, voiceID, mediaType, backgroundMusicUrl, backgroundMusicVolume,
+  }, [topic, duration, style, tone, voiceID, voiceName, mediaType, backgroundMusicUrl, backgroundMusicVolume,
       aspectRatio, videoQuality, subtitleLanguage, subtitleModel, subtitleStyle, subtitleFontFamily,
       subtitlePosition, subtitleFontSize, subtitleAllCaps, subtitleBoxColor, subtitleLineColor,
       subtitleWordColor, subtitleOutlineColor, subtitleOutlineWidth, subtitleShadowColor,
@@ -226,39 +219,10 @@ export function StoryboardInput() {
     toast.success('✨ Random topic selected!');
   };
 
-  const handlePlayVoicePreview = (voiceId: string, voiceName: string) => {
-    if (playingVoice === voiceId) {
-      window.speechSynthesis.cancel();
-      setPlayingVoice(null);
-      return;
-    }
-
-    window.speechSynthesis.cancel();
-    setPlayingVoice(voiceId);
-
-    const utterance = new SpeechSynthesisUtterance(
-      'Hello! This is a preview of how your video voiceover will sound. I will narrate your storyboard with this voice.'
-    );
-
-    const voices = window.speechSynthesis.getVoices();
-    const genderMatch = voiceName.toLowerCase().includes('male') && !voiceName.toLowerCase().includes('female') ? 'male' : 'female';
-    const regionMatch = voiceName.includes('US') ? 'en-US' : voiceName.includes('UK') ? 'en-GB' : voiceName.includes('AU') ? 'en-AU' : 'en-US';
-    
-    const matchedVoice = voices.find(v => 
-      v.lang.includes(regionMatch) && 
-      (genderMatch === 'male' ? v.name.toLowerCase().includes('male') && !v.name.toLowerCase().includes('female') : v.name.toLowerCase().includes('female'))
-    ) || voices.find(v => v.lang.includes('en'));
-
-    if (matchedVoice) {
-      utterance.voice = matchedVoice;
-    }
-
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-    utterance.onend = () => setPlayingVoice(null);
-
-    window.speechSynthesis.speak(utterance);
+  const handleSelectVoice = (selectedVoiceId: string, selectedVoiceName: string) => {
+    setVoiceID(selectedVoiceId);
+    setVoiceName(selectedVoiceName);
+    setVoiceDialogOpen(false);
   };
 
   const handleReset = async () => {
@@ -296,6 +260,7 @@ export function StoryboardInput() {
     setStyle('hyper-realistic');
     setTone('engaging');
     setVoiceID('en-US-AndrewMultilingualNeural');
+    setVoiceName('Andrew');
     setMediaType('image');
     setBackgroundMusicUrl('');
     setBackgroundMusicVolume(5);
@@ -345,8 +310,6 @@ export function StoryboardInput() {
       }
       return;
     }
-
-    const voiceName = VOICES.find(v => v.id === voiceID)?.name || '';
 
     await generateStoryboard({
       topic,
@@ -573,57 +536,19 @@ export function StoryboardInput() {
             <DialogTrigger asChild>
               <Button variant="outline" className="w-full justify-start" disabled={isGenerating}>
                 <Volume2 className="w-4 h-4 mr-2" />
-                {VOICES.find(v => v.id === voiceID)?.name}
+                {voiceName}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-4xl max-h-[90vh]">
               <DialogHeader>
                 <DialogTitle>Choose a Voice</DialogTitle>
               </DialogHeader>
-              <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-                {VOICES.map((voice) => (
-                  <div
-                    key={voice.id}
-                    className={cn(
-                      "flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all",
-                      voiceID === voice.id
-                        ? "border-primary bg-primary/10"
-                        : "border-muted hover:border-primary/50 hover:bg-accent/50"
-                    )}
-                    onClick={() => {
-                      setVoiceID(voice.id);
-                      setVoiceDialogOpen(false);
-                    }}
-                  >
-                    <span className="font-medium text-sm">{voice.name}</span>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePlayVoicePreview(voice.id, voice.name);
-                      }}
-                      className="gap-2"
-                    >
-                      {playingVoice === voice.id ? (
-                        <>
-                          <Volume2 className="w-3.5 h-3.5" />
-                          Playing
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-3.5 h-3.5" />
-                          Preview
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                💡 Preview uses browser voices. Actual video uses Azure AI voices.
-              </p>
+              <VoiceSelector
+                selectedValue={voiceID}
+                onSelectVoice={handleSelectVoice}
+                disabled={isGenerating}
+                showAzureVoices={true}
+              />
             </DialogContent>
           </Dialog>
         </div>

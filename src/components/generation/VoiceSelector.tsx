@@ -17,6 +17,7 @@ interface VoiceSelectorProps {
   selectedValue: string;              // voice_id for highlighting selected voice
   onSelectVoice: (voiceId: string, voiceName: string) => void;  // Returns both ID and name
   disabled?: boolean;
+  showAzureVoices?: boolean;          // Whether to show Azure voices tab (default: false)
 }
 
 interface VoiceCardProps {
@@ -130,7 +131,7 @@ const VoiceCard = ({ voice, isSelected, isPlaying, onSelect, onPreview, disabled
   );
 };
 
-export function VoiceSelector({ selectedValue, onSelectVoice, disabled }: VoiceSelectorProps) {
+export function VoiceSelector({ selectedValue, onSelectVoice, disabled, showAzureVoices = false }: VoiceSelectorProps) {
   const [provider, setProvider] = useState<'elevenlabs' | 'azure'>('elevenlabs');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
@@ -247,10 +248,16 @@ export function VoiceSelector({ selectedValue, onSelectVoice, disabled }: VoiceS
   return (
     <div className="space-y-4">
       <Tabs value={provider} onValueChange={(v) => setProvider(v as 'elevenlabs' | 'azure')}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="elevenlabs">ElevenLabs ({elevenLabsVoices.length})</TabsTrigger>
-          <TabsTrigger value="azure">Azure Voices ({azureVoices?.length || 0})</TabsTrigger>
-        </TabsList>
+        {showAzureVoices ? (
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="elevenlabs">ElevenLabs ({elevenLabsVoices.length})</TabsTrigger>
+            <TabsTrigger value="azure">Azure Voices ({azureVoices?.length || 0})</TabsTrigger>
+          </TabsList>
+        ) : (
+          <TabsList className="w-full">
+            <TabsTrigger value="elevenlabs" className="flex-1">ElevenLabs Voices ({elevenLabsVoices.length})</TabsTrigger>
+          </TabsList>
+        )}
 
         {/* ElevenLabs Tab */}
         <TabsContent value="elevenlabs" className="space-y-4 mt-4">
@@ -300,8 +307,9 @@ export function VoiceSelector({ selectedValue, onSelectVoice, disabled }: VoiceS
           </ScrollArea>
         </TabsContent>
 
-        {/* Azure Tab */}
-        <TabsContent value="azure" className="space-y-4 mt-4">
+        {/* Azure Tab - Only show if enabled */}
+        {showAzureVoices && (
+          <TabsContent value="azure" className="space-y-4 mt-4">
           {/* Search bar */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -421,6 +429,7 @@ export function VoiceSelector({ selectedValue, onSelectVoice, disabled }: VoiceS
             </>
           )}
         </TabsContent>
+        )}
       </Tabs>
     </div>
   );

@@ -151,7 +151,7 @@ export const StoryboardEditor = () => {
 
     // Check if user has enough credits for any additional charge
     if (costDifference > 0 && (tokenData?.tokens_remaining || 0) < costDifference) {
-      toast.error(`Insufficient credits. Need ${costDifference.toFixed(1)} more credits.`);
+      toast.error(`Insufficient credits. Need ${costDifference.toFixed(2)} more credits.`);
       return;
     }
 
@@ -401,7 +401,7 @@ export const StoryboardEditor = () => {
                 ) : (
                   <>
                     <Play className="w-5 h-5 mr-2" />
-                    Render Video ({actualRenderCost.toFixed(1)} credits)
+                    Render Video ({actualRenderCost.toFixed(2)} credits)
                   </>
                 )}
               </Button>
@@ -415,29 +415,29 @@ export const StoryboardEditor = () => {
                   </p>
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">
-                      Initial estimate: {initialEstimate.toFixed(1)} credits
+                      Initial estimate: {initialEstimate.toFixed(2)} credits
                     </p>
                     <p className="font-semibold">
-                      Actual cost: {actualRenderCost.toFixed(1)} credits
+                      Actual cost: {actualRenderCost.toFixed(2)} credits
                       {costDifference !== 0 && (
                         <span className={costDifference > 0 ? "text-destructive" : "text-green-500"}>
-                          {" "}({costDifference > 0 ? '+' : ''}{costDifference.toFixed(1)})
+                          {" "}({costDifference > 0 ? '+' : ''}{costDifference.toFixed(2)})
                         </span>
                       )}
                     </p>
                     {costDifference < 0 && (
                       <p className="text-xs text-green-500">
-                        {Math.abs(costDifference).toFixed(1)} credits will be refunded automatically
+                        {Math.abs(costDifference).toFixed(2)} credits will be refunded automatically
                       </p>
                     )}
                     {costDifference > 0 && (
                       <p className="text-xs text-destructive">
-                        {costDifference.toFixed(1)} additional credits will be charged
+                        {costDifference.toFixed(2)} additional credits will be charged
                       </p>
                     )}
                   </div>
                   <p className="text-xs">
-                    Current balance: {Number(tokenData?.tokens_remaining || 0).toFixed(1)} credits • Est. time: ~60s
+                    Current balance: {Number(tokenData?.tokens_remaining || 0).toFixed(2)} credits • Est. time: ~60s
                   </p>
                 </AlertDialogDescription>
               </AlertDialogHeader>

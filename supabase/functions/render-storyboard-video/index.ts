@@ -382,15 +382,30 @@ serve(async (req) => {
     const json2videoData = await json2videoResponse.json();
     console.log('[render-storyboard-video] JSON2Video response:', json2videoData);
 
-    // Use our generated unique ID as the render job ID
-    console.log('[render-storyboard-video] JSON2Video render started with ID:', uniqueRenderJobId);
+    // ✅ CRITICAL: Use JSON2Video's returned project ID, not our generated one!
+    const json2videoProjectId = json2videoData.project;
 
-    // Update storyboard status
+    if (!json2videoProjectId) {
+      console.error('[render-storyboard-video] JSON2Video did not return a project ID!');
+      
+      // Refund initial estimate (actual cost may have been higher, but we limit refund to initial)
+      await supabaseClient.rpc('increment_tokens', {
+        user_id_param: user.id,
+        amount: initialEstimate
+      });
+      
+      throw new Error('JSON2Video API error: No project ID in response');
+    }
+
+    console.log('[render-storyboard-video] JSON2Video assigned project ID:', json2videoProjectId);
+    console.log('[render-storyboard-video] Our generated ID was:', uniqueRenderJobId, '(will be replaced)');
+
+    // Update storyboard status with JSON2Video's project ID
     const { error: updateError } = await supabaseClient
       .from('storyboards')
       .update({
         status: 'rendering',
-        render_job_id: uniqueRenderJobId,
+        render_job_id: json2videoProjectId, // ✅ Use THEIR ID, not ours!
         updated_at: new Date().toISOString()
       })
       .eq('id', storyboardId);
@@ -407,7 +422,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        jobId: uniqueRenderJobId,
+        jobId: json2videoProjectId, // ✅ Return THEIR ID for polling
         estimatedTime: 180, // 3 minutes typical for JSON2Video
         webhookConfigured: true,
         message: 'Video rendering started. You will be notified when complete.'

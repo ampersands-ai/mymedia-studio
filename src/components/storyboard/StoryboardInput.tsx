@@ -548,6 +548,7 @@ export function StoryboardInput() {
                 onSelectVoice={handleSelectVoice}
                 disabled={isGenerating}
                 showAzureVoices={true}
+                showElevenLabs={false}
               />
             </DialogContent>
           </Dialog>

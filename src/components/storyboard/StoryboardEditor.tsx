@@ -76,7 +76,12 @@ export const StoryboardEditor = () => {
 
   const activeScene = scenes.find(s => s.id === activeSceneId) || scenes[0];
   const estimatedDuration = storyboard ? storyboard.duration : 0;
-  const initialEstimate = storyboard?.estimated_render_cost || 0;
+  const baseRatePerSecond = 0.25;
+  const expectedEstimate = (storyboard?.duration || 0) * baseRatePerSecond;
+  const rawEstimate = storyboard?.estimated_render_cost ?? expectedEstimate;
+  const initialEstimate = (rawEstimate <= 0 || rawEstimate > 100 || rawEstimate > expectedEstimate * 10)
+    ? expectedEstimate
+    : rawEstimate;
   
   // Calculate actual render cost based on script character changes
   const calculateRenderCost = useCallback(() => {

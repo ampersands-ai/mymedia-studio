@@ -111,7 +111,7 @@ export const ScenePreviewGenerator = ({
       </div>
 
       {/* Image Display */}
-      <div className="flex-1 relative rounded-lg overflow-hidden bg-muted/20 border border-border/20 mb-4">
+      <div className="flex-1 relative rounded-lg overflow-hidden bg-muted/20 border border-border/20 mb-4 w-full aspect-video lg:aspect-[9/16]">
         {isGenerating ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
@@ -127,7 +127,7 @@ export const ScenePreviewGenerator = ({
             <img
               src={displayUrl}
               alt={`Scene ${sceneNumber} preview`}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
               loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">

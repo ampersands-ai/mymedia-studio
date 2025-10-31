@@ -100,6 +100,10 @@ export const StoryboardEditor = () => {
   
   const actualRenderCost = calculateRenderCost();
   const costDifference = actualRenderCost - initialEstimate;
+  
+  // Display price: show initial estimate if actual is same/higher, show actual if lower
+  const displayPrice = actualRenderCost >= initialEstimate ? initialEstimate : actualRenderCost;
+  const showSavings = actualRenderCost < initialEstimate;
 
   // Phase 5: Dynamic status messages based on rendering time
   useEffect(() => {
@@ -149,9 +153,10 @@ export const StoryboardEditor = () => {
       return;
     }
 
-    // Check if user has enough credits for any additional charge
-    if (costDifference > 0 && (tokenData?.tokens_remaining || 0) < costDifference) {
-      toast.error(`Insufficient credits. Need ${costDifference.toFixed(2)} more credits.`);
+    // Check if user has enough credits for the display price (never charge more than initial estimate)
+    const chargeAmount = Math.min(actualRenderCost, initialEstimate);
+    if ((tokenData?.tokens_remaining || 0) < chargeAmount) {
+      toast.error(`Insufficient credits. Need ${chargeAmount.toFixed(2)} credits.`);
       return;
     }
 
@@ -390,7 +395,7 @@ export const StoryboardEditor = () => {
             <AlertDialogTrigger asChild>
               <Button
                 size="lg"
-                disabled={isRendering || (costDifference > 0 && (tokenData?.tokens_remaining || 0) < costDifference)}
+                disabled={isRendering || (tokenData?.tokens_remaining || 0) < displayPrice}
                 className="bg-gradient-to-r from-primary via-primary to-primary/80 hover:scale-105 transition-transform font-bold"
               >
                 {isRendering ? (
@@ -401,7 +406,7 @@ export const StoryboardEditor = () => {
                 ) : (
                   <>
                     <Play className="w-5 h-5 mr-2" />
-                    Render Video ({actualRenderCost.toFixed(2)} credits)
+                    Render Video ({displayPrice.toFixed(2)} credits)
                   </>
                 )}
               </Button>
@@ -413,30 +418,42 @@ export const StoryboardEditor = () => {
                   <p>
                     This will create your final video with {scenes.length} scenes.
                   </p>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">
-                      Initial estimate: {initialEstimate.toFixed(2)} credits
-                    </p>
-                    <p className="font-semibold">
-                      Actual cost: {actualRenderCost.toFixed(2)} credits
-                      {costDifference !== 0 && (
-                        <span className={costDifference > 0 ? "text-destructive" : "text-green-500"}>
-                          {" "}({costDifference > 0 ? '+' : ''}{costDifference.toFixed(2)})
-                        </span>
-                      )}
-                    </p>
-                    {costDifference < 0 && (
-                      <p className="text-xs text-green-500">
-                        {Math.abs(costDifference).toFixed(2)} credits will be refunded automatically
-                      </p>
-                    )}
-                    {costDifference > 0 && (
-                      <p className="text-xs text-destructive">
-                        {costDifference.toFixed(2)} additional credits will be charged
-                      </p>
+                  <div className="space-y-2">
+                    {showSavings ? (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Original estimate:</span>
+                          <span className="line-through text-muted-foreground">{initialEstimate.toFixed(2)} credits</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold">Your price:</span>
+                          <span className="font-bold text-green-600">{actualRenderCost.toFixed(2)} credits</span>
+                        </div>
+                        <p className="text-xs text-green-600">
+                          You save {Math.abs(costDifference).toFixed(2)} credits! Refund applied automatically.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        {actualRenderCost > initialEstimate && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Calculated cost:</span>
+                            <span className="line-through text-muted-foreground">{actualRenderCost.toFixed(2)} credits</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold">Your price:</span>
+                          <span className="font-bold">{initialEstimate.toFixed(2)} credits</span>
+                        </div>
+                        {actualRenderCost > initialEstimate && (
+                          <p className="text-xs text-primary">
+                            Locked at your original estimate - no extra charge!
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
-                  <p className="text-xs">
+                  <p className="text-xs text-muted-foreground pt-2 border-t">
                     Current balance: {Number(tokenData?.tokens_remaining || 0).toFixed(2)} credits • Est. time: ~60s
                   </p>
                 </AlertDialogDescription>

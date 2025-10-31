@@ -210,8 +210,9 @@ export function StoryboardInput() {
       subtitleShadowOffset, subtitleMaxWordsPerLine, musicVolume, musicFadeIn, musicFadeOut,
       imageZoom, imagePosition, enableCache, draftMode, customWidth, customHeight]);
 
-  // Calculate cost dynamically: 0.25 credits per second
-  const estimatedCost = Math.max(1, Math.ceil(duration * 0.25));
+  // Cost for generating storyboard: 1 credit per scene. Scene count = (duration / 5) - 1
+  const sceneCount = Math.floor(duration / 5) - 1;
+  const estimatedCost = Math.max(1, sceneCount);
   const canGenerate = topic.length >= 5 && topic.length <= 500 && (tokenData?.tokens_remaining || 0) >= estimatedCost;
 
   const handleSurpriseMe = () => {

@@ -61,8 +61,8 @@ serve(async (req) => {
     // Calculate scene count: (duration / 5) - 1
     const sceneCount = Math.floor(duration / 5) - 1;
     
-    // Calculate cost: 0.25 credits per second, minimum 1 credit
-    const tokenCost = Math.max(1, Math.ceil(duration * 0.25));
+    // Cost for generating storyboard script: 1 credit per scene
+    const tokenCost = Math.max(1, sceneCount);
 
     // Check user token balance
     const { data: subscription, error: subError } = await supabaseClient

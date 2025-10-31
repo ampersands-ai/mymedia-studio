@@ -99,6 +99,7 @@ export const useStoryboard = () => {
   const [isRendering, setIsRendering] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
   const [renderingStartTime, setRenderingStartTime] = useState<number | null>(null);
+  const [estimatedRenderTime, setEstimatedRenderTime] = useState<number | null>(null);
 
   // Wrapper to persist storyboard ID to localStorage
   const setAndPersistStoryboardId = useCallback((id: string | null) => {
@@ -331,9 +332,13 @@ export const useStoryboard = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setIsRendering(true);
       setRenderingStartTime(Date.now());
+      // Store the estimated render time (2x video duration)
+      if (storyboard?.duration) {
+        setEstimatedRenderTime(storyboard.duration * 2);
+      }
     },
     onError: (error: any) => {
       console.error('[useStoryboard] Render start error:', error);
@@ -377,15 +382,30 @@ export const useStoryboard = () => {
 
         if (error) throw error;
 
-        setRenderProgress(data.progress);
+        // Calculate progress based on 2x the video duration
+        const targetDuration = estimatedRenderTime || (storyboard ? storyboard.duration * 2 : 120);
+        const elapsed = renderingStartTime ? (Date.now() - renderingStartTime) / 1000 : 0;
+        
+        // Progress goes from 0% to 90% over targetDuration seconds
+        let calculatedProgress = 0;
+        if (elapsed <= targetDuration) {
+          calculatedProgress = Math.floor((elapsed / targetDuration) * 90);
+        } else {
+          calculatedProgress = 90; // Stay at 90% until complete
+        }
+        
+        setRenderProgress(calculatedProgress);
 
         if (data.status === 'complete') {
+          setRenderProgress(100);
           setIsRendering(false);
           setRenderingStartTime(null);
+          setEstimatedRenderTime(null);
           queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
         } else if (data.status === 'failed') {
           setIsRendering(false);
           setRenderingStartTime(null);
+          setEstimatedRenderTime(null);
         }
 
         // Phase 4: Timeout detection (10 minutes)
@@ -409,6 +429,7 @@ export const useStoryboard = () => {
               console.log('[useStoryboard] Video recovered successfully');
               setIsRendering(false);
               setRenderingStartTime(null);
+              setEstimatedRenderTime(null);
               queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
             } else {
               console.warn('[useStoryboard] Manual fetch failed, rendering still in progress');
@@ -421,7 +442,7 @@ export const useStoryboard = () => {
     }, 5000); // Poll every 5 seconds
 
     return () => clearInterval(interval);
-  }, [isRendering, currentStoryboardId, queryClient, renderingStartTime]);
+  }, [isRendering, currentStoryboardId, queryClient, renderingStartTime, estimatedRenderTime, storyboard]);
 
   // Realtime subscription for storyboard updates (webhook notifications)
   useEffect(() => {

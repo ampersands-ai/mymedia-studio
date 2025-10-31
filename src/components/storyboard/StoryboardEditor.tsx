@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { useVideoUrl } from '@/hooks/media/useVideoUrl';
 
 export const StoryboardEditor = () => {
   const navigate = useNavigate();
@@ -45,6 +46,14 @@ export const StoryboardEditor = () => {
     updateSceneImage,
   } = useStoryboard();
   const { data: tokenData } = useUserTokens();
+  
+  // Fetch signed/proxied URL for the completed video
+  const { url: videoSignedUrl, isLoading: isLoadingVideo } = useVideoUrl(
+    storyboard?.status === 'complete' && storyboard?.video_storage_path 
+      ? storyboard.video_storage_path 
+      : null,
+    { strategy: 'signed-short', bucket: 'generated-content' }
+  );
   const [renderStatusMessage, setRenderStatusMessage] = useState('');
   const [introVoiceOverText, setIntroVoiceOverText] = useState(storyboard?.intro_voiceover_text || '');
   const [introImagePrompt, setIntroImagePrompt] = useState(storyboard?.intro_image_prompt || '');
@@ -386,21 +395,33 @@ export const StoryboardEditor = () => {
         <div className="space-y-2">
           <h3 className="text-lg font-bold">🎬 Final Video</h3>
           <div className="rounded-lg overflow-hidden border border-primary/20 bg-black">
-            <video
-              controls
-              className="w-full aspect-video"
-              src={storyboard.video_url}
-              poster={storyboard.video_url.replace(/\.[^.]+$/, '.jpg')}
-            >
-              Your browser does not support the video tag.
-            </video>
+            {isLoadingVideo ? (
+              <div className="w-full aspect-video flex items-center justify-center bg-muted">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <video
+                controls
+                className="w-full aspect-video"
+                src={videoSignedUrl || storyboard.video_url}
+                onError={(e) => {
+                  console.error('[StoryboardEditor] Video load error:', e);
+                  toast.error('Failed to load video. Try downloading instead.');
+                }}
+              >
+                Your browser does not support the video tag.
+              </video>
+            )}
           </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               className="flex-1"
-              onClick={() => window.open(storyboard.video_url, '_blank')}
+              onClick={() => {
+                const urlToOpen = videoSignedUrl || storyboard.video_url;
+                window.open(urlToOpen, '_blank');
+              }}
             >
               Open in New Tab
             </Button>
@@ -410,7 +431,18 @@ export const StoryboardEditor = () => {
               className="flex-1"
               onClick={async () => {
                 try {
-                  const response = await fetch(storyboard.video_url!);
+                  const downloadUrl = videoSignedUrl || storyboard.video_url;
+                  
+                  if (!downloadUrl) {
+                    toast.error('Video URL not available');
+                    return;
+                  }
+
+                  toast.loading('Downloading video...', { id: 'download-video' });
+                  
+                  const response = await fetch(downloadUrl);
+                  if (!response.ok) throw new Error('Download failed');
+                  
                   const blob = await response.blob();
                   const url = window.URL.createObjectURL(blob);
                   const a = document.createElement('a');
@@ -420,9 +452,13 @@ export const StoryboardEditor = () => {
                   a.click();
                   document.body.removeChild(a);
                   window.URL.revokeObjectURL(url);
-                  toast.success('Video downloaded!');
+                  
+                  toast.success('Video downloaded!', { id: 'download-video' });
                 } catch (error) {
-                  toast.error('Failed to download video');
+                  console.error('[StoryboardEditor] Download error:', error);
+                  toast.error('Failed to download video. Try "Open in New Tab" and save from there.', { 
+                    id: 'download-video' 
+                  });
                 }
               }}
             >

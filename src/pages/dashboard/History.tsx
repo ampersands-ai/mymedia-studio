@@ -407,7 +407,7 @@ const History = () => {
           id: sb.id,
           type: 'video',
           prompt: `Storyboard: ${sb.topic}`,
-          output_url: sb.video_url,
+          output_url: sb.video_url || sb.video_storage_path, // ✅ Fallback to storage_path
           storage_path: sb.video_storage_path,
           status: sb.status,
           tokens_used: sb.tokens_cost || sb.estimated_render_cost || 0,

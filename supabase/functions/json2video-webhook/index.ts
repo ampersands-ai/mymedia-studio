@@ -41,11 +41,15 @@ serve(async (req) => {
     console.log('[json2video-webhook] === PAYLOAD RECEIVED ===');
     console.log('[json2video-webhook] Full Payload:', JSON.stringify(payload, null, 2));
 
-    const { project, status, url, error, progress, id } = payload;
-    console.log('[json2video-webhook] Parsed Values:', { project, status, url, error, progress, id });
+    const { project, status, url, error, progress, id, success } = payload;
+    console.log('[json2video-webhook] Parsed Values:', { project, status, url, error, progress, id, success });
 
-    // JSON2Video sends the render job ID in the 'id' field
-    const renderJobId = id || project;
+    // ✅ CRITICAL: JSON2Video sends both 'project' (the ID we saved) and 'id' (render task ID)
+    // We must use 'project' to match our database render_job_id
+    const renderJobId = project || id; // Prioritize 'project' over 'id'
+
+    // Also check for 'success' field to determine completion
+    const isComplete = success === true || status === 'done' || status === 'success';
     
     if (!renderJobId) {
       console.error('[json2video-webhook] Missing render job ID in payload');
@@ -79,7 +83,8 @@ serve(async (req) => {
       updated_at: new Date().toISOString()
     };
 
-    if (status === 'done' || status === 'success') {
+    // Update storyboard based on status
+    if (isComplete) {
       updates.status = 'complete';
       updates.video_url = url;
       updates.video_storage_path = url; // JSON2Video hosts the video

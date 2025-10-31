@@ -171,13 +171,17 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
   const sourceForSigning = generation.storage_path
     ? generation.storage_path
     : (generation.is_video_job ? generation.output_url : null);
+  
+  // If the source is an external (non-Supabase) URL, use it directly
+  const isExternalUrl = !!sourceForSigning && /^https?:\/\//.test(sourceForSigning) && !sourceForSigning.includes('/storage/v1/object/public/');
   const { url: videoSignedUrl, isLoading: isLoadingVideoUrl } = useVideoUrl(
-    sourceForSigning,
+    isExternalUrl ? null : sourceForSigning,
     { strategy: 'public-direct', bucket: 'generated-content' }
   );
+  const finalVideoUrl = isExternalUrl ? sourceForSigning : videoSignedUrl;
 
   // Show download fallback if we encounter playback error or no signed URL
-  if (!videoSignedUrl || videoError) {
+  if (!finalVideoUrl || videoError) {
     return (
       <div className={`${className} flex flex-col items-center justify-center bg-muted gap-2 p-4`}>
         <Video className="h-8 w-8 text-muted-foreground" />
@@ -189,51 +193,29 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
             e.stopPropagation();
             toast.loading('Preparing your download...', { id: 'video-download' });
             try {
-              if (videoSignedUrl) {
-                const response = await fetch(videoSignedUrl);
-                const blob = await response.blob();
-                const blobUrl = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = blobUrl;
-                a.download = `artifio-video-${Date.now()}.mp4`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(blobUrl);
-                document.body.removeChild(a);
-                toast.success('Download started successfully!', { id: 'video-download' });
-              } else if (generation.is_video_job && generation.output_url) {
-                // Fallback: direct URL download for video jobs
-                const response = await fetch(generation.output_url);
-                const blob = await response.blob();
-                const blobUrl = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = blobUrl;
-                a.download = `artifio-video-${Date.now()}.mp4`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(blobUrl);
-                document.body.removeChild(a);
-                toast.success('Download started successfully!', { id: 'video-download' });
-              } else if (generation.storage_path) {
-                // Last resort: create a short-lived signed URL on the fly
-                const { data } = await supabase.storage
-                  .from('generated-content')
-                  .createSignedUrl(generation.storage_path, 60);
-                if (data?.signedUrl) {
-                  const response = await fetch(data.signedUrl);
-                  const blob = await response.blob();
-                  const blobUrl = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = blobUrl;
-                  a.download = `artifio-video-${Date.now()}.mp4`;
-                  document.body.appendChild(a);
-                  a.click();
-                  window.URL.revokeObjectURL(blobUrl);
-                  document.body.removeChild(a);
-                  toast.success('Download started successfully!', { id: 'video-download' });
-                }
+              const urlToFetch = finalVideoUrl 
+                || (generation.is_video_job ? generation.output_url : null)
+                || null;
+
+              if (!urlToFetch) {
+                throw new Error('No video URL available for download');
               }
+
+              const response = await fetch(urlToFetch);
+              if (!response.ok) throw new Error('Download failed');
+
+              const blob = await response.blob();
+              const blobUrl = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = blobUrl;
+              a.download = `artifio-video-${Date.now()}.mp4`;
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(blobUrl);
+              document.body.removeChild(a);
+              toast.success('Download started successfully!', { id: 'video-download' });
             } catch (error) {
+              console.error('[History] Download error:', error);
               toast.error('Failed to download', { id: 'video-download' });
             }
           }}
@@ -263,21 +245,21 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
   return (
     <video
       ref={videoRef}
-      src={videoSignedUrl || undefined}
+      src={finalVideoUrl || undefined}
       className={className}
       preload="metadata"
       controls={showControls}
       playsInline
       muted={!showControls}
       loop={playOnHover}
-      crossOrigin="anonymous"
+      {...(!isExternalUrl ? { crossOrigin: 'anonymous' } : {})}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onError={() => {
-        console.error('Video playback error for:', videoSignedUrl);
+        console.error('Video playback error for:', finalVideoUrl);
         setVideoError(true);
       }}
-      onLoadedMetadata={() => console.log('Video loaded successfully:', videoSignedUrl)}
+      onLoadedMetadata={() => console.log('Video loaded successfully:', finalVideoUrl)}
     />
   );
 };

@@ -79,7 +79,6 @@ serve(async (req) => {
         .update({
           status: 'complete',
           video_url: statusData.movie.url,
-          video_storage_path: statusData.movie.url,
           completed_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           api_quota_remaining: statusData.remaining_quota?.time || null
@@ -92,6 +91,25 @@ serve(async (req) => {
 
       console.log('[fetch-video-status] Video fetched successfully:', statusData.movie.url);
       console.log('[fetch-video-status] API quota remaining:', statusData.remaining_quota?.time);
+      
+      // Invoke download function to store in Supabase Storage
+      console.log('[fetch-video-status] Triggering video download to Supabase Storage...');
+      const { error: downloadError } = await supabaseClient.functions.invoke(
+        'download-storyboard-video',
+        {
+          body: {
+            storyboardId: storyboard.id,
+            videoUrl: statusData.movie.url,
+            userId: user.id
+          }
+        }
+      );
+      
+      if (downloadError) {
+        console.error('[fetch-video-status] Failed to trigger download:', downloadError);
+      } else {
+        console.log('[fetch-video-status] Download function invoked successfully');
+      }
 
       return new Response(
         JSON.stringify({

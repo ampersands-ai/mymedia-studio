@@ -59,22 +59,11 @@ export const StoryboardEditor = () => {
   } = useStoryboard();
   const { data: tokenData } = useUserTokens();
   
-  // Check if video is in Supabase Storage or still external
-  const hasStoragePath = storyboard?.video_storage_path && 
-                         storyboard.video_storage_path.startsWith('storyboard-videos/');
-
-  // Only fetch signed URL for Supabase-hosted videos
+  // Get video URL from Supabase Storage
   const { url: videoSignedUrl, isLoading: isLoadingVideo } = useVideoUrl(
-    hasStoragePath ? storyboard.video_storage_path : null,
+    storyboard?.status === 'complete' ? storyboard.video_storage_path : null,
     { strategy: 'public-direct', bucket: 'generated-content' }
   );
-
-  // Determine final video URL with fallback
-  const finalVideoUrl = hasStoragePath 
-    ? (videoSignedUrl || storyboard?.video_url) 
-    : storyboard?.video_url;
-
-  const isExternalVideo = !hasStoragePath;
   const [renderStatusMessage, setRenderStatusMessage] = useState('');
   const [introVoiceOverText, setIntroVoiceOverText] = useState(storyboard?.intro_voiceover_text || '');
   const [introImagePrompt, setIntroImagePrompt] = useState(storyboard?.intro_image_prompt || '');
@@ -858,39 +847,21 @@ export const StoryboardEditor = () => {
               <video
                 controls
                 className="w-full aspect-video"
-                src={finalVideoUrl}
+                src={videoSignedUrl}
                 preload="metadata"
-                {...(hasStoragePath ? { crossOrigin: "anonymous" } : {})}
-                onError={(e) => {
-                  console.error('[StoryboardEditor] Video load error:', e, {
-                    src: finalVideoUrl,
-                    hasStoragePath,
-                    storagePath: storyboard?.video_storage_path,
-                    externalUrl: storyboard.video_url
-                  });
-                }}
+                crossOrigin="anonymous"
               >
                 Your browser does not support the video tag.
               </video>
             )}
           </div>
 
-          {isExternalVideo && (
-            <Alert variant="default" className="mt-2">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                This video is temporarily hosted externally and will expire in 24 hours.
-                It will be automatically migrated to permanent storage.
-              </AlertDescription>
-            </Alert>
-          )}
-
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               className="flex-1"
-              onClick={() => window.open(finalVideoUrl, '_blank')}
+              onClick={() => window.open(videoSignedUrl, '_blank')}
             >
               Open in New Tab
             </Button>
@@ -900,50 +871,25 @@ export const StoryboardEditor = () => {
               className="flex-1"
               onClick={async () => {
                 try {
-                  if (!finalVideoUrl) {
+                  if (!videoSignedUrl) {
                     toast.error('Video URL not available');
                     return;
                   }
 
                   toast.loading('Downloading video...', { id: 'download-video' });
                   
-                  // Use proxy for external videos to avoid CORS issues
-                  if (isExternalVideo) {
-                    const { supabase } = await import('@/integrations/supabase/client');
-                    const { data, error } = await supabase.functions.invoke('proxy-video-download', {
-                      body: { 
-                        videoUrl: finalVideoUrl,
-                        filename: `storyboard-${storyboard.id}.mp4`
-                      }
-                    });
-
-                    if (error) throw error;
-
-                    // Create blob from response and trigger download
-                    const blob = new Blob([data], { type: 'video/mp4' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `storyboard-${storyboard.id}.mp4`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                  } else {
-                    // Direct download for Supabase-hosted videos
-                    const response = await fetch(finalVideoUrl);
-                    if (!response.ok) throw new Error('Download failed');
-                    
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `storyboard-${storyboard.id}.mp4`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                  }
+                  const response = await fetch(videoSignedUrl);
+                  if (!response.ok) throw new Error('Download failed');
+                  
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `storyboard-${storyboard.id}.mp4`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  window.URL.revokeObjectURL(url);
                   
                   toast.success('Video downloaded!', { id: 'download-video' });
                 } catch (error) {

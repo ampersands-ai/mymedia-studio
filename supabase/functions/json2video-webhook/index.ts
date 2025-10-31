@@ -87,10 +87,28 @@ serve(async (req) => {
     if (isComplete) {
       updates.status = 'complete';
       updates.video_url = url;
-      updates.video_storage_path = url; // JSON2Video hosts the video
       updates.completed_at = new Date().toISOString();
       console.log('[json2video-webhook] ✅ Video rendering completed successfully!');
       console.log('[json2video-webhook] Video URL stored:', url);
+      
+      // Invoke download function to store in Supabase Storage
+      console.log('[json2video-webhook] Triggering video download to Supabase Storage...');
+      const { error: downloadError } = await supabaseClient.functions.invoke(
+        'download-storyboard-video',
+        {
+          body: {
+            storyboardId: storyboard.id,
+            videoUrl: url,
+            userId: storyboard.user_id
+          }
+        }
+      );
+      
+      if (downloadError) {
+        console.error('[json2video-webhook] Failed to trigger download:', downloadError);
+      } else {
+        console.log('[json2video-webhook] Download function invoked successfully');
+      }
     } else if (status === 'error' || status === 'failed') {
       updates.status = 'failed';
       

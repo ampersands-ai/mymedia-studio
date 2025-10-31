@@ -105,8 +105,8 @@ verify_jwt = false  # Cron job for timeout monitoring
 [functions.seed-azure-voices]
 verify_jwt = false
 
-[functions.json2video-webhook]
-verify_jwt = false  # Webhook endpoint called by JSON2Video
+[functions.download-storyboard-video]
+verify_jwt = false  # Called by service role after video completes
 
-[functions.proxy-video-download]
+[functions.fetch-video-status]
 verify_jwt = true

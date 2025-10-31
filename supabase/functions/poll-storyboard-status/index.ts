@@ -119,20 +119,36 @@ serve(async (req) => {
             progress = 100;
             videoUrl = statusData.movie.url;
 
-            // Update database with video URL and quota info
+            // Update database with completion status (storage path will be set by download function)
             await supabaseClient
               .from('storyboards')
               .update({
                 status: 'complete',
                 video_url: videoUrl,
-                video_storage_path: videoUrl,
                 completed_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
                 api_quota_remaining: statusData.remaining_quota?.time || null
               })
               .eq('id', storyboardId);
+
+            // Trigger background storage upload (fire and forget)
+            supabaseClient.functions.invoke('download-storyboard-video', {
+              body: { 
+                storyboardId, 
+                videoUrl,
+                userId: user.id 
+              }
+            }).then(downloadResult => {
+              if (downloadResult.error) {
+                console.error('[poll-storyboard-status] Storage upload failed:', downloadResult.error);
+              } else {
+                console.log('[poll-storyboard-status] Video stored at:', downloadResult.data?.storagePath);
+              }
+            }).catch(error => {
+              console.error('[poll-storyboard-status] Background storage upload error:', error);
+            });
               
-            console.log('[poll-storyboard-status] Storyboard completed:', videoUrl);
+            console.log('[poll-storyboard-status] Render complete, storage upload initiated');
             console.log('[poll-storyboard-status] API quota remaining:', statusData.remaining_quota?.time);
             
           } else if (statusData.movie?.status === 'error' || statusData.movie?.status === 'failed') {

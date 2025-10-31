@@ -54,14 +54,22 @@ export const StoryboardEditor = () => {
   } = useStoryboard();
   const { data: tokenData } = useUserTokens();
   
+  // Check if video is in Supabase Storage or still external
+  const hasStoragePath = storyboard?.video_storage_path && 
+                         storyboard.video_storage_path.startsWith('storyboard-videos/');
+
   // Only fetch signed URL for Supabase-hosted videos
-  const isSupabaseVideo = storyboard?.video_storage_path?.startsWith('storyboard-videos/');
   const { url: videoSignedUrl, isLoading: isLoadingVideo } = useVideoUrl(
-    storyboard?.status === 'complete' && isSupabaseVideo && storyboard?.video_storage_path 
-      ? storyboard.video_storage_path 
-      : null,
-    { strategy: 'signed-short', bucket: 'generated-content' }
+    hasStoragePath ? storyboard.video_storage_path : null,
+    { strategy: 'public-direct', bucket: 'generated-content' }
   );
+
+  // Determine final video URL with fallback
+  const finalVideoUrl = hasStoragePath 
+    ? (videoSignedUrl || storyboard?.video_url) 
+    : storyboard?.video_url;
+
+  const isExternalVideo = !hasStoragePath;
   const [renderStatusMessage, setRenderStatusMessage] = useState('');
   const [introVoiceOverText, setIntroVoiceOverText] = useState(storyboard?.intro_voiceover_text || '');
   const [introImagePrompt, setIntroImagePrompt] = useState(storyboard?.intro_image_prompt || '');
@@ -530,15 +538,15 @@ export const StoryboardEditor = () => {
               <video
                 controls
                 className="w-full aspect-video"
-                src={isSupabaseVideo ? (videoSignedUrl || storyboard.video_url) : storyboard.video_url}
+                src={finalVideoUrl}
                 preload="metadata"
-                {...(isSupabaseVideo ? { crossOrigin: "anonymous" } : {})}
+                {...(hasStoragePath ? { crossOrigin: "anonymous" } : {})}
                 onError={(e) => {
                   console.error('[StoryboardEditor] Video load error:', e, {
-                    src: isSupabaseVideo ? (videoSignedUrl || storyboard.video_url) : storyboard.video_url,
-                    isSupabaseVideo,
-                    videoSignedUrl,
-                    directUrl: storyboard.video_url
+                    src: finalVideoUrl,
+                    hasStoragePath,
+                    storagePath: storyboard?.video_storage_path,
+                    externalUrl: storyboard.video_url
                   });
                 }}
               >
@@ -546,17 +554,23 @@ export const StoryboardEditor = () => {
               </video>
             )}
           </div>
+
+          {isExternalVideo && (
+            <Alert variant="default" className="mt-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                This video is temporarily hosted externally and will expire in 24 hours.
+                It will be automatically migrated to permanent storage.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               className="flex-1"
-              onClick={() => {
-                const finalVideoUrl = isSupabaseVideo 
-                  ? (videoSignedUrl || storyboard.video_url) 
-                  : storyboard.video_url;
-                window.open(finalVideoUrl, '_blank');
-              }}
+              onClick={() => window.open(finalVideoUrl, '_blank')}
             >
               Open in New Tab
             </Button>
@@ -566,10 +580,6 @@ export const StoryboardEditor = () => {
               className="flex-1"
               onClick={async () => {
                 try {
-                  const finalVideoUrl = isSupabaseVideo 
-                    ? (videoSignedUrl || storyboard.video_url) 
-                    : storyboard.video_url;
-                  
                   if (!finalVideoUrl) {
                     toast.error('Video URL not available');
                     return;

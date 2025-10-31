@@ -172,16 +172,20 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
     ? generation.storage_path
     : (generation.is_video_job ? generation.output_url : null);
   
-  // If the source is an external (non-Supabase) URL, use it directly
-  const isExternalUrl = !!sourceForSigning && /^https?:\/\//.test(sourceForSigning) && !sourceForSigning.includes('/storage/v1/object/public/');
+  // Detect external vs Supabase URLs (e.g., JSON2Video URLs)
+  const isExternalUrl = sourceForSigning && 
+                       !sourceForSigning.startsWith('storyboard-videos/') &&
+                       !sourceForSigning.startsWith('faceless-videos/') &&
+                       /^https?:\/\//.test(sourceForSigning);
   const { url: videoSignedUrl, isLoading: isLoadingVideoUrl } = useVideoUrl(
-    isExternalUrl ? null : sourceForSigning,
+    !isExternalUrl ? sourceForSigning : null,
     { strategy: 'public-direct', bucket: 'generated-content' }
   );
+  
+  // Use external URL directly if not in Supabase Storage
   const finalVideoUrl = isExternalUrl ? sourceForSigning : videoSignedUrl;
 
-  // Show download fallback if we encounter playback error or no signed URL
-  if (!finalVideoUrl || videoError) {
+  if (isLoadingVideoUrl || !finalVideoUrl) {
     return (
       <div className={`${className} flex flex-col items-center justify-center bg-muted gap-2 p-4`}>
         <Video className="h-8 w-8 text-muted-foreground" />
@@ -385,13 +389,19 @@ const History = () => {
       
       // Convert storyboards to generation-like format
       const storyboardGenerations = (storyboardData || []).map(sb => {
+        // Check if video is in Supabase Storage
+        const hasStoragePath = sb.video_storage_path && 
+                              sb.video_storage_path.startsWith('storyboard-videos/');
+        
         return {
           id: sb.id,
           type: 'video',
           prompt: `Storyboard: ${sb.topic}`,
-          output_url: sb.video_url || sb.video_storage_path, // ✅ Fallback to storage_path
-          storage_path: sb.video_storage_path,
-          status: sb.status === 'complete' ? 'completed' : sb.status, // ✅ Normalize status
+          // Prioritize storage path, fallback to external URL
+          output_url: hasStoragePath ? sb.video_storage_path : (sb.video_url || ''),
+          storage_path: hasStoragePath ? sb.video_storage_path : null,
+          // Normalize status
+          status: sb.status === 'complete' ? 'completed' : sb.status,
           tokens_used: sb.tokens_cost || sb.estimated_render_cost || 0,
           created_at: sb.created_at,
           enhanced_prompt: null,

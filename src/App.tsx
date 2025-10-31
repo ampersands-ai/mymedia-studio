@@ -54,6 +54,7 @@ const TemplateLandingManager = lazy(() => import("./pages/admin/TemplateLandingM
 const TemplateLandingEditor = lazy(() => import("./pages/admin/TemplateLandingEditor"));
 const TemplateCategoriesManager = lazy(() => import("./pages/admin/TemplateCategoriesManager"));
 const TemplateAnalytics = lazy(() => import("./pages/admin/TemplateAnalytics"));
+const MigrateStoryboards = lazy(() => import("./pages/admin/MigrateStoryboards"));
 const SharedContent = lazy(() => import("./pages/SharedContent"));
 
 const AppContent = () => {
@@ -134,6 +135,7 @@ const AppContent = () => {
               <Route path="template-landing/:id" element={<TemplateLandingEditor />} />
               <Route path="template-categories" element={<TemplateCategoriesManager />} />
               <Route path="template-analytics" element={<TemplateAnalytics />} />
+              <Route path="migrate-storyboards" element={<MigrateStoryboards />} />
             </Route>
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/privacy" element={<Privacy />} />

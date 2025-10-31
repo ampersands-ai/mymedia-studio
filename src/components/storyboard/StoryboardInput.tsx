@@ -433,6 +433,24 @@ export function StoryboardInput() {
           </div>
         </div>
 
+        {/* Resolution */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Resolution</Label>
+          <Select value={aspectRatio} onValueChange={setAspectRatio} disabled={isGenerating}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="sd">SD - 640×480 (4:3)</SelectItem>
+              <SelectItem value="hd">HD - 1280×720 (16:9)</SelectItem>
+              <SelectItem value="full-hd">Full HD - 1920×1080 (16:9)</SelectItem>
+              <SelectItem value="squared">Square - 1080×1080 (1:1)</SelectItem>
+              <SelectItem value="instagram-story">Instagram Story - 1080×1920 (9:16)</SelectItem>
+              <SelectItem value="instagram-feed">Instagram Feed - 1080×1350 (4:5)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Style Selection */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Video Style</Label>
@@ -601,60 +619,355 @@ export function StoryboardInput() {
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-6 pt-4 border-t">
-            {/* Aspect Ratio & Quality */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Resolution</Label>
-                <Select value={aspectRatio} onValueChange={setAspectRatio} disabled={isGenerating}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sd">SD - 640×480 (4:3)</SelectItem>
-                    <SelectItem value="hd">HD - 1280×720 (16:9)</SelectItem>
-                    <SelectItem value="full-hd">Full HD - 1920×1080 (16:9)</SelectItem>
-                    <SelectItem value="squared">Square - 1080×1080 (1:1)</SelectItem>
-                    <SelectItem value="instagram-story">Instagram Story - 1080×1920 (9:16)</SelectItem>
-                    <SelectItem value="instagram-feed">Instagram Feed - 1080×1350 (4:5)</SelectItem>
-                    <SelectItem value="twitter-landscape">Twitter Landscape - 1920×1200 (16:10)</SelectItem>
-                    <SelectItem value="twitter-portrait">Twitter Portrait - 1200×1920 (10:16)</SelectItem>
-                    <SelectItem value="custom">Custom (Specify dimensions)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            
+            {/* Video Quality */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Video Quality</Label>
+              <Select value={videoQuality} onValueChange={setVideoQuality} disabled={isGenerating}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low (Faster, smaller file)</SelectItem>
+                  <SelectItem value="medium">Medium (Balanced)</SelectItem>
+                  <SelectItem value="high">High (Best quality)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-              {/* Custom Dimensions */}
-              {aspectRatio === 'custom' && (
-                <div className="grid grid-cols-2 gap-4">
+            {/* Subtitle Settings */}
+            <Collapsible className="space-y-3">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full justify-between" type="button">
+                  <span className="text-xs font-medium">💬 Subtitle Settings</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 pt-3">
+                
+                {/* Language */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Language</Label>
+                  <Select value={subtitleLanguage} onValueChange={setSubtitleLanguage} disabled={isGenerating}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">Auto-detect</SelectItem>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="es">Spanish</SelectItem>
+                      <SelectItem value="fr">French</SelectItem>
+                      <SelectItem value="de">German</SelectItem>
+                      <SelectItem value="pt">Portuguese</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Model */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Model</Label>
+                  <Select value={subtitleModel} onValueChange={setSubtitleModel} disabled={isGenerating}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Default</SelectItem>
+                      <SelectItem value="advanced">Advanced</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Style */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Style</Label>
+                  <Select value={subtitleStyle} onValueChange={setSubtitleStyle} disabled={isGenerating}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="boxed-word">Boxed Word</SelectItem>
+                      <SelectItem value="word-by-word">Word by Word</SelectItem>
+                      <SelectItem value="line-by-line">Line by Line</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Font Family */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Font Family</Label>
+                  <Select value={subtitleFontFamily} onValueChange={setSubtitleFontFamily} disabled={isGenerating}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Oswald Bold">Oswald Bold</SelectItem>
+                      <SelectItem value="Montserrat Black">Montserrat Black</SelectItem>
+                      <SelectItem value="Arial Bold">Arial Bold</SelectItem>
+                      <SelectItem value="Impact">Impact</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Font Size */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Font Size</Label>
+                    <span className="text-xs font-medium">{subtitleFontSize}px</span>
+                  </div>
+                  <Slider
+                    value={[subtitleFontSize]}
+                    onValueChange={(values) => setSubtitleFontSize(values[0])}
+                    min={60}
+                    max={200}
+                    step={10}
+                    disabled={isGenerating}
+                  />
+                </div>
+
+                {/* Position */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Position</Label>
+                  <Select value={subtitlePosition} onValueChange={setSubtitlePosition} disabled={isGenerating}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="top-center">Top Center</SelectItem>
+                      <SelectItem value="mid-center">Mid Center</SelectItem>
+                      <SelectItem value="mid-bottom-center">Mid Bottom Center</SelectItem>
+                      <SelectItem value="bottom-center">Bottom Center</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* All Caps */}
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">All Caps</Label>
+                  <Button
+                    type="button"
+                    variant={subtitleAllCaps ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => setSubtitleAllCaps(!subtitleAllCaps)}
+                    disabled={isGenerating}
+                  >
+                    {subtitleAllCaps ? "ON" : "OFF"}
+                  </Button>
+                </div>
+
+                {/* Colors */}
+                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="customWidth">Width (pixels)</Label>
+                    <Label className="text-xs">Box Color</Label>
                     <Input
-                      id="customWidth"
-                      type="number"
-                      value={customWidth}
-                      onChange={(e) => setCustomWidth(parseInt(e.target.value) || 1920)}
-                      min={320}
-                      max={3840}
+                      type="color"
+                      value={subtitleBoxColor}
+                      onChange={(e) => setSubtitleBoxColor(e.target.value)}
+                      className="h-8"
                       disabled={isGenerating}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="customHeight">Height (pixels)</Label>
+                    <Label className="text-xs">Line Color</Label>
                     <Input
-                      id="customHeight"
-                      type="number"
-                      value={customHeight}
-                      onChange={(e) => setCustomHeight(parseInt(e.target.value) || 1080)}
-                      min={240}
-                      max={2160}
+                      type="color"
+                      value={subtitleLineColor}
+                      onChange={(e) => setSubtitleLineColor(e.target.value)}
+                      className="h-8"
+                      disabled={isGenerating}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Word Color</Label>
+                    <Input
+                      type="color"
+                      value={subtitleWordColor}
+                      onChange={(e) => setSubtitleWordColor(e.target.value)}
+                      className="h-8"
+                      disabled={isGenerating}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Outline Color</Label>
+                    <Input
+                      type="color"
+                      value={subtitleOutlineColor}
+                      onChange={(e) => setSubtitleOutlineColor(e.target.value)}
+                      className="h-8"
                       disabled={isGenerating}
                     />
                   </div>
                 </div>
-              )}
-            </div>
 
-            {/* Video Quality, Subtitle, Audio, and Image Animation settings moved to editor before rendering */}
+                {/* Outline Width */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Outline Width</Label>
+                    <span className="text-xs font-medium">{subtitleOutlineWidth}px</span>
+                  </div>
+                  <Slider
+                    value={[subtitleOutlineWidth]}
+                    onValueChange={(values) => setSubtitleOutlineWidth(values[0])}
+                    min={0}
+                    max={20}
+                    step={1}
+                    disabled={isGenerating}
+                  />
+                </div>
+
+                {/* Shadow Settings */}
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Shadow Color</Label>
+                    <Input
+                      type="color"
+                      value={subtitleShadowColor}
+                      onChange={(e) => setSubtitleShadowColor(e.target.value)}
+                      className="h-8"
+                      disabled={isGenerating}
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">Shadow Offset</Label>
+                      <span className="text-xs font-medium">{subtitleShadowOffset}px</span>
+                    </div>
+                    <Slider
+                      value={[subtitleShadowOffset]}
+                      onValueChange={(values) => setSubtitleShadowOffset(values[0])}
+                      min={0}
+                      max={20}
+                      step={1}
+                      disabled={isGenerating}
+                    />
+                  </div>
+                </div>
+
+                {/* Max Words Per Line */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Max Words Per Line</Label>
+                    <span className="text-xs font-medium">{subtitleMaxWordsPerLine}</span>
+                  </div>
+                  <Slider
+                    value={[subtitleMaxWordsPerLine]}
+                    onValueChange={(values) => setSubtitleMaxWordsPerLine(values[0])}
+                    min={1}
+                    max={8}
+                    step={1}
+                    disabled={isGenerating}
+                  />
+                </div>
+
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Audio Settings */}
+            <Collapsible className="space-y-3">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full justify-between" type="button">
+                  <span className="text-xs font-medium">🎵 Audio Settings</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 pt-3">
+                
+                {/* Music Volume */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Music Volume</Label>
+                    <span className="text-xs font-medium">{Math.round(musicVolume * 100)}%</span>
+                  </div>
+                  <Slider
+                    value={[musicVolume * 100]}
+                    onValueChange={(values) => setMusicVolume(values[0] / 100)}
+                    min={0}
+                    max={100}
+                    step={5}
+                    disabled={isGenerating}
+                  />
+                </div>
+
+                {/* Fade In */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Fade In Duration</Label>
+                    <span className="text-xs font-medium">{musicFadeIn}s</span>
+                  </div>
+                  <Slider
+                    value={[musicFadeIn]}
+                    onValueChange={(values) => setMusicFadeIn(values[0])}
+                    min={0}
+                    max={10}
+                    step={0.5}
+                    disabled={isGenerating}
+                  />
+                </div>
+
+                {/* Fade Out */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Fade Out Duration</Label>
+                    <span className="text-xs font-medium">{musicFadeOut}s</span>
+                  </div>
+                  <Slider
+                    value={[musicFadeOut]}
+                    onValueChange={(values) => setMusicFadeOut(values[0])}
+                    min={0}
+                    max={10}
+                    step={0.5}
+                    disabled={isGenerating}
+                  />
+                </div>
+
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Image Animation Settings */}
+            <Collapsible className="space-y-3">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full justify-between" type="button">
+                  <span className="text-xs font-medium">🎬 Image Animation</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 pt-3">
+                
+                {/* Zoom Level */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Zoom Level</Label>
+                    <span className="text-xs font-medium">{imageZoom}x</span>
+                  </div>
+                  <Slider
+                    value={[imageZoom]}
+                    onValueChange={(values) => setImageZoom(values[0])}
+                    min={1}
+                    max={3}
+                    step={0.1}
+                    disabled={isGenerating}
+                  />
+                </div>
+
+                {/* Position */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Position</Label>
+                  <Select value={imagePosition} onValueChange={setImagePosition} disabled={isGenerating}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="center-center">Center Center</SelectItem>
+                      <SelectItem value="top-center">Top Center</SelectItem>
+                      <SelectItem value="bottom-center">Bottom Center</SelectItem>
+                      <SelectItem value="left-center">Left Center</SelectItem>
+                      <SelectItem value="right-center">Right Center</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+              </CollapsibleContent>
+            </Collapsible>
 
           </CollapsibleContent>
         </Collapsible>

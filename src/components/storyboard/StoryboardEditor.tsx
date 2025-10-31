@@ -319,19 +319,8 @@ export const StoryboardEditor = () => {
 
       {/* Header Bar */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-            className="gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Input
-          </Button>
-          <div className="hidden md:block text-sm text-muted-foreground">
-            {scenes.length} scenes • ~{estimatedDuration}s video
-          </div>
+        <div className="text-sm text-muted-foreground">
+          {scenes.length} scenes • ~{estimatedDuration}s video
         </div>
       </div>
 

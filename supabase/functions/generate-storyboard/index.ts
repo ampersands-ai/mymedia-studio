@@ -280,8 +280,18 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     });
 
     if (deductError) {
-      console.error('Token deduction error:', deductError);
-      throw new Error('Failed to deduct tokens');
+      console.error('Credit deduction error:', deductError);
+      return new Response(
+        JSON.stringify({ 
+          error: `Failed to deduct credits: ${deductError.message}`,
+          details: deductError,
+          cost: tokenCost
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     // Create storyboard record

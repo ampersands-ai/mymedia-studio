@@ -1673,10 +1673,15 @@ export type Database = {
         Args: { template_id: string }
         Returns: undefined
       }
-      increment_tokens: {
-        Args: { amount: number; user_id_param: string }
-        Returns: undefined
-      }
+      increment_tokens:
+        | {
+            Args: { amount: number; user_id_param: string }
+            Returns: undefined
+          }
+        | {
+            Args: { amount: number; user_id_param: string }
+            Returns: undefined
+          }
       sanitize_provider_data: { Args: { data: Json }; Returns: Json }
     }
     Enums: {

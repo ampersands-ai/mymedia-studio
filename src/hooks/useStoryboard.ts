@@ -232,6 +232,12 @@ export const useStoryboard = () => {
     },
     onError: (error: any) => {
       console.error('[useStoryboard] Generate error:', error);
+      const errorMessage = error?.message || 'Failed to generate storyboard';
+      toast.error(errorMessage, {
+        description: 'Please check your credits and try again',
+        duration: 5000
+      });
+      setIsGenerating(false);
     },
   });
 
@@ -431,7 +437,18 @@ export const useStoryboard = () => {
     setActiveSceneId(null);
     
     try {
+      toast.loading('Generating storyboard...', { id: 'generate-storyboard' });
       await generateMutation.mutateAsync(input);
+      toast.success('Storyboard generated successfully!', { id: 'generate-storyboard' });
+    } catch (error: any) {
+      console.error('[generateStoryboard] Error:', error);
+      toast.error(
+        error?.message || 'Failed to generate storyboard', 
+        { 
+          id: 'generate-storyboard',
+          description: 'Please check your credits and try again'
+        }
+      );
     } finally {
       setIsGenerating(false);
     }

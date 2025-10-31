@@ -98,3 +98,6 @@ verify_jwt = false
 
 [functions.monitor-video-jobs]
 verify_jwt = false  # Cron job for timeout monitoring
+
+[functions.seed-azure-voices]
+verify_jwt = false

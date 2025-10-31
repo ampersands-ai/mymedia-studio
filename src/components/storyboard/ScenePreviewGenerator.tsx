@@ -144,7 +144,7 @@ export const ScenePreviewGenerator = ({
             <div className="space-y-1">
               <p className="text-sm font-medium text-muted-foreground">No preview generated</p>
               <p className="text-xs text-muted-foreground/70">
-                Generate a preview to see what this scene will look like
+                Generate a preview to see what this scene will look like. Leave it blank to auto-generate for free.
               </p>
             </div>
           </div>

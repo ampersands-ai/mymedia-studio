@@ -111,7 +111,7 @@ export const ScenePreviewGenerator = ({
       </div>
 
       {/* Image Display */}
-      <div className="relative rounded-lg overflow-hidden bg-muted/20 border border-border/20 mb-4 max-h-[500px] aspect-auto lg:aspect-[9/16]">
+      <div className="relative rounded-lg overflow-hidden bg-muted/20 border border-border/20 mb-4 aspect-[9/16] min-h-[400px]">
         {isGenerating ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />

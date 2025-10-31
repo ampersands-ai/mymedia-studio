@@ -2,8 +2,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { SceneCard } from './SceneCard';
 import { ScenePreviewGenerator } from './ScenePreviewGenerator';
+import { GeneratingOutputConsole } from './GeneratingOutputConsole';
 import { useStoryboard } from '@/hooks/useStoryboard';
-import { Play, ArrowLeft, Coins, Loader2, AlertCircle, RefreshCw, X } from 'lucide-react';
+import { Play, ArrowLeft, Coins, Loader2, AlertCircle, RefreshCw, X, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { toast } from 'sonner';
@@ -11,6 +12,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +29,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useVideoUrl } from '@/hooks/media/useVideoUrl';
+import { cn } from '@/lib/utils';
 
 export const StoryboardEditor = () => {
   const navigate = useNavigate();
@@ -57,6 +64,7 @@ export const StoryboardEditor = () => {
   const [renderStatusMessage, setRenderStatusMessage] = useState('');
   const [introVoiceOverText, setIntroVoiceOverText] = useState(storyboard?.intro_voiceover_text || '');
   const [introImagePrompt, setIntroImagePrompt] = useState(storyboard?.intro_image_prompt || '');
+  const [showScenes, setShowScenes] = useState(true);
 
   // Sync intro fields with storyboard
   useEffect(() => {
@@ -157,6 +165,20 @@ export const StoryboardEditor = () => {
 
     return () => clearInterval(interval);
   }, [isRendering, renderingStartTime]);
+
+  // Auto-collapse scenes when rendering starts
+  useEffect(() => {
+    if (isRendering) {
+      setShowScenes(false);
+    }
+  }, [isRendering]);
+
+  // Re-expand scenes when rendering completes or is canceled
+  useEffect(() => {
+    if (!isRendering && storyboard?.status === 'complete') {
+      setShowScenes(true);
+    }
+  }, [isRendering, storyboard?.status]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -319,76 +341,105 @@ export const StoryboardEditor = () => {
         </div>
       </div>
 
-      {/* Main Content - Scene Cards */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-bold">📋 Scenes</h3>
+      {/* Main Content - Scene Cards (Collapsible) */}
+      <Collapsible open={showScenes} onOpenChange={setShowScenes}>
+        {/* Toggle button - only show when there's an active render or completed video */}
+        {(isRendering || storyboard?.status === 'complete') && (
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="w-full mb-4">
+              {showScenes ? 'Hide Scenes' : 'Show Scenes'}
+              <ChevronDown className={cn(
+                "ml-2 h-4 w-4 transition-transform",
+                showScenes && "rotate-180"
+              )} />
+            </Button>
+          </CollapsibleTrigger>
+        )}
         
-        {/* Title/Intro Scene (Scene 1) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-          <Card className="relative p-4 bg-primary/5 backdrop-blur-xl border-2 border-primary/30 lg:col-span-2 h-full">
-            <div className="flex items-center justify-between mb-4">
-              <div className="px-2 py-1 rounded-md bg-primary/30 text-primary text-xs font-bold">
-                Scene 1 - Title
+        <CollapsibleContent forceMount className={cn(!showScenes && "hidden")}>
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold">📋 Scenes</h3>
+            
+            {/* Title/Intro Scene (Scene 1) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+              <Card className="relative p-4 bg-primary/5 backdrop-blur-xl border-2 border-primary/30 lg:col-span-2 h-full">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="px-2 py-1 rounded-md bg-primary/30 text-primary text-xs font-bold">
+                    Scene 1 - Title
+                  </div>
+                </div>
+
+                <div className="space-y-2 mb-4">
+                  <Label className="text-xs font-semibold text-muted-foreground">🎤 Voiceover</Label>
+                  <Textarea
+                    value={introVoiceOverText}
+                    onChange={(e) => setIntroVoiceOverText(e.target.value)}
+                    className="min-h-[80px] text-sm bg-background/50"
+                    maxLength={1000}
+                    placeholder="Title voiceover text..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-muted-foreground">🖼️ Image Prompt</Label>
+                  <Textarea
+                    value={introImagePrompt}
+                    onChange={(e) => setIntroImagePrompt(e.target.value)}
+                    className="min-h-[160px] sm:min-h-[200px] text-sm bg-background/50 resize-y"
+                    maxLength={2000}
+                    placeholder="Title scene visual description..."
+                  />
+                </div>
+              </Card>
+              <div className="lg:col-span-1 h-full">
+                <ScenePreviewGenerator
+                  scene={{
+                    id: storyboard.id,
+                    image_prompt: introImagePrompt,
+                    image_preview_url: storyboard.intro_image_preview_url,
+                  }}
+                  sceneNumber={1}
+                  onImageGenerated={handleImageGenerated}
+                />
               </div>
             </div>
 
-            <div className="space-y-2 mb-4">
-              <Label className="text-xs font-semibold text-muted-foreground">🎤 Voiceover</Label>
-              <Textarea
-                value={introVoiceOverText}
-                onChange={(e) => setIntroVoiceOverText(e.target.value)}
-                className="min-h-[80px] text-sm bg-background/50"
-                maxLength={1000}
-                placeholder="Title voiceover text..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-muted-foreground">🖼️ Image Prompt</Label>
-              <Textarea
-                value={introImagePrompt}
-                onChange={(e) => setIntroImagePrompt(e.target.value)}
-                className="min-h-[160px] sm:min-h-[200px] text-sm bg-background/50 resize-y"
-                maxLength={2000}
-                placeholder="Title scene visual description..."
-              />
-            </div>
-          </Card>
-          <div className="lg:col-span-1 h-full">
-            <ScenePreviewGenerator
-              scene={{
-                id: storyboard.id,
-                image_prompt: introImagePrompt,
-                image_preview_url: storyboard.intro_image_preview_url,
-              }}
-              sceneNumber={1}
-              onImageGenerated={handleImageGenerated}
-            />
+            {scenes.map((scene, idx) => (
+              <div key={scene.id} className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+                <div className="lg:col-span-2 h-full">
+                  <SceneCard
+                    scene={scene}
+                    sceneNumber={idx + 2}
+                    isActive={activeSceneId === scene.id}
+                    onUpdate={updateScene}
+                    onRegenerate={regenerateScene}
+                    onClick={() => setActiveScene(scene.id)}
+                  />
+                </div>
+                <div className="lg:col-span-1 h-full">
+                  <ScenePreviewGenerator
+                    scene={scene}
+                    sceneNumber={idx + 2}
+                    onImageGenerated={handleImageGenerated}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+        </CollapsibleContent>
+      </Collapsible>
 
-        {scenes.map((scene, idx) => (
-          <div key={scene.id} className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-            <div className="lg:col-span-2 h-full">
-              <SceneCard
-                scene={scene}
-                sceneNumber={idx + 2}
-                isActive={activeSceneId === scene.id}
-                onUpdate={updateScene}
-                onRegenerate={regenerateScene}
-                onClick={() => setActiveScene(scene.id)}
-              />
-            </div>
-            <div className="lg:col-span-1 h-full">
-              <ScenePreviewGenerator
-                scene={scene}
-                sceneNumber={idx + 2}
-                onImageGenerated={handleImageGenerated}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Generating Output Console - shows when rendering and scenes are collapsed */}
+      {isRendering && !showScenes && (
+        <GeneratingOutputConsole
+          progress={renderProgress}
+          statusMessage={renderStatusMessage}
+          elapsedTime={renderingStartTime ? Date.now() - renderingStartTime : 0}
+          onCheckStatus={refreshStatus}
+          onCancelRender={cancelRender}
+          isCanceling={isCancelingRender}
+        />
+      )}
 
       {/* Final Video (appears below scenes after rendering) */}
       {storyboard?.status === 'complete' && storyboard?.video_url && (
@@ -468,8 +519,9 @@ export const StoryboardEditor = () => {
         </div>
       )}
 
-      {/* Render Dialog */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-card/95 backdrop-blur border-t z-50">
+      {/* Render Dialog - only show when NOT rendering */}
+      {!isRendering && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-card/95 backdrop-blur border-t z-50">
         <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3 text-sm">
             <Coins className="w-5 h-5 text-primary" />
@@ -566,10 +618,11 @@ export const StoryboardEditor = () => {
             </AlertDialogContent>
           </AlertDialog>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Add padding to prevent content from being hidden by fixed bar */}
-      <div className="h-24" />
+      {!isRendering && <div className="h-24" />}
     </div>
   );
 };

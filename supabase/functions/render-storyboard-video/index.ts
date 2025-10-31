@@ -61,10 +61,10 @@ serve(async (req) => {
       throw new Error('Storyboard not found or unauthorized');
     }
 
-    // Fetch scenes in order
+    // Fetch scenes in order (include image_preview_url)
     const { data: scenes, error: scenesError } = await supabaseClient
       .from('storyboard_scenes')
-      .select('*')
+      .select('id, order_number, voice_over_text, image_prompt, image_preview_url')
       .eq('storyboard_id', storyboardId)
       .order('order_number', { ascending: true });
 
@@ -102,7 +102,11 @@ serve(async (req) => {
       template: 'hae1en4rQdJHFgFS3545',
       variables: {
         scenes: scenes.map(s => ({
-          imagePrompt: s.image_prompt,
+          // If scene has a generated preview, pass the URL; otherwise use the prompt
+          ...(s.image_preview_url 
+            ? { imageUrl: s.image_preview_url }  // JSON2Video will use this image directly
+            : { imagePrompt: s.image_prompt }     // JSON2Video will generate from prompt
+          ),
           voiceOverText: s.voice_over_text,
         })),
         voiceModel: storyboard.voice_model || 'azure',

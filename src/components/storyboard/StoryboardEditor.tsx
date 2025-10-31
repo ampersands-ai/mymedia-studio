@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SceneCard } from './SceneCard';
+import { ScenePreviewGenerator } from './ScenePreviewGenerator';
 import { StoryboardPreview } from './StoryboardPreview';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { Play, ArrowLeft, Coins, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
@@ -40,6 +41,7 @@ export const StoryboardEditor = () => {
     renderVideo,
     clearStoryboard,
     refreshStatus,
+    updateSceneImage,
   } = useStoryboard();
   const { data: tokenData } = useUserTokens();
   const [renderStatusMessage, setRenderStatusMessage] = useState('');
@@ -135,6 +137,10 @@ export const StoryboardEditor = () => {
 
   const handleBack = () => {
     clearStoryboard();
+  };
+
+  const handleImageGenerated = (sceneId: string, imageUrl: string) => {
+    updateSceneImage({ sceneId, imageUrl });
   };
 
   if (!storyboard || scenes.length === 0) {
@@ -237,15 +243,21 @@ export const StoryboardEditor = () => {
           </Card>
 
           {scenes.map((scene, idx) => (
-            <SceneCard
-              key={scene.id}
-              scene={scene}
-              sceneNumber={idx + 1}
-              isActive={activeSceneId === scene.id}
-              onUpdate={updateScene}
-              onRegenerate={regenerateScene}
-              onClick={() => setActiveScene(scene.id)}
-            />
+            <div key={scene.id} className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+              <SceneCard
+                scene={scene}
+                sceneNumber={idx + 1}
+                isActive={activeSceneId === scene.id}
+                onUpdate={updateScene}
+                onRegenerate={regenerateScene}
+                onClick={() => setActiveScene(scene.id)}
+              />
+              <ScenePreviewGenerator
+                scene={scene}
+                sceneNumber={idx + 1}
+                onImageGenerated={handleImageGenerated}
+              />
+            </div>
           ))}
         </div>
 

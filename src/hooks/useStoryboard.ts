@@ -274,6 +274,21 @@ export const useStoryboard = () => {
     },
   });
 
+  // Update scene image mutation
+  const updateSceneImageMutation = useMutation({
+    mutationFn: async ({ sceneId, imageUrl }: { sceneId: string; imageUrl: string }) => {
+      const { error } = await supabase
+        .from('storyboard_scenes')
+        .update({ image_preview_url: imageUrl })
+        .eq('id', sceneId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['storyboard-scenes', currentStoryboardId] });
+    },
+  });
+
   // Regenerate scene mutation
   const regenerateSceneMutation = useMutation({
     mutationFn: async ({ sceneId, previousSceneText, nextSceneText }: {
@@ -543,5 +558,6 @@ export const useStoryboard = () => {
     renderVideo,
     clearStoryboard,
     refreshStatus,
+    updateSceneImage: updateSceneImageMutation.mutate,
   };
 };

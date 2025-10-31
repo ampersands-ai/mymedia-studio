@@ -113,8 +113,18 @@ serve(async (req) => {
         introImagePrompt: storyboard.intro_image_prompt,
         introText: storyboard.intro_voiceover_text,
       },
-      webhook: webhookUrl,
       project: storyboardId,
+      exports: [
+        {
+          destinations: [
+            {
+              type: "webhook",
+              endpoint: webhookUrl,
+              "content-type": "json"
+            }
+          ]
+        }
+      ],
       // Apply customization settings
       ...mapAspectRatio(
         storyboard.aspect_ratio || 'full-hd',

@@ -155,7 +155,10 @@ export function StoryboardInput() {
   
   // Advanced video settings
   const [aspectRatio, setAspectRatio] = useState(draft?.aspectRatio || 'full-hd');
-  const [videoQuality, setVideoQuality] = useState(draft?.videoQuality || 'high');
+  // Migrate old/invalid quality values to 'high'
+  const validQualities = ['low', 'medium', 'high'];
+  const draftQuality = draft?.videoQuality && validQualities.includes(draft.videoQuality) ? draft.videoQuality : 'high';
+  const [videoQuality, setVideoQuality] = useState(draftQuality);
   const [customWidth, setCustomWidth] = useState(draft?.customWidth || 1920);
   const [customHeight, setCustomHeight] = useState(draft?.customHeight || 1080);
   

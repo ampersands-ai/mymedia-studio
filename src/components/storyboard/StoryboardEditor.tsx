@@ -185,14 +185,68 @@ export const StoryboardEditor = () => {
         </div>
 
         {/* Preview Panel */}
-        <div className="lg:sticky lg:top-24 h-fit">
-          <h3 className="text-lg font-bold mb-4">👁️ Preview</h3>
-          <StoryboardPreview
-            scene={activeScene}
-            totalScenes={scenes.length}
-            onPrevious={() => navigateScene('prev')}
-            onNext={() => navigateScene('next')}
-          />
+        <div className="lg:sticky lg:top-24 h-fit space-y-4">
+          {/* Completed Video Player */}
+          {storyboard?.status === 'complete' && storyboard?.video_url && (
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold">🎬 Final Video</h3>
+              <div className="rounded-lg overflow-hidden border border-primary/20 bg-black">
+                <video
+                  controls
+                  className="w-full aspect-video"
+                  src={storyboard.video_url}
+                  poster={storyboard.video_url.replace(/\.[^.]+$/, '.jpg')}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => window.open(storyboard.video_url, '_blank')}
+                >
+                  Open in New Tab
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(storyboard.video_url!);
+                      const blob = await response.blob();
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `storyboard-${storyboard.id}.mp4`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      window.URL.revokeObjectURL(url);
+                      toast.success('Video downloaded!');
+                    } catch (error) {
+                      toast.error('Failed to download video');
+                    }
+                  }}
+                >
+                  Download
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Scene Preview */}
+          <div>
+            <h3 className="text-lg font-bold mb-4">👁️ Scene Preview</h3>
+            <StoryboardPreview
+              scene={activeScene}
+              totalScenes={scenes.length}
+              onPrevious={() => navigateScene('prev')}
+              onNext={() => navigateScene('next')}
+            />
+          </div>
         </div>
       </div>
 

@@ -40,12 +40,11 @@ export const ScenePreviewGenerator = ({
 
   // Handle generation result
   useEffect(() => {
-    if (result?.output_url) {
+    if (result?.output_url && result.output_url !== previewUrl) {
       setPreviewUrl(result.output_url);
       onImageGenerated(scene.id, result.output_url);
-      toast.success('Preview generated!');
     }
-  }, [result, scene.id, onImageGenerated]);
+  }, [result?.output_url, scene.id, onImageGenerated, previewUrl]);
 
   // Handle generation error
   useEffect(() => {

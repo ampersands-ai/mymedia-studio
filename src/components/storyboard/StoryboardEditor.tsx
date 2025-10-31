@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { SceneCard } from './SceneCard';
 import { ScenePreviewGenerator } from './ScenePreviewGenerator';
@@ -139,14 +139,15 @@ export const StoryboardEditor = () => {
     clearStoryboard();
   };
 
-  const handleImageGenerated = (sceneId: string, imageUrl: string) => {
+  const handleImageGenerated = useCallback((sceneId: string, imageUrl: string) => {
     // Check if it's the intro scene (using storyboard ID)
     if (storyboard && sceneId === storyboard.id) {
       updateIntroScene('intro_image_preview_url', imageUrl);
     } else {
       updateSceneImage({ sceneId, imageUrl });
     }
-  };
+    toast.success('Preview generated!');
+  }, [storyboard, updateIntroScene, updateSceneImage]);
 
   if (!storyboard || scenes.length === 0) {
     return null;

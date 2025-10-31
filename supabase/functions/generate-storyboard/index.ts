@@ -58,8 +58,8 @@ serve(async (req) => {
       throw new Error('Duration must be between 15 and 120 seconds in 5-second increments');
     }
 
-    // Calculate scene count (approximately 5 seconds per scene)
-    const sceneCount = Math.floor(duration / 5);
+    // Calculate scene count: (duration / 5) - 1
+    const sceneCount = Math.floor(duration / 5) - 1;
     const tokenCost = 250;
 
     // Check user token balance

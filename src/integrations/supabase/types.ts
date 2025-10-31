@@ -218,6 +218,60 @@ export type Database = {
         }
         Relationships: []
       }
+      azure_voices: {
+        Row: {
+          country: string
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          has_preview: boolean | null
+          id: string
+          is_active: boolean | null
+          language: string
+          language_code: string
+          preview_url: string | null
+          provider: string
+          tags: Json | null
+          updated_at: string | null
+          voice_id: string
+          voice_name: string
+        }
+        Insert: {
+          country: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          has_preview?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          language: string
+          language_code: string
+          preview_url?: string | null
+          provider?: string
+          tags?: Json | null
+          updated_at?: string | null
+          voice_id: string
+          voice_name: string
+        }
+        Update: {
+          country?: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          has_preview?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          language?: string
+          language_code?: string
+          preview_url?: string | null
+          provider?: string
+          tags?: Json | null
+          updated_at?: string | null
+          voice_id?: string
+          voice_name?: string
+        }
+        Relationships: []
+      }
       community_creations: {
         Row: {
           content_type: string
@@ -791,6 +845,7 @@ export type Database = {
           voice_id: string
           voice_model: string | null
           voice_name: string
+          voice_provider: string | null
         }
         Insert: {
           api_quota_remaining?: number | null
@@ -842,6 +897,7 @@ export type Database = {
           voice_id: string
           voice_model?: string | null
           voice_name: string
+          voice_provider?: string | null
         }
         Update: {
           api_quota_remaining?: number | null
@@ -893,6 +949,7 @@ export type Database = {
           voice_id?: string
           voice_model?: string | null
           voice_name?: string
+          voice_provider?: string | null
         }
         Relationships: []
       }

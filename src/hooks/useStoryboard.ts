@@ -58,6 +58,17 @@ interface StoryboardInput {
     fontSize: number;
     outlineColor: string;
     outlineWidth: number;
+    language?: string;
+    model?: string;
+    style?: string;
+    fontFamily?: string;
+    allCaps?: boolean;
+    boxColor?: string;
+    lineColor?: string;
+    wordColor?: string;
+    shadowColor?: string;
+    shadowOffset?: number;
+    maxWordsPerLine?: number;
   };
   musicSettings?: {
     volume: number;

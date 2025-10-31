@@ -4,7 +4,11 @@ import { SceneCard } from './SceneCard';
 import { ScenePreviewGenerator } from './ScenePreviewGenerator';
 import { GeneratingOutputConsole } from './GeneratingOutputConsole';
 import { useStoryboard } from '@/hooks/useStoryboard';
-import { Play, ArrowLeft, Coins, Loader2, AlertCircle, RefreshCw, X, ChevronDown } from 'lucide-react';
+import { Play, ArrowLeft, Coins, Loader2, AlertCircle, RefreshCw, X, ChevronDown, Volume2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
+import { VoiceSelector } from '@/components/generation/VoiceSelector';
 import { useNavigate } from 'react-router-dom';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { toast } from 'sonner';
@@ -51,6 +55,7 @@ export const StoryboardEditor = () => {
     clearStoryboard,
     refreshStatus,
     updateSceneImage,
+    updateRenderSettings,
   } = useStoryboard();
   const { data: tokenData } = useUserTokens();
   
@@ -421,36 +426,70 @@ export const StoryboardEditor = () => {
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Voice & Advanced Settings Review - After scenes, before render */}
+      {/* Voice & Advanced Settings - Editable Before Rendering */}
       {!isRendering && (
         <Card className="p-6 space-y-6">
           <h3 className="text-lg font-bold">🎙️ Voice & Advanced Settings</h3>
           <p className="text-sm text-muted-foreground">
-            Review your video settings before rendering. These were configured during storyboard generation.
+            Customize your video settings before rendering. Changes are saved automatically.
           </p>
           
-          {/* Voice Selection - Read Only */}
-          <div className="space-y-2 p-4 bg-muted/30 rounded-lg border">
+          {/* Voice Selection - Editable */}
+          <div className="space-y-2">
             <Label className="text-sm font-semibold">Voiceover Voice</Label>
-            <div className="text-sm">
-              {storyboard?.voice_name || 'Not set'}
-            </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full justify-start">
+                  <Volume2 className="w-4 h-4 mr-2" />
+                  {storyboard?.voice_name || 'Select Voice'}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh]">
+                <DialogHeader>
+                  <DialogTitle>Select Voice</DialogTitle>
+                </DialogHeader>
+                <VoiceSelector
+                  selectedValue={storyboard?.voice_id || ''}
+                  onSelectVoice={(voiceId, voiceName) => {
+                    updateRenderSettings?.({
+                      voice_id: voiceId,
+                      voice_name: voiceName,
+                    });
+                  }}
+                  showElevenLabs={false}
+                  showAzureVoices={true}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
 
-          {/* Advanced Settings Display */}
-          <Collapsible className="space-y-4">
+          {/* Advanced Settings - Now Editable */}
+          <Collapsible className="space-y-4" defaultOpen>
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between -ml-4" type="button">
                 <span className="font-semibold">⚙️ Advanced Render Settings</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4 pt-4 border-t">
-              <div className="space-y-2 p-4 bg-muted/30 rounded-lg border">
+            <CollapsibleContent className="space-y-6 pt-4 border-t">
+              {/* Video Quality */}
+              <div className="space-y-2">
                 <Label className="text-sm font-semibold">Video Quality</Label>
-                <div className="text-sm capitalize">
-                  {storyboard?.video_quality || 'High'}
-                </div>
+                <Select 
+                  value={storyboard?.video_quality || 'high'}
+                  onValueChange={(value) => {
+                    updateRenderSettings?.({ video_quality: value });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Subtitle Settings */}
@@ -461,25 +500,111 @@ export const StoryboardEditor = () => {
                     <ChevronDown className="h-3 w-3" />
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-3 pl-4">
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Style:</span>{' '}
-                      <span className="capitalize">{storyboard?.subtitle_settings?.style || 'boxed-word'}</span>
+                <CollapsibleContent className="space-y-4 pl-4">
+                  <div className="text-xs text-muted-foreground mb-2">
+                    Configure subtitle appearance and behavior
+                  </div>
+                  
+                  {/* Style & Font */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label className="text-xs">Style</Label>
+                      <Select 
+                        value={storyboard?.subtitle_settings?.style || 'boxed-word'}
+                        onValueChange={(value) => {
+                          updateRenderSettings?.({
+                            subtitle_settings: {
+                              ...storyboard?.subtitle_settings,
+                              style: value,
+                            },
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          <SelectItem value="boxed-word">Boxed Word</SelectItem>
+                          <SelectItem value="word-by-word">Word by Word</SelectItem>
+                          <SelectItem value="line">Full Line</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div>
-                      <span className="text-muted-foreground">Font:</span>{' '}
-                      <span>{storyboard?.subtitle_settings?.fontFamily || 'Oswald Bold'}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Size:</span>{' '}
-                      <span>{storyboard?.subtitle_settings?.fontSize || 140}px</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Position:</span>{' '}
-                      <span className="capitalize">{storyboard?.subtitle_settings?.position?.replace('-', ' ') || 'mid-bottom center'}</span>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-xs">Font Family</Label>
+                      <Select 
+                        value={storyboard?.subtitle_settings?.fontFamily || 'Oswald Bold'}
+                        onValueChange={(value) => {
+                          updateRenderSettings?.({
+                            subtitle_settings: {
+                              ...storyboard?.subtitle_settings,
+                              fontFamily: value,
+                            },
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          <SelectItem value="Oswald Bold">Oswald Bold</SelectItem>
+                          <SelectItem value="Arial">Arial</SelectItem>
+                          <SelectItem value="Impact">Impact</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
+
+                  {/* Font Size & Position */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label className="text-xs">Font Size: {storyboard?.subtitle_settings?.fontSize || 140}px</Label>
+                      <Slider
+                        value={[storyboard?.subtitle_settings?.fontSize || 140]}
+                        onValueChange={([value]) => {
+                          updateRenderSettings?.({
+                            subtitle_settings: {
+                              ...storyboard?.subtitle_settings,
+                              fontSize: value,
+                            },
+                          });
+                        }}
+                        min={80}
+                        max={200}
+                        step={10}
+                        className="w-full"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-xs">Position</Label>
+                      <Select 
+                        value={storyboard?.subtitle_settings?.position || 'mid-bottom-center'}
+                        onValueChange={(value) => {
+                          updateRenderSettings?.({
+                            subtitle_settings: {
+                              ...storyboard?.subtitle_settings,
+                              position: value,
+                            },
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          <SelectItem value="mid-bottom-center">Bottom Center</SelectItem>
+                          <SelectItem value="top-center">Top Center</SelectItem>
+                          <SelectItem value="center">Center</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <p className="text-[10px] text-muted-foreground">
+                    More subtitle options available in full configuration
+                  </p>
                 </CollapsibleContent>
               </Collapsible>
 
@@ -491,19 +616,63 @@ export const StoryboardEditor = () => {
                     <ChevronDown className="h-3 w-3" />
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-3 pl-4">
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Music Volume:</span>{' '}
-                      <span>{Math.round((storyboard?.music_settings?.volume || 0.05) * 100)}%</span>
+                <CollapsibleContent className="space-y-4 pl-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Music Volume: {Math.round((storyboard?.music_settings?.volume || 0.05) * 100)}%</Label>
+                    <Slider
+                      value={[(storyboard?.music_settings?.volume || 0.05) * 100]}
+                      onValueChange={([value]) => {
+                        updateRenderSettings?.({
+                          music_settings: {
+                            ...storyboard?.music_settings,
+                            volume: value / 100,
+                          },
+                        });
+                      }}
+                      min={0}
+                      max={100}
+                      step={5}
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label className="text-xs">Fade In: {storyboard?.music_settings?.fadeIn || 2}s</Label>
+                      <Slider
+                        value={[storyboard?.music_settings?.fadeIn || 2]}
+                        onValueChange={([value]) => {
+                          updateRenderSettings?.({
+                            music_settings: {
+                              ...storyboard?.music_settings,
+                              fadeIn: value,
+                            },
+                          });
+                        }}
+                        min={0}
+                        max={10}
+                        step={1}
+                        className="w-full"
+                      />
                     </div>
-                    <div>
-                      <span className="text-muted-foreground">Fade In:</span>{' '}
-                      <span>{storyboard?.music_settings?.fadeIn || 2}s</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Fade Out:</span>{' '}
-                      <span>{storyboard?.music_settings?.fadeOut || 2}s</span>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-xs">Fade Out: {storyboard?.music_settings?.fadeOut || 2}s</Label>
+                      <Slider
+                        value={[storyboard?.music_settings?.fadeOut || 2]}
+                        onValueChange={([value]) => {
+                          updateRenderSettings?.({
+                            music_settings: {
+                              ...storyboard?.music_settings,
+                              fadeOut: value,
+                            },
+                          });
+                        }}
+                        min={0}
+                        max={10}
+                        step={1}
+                        className="w-full"
+                      />
                     </div>
                   </div>
                 </CollapsibleContent>
@@ -517,22 +686,54 @@ export const StoryboardEditor = () => {
                     <ChevronDown className="h-3 w-3" />
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-3 pl-4">
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Zoom Level:</span>{' '}
-                      <span>{(storyboard?.image_animation_settings?.zoom || 2).toFixed(1)}x</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Position:</span>{' '}
-                      <span className="capitalize">{storyboard?.image_animation_settings?.position?.replace('-', ' ') || 'center center'}</span>
-                    </div>
+                <CollapsibleContent className="space-y-4 pl-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Zoom Level: {(storyboard?.image_animation_settings?.zoom || 2).toFixed(1)}x</Label>
+                    <Slider
+                      value={[storyboard?.image_animation_settings?.zoom || 2]}
+                      onValueChange={([value]) => {
+                        updateRenderSettings?.({
+                          image_animation_settings: {
+                            ...storyboard?.image_animation_settings,
+                            zoom: value,
+                          },
+                        });
+                      }}
+                      min={1}
+                      max={5}
+                      step={0.1}
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-xs">Position</Label>
+                    <Select 
+                      value={storyboard?.image_animation_settings?.position || 'center-center'}
+                      onValueChange={(value) => {
+                        updateRenderSettings?.({
+                          image_animation_settings: {
+                            ...storyboard?.image_animation_settings,
+                            position: value,
+                          },
+                        });
+                      }}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        <SelectItem value="center-center">Center</SelectItem>
+                        <SelectItem value="top-center">Top Center</SelectItem>
+                        <SelectItem value="bottom-center">Bottom Center</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </CollapsibleContent>
               </Collapsible>
 
               <p className="text-xs text-muted-foreground pt-2 border-t">
-                💡 To change these settings, create a new storyboard with your desired configuration.
+                💡 Settings are saved automatically as you make changes
               </p>
             </CollapsibleContent>
           </Collapsible>

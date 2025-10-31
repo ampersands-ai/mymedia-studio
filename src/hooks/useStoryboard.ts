@@ -313,6 +313,38 @@ export const useStoryboard = () => {
     },
   });
 
+  // Update render settings mutation (for voice, quality, subtitles, audio, image animation)
+  const updateRenderSettingsMutation = useMutation({
+    mutationFn: async (settings: {
+      voice_id?: string;
+      voice_name?: string;
+      video_quality?: string;
+      subtitle_settings?: any;
+      music_settings?: any;
+      image_animation_settings?: any;
+    }) => {
+      if (!currentStoryboardId) throw new Error('No storyboard selected');
+      
+      const { data, error } = await supabase
+        .from('storyboards')
+        .update(settings)
+        .eq('id', currentStoryboardId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
+      toast.success('Settings updated');
+    },
+    onError: (error: any) => {
+      console.error('[useStoryboard] Update render settings error:', error);
+      toast.error('Failed to update settings');
+    },
+  });
+
   // Regenerate scene mutation
   const regenerateSceneMutation = useMutation({
     mutationFn: async ({ sceneId, previousSceneText, nextSceneText }: {
@@ -637,5 +669,6 @@ export const useStoryboard = () => {
     clearStoryboard,
     refreshStatus,
     updateSceneImage: updateSceneImageMutation.mutate,
+    updateRenderSettings: updateRenderSettingsMutation.mutate,
   };
 };

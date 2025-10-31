@@ -433,6 +433,24 @@ export function StoryboardInput() {
           </div>
         </div>
 
+        {/* Resolution */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Resolution</Label>
+          <Select value={aspectRatio} onValueChange={setAspectRatio} disabled={isGenerating}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="sd">SD - 640×480 (4:3)</SelectItem>
+              <SelectItem value="hd">HD - 1280×720 (16:9)</SelectItem>
+              <SelectItem value="full-hd">Full HD - 1920×1080 (16:9)</SelectItem>
+              <SelectItem value="squared">Square - 1080×1080 (1:1)</SelectItem>
+              <SelectItem value="instagram-story">Instagram Story - 1080×1920 (9:16)</SelectItem>
+              <SelectItem value="instagram-feed">Instagram Feed - 1080×1350 (4:5)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Style Selection */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Video Style</Label>
@@ -592,72 +610,8 @@ export function StoryboardInput() {
           />
         </div> */}
 
-        {/* Advanced Settings */}
-        <Collapsible className="space-y-4">
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="w-full justify-between" type="button">
-              <span className="font-semibold">⚙️ Advanced Settings</span>
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-6 pt-4 border-t">
-            {/* Aspect Ratio & Quality */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Resolution</Label>
-                <Select value={aspectRatio} onValueChange={setAspectRatio} disabled={isGenerating}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sd">SD - 640×480 (4:3)</SelectItem>
-                    <SelectItem value="hd">HD - 1280×720 (16:9)</SelectItem>
-                    <SelectItem value="full-hd">Full HD - 1920×1080 (16:9)</SelectItem>
-                    <SelectItem value="squared">Square - 1080×1080 (1:1)</SelectItem>
-                    <SelectItem value="instagram-story">Instagram Story - 1080×1920 (9:16)</SelectItem>
-                    <SelectItem value="instagram-feed">Instagram Feed - 1080×1350 (4:5)</SelectItem>
-                    <SelectItem value="twitter-landscape">Twitter Landscape - 1920×1200 (16:10)</SelectItem>
-                    <SelectItem value="twitter-portrait">Twitter Portrait - 1200×1920 (10:16)</SelectItem>
-                    <SelectItem value="custom">Custom (Specify dimensions)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Custom Dimensions */}
-              {aspectRatio === 'custom' && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="customWidth">Width (pixels)</Label>
-                    <Input
-                      id="customWidth"
-                      type="number"
-                      value={customWidth}
-                      onChange={(e) => setCustomWidth(parseInt(e.target.value) || 1920)}
-                      min={320}
-                      max={3840}
-                      disabled={isGenerating}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="customHeight">Height (pixels)</Label>
-                    <Input
-                      id="customHeight"
-                      type="number"
-                      value={customHeight}
-                      onChange={(e) => setCustomHeight(parseInt(e.target.value) || 1080)}
-                      min={240}
-                      max={2160}
-                      disabled={isGenerating}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Video Quality, Subtitle, Audio, and Image Animation settings moved to editor before rendering */}
-
-          </CollapsibleContent>
-        </Collapsible>
+        {/* Advanced Settings - Temporarily Disabled */}
+        {/* All advanced settings (Video Quality, Subtitles, Audio, Image Animation) are now configured in the Editor before rendering */}
 
         {/* Token Cost Display */}
         <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border">

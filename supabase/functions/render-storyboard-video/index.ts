@@ -29,10 +29,10 @@ serve(async (req) => {
 
     const { storyboardId } = await req.json();
 
-    // Fetch storyboard first to calculate cost
+    // Fetch storyboard first to calculate cost and get initial estimate
     const { data: storyboard, error: storyboardError } = await supabaseClient
       .from('storyboards')
-      .select('*, intro_image_preview_url, intro_voiceover_text')
+      .select('*, intro_image_preview_url, intro_voiceover_text, estimated_render_cost')
       .eq('id', storyboardId)
       .eq('user_id', user.id)
       .single();
@@ -70,10 +70,13 @@ serve(async (req) => {
     // Estimate duration in seconds (2.5 words per second)
     const estimatedDuration = Math.ceil(totalWords / 2.5);
     
-    // Cost: 0.25 credits per second
-    const tokenCost = estimatedDuration * 0.25;
+    // Actual cost: 0.25 credits per second of voiceover
+    const actualCost = estimatedDuration * 0.25;
+    const initialEstimate = storyboard.estimated_render_cost || (storyboard.duration * 0.25);
+    const costDifference = actualCost - initialEstimate;
     
-    console.log(`[render-storyboard-video] Estimated duration: ${estimatedDuration}s (${totalWords} words), Cost: ${tokenCost} credits`);
+    console.log(`[render-storyboard-video] Estimated duration: ${estimatedDuration}s (${totalWords} words)`);
+    console.log(`[render-storyboard-video] Initial estimate: ${initialEstimate} credits, Actual cost: ${actualCost} credits, Difference: ${costDifference} credits`);
 
     // Check user credit balance
     const { data: subscription, error: subError } = await supabaseClient
@@ -86,32 +89,51 @@ serve(async (req) => {
       throw new Error('Could not fetch user subscription');
     }
 
-    if (subscription.tokens_remaining < tokenCost) {
-      return new Response(
-        JSON.stringify({ error: 'Insufficient credits' }),
-        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Handle cost difference: refund if lower, charge if higher
+    if (costDifference > 0) {
+      // Need to charge additional credits
+      if (subscription.tokens_remaining < costDifference) {
+        return new Response(
+          JSON.stringify({ error: `Insufficient credits. Need ${costDifference.toFixed(1)} more credits.` }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.log(`[render-storyboard-video] Charging ${costDifference.toFixed(1)} additional credits`);
+      const { error: chargeError } = await supabaseClient.rpc('increment_tokens', {
+        user_id_param: user.id,
+        amount: -costDifference
+      });
+      
+      if (chargeError) {
+        console.error('[render-storyboard-video] Failed to charge additional credits:', chargeError);
+        throw new Error('Failed to charge additional credits');
+      }
+    } else if (costDifference < 0) {
+      // Refund the difference
+      const refundAmount = Math.abs(costDifference);
+      console.log(`[render-storyboard-video] Refunding ${refundAmount.toFixed(1)} credits`);
+      
+      const { error: refundError } = await supabaseClient.rpc('increment_tokens', {
+        user_id_param: user.id,
+        amount: refundAmount
+      });
+      
+      if (refundError) {
+        console.error('[render-storyboard-video] Failed to refund credits:', refundError);
+        // Don't throw - continue with render even if refund fails
+      }
     }
-
-    // Store the estimated cost in the storyboard for accurate refunds
+    
+    // Update the actual cost in the storyboard
     const { error: updateCostError } = await supabaseClient
       .from('storyboards')
-      .update({ estimated_render_cost: tokenCost })
+      .update({ estimated_render_cost: actualCost })
       .eq('id', storyboardId);
 
+
     if (updateCostError) {
-      console.error('[render-storyboard-video] Failed to update estimated cost:', updateCostError);
-    }
-
-    // Deduct credits
-    const { error: deductError } = await supabaseClient.rpc('increment_tokens', {
-      user_id_param: user.id,
-      amount: -tokenCost
-    });
-
-    if (deductError) {
-      console.error('Credit deduction error:', deductError);
-      throw new Error('Failed to deduct credits');
+      console.error('[render-storyboard-video] Failed to update actual cost:', updateCostError);
     }
 
     // Build JSON2Video payload
@@ -247,10 +269,10 @@ serve(async (req) => {
       const errorText = await json2videoResponse.text();
       console.error('[render-storyboard-video] JSON2Video API error:', json2videoResponse.status, errorText);
       
-      // Refund credits on API error
+      // Refund the actual cost on API error
       await supabaseClient.rpc('increment_tokens', {
         user_id_param: user.id,
-        amount: tokenCost
+        amount: actualCost
       });
       
       if (json2videoResponse.status === 429) {
@@ -279,10 +301,10 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('[render-storyboard-video] Status update error:', updateError);
-      // Refund credits
+      // Refund the actual cost
       await supabaseClient.rpc('increment_tokens', {
         user_id_param: user.id,
-        amount: tokenCost
+        amount: actualCost
       });
       throw new Error('Failed to update storyboard status');
     }

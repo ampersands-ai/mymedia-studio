@@ -77,8 +77,9 @@ export const StoryboardEditor = () => {
 
   const activeScene = scenes.find(s => s.id === activeSceneId) || scenes[0];
   const estimatedDuration = storyboard ? storyboard.duration : 0;
+  const initialEstimate = storyboard?.estimated_render_cost || 0;
   
-  // Calculate dynamic render cost based on voiceover text (0.25 credits per second)
+  // Calculate actual render cost based on voiceover text (0.25 credits per second)
   const calculateRenderCost = useCallback(() => {
     if (!storyboard) return 0;
     
@@ -89,15 +90,16 @@ export const StoryboardEditor = () => {
     const totalWords = introWords + sceneWords;
     
     // Estimate duration in seconds (2.5 words per second)
-    const estimatedDuration = Math.ceil(totalWords / 2.5);
+    const estimatedVoiceoverDuration = Math.ceil(totalWords / 2.5);
     
-    // Cost: 0.25 credits per second, minimum 1 credit
-    const cost = Math.max(1, Math.ceil(estimatedDuration * 0.25));
+    // Cost: 0.25 credits per second
+    const cost = estimatedVoiceoverDuration * 0.25;
     
     return cost;
   }, [storyboard, scenes]);
   
-  const renderCost = calculateRenderCost();
+  const actualRenderCost = calculateRenderCost();
+  const costDifference = actualRenderCost - initialEstimate;
 
   // Phase 5: Dynamic status messages based on rendering time
   useEffect(() => {
@@ -147,8 +149,9 @@ export const StoryboardEditor = () => {
       return;
     }
 
-    if ((tokenData?.tokens_remaining || 0) < renderCost) {
-      toast.error('Insufficient credits');
+    // Check if user has enough credits for any additional charge
+    if (costDifference > 0 && (tokenData?.tokens_remaining || 0) < costDifference) {
+      toast.error(`Insufficient credits. Need ${costDifference.toFixed(1)} more credits.`);
       return;
     }
 
@@ -387,7 +390,7 @@ export const StoryboardEditor = () => {
             <AlertDialogTrigger asChild>
               <Button
                 size="lg"
-                disabled={isRendering || (tokenData?.tokens_remaining || 0) < renderCost}
+                disabled={isRendering || (costDifference > 0 && (tokenData?.tokens_remaining || 0) < costDifference)}
                 className="bg-gradient-to-r from-primary via-primary to-primary/80 hover:scale-105 transition-transform font-bold"
               >
                 {isRendering ? (
@@ -398,7 +401,7 @@ export const StoryboardEditor = () => {
                 ) : (
                   <>
                     <Play className="w-5 h-5 mr-2" />
-                    Render Video ({renderCost} credits)
+                    Render Video ({actualRenderCost.toFixed(1)} credits)
                   </>
                 )}
               </Button>
@@ -410,11 +413,31 @@ export const StoryboardEditor = () => {
                   <p>
                     This will create your final video with {scenes.length} scenes.
                   </p>
-                  <p className="font-semibold">
-                    Cost: {renderCost} credits • Est. time: ~60 seconds
-                  </p>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">
+                      Initial estimate: {initialEstimate.toFixed(1)} credits
+                    </p>
+                    <p className="font-semibold">
+                      Actual cost: {actualRenderCost.toFixed(1)} credits
+                      {costDifference !== 0 && (
+                        <span className={costDifference > 0 ? "text-destructive" : "text-green-500"}>
+                          {" "}({costDifference > 0 ? '+' : ''}{costDifference.toFixed(1)})
+                        </span>
+                      )}
+                    </p>
+                    {costDifference < 0 && (
+                      <p className="text-xs text-green-500">
+                        {Math.abs(costDifference).toFixed(1)} credits will be refunded automatically
+                      </p>
+                    )}
+                    {costDifference > 0 && (
+                      <p className="text-xs text-destructive">
+                        {costDifference.toFixed(1)} additional credits will be charged
+                      </p>
+                    )}
+                  </div>
                   <p className="text-xs">
-                    Current balance: {Number(tokenData?.tokens_remaining || 0).toFixed(2)} credits
+                    Current balance: {Number(tokenData?.tokens_remaining || 0).toFixed(1)} credits • Est. time: ~60s
                   </p>
                 </AlertDialogDescription>
               </AlertDialogHeader>

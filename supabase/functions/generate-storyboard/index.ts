@@ -61,8 +61,8 @@ serve(async (req) => {
     // Calculate scene count: (duration / 5) - 1
     const sceneCount = Math.floor(duration / 5) - 1;
     
-    // Cost for generating storyboard script: 1 credit per scene
-    const tokenCost = Math.max(1, sceneCount);
+    // Initial cost estimate: 0.25 credits per second of video duration
+    const tokenCost = duration * 0.25;
 
     // Check user token balance
     const { data: subscription, error: subError } = await supabaseClient
@@ -325,6 +325,7 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
         },
         enable_cache: enableCache,
         draft_mode: draftMode,
+        estimated_render_cost: tokenCost, // Store initial estimate for later comparison
       })
       .select()
       .single();

@@ -4,9 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Play, Pause, Check, Search, X } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Play, Pause, Check, Search, X, Globe, MapPin } from 'lucide-react';
 import { useAudioUrl } from '@/hooks/media';
-import { VOICE_DATABASE, VoiceData, getVoiceById, getVoiceByName } from '@/lib/voice-mapping';
+import { VOICE_DATABASE, VoiceData, getVoiceById } from '@/lib/voice-mapping';
+import { useAzureVoices, useAzureVoiceFilters, AzureVoice } from '@/hooks/useAzureVoices';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -128,16 +131,23 @@ const VoiceCard = ({ voice, isSelected, isPlaying, onSelect, onPreview, disabled
 };
 
 export function VoiceSelector({ selectedValue, onSelectVoice, disabled }: VoiceSelectorProps) {
+  const [provider, setProvider] = useState<'elevenlabs' | 'azure'>('elevenlabs');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
+  const [languageFilter, setLanguageFilter] = useState<string>('all');
+  const [countryFilter, setCountryFilter] = useState<string>('all');
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Get all voices from central database
-  const voices = VOICE_DATABASE;
+  // Fetch Azure voices
+  const { data: azureVoices, isLoading: azureLoading } = useAzureVoices();
+  const { languages, countries } = useAzureVoiceFilters(azureVoices);
+
+  // Get ElevenLabs voices from central database
+  const elevenLabsVoices = VOICE_DATABASE;
   
-  // Filter logic based on search and filters, then sort by preview availability
-  const filteredVoices = voices
+  // Filter ElevenLabs voices
+  const filteredElevenLabsVoices = elevenLabsVoices
     .filter(voice => {
       const matchesSearch = voice.name.toLowerCase().includes(search.toLowerCase()) ||
                            voice.description?.toLowerCase().includes(search.toLowerCase());
@@ -150,11 +160,23 @@ export function VoiceSelector({ selectedValue, onSelectVoice, disabled }: VoiceS
       return matchesSearch && matchesFilter;
     })
     .sort((a, b) => {
-      // Sort voices with previews first, then those without
       const aHasPreview = a.hasPreview !== false;
       const bHasPreview = b.hasPreview !== false;
       if (aHasPreview === bHasPreview) return 0;
       return aHasPreview ? -1 : 1;
+    });
+
+  // Filter Azure voices
+  const filteredAzureVoices = (azureVoices || [])
+    .filter(voice => {
+      const matchesSearch = voice.voice_name.toLowerCase().includes(search.toLowerCase()) ||
+                           voice.language.toLowerCase().includes(search.toLowerCase()) ||
+                           voice.country.toLowerCase().includes(search.toLowerCase());
+      
+      const matchesLanguage = languageFilter === 'all' || voice.language === languageFilter;
+      const matchesCountry = countryFilter === 'all' || voice.country === countryFilter;
+      
+      return matchesSearch && matchesLanguage && matchesCountry;
     });
 
   // Determine selected voice by ID
@@ -216,52 +238,190 @@ export function VoiceSelector({ selectedValue, onSelectVoice, disabled }: VoiceS
     { label: 'Conversational', value: 'conversational' },
   ];
 
+  // Handle Azure voice selection
+  const handleAzureSelect = (voice: AzureVoice) => {
+    if (disabled) return;
+    onSelectVoice(voice.voice_id, voice.voice_name);
+  };
+
   return (
     <div className="space-y-4">
-      {/* Search bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-        <Input 
-          placeholder="Search voices..." 
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
-          disabled={disabled}
-        />
-      </div>
-      
-      {/* Filters */}
-      <div className="flex gap-2 flex-wrap">
-        {filters.map(f => (
-          <Button 
-            key={f.value}
-            size="sm" 
-            variant={filter === f.value ? 'default' : 'outline'} 
-            onClick={() => setFilter(f.value)}
-            disabled={disabled}
-            className="text-xs"
-          >
-            {f.label}
-          </Button>
-        ))}
-      </div>
+      <Tabs value={provider} onValueChange={(v) => setProvider(v as 'elevenlabs' | 'azure')}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="elevenlabs">ElevenLabs ({elevenLabsVoices.length})</TabsTrigger>
+          <TabsTrigger value="azure">Azure Voices ({azureVoices?.length || 0})</TabsTrigger>
+        </TabsList>
 
-      {/* Voice grid */}
-      <ScrollArea className="h-[500px] pr-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
-          {filteredVoices.map(voice => (
-            <VoiceCard
-              key={voice.voice_id}
-              voice={voice}
-              isSelected={selectedVoice?.voice_id === voice.voice_id}
-              isPlaying={playingVoiceId === voice.voice_id}
-              onSelect={handleSelect}
-              onPreview={handlePreview}
-              disabled={disabled || false}
+        {/* ElevenLabs Tab */}
+        <TabsContent value="elevenlabs" className="space-y-4 mt-4">
+          {/* Search bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Input 
+              placeholder="Search voices..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+              disabled={disabled}
             />
-          ))}
-        </div>
-      </ScrollArea>
+          </div>
+          
+          {/* Filters */}
+          <div className="flex gap-2 flex-wrap">
+            {filters.map(f => (
+              <Button 
+                key={f.value}
+                size="sm" 
+                variant={filter === f.value ? 'default' : 'outline'} 
+                onClick={() => setFilter(f.value)}
+                disabled={disabled}
+                className="text-xs"
+              >
+                {f.label}
+              </Button>
+            ))}
+          </div>
+
+          {/* Voice grid */}
+          <ScrollArea className="h-[500px] pr-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
+              {filteredElevenLabsVoices.map(voice => (
+                <VoiceCard
+                  key={voice.voice_id}
+                  voice={voice}
+                  isSelected={selectedVoice?.voice_id === voice.voice_id}
+                  isPlaying={playingVoiceId === voice.voice_id}
+                  onSelect={handleSelect}
+                  onPreview={handlePreview}
+                  disabled={disabled || false}
+                />
+              ))}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
+        {/* Azure Tab */}
+        <TabsContent value="azure" className="space-y-4 mt-4">
+          {/* Search bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Input 
+              placeholder="Search by name, language, or country..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+              disabled={disabled}
+            />
+          </div>
+
+          {/* Language and Country Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Globe className="w-4 h-4" />
+                <span>Language</span>
+              </div>
+              <Select value={languageFilter} onValueChange={setLanguageFilter}>
+                <SelectTrigger disabled={disabled}>
+                  <SelectValue placeholder="All Languages" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  <SelectItem value="all">All Languages</SelectItem>
+                  {languages.map(lang => (
+                    <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <MapPin className="w-4 h-4" />
+                <span>Country</span>
+              </div>
+              <Select value={countryFilter} onValueChange={setCountryFilter}>
+                <SelectTrigger disabled={disabled}>
+                  <SelectValue placeholder="All Countries" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  <SelectItem value="all">All Countries</SelectItem>
+                  {countries.map(country => (
+                    <SelectItem key={country} value={country}>{country}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {azureLoading ? (
+            <div className="text-center py-8 text-muted-foreground">Loading voices...</div>
+          ) : (
+            <>
+              {/* Results count */}
+              <div className="text-sm text-muted-foreground">
+                Showing {filteredAzureVoices.length} of {azureVoices?.length || 0} voices
+              </div>
+
+              {/* Voice grid */}
+              <ScrollArea className="h-[500px] pr-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
+                  {filteredAzureVoices.map(voice => (
+                    <Card 
+                      key={voice.id}
+                      className={cn(
+                        "cursor-pointer transition-all hover:shadow-lg",
+                        selectedValue === voice.voice_id && "ring-2 ring-primary",
+                        disabled && "opacity-50 cursor-not-allowed"
+                      )}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-semibold text-sm truncate">{voice.voice_name}</h4>
+                              {selectedValue === voice.voice_id && (
+                                <Check className="w-4 h-4 text-primary shrink-0" />
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {voice.country}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          <Badge variant="secondary" className="text-xs">{voice.language}</Badge>
+                          <Badge variant="outline" className="text-xs">{voice.language_code}</Badge>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAzureSelect(voice);
+                            }}
+                            disabled={disabled || selectedValue === voice.voice_id}
+                            className="text-xs flex-1"
+                          >
+                            {selectedValue === voice.voice_id ? 'Selected' : 'Select'}
+                          </Button>
+                        </div>
+
+                        <div className="mt-2">
+                          <p className="text-[10px] text-muted-foreground">
+                            💡 Preview uses browser voices. Actual video uses Azure AI voices.
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </ScrollArea>
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

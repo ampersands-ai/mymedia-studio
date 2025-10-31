@@ -90,7 +90,7 @@ export const ScenePreviewGenerator = ({
     <Card className={cn(
       'p-4 bg-card/95 backdrop-blur-xl border border-border/30',
       'hover:border-border/50 transition-all duration-300',
-      'min-h-[400px] flex flex-col'
+      'flex flex-col'
     )}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
@@ -111,7 +111,7 @@ export const ScenePreviewGenerator = ({
       </div>
 
       {/* Image Display */}
-      <div className="flex-1 relative rounded-lg overflow-hidden bg-muted/20 border border-border/20 mb-4 aspect-auto lg:aspect-[9/16]">
+      <div className="relative rounded-lg overflow-hidden bg-muted/20 border border-border/20 mb-4 max-h-[500px] aspect-auto lg:aspect-[9/16]">
         {isGenerating ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />

@@ -140,7 +140,12 @@ export const StoryboardEditor = () => {
   };
 
   const handleImageGenerated = (sceneId: string, imageUrl: string) => {
-    updateSceneImage({ sceneId, imageUrl });
+    // Check if it's the intro scene (using storyboard ID)
+    if (storyboard && sceneId === storyboard.id) {
+      updateIntroScene('intro_image_preview_url', imageUrl);
+    } else {
+      updateSceneImage({ sceneId, imageUrl });
+    }
   };
 
   if (!storyboard || scenes.length === 0) {
@@ -212,35 +217,46 @@ export const StoryboardEditor = () => {
           <h3 className="text-lg font-bold">📋 Scenes</h3>
           
           {/* Title/Intro Scene (Scene 0) */}
-          <Card className="relative p-4 bg-primary/5 backdrop-blur-xl border-2 border-primary/30">
-            <div className="flex items-center justify-between mb-4">
-              <div className="px-2 py-1 rounded-md bg-primary/30 text-primary text-xs font-bold">
-                Scene 0 - Title
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            <Card className="relative p-4 bg-primary/5 backdrop-blur-xl border-2 border-primary/30">
+              <div className="flex items-center justify-between mb-4">
+                <div className="px-2 py-1 rounded-md bg-primary/30 text-primary text-xs font-bold">
+                  Scene 0 - Title
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2 mb-4">
-              <Label className="text-xs font-semibold text-muted-foreground">🎤 Voiceover</Label>
-              <Textarea
-                value={introVoiceOverText}
-                onChange={(e) => setIntroVoiceOverText(e.target.value)}
-                className="min-h-[80px] text-sm bg-background/50"
-                maxLength={1000}
-                placeholder="Title voiceover text..."
-              />
-            </div>
+              <div className="space-y-2 mb-4">
+                <Label className="text-xs font-semibold text-muted-foreground">🎤 Voiceover</Label>
+                <Textarea
+                  value={introVoiceOverText}
+                  onChange={(e) => setIntroVoiceOverText(e.target.value)}
+                  className="min-h-[80px] text-sm bg-background/50"
+                  maxLength={1000}
+                  placeholder="Title voiceover text..."
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-muted-foreground">🖼️ Image Prompt</Label>
-              <Textarea
-                value={introImagePrompt}
-                onChange={(e) => setIntroImagePrompt(e.target.value)}
-                className="min-h-[160px] sm:min-h-[200px] text-sm bg-background/50 resize-y"
-                maxLength={2000}
-                placeholder="Title scene visual description..."
-              />
-            </div>
-          </Card>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-muted-foreground">🖼️ Image Prompt</Label>
+                <Textarea
+                  value={introImagePrompt}
+                  onChange={(e) => setIntroImagePrompt(e.target.value)}
+                  className="min-h-[160px] sm:min-h-[200px] text-sm bg-background/50 resize-y"
+                  maxLength={2000}
+                  placeholder="Title scene visual description..."
+                />
+              </div>
+            </Card>
+            <ScenePreviewGenerator
+              scene={{
+                id: storyboard.id,
+                image_prompt: introImagePrompt,
+                image_preview_url: storyboard.intro_image_preview_url,
+              }}
+              sceneNumber={0}
+              onImageGenerated={handleImageGenerated}
+            />
+          </div>
 
           {scenes.map((scene, idx) => (
             <div key={scene.id} className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">

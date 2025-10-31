@@ -812,6 +812,7 @@ export type Database = {
           id: string
           image_animation_settings: Json | null
           image_model: string | null
+          intro_image_preview_url: string | null
           intro_image_prompt: string | null
           intro_voiceover_text: string | null
           media_type: string | null
@@ -864,6 +865,7 @@ export type Database = {
           id?: string
           image_animation_settings?: Json | null
           image_model?: string | null
+          intro_image_preview_url?: string | null
           intro_image_prompt?: string | null
           intro_voiceover_text?: string | null
           media_type?: string | null
@@ -916,6 +918,7 @@ export type Database = {
           id?: string
           image_animation_settings?: Json | null
           image_model?: string | null
+          intro_image_preview_url?: string | null
           intro_image_prompt?: string | null
           intro_voiceover_text?: string | null
           media_type?: string | null

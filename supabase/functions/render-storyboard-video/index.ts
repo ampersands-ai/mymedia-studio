@@ -52,7 +52,7 @@ serve(async (req) => {
     // Fetch storyboard
     const { data: storyboard, error: storyboardError } = await supabaseClient
       .from('storyboards')
-      .select('*')
+      .select('*, intro_image_preview_url')
       .eq('id', storyboardId)
       .eq('user_id', user.id)
       .single();
@@ -114,7 +114,11 @@ serve(async (req) => {
         subtitlesModel: storyboard.subtitles_model || 'default',
         fontFamily: storyboard.font_family || 'Oswald Bold',
         voiceID: storyboard.voice_id,
-        introImagePrompt: storyboard.intro_image_prompt,
+        // If intro has a generated preview, pass the URL; otherwise use the prompt
+        ...(storyboard.intro_image_preview_url
+          ? { introImageUrl: storyboard.intro_image_preview_url }
+          : { introImagePrompt: storyboard.intro_image_prompt }
+        ),
         introText: storyboard.intro_voiceover_text,
       },
       project: storyboardId,

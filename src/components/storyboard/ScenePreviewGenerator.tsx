@@ -26,7 +26,7 @@ export const ScenePreviewGenerator = ({
   sceneNumber,
   onImageGenerated,
 }: ScenePreviewGeneratorProps) => {
-  const [selectedModelId, setSelectedModelId] = useState<string>('runware:100@1');
+  const [selectedModelId, setSelectedModelId] = useState<string>('runware:100@1"');
   const [previewUrl, setPreviewUrl] = useState<string | null>(scene.image_preview_url || null);
   
   const { generate, isGenerating, result, error } = useGeneration();
@@ -57,8 +57,15 @@ export const ScenePreviewGenerator = ({
   // Filter models for scene preview (image generation only)
   const imageModels = models?.filter(m => 
     m.content_type === 'image' && 
-    (m.id === 'runware:100@1' || m.id === 'google/imagen4-fast')
+    (m.id === 'runware:100@1"' || m.id === 'google/nano-banana')
   ) || [];
+
+  // Auto-select first available model if current selection is invalid
+  useEffect(() => {
+    if (imageModels.length > 0 && !imageModels.find(m => m.id === selectedModelId)) {
+      setSelectedModelId(imageModels[0].id);
+    }
+  }, [imageModels, selectedModelId]);
 
   const selectedModel = imageModels.find(m => m.id === selectedModelId) || imageModels[0];
   const tokenCost = selectedModel?.base_token_cost || 1;

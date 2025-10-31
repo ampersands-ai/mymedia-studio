@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { SceneCard } from './SceneCard';
 import { ScenePreviewGenerator } from './ScenePreviewGenerator';
-import { StoryboardPreview } from './StoryboardPreview';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { Play, ArrowLeft, Coins, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -266,138 +265,121 @@ export const StoryboardEditor = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="grid lg:grid-cols-[1fr_400px] gap-6">
-        {/* Scene Cards */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-bold">📋 Scenes</h3>
-          
-          {/* Title/Intro Scene (Scene 0) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-            <Card className="relative p-4 bg-primary/5 backdrop-blur-xl border-2 border-primary/30">
-              <div className="flex items-center justify-between mb-4">
-                <div className="px-2 py-1 rounded-md bg-primary/30 text-primary text-xs font-bold">
-                  Scene 1 - Title
-                </div>
+      {/* Main Content - Scene Cards */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-bold">📋 Scenes</h3>
+        
+        {/* Title/Intro Scene (Scene 1) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          <Card className="relative p-4 bg-primary/5 backdrop-blur-xl border-2 border-primary/30">
+            <div className="flex items-center justify-between mb-4">
+              <div className="px-2 py-1 rounded-md bg-primary/30 text-primary text-xs font-bold">
+                Scene 1 - Title
               </div>
+            </div>
 
-              <div className="space-y-2 mb-4">
-                <Label className="text-xs font-semibold text-muted-foreground">🎤 Voiceover</Label>
-                <Textarea
-                  value={introVoiceOverText}
-                  onChange={(e) => setIntroVoiceOverText(e.target.value)}
-                  className="min-h-[80px] text-sm bg-background/50"
-                  maxLength={1000}
-                  placeholder="Title voiceover text..."
-                />
-              </div>
+            <div className="space-y-2 mb-4">
+              <Label className="text-xs font-semibold text-muted-foreground">🎤 Voiceover</Label>
+              <Textarea
+                value={introVoiceOverText}
+                onChange={(e) => setIntroVoiceOverText(e.target.value)}
+                className="min-h-[80px] text-sm bg-background/50"
+                maxLength={1000}
+                placeholder="Title voiceover text..."
+              />
+            </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold text-muted-foreground">🖼️ Image Prompt</Label>
-                <Textarea
-                  value={introImagePrompt}
-                  onChange={(e) => setIntroImagePrompt(e.target.value)}
-                  className="min-h-[160px] sm:min-h-[200px] text-sm bg-background/50 resize-y"
-                  maxLength={2000}
-                  placeholder="Title scene visual description..."
-                />
-              </div>
-            </Card>
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-muted-foreground">🖼️ Image Prompt</Label>
+              <Textarea
+                value={introImagePrompt}
+                onChange={(e) => setIntroImagePrompt(e.target.value)}
+                className="min-h-[160px] sm:min-h-[200px] text-sm bg-background/50 resize-y"
+                maxLength={2000}
+                placeholder="Title scene visual description..."
+              />
+            </div>
+          </Card>
+          <ScenePreviewGenerator
+            scene={{
+              id: storyboard.id,
+              image_prompt: introImagePrompt,
+              image_preview_url: storyboard.intro_image_preview_url,
+            }}
+            sceneNumber={1}
+            onImageGenerated={handleImageGenerated}
+          />
+        </div>
+
+        {scenes.map((scene, idx) => (
+          <div key={scene.id} className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            <SceneCard
+              scene={scene}
+              sceneNumber={idx + 2}
+              isActive={activeSceneId === scene.id}
+              onUpdate={updateScene}
+              onRegenerate={regenerateScene}
+              onClick={() => setActiveScene(scene.id)}
+            />
             <ScenePreviewGenerator
-              scene={{
-                id: storyboard.id,
-                image_prompt: introImagePrompt,
-                image_preview_url: storyboard.intro_image_preview_url,
-              }}
-              sceneNumber={1}
+              scene={scene}
+              sceneNumber={idx + 2}
               onImageGenerated={handleImageGenerated}
             />
           </div>
+        ))}
+      </div>
 
-          {scenes.map((scene, idx) => (
-            <div key={scene.id} className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-              <SceneCard
-                scene={scene}
-                sceneNumber={idx + 2}
-                isActive={activeSceneId === scene.id}
-                onUpdate={updateScene}
-                onRegenerate={regenerateScene}
-                onClick={() => setActiveScene(scene.id)}
-              />
-              <ScenePreviewGenerator
-                scene={scene}
-                sceneNumber={idx + 2}
-                onImageGenerated={handleImageGenerated}
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Preview Panel */}
-        <div className="lg:sticky lg:top-24 h-fit space-y-4">
-          {/* Completed Video Player */}
-          {storyboard?.status === 'complete' && storyboard?.video_url && (
-            <div className="space-y-2">
-              <h3 className="text-lg font-bold">🎬 Final Video</h3>
-              <div className="rounded-lg overflow-hidden border border-primary/20 bg-black">
-                <video
-                  controls
-                  className="w-full aspect-video"
-                  src={storyboard.video_url}
-                  poster={storyboard.video_url.replace(/\.[^.]+$/, '.jpg')}
-                >
-                  Your browser does not support the video tag.
-                </video>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => window.open(storyboard.video_url, '_blank')}
-                >
-                  Open in New Tab
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={async () => {
-                    try {
-                      const response = await fetch(storyboard.video_url!);
-                      const blob = await response.blob();
-                      const url = window.URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `storyboard-${storyboard.id}.mp4`;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                      window.URL.revokeObjectURL(url);
-                      toast.success('Video downloaded!');
-                    } catch (error) {
-                      toast.error('Failed to download video');
-                    }
-                  }}
-                >
-                  Download
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Scene Preview */}
-          <div>
-            <h3 className="text-lg font-bold mb-4">👁️ Scene Preview</h3>
-            <StoryboardPreview
-              scene={activeScene}
-              totalScenes={scenes.length}
-              onPrevious={() => navigateScene('prev')}
-              onNext={() => navigateScene('next')}
-            />
+      {/* Final Video (appears below scenes after rendering) */}
+      {storyboard?.status === 'complete' && storyboard?.video_url && (
+        <div className="space-y-2">
+          <h3 className="text-lg font-bold">🎬 Final Video</h3>
+          <div className="rounded-lg overflow-hidden border border-primary/20 bg-black">
+            <video
+              controls
+              className="w-full aspect-video"
+              src={storyboard.video_url}
+              poster={storyboard.video_url.replace(/\.[^.]+$/, '.jpg')}
+            >
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() => window.open(storyboard.video_url, '_blank')}
+            >
+              Open in New Tab
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={async () => {
+                try {
+                  const response = await fetch(storyboard.video_url!);
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `storyboard-${storyboard.id}.mp4`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  window.URL.revokeObjectURL(url);
+                  toast.success('Video downloaded!');
+                } catch (error) {
+                  toast.error('Failed to download video');
+                }
+              }}
+            >
+              Download
+            </Button>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Render Dialog */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-card/95 backdrop-blur border-t z-50">

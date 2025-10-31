@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -32,6 +32,7 @@ export const ScenePreviewGenerator = ({
   const { generate, isGenerating, result, error } = useGeneration();
   const { data: models } = useModels();
   const { data: tokenData } = useUserTokens();
+  const lastHandledUrlRef = useRef<string | null>(null);
 
   // Sync preview URL with scene prop
   useEffect(() => {
@@ -40,11 +41,12 @@ export const ScenePreviewGenerator = ({
 
   // Handle generation result
   useEffect(() => {
-    if (result?.output_url && result.output_url !== previewUrl) {
+    if (result?.output_url && lastHandledUrlRef.current !== result.output_url) {
+      lastHandledUrlRef.current = result.output_url;
       setPreviewUrl(result.output_url);
       onImageGenerated(scene.id, result.output_url);
     }
-  }, [result?.output_url, scene.id, onImageGenerated, previewUrl]);
+  }, [result?.output_url, scene.id, onImageGenerated]);
 
   // Handle generation error
   useEffect(() => {
@@ -79,7 +81,8 @@ export const ScenePreviewGenerator = ({
       toast.error('Insufficient credits');
       return;
     }
-
+  
+    lastHandledUrlRef.current = null;
     await generate({
       model_id: selectedModelId,
       prompt: scene.image_prompt,

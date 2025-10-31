@@ -78,7 +78,7 @@ export const StoryboardEditor = () => {
   const [renderStatusMessage, setRenderStatusMessage] = useState('');
   const [introVoiceOverText, setIntroVoiceOverText] = useState(storyboard?.intro_voiceover_text || '');
   const [introImagePrompt, setIntroImagePrompt] = useState(storyboard?.intro_image_prompt || '');
-  const [showScenes, setShowScenes] = useState(true);
+  const [showScenes, setShowScenes] = useState(storyboard?.status !== 'complete');
 
   // Sync intro fields with storyboard
   useEffect(() => {

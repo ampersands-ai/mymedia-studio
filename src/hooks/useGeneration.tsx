@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { trackEvent } from "@/lib/posthog";
 
 interface GenerationParams {
@@ -81,7 +80,8 @@ export const useGeneration = () => {
       // Client-side prompt validation and mapping
       const effectivePromptClient = (params.prompt || params.custom_parameters?.positivePrompt || params.custom_parameters?.prompt || '').trim();
       if (effectivePromptClient.length < 2) {
-        toast.error("Please enter a prompt at least 2 characters long.");
+        const errorMessage = "Please enter a prompt at least 2 characters long.";
+        setError(errorMessage);
         throw new Error("Prompt is required");
       }
 

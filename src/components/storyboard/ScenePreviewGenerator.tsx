@@ -27,31 +27,27 @@ export const ScenePreviewGenerator = ({
   onImageGenerated,
 }: ScenePreviewGeneratorProps) => {
   const [selectedModelId, setSelectedModelId] = useState<string>('runware:100@1"');
-  const [previewUrl, setPreviewUrl] = useState<string | null>(scene.image_preview_url || null);
   
   const { generate, isGenerating, result, error } = useGeneration();
   const { data: models } = useModels();
   const { data: tokenData } = useUserTokens();
   const lastHandledUrlRef = useRef<string | null>(null);
 
-  // Sync preview URL with scene prop
-  useEffect(() => {
-    setPreviewUrl(scene.image_preview_url || null);
-  }, [scene.image_preview_url]);
+  // Compute display URL from result or scene prop
+  const displayUrl = result?.output_url ?? scene.image_preview_url ?? null;
 
-  // Handle generation result
+  // Handle generation result - only call onImageGenerated once per new URL
   useEffect(() => {
     if (result?.output_url && lastHandledUrlRef.current !== result.output_url) {
       lastHandledUrlRef.current = result.output_url;
-      setPreviewUrl(result.output_url);
       onImageGenerated(scene.id, result.output_url);
     }
   }, [result?.output_url, scene.id, onImageGenerated]);
 
-  // Handle generation error
+  // Log errors to console instead of toasting
   useEffect(() => {
     if (error) {
-      toast.error(error);
+      console.error('[ScenePreviewGenerator] Generation error:', error);
     }
   }, [error]);
 
@@ -73,13 +69,11 @@ export const ScenePreviewGenerator = ({
 
   const handleGenerate = async () => {
     if (!scene.image_prompt) {
-      toast.error('Scene must have an image prompt');
-      return;
+      return; // Silent no-op
     }
 
     if ((tokenData?.tokens_remaining || 0) < tokenCost) {
-      toast.error('Insufficient credits');
-      return;
+      return; // Silent no-op, UI already shows insufficient credits message
     }
   
     lastHandledUrlRef.current = null;
@@ -90,7 +84,7 @@ export const ScenePreviewGenerator = ({
     });
   };
 
-  const hasExistingPreview = !!previewUrl;
+  const hasExistingPreview = !!displayUrl;
 
   return (
     <Card className={cn(
@@ -128,10 +122,10 @@ export const ScenePreviewGenerator = ({
               </p>
             </div>
           </div>
-        ) : previewUrl ? (
+        ) : displayUrl ? (
           <div className="relative w-full h-full group">
             <img
-              src={previewUrl}
+              src={displayUrl}
               alt={`Scene ${sceneNumber} preview`}
               className="w-full h-full object-contain"
               loading="lazy"

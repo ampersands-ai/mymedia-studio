@@ -140,14 +140,23 @@ export const StoryboardEditor = () => {
   };
 
   const handleImageGenerated = useCallback((sceneId: string, imageUrl: string) => {
+    if (!storyboard) return;
+
     // Check if it's the intro scene (using storyboard ID)
-    if (storyboard && sceneId === storyboard.id) {
-      updateIntroScene('intro_image_preview_url', imageUrl);
+    if (sceneId === storyboard.id) {
+      // Only update if value actually changed
+      if (storyboard.intro_image_preview_url !== imageUrl) {
+        updateIntroScene('intro_image_preview_url', imageUrl);
+      }
     } else {
-      updateSceneImage({ sceneId, imageUrl });
+      // Find the scene
+      const scene = scenes.find(s => s.id === sceneId);
+      // Only update if value actually changed
+      if (scene && scene.image_preview_url !== imageUrl) {
+        updateSceneImage({ sceneId, imageUrl });
+      }
     }
-    toast.success('Preview generated!');
-  }, [storyboard, updateIntroScene, updateSceneImage]);
+  }, [storyboard, scenes, updateIntroScene, updateSceneImage]);
 
   if (!storyboard || scenes.length === 0) {
     return null;

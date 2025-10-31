@@ -229,11 +229,9 @@ export const useStoryboard = () => {
       // Invalidate to force refetch
       queryClient.invalidateQueries({ queryKey: ['storyboard', newStoryboardId] });
       queryClient.invalidateQueries({ queryKey: ['storyboard-scenes', newStoryboardId] });
-      
-      toast.success(`Storyboard created! ${data.scenes.length} scenes generated`);
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to generate storyboard');
+      console.error('[useStoryboard] Generate error:', error);
     },
   });
 
@@ -311,10 +309,9 @@ export const useStoryboard = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['storyboard-scenes', currentStoryboardId] });
-      toast.success('Scene regenerated!');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to regenerate scene');
+      console.error('[useStoryboard] Regenerate scene error:', error);
     },
   });
 
@@ -331,10 +328,9 @@ export const useStoryboard = () => {
     onSuccess: () => {
       setIsRendering(true);
       setRenderingStartTime(Date.now());
-      toast.success('Video rendering started!');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to start rendering');
+      console.error('[useStoryboard] Render start error:', error);
     },
   });
 
@@ -358,11 +354,9 @@ export const useStoryboard = () => {
           setIsRendering(false);
           setRenderingStartTime(null);
           queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
-          toast.success('🎉 Video ready! Check the preview below.');
         } else if (data.status === 'failed') {
           setIsRendering(false);
           setRenderingStartTime(null);
-          toast.error('Video rendering failed. Credits have been refunded.');
         }
 
         // Phase 4: Timeout detection (10 minutes)
@@ -383,12 +377,12 @@ export const useStoryboard = () => {
             );
 
             if (!fetchError && fetchData?.success) {
-              toast.success('🎉 Video recovered successfully!');
+              console.log('[useStoryboard] Video recovered successfully');
               setIsRendering(false);
               setRenderingStartTime(null);
               queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
             } else {
-              toast.error('Rendering is taking longer than usual. Please try manual fetch or contact support.');
+              console.warn('[useStoryboard] Manual fetch failed, rendering still in progress');
             }
           }
         }
@@ -415,14 +409,12 @@ export const useStoryboard = () => {
         const updatedStoryboard = payload.new as Storyboard;
         queryClient.setQueryData(['storyboard', currentStoryboardId], updatedStoryboard);
         
-        // Show notification when webhook updates status
+        // Update state when webhook notifies status change
         if (updatedStoryboard.status === 'complete' && isRendering) {
           setIsRendering(false);
           setRenderProgress(100);
-          toast.success('🎉 Video ready! (Webhook notification)');
         } else if (updatedStoryboard.status === 'failed' && isRendering) {
           setIsRendering(false);
-          toast.error('Video rendering failed. Credits refunded.');
         }
       })
       .subscribe();
@@ -508,7 +500,7 @@ export const useStoryboard = () => {
         return;
       }
 
-      toast.loading('Checking video status...', { id: 'refresh-status' });
+      console.log('[useStoryboard] Checking video status...');
 
       const { data, error } = await supabase.functions.invoke(
         'fetch-video-status',
@@ -518,19 +510,19 @@ export const useStoryboard = () => {
       if (error) throw error;
 
       if (data.status === 'complete') {
-        toast.success('🎉 Video is ready!', { id: 'refresh-status' });
+        console.log('[useStoryboard] Video is ready');
         setIsRendering(false);
         setRenderingStartTime(null);
         queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
       } else if (data.status === 'failed') {
-        toast.error('Video rendering failed', { id: 'refresh-status' });
+        console.warn('[useStoryboard] Video rendering failed');
         setIsRendering(false);
         setRenderingStartTime(null);
       } else {
-        toast.info('Still rendering...', { id: 'refresh-status' });
+        console.log('[useStoryboard] Still rendering...');
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to check status', { id: 'refresh-status' });
+      console.error('[useStoryboard] Failed to check status:', error);
     }
   }, [currentStoryboardId, queryClient]);
 

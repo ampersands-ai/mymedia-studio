@@ -817,6 +817,7 @@ export type Database = {
           intro_voiceover_text: string | null
           media_type: string | null
           music_settings: Json | null
+          original_character_count: number | null
           render_job_id: string | null
           status: string
           style: string
@@ -870,6 +871,7 @@ export type Database = {
           intro_voiceover_text?: string | null
           media_type?: string | null
           music_settings?: Json | null
+          original_character_count?: number | null
           render_job_id?: string | null
           status?: string
           style: string
@@ -923,6 +925,7 @@ export type Database = {
           intro_voiceover_text?: string | null
           media_type?: string | null
           music_settings?: Json | null
+          original_character_count?: number | null
           render_job_id?: string | null
           status?: string
           style?: string

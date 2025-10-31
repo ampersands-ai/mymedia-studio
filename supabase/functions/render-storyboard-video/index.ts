@@ -59,8 +59,8 @@ serve(async (req) => {
       }
     }
 
-    // Calculate estimated duration based on voice-over text
-    // Estimate: ~2.5 words per second for text-to-speech
+    // Calculate estimated duration based on voice-over text (for logging purposes)
+    // Note: Actual pricing is now based on character count changes
     const countWords = (text: string) => text.trim().split(/\s+/).filter(w => w.length > 0).length;
     
     const introWords = storyboard.intro_voiceover_text ? countWords(storyboard.intro_voiceover_text) : 0;
@@ -70,15 +70,11 @@ serve(async (req) => {
     // Estimate duration in seconds (2.5 words per second)
     const estimatedDuration = Math.ceil(totalWords / 2.5);
     
-    // Actual cost: 0.25 credits per second of voiceover
-    const actualCost = estimatedDuration * 0.25;
-    const initialEstimate = storyboard.estimated_render_cost || (storyboard.duration * 0.25);
-    const costDifference = actualCost - initialEstimate;
-    
     console.log(`[render-storyboard-video] Estimated duration: ${estimatedDuration}s (${totalWords} words)`);
-    console.log(`[render-storyboard-video] Initial estimate: ${initialEstimate} credits, Actual cost: ${actualCost} credits, Difference: ${costDifference} credits`);
 
-    // Check user credit balance
+    // Get initial estimate and check user credit balance
+    const initialEstimate = storyboard.estimated_render_cost || (storyboard.duration * 0.25);
+    
     const { data: subscription, error: subError } = await supabaseClient
       .from('user_subscriptions')
       .select('tokens_remaining')
@@ -90,13 +86,47 @@ serve(async (req) => {
     }
 
     // Never charge more than initial estimate - lock in the original price
+    // Calculate pricing based on character changes
+    const countChars = (text: string) => text?.trim().length || 0;
+    
+    // Calculate current total character count
+    const introChars = countChars(storyboard.intro_voiceover_text || '');
+    const sceneChars = scenes.reduce((sum, scene) => sum + countChars(scene.voice_over_text), 0);
+    const currentTotalChars = introChars + sceneChars;
+    
+    // Get original character count
+    const originalChars = storyboard.original_character_count || currentTotalChars;
+    
+    // Calculate character difference
+    const charDifference = currentTotalChars - originalChars;
+    
+    console.log(`[render-storyboard-video] Character count - Original: ${originalChars}, Current: ${currentTotalChars}, Difference: ${charDifference}`);
+    
+    // Calculate actual cost based on character changes
+    let actualCost = initialEstimate;
+    
+    if (charDifference >= 100) {
+      // Script increased: add 0.25 credits per 100 chars
+      const additionalChunks = Math.floor(charDifference / 100);
+      actualCost += additionalChunks * 0.25;
+      console.log(`[render-storyboard-video] Script increased by ${charDifference} chars (${additionalChunks} chunks), adding ${(additionalChunks * 0.25).toFixed(2)} credits`);
+    } else if (charDifference <= -100) {
+      // Script decreased: reduce cost proportionally
+      const reducedChunks = Math.floor(Math.abs(charDifference) / 100);
+      actualCost -= reducedChunks * 0.25;
+      actualCost = Math.max(0, actualCost);
+      console.log(`[render-storyboard-video] Script decreased by ${Math.abs(charDifference)} chars (${reducedChunks} chunks), reducing ${(reducedChunks * 0.25).toFixed(2)} credits`);
+    }
+    
+    console.log(`[render-storyboard-video] Initial estimate: ${initialEstimate} credits, Actual cost: ${actualCost.toFixed(2)} credits`);
+    
     // If actual is lower, refund the difference
     // Note: User was already charged initialEstimate when storyboard was created
     
     if (actualCost < initialEstimate) {
       // Refund the difference
       const refundAmount = initialEstimate - actualCost;
-      console.log(`[render-storyboard-video] Refunding ${refundAmount.toFixed(2)} credits (locked at original estimate)`);
+      console.log(`[render-storyboard-video] Refunding ${refundAmount.toFixed(2)} credits`);
       
       const { error: refundError } = await supabaseClient.rpc('increment_tokens', {
         user_id_param: user.id,
@@ -108,8 +138,28 @@ serve(async (req) => {
         // Don't throw - continue with render even if refund fails
       }
     } else if (actualCost > initialEstimate) {
-      // Don't charge extra - honor the original quote
-      console.log(`[render-storyboard-video] Actual cost ${actualCost.toFixed(2)} exceeds estimate ${initialEstimate.toFixed(2)}, but honoring original quote`);
+      // Script increased - charge the difference
+      const additionalCharge = actualCost - initialEstimate;
+      
+      // Check if user has enough credits
+      if (subscription.tokens_remaining < additionalCharge) {
+        return new Response(
+          JSON.stringify({ error: `Insufficient credits. Script changes require ${additionalCharge.toFixed(2)} additional credits.` }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.log(`[render-storyboard-video] Charging ${additionalCharge.toFixed(2)} additional credits for script increase`);
+      
+      const { error: chargeError } = await supabaseClient.rpc('increment_tokens', {
+        user_id_param: user.id,
+        amount: -additionalCharge
+      });
+      
+      if (chargeError) {
+        console.error('[render-storyboard-video] Failed to charge additional credits:', chargeError);
+        throw new Error('Failed to charge additional credits');
+      }
     }
     
     // Update the actual cost in the storyboard
@@ -256,7 +306,7 @@ serve(async (req) => {
       const errorText = await json2videoResponse.text();
       console.error('[render-storyboard-video] JSON2Video API error:', json2videoResponse.status, errorText);
       
-      // Refund the initial estimate on API error
+      // Refund initial estimate (actual cost may have been higher due to script changes, but we limit refund to initial)
       await supabaseClient.rpc('increment_tokens', {
         user_id_param: user.id,
         amount: initialEstimate
@@ -288,7 +338,7 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('[render-storyboard-video] Status update error:', updateError);
-      // Refund the initial estimate
+      // Refund initial estimate (actual cost may have been higher, but we limit refund to initial)
       await supabaseClient.rpc('increment_tokens', {
         user_id_param: user.id,
         amount: initialEstimate

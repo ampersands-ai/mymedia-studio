@@ -79,24 +79,40 @@ export const StoryboardEditor = () => {
   const estimatedDuration = storyboard ? storyboard.duration : 0;
   const initialEstimate = storyboard?.estimated_render_cost || 0;
   
-  // Calculate actual render cost based on voiceover text (0.25 credits per second)
+  // Calculate actual render cost based on script character changes
   const calculateRenderCost = useCallback(() => {
     if (!storyboard) return 0;
     
-    const countWords = (text: string) => text?.trim().split(/\s+/).filter(w => w.length > 0).length || 0;
+    const countChars = (text: string) => text?.trim().length || 0;
     
-    const introWords = countWords(storyboard.intro_voiceover_text || '');
-    const sceneWords = scenes.reduce((sum, scene) => sum + countWords(scene.voice_over_text || ''), 0);
-    const totalWords = introWords + sceneWords;
+    // Calculate current total character count
+    const introChars = countChars(storyboard.intro_voiceover_text || '');
+    const sceneChars = scenes.reduce((sum, scene) => sum + countChars(scene.voice_over_text || ''), 0);
+    const currentTotalChars = introChars + sceneChars;
     
-    // Estimate duration in seconds (2.5 words per second)
-    const estimatedVoiceoverDuration = Math.ceil(totalWords / 2.5);
+    // Get original character count (stored at creation)
+    const originalChars = (storyboard as any).original_character_count || currentTotalChars;
     
-    // Cost: 0.25 credits per second
-    const cost = estimatedVoiceoverDuration * 0.25;
+    // Calculate character difference
+    const charDifference = currentTotalChars - originalChars;
+    
+    // Start with initial estimate
+    let cost = initialEstimate;
+    
+    // If script increased by 100+ characters, add 0.25 credits per 100 chars
+    if (charDifference >= 100) {
+      const additionalChunks = Math.floor(charDifference / 100);
+      cost += additionalChunks * 0.25;
+    }
+    // If script decreased by 100+ characters, reduce cost proportionally
+    else if (charDifference <= -100) {
+      const reducedChunks = Math.floor(Math.abs(charDifference) / 100);
+      cost -= reducedChunks * 0.25;
+      cost = Math.max(0, cost); // Never go below 0
+    }
     
     return cost;
-  }, [storyboard, scenes]);
+  }, [storyboard, scenes, initialEstimate]);
   
   const actualRenderCost = calculateRenderCost();
   const costDifference = actualRenderCost - initialEstimate;
@@ -153,9 +169,14 @@ export const StoryboardEditor = () => {
       return;
     }
 
-    // Note: User was already charged initialEstimate during storyboard creation
-    // At render time, we either refund (if actual < initial) or honor the quote (if actual > initial)
-    // No additional credit check needed here
+    // Check if script increased and user needs to pay additional credits
+    if (actualRenderCost > initialEstimate) {
+      const additionalCharge = actualRenderCost - initialEstimate;
+      if ((tokenData?.tokens_remaining || 0) < additionalCharge) {
+        toast.error(`Insufficient credits. Need ${additionalCharge.toFixed(2)} more credits for script changes.`);
+        return;
+      }
+    }
 
     await renderVideo();
   };
@@ -392,7 +413,7 @@ export const StoryboardEditor = () => {
             <AlertDialogTrigger asChild>
               <Button
                 size="lg"
-                disabled={isRendering}
+                disabled={isRendering || (actualRenderCost > initialEstimate && (tokenData?.tokens_remaining || 0) < (actualRenderCost - initialEstimate))}
                 className="bg-gradient-to-r from-primary via-primary to-primary/80 hover:scale-105 transition-transform font-bold"
               >
                 {isRendering ? (
@@ -427,36 +448,43 @@ export const StoryboardEditor = () => {
                           <span className="font-bold text-green-600">{actualRenderCost.toFixed(2)} credits</span>
                         </div>
                         <p className="text-xs text-green-600">
-                          {Math.abs(costDifference).toFixed(2)} credits will be refunded automatically!
+                          {Math.abs(costDifference).toFixed(2)} credits refund - script shortened!
+                        </p>
+                      </>
+                    ) : actualRenderCost > initialEstimate ? (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Originally charged:</span>
+                          <span>{initialEstimate.toFixed(2)} credits</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Script increase charge:</span>
+                          <span className="text-amber-600">+{costDifference.toFixed(2)} credits</span>
+                        </div>
+                        <div className="flex justify-between items-center pt-2 border-t">
+                          <span className="font-semibold">Total price:</span>
+                          <span className="font-bold">{actualRenderCost.toFixed(2)} credits</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Script expanded by {Math.floor(Math.abs(costDifference / 0.25) * 100)}+ characters
                         </p>
                       </>
                     ) : (
                       <>
-                        {actualRenderCost > initialEstimate && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-muted-foreground">Calculated cost:</span>
-                            <span className="line-through text-muted-foreground">{actualRenderCost.toFixed(2)} credits</span>
-                          </div>
-                        )}
                         <div className="flex justify-between items-center">
                           <span className="font-semibold">Final price:</span>
                           <span className="font-bold">{displayPrice.toFixed(2)} credits</span>
                         </div>
-                        {actualRenderCost > initialEstimate && (
-                          <p className="text-xs text-primary">
-                            Locked at your original quote - no extra charge!
-                          </p>
-                        )}
-                        {actualRenderCost === initialEstimate && (
-                          <p className="text-xs text-muted-foreground">
-                            Same as your original quote - already charged.
-                          </p>
-                        )}
+                        <p className="text-xs text-muted-foreground">
+                          Same as original - already charged.
+                        </p>
                       </>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground pt-2 border-t">
-                    Already charged at creation. Balance: {Number(tokenData?.tokens_remaining || 0).toFixed(2)} credits • Est. time: ~60s
+                    {actualRenderCost > initialEstimate && costDifference > (tokenData?.tokens_remaining || 0) 
+                      ? `Insufficient balance. Need ${costDifference.toFixed(2)} more credits.`
+                      : `Current balance: ${Number(tokenData?.tokens_remaining || 0).toFixed(2)} credits`} • Est. time: ~60s
                   </p>
                 </AlertDialogDescription>
               </AlertDialogHeader>

@@ -262,6 +262,17 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     
     console.log('[generate-storyboard] Successfully validated AI response with', scenes.length, 'scenes');
 
+    // Calculate original character count for pricing
+    const countChars = (text: string) => text?.trim().length || 0;
+    const introChars = countChars(introVoiceoverText || '');
+    const sceneChars = scenes.reduce((sum: number, scene: any) => {
+      const voiceText = scene.voiceOverText || scene.voice_over_text || '';
+      return sum + countChars(voiceText);
+    }, 0);
+    const originalCharacterCount = introChars + sceneChars;
+    
+    console.log('[generate-storyboard] Original character count:', originalCharacterCount, '(intro:', introChars, ', scenes:', sceneChars, ')');
+
     // Deduct tokens
     const { error: deductError } = await supabaseClient.rpc('increment_tokens', {
       user_id_param: user.id,
@@ -326,6 +337,7 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
         enable_cache: enableCache,
         draft_mode: draftMode,
         estimated_render_cost: tokenCost, // Store initial estimate for later comparison
+        original_character_count: originalCharacterCount, // Store original script length for pricing
       })
       .select()
       .single();

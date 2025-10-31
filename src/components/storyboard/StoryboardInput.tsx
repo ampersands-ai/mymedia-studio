@@ -1014,51 +1014,50 @@ export function StoryboardInput() {
                       </div>
                     </div>
 
-                    {/* Shadow Color */}
+                    {/* Shadow Offset */}
                     <div className="space-y-1.5">
-                      <Label className="text-xs">Shadow</Label>
-                      <Input
-                        type="color"
-                        value={subtitleShadowColor}
-                        onChange={(e) => setSubtitleShadowColor(e.target.value)}
-                        className="h-8 p-0.5 cursor-pointer"
-                      />
+                      <Label className="text-xs">Shadow Offset</Label>
+                      <div className="flex items-center gap-1">
+                        <Button 
+                          type="button"
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 w-8 p-0"
+                          onClick={() => setSubtitleShadowOffset(Math.max(0, subtitleShadowOffset - 1))}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <Input 
+                          type="number" 
+                          value={subtitleShadowOffset}
+                          onChange={(e) => setSubtitleShadowOffset(Number(e.target.value))}
+                          min={0}
+                          max={20}
+                          step={1}
+                          className="h-8 text-center text-xs"
+                        />
+                        <Button 
+                          type="button"
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 w-8 p-0"
+                          onClick={() => setSubtitleShadowOffset(Math.min(20, subtitleShadowOffset + 1))}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Shadow Offset - Full Width Below */}
+                  {/* Shadow Color - Full Width Below */}
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Shadow Offset</Label>
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        type="button"
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8 w-8 p-0"
-                        onClick={() => setSubtitleShadowOffset(Math.max(0, subtitleShadowOffset - 1))}
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <Input 
-                        type="number" 
-                        value={subtitleShadowOffset}
-                        onChange={(e) => setSubtitleShadowOffset(Number(e.target.value))}
-                        min={0}
-                        max={20}
-                        step={1}
-                        className="h-8 text-center text-xs"
-                      />
-                      <Button 
-                        type="button"
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8 w-8 p-0"
-                        onClick={() => setSubtitleShadowOffset(Math.min(20, subtitleShadowOffset + 1))}
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                      <span className="text-xs text-muted-foreground">{subtitleShadowOffset}px</span>
-                    </div>
+                    <Label className="text-xs">Shadow Color</Label>
+                    <Input
+                      type="color"
+                      value={subtitleShadowColor}
+                      onChange={(e) => setSubtitleShadowColor(e.target.value)}
+                      className="h-8 p-0.5 cursor-pointer"
+                    />
                   </div>
                 </div>
               </CollapsibleContent>

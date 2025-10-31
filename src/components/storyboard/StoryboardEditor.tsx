@@ -421,23 +421,23 @@ export const StoryboardEditor = () => {
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Voiceover & Advanced Settings - After scenes, before render */}
+      {/* Voice & Advanced Settings Review - After scenes, before render */}
       {!isRendering && (
         <Card className="p-6 space-y-6">
-          <h3 className="text-lg font-bold">🎙️ Pre-Render Settings</h3>
+          <h3 className="text-lg font-bold">🎙️ Voice & Advanced Settings</h3>
+          <p className="text-sm text-muted-foreground">
+            Review your video settings before rendering. These were configured during storyboard generation.
+          </p>
           
-          {/* Voice Selection */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Voiceover Voice</Label>
-            <div className="text-sm text-muted-foreground mb-2">
-              Current: {storyboard?.voice_name || 'Not set'}
+          {/* Voice Selection - Read Only */}
+          <div className="space-y-2 p-4 bg-muted/30 rounded-lg border">
+            <Label className="text-sm font-semibold">Voiceover Voice</Label>
+            <div className="text-sm">
+              {storyboard?.voice_name || 'Not set'}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Voiceover cannot be changed after storyboard generation. To use a different voice, create a new storyboard.
-            </p>
           </div>
 
-          {/* Advanced Settings (excluding Resolution) */}
+          {/* Advanced Settings Display */}
           <Collapsible className="space-y-4">
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between -ml-4" type="button">
@@ -446,10 +446,94 @@ export const StoryboardEditor = () => {
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-4 pt-4 border-t">
-              <div className="text-sm text-muted-foreground">
-                Advanced video settings (quality, subtitles, music) cannot be changed after storyboard generation.
-                To modify these settings, create a new storyboard with your desired configuration.
+              <div className="space-y-2 p-4 bg-muted/30 rounded-lg border">
+                <Label className="text-sm font-semibold">Video Quality</Label>
+                <div className="text-sm capitalize">
+                  {storyboard?.video_quality || 'High'}
+                </div>
               </div>
+
+              {/* Subtitle Settings */}
+              <Collapsible className="space-y-3">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-full justify-between -ml-4" type="button">
+                    <span className="text-sm font-medium">📝 Subtitle Settings</span>
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-3 pl-4">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Style:</span>{' '}
+                      <span className="capitalize">{storyboard?.subtitle_settings?.style || 'boxed-word'}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Font:</span>{' '}
+                      <span>{storyboard?.subtitle_settings?.fontFamily || 'Oswald Bold'}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Size:</span>{' '}
+                      <span>{storyboard?.subtitle_settings?.fontSize || 140}px</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Position:</span>{' '}
+                      <span className="capitalize">{storyboard?.subtitle_settings?.position?.replace('-', ' ') || 'mid-bottom center'}</span>
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
+              {/* Audio Settings */}
+              <Collapsible className="space-y-3">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-full justify-between -ml-4" type="button">
+                    <span className="text-sm font-medium">🎵 Audio Settings</span>
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-3 pl-4">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Music Volume:</span>{' '}
+                      <span>{Math.round((storyboard?.music_settings?.volume || 0.05) * 100)}%</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Fade In:</span>{' '}
+                      <span>{storyboard?.music_settings?.fadeIn || 2}s</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Fade Out:</span>{' '}
+                      <span>{storyboard?.music_settings?.fadeOut || 2}s</span>
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
+              {/* Image Animation */}
+              <Collapsible className="space-y-3">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-full justify-between -ml-4" type="button">
+                    <span className="text-sm font-medium">🎬 Image Animation</span>
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-3 pl-4">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Zoom Level:</span>{' '}
+                      <span>{(storyboard?.image_animation_settings?.zoom || 2).toFixed(1)}x</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Position:</span>{' '}
+                      <span className="capitalize">{storyboard?.image_animation_settings?.position?.replace('-', ' ') || 'center center'}</span>
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
+              <p className="text-xs text-muted-foreground pt-2 border-t">
+                💡 To change these settings, create a new storyboard with your desired configuration.
+              </p>
             </CollapsibleContent>
           </Collapsible>
         </Card>

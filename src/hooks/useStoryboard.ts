@@ -38,6 +38,24 @@ interface Storyboard {
   created_at: string;
   updated_at: string;
   completed_at?: string;
+  video_quality?: string;
+  subtitle_settings?: {
+    style?: string;
+    fontFamily?: string;
+    fontSize?: number;
+    position?: string;
+    [key: string]: any;
+  };
+  music_settings?: {
+    volume?: number;
+    fadeIn?: number;
+    fadeOut?: number;
+    [key: string]: any;
+  };
+  image_animation_settings?: {
+    zoom?: number;
+    position?: string;
+  };
 }
 
 interface StoryboardInput {

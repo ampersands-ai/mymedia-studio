@@ -76,7 +76,12 @@ export const StoryboardEditor = () => {
 
   const activeScene = scenes.find(s => s.id === activeSceneId) || scenes[0];
   const estimatedDuration = storyboard ? storyboard.duration : 0;
-  const initialEstimate = storyboard?.estimated_render_cost || 0;
+  // Sanitize wildly incorrect estimates (e.g., legacy 800 credits)
+  const rawEstimate = storyboard?.estimated_render_cost ?? 0;
+  const expectedEstimate = (storyboard?.duration || 0) * 0.25; // 0.25 credits/sec
+  const initialEstimate = (!Number.isFinite(rawEstimate) || rawEstimate <= 0 || rawEstimate > Math.max(100, expectedEstimate * 10))
+    ? expectedEstimate
+    : rawEstimate;
   
   // Calculate actual render cost based on script character changes
   const calculateRenderCost = useCallback(() => {
@@ -270,8 +275,8 @@ export const StoryboardEditor = () => {
         <h3 className="text-lg font-bold">📋 Scenes</h3>
         
         {/* Title/Intro Scene (Scene 1) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-          <Card className="relative p-4 bg-primary/5 backdrop-blur-xl border-2 border-primary/30">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+          <Card className="relative p-4 bg-primary/5 backdrop-blur-xl border-2 border-primary/30 lg:col-span-2 h-full">
             <div className="flex items-center justify-between mb-4">
               <div className="px-2 py-1 rounded-md bg-primary/30 text-primary text-xs font-bold">
                 Scene 1 - Title
@@ -300,32 +305,38 @@ export const StoryboardEditor = () => {
               />
             </div>
           </Card>
-          <ScenePreviewGenerator
-            scene={{
-              id: storyboard.id,
-              image_prompt: introImagePrompt,
-              image_preview_url: storyboard.intro_image_preview_url,
-            }}
-            sceneNumber={1}
-            onImageGenerated={handleImageGenerated}
-          />
+          <div className="lg:col-span-1 h-full">
+            <ScenePreviewGenerator
+              scene={{
+                id: storyboard.id,
+                image_prompt: introImagePrompt,
+                image_preview_url: storyboard.intro_image_preview_url,
+              }}
+              sceneNumber={1}
+              onImageGenerated={handleImageGenerated}
+            />
+          </div>
         </div>
 
         {scenes.map((scene, idx) => (
-          <div key={scene.id} className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-            <SceneCard
-              scene={scene}
-              sceneNumber={idx + 2}
-              isActive={activeSceneId === scene.id}
-              onUpdate={updateScene}
-              onRegenerate={regenerateScene}
-              onClick={() => setActiveScene(scene.id)}
-            />
-            <ScenePreviewGenerator
-              scene={scene}
-              sceneNumber={idx + 2}
-              onImageGenerated={handleImageGenerated}
-            />
+          <div key={scene.id} className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+            <div className="lg:col-span-2 h-full">
+              <SceneCard
+                scene={scene}
+                sceneNumber={idx + 2}
+                isActive={activeSceneId === scene.id}
+                onUpdate={updateScene}
+                onRegenerate={regenerateScene}
+                onClick={() => setActiveScene(scene.id)}
+              />
+            </div>
+            <div className="lg:col-span-1 h-full">
+              <ScenePreviewGenerator
+                scene={scene}
+                sceneNumber={idx + 2}
+                onImageGenerated={handleImageGenerated}
+              />
+            </div>
           </div>
         ))}
       </div>

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -193,13 +194,71 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
 
     const aiData = await aiResponse.json();
     const content = aiData.choices[0].message.content;
-    const parsedContent = JSON.parse(content);
     
-    if (!parsedContent.variables || !parsedContent.variables.scenes) {
-      throw new Error('Invalid AI response format');
+    console.log('[generate-storyboard] Raw AI response content:', content);
+    
+    let parsedContent;
+    try {
+      parsedContent = JSON.parse(content);
+      console.log('[generate-storyboard] Parsed AI response structure:', JSON.stringify(Object.keys(parsedContent), null, 2));
+    } catch (parseError) {
+      console.error('[generate-storyboard] JSON parse error:', parseError);
+      throw new Error(`Failed to parse AI response as JSON: ${parseError instanceof Error ? parseError.message : 'Unknown parse error'}`);
     }
-
-    const { introImagePrompt, introVoiceoverText, scenes } = parsedContent.variables;
+    
+    // Try multiple possible response formats
+    let introImagePrompt, introVoiceoverText, scenes;
+    
+    if (parsedContent.variables?.scenes) {
+      // Format 1: Expected format with nested variables
+      console.log('[generate-storyboard] Using nested variables format');
+      ({ introImagePrompt, introVoiceoverText, scenes } = parsedContent.variables);
+    } else if (parsedContent.scenes) {
+      // Format 2: Scenes at root level
+      console.log('[generate-storyboard] Using root level scenes format');
+      scenes = parsedContent.scenes;
+      introImagePrompt = parsedContent.introImagePrompt || parsedContent.intro_image_prompt;
+      introVoiceoverText = parsedContent.introVoiceoverText || parsedContent.intro_voiceover_text;
+    } else if (parsedContent.data?.scenes) {
+      // Format 3: Nested under data
+      console.log('[generate-storyboard] Using data.scenes format');
+      scenes = parsedContent.data.scenes;
+      introImagePrompt = parsedContent.data.introImagePrompt || parsedContent.data.intro_image_prompt;
+      introVoiceoverText = parsedContent.data.introVoiceoverText || parsedContent.data.intro_voiceover_text;
+    } else {
+      console.error('[generate-storyboard] Unknown response structure:', JSON.stringify(parsedContent, null, 2));
+      throw new Error(`Invalid AI response format. Expected 'scenes' array but got: ${JSON.stringify(Object.keys(parsedContent))}`);
+    }
+    
+    // Validate scenes array
+    if (!Array.isArray(scenes) || scenes.length === 0) {
+      console.error('[generate-storyboard] Invalid scenes array:', scenes);
+      throw new Error(`Invalid scenes array. Expected array with ${sceneCount} scenes, got: ${scenes ? scenes.length : 'null'}`);
+    }
+    
+    if (scenes.length !== sceneCount) {
+      console.warn(`[generate-storyboard] Scene count mismatch. Expected ${sceneCount}, got ${scenes.length}`);
+    }
+    
+    // Validate required scene properties
+    const invalidScenes = scenes.filter((scene: any, index: number) => {
+      const hasVoiceOver = scene.voiceOverText || scene.voice_over_text;
+      const hasMedia = mediaType === 'video' 
+        ? (scene.videoSearchQuery || scene.video_search_query)
+        : (scene.imagePrompt || scene.image_prompt);
+      
+      if (!hasVoiceOver || !hasMedia) {
+        console.error(`[generate-storyboard] Scene ${index + 1} missing required fields:`, scene);
+        return true;
+      }
+      return false;
+    });
+    
+    if (invalidScenes.length > 0) {
+      throw new Error(`${invalidScenes.length} scenes missing required fields (voiceOverText and ${mediaType === 'video' ? 'videoSearchQuery' : 'imagePrompt'})`);
+    }
+    
+    console.log('[generate-storyboard] Successfully validated AI response with', scenes.length, 'scenes');
 
     // Deduct tokens
     const { error: deductError } = await supabaseClient.rpc('increment_tokens', {
@@ -308,11 +367,6 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     );
 
   } catch (error) {
-    console.error('Error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createSafeErrorResponse(error, 'generate-storyboard', corsHeaders);
   }
 });

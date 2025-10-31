@@ -765,7 +765,18 @@ export type Database = {
           render_job_id: string | null
           status: string
           style: string
+          subtitle_all_caps: boolean | null
+          subtitle_box_color: string | null
+          subtitle_font_family: string | null
+          subtitle_language: string | null
+          subtitle_line_color: string | null
+          subtitle_max_words_per_line: number | null
+          subtitle_model: string | null
           subtitle_settings: Json | null
+          subtitle_shadow_color: string | null
+          subtitle_shadow_offset: number | null
+          subtitle_style: string | null
+          subtitle_word_color: string | null
           subtitles_model: string | null
           template_id: string | null
           tokens_cost: number | null
@@ -805,7 +816,18 @@ export type Database = {
           render_job_id?: string | null
           status?: string
           style: string
+          subtitle_all_caps?: boolean | null
+          subtitle_box_color?: string | null
+          subtitle_font_family?: string | null
+          subtitle_language?: string | null
+          subtitle_line_color?: string | null
+          subtitle_max_words_per_line?: number | null
+          subtitle_model?: string | null
           subtitle_settings?: Json | null
+          subtitle_shadow_color?: string | null
+          subtitle_shadow_offset?: number | null
+          subtitle_style?: string | null
+          subtitle_word_color?: string | null
           subtitles_model?: string | null
           template_id?: string | null
           tokens_cost?: number | null
@@ -845,7 +867,18 @@ export type Database = {
           render_job_id?: string | null
           status?: string
           style?: string
+          subtitle_all_caps?: boolean | null
+          subtitle_box_color?: string | null
+          subtitle_font_family?: string | null
+          subtitle_language?: string | null
+          subtitle_line_color?: string | null
+          subtitle_max_words_per_line?: number | null
+          subtitle_model?: string | null
           subtitle_settings?: Json | null
+          subtitle_shadow_color?: string | null
+          subtitle_shadow_offset?: number | null
+          subtitle_style?: string | null
+          subtitle_word_color?: string | null
           subtitles_model?: string | null
           template_id?: string | null
           tokens_cost?: number | null

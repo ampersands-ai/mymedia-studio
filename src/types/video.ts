@@ -84,4 +84,19 @@ export interface StoryboardInput {
   backgroundMusicVolume?: number;
   customWidth?: number;
   customHeight?: number;
+  subtitleLanguage?: string;
+  subtitleModel?: string;
+  subtitleStyle?: string;
+  subtitleFontFamily?: string;
+  subtitlePosition?: string;
+  subtitleFontSize?: number;
+  subtitleAllCaps?: boolean;
+  subtitleBoxColor?: string;
+  subtitleLineColor?: string;
+  subtitleWordColor?: string;
+  subtitleOutlineColor?: string;
+  subtitleOutlineWidth?: number;
+  subtitleShadowColor?: string;
+  subtitleShadowOffset?: number;
+  subtitleMaxWordsPerLine?: number;
 }

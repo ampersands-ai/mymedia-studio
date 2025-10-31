@@ -162,11 +162,22 @@ export function StoryboardInput() {
   const [customWidth, setCustomWidth] = useState(draft?.customWidth || 1920);
   const [customHeight, setCustomHeight] = useState(draft?.customHeight || 1080);
   
-  // Subtitle settings
+  // Subtitle settings (comprehensive)
+  const [subtitleLanguage, setSubtitleLanguage] = useState(draft?.subtitleLanguage || 'auto');
+  const [subtitleModel, setSubtitleModel] = useState(draft?.subtitleModel || 'default');
+  const [subtitleStyle, setSubtitleStyle] = useState(draft?.subtitleStyle || 'boxed-word');
+  const [subtitleFontFamily, setSubtitleFontFamily] = useState(draft?.subtitleFontFamily || 'Oswald Bold');
   const [subtitlePosition, setSubtitlePosition] = useState(draft?.subtitlePosition || 'mid-bottom-center');
   const [subtitleFontSize, setSubtitleFontSize] = useState(draft?.subtitleFontSize || 140);
+  const [subtitleAllCaps, setSubtitleAllCaps] = useState(draft?.subtitleAllCaps ?? false);
+  const [subtitleBoxColor, setSubtitleBoxColor] = useState(draft?.subtitleBoxColor || '#000000');
+  const [subtitleLineColor, setSubtitleLineColor] = useState(draft?.subtitleLineColor || '#FFFFFF');
+  const [subtitleWordColor, setSubtitleWordColor] = useState(draft?.subtitleWordColor || '#FFFF00');
   const [subtitleOutlineColor, setSubtitleOutlineColor] = useState(draft?.subtitleOutlineColor || '#000000');
   const [subtitleOutlineWidth, setSubtitleOutlineWidth] = useState(draft?.subtitleOutlineWidth || 8);
+  const [subtitleShadowColor, setSubtitleShadowColor] = useState(draft?.subtitleShadowColor || '#000000');
+  const [subtitleShadowOffset, setSubtitleShadowOffset] = useState(draft?.subtitleShadowOffset || 0);
+  const [subtitleMaxWordsPerLine, setSubtitleMaxWordsPerLine] = useState(draft?.subtitleMaxWordsPerLine || 4);
   
   // Audio settings
   const [musicVolume, setMusicVolume] = useState(draft?.musicVolume || 0.05);
@@ -189,18 +200,22 @@ export function StoryboardInput() {
     const timer = setTimeout(() => {
       const draftData = {
         topic, duration, style, tone, voiceID, mediaType, backgroundMusicUrl,
-        backgroundMusicVolume, aspectRatio, videoQuality, subtitlePosition,
-        subtitleFontSize, subtitleOutlineColor, subtitleOutlineWidth, musicVolume,
-        musicFadeIn, musicFadeOut, imageZoom, imagePosition, enableCache, draftMode,
+        backgroundMusicVolume, aspectRatio, videoQuality, subtitleLanguage, subtitleModel,
+        subtitleStyle, subtitleFontFamily, subtitlePosition, subtitleFontSize, subtitleAllCaps,
+        subtitleBoxColor, subtitleLineColor, subtitleWordColor, subtitleOutlineColor,
+        subtitleOutlineWidth, subtitleShadowColor, subtitleShadowOffset, subtitleMaxWordsPerLine,
+        musicVolume, musicFadeIn, musicFadeOut, imageZoom, imagePosition, enableCache, draftMode,
         customWidth, customHeight
       };
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
     }, 500);
     return () => clearTimeout(timer);
   }, [topic, duration, style, tone, voiceID, mediaType, backgroundMusicUrl, backgroundMusicVolume,
-      aspectRatio, videoQuality, subtitlePosition, subtitleFontSize, subtitleOutlineColor,
-      subtitleOutlineWidth, musicVolume, musicFadeIn, musicFadeOut, imageZoom, imagePosition,
-      enableCache, draftMode, customWidth, customHeight]);
+      aspectRatio, videoQuality, subtitleLanguage, subtitleModel, subtitleStyle, subtitleFontFamily,
+      subtitlePosition, subtitleFontSize, subtitleAllCaps, subtitleBoxColor, subtitleLineColor,
+      subtitleWordColor, subtitleOutlineColor, subtitleOutlineWidth, subtitleShadowColor,
+      subtitleShadowOffset, subtitleMaxWordsPerLine, musicVolume, musicFadeIn, musicFadeOut,
+      imageZoom, imagePosition, enableCache, draftMode, customWidth, customHeight]);
 
   const estimatedCost = 250;
   const canGenerate = topic.length >= 5 && topic.length <= 500 && (tokenData?.tokens_remaining || 0) >= estimatedCost;
@@ -288,10 +303,21 @@ export function StoryboardInput() {
     setVideoQuality('high');
     setCustomWidth(1920);
     setCustomHeight(1080);
+    setSubtitleLanguage('auto');
+    setSubtitleModel('default');
+    setSubtitleStyle('boxed-word');
+    setSubtitleFontFamily('Oswald Bold');
     setSubtitlePosition('mid-bottom-center');
     setSubtitleFontSize(140);
+    setSubtitleAllCaps(false);
+    setSubtitleBoxColor('#000000');
+    setSubtitleLineColor('#FFFFFF');
+    setSubtitleWordColor('#FFFF00');
     setSubtitleOutlineColor('#000000');
     setSubtitleOutlineWidth(8);
+    setSubtitleShadowColor('#000000');
+    setSubtitleShadowOffset(0);
+    setSubtitleMaxWordsPerLine(4);
     setMusicVolume(0.05);
     setMusicFadeIn(2);
     setMusicFadeOut(2);
@@ -337,10 +363,21 @@ export function StoryboardInput() {
       customWidth: aspectRatio === 'custom' ? customWidth : undefined,
       customHeight: aspectRatio === 'custom' ? customHeight : undefined,
       subtitleSettings: {
+        language: subtitleLanguage,
+        model: subtitleModel,
+        style: subtitleStyle,
+        'font-family': subtitleFontFamily,
+        'font-size': subtitleFontSize,
+        'all-caps': subtitleAllCaps,
+        'box-color': subtitleBoxColor,
+        'line-color': subtitleLineColor,
+        'word-color': subtitleWordColor,
         position: subtitlePosition,
-        fontSize: subtitleFontSize,
-        outlineColor: subtitleOutlineColor,
-        outlineWidth: subtitleOutlineWidth,
+        'outline-color': subtitleOutlineColor,
+        'outline-width': subtitleOutlineWidth,
+        'shadow-color': subtitleShadowColor,
+        'shadow-offset': subtitleShadowOffset,
+        'max-words-per-line': subtitleMaxWordsPerLine,
       },
       musicSettings: {
         volume: musicVolume,
@@ -739,6 +776,150 @@ export function StoryboardInput() {
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-4">
+                {/* Language */}
+                <div className="space-y-2">
+                  <Label>Language</Label>
+                  <Select value={subtitleLanguage} onValueChange={setSubtitleLanguage}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <SelectItem value="auto">Auto-detect</SelectItem>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="en-US">English (US)</SelectItem>
+                      <SelectItem value="en-GB">English (UK)</SelectItem>
+                      <SelectItem value="en-AU">English (Australia)</SelectItem>
+                      <SelectItem value="es">Spanish</SelectItem>
+                      <SelectItem value="es-419">Spanish (Latin America)</SelectItem>
+                      <SelectItem value="fr">French</SelectItem>
+                      <SelectItem value="de">German</SelectItem>
+                      <SelectItem value="de-CH">German (Switzerland)</SelectItem>
+                      <SelectItem value="it">Italian</SelectItem>
+                      <SelectItem value="pt">Portuguese</SelectItem>
+                      <SelectItem value="pt-BR">Portuguese (Brazil)</SelectItem>
+                      <SelectItem value="zh">Chinese (Simplified)</SelectItem>
+                      <SelectItem value="zh-TW">Chinese (Traditional)</SelectItem>
+                      <SelectItem value="ja">Japanese</SelectItem>
+                      <SelectItem value="ko">Korean</SelectItem>
+                      <SelectItem value="hi">Hindi</SelectItem>
+                      <SelectItem value="hi-Latn">Hindi (Latin)</SelectItem>
+                      <SelectItem value="ru">Russian</SelectItem>
+                      <SelectItem value="bg">Bulgarian</SelectItem>
+                      <SelectItem value="ca">Catalan</SelectItem>
+                      <SelectItem value="cs">Czech</SelectItem>
+                      <SelectItem value="da">Danish</SelectItem>
+                      <SelectItem value="nl">Dutch</SelectItem>
+                      <SelectItem value="nl-BE">Dutch (Belgium)</SelectItem>
+                      <SelectItem value="et">Estonian</SelectItem>
+                      <SelectItem value="fi">Finnish</SelectItem>
+                      <SelectItem value="el">Greek</SelectItem>
+                      <SelectItem value="hu">Hungarian</SelectItem>
+                      <SelectItem value="id">Indonesian</SelectItem>
+                      <SelectItem value="lv">Latvian</SelectItem>
+                      <SelectItem value="lt">Lithuanian</SelectItem>
+                      <SelectItem value="ms">Malay</SelectItem>
+                      <SelectItem value="no">Norwegian</SelectItem>
+                      <SelectItem value="pl">Polish</SelectItem>
+                      <SelectItem value="ro">Romanian</SelectItem>
+                      <SelectItem value="sk">Slovak</SelectItem>
+                      <SelectItem value="sv">Swedish</SelectItem>
+                      <SelectItem value="th">Thai</SelectItem>
+                      <SelectItem value="tr">Turkish</SelectItem>
+                      <SelectItem value="uk">Ukrainian</SelectItem>
+                      <SelectItem value="vi">Vietnamese</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Auto-detect recommended for best accuracy
+                  </p>
+                </div>
+
+                {/* Model */}
+                <div className="space-y-2">
+                  <Label>Transcription Model</Label>
+                  <Select value={subtitleModel} onValueChange={setSubtitleModel}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Default (Fast & accurate)</SelectItem>
+                      <SelectItem value="whisper">Whisper (OpenAI model)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Style */}
+                <div className="space-y-2">
+                  <Label>Subtitle Style</Label>
+                  <Select value={subtitleStyle} onValueChange={setSubtitleStyle}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="classic">Classic (Simple text)</SelectItem>
+                      <SelectItem value="classic-progressive">Classic Progressive (Word by word)</SelectItem>
+                      <SelectItem value="classic-one-word">Classic One Word (One word at a time)</SelectItem>
+                      <SelectItem value="boxed-line">Boxed Line (Full line in box)</SelectItem>
+                      <SelectItem value="boxed-word">Boxed Word (Each word in box) ⭐</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Boxed styles highlight words as they're spoken
+                  </p>
+                </div>
+
+                {/* Font Family */}
+                <div className="space-y-2">
+                  <Label>Font Family</Label>
+                  <Select value={subtitleFontFamily} onValueChange={setSubtitleFontFamily}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <SelectItem value="Arial">Arial</SelectItem>
+                      <SelectItem value="Arial Bold">Arial Bold</SelectItem>
+                      <SelectItem value="Oswald">Oswald</SelectItem>
+                      <SelectItem value="Oswald Bold">Oswald Bold ⭐</SelectItem>
+                      <SelectItem value="Roboto">Roboto</SelectItem>
+                      <SelectItem value="Nunito">Nunito</SelectItem>
+                      <SelectItem value="Lobster">Lobster</SelectItem>
+                      <SelectItem value="Pacifico">Pacifico</SelectItem>
+                      <SelectItem value="Permanent Marker">Permanent Marker</SelectItem>
+                      <SelectItem value="Comic Neue">Comic Neue</SelectItem>
+                      <SelectItem value="Fredericka the Great">Fredericka the Great</SelectItem>
+                      <SelectItem value="Libre Baskerville">Libre Baskerville</SelectItem>
+                      <SelectItem value="Luckiest Guy">Luckiest Guy</SelectItem>
+                      <SelectItem value="Nanum Pen Script">Nanum Pen Script</SelectItem>
+                      <SelectItem value="Orelega One">Orelega One</SelectItem>
+                      <SelectItem value="Shrikhand">Shrikhand</SelectItem>
+                      <SelectItem value="Katibeh">Katibeh</SelectItem>
+                      <SelectItem value="Lalezar">Lalezar</SelectItem>
+                      <SelectItem value="NotoSans Bold">NotoSans Bold</SelectItem>
+                      <SelectItem value="Simplified Chinese">Simplified Chinese</SelectItem>
+                      <SelectItem value="Traditional Chinese">Traditional Chinese</SelectItem>
+                      <SelectItem value="Japanese">Japanese</SelectItem>
+                      <SelectItem value="Korean">Korean</SelectItem>
+                      <SelectItem value="Korean Bold">Korean Bold</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Font Size */}
+                <div className="space-y-2">
+                  <Label>Font Size: {subtitleFontSize}px</Label>
+                  <Slider
+                    value={[subtitleFontSize]}
+                    onValueChange={([value]) => setSubtitleFontSize(value)}
+                    min={90}
+                    max={200}
+                    step={10}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Typical sizes: 90-150px
+                  </p>
+                </div>
+
+                {/* Position */}
                 <div className="space-y-2">
                   <Label>Position</Label>
                   <Select value={subtitlePosition} onValueChange={setSubtitlePosition}>
@@ -746,26 +927,82 @@ export function StoryboardInput() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="top-left">Top Left</SelectItem>
                       <SelectItem value="top-center">Top Center</SelectItem>
-                      <SelectItem value="mid-center">Mid Center</SelectItem>
-                      <SelectItem value="mid-bottom-center">Mid-Bottom Center</SelectItem>
+                      <SelectItem value="top-right">Top Right</SelectItem>
+                      <SelectItem value="mid-top-center">Mid-Top Center</SelectItem>
+                      <SelectItem value="center-left">Center Left</SelectItem>
+                      <SelectItem value="center-center">Center Center</SelectItem>
+                      <SelectItem value="center-right">Center Right</SelectItem>
+                      <SelectItem value="mid-bottom-center">Mid-Bottom Center ⭐</SelectItem>
+                      <SelectItem value="bottom-left">Bottom Left</SelectItem>
                       <SelectItem value="bottom-center">Bottom Center</SelectItem>
+                      <SelectItem value="bottom-right">Bottom Right</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
+                {/* Max Words Per Line */}
                 <div className="space-y-2">
-                  <Label>Font Size: {subtitleFontSize}px</Label>
+                  <Label>Max Words Per Line: {subtitleMaxWordsPerLine}</Label>
                   <Slider
-                    value={[subtitleFontSize]}
-                    onValueChange={([value]) => setSubtitleFontSize(value)}
-                    min={100}
-                    max={200}
-                    step={10}
+                    value={[subtitleMaxWordsPerLine]}
+                    onValueChange={([value]) => setSubtitleMaxWordsPerLine(value)}
+                    min={1}
+                    max={10}
+                    step={1}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Set to 1 for one word at a time
+                  </p>
+                </div>
+
+                {/* All Caps Toggle */}
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <Label className="cursor-pointer">Uppercase Text</Label>
+                  <input
+                    type="checkbox"
+                    checked={subtitleAllCaps}
+                    onChange={(e) => setSubtitleAllCaps(e.target.checked)}
+                    className="h-4 w-4 cursor-pointer"
                   />
                 </div>
 
+                {/* Color Settings */}
                 <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Current Word Color</Label>
+                    <Input
+                      type="color"
+                      value={subtitleWordColor}
+                      onChange={(e) => setSubtitleWordColor(e.target.value)}
+                      className="h-10"
+                    />
+                    <p className="text-xs text-muted-foreground">Word being spoken</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Other Words Color</Label>
+                    <Input
+                      type="color"
+                      value={subtitleLineColor}
+                      onChange={(e) => setSubtitleLineColor(e.target.value)}
+                      className="h-10"
+                    />
+                    <p className="text-xs text-muted-foreground">Rest of sentence</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Box/Background Color</Label>
+                    <Input
+                      type="color"
+                      value={subtitleBoxColor}
+                      onChange={(e) => setSubtitleBoxColor(e.target.value)}
+                      className="h-10"
+                    />
+                    <p className="text-xs text-muted-foreground">Behind subtitles</p>
+                  </div>
+
                   <div className="space-y-2">
                     <Label>Outline Color</Label>
                     <Input
@@ -775,14 +1012,39 @@ export function StoryboardInput() {
                       className="h-10"
                     />
                   </div>
+                </div>
+
+                {/* Outline Width */}
+                <div className="space-y-2">
+                  <Label>Outline Width: {subtitleOutlineWidth}px</Label>
+                  <Slider
+                    value={[subtitleOutlineWidth]}
+                    onValueChange={([value]) => setSubtitleOutlineWidth(value)}
+                    min={0}
+                    max={12}
+                    step={1}
+                  />
+                </div>
+
+                {/* Shadow Settings */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Shadow Color</Label>
+                    <Input
+                      type="color"
+                      value={subtitleShadowColor}
+                      onChange={(e) => setSubtitleShadowColor(e.target.value)}
+                      className="h-10"
+                    />
+                  </div>
 
                   <div className="space-y-2">
-                    <Label>Outline Width: {subtitleOutlineWidth}px</Label>
+                    <Label>Shadow Offset: {subtitleShadowOffset}px</Label>
                     <Slider
-                      value={[subtitleOutlineWidth]}
-                      onValueChange={([value]) => setSubtitleOutlineWidth(value)}
-                      min={4}
-                      max={12}
+                      value={[subtitleShadowOffset]}
+                      onValueChange={([value]) => setSubtitleShadowOffset(value)}
+                      min={0}
+                      max={20}
                       step={1}
                     />
                   </div>

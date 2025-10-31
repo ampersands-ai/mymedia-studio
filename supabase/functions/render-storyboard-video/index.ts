@@ -127,14 +127,22 @@ serve(async (req) => {
       elements: [
         {
           type: 'subtitles',
-          model: storyboard.subtitles_model || 'default',
-          language: 'auto',
-          settings: storyboard.subtitle_settings || {
-            'font-size': 140,
-            'font-family': storyboard.font_family || 'Oswald Bold',
-            'position': 'mid-bottom-center',
-            'outline-color': '#000000',
-            'outline-width': 8
+          model: storyboard.subtitle_model || 'default',
+          language: storyboard.subtitle_language || 'auto',
+          settings: {
+            'style': storyboard.subtitle_style || 'boxed-word',
+            'font-family': storyboard.subtitle_font_family || 'Oswald Bold',
+            'font-size': storyboard.subtitle_settings?.fontSize || 140,
+            'all-caps': storyboard.subtitle_all_caps ?? false,
+            'box-color': storyboard.subtitle_box_color || '#000000',
+            'line-color': storyboard.subtitle_line_color || '#FFFFFF',
+            'word-color': storyboard.subtitle_word_color || '#FFFF00',
+            'position': storyboard.subtitle_settings?.position || 'mid-bottom-center',
+            'outline-color': storyboard.subtitle_settings?.outlineColor || '#000000',
+            'outline-width': storyboard.subtitle_settings?.outlineWidth || 8,
+            'shadow-color': storyboard.subtitle_shadow_color || '#000000',
+            'shadow-offset': storyboard.subtitle_shadow_offset || 0,
+            'max-words-per-line': storyboard.subtitle_max_words_per_line || 4,
           },
         },
         {

@@ -434,12 +434,22 @@ serve(async (req) => {
 
       console.log('Uploaded to storage:', storagePath);
 
+      // Generate public URL since bucket is public
+      const { data: urlData } = await supabase
+        .storage
+        .from('generated-content')
+        .getPublicUrl(storagePath);
+
+      const publicUrl = urlData?.publicUrl || null;
+      console.log('Generated public URL:', publicUrl);
+
       // Update generation record to completed
       const { error: updateError } = await supabase
         .from('generations')
         .update({
           status: 'completed',
           storage_path: storagePath,
+          output_url: publicUrl,
           file_size_bytes: output_data.length,
           provider_response: {
             ...payload,

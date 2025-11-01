@@ -13,11 +13,12 @@ interface GenerationParams {
 
 interface GenerationResult {
   id: string;
-  output_url: string;
+  output_url?: string; // Optional for async generations
   tokens_used: number;
   status: string;
   content_type: string;
   enhanced: boolean;
+  is_async?: boolean; // Flag to indicate async generation
 }
 
 export const useGeneration = () => {

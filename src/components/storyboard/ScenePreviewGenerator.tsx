@@ -6,6 +6,7 @@ import { Loader2, Sparkles, RefreshCw, Image as ImageIcon } from 'lucide-react';
 import { useGeneration } from '@/hooks/useGeneration';
 import { useModels } from '@/hooks/useModels';
 import { useUserTokens } from '@/hooks/useUserTokens';
+import { useGenerationPolling } from '@/hooks/useGenerationPolling';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -26,17 +27,24 @@ export const ScenePreviewGenerator = ({
   sceneNumber,
   onImageGenerated,
 }: ScenePreviewGeneratorProps) => {
-  const [selectedModelId, setSelectedModelId] = useState<string>('runware:100@1"');
+  const [selectedModelId, setSelectedModelId] = useState<string>('runware:100@1');
+  const [pendingGenerationId, setPendingGenerationId] = useState<string | null>(null);
+  const [isAsyncGeneration, setIsAsyncGeneration] = useState(false);
   
   const { generate, isGenerating, result, error } = useGeneration();
   const { data: models } = useModels();
   const { data: tokenData } = useUserTokens();
   const lastHandledUrlRef = useRef<string | null>(null);
+  
+  const { status: pollStatus, outputUrl: pollOutputUrl, error: pollError } = useGenerationPolling(
+    pendingGenerationId,
+    isAsyncGeneration
+  );
 
   // Compute display URL from result or scene prop
-  const displayUrl = result?.output_url ?? scene.image_preview_url ?? null;
+  const displayUrl = result?.output_url ?? pollOutputUrl ?? scene.image_preview_url ?? null;
 
-  // Handle generation result - only call onImageGenerated once per new URL
+  // Handle sync generation result - only call onImageGenerated once per new URL
   useEffect(() => {
     if (result?.output_url && lastHandledUrlRef.current !== result.output_url) {
       lastHandledUrlRef.current = result.output_url;
@@ -44,17 +52,34 @@ export const ScenePreviewGenerator = ({
     }
   }, [result?.output_url, scene.id, onImageGenerated]);
 
+  // Handle async generation result from polling
+  useEffect(() => {
+    if (pollStatus === 'completed' && pollOutputUrl && lastHandledUrlRef.current !== pollOutputUrl) {
+      console.log('[ScenePreviewGenerator] Async generation completed:', pollOutputUrl);
+      lastHandledUrlRef.current = pollOutputUrl;
+      onImageGenerated(scene.id, pollOutputUrl);
+      setIsAsyncGeneration(false);
+      setPendingGenerationId(null);
+    } else if (pollStatus === 'failed' && pollError) {
+      console.error('[ScenePreviewGenerator] Async generation failed:', pollError);
+      toast.error(pollError);
+      setIsAsyncGeneration(false);
+      setPendingGenerationId(null);
+    }
+  }, [pollStatus, pollOutputUrl, pollError, scene.id, onImageGenerated]);
+
   // Log errors to console instead of toasting
   useEffect(() => {
     if (error) {
       console.error('[ScenePreviewGenerator] Generation error:', error);
+      toast.error(error);
     }
   }, [error]);
 
   // Filter models for scene preview (image generation only)
   const imageModels = models?.filter(m => 
     m.content_type === 'image' && 
-    (m.id === 'runware:100@1"' || m.id === 'google/nano-banana')
+    (m.id === 'runware:100@1' || m.id === 'google/nano-banana')
   ) || [];
 
   // Auto-select first available model if current selection is invalid
@@ -76,12 +101,23 @@ export const ScenePreviewGenerator = ({
       return; // Silent no-op, UI already shows insufficient credits message
     }
   
+    // Reset state for new generation
     lastHandledUrlRef.current = null;
-    await generate({
+    setPendingGenerationId(null);
+    setIsAsyncGeneration(false);
+
+    const generationResult = await generate({
       model_id: selectedModelId,
       prompt: scene.image_prompt,
       custom_parameters: {},
     });
+
+    // Check if this is an async generation (no output_url yet)
+    if (!generationResult.output_url && generationResult.id) {
+      console.log('[ScenePreviewGenerator] Async generation started:', generationResult.id);
+      setPendingGenerationId(generationResult.id);
+      setIsAsyncGeneration(true);
+    }
   };
 
   const hasExistingPreview = !!displayUrl;
@@ -97,7 +133,7 @@ export const ScenePreviewGenerator = ({
         <h4 className="text-sm font-semibold text-muted-foreground">
           🎨 Scene {sceneNumber} Preview
         </h4>
-        {hasExistingPreview && !isGenerating && (
+        {hasExistingPreview && !isGenerating && !isAsyncGeneration && (
           <Button
             size="sm"
             variant="ghost"
@@ -112,16 +148,30 @@ export const ScenePreviewGenerator = ({
 
       {/* Image Display */}
       <div className="relative rounded-lg overflow-hidden bg-muted/20 border border-border/20 mb-4 h-[280px] sm:h-[300px]">
-        {isGenerating ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-            <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            <div className="text-center space-y-1">
-              <p className="text-sm font-medium">Generating preview...</p>
-              <p className="text-xs text-muted-foreground">
-                Using {selectedModel?.model_name || 'AI model'}
-              </p>
+        {(isGenerating || isAsyncGeneration) ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+              <Loader2 className="w-12 h-12 animate-spin text-primary" />
+              <div className="text-center space-y-1">
+                {isGenerating ? (
+                  <>
+                    <p className="text-sm font-medium">Submitting generation...</p>
+                    <p className="text-xs text-muted-foreground">
+                      Using {selectedModel?.model_name || 'AI model'}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium">Processing...</p>
+                    <p className="text-xs text-muted-foreground">
+                      Status: {pollStatus}
+                    </p>
+                    <p className="text-xs text-muted-foreground/70">
+                      This may take 20-60 seconds
+                    </p>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
         ) : displayUrl ? (
           <div className="relative w-full h-full group">
             <img
@@ -152,7 +202,7 @@ export const ScenePreviewGenerator = ({
       </div>
 
       {/* Controls */}
-      {!hasExistingPreview && !isGenerating && (
+      {!hasExistingPreview && !isGenerating && !isAsyncGeneration && (
         <>
           <div className="space-y-3">
             <Select value={selectedModelId} onValueChange={setSelectedModelId}>
@@ -176,7 +226,7 @@ export const ScenePreviewGenerator = ({
 
             <Button
               onClick={handleGenerate}
-              disabled={isGenerating || (tokenData?.tokens_remaining || 0) < tokenCost}
+              disabled={isGenerating || isAsyncGeneration || (tokenData?.tokens_remaining || 0) < tokenCost}
               className="w-full"
               variant="outline"
             >

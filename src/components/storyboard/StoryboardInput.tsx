@@ -217,7 +217,7 @@ export function StoryboardInput() {
   const handleSurpriseMe = () => {
     const randomTopic = TOPIC_SUGGESTIONS[Math.floor(Math.random() * TOPIC_SUGGESTIONS.length)];
     setTopic(randomTopic);
-    toast.success('✨ Random topic selected!');
+    toast.success('✨ Random topic selected!', { id: 'random-topic' });
   };
 
   const handleSelectVoice = (selectedVoiceId: string, selectedVoiceName: string) => {
@@ -248,9 +248,9 @@ export function StoryboardInput() {
         if (error) throw error;
         
         clearStoryboard();
-        toast.success('Storyboard deleted and form reset');
+        toast.success('Storyboard deleted and form reset', { id: 'storyboard-reset' });
       } catch (error: any) {
-        toast.error(error.message || 'Failed to delete storyboard');
+        toast.error(error.message || 'Failed to delete storyboard', { id: 'delete-error' });
         return;
       }
     }
@@ -296,18 +296,18 @@ export function StoryboardInput() {
     localStorage.removeItem(DRAFT_KEY);
     
     if (!deleteStoryboard) {
-      toast.success('Form reset to defaults');
+      toast.success('Form reset to defaults', { id: 'form-reset' });
     }
   };
 
   const handleGenerate = async () => {
     if (!canGenerate) {
       if (topic.length < 5) {
-        toast.error('Topic must be at least 5 characters');
+        toast.error('Topic must be at least 5 characters', { id: 'topic-error' });
       } else if (topic.length > 500) {
-        toast.error('Topic must be less than 500 characters');
+        toast.error('Topic must be less than 500 characters', { id: 'topic-error' });
       } else {
-        toast.error('Insufficient tokens');
+        toast.error('Insufficient tokens', { id: 'token-error' });
       }
       return;
     }

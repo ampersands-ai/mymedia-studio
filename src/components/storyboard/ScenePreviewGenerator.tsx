@@ -7,6 +7,7 @@ import { useGeneration } from '@/hooks/useGeneration';
 import { useModels } from '@/hooks/useModels';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { useGenerationPolling } from '@/hooks/useGenerationPolling';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -34,7 +35,17 @@ export const ScenePreviewGenerator = ({
   const { generate, isGenerating, result, error } = useGeneration();
   const { data: models } = useModels();
   const { data: tokenData } = useUserTokens();
+  const queryClient = useQueryClient();
   const lastHandledUrlRef = useRef<string | null>(null);
+
+  // DEBUG: Log raw models data on mount
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.log('[ScenePreviewGenerator] Raw models from useModels:', models);
+      console.log('[ScenePreviewGenerator] Total models:', models?.length);
+      console.log('[ScenePreviewGenerator] Image models:', models?.filter(m => m.content_type === 'image').length);
+    }
+  }, [models]);
   
   const { status: pollStatus, outputUrl: pollOutputUrl, error: pollError } = useGenerationPolling(
     pendingGenerationId,
@@ -78,10 +89,34 @@ export const ScenePreviewGenerator = ({
 
   // Filter models for scene preview (image generation only)
   // Include: Runware models (HiDream, Flux.1), Google Nano Banana
-  const imageModels = models?.filter(m => 
-    m.content_type === 'image' && 
-    (m.provider === 'runware' || m.id === 'google/nano-banana')
-  ) || [];
+  const imageModels = models?.filter(m => {
+    const isImage = m.content_type === 'image';
+    const isRunware = m.provider === 'runware';
+    const isNanoBanana = m.id === 'google/nano-banana';
+    
+    // DEBUG: Log each model's filter decision
+    if (isImage && import.meta.env.DEV) {
+      console.log(`[Filter] ${m.model_name} (${m.id}):`, {
+        provider: m.provider,
+        isRunware,
+        isNanoBanana,
+        included: isRunware || isNanoBanana
+      });
+    }
+    
+    return isImage && (isRunware || isNanoBanana);
+  }) || [];
+
+  // DEBUG: Log final filtered models
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.log('[ScenePreviewGenerator] Filtered imageModels:', imageModels.map(m => ({
+        id: m.id,
+        name: m.model_name,
+        provider: m.provider
+      })));
+    }
+  }, [imageModels]);
 
   // Auto-select first available model if current selection is invalid
   useEffect(() => {
@@ -134,17 +169,34 @@ export const ScenePreviewGenerator = ({
         <h4 className="text-sm font-semibold text-muted-foreground">
           🎨 Scene {sceneNumber} Preview
         </h4>
-        {hasExistingPreview && !isGenerating && !isAsyncGeneration && (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={handleGenerate}
-            className="h-8 px-2"
-            title="Regenerate preview"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {import.meta.env.DEV && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ['ai-models'] });
+                console.log('🔄 Cache cleared! Refetching models...');
+                toast.success('Model cache cleared');
+              }}
+              className="h-8 px-2 text-xs"
+              title="Clear model cache (dev only)"
+            >
+              🔄 Clear Cache
+            </Button>
+          )}
+          {hasExistingPreview && !isGenerating && !isAsyncGeneration && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleGenerate}
+              className="h-8 px-2"
+              title="Regenerate preview"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Image Display */}

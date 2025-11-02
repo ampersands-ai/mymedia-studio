@@ -11,6 +11,17 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
+// Approved models for storyboard scene generation
+const APPROVED_STORYBOARD_MODEL_IDS = [
+  'runware:100@1', // Flux.1 Schnell
+  'runware:101@1', // Flux.1 Dev
+  'runware:97@3',  // HiDream Fast
+  'runware:97@2',  // HiDream Dev
+  'google/nano-banana', // Google Nano Banana
+] as const;
+
+const APPROVED_ORDER = [...APPROVED_STORYBOARD_MODEL_IDS];
+
 interface Scene {
   id: string;
   image_prompt: string;
@@ -87,43 +98,32 @@ export const ScenePreviewGenerator = ({
     }
   }, [error]);
 
-  // Filter models for scene preview (image generation only)
-  // Show ALL active image models to restore full selection
+  // Filter models: ONLY approved storyboard models
+  const allowed = new Set<string>(APPROVED_STORYBOARD_MODEL_IDS);
+
   const imageModels = (models ?? [])
-    .filter(m => m.content_type === 'image')
+    .filter(m => m.content_type === 'image' && allowed.has(m.id))
     .sort((a, b) => {
-      // Preferred order: Runware variants first, then Nano Banana, then the rest alphabetically
-      const priority: Record<string, number> = {
-        'runware:100@1': 1, // Flux.1 Schnell
-        'runware:101@1': 2, // Flux.1 Dev
-        'runware:97@3': 3,  // HiDream Fast
-        'runware:97@2': 4,  // HiDream Dev
-        'google/nano-banana': 5,
-      };
-      const pa = priority[a.id] ?? 999;
-      const pb = priority[b.id] ?? 999;
-      if (pa !== pb) return pa - pb;
-      // Group by provider next, then model name
-      const prov = (a.provider || '').localeCompare(b.provider || '');
-      if (prov !== 0) return prov;
-      return (a.model_name || '').localeCompare(b.model_name || '');
+      const ia = APPROVED_ORDER.indexOf(a.id as typeof APPROVED_STORYBOARD_MODEL_IDS[number]);
+      const ib = APPROVED_ORDER.indexOf(b.id as typeof APPROVED_STORYBOARD_MODEL_IDS[number]);
+      if (ia === -1 && ib === -1) return (a.model_name || '').localeCompare(b.model_name || '');
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
     });
 
-  // DEBUG: Log final filtered models
+  // DEBUG: Confirm what ends up in the dropdown
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.log('[ScenePreviewGenerator] Filtered imageModels (ALL image):', imageModels.map(m => ({
-        id: m.id,
-        name: m.model_name,
-        provider: m.provider
-      })));
+      console.log('[ScenePreviewGenerator] Approved imageModels:', imageModels.map(m => ({ id: m.id, name: m.model_name })));
     }
   }, [imageModels]);
 
-  // Auto-select first available model if current selection is invalid
+  // Auto-select first available model from approved order if current selection is invalid
   useEffect(() => {
     if (imageModels.length > 0 && !imageModels.find(m => m.id === selectedModelId)) {
-      setSelectedModelId(imageModels[0].id);
+      const firstAvailable = APPROVED_ORDER.find(id => imageModels.some(m => m.id === id));
+      setSelectedModelId(firstAvailable ?? imageModels[0].id);
     }
   }, [imageModels, selectedModelId]);
 
@@ -260,7 +260,11 @@ export const ScenePreviewGenerator = ({
       {!hasExistingPreview && !isGenerating && !isAsyncGeneration && (
         <>
           <div className="space-y-3">
-            <Select value={selectedModelId} onValueChange={setSelectedModelId}>
+            <Select 
+              value={selectedModelId} 
+              onValueChange={setSelectedModelId}
+              disabled={imageModels.length === 0}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -278,10 +282,15 @@ export const ScenePreviewGenerator = ({
                 ))}
               </SelectContent>
             </Select>
+            {imageModels.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                No storyboard-approved models are currently available. Please try again later or contact support.
+              </p>
+            )}
 
             <Button
               onClick={handleGenerate}
-              disabled={isGenerating || isAsyncGeneration || (tokenData?.tokens_remaining || 0) < tokenCost}
+              disabled={isGenerating || isAsyncGeneration || (tokenData?.tokens_remaining || 0) < tokenCost || imageModels.length === 0}
               className="w-full"
               variant="outline"
             >

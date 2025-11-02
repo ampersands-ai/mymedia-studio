@@ -337,7 +337,6 @@ export const useStoryboard = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
-      toast.success('Settings updated');
     },
     onError: (error: any) => {
       console.error('[useStoryboard] Update render settings error:', error);

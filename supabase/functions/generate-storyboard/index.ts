@@ -219,8 +219,19 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
       // Format 2: Scenes at root level
       console.log('[generate-storyboard] Using root level scenes format');
       scenes = parsedContent.scenes;
-      introImagePrompt = parsedContent.introImagePrompt || parsedContent.intro_image_prompt;
-      introVoiceoverText = parsedContent.introVoiceoverText || parsedContent.intro_voiceover_text;
+      
+      // Check variables first (AI sometimes puts scenes at root but intro under variables)
+      introImagePrompt = parsedContent.variables?.introImagePrompt 
+        || parsedContent.introImagePrompt 
+        || parsedContent.intro_image_prompt;
+      introVoiceoverText = parsedContent.variables?.introVoiceoverText 
+        || parsedContent.introVoiceoverText 
+        || parsedContent.intro_voiceover_text;
+      
+      if (!introImagePrompt || !introVoiceoverText) {
+        console.warn('[generate-storyboard] Missing intro fields. Variables:', 
+          JSON.stringify(parsedContent.variables));
+      }
     } else if (parsedContent.data?.scenes) {
       // Format 3: Nested under data
       console.log('[generate-storyboard] Using data.scenes format');

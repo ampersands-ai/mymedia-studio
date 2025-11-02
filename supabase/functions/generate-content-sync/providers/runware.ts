@@ -53,32 +53,39 @@ export async function callRunware(
   
   console.log('[Runware] Using prompt:', effectivePrompt.substring(0, 100) + (effectivePrompt.length > 100 ? '...' : ''));
   
+  // Build task payload - trust validated parameters from schema
+  const taskPayload: any = {
+    taskType: "imageInference",
+    taskUUID,
+    model: cleanModel,
+    positivePrompt: effectivePrompt,
+  };
+
+  // Only include parameters that exist in validated params (schema defaults already applied)
+  if (params.width !== undefined) taskPayload.width = Number(params.width);
+  if (params.height !== undefined) taskPayload.height = Number(params.height);
+  if (params.numberResults !== undefined) taskPayload.numberResults = Number(params.numberResults);
+  if (params.outputFormat !== undefined) taskPayload.outputFormat = params.outputFormat;
+  if (params.outputType !== undefined) taskPayload.outputType = params.outputType;
+  if (params.steps !== undefined) taskPayload.steps = Number(params.steps);
+  if (params.CFGScale !== undefined) taskPayload.CFGScale = Number(params.CFGScale);
+  if (params.scheduler !== undefined) taskPayload.scheduler = params.scheduler;
+  if (params.outputQuality !== undefined) taskPayload.outputQuality = Number(params.outputQuality);
+  if (params.seed !== undefined) taskPayload.seed = Number(params.seed);
+  if (params.strength !== undefined) taskPayload.strength = Number(params.strength);
+  if (params.lora !== undefined) taskPayload.lora = params.lora;
+
+  // These can have reasonable defaults if missing
+  taskPayload.checkNSFW = params.checkNSFW ?? true;
+  taskPayload.includeCost = params.includeCost ?? true;
+
   // Build request payload with authentication and task
   const requestBody = [
     {
       taskType: "authentication",
       apiKey: RUNWARE_API_KEY
     },
-    {
-      taskType: "imageInference",
-      taskUUID,
-      model: cleanModel,
-      positivePrompt: effectivePrompt,
-      width: Number(params.width ?? 1024),
-      height: Number(params.height ?? 1024),
-      numberResults: Number(params.numberResults ?? 1),
-      outputFormat: params.outputFormat ?? "WEBP",
-      steps: Number(params.steps ?? 4),
-      CFGScale: Number(params.CFGScale ?? 1),
-      scheduler: params.scheduler ?? "FlowMatchEulerDiscreteScheduler",
-      checkNSFW: true,
-      includeCost: true,
-      outputType: ["URL"],
-      outputQuality: Number(params.outputQuality ?? 85),
-      ...(params.seed && { seed: Number(params.seed) }),
-      ...(params.strength && { strength: Number(params.strength) }),
-      ...(params.lora && { lora: params.lora })
-    }
+    taskPayload
   ];
 
   // Redact API key in logs for security

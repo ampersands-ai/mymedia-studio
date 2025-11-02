@@ -165,6 +165,8 @@ serve(async (req) => {
     }
 
     const parameters = validateAndFilterParameters(custom_parameters, model.input_schema);
+    
+    console.log('[sync] Validated parameters before provider call:', JSON.stringify(parameters, null, 2));
 
     // Calculate token cost
     const tokenCost = calculateTokenCost(

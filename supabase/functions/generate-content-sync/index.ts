@@ -138,6 +138,15 @@ serve(async (req) => {
         const schemaProperty = schema.properties[key];
         const candidateValue = parameters[key];
         
+        // For parameters marked showToUser: false, ALWAYS use schema default (ignore user input)
+        if (schemaProperty?.showToUser === false) {
+          if (schemaProperty?.default !== undefined) {
+            filtered[key] = schemaProperty.default;
+          }
+          continue;
+        }
+        
+        // For user-visible parameters, handle normally
         if (schemaProperty?.enum && Array.isArray(schemaProperty.enum)) {
           if (candidateValue === "" || candidateValue === undefined || candidateValue === null) {
             if (schemaProperty.default !== undefined) {

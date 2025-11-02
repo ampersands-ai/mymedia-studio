@@ -77,9 +77,10 @@ export const ScenePreviewGenerator = ({
   }, [error]);
 
   // Filter models for scene preview (image generation only)
+  // Include: Runware models (HiDream, Flux.1), Google Nano Banana
   const imageModels = models?.filter(m => 
     m.content_type === 'image' && 
-    (m.id === 'runware:100@1' || m.id === 'google/nano-banana')
+    (m.provider === 'runware' || m.id === 'google/nano-banana')
   ) || [];
 
   // Auto-select first available model if current selection is invalid

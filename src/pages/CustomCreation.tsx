@@ -664,10 +664,21 @@ const CustomCreation = () => {
       return;
     }
     
-    // Reset generation tracking
+    // Clear any existing poll interval
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    setPollingGenerationId(null);
+    
+    // Reset generation tracking and ALL output state
     generationStartTimeRef.current = Date.now();
     setGenerationCompleteTime(null);
     setGeneratedOutput(null);
+    setGeneratedOutputs([]); // Clear previous outputs array
+    setSelectedOutputIndex(0); // Reset selection
+    setCaptionData(null); // Clear previous caption
+    setShowLightbox(false); // Close any open lightbox
     
     setLocalGenerating(true);
     

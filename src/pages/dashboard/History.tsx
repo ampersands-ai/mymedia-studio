@@ -277,6 +277,15 @@ const History = () => {
   const [reportingGeneration, setReportingGeneration] = useState<Generation | null>(null);
   const queryClient = useQueryClient();
   const { progress, updateProgress } = useOnboarding();
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 25;
+  
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
 
   // SECURITY: Check if generation already has a dispute
   const { data: disputeStatus } = useQuery({
@@ -311,35 +320,40 @@ const History = () => {
   }, [previewGeneration, progress]);
 
   const { data: generations, refetch, isRefetching } = useQuery<Generation[]>({
-    queryKey: ["generations", user?.id],
+    queryKey: ["generations", user?.id, currentPage],
     queryFn: async () => {
-      // First get generations (including batch output fields)
+      const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+      
+      // First get generations (including batch output fields) with pagination
       const { data: genData, error: genError } = await supabase
         .from("generations")
         .select("*")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false })
-        .order("output_index", { ascending: true });
+        .order("output_index", { ascending: true })
+        .range(offset, offset + ITEMS_PER_PAGE - 1);
 
       if (genError) throw genError;
 
-      // Get completed AND failed video jobs
+      // Get completed AND failed video jobs with pagination
       const { data: videoData, error: videoError } = await supabase
         .from("video_jobs")
         .select("*")
         .eq("user_id", user!.id)
         .in("status", ["completed", "failed"])
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(offset, offset + ITEMS_PER_PAGE - 1);
 
       if (videoError) console.error("Error fetching video jobs:", videoError);
       
-      // Get storyboards (complete, failed, or rendering)
+      // Get storyboards (complete, failed, or rendering) with pagination
       const { data: storyboardData, error: storyboardError } = await supabase
         .from("storyboards")
         .select("*")
         .eq("user_id", user!.id)
         .in("status", ["complete", "failed", "rendering"])
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(offset, offset + ITEMS_PER_PAGE - 1);
 
       if (storyboardError) console.error("Error fetching storyboards:", storyboardError);
 
@@ -921,6 +935,31 @@ const History = () => {
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {filteredGenerations && filteredGenerations.length > 0 && (
+        <div className="flex justify-center items-center gap-4 mt-8 mb-4">
+          <Button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            variant="outline"
+            size="sm"
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-muted-foreground px-4">
+            Page {currentPage}
+          </span>
+          <Button
+            onClick={() => setCurrentPage(p => p + 1)}
+            disabled={filteredGenerations.length < ITEMS_PER_PAGE}
+            variant="outline"
+            size="sm"
+          >
+            Next
+          </Button>
         </div>
       )}
 

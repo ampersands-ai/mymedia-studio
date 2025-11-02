@@ -88,29 +88,31 @@ export const ScenePreviewGenerator = ({
   }, [error]);
 
   // Filter models for scene preview (image generation only)
-  // Include: Runware models (HiDream, Flux.1), Google Nano Banana
-  const imageModels = models?.filter(m => {
-    const isImage = m.content_type === 'image';
-    const isRunware = m.provider === 'runware';
-    const isNanoBanana = m.id === 'google/nano-banana';
-    
-    // DEBUG: Log each model's filter decision
-    if (isImage && import.meta.env.DEV) {
-      console.log(`[Filter] ${m.model_name} (${m.id}):`, {
-        provider: m.provider,
-        isRunware,
-        isNanoBanana,
-        included: isRunware || isNanoBanana
-      });
-    }
-    
-    return isImage && (isRunware || isNanoBanana);
-  }) || [];
+  // Show ALL active image models to restore full selection
+  const imageModels = (models ?? [])
+    .filter(m => m.content_type === 'image')
+    .sort((a, b) => {
+      // Preferred order: Runware variants first, then Nano Banana, then the rest alphabetically
+      const priority: Record<string, number> = {
+        'runware:100@1': 1, // Flux.1 Schnell
+        'runware:101@1': 2, // Flux.1 Dev
+        'runware:97@3': 3,  // HiDream Fast
+        'runware:97@2': 4,  // HiDream Dev
+        'google/nano-banana': 5,
+      };
+      const pa = priority[a.id] ?? 999;
+      const pb = priority[b.id] ?? 999;
+      if (pa !== pb) return pa - pb;
+      // Group by provider next, then model name
+      const prov = (a.provider || '').localeCompare(b.provider || '');
+      if (prov !== 0) return prov;
+      return (a.model_name || '').localeCompare(b.model_name || '');
+    });
 
   // DEBUG: Log final filtered models
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.log('[ScenePreviewGenerator] Filtered imageModels:', imageModels.map(m => ({
+      console.log('[ScenePreviewGenerator] Filtered imageModels (ALL image):', imageModels.map(m => ({
         id: m.id,
         name: m.model_name,
         provider: m.provider

@@ -98,18 +98,16 @@ export const ScenePreviewGenerator = ({
     }
   }, [error]);
 
-  // Filter models: ONLY approved storyboard models
+  // Filter models: ONLY approved storyboard models, sorted by credit cost (cheapest first)
   const allowed = new Set<string>(APPROVED_STORYBOARD_MODEL_IDS);
 
   const imageModels = (models ?? [])
     .filter(m => m.content_type === 'image' && allowed.has(m.id))
     .sort((a, b) => {
-      const ia = APPROVED_ORDER.indexOf(a.id as typeof APPROVED_STORYBOARD_MODEL_IDS[number]);
-      const ib = APPROVED_ORDER.indexOf(b.id as typeof APPROVED_STORYBOARD_MODEL_IDS[number]);
-      if (ia === -1 && ib === -1) return (a.model_name || '').localeCompare(b.model_name || '');
-      if (ia === -1) return 1;
-      if (ib === -1) return -1;
-      return ia - ib;
+      const costA = a.base_token_cost || 0;
+      const costB = b.base_token_cost || 0;
+      if (costA !== costB) return costA - costB;
+      return (a.model_name || '').localeCompare(b.model_name || '');
     });
 
   // DEBUG: Confirm what ends up in the dropdown

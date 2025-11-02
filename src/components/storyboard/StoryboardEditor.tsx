@@ -453,6 +453,8 @@ export const StoryboardEditor = () => {
                       onSelectVoice={(voiceId, voiceName) => {
                         updateRenderSettings?.({ voice_id: voiceId, voice_name: voiceName });
                       }}
+                      showAzureVoices={true}
+                      showElevenLabs={false}
                     />
                   </DialogContent>
                 </Dialog>

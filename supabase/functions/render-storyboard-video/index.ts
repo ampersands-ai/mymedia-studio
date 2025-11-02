@@ -229,9 +229,26 @@ serve(async (req) => {
       voiceModel: storyboard.voice_model || 'azure',
       imageModel: storyboard.image_model || 'freepik-classic',
       subtitlesModel: storyboard.subtitles_model || 'default',
-      fontFamily: storyboard.font_family || 'Oswald Bold',
+      fontFamily: storyboard.subtitle_settings?.fontFamily || 'Oswald Bold',
       voiceID: storyboard.voice_id,
       introText: storyboard.intro_voiceover_text,
+      // Subtitle settings as variables
+      subtitleStyle: storyboard.subtitle_settings?.style || 'boxed-word',
+      subtitleFontSize: storyboard.subtitle_settings?.fontSize || 140,
+      subtitleAllCaps: storyboard.subtitle_settings?.allCaps ?? false,
+      subtitleBoxColor: storyboard.subtitle_settings?.boxColor || '#000000',
+      subtitleLineColor: storyboard.subtitle_settings?.lineColor || '#FFFFFF',
+      subtitleWordColor: storyboard.subtitle_settings?.wordColor || '#FFFF00',
+      subtitlePosition: storyboard.subtitle_settings?.position || 'mid-bottom-center',
+      subtitleOutlineColor: storyboard.subtitle_settings?.outlineColor || '#000000',
+      subtitleOutlineWidth: storyboard.subtitle_settings?.outlineWidth || 8,
+      subtitleShadowColor: storyboard.subtitle_settings?.shadowColor || '#000000',
+      subtitleShadowOffset: storyboard.subtitle_settings?.shadowOffset || 0,
+      subtitleMaxWordsPerLine: storyboard.subtitle_settings?.maxWordsPerLine || 4,
+      // Music settings as variables
+      musicVolume: storyboard.music_settings?.volume || 0.05,
+      musicFadeIn: storyboard.music_settings?.fadeIn || 2,
+      musicFadeOut: storyboard.music_settings?.fadeOut || 2,
     };
 
     // Add intro image based on whether it's pre-generated or AI-generated
@@ -283,37 +300,6 @@ serve(async (req) => {
       quality: (['low', 'medium', 'high'].includes(storyboard.video_quality) ? storyboard.video_quality : 'high'),
       cache: storyboard.enable_cache ?? true,
       draft: storyboard.draft_mode ?? false,
-      elements: [
-        {
-          type: 'subtitles',
-          model: 'default',
-          language: 'auto',
-          settings: {
-            'style': storyboard.subtitle_settings?.style || 'boxed-word',
-            'font-family': storyboard.subtitle_settings?.fontFamily || 'Oswald Bold',
-            'font-size': storyboard.subtitle_settings?.fontSize || 140,
-            'all-caps': storyboard.subtitle_settings?.allCaps ?? false,
-            'box-color': storyboard.subtitle_settings?.boxColor || '#000000',
-            'line-color': storyboard.subtitle_settings?.lineColor || '#FFFFFF',
-            'word-color': storyboard.subtitle_settings?.wordColor || '#FFFF00',
-            'position': storyboard.subtitle_settings?.position || 'mid-bottom-center',
-            'outline-color': storyboard.subtitle_settings?.outlineColor || '#000000',
-            'outline-width': storyboard.subtitle_settings?.outlineWidth || 8,
-            'shadow-color': storyboard.subtitle_settings?.shadowColor || '#000000',
-            'shadow-offset': storyboard.subtitle_settings?.shadowOffset || 0,
-            'max-words-per-line': storyboard.subtitle_settings?.maxWordsPerLine || 4,
-          },
-        },
-        {
-          type: 'audio',
-          src: 'https://assets.json2video.com/clients/JugBn84wBL/uploads/dramatic-epic-background-305293.mp3',
-          volume: storyboard.music_settings?.volume || 0.05,
-          'fade-in': storyboard.music_settings?.fadeIn || 2,
-          'fade-out': storyboard.music_settings?.fadeOut || 2,
-          duration: -2
-        }
-      ],
-      imageAnimationSettings: storyboard.image_animation_settings || { zoom: 2, position: 'center-center' }
     };
 
     // Helper function to map resolution presets

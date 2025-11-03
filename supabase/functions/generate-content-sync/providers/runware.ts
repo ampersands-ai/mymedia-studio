@@ -4,6 +4,9 @@ export interface ProviderRequest {
   parameters: Record<string, any>;
   api_endpoint?: string;
   payload_structure?: string;
+  userId?: string; // For storage path generation
+  generationId?: string; // For storage path generation
+  supabase?: any; // Supabase client for presigned URLs
 }
 
 export interface ProviderResponse {
@@ -11,6 +14,7 @@ export interface ProviderResponse {
   file_extension: string;
   file_size: number;
   metadata: Record<string, any>;
+  storage_path?: string; // Optional: indicates content already uploaded to storage
 }
 
 function uint8ArrayToBase64(bytes: Uint8Array): string {
@@ -153,6 +157,31 @@ export async function callRunware(
   
   console.log('[Runware] Task type:', taskType, 'Is video:', isVideo);
   
+  // For video tasks, generate presigned URL for direct upload by Runware
+  let presignedUrl: string | null = null;
+  let storagePath: string | null = null;
+
+  if (isVideo && request.userId && request.generationId && request.supabase) {
+    const timestamp = new Date();
+    const year = timestamp.getFullYear();
+    const month = String(timestamp.getMonth() + 1).padStart(2, '0');
+    const day = String(timestamp.getDate()).padStart(2, '0');
+    
+    storagePath = `${request.userId}/${year}-${month}-${day}/${request.generationId}/output.mp4`;
+    
+    const { data: signedData, error: signedError } = await request.supabase.storage
+      .from('generated-content')
+      .createSignedUploadUrl(storagePath, { upsert: true });
+    
+    if (signedError || !signedData) {
+      console.error('[Runware Video] Failed to create presigned URL:', signedError);
+      // Continue without uploadEndpoint as fallback
+    } else {
+      presignedUrl = signedData.signedUrl;
+      console.log('[Runware Video] Generated presigned URL for path:', storagePath);
+    }
+  }
+  
   // Build task payload - trust validated parameters from schema
   const taskPayload: any = {
     taskType,
@@ -190,6 +219,12 @@ export async function callRunware(
       taskPayload.frameImages = await convertFrameImagesToRunwareFormat(params.frameImages);
     }
     if (params.providerSettings !== undefined) taskPayload.providerSettings = params.providerSettings;
+    
+    // Add uploadEndpoint for direct upload to storage
+    if (presignedUrl) {
+      taskPayload.uploadEndpoint = presignedUrl;
+      console.log('[Runware Video] Using uploadEndpoint for direct storage upload');
+    }
   }
 
   // Build request payload with authentication and task
@@ -253,6 +288,47 @@ export async function callRunware(
       throw new Error(`Runware generation failed: ${result.error}`);
     }
 
+    // Handle video with uploadEndpoint (direct upload to storage by Runware)
+    if (isVideo && presignedUrl && storagePath && request.supabase) {
+      console.log('[Runware Video] Video will be uploaded directly to storage by Runware');
+      
+      // Wait for upload to complete (give Runware time to upload)
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Verify file exists in storage
+      const folderPath = storagePath.substring(0, storagePath.lastIndexOf('/'));
+      const { data: fileData, error: fileError } = await request.supabase.storage
+        .from('generated-content')
+        .list(folderPath, { search: 'output.mp4' });
+      
+      if (fileError || !fileData || fileData.length === 0) {
+        console.error('[Runware Video] Upload verification failed:', fileError);
+        throw new Error('Video upload to storage failed - file not found after upload');
+      }
+      
+      const uploadedFile = fileData[0];
+      console.log('[Runware Video] Video successfully uploaded to storage:', storagePath, `(${uploadedFile.metadata?.size || 0} bytes)`);
+      
+      // Return response indicating file already in storage
+      return {
+        output_data: new Uint8Array(0), // Empty - already in storage
+        file_extension: 'mp4',
+        file_size: uploadedFile.metadata?.size || 0,
+        storage_path: storagePath, // Indicate video is already in storage
+        metadata: {
+          model: cleanModel,
+          positivePrompt: result.positivePrompt,
+          runware_cost: result.cost,
+          videoUUID: result.videoUUID,
+          duration: result.duration,
+          fps: result.fps,
+          width: result.width,
+          height: result.height,
+        }
+      };
+    }
+
+    // For video without uploadEndpoint or images, use traditional download
     // Extract content URL (imageURL or videoURL)
     let contentUrl = result.imageURL || result.videoURL;
     

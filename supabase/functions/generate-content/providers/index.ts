@@ -7,6 +7,9 @@ export interface ProviderRequest {
   parameters: Record<string, any>;
   api_endpoint?: string;
   payload_structure?: string;
+  userId?: string; // For storage path generation
+  generationId?: string; // For storage path generation
+  supabase?: any; // Supabase client for presigned URLs
 }
 
 export interface ProviderResponse {
@@ -14,6 +17,7 @@ export interface ProviderResponse {
   file_extension: string;
   file_size: number;
   metadata: Record<string, any>;
+  storage_path?: string; // Optional: indicates content already uploaded to storage
 }
 
 export async function callProvider(

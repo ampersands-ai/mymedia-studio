@@ -260,7 +260,10 @@ serve(async (req) => {
         prompt: effectivePrompt,
         parameters: parameters,
         api_endpoint: model.api_endpoint,
-        payload_structure: model.payload_structure || 'flat'
+        payload_structure: model.payload_structure || 'flat',
+        userId: user.id,
+        generationId: generation.id,
+        supabase: supabase
       };
 
       console.log('[sync] Calling Runware provider...');
@@ -269,15 +272,39 @@ serve(async (req) => {
 
       console.log('[sync] Provider response received, uploading to storage...');
 
-      // Upload to storage
-      const storagePath = await uploadToStorage(
-        supabase,
-        user.id,
-        generation.id,
-        providerResponse.output_data,
-        providerResponse.file_extension,
-        model.content_type
-      );
+      let storagePath: string;
+      let fileSize = providerResponse.file_size;
+
+      // Check if provider already uploaded to storage
+      if (providerResponse.storage_path) {
+        console.log('[sync] Content already in storage:', providerResponse.storage_path);
+        storagePath = providerResponse.storage_path;
+        
+        // Get actual file size if not provided
+        if (!fileSize) {
+          const folderPath = storagePath.substring(0, storagePath.lastIndexOf('/'));
+          const { data: fileData } = await supabase.storage
+            .from('generated-content')
+            .list(folderPath);
+          
+          if (fileData && fileData.length > 0) {
+            const file = fileData.find(f => f.name === 'output.mp4');
+            if (file) {
+              fileSize = file.metadata?.size || 0;
+            }
+          }
+        }
+      } else {
+        // Normal upload flow
+        storagePath = await uploadToStorage(
+          supabase,
+          user.id,
+          generation.id,
+          providerResponse.output_data,
+          providerResponse.file_extension,
+          model.content_type
+        );
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('generated-content')
@@ -290,7 +317,7 @@ serve(async (req) => {
           status: 'completed',
           output_url: publicUrl,
           storage_path: storagePath,
-          file_size_bytes: providerResponse.file_size,
+          file_size_bytes: fileSize,
           provider_request: providerRequest,
           provider_response: providerResponse.metadata
         })

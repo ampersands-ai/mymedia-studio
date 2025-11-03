@@ -16,9 +16,15 @@ export async function callRunware(
   
   console.log('[Runware] Calling API - Model:', cleanModel);
 
+  // Determine task type from parameters or infer from model/params
+  const taskType = request.parameters?.taskType || (request.parameters?.frameImages ? "videoInference" : "imageInference");
+  const isVideo = taskType === "videoInference";
+  
+  console.log('[Runware] Task type:', taskType, 'Is video:', isVideo);
+
   // Build task payload with proper parameter mapping
   const taskPayload: any = {
-    taskType: "imageInference",
+    taskType,
     model: cleanModel,
     ...request.parameters,
   };
@@ -74,45 +80,53 @@ export async function callRunware(
       throw new Error(`Runware generation failed: ${result.error}`);
     }
 
-    // Extract image URL
-    const imageUrl = result.imageURL;
-    if (!imageUrl) {
-      throw new Error('No image URL in Runware response');
+    // Extract content URL (imageURL or videoURL)
+    const contentUrl = result.imageURL || result.videoURL;
+    if (!contentUrl) {
+      throw new Error(`No ${isVideo ? 'video' : 'image'} URL in Runware response`);
     }
 
-    console.log('[Runware] Generated image URL:', imageUrl);
+    console.log(`[Runware] Generated ${isVideo ? 'video' : 'image'} URL:`, contentUrl);
 
-    // Download the image
-    const imageResponse = await fetch(imageUrl);
-    if (!imageResponse.ok) {
-      throw new Error(`Failed to download image: ${imageResponse.status}`);
+    // Download the content
+    const contentResponse = await fetch(contentUrl);
+    if (!contentResponse.ok) {
+      throw new Error(`Failed to download ${isVideo ? 'video' : 'image'}: ${contentResponse.status}`);
     }
 
-    const imageData = await imageResponse.arrayBuffer();
-    const uint8Data = new Uint8Array(imageData);
+    const contentData = await contentResponse.arrayBuffer();
+    const uint8Data = new Uint8Array(contentData);
 
     // Determine file extension
-    const outputFormat = taskPayload.outputFormat?.toLowerCase() || 'webp';
-    const fileExtension = determineFileExtension(outputFormat, imageUrl);
+    const outputFormat = taskPayload.outputFormat?.toLowerCase() || (isVideo ? 'mp4' : 'webp');
+    const fileExtension = determineFileExtension(outputFormat, contentUrl, isVideo);
 
     console.log(`[Runware] Downloaded: ${uint8Data.length} bytes, extension: ${fileExtension}`);
 
     // Build metadata
     const metadata: Record<string, any> = {
       model: cleanModel,
-      imageUUID: result.imageUUID,
       positivePrompt: result.positivePrompt,
       runware_cost: result.cost,
-      nsfw_detected: result.NSFWContent || false,
     };
 
-    // Include optional fields
-    if (result.seed) metadata.seed = result.seed;
+    // Add content-specific metadata
+    if (isVideo) {
+      if (result.videoUUID) metadata.videoUUID = result.videoUUID;
+      if (result.duration) metadata.duration = result.duration;
+      if (result.fps) metadata.fps = result.fps;
+    } else {
+      if (result.imageUUID) metadata.imageUUID = result.imageUUID;
+      if (result.NSFWContent !== undefined) metadata.nsfw_detected = result.NSFWContent;
+      if (result.seed) metadata.seed = result.seed;
+      if (result.steps) metadata.steps = result.steps;
+      if (result.CFGScale) metadata.cfgScale = result.CFGScale;
+      if (result.scheduler) metadata.scheduler = result.scheduler;
+    }
+
+    // Common metadata
     if (result.width) metadata.width = result.width;
     if (result.height) metadata.height = result.height;
-    if (result.steps) metadata.steps = result.steps;
-    if (result.CFGScale) metadata.cfgScale = result.CFGScale;
-    if (result.scheduler) metadata.scheduler = result.scheduler;
 
     return {
       output_data: uint8Data,
@@ -127,13 +141,18 @@ export async function callRunware(
   }
 }
 
-function determineFileExtension(format: string, url: string): string {
+function determineFileExtension(format: string, url: string, isVideo: boolean): string {
   // Try to get extension from format first
   const formatMap: Record<string, string> = {
+    // Image formats
     'webp': 'webp',
     'png': 'png',
     'jpg': 'jpg',
-    'jpeg': 'jpg'
+    'jpeg': 'jpg',
+    // Video formats
+    'mp4': 'mp4',
+    'webm': 'webm',
+    'mov': 'mov'
   };
 
   if (formatMap[format.toLowerCase()]) {
@@ -146,6 +165,6 @@ function determineFileExtension(format: string, url: string): string {
     if (match) return match[1];
   }
 
-  // Default to webp
-  return 'webp';
+  // Default based on content type
+  return isVideo ? 'mp4' : 'webp';
 }

@@ -53,31 +53,47 @@ export async function callRunware(
   
   console.log('[Runware] Using prompt:', effectivePrompt.substring(0, 100) + (effectivePrompt.length > 100 ? '...' : ''));
   
+  // Determine task type from parameters or infer from model/params
+  const taskType = params.taskType || (params.frameImages ? "videoInference" : "imageInference");
+  const isVideo = taskType === "videoInference";
+  
+  console.log('[Runware] Task type:', taskType, 'Is video:', isVideo);
+  
   // Build task payload - trust validated parameters from schema
   const taskPayload: any = {
-    taskType: "imageInference",
+    taskType,
     taskUUID,
     model: cleanModel,
     positivePrompt: effectivePrompt,
   };
 
-  // Only include parameters that exist in validated params (schema defaults already applied)
+  // Common parameters
   if (params.width !== undefined) taskPayload.width = Number(params.width);
   if (params.height !== undefined) taskPayload.height = Number(params.height);
   if (params.numberResults !== undefined) taskPayload.numberResults = Number(params.numberResults);
   if (params.outputFormat !== undefined) taskPayload.outputFormat = params.outputFormat;
-  if (params.outputType !== undefined) taskPayload.outputType = params.outputType;
-  if (params.steps !== undefined) taskPayload.steps = Number(params.steps);
-  if (params.CFGScale !== undefined) taskPayload.CFGScale = Number(params.CFGScale);
-  if (params.scheduler !== undefined) taskPayload.scheduler = params.scheduler;
   if (params.outputQuality !== undefined) taskPayload.outputQuality = Number(params.outputQuality);
-  if (params.seed !== undefined) taskPayload.seed = Number(params.seed);
-  if (params.strength !== undefined) taskPayload.strength = Number(params.strength);
-  if (params.lora !== undefined) taskPayload.lora = params.lora;
-
-  // These can have reasonable defaults if missing
-  taskPayload.checkNSFW = params.checkNSFW ?? true;
   taskPayload.includeCost = params.includeCost ?? true;
+
+  // Image-specific parameters
+  if (!isVideo) {
+    if (params.outputType !== undefined) taskPayload.outputType = params.outputType;
+    if (params.steps !== undefined) taskPayload.steps = Number(params.steps);
+    if (params.CFGScale !== undefined) taskPayload.CFGScale = Number(params.CFGScale);
+    if (params.scheduler !== undefined) taskPayload.scheduler = params.scheduler;
+    if (params.seed !== undefined) taskPayload.seed = Number(params.seed);
+    if (params.strength !== undefined) taskPayload.strength = Number(params.strength);
+    if (params.lora !== undefined) taskPayload.lora = params.lora;
+    taskPayload.checkNSFW = params.checkNSFW ?? true;
+  }
+  
+  // Video-specific parameters
+  if (isVideo) {
+    if (params.fps !== undefined) taskPayload.fps = Number(params.fps);
+    if (params.duration !== undefined) taskPayload.duration = Number(params.duration);
+    if (params.frameImages !== undefined) taskPayload.frameImages = params.frameImages;
+    if (params.providerSettings !== undefined) taskPayload.providerSettings = params.providerSettings;
+  }
 
   // Build request payload with authentication and task
   const requestBody = [
@@ -126,11 +142,13 @@ export async function callRunware(
       throw new Error('Invalid response from Runware API');
     }
 
-    // Find the imageInference result (skip authentication result)
-    const result = responseData.data.find((item: any) => item.taskType === 'imageInference');
+    // Find the result (imageInference or videoInference)
+    const result = responseData.data.find((item: any) => 
+      item.taskType === 'imageInference' || item.taskType === 'videoInference'
+    );
     
     if (!result) {
-      throw new Error('No image inference result in Runware response');
+      throw new Error('No inference result in Runware response');
     }
 
     // Check for errors in result
@@ -138,45 +156,53 @@ export async function callRunware(
       throw new Error(`Runware generation failed: ${result.error}`);
     }
 
-    // Extract image URL
-    const imageUrl = result.imageURL;
-    if (!imageUrl) {
-      throw new Error('No image URL in Runware response');
+    // Extract content URL (imageURL or videoURL)
+    const contentUrl = result.imageURL || result.videoURL;
+    if (!contentUrl) {
+      throw new Error(`No ${isVideo ? 'video' : 'image'} URL in Runware response`);
     }
 
-    console.log('[Runware] Generated image URL:', imageUrl);
+    console.log(`[Runware] Generated ${isVideo ? 'video' : 'image'} URL:`, contentUrl);
 
-    // Download the image
-    const imageResponse = await fetch(imageUrl);
-    if (!imageResponse.ok) {
-      throw new Error(`Failed to download image: ${imageResponse.status}`);
+    // Download the content
+    const contentResponse = await fetch(contentUrl);
+    if (!contentResponse.ok) {
+      throw new Error(`Failed to download ${isVideo ? 'video' : 'image'}: ${contentResponse.status}`);
     }
 
-    const imageData = await imageResponse.arrayBuffer();
-    const uint8Data = new Uint8Array(imageData);
+    const contentData = await contentResponse.arrayBuffer();
+    const uint8Data = new Uint8Array(contentData);
 
     // Determine file extension
-    const outputFormat = params.outputFormat?.toLowerCase() || 'webp';
-    const fileExtension = determineFileExtension(outputFormat, imageUrl);
+    const outputFormat = params.outputFormat?.toLowerCase() || (isVideo ? 'mp4' : 'webp');
+    const fileExtension = determineFileExtension(outputFormat, contentUrl, isVideo);
 
     console.log(`[Runware] Downloaded: ${uint8Data.length} bytes, extension: ${fileExtension}`);
 
     // Build metadata
     const metadata: Record<string, any> = {
       model: cleanModel,
-      imageUUID: result.imageUUID,
       positivePrompt: result.positivePrompt,
       runware_cost: result.cost,
-      nsfw_detected: result.NSFWContent || false,
     };
 
-    // Include optional fields
-    if (result.seed) metadata.seed = result.seed;
+    // Add content-specific metadata
+    if (isVideo) {
+      if (result.videoUUID) metadata.videoUUID = result.videoUUID;
+      if (result.duration) metadata.duration = result.duration;
+      if (result.fps) metadata.fps = result.fps;
+    } else {
+      if (result.imageUUID) metadata.imageUUID = result.imageUUID;
+      if (result.NSFWContent !== undefined) metadata.nsfw_detected = result.NSFWContent;
+      if (result.seed) metadata.seed = result.seed;
+      if (result.steps) metadata.steps = result.steps;
+      if (result.CFGScale) metadata.cfgScale = result.CFGScale;
+      if (result.scheduler) metadata.scheduler = result.scheduler;
+    }
+
+    // Common metadata
     if (result.width) metadata.width = result.width;
     if (result.height) metadata.height = result.height;
-    if (result.steps) metadata.steps = result.steps;
-    if (result.CFGScale) metadata.cfgScale = result.CFGScale;
-    if (result.scheduler) metadata.scheduler = result.scheduler;
 
     return {
       output_data: uint8Data,
@@ -191,12 +217,17 @@ export async function callRunware(
   }
 }
 
-function determineFileExtension(format: string, url: string): string {
+function determineFileExtension(format: string, url: string, isVideo: boolean): string {
   const formatMap: Record<string, string> = {
+    // Image formats
     'webp': 'webp',
     'png': 'png',
     'jpg': 'jpg',
-    'jpeg': 'jpg'
+    'jpeg': 'jpg',
+    // Video formats
+    'mp4': 'mp4',
+    'webm': 'webm',
+    'mov': 'mov'
   };
 
   if (formatMap[format.toLowerCase()]) {
@@ -209,5 +240,6 @@ function determineFileExtension(format: string, url: string): string {
     if (match) return match[1];
   }
 
-  return 'webp';
+  // Default based on content type
+  return isVideo ? 'mp4' : 'webp';
 }

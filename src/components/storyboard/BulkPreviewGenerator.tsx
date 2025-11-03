@@ -151,8 +151,16 @@ export const BulkPreviewGenerator = ({ storyboard, scenes, onGenerateAll }: Bulk
               disabled={!hasEnoughCredits || imageModels.length === 0}
               className="w-full"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Generate All ({totalCost} credits)
+              <div className="flex items-center justify-center gap-2 w-full">
+                <Sparkles className="w-4 h-4 flex-shrink-0" />
+                <span className="whitespace-nowrap">
+                  <span className="hidden sm:inline">Generate All</span>
+                  <span className="sm:hidden">Generate</span>
+                </span>
+                <span className="whitespace-nowrap flex-shrink-0">
+                  (~{totalCost.toFixed(2)} credits)
+                </span>
+              </div>
             </Button>
 
             {/* Credit Warning */}

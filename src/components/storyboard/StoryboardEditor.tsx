@@ -7,6 +7,7 @@ import { GeneratingOutputConsole } from './GeneratingOutputConsole';
 import { SubtitleCustomizer } from './SubtitleCustomizer';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import type { SubtitleSettings } from '@/types/subtitle';
+import { FONT_FAMILIES } from '@/config/subtitlePresets';
 import { Play, ArrowLeft, Coins, Loader2, AlertCircle, RefreshCw, X, ChevronDown, Volume2, Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -300,6 +301,18 @@ export const StoryboardEditor = () => {
         </Alert>
       )}
 
+      {/* Generation Progress Console - Always visible during rendering */}
+      {isRendering && (
+        <GeneratingOutputConsole
+          progress={renderProgress}
+          statusMessage={renderStatusMessage}
+          elapsedTime={renderingStartTime ? Date.now() - renderingStartTime : 0}
+          onCheckStatus={refreshStatus}
+          onCancelRender={cancelRender}
+          isCanceling={isCancelingRender}
+        />
+      )}
+
       {/* Show Refresh button for stuck videos */}
       {storyboard?.status === 'rendering' && !isRendering && (
         <Alert>
@@ -422,27 +435,40 @@ export const StoryboardEditor = () => {
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Voice & Advanced Settings - Editable Before Rendering */}
-      {!isRendering && (
-        <Card className="p-6 space-y-6">
-          <Collapsible defaultOpen>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full justify-between -ml-4" type="button">
-                <span className="text-lg font-bold">🎙️ Voice & Advanced Settings</span>
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-6 pt-4">
-              <p className="text-sm text-muted-foreground">
-                Customize your video settings before rendering. Changes are saved automatically.
-              </p>
+      {/* Voice & Advanced Settings - Accessible during rendering but disabled */}
+      <Card className="p-6 space-y-6">
+        <Collapsible defaultOpen={false}>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" className="w-full justify-between -ml-4" type="button">
+              <span className="text-lg font-bold flex items-center">
+                <Volume2 className="mr-2 h-5 w-5" />
+                Voice & Advanced Settings
+                {isRendering && (
+                  <span className="text-xs text-muted-foreground ml-2 font-normal">(settings locked during render)</span>
+                )}
+              </span>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-6 pt-4">
+            {isRendering && (
+              <Alert className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Settings cannot be changed during rendering. Cancel the render to make changes.
+                </AlertDescription>
+              </Alert>
+            )}
+            <p className="text-sm text-muted-foreground">
+              Customize your video settings before rendering. Changes are saved automatically.
+            </p>
               
-              {/* Voice Selection - Editable */}
+              {/* Voice Selection */}
               <div className="space-y-2">
                 <Label className="text-sm font-semibold">Voiceover Voice</Label>
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start" type="button">
+                    <Button variant="outline" className="w-full justify-start" type="button" disabled={isRendering}>
                       <Volume2 className="w-4 h-4 mr-2" />
                       <span className="truncate">
                         {storyboard?.voice_name || 'Select Voice'}
@@ -473,6 +499,7 @@ export const StoryboardEditor = () => {
                   onValueChange={(value) => {
                     updateRenderSettings?.({ video_quality: value });
                   }}
+                  disabled={isRendering}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -512,24 +539,25 @@ export const StoryboardEditor = () => {
                             },
                           });
                         }}
+                        disabled={isRendering}
                       >
                         <SelectTrigger className="h-8 text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-background z-50">
-                          <SelectItem value="Oswald Bold">Oswald Bold</SelectItem>
-                          <SelectItem value="Montserrat Bold">Montserrat Bold</SelectItem>
-                          <SelectItem value="Inter Bold">Inter Bold</SelectItem>
-                          <SelectItem value="Arial">Arial</SelectItem>
-                          <SelectItem value="Impact">Impact</SelectItem>
+                          {FONT_FAMILIES.map((font) => (
+                            <SelectItem key={font} value={font}>
+                              {font}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
                     
                     <div className="space-y-2">
-                      <Label className="text-xs">Size: {storyboard?.subtitle_settings?.fontSize || 140}px</Label>
+                      <Label className="text-xs">Size: {storyboard?.subtitle_settings?.fontSize || 40}px</Label>
                       <Slider
-                        value={[storyboard?.subtitle_settings?.fontSize || 140]}
+                        value={[storyboard?.subtitle_settings?.fontSize || 40]}
                         onValueChange={([value]) => {
                           updateRenderSettings?.({
                             subtitle_settings: {
@@ -538,10 +566,11 @@ export const StoryboardEditor = () => {
                             },
                           });
                         }}
-                        min={80}
+                        min={20}
                         max={200}
                         step={10}
                         className="w-full"
+                        disabled={isRendering}
                       />
                     </div>
                   </div>
@@ -553,6 +582,7 @@ export const StoryboardEditor = () => {
                     className="w-full"
                     onClick={() => setShowSubtitleCustomizer(true)}
                     type="button"
+                    disabled={isRendering}
                   >
                     <Settings className="h-4 w-4 mr-2" />
                     Advanced Subtitle Customizer
@@ -585,6 +615,7 @@ export const StoryboardEditor = () => {
                       max={100}
                       step={5}
                       className="w-full"
+                      disabled={isRendering}
                     />
                   </div>
                   
@@ -605,6 +636,7 @@ export const StoryboardEditor = () => {
                         max={10}
                         step={1}
                         className="w-full"
+                        disabled={isRendering}
                       />
                     </div>
                     
@@ -624,6 +656,7 @@ export const StoryboardEditor = () => {
                         max={10}
                         step={1}
                         className="w-full"
+                        disabled={isRendering}
                       />
                     </div>
                   </div>
@@ -655,6 +688,7 @@ export const StoryboardEditor = () => {
                       max={5}
                       step={0.1}
                       className="w-full"
+                      disabled={isRendering}
                     />
                   </div>
                   
@@ -670,6 +704,7 @@ export const StoryboardEditor = () => {
                           },
                         });
                       }}
+                      disabled={isRendering}
                     >
                       <SelectTrigger className="h-8 text-xs">
                         <SelectValue />
@@ -687,10 +722,9 @@ export const StoryboardEditor = () => {
               <p className="text-xs text-muted-foreground pt-2 border-t">
                 💡 Settings are saved automatically as you make changes
               </p>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
-      )}
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
 
       {/* Render Video Button - After settings */}
       {!isRendering && (
@@ -765,17 +799,6 @@ export const StoryboardEditor = () => {
         </Card>
       )}
 
-      {/* Generating Output Console - shows when rendering and scenes are collapsed */}
-      {isRendering && !showScenes && (
-        <GeneratingOutputConsole
-          progress={renderProgress}
-          statusMessage={renderStatusMessage}
-          elapsedTime={renderingStartTime ? Date.now() - renderingStartTime : 0}
-          onCheckStatus={refreshStatus}
-          onCancelRender={cancelRender}
-          isCanceling={isCancelingRender}
-        />
-      )}
 
       {/* Final Video (appears below scenes after rendering) */}
       {storyboard?.status === 'complete' && storyboard?.video_url && (

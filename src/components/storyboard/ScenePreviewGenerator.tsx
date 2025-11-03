@@ -255,54 +255,105 @@ export const ScenePreviewGenerator = ({
       </div>
 
       {/* Controls */}
-      {!hasExistingPreview && !isGenerating && !isAsyncGeneration && (
-        <>
-          <div className="space-y-3">
-            <Select 
-              value={selectedModelId} 
-              onValueChange={setSelectedModelId}
-              disabled={imageModels.length === 0}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {imageModels.map(model => (
-                  <SelectItem key={model.id} value={model.id}>
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4" />
-                      <span>{model.model_name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        (~{model.base_token_cost} token{model.base_token_cost !== 1 ? 's' : ''})
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {imageModels.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                No storyboard-approved models are currently available. Please try again later or contact support.
-              </p>
-            )}
+      {!isGenerating && !isAsyncGeneration && (
+        <div className="space-y-3">
+          {!hasExistingPreview ? (
+            <>
+              {/* Initial generation controls */}
+              <Select 
+                value={selectedModelId} 
+                onValueChange={setSelectedModelId}
+                disabled={imageModels.length === 0}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {imageModels.map(model => (
+                    <SelectItem key={model.id} value={model.id}>
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4" />
+                        <span>{model.model_name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          (~{model.base_token_cost} token{model.base_token_cost !== 1 ? 's' : ''})
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {imageModels.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No storyboard-approved models are currently available. Please try again later or contact support.
+                </p>
+              )}
 
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating || isAsyncGeneration || (tokenData?.tokens_remaining || 0) < tokenCost || imageModels.length === 0}
-              className="w-full"
-              variant="outline"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Generate Preview ({tokenCost} credit{tokenCost !== 1 ? 's' : ''})
-            </Button>
-          </div>
+              <Button
+                onClick={handleGenerate}
+                disabled={isGenerating || isAsyncGeneration || (tokenData?.tokens_remaining || 0) < tokenCost || imageModels.length === 0}
+                className="w-full"
+                variant="outline"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate Preview ({tokenCost} credit{tokenCost !== 1 ? 's' : ''})
+              </Button>
 
-          {(tokenData?.tokens_remaining || 0) < tokenCost && (
-            <p className="text-xs text-destructive mt-2">
-              Insufficient credits. You need {tokenCost} credit{tokenCost !== 1 ? 's' : ''}.
-            </p>
+              {(tokenData?.tokens_remaining || 0) < tokenCost && (
+                <p className="text-xs text-destructive">
+                  Insufficient credits. You need {tokenCost} credit{tokenCost !== 1 ? 's' : ''}.
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Regeneration controls */}
+              <div className="pt-3 border-t border-border/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Want to try a different model?</span>
+                </div>
+                
+                <Select 
+                  value={selectedModelId} 
+                  onValueChange={setSelectedModelId}
+                  disabled={imageModels.length === 0}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {imageModels.map(model => (
+                      <SelectItem key={model.id} value={model.id}>
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4" />
+                          <span>{model.model_name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            (~{model.base_token_cost} credit{model.base_token_cost !== 1 ? 's' : ''})
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating || isAsyncGeneration || (tokenData?.tokens_remaining || 0) < tokenCost || imageModels.length === 0}
+                  className="w-full"
+                  variant="outline"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Regenerate with {selectedModel?.model_name} ({tokenCost} credit{tokenCost !== 1 ? 's' : ''})
+                </Button>
+
+                {(tokenData?.tokens_remaining || 0) < tokenCost && (
+                  <p className="text-xs text-destructive">
+                    Insufficient credits. You need {tokenCost} credit{tokenCost !== 1 ? 's' : ''}.
+                  </p>
+                )}
+              </div>
+            </>
           )}
-        </>
+        </div>
       )}
     </Card>
   );

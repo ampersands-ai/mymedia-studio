@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { SceneCard } from './SceneCard';
 import { ScenePreviewGenerator } from './ScenePreviewGenerator';
+import { BulkPreviewGenerator } from './BulkPreviewGenerator';
 import { GeneratingOutputConsole } from './GeneratingOutputConsole';
 import { SubtitleCustomizer } from './SubtitleCustomizer';
 import { useStoryboard } from '@/hooks/useStoryboard';
@@ -60,6 +61,7 @@ export const StoryboardEditor = () => {
     refreshStatus,
     updateSceneImage,
     updateRenderSettings,
+    generateAllScenePreviews,
   } = useStoryboard();
   const { data: tokenData } = useUserTokens();
   
@@ -342,6 +344,13 @@ export const StoryboardEditor = () => {
         <CollapsibleContent forceMount className={cn(!showScenes && "hidden")}>
           <div className="space-y-4">
             <h3 className="text-lg font-bold">📋 Scenes</h3>
+            
+            {/* Bulk Preview Generator */}
+            <BulkPreviewGenerator
+              storyboard={storyboard}
+              scenes={scenes}
+              onGenerateAll={generateAllScenePreviews}
+            />
             
             {/* Title/Intro Scene (Scene 1) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">

@@ -647,6 +647,186 @@ export const useStoryboard = () => {
     }
   }, [scenes, activeSceneId]);
 
+  // Helper function for polling async generations
+  const pollForGenerationResult = async (
+    generationId: string, 
+    signal: AbortSignal
+  ): Promise<string> => {
+    const maxAttempts = 60; // 60 seconds max
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      if (signal.aborted) {
+        throw new Error('Polling cancelled');
+      }
+
+      const { data, error } = await supabase
+        .from('generations')
+        .select('status, output_url')
+        .eq('id', generationId)
+        .single();
+
+      if (error) throw error;
+
+      if (data.status === 'completed' && data.output_url) {
+        return data.output_url;
+      }
+
+      if (data.status === 'failed') {
+        throw new Error('Generation failed');
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      attempts++;
+    }
+
+    throw new Error('Generation timed out after 60 seconds');
+  };
+
+  // Generate all scene previews at once
+  const generateAllScenePreviews = useCallback(async (
+    modelId: string,
+    signal: AbortSignal,
+    onProgress?: (current: number, total: number) => void
+  ) => {
+    if (!currentStoryboardId || !user) {
+      throw new Error('No storyboard or user');
+    }
+
+    // 1. Identify scenes needing previews
+    const scenesToGenerate = [
+      // Intro scene
+      ...(storyboard?.intro_image_preview_url ? [] : [{
+        id: storyboard.id,
+        imagePrompt: storyboard.intro_image_prompt,
+        sceneNumber: 1,
+        isIntro: true
+      }]),
+      // Regular scenes without previews
+      ...scenes
+        .filter(scene => !scene.image_preview_url && scene.image_prompt)
+        .map((scene, idx) => ({
+          id: scene.id,
+          imagePrompt: scene.image_prompt,
+          sceneNumber: scenes.findIndex(s => s.id === scene.id) + 2,
+          isIntro: false
+        }))
+    ];
+
+    if (scenesToGenerate.length === 0) {
+      return { success: true, generated: 0, failed: 0, results: [] };
+    }
+
+    // 2. Check credit balance upfront
+    const { data: model } = await supabase
+      .from('ai_models')
+      .select('base_token_cost, provider')
+      .eq('id', modelId)
+      .single();
+    
+    const tokenCost = model?.base_token_cost || 1;
+    const totalCost = tokenCost * scenesToGenerate.length;
+    
+    const { data: tokenData } = await supabase
+      .from('user_subscriptions')
+      .select('tokens_remaining')
+      .eq('user_id', user.id)
+      .single();
+    
+    if ((tokenData?.tokens_remaining || 0) < totalCost) {
+      throw new Error(`Insufficient credits. Need ${totalCost} credits to generate ${scenesToGenerate.length} previews.`);
+    }
+
+    // 3. Generate sequentially with cancellation support
+    const results = [];
+    for (let i = 0; i < scenesToGenerate.length; i++) {
+      // Check for cancellation
+      if (signal.aborted) {
+        throw new Error('Generation cancelled by user');
+      }
+
+      const scene = scenesToGenerate[i];
+      onProgress?.(i + 1, scenesToGenerate.length);
+
+      try {
+        // Use appropriate endpoint based on model provider
+        const functionName = model?.provider === 'runware' 
+          ? 'generate-content-sync' 
+          : 'generate-content';
+
+        const { data, error } = await supabase.functions.invoke(functionName, {
+          body: {
+            model_id: modelId,
+            prompt: scene.imagePrompt,
+            custom_parameters: {},
+          }
+        });
+        
+        if (error) throw error;
+        
+        // Handle async generation (polling required)
+        let outputUrl = data.output_url;
+        if (!outputUrl && data.id) {
+          // Poll for async generation result
+          outputUrl = await pollForGenerationResult(data.id, signal);
+        }
+
+        // Update scene with preview URL
+        if (scene.isIntro) {
+          await updateIntroSceneMutation.mutateAsync({ 
+            field: 'intro_image_preview_url', 
+            value: outputUrl 
+          });
+        } else {
+          await updateSceneImageMutation.mutateAsync({ 
+            sceneId: scene.id, 
+            imageUrl: outputUrl 
+          });
+        }
+        
+        results.push({ 
+          sceneNumber: scene.sceneNumber, 
+          success: true, 
+          url: outputUrl 
+        });
+        
+        console.log(`✅ Generated preview for scene ${scene.sceneNumber}`);
+      } catch (error: any) {
+        if (signal.aborted) {
+          throw new Error('Generation cancelled by user');
+        }
+        
+        console.error(`❌ Failed to generate preview for scene ${scene.sceneNumber}:`, error);
+        results.push({ 
+          sceneNumber: scene.sceneNumber, 
+          success: false, 
+          error: error.message 
+        });
+        
+        // Continue with remaining scenes even if one fails
+      }
+    }
+
+    onProgress?.(scenesToGenerate.length, scenesToGenerate.length);
+
+    // Summary
+    const successCount = results.filter((r: any) => r.success).length;
+    const failCount = results.filter((r: any) => !r.success).length;
+    
+    if (failCount > 0) {
+      console.warn(`⚠️ Bulk generation completed with ${failCount} failures`);
+    }
+
+    toast.success(`Generated ${successCount} of ${scenesToGenerate.length} previews`);
+
+    return { 
+      success: true, 
+      generated: successCount, 
+      failed: failCount,
+      results 
+    };
+  }, [currentStoryboardId, user, storyboard, scenes, updateIntroSceneMutation, updateSceneImageMutation]);
+
   return {
     storyboard,
     scenes,
@@ -669,5 +849,6 @@ export const useStoryboard = () => {
     refreshStatus,
     updateSceneImage: updateSceneImageMutation.mutate,
     updateRenderSettings: updateRenderSettingsMutation.mutate,
+    generateAllScenePreviews,
   };
 };

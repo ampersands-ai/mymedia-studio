@@ -295,9 +295,11 @@ export const StoryboardEditor = () => {
                     variant="destructive"
                     size="sm"
                     disabled={isCancelingRender}
+                    className="whitespace-nowrap"
                   >
-                    <X className="w-4 h-4 mr-2" />
-                    Cancel Render
+                    <X className="w-4 h-4 mr-1 flex-shrink-0" />
+                    <span className="hidden sm:inline">Cancel Render</span>
+                    <span className="sm:hidden">Cancel</span>
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -772,8 +774,11 @@ export const StoryboardEditor = () => {
                   disabled={isRendering || (tokenData?.tokens_remaining || 0) < actualRenderCost}
                   className="bg-gradient-to-r from-primary via-primary to-primary/80 hover:scale-105 transition-transform font-bold w-full sm:w-auto"
                 >
-                  <Play className="w-5 h-5 mr-2" />
-                  Render Video ({actualRenderCost.toFixed(2)} credits will be charged)
+                  <Play className="w-5 h-5 mr-2 flex-shrink-0" />
+                  <span className="truncate">
+                    <span className="hidden sm:inline">Render Video ({actualRenderCost.toFixed(2)} credits)</span>
+                    <span className="sm:hidden">Render ({actualRenderCost.toFixed(2)} credits)</span>
+                  </span>
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>

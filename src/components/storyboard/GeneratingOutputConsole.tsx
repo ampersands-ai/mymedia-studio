@@ -94,11 +94,12 @@ export const GeneratingOutputConsole = ({
           <AlertDialogTrigger asChild>
             <Button
               variant="destructive"
-              className="flex-1"
+              className="flex-1 whitespace-nowrap"
               disabled={isCanceling}
             >
-              <X className="w-4 h-4 mr-2" />
-              Cancel Render
+              <X className="w-4 h-4 mr-1 flex-shrink-0" />
+              <span className="hidden sm:inline">Cancel Render</span>
+              <span className="sm:hidden">Cancel</span>
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>

@@ -7,7 +7,7 @@ export const SUBTITLE_PRESETS: Record<string, SubtitlePreset> = {
     settings: {
       style: 'classic',
       fontFamily: 'Oswald Bold',
-      fontSize: 140,
+      fontSize: 40,
       wordColor: '#FFFF00',
       lineColor: '#FFFFFF',
       boxColor: '#000000',
@@ -32,7 +32,7 @@ export const SUBTITLE_PRESETS: Record<string, SubtitlePreset> = {
     settings: {
       style: 'boxed-word',
       fontFamily: 'Montserrat Bold',
-      fontSize: 120,
+      fontSize: 40,
       boxColor: '#000000',
       lineColor: '#FFFFFF',
       wordColor: '#FFFF00',
@@ -58,7 +58,7 @@ export const SUBTITLE_PRESETS: Record<string, SubtitlePreset> = {
     settings: {
       style: 'classic-progressive',
       fontFamily: 'Roboto',
-      fontSize: 110,
+      fontSize: 40,
       lineColor: '#FFFFFF',
       wordColor: '#FFFFFF',
       boxColor: '#000000',
@@ -82,7 +82,7 @@ export const SUBTITLE_PRESETS: Record<string, SubtitlePreset> = {
     settings: {
       style: 'boxed-line',
       fontFamily: 'Arial Bold',
-      fontSize: 130,
+      fontSize: 40,
       boxColor: '#000000',
       lineColor: '#FFFFFF',
       wordColor: '#FFFFFF',
@@ -108,7 +108,7 @@ export const SUBTITLE_PRESETS: Record<string, SubtitlePreset> = {
     settings: {
       style: 'boxed-word',
       fontFamily: 'Montserrat Bold',
-      fontSize: 100,
+      fontSize: 40,
       boxColor: '#000000',
       lineColor: '#FFFFFF',
       wordColor: '#FFFFFF',
@@ -135,7 +135,7 @@ export const SUBTITLE_PRESETS: Record<string, SubtitlePreset> = {
     settings: {
       style: 'classic',
       fontFamily: 'Arial',
-      fontSize: 120,
+      fontSize: 40,
       lineColor: '#FFFFFF',
       wordColor: '#FFFFFF',
       boxColor: '#000000',

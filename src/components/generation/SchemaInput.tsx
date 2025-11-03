@@ -417,21 +417,21 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
   // Special handling for duration field - use increment/decrement buttons
   if (name === "duration" && (schema.type === "number" || schema.type === "integer")) {
     const numericValue = (value === "" || value === undefined || value === null) 
-      ? (schema.default ?? schema.minimum ?? 1) 
-      : value;
+      ? Math.round(schema.default ?? schema.minimum ?? 1)
+      : Math.round(Number(value));
     
-    const step = schema.type === "integer" ? 1 : (schema.step || 0.1);
+    const step = 1; // Always use integer step for duration
     const min = schema.minimum ?? 0;
     const max = schema.maximum ?? 100;
     
     const handleDecrement = () => {
       const newValue = Math.max(min, numericValue - step);
-      onChange(schema.type === "integer" ? Math.round(newValue) : newValue);
+      onChange(Math.round(newValue));
     };
     
     const handleIncrement = () => {
       const newValue = Math.min(max, numericValue + step);
-      onChange(schema.type === "integer" ? Math.round(newValue) : newValue);
+      onChange(Math.round(newValue));
     };
     
     return (
@@ -458,12 +458,12 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
               type="number"
               value={numericValue}
               onChange={(e) => {
-                const val = schema.type === "integer" ? parseInt(e.target.value) : parseFloat(e.target.value);
-                if (!isNaN(val)) onChange(Math.max(min, Math.min(max, val)));
+                const val = parseInt(e.target.value);
+                if (!isNaN(val)) onChange(Math.round(Math.max(min, Math.min(max, val))));
               }}
               min={min}
               max={max}
-              step={step}
+              step={1}
               className="text-center"
             />
           </div>

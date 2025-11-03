@@ -90,7 +90,7 @@ export async function callRunware(
   // Video-specific parameters
   if (isVideo) {
     if (params.fps !== undefined) taskPayload.fps = Number(params.fps);
-    if (params.duration !== undefined) taskPayload.duration = Number(params.duration);
+    if (params.duration !== undefined) taskPayload.duration = Math.round(Number(params.duration));
     if (params.frameImages !== undefined) taskPayload.frameImages = params.frameImages;
     if (params.providerSettings !== undefined) taskPayload.providerSettings = params.providerSettings;
   }

@@ -33,6 +33,11 @@ export async function callRunware(
   if (request.prompt && !taskPayload.positivePrompt) {
     taskPayload.positivePrompt = request.prompt;
   }
+  
+  // Ensure duration is always an integer for video tasks
+  if (isVideo && taskPayload.duration !== undefined) {
+    taskPayload.duration = Math.round(Number(taskPayload.duration));
+  }
 
   console.log('[Runware] Task payload:', JSON.stringify(taskPayload, null, 2));
 

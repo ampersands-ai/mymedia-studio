@@ -284,6 +284,26 @@ export const useStoryboard = () => {
     mutationFn: async ({ field, value }: { field: string; value: string }) => {
       if (!currentStoryboardId) throw new Error('No storyboard selected');
       
+      // If updating intro image, detect if it's actually a video
+      if (field === 'intro_image_preview_url' && typeof value === 'string') {
+        const isVideo = value.includes('.mp4') || value.includes('.webm') || value.includes('video');
+        
+        if (isVideo) {
+          // Save to intro_video_url instead
+          const { error } = await supabase
+            .from('storyboards')
+            .update({ 
+              intro_video_url: value,
+              intro_image_preview_url: null  // Clear old image
+            })
+            .eq('id', currentStoryboardId);
+          
+          if (error) throw error;
+          return;
+        }
+      }
+      
+      // Regular field update (non-video)
       const { data, error } = await supabase
         .from('storyboards')
         .update({ [field]: value })
@@ -302,9 +322,16 @@ export const useStoryboard = () => {
   // Update scene image mutation
   const updateSceneImageMutation = useMutation({
     mutationFn: async ({ sceneId, imageUrl }: { sceneId: string; imageUrl: string }) => {
+      // Detect if this is a video or image based on URL
+      const isVideo = imageUrl.includes('.mp4') || imageUrl.includes('.webm') || imageUrl.includes('video');
+      
+      const updateData = isVideo 
+        ? { video_url: imageUrl, image_preview_url: null }  // Video: clear old image, set video
+        : { image_preview_url: imageUrl };                   // Image: update preview
+      
       const { error } = await supabase
         .from('storyboard_scenes')
-        .update({ image_preview_url: imageUrl })
+        .update(updateData)
         .eq('id', sceneId);
       
       if (error) throw error;

@@ -13,6 +13,36 @@ export interface ProviderResponse {
   metadata: Record<string, any>;
 }
 
+async function convertFrameImagesToRunwareFormat(frameImages: string[]): Promise<Array<{inputImage: string}>> {
+  const converted = [];
+  
+  for (const imageUrl of frameImages) {
+    console.log('[Runware Video] Fetching frame image:', imageUrl.substring(0, 80) + '...');
+    
+    try {
+      const response = await fetch(imageUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch frame image: ${response.status} ${response.statusText}`);
+      }
+      
+      const imageBuffer = await response.arrayBuffer();
+      const uint8Array = new Uint8Array(imageBuffer);
+      const base64 = btoa(String.fromCharCode(...uint8Array));
+      const contentType = response.headers.get('content-type') || 'image/png';
+      const dataUri = `data:${contentType};base64,${base64}`;
+      
+      console.log('[Runware Video] Converted frame image, size:', Math.round(dataUri.length / 1024), 'KB');
+      converted.push({ inputImage: dataUri });
+      
+    } catch (error: any) {
+      console.error('[Runware Video] Failed to convert frame image:', error.message);
+      throw new Error(`Failed to convert frame image: ${error.message}`);
+    }
+  }
+  
+  return converted;
+}
+
 export async function callRunware(
   request: ProviderRequest
 ): Promise<ProviderResponse> {
@@ -91,7 +121,10 @@ export async function callRunware(
   if (isVideo) {
     if (params.fps !== undefined) taskPayload.fps = Number(params.fps);
     if (params.duration !== undefined) taskPayload.duration = Math.round(Number(params.duration));
-    if (params.frameImages !== undefined) taskPayload.frameImages = params.frameImages;
+    if (params.frameImages !== undefined) {
+      console.log('[Runware Video] Converting', params.frameImages.length, 'frame images...');
+      taskPayload.frameImages = await convertFrameImagesToRunwareFormat(params.frameImages);
+    }
     if (params.providerSettings !== undefined) taskPayload.providerSettings = params.providerSettings;
   }
 

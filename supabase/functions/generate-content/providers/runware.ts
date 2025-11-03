@@ -1,5 +1,35 @@
 import { ProviderRequest, ProviderResponse } from "./index.ts";
 
+async function convertFrameImagesToRunwareFormat(frameImages: string[]): Promise<Array<{inputImage: string}>> {
+  const converted = [];
+  
+  for (const imageUrl of frameImages) {
+    console.log('[Runware Video] Fetching frame image:', imageUrl.substring(0, 80) + '...');
+    
+    try {
+      const response = await fetch(imageUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch frame image: ${response.status} ${response.statusText}`);
+      }
+      
+      const imageBuffer = await response.arrayBuffer();
+      const uint8Array = new Uint8Array(imageBuffer);
+      const base64 = btoa(String.fromCharCode(...uint8Array));
+      const contentType = response.headers.get('content-type') || 'image/png';
+      const dataUri = `data:${contentType};base64,${base64}`;
+      
+      console.log('[Runware Video] Converted frame image, size:', Math.round(dataUri.length / 1024), 'KB');
+      converted.push({ inputImage: dataUri });
+      
+    } catch (error: any) {
+      console.error('[Runware Video] Failed to convert frame image:', error.message);
+      throw new Error(`Failed to convert frame image: ${error.message}`);
+    }
+  }
+  
+  return converted;
+}
+
 export async function callRunware(
   request: ProviderRequest
 ): Promise<ProviderResponse> {
@@ -37,6 +67,12 @@ export async function callRunware(
   // Ensure duration is always an integer for video tasks
   if (isVideo && taskPayload.duration !== undefined) {
     taskPayload.duration = Math.round(Number(taskPayload.duration));
+  }
+
+  // Convert frameImages to Runware format for video tasks
+  if (isVideo && taskPayload.frameImages !== undefined) {
+    console.log('[Runware Video] Converting', taskPayload.frameImages.length, 'frame images...');
+    taskPayload.frameImages = await convertFrameImagesToRunwareFormat(taskPayload.frameImages);
   }
 
   console.log('[Runware] Task payload:', JSON.stringify(taskPayload, null, 2));

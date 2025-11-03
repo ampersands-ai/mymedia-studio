@@ -73,6 +73,14 @@ export const ScenePreviewGenerator = ({
 
   // Compute display URL from result or scene prop
   const displayUrl = result?.output_url ?? pollOutputUrl ?? scene.image_preview_url ?? null;
+  
+  // Determine if the display content is a video or image
+  const isVideoContent = displayUrl && (
+    displayUrl.includes('.mp4') || 
+    displayUrl.includes('.webm') || 
+    displayUrl.includes('video') ||
+    result?.content_type === 'video'
+  );
 
   // Handle sync generation result - only call onImageGenerated once per new URL
   useEffect(() => {
@@ -284,16 +292,27 @@ export const ScenePreviewGenerator = ({
             </div>
         ) : displayUrl ? (
           <div className="relative w-full h-full group">
-            <img
-              src={displayUrl}
-              alt={`Scene ${sceneNumber} preview`}
-              className="w-full h-full object-contain"
-              loading="lazy"
-            />
+            {isVideoContent ? (
+              <video
+                src={displayUrl}
+                className="w-full h-full object-contain"
+                controls
+                autoPlay
+                loop
+                muted
+              />
+            ) : (
+              <img
+                src={displayUrl}
+                alt={`Scene ${sceneNumber} preview`}
+                className="w-full h-full object-contain"
+                loading="lazy"
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
               <div className="absolute bottom-4 left-4 right-4">
                 <p className="text-xs text-white/90 bg-black/40 rounded px-2 py-1">
-                  ✅ This image will be used in video render
+                  ✅ This {isVideoContent ? 'video' : 'image'} will be used in video render
                 </p>
               </div>
             </div>

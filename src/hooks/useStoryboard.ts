@@ -693,6 +693,12 @@ export const useStoryboard = () => {
       throw new Error('No storyboard or user');
     }
 
+    // Get current session for authentication
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('Not authenticated. Please log in again.');
+    }
+
     // 1. Identify scenes needing previews
     const scenesToGenerate = [
       // Intro scene
@@ -762,6 +768,9 @@ export const useStoryboard = () => {
             : 'generate-content';
 
           const { data, error } = await supabase.functions.invoke(functionName, {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
             body: {
               model_id: modelId,
               prompt: scene.imagePrompt,
@@ -769,7 +778,13 @@ export const useStoryboard = () => {
             }
           });
           
-          if (error) throw error;
+          if (error) {
+            // Better error handling for auth issues
+            if (error.message?.includes('Unauthorized') || error.message?.includes('401')) {
+              throw new Error('Authentication failed. Please try logging out and back in.');
+            }
+            throw error;
+          }
           
           // Handle async generation (polling required)
           let outputUrl = data.output_url;

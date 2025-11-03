@@ -737,73 +737,91 @@ export const useStoryboard = () => {
       throw new Error(`Insufficient credits. Need ${totalCost} credits to generate ${scenesToGenerate.length} previews.`);
     }
 
-    // 3. Generate sequentially with cancellation support
+    // 3. Generate in parallel batches with cancellation support
+    const BATCH_SIZE = model?.provider === 'runware' ? 10 : 5;
     const results = [];
-    for (let i = 0; i < scenesToGenerate.length; i++) {
-      // Check for cancellation
+
+    for (let batchStart = 0; batchStart < scenesToGenerate.length; batchStart += BATCH_SIZE) {
+      // Check for cancellation before each batch
       if (signal.aborted) {
         throw new Error('Generation cancelled by user');
       }
 
-      const scene = scenesToGenerate[i];
-      onProgress?.(i + 1, scenesToGenerate.length);
+      const batch = scenesToGenerate.slice(batchStart, batchStart + BATCH_SIZE);
+      
+      // Generate all scenes in this batch in parallel
+      const batchPromises = batch.map(async (scene, batchIndex) => {
+        const absoluteIndex = batchStart + batchIndex;
+        
+        try {
+          // Update progress for this scene
+          onProgress?.(absoluteIndex + 1, scenesToGenerate.length);
 
-      try {
-        // Use appropriate endpoint based on model provider
-        const functionName = model?.provider === 'runware' 
-          ? 'generate-content-sync' 
-          : 'generate-content';
+          const functionName = model?.provider === 'runware' 
+            ? 'generate-content-sync' 
+            : 'generate-content';
 
-        const { data, error } = await supabase.functions.invoke(functionName, {
-          body: {
-            model_id: modelId,
-            prompt: scene.imagePrompt,
-            custom_parameters: {},
+          const { data, error } = await supabase.functions.invoke(functionName, {
+            body: {
+              model_id: modelId,
+              prompt: scene.imagePrompt,
+              custom_parameters: {},
+            }
+          });
+          
+          if (error) throw error;
+          
+          // Handle async generation (polling required)
+          let outputUrl = data.output_url;
+          if (!outputUrl && data.id) {
+            outputUrl = await pollForGenerationResult(data.id, signal);
           }
-        });
-        
-        if (error) throw error;
-        
-        // Handle async generation (polling required)
-        let outputUrl = data.output_url;
-        if (!outputUrl && data.id) {
-          // Poll for async generation result
-          outputUrl = await pollForGenerationResult(data.id, signal);
-        }
 
-        // Update scene with preview URL
-        if (scene.isIntro) {
-          await updateIntroSceneMutation.mutateAsync({ 
-            field: 'intro_image_preview_url', 
-            value: outputUrl 
-          });
+          // Update scene with preview URL
+          if (scene.isIntro) {
+            await updateIntroSceneMutation.mutateAsync({ 
+              field: 'intro_image_preview_url', 
+              value: outputUrl 
+            });
+          } else {
+            await updateSceneImageMutation.mutateAsync({ 
+              sceneId: scene.id, 
+              imageUrl: outputUrl 
+            });
+          }
+          
+          console.log(`✅ Generated preview for scene ${scene.sceneNumber}`);
+          
+          return { 
+            sceneNumber: scene.sceneNumber, 
+            success: true, 
+            url: outputUrl 
+          };
+        } catch (error: any) {
+          if (signal.aborted) {
+            throw new Error('Generation cancelled by user');
+          }
+          
+          console.error(`❌ Failed to generate preview for scene ${scene.sceneNumber}:`, error);
+          
+          return { 
+            sceneNumber: scene.sceneNumber, 
+            success: false, 
+            error: error.message 
+          };
+        }
+      });
+
+      // Wait for all scenes in this batch to complete
+      const batchResults = await Promise.allSettled(batchPromises);
+      
+      // Extract results from settled promises
+      for (const result of batchResults) {
+        if (result.status === 'fulfilled') {
+          results.push(result.value);
         } else {
-          await updateSceneImageMutation.mutateAsync({ 
-            sceneId: scene.id, 
-            imageUrl: outputUrl 
-          });
+          console.error('Unexpected batch promise rejection:', result.reason);
         }
-        
-        results.push({ 
-          sceneNumber: scene.sceneNumber, 
-          success: true, 
-          url: outputUrl 
-        });
-        
-        console.log(`✅ Generated preview for scene ${scene.sceneNumber}`);
-      } catch (error: any) {
-        if (signal.aborted) {
-          throw new Error('Generation cancelled by user');
-        }
-        
-        console.error(`❌ Failed to generate preview for scene ${scene.sceneNumber}:`, error);
-        results.push({ 
-          sceneNumber: scene.sceneNumber, 
-          success: false, 
-          error: error.message 
-        });
-        
-        // Continue with remaining scenes even if one fails
       }
     }
 

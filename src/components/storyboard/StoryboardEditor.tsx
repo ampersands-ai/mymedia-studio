@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button';
 import { SceneCard } from './SceneCard';
 import { ScenePreviewGenerator } from './ScenePreviewGenerator';
 import { GeneratingOutputConsole } from './GeneratingOutputConsole';
+import { SubtitleCustomizer } from './SubtitleCustomizer';
 import { useStoryboard } from '@/hooks/useStoryboard';
-import { Play, ArrowLeft, Coins, Loader2, AlertCircle, RefreshCw, X, ChevronDown, Volume2 } from 'lucide-react';
+import { Play, ArrowLeft, Coins, Loader2, AlertCircle, RefreshCw, X, ChevronDown, Volume2, Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
@@ -70,6 +71,7 @@ export const StoryboardEditor = () => {
   const [introVoiceOverText, setIntroVoiceOverText] = useState(storyboard?.intro_voiceover_text || '');
   const [introImagePrompt, setIntroImagePrompt] = useState(storyboard?.intro_image_prompt || '');
   const [showScenes, setShowScenes] = useState(storyboard?.status !== 'complete');
+  const [showSubtitleCustomizer, setShowSubtitleCustomizer] = useState(false);
 
   // Sync intro fields with storyboard
   useEffect(() => {
@@ -490,37 +492,13 @@ export const StoryboardEditor = () => {
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-4 pl-4">
                   <div className="text-xs text-muted-foreground mb-2">
-                    Configure subtitle appearance and behavior
+                    Configure subtitle appearance with advanced styling options
                   </div>
                   
-                  {/* Style & Font */}
+                  {/* Quick Preview */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label className="text-xs">Style</Label>
-                      <Select 
-                        value={storyboard?.subtitle_settings?.style || 'boxed-word'}
-                        onValueChange={(value) => {
-                          updateRenderSettings?.({
-                            subtitle_settings: {
-                              ...storyboard?.subtitle_settings,
-                              style: value,
-                            },
-                          });
-                        }}
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background z-50">
-                          <SelectItem value="boxed-word">Boxed Word</SelectItem>
-                          <SelectItem value="word-by-word">Word by Word</SelectItem>
-                          <SelectItem value="line">Full Line</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label className="text-xs">Font Family</Label>
+                      <Label className="text-xs">Font</Label>
                       <Select 
                         value={storyboard?.subtitle_settings?.fontFamily || 'Oswald Bold'}
                         onValueChange={(value) => {
@@ -537,17 +515,16 @@ export const StoryboardEditor = () => {
                         </SelectTrigger>
                         <SelectContent className="bg-background z-50">
                           <SelectItem value="Oswald Bold">Oswald Bold</SelectItem>
+                          <SelectItem value="Montserrat Bold">Montserrat Bold</SelectItem>
+                          <SelectItem value="Inter Bold">Inter Bold</SelectItem>
                           <SelectItem value="Arial">Arial</SelectItem>
                           <SelectItem value="Impact">Impact</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
-
-                  {/* Font Size & Position */}
-                  <div className="grid grid-cols-2 gap-3">
+                    
                     <div className="space-y-2">
-                      <Label className="text-xs">Font Size: {storyboard?.subtitle_settings?.fontSize || 140}px</Label>
+                      <Label className="text-xs">Size: {storyboard?.subtitle_settings?.fontSize || 140}px</Label>
                       <Slider
                         value={[storyboard?.subtitle_settings?.fontSize || 140]}
                         onValueChange={([value]) => {
@@ -564,306 +541,19 @@ export const StoryboardEditor = () => {
                         className="w-full"
                       />
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label className="text-xs">Position</Label>
-                      <Select 
-                        value={storyboard?.subtitle_settings?.position || 'mid-bottom-center'}
-                        onValueChange={(value) => {
-                          updateRenderSettings?.({
-                            subtitle_settings: {
-                              ...storyboard?.subtitle_settings,
-                              position: value,
-                            },
-                          });
-                        }}
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background z-50">
-                          <SelectItem value="mid-bottom-center">Bottom Center</SelectItem>
-                          <SelectItem value="top-center">Top Center</SelectItem>
-                          <SelectItem value="center">Center</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
                   </div>
 
-                  {/* Language & Model */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label className="text-xs">Language</Label>
-                      <Select 
-                        value={storyboard?.subtitle_settings?.language || 'auto'}
-                        onValueChange={(value) => {
-                          updateRenderSettings?.({
-                            subtitle_settings: {
-                              ...storyboard?.subtitle_settings,
-                              language: value,
-                            },
-                          });
-                        }}
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background z-50">
-                          <SelectItem value="auto">Auto-detect</SelectItem>
-                          <SelectItem value="en">English</SelectItem>
-                          <SelectItem value="es">Spanish</SelectItem>
-                          <SelectItem value="fr">French</SelectItem>
-                          <SelectItem value="de">German</SelectItem>
-                          <SelectItem value="it">Italian</SelectItem>
-                          <SelectItem value="pt">Portuguese</SelectItem>
-                          <SelectItem value="zh">Chinese</SelectItem>
-                          <SelectItem value="ja">Japanese</SelectItem>
-                          <SelectItem value="ko">Korean</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label className="text-xs">Model</Label>
-                      <Select 
-                        value={storyboard?.subtitle_settings?.model || 'default'}
-                        onValueChange={(value) => {
-                          updateRenderSettings?.({
-                            subtitle_settings: {
-                              ...storyboard?.subtitle_settings,
-                              model: value,
-                            },
-                          });
-                        }}
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background z-50">
-                          <SelectItem value="default">Standard</SelectItem>
-                          <SelectItem value="advanced">Advanced</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Text Styling */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label className="text-xs">Max Words/Line: {storyboard?.subtitle_settings?.maxWordsPerLine || 3}</Label>
-                      <Slider
-                        value={[storyboard?.subtitle_settings?.maxWordsPerLine || 3]}
-                        onValueChange={([value]) => {
-                          updateRenderSettings?.({
-                            subtitle_settings: {
-                              ...storyboard?.subtitle_settings,
-                              maxWordsPerLine: value,
-                            },
-                          });
-                        }}
-                        min={1}
-                        max={10}
-                        step={1}
-                        className="w-full"
-                      />
-                    </div>
-                    
-                    <div className="flex items-center gap-2 pt-5">
-                      <Checkbox 
-                        id="allCaps"
-                        checked={storyboard?.subtitle_settings?.allCaps || false}
-                        onCheckedChange={(checked) => {
-                          updateRenderSettings?.({
-                            subtitle_settings: {
-                              ...storyboard?.subtitle_settings,
-                              allCaps: checked === true,
-                            },
-                          });
-                        }}
-                      />
-                      <Label htmlFor="allCaps" className="text-xs cursor-pointer">ALL CAPS</Label>
-                    </div>
-                  </div>
-
-                  {/* Advanced Colors Section */}
-                  <Collapsible className="space-y-2 border-l-2 border-muted pl-3">
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm" className="w-full justify-between -ml-1 h-7" type="button">
-                        <span className="text-xs font-medium">🎨 Advanced Colors</span>
-                        <ChevronDown className="h-3 w-3" />
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-3 pt-2">
-                      <div className="grid grid-cols-2 gap-3">
-                        {/* Box Color */}
-                        <div className="space-y-2">
-                          <Label className="text-xs">Box Color</Label>
-                          <div className="flex items-center gap-2">
-                            <Input 
-                              type="color" 
-                              value={storyboard?.subtitle_settings?.boxColor || '#000000'}
-                              onChange={(e) => {
-                                updateRenderSettings?.({
-                                  subtitle_settings: {
-                                    ...storyboard?.subtitle_settings,
-                                    boxColor: e.target.value,
-                                  },
-                                });
-                              }}
-                              className="w-12 h-8 p-1 cursor-pointer"
-                            />
-                            <span className="text-xs text-muted-foreground font-mono">
-                              {storyboard?.subtitle_settings?.boxColor || '#000000'}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        {/* Line Color (Text Color) */}
-                        <div className="space-y-2">
-                          <Label className="text-xs">Text Color</Label>
-                          <div className="flex items-center gap-2">
-                            <Input 
-                              type="color" 
-                              value={storyboard?.subtitle_settings?.lineColor || '#FFFFFF'}
-                              onChange={(e) => {
-                                updateRenderSettings?.({
-                                  subtitle_settings: {
-                                    ...storyboard?.subtitle_settings,
-                                    lineColor: e.target.value,
-                                  },
-                                });
-                              }}
-                              className="w-12 h-8 p-1 cursor-pointer"
-                            />
-                            <span className="text-xs text-muted-foreground font-mono">
-                              {storyboard?.subtitle_settings?.lineColor || '#FFFFFF'}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        {/* Word Highlight Color */}
-                        <div className="space-y-2">
-                          <Label className="text-xs">Highlight Color</Label>
-                          <div className="flex items-center gap-2">
-                            <Input 
-                              type="color" 
-                              value={storyboard?.subtitle_settings?.wordColor || '#FFFF00'}
-                              onChange={(e) => {
-                                updateRenderSettings?.({
-                                  subtitle_settings: {
-                                    ...storyboard?.subtitle_settings,
-                                    wordColor: e.target.value,
-                                  },
-                                });
-                              }}
-                              className="w-12 h-8 p-1 cursor-pointer"
-                            />
-                            <span className="text-xs text-muted-foreground font-mono">
-                              {storyboard?.subtitle_settings?.wordColor || '#FFFF00'}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        {/* Outline Color */}
-                        <div className="space-y-2">
-                          <Label className="text-xs">Outline Color</Label>
-                          <div className="flex items-center gap-2">
-                            <Input 
-                              type="color" 
-                              value={storyboard?.subtitle_settings?.outlineColor || '#000000'}
-                              onChange={(e) => {
-                                updateRenderSettings?.({
-                                  subtitle_settings: {
-                                    ...storyboard?.subtitle_settings,
-                                    outlineColor: e.target.value,
-                                  },
-                                });
-                              }}
-                              className="w-12 h-8 p-1 cursor-pointer"
-                            />
-                            <span className="text-xs text-muted-foreground font-mono">
-                              {storyboard?.subtitle_settings?.outlineColor || '#000000'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-
-                  {/* Text Effects Section */}
-                  <Collapsible className="space-y-2 border-l-2 border-muted pl-3">
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm" className="w-full justify-between -ml-1 h-7" type="button">
-                        <span className="text-xs font-medium">✨ Text Effects</span>
-                        <ChevronDown className="h-3 w-3" />
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-3 pt-2">
-                      {/* Outline Width */}
-                      <div className="space-y-2">
-                        <Label className="text-xs">Outline Width: {storyboard?.subtitle_settings?.outlineWidth || 0}px</Label>
-                        <Slider
-                          value={[storyboard?.subtitle_settings?.outlineWidth || 0]}
-                          onValueChange={([value]) => {
-                            updateRenderSettings?.({
-                              subtitle_settings: {
-                                ...storyboard?.subtitle_settings,
-                                outlineWidth: value,
-                              },
-                            });
-                          }}
-                          min={0}
-                          max={20}
-                          step={1}
-                          className="w-full"
-                        />
-                      </div>
-                      
-                      {/* Shadow Settings */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-2">
-                          <Label className="text-xs">Shadow Color</Label>
-                          <div className="flex items-center gap-2">
-                            <Input 
-                              type="color" 
-                              value={storyboard?.subtitle_settings?.shadowColor || '#000000'}
-                              onChange={(e) => {
-                                updateRenderSettings?.({
-                                  subtitle_settings: {
-                                    ...storyboard?.subtitle_settings,
-                                    shadowColor: e.target.value,
-                                  },
-                                });
-                              }}
-                              className="w-12 h-8 p-1 cursor-pointer"
-                            />
-                            <span className="text-xs text-muted-foreground font-mono">
-                              {storyboard?.subtitle_settings?.shadowColor || '#000000'}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label className="text-xs">Shadow Offset: {storyboard?.subtitle_settings?.shadowOffset || 0}px</Label>
-                          <Slider
-                            value={[storyboard?.subtitle_settings?.shadowOffset || 0]}
-                            onValueChange={([value]) => {
-                              updateRenderSettings?.({
-                                subtitle_settings: {
-                                  ...storyboard?.subtitle_settings,
-                                  shadowOffset: value,
-                                },
-                              });
-                            }}
-                            min={0}
-                            max={10}
-                            step={1}
-                            className="w-full"
-                          />
-                        </div>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
+                  {/* Advanced Customizer Button */}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setShowSubtitleCustomizer(true)}
+                    type="button"
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Advanced Subtitle Customizer
+                  </Button>
                 </CollapsibleContent>
               </Collapsible>
 
@@ -1175,6 +865,18 @@ export const StoryboardEditor = () => {
           </div>
         </div>
       )}
+
+      {/* Subtitle Customizer Dialog */}
+      <SubtitleCustomizer
+        open={showSubtitleCustomizer}
+        onOpenChange={setShowSubtitleCustomizer}
+        initialSettings={storyboard?.subtitle_settings}
+        onSave={(settings) => {
+          updateRenderSettings?.({ subtitle_settings: settings });
+          setShowSubtitleCustomizer(false);
+          toast.success('Subtitle settings saved');
+        }}
+      />
 
     </div>
   );

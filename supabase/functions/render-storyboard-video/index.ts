@@ -232,7 +232,8 @@ serve(async (req) => {
       fontFamily: storyboard.subtitle_settings?.fontFamily || 'Oswald Bold',
       voiceID: storyboard.voice_id,
       introText: storyboard.intro_voiceover_text,
-      // Subtitle settings as variables
+      
+      // Legacy subtitle settings (backward compatibility)
       subtitleStyle: storyboard.subtitle_settings?.style || 'boxed-word',
       subtitleFontSize: storyboard.subtitle_settings?.fontSize || 140,
       subtitleAllCaps: storyboard.subtitle_settings?.allCaps ?? false,
@@ -245,6 +246,34 @@ serve(async (req) => {
       subtitleShadowColor: storyboard.subtitle_settings?.shadowColor || '#000000',
       subtitleShadowOffset: storyboard.subtitle_settings?.shadowOffset || 0,
       subtitleMaxWordsPerLine: storyboard.subtitle_settings?.maxWordsPerLine || 4,
+      
+      // Comprehensive subtitle settings (all new parameters)
+      subtitleFontColor: storyboard.subtitle_settings?.fontColor || '#FFFFFF',
+      subtitleFontWeight: storyboard.subtitle_settings?.fontWeight || 'bold',
+      subtitleFontStyle: storyboard.subtitle_settings?.fontStyle || 'normal',
+      subtitleTextAlign: storyboard.subtitle_settings?.textAlign || 'center',
+      subtitleTextTransform: storyboard.subtitle_settings?.textTransform || 'none',
+      subtitleLineHeight: storyboard.subtitle_settings?.lineHeight || 1.2,
+      subtitleLetterSpacing: storyboard.subtitle_settings?.letterSpacing || 0,
+      
+      subtitleBackgroundColor: storyboard.subtitle_settings?.backgroundColor || 'transparent',
+      subtitleBackgroundOpacity: storyboard.subtitle_settings?.backgroundOpacity ?? 0.8,
+      subtitleBackgroundPadding: storyboard.subtitle_settings?.backgroundPadding || 20,
+      subtitleBackgroundRadius: storyboard.subtitle_settings?.backgroundRadius || 10,
+      
+      subtitleShadowBlur: storyboard.subtitle_settings?.shadowBlur || 10,
+      subtitleShadowX: storyboard.subtitle_settings?.shadowX || 2,
+      subtitleShadowY: storyboard.subtitle_settings?.shadowY || 2,
+      
+      subtitleOffsetX: storyboard.subtitle_settings?.offsetX || 0,
+      subtitleOffsetY: storyboard.subtitle_settings?.offsetY || 0,
+      subtitleMaxWidth: storyboard.subtitle_settings?.maxWidth || 800,
+      
+      subtitleAnimation: storyboard.subtitle_settings?.animation || 'none',
+      subtitleAnimationDuration: storyboard.subtitle_settings?.animationDuration || 0.3,
+      
+      subtitleLanguage: storyboard.subtitle_settings?.language || 'auto',
+      
       // Music settings as variables
       musicVolume: storyboard.music_settings?.volume || 0.05,
       musicFadeIn: storyboard.music_settings?.fadeIn || 2,

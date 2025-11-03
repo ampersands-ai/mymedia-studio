@@ -38,6 +38,7 @@ export function SubtitlePreview({ settings, className }: SubtitlePreviewProps) {
   };
 
   const subtitleStyles: React.CSSProperties = {
+    position: 'absolute',
     fontFamily: settings.fontFamily,
     fontSize: `${settings.fontSize}px`,
     color: settings.fontColor,
@@ -94,8 +95,8 @@ export function SubtitlePreview({ settings, className }: SubtitlePreviewProps) {
           <div 
             className="flex gap-2 justify-center flex-wrap"
             style={{
-              ...getPositionStyles(),
-              position: 'absolute',
+              ...subtitleStyles,
+              maxWidth: '90%',
             }}
           >
             {words.map((word, idx) => (

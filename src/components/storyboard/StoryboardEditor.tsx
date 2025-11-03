@@ -5,6 +5,7 @@ import { ScenePreviewGenerator } from './ScenePreviewGenerator';
 import { GeneratingOutputConsole } from './GeneratingOutputConsole';
 import { SubtitleCustomizer } from './SubtitleCustomizer';
 import { useStoryboard } from '@/hooks/useStoryboard';
+import type { SubtitleSettings } from '@/types/subtitle';
 import { Play, ArrowLeft, Coins, Loader2, AlertCircle, RefreshCw, X, ChevronDown, Volume2, Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -870,7 +871,7 @@ export const StoryboardEditor = () => {
       <SubtitleCustomizer
         open={showSubtitleCustomizer}
         onOpenChange={setShowSubtitleCustomizer}
-        initialSettings={storyboard?.subtitle_settings}
+        initialSettings={storyboard?.subtitle_settings as Partial<SubtitleSettings>}
         onSave={(settings) => {
           updateRenderSettings?.({ subtitle_settings: settings });
           setShowSubtitleCustomizer(false);

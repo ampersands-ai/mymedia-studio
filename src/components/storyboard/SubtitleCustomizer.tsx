@@ -8,9 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import type { SubtitleSettings } from "@/types/subtitle";
 import { DEFAULT_SUBTITLE_SETTINGS } from "@/types/subtitle";
-import { SUBTITLE_PRESETS, FONT_FAMILIES, ANIMATION_TYPES, LANGUAGES, SUBTITLES_MODELS, FONT_WEIGHTS } from "@/config/subtitlePresets";
+import { SUBTITLE_PRESETS, FONT_FAMILIES, SUBTITLE_STYLES, ANIMATION_TYPES, LANGUAGES, SUBTITLES_MODELS, FONT_WEIGHTS } from "@/config/subtitlePresets";
 import { SubtitlePreview } from "./SubtitlePreview";
 import { PositionGridSelector } from "./PositionGridSelector";
 import { cn } from "@/lib/utils";
@@ -28,7 +30,6 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
     ...initialSettings,
   });
 
-  // Update settings when initialSettings change
   useEffect(() => {
     if (initialSettings) {
       setSettings(prev => ({ ...DEFAULT_SUBTITLE_SETTINGS, ...initialSettings }));
@@ -58,6 +59,38 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
     navigator.clipboard.writeText(json);
   };
 
+  const copyFullTemplate = () => {
+    const fullTemplate = {
+      resolution: "vertical",
+      quality: "high",
+      draft: false,
+      template: "mG1o3jStlfepwwOj8a2H",
+      variables: {
+        subtitlesModel: settings.subtitlesModel,
+        subtitleStyle: settings.style,
+        fontFamily: settings.fontFamily,
+        fontSize: settings.fontSize,
+        allCaps: settings.allCaps,
+        boxColor: settings.boxColor,
+        lineColor: settings.lineColor,
+        wordColor: settings.wordColor,
+        outlineColor: settings.outlineColor,
+        outlineWidth: settings.outlineWidth,
+        shadowColor: settings.shadowColor,
+        shadowOffset: settings.shadowOffset,
+        position: settings.position,
+        maxWordsPerLine: settings.maxWordsPerLine,
+        x: settings.x,
+        y: settings.y,
+        keywords: settings.keywords,
+        replace: settings.replace,
+        fontUrl: settings.fontUrl
+      }
+    };
+    
+    navigator.clipboard.writeText(JSON.stringify(fullTemplate, null, 2));
+  };
+
   const handleSave = () => {
     onSave(settings);
     onOpenChange(false);
@@ -69,10 +102,10 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings2 className="h-5 w-5" />
-            Advanced Subtitle Customizer
+            json2video Subtitle Customizer
           </DialogTitle>
           <DialogDescription>
-            Customize every aspect of your video subtitles with 40+ styling options
+            Customize all json2video subtitle parameters with live preview
           </DialogDescription>
         </DialogHeader>
 
@@ -80,7 +113,7 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
           {/* Preset Cards */}
           <div>
             <Label className="text-sm font-semibold mb-3 block">Quick Presets</Label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {Object.entries(SUBTITLE_PRESETS).map(([key, preset]) => (
                 <Card
                   key={key}
@@ -118,385 +151,42 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
           </div>
 
           {/* Collapsible Sections */}
-          <Accordion type="multiple" defaultValue={["text", "position"]} className="space-y-2">
-            {/* Text Styling */}
-            <AccordionItem value="text" className="border rounded-lg px-4">
+          <Accordion type="multiple" defaultValue={["basic", "text"]} className="space-y-2">
+            {/* Basic Settings */}
+            <AccordionItem value="basic" className="border rounded-lg px-4">
               <AccordionTrigger className="text-sm font-semibold hover:no-underline">
-                📝 Text Styling
-              </AccordionTrigger>
-              <AccordionContent className="space-y-4 pt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Font Family</Label>
-                    <Select value={settings.fontFamily} onValueChange={(v) => updateSetting('fontFamily', v)}>
-                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {FONT_FAMILIES.map(font => (
-                          <SelectItem key={font} value={font}>{font}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Font Color</Label>
-                    <div className="flex gap-2">
-                      <Input 
-                        type="color" 
-                        value={settings.fontColor} 
-                        onChange={(e) => updateSetting('fontColor', e.target.value)}
-                        className="w-16 h-9 p-1 cursor-pointer"
-                      />
-                      <Input 
-                        type="text" 
-                        value={settings.fontColor} 
-                        onChange={(e) => updateSetting('fontColor', e.target.value)}
-                        className="flex-1 h-9 font-mono text-xs"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Font Weight</Label>
-                    <Select value={settings.fontWeight} onValueChange={(v) => updateSetting('fontWeight', v)}>
-                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {FONT_WEIGHTS.map(w => (
-                          <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Font Style</Label>
-                    <Select value={settings.fontStyle} onValueChange={(v) => updateSetting('fontStyle', v as 'normal' | 'italic')}>
-                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="normal">Normal</SelectItem>
-                        <SelectItem value="italic">Italic</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Text Align</Label>
-                    <Select value={settings.textAlign} onValueChange={(v) => updateSetting('textAlign', v as any)}>
-                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="left">Left</SelectItem>
-                        <SelectItem value="center">Center</SelectItem>
-                        <SelectItem value="right">Right</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Text Transform</Label>
-                    <Select value={settings.textTransform} onValueChange={(v) => updateSetting('textTransform', v as any)}>
-                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        <SelectItem value="uppercase">UPPERCASE</SelectItem>
-                        <SelectItem value="lowercase">lowercase</SelectItem>
-                        <SelectItem value="capitalize">Capitalize</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Font Size: {settings.fontSize}px</Label>
-                    <Slider
-                      value={[settings.fontSize]}
-                      onValueChange={([v]) => updateSetting('fontSize', v)}
-                      min={40}
-                      max={300}
-                      step={5}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Line Height: {settings.lineHeight}</Label>
-                    <Slider
-                      value={[settings.lineHeight]}
-                      onValueChange={([v]) => updateSetting('lineHeight', v)}
-                      min={1.0}
-                      max={3.0}
-                      step={0.1}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Letter Spacing: {settings.letterSpacing}px</Label>
-                    <Slider
-                      value={[settings.letterSpacing]}
-                      onValueChange={([v]) => updateSetting('letterSpacing', v)}
-                      min={-5}
-                      max={20}
-                      step={1}
-                    />
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* Background */}
-            <AccordionItem value="background" className="border rounded-lg px-4">
-              <AccordionTrigger className="text-sm font-semibold hover:no-underline">
-                🎨 Background
-              </AccordionTrigger>
-              <AccordionContent className="space-y-4 pt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Background Color</Label>
-                    <div className="flex gap-2">
-                      <Input 
-                        type="color" 
-                        value={settings.backgroundColor === 'transparent' ? '#000000' : settings.backgroundColor} 
-                        onChange={(e) => updateSetting('backgroundColor', e.target.value)}
-                        className="w-16 h-9 p-1 cursor-pointer"
-                      />
-                      <Input 
-                        type="text" 
-                        value={settings.backgroundColor} 
-                        onChange={(e) => updateSetting('backgroundColor', e.target.value)}
-                        placeholder="transparent"
-                        className="flex-1 h-9 font-mono text-xs"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Opacity: {settings.backgroundOpacity}</Label>
-                    <Slider
-                      value={[settings.backgroundOpacity]}
-                      onValueChange={([v]) => updateSetting('backgroundOpacity', v)}
-                      min={0}
-                      max={1}
-                      step={0.1}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Padding: {settings.backgroundPadding}px</Label>
-                    <Slider
-                      value={[settings.backgroundPadding]}
-                      onValueChange={([v]) => updateSetting('backgroundPadding', v)}
-                      min={0}
-                      max={100}
-                      step={5}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Border Radius: {settings.backgroundRadius}px</Label>
-                    <Slider
-                      value={[settings.backgroundRadius]}
-                      onValueChange={([v]) => updateSetting('backgroundRadius', v)}
-                      min={0}
-                      max={50}
-                      step={5}
-                    />
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* Outline/Stroke */}
-            <AccordionItem value="outline" className="border rounded-lg px-4">
-              <AccordionTrigger className="text-sm font-semibold hover:no-underline">
-                ✏️ Outline/Stroke
-              </AccordionTrigger>
-              <AccordionContent className="space-y-4 pt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Outline Color</Label>
-                    <div className="flex gap-2">
-                      <Input 
-                        type="color" 
-                        value={settings.outlineColor} 
-                        onChange={(e) => updateSetting('outlineColor', e.target.value)}
-                        className="w-16 h-9 p-1 cursor-pointer"
-                      />
-                      <Input 
-                        type="text" 
-                        value={settings.outlineColor} 
-                        onChange={(e) => updateSetting('outlineColor', e.target.value)}
-                        className="flex-1 h-9 font-mono text-xs"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Outline Width: {settings.outlineWidth}px</Label>
-                    <Slider
-                      value={[settings.outlineWidth]}
-                      onValueChange={([v]) => updateSetting('outlineWidth', v)}
-                      min={0}
-                      max={20}
-                      step={1}
-                    />
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* Shadow Effects */}
-            <AccordionItem value="shadow" className="border rounded-lg px-4">
-              <AccordionTrigger className="text-sm font-semibold hover:no-underline">
-                🌟 Shadow Effects
-              </AccordionTrigger>
-              <AccordionContent className="space-y-4 pt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Shadow Color</Label>
-                    <div className="flex gap-2">
-                      <Input 
-                        type="color" 
-                        value={settings.shadowColor} 
-                        onChange={(e) => updateSetting('shadowColor', e.target.value)}
-                        className="w-16 h-9 p-1 cursor-pointer"
-                      />
-                      <Input 
-                        type="text" 
-                        value={settings.shadowColor} 
-                        onChange={(e) => updateSetting('shadowColor', e.target.value)}
-                        className="flex-1 h-9 font-mono text-xs"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Shadow Blur: {settings.shadowBlur}px</Label>
-                    <Slider
-                      value={[settings.shadowBlur]}
-                      onValueChange={([v]) => updateSetting('shadowBlur', v)}
-                      min={0}
-                      max={50}
-                      step={1}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Shadow X Offset: {settings.shadowX}px</Label>
-                    <Slider
-                      value={[settings.shadowX]}
-                      onValueChange={([v]) => updateSetting('shadowX', v)}
-                      min={-50}
-                      max={50}
-                      step={1}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Shadow Y Offset: {settings.shadowY}px</Label>
-                    <Slider
-                      value={[settings.shadowY]}
-                      onValueChange={([v]) => updateSetting('shadowY', v)}
-                      min={-50}
-                      max={50}
-                      step={1}
-                    />
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* Positioning */}
-            <AccordionItem value="position" className="border rounded-lg px-4">
-              <AccordionTrigger className="text-sm font-semibold hover:no-underline">
-                📍 Positioning
+                ⚙️ Basic Settings
               </AccordionTrigger>
               <AccordionContent className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <Label className="text-xs">Position Grid</Label>
-                  <PositionGridSelector 
-                    value={settings.position} 
-                    onChange={(v) => updateSetting('position', v)} 
-                  />
+                  <Label className="text-xs">Subtitle Style</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {SUBTITLE_STYLES.map(styleOption => (
+                      <Card
+                        key={styleOption.value}
+                        className={cn(
+                          "cursor-pointer p-3 transition-all",
+                          settings.style === styleOption.value 
+                            ? "border-primary bg-primary/10" 
+                            : "hover:border-primary/50"
+                        )}
+                        onClick={() => updateSetting('style', styleOption.value as any)}
+                      >
+                        <div className="text-xs font-semibold">{styleOption.label}</div>
+                        <div className="text-[10px] text-muted-foreground mt-1">
+                          {styleOption.description}
+                        </div>
+                        <div className="mt-2 p-2 bg-muted rounded text-[10px] text-center">
+                          {styleOption.preview}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-xs">X Offset: {settings.offsetX}px</Label>
-                    <Slider
-                      value={[settings.offsetX]}
-                      onValueChange={([v]) => updateSetting('offsetX', v)}
-                      min={-500}
-                      max={500}
-                      step={10}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Y Offset: {settings.offsetY}px</Label>
-                    <Slider
-                      value={[settings.offsetY]}
-                      onValueChange={([v]) => updateSetting('offsetY', v)}
-                      min={-500}
-                      max={500}
-                      step={10}
-                    />
-                  </div>
-
-                  <div className="space-y-2 col-span-2">
-                    <Label className="text-xs">Max Width: {settings.maxWidth}px</Label>
-                    <Slider
-                      value={[settings.maxWidth]}
-                      onValueChange={([v]) => updateSetting('maxWidth', v)}
-                      min={300}
-                      max={1000}
-                      step={50}
-                    />
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* Animation */}
-            <AccordionItem value="animation" className="border rounded-lg px-4">
-              <AccordionTrigger className="text-sm font-semibold hover:no-underline">
-                ✨ Animation
-              </AccordionTrigger>
-              <AccordionContent className="space-y-4 pt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Animation Type</Label>
-                    <Select value={settings.animation} onValueChange={(v) => updateSetting('animation', v as any)}>
-                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {ANIMATION_TYPES.map(a => (
-                          <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Duration: {settings.animationDuration}s</Label>
-                    <Slider
-                      value={[settings.animationDuration]}
-                      onValueChange={([v]) => updateSetting('animationDuration', v)}
-                      min={0.1}
-                      max={2.0}
-                      step={0.1}
-                    />
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* Language Settings */}
-            <AccordionItem value="language" className="border rounded-lg px-4">
-              <AccordionTrigger className="text-sm font-semibold hover:no-underline">
-                🌍 Language Settings
-              </AccordionTrigger>
-              <AccordionContent className="space-y-4 pt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Subtitles Model</Label>
+                    <Label className="text-xs">Transcription Model</Label>
                     <Select value={settings.subtitlesModel} onValueChange={(v) => updateSetting('subtitlesModel', v as any)}>
                       <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -521,21 +211,360 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
                 </div>
               </AccordionContent>
             </AccordionItem>
+
+            {/* Text Styling */}
+            <AccordionItem value="text" className="border rounded-lg px-4">
+              <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+                📝 Text Styling
+              </AccordionTrigger>
+              <AccordionContent className="space-y-4 pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Font Family</Label>
+                    <Select value={settings.fontFamily} onValueChange={(v) => updateSetting('fontFamily', v)}>
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {FONT_FAMILIES.map(font => (
+                          <SelectItem key={font} value={font}>{font}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs">Font Weight</Label>
+                    <Select value={settings.fontWeight} onValueChange={(v) => updateSetting('fontWeight', v)}>
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {FONT_WEIGHTS.map(w => (
+                          <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Font Size: {settings.fontSize}px</Label>
+                    <Slider
+                      value={[settings.fontSize]}
+                      onValueChange={([v]) => updateSetting('fontSize', v)}
+                      min={40}
+                      max={300}
+                      step={5}
+                    />
+                    <p className="text-[10px] text-muted-foreground">Recommended: 90-150px</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs">Max Words Per Line: {settings.maxWordsPerLine}</Label>
+                    <Slider
+                      value={[settings.maxWordsPerLine]}
+                      onValueChange={([v]) => updateSetting('maxWordsPerLine', v)}
+                      min={1}
+                      max={10}
+                      step={1}
+                    />
+                    <p className="text-[10px] text-muted-foreground">Set to 1 for one word at a time</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-xs">
+                    <Switch 
+                      checked={settings.allCaps} 
+                      onCheckedChange={(v) => updateSetting('allCaps', v)} 
+                    />
+                    MAKE ALL TEXT UPPERCASE
+                  </Label>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Colors */}
+            <AccordionItem value="colors" className="border rounded-lg px-4">
+              <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+                🎨 Colors
+              </AccordionTrigger>
+              <AccordionContent className="space-y-4 pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Text Color (Non-speaking words)</Label>
+                    <div className="flex gap-2">
+                      <Input type="color" value={settings.lineColor} onChange={(e) => updateSetting('lineColor', e.target.value)} className="w-16 h-9 p-1" />
+                      <Input type="text" value={settings.lineColor} onChange={(e) => updateSetting('lineColor', e.target.value)} className="flex-1 h-9" />
+                    </div>
+                  </div>
+
+                  {['classic', 'classic-progressive', 'classic-one-word'].includes(settings.style) && (
+                    <div className="space-y-2">
+                      <Label className="text-xs">Highlight Color (Speaking word)</Label>
+                      <div className="flex gap-2">
+                        <Input type="color" value={settings.wordColor} onChange={(e) => updateSetting('wordColor', e.target.value)} className="w-16 h-9 p-1" />
+                        <Input type="text" value={settings.wordColor} onChange={(e) => updateSetting('wordColor', e.target.value)} className="flex-1 h-9" />
+                      </div>
+                    </div>
+                  )}
+
+                  {['boxed-line', 'boxed-word'].includes(settings.style) && (
+                    <div className="space-y-2">
+                      <Label className="text-xs">Background Box Color</Label>
+                      <div className="flex gap-2">
+                        <Input type="color" value={settings.boxColor} onChange={(e) => updateSetting('boxColor', e.target.value)} className="w-16 h-9 p-1" />
+                        <Input type="text" value={settings.boxColor} onChange={(e) => updateSetting('boxColor', e.target.value)} className="flex-1 h-9" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Outline & Shadow */}
+            <AccordionItem value="outline" className="border rounded-lg px-4">
+              <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+                ✏️ Outline & Shadow
+              </AccordionTrigger>
+              <AccordionContent className="space-y-4 pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Outline Color</Label>
+                    <div className="flex gap-2">
+                      <Input type="color" value={settings.outlineColor} onChange={(e) => updateSetting('outlineColor', e.target.value)} className="w-16 h-9 p-1" />
+                      <Input type="text" value={settings.outlineColor} onChange={(e) => updateSetting('outlineColor', e.target.value)} className="flex-1 h-9" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs">Outline Width: {settings.outlineWidth}px</Label>
+                    <Slider value={[settings.outlineWidth]} onValueChange={([v]) => updateSetting('outlineWidth', v)} min={0} max={20} step={1} />
+                    <p className="text-[10px] text-muted-foreground">0 = No outline</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs">Shadow Color</Label>
+                    <div className="flex gap-2">
+                      <Input type="color" value={settings.shadowColor} onChange={(e) => updateSetting('shadowColor', e.target.value)} className="w-16 h-9 p-1" />
+                      <Input type="text" value={settings.shadowColor} onChange={(e) => updateSetting('shadowColor', e.target.value)} className="flex-1 h-9" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs">Shadow Offset: {settings.shadowOffset}px</Label>
+                    <Slider value={[settings.shadowOffset]} onValueChange={([v]) => updateSetting('shadowOffset', v)} min={0} max={50} step={1} />
+                    <p className="text-[10px] text-muted-foreground">0 = No shadow (json2video API)</p>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Positioning */}
+            <AccordionItem value="position" className="border rounded-lg px-4">
+              <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+                📍 Positioning
+              </AccordionTrigger>
+              <AccordionContent className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label className="text-xs">Position Mode</Label>
+                  <Select 
+                    value={settings.position === 'custom' ? 'custom' : settings.position}
+                    onValueChange={(v) => {
+                      if (v === 'custom') {
+                        updateSetting('position', 'custom');
+                      } else {
+                        updateSetting('position', v);
+                        updateSetting('x', 0);
+                        updateSetting('y', 0);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="top-left">Top Left</SelectItem>
+                      <SelectItem value="top-center">Top Center</SelectItem>
+                      <SelectItem value="top-right">Top Right</SelectItem>
+                      <SelectItem value="mid-left-center">Middle Left</SelectItem>
+                      <SelectItem value="mid-center">Middle Center</SelectItem>
+                      <SelectItem value="mid-right-center">Middle Right</SelectItem>
+                      <SelectItem value="mid-bottom-center">Mid Bottom</SelectItem>
+                      <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                      <SelectItem value="bottom-center">Bottom Center</SelectItem>
+                      <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                      <SelectItem value="custom">Custom (X, Y)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {settings.position !== 'custom' && (
+                  <div className="space-y-2">
+                    <Label className="text-xs">Position Grid</Label>
+                    <PositionGridSelector value={settings.position} onChange={(v) => updateSetting('position', v)} />
+                  </div>
+                )}
+
+                {settings.position === 'custom' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs">X Coordinate: {settings.x}px</Label>
+                      <Input 
+                        type="number" 
+                        value={settings.x}
+                        onChange={(e) => updateSetting('x', Number(e.target.value))}
+                        min={-1000}
+                        max={1000}
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Y Coordinate: {settings.y}px</Label>
+                      <Input 
+                        type="number" 
+                        value={settings.y}
+                        onChange={(e) => updateSetting('y', Number(e.target.value))}
+                        min={-1000}
+                        max={1000}
+                        className="h-9"
+                      />
+                    </div>
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Advanced Settings */}
+            <AccordionItem value="advanced" className="border rounded-lg px-4">
+              <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+                🔧 Advanced Settings
+              </AccordionTrigger>
+              <AccordionContent className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label className="text-xs">Keywords (for transcription accuracy)</Label>
+                  <p className="text-[10px] text-muted-foreground mb-2">
+                    Add words to improve transcription accuracy. Type and press Enter.
+                  </p>
+                  <Input 
+                    placeholder="Type word and press Enter"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                        const newKeyword = e.currentTarget.value.trim();
+                        updateSetting('keywords', [...settings.keywords, newKeyword]);
+                        e.currentTarget.value = '';
+                      }
+                    }}
+                    className="h-9"
+                  />
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {settings.keywords.map((keyword, idx) => (
+                      <Badge key={idx} variant="secondary" className="gap-1">
+                        {keyword}
+                        <button 
+                          onClick={() => {
+                            const newKeywords = [...settings.keywords];
+                            newKeywords.splice(idx, 1);
+                            updateSetting('keywords', newKeywords);
+                          }}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          ×
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs">Word Replacement</Label>
+                  <p className="text-[10px] text-muted-foreground mb-2">
+                    Replace transcribed words with corrections
+                  </p>
+                  {Object.entries(settings.replace).map(([find, replace], idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <Input 
+                        value={find} 
+                        placeholder="Find"
+                        onChange={(e) => {
+                          const newReplace = { ...settings.replace };
+                          delete newReplace[find];
+                          newReplace[e.target.value] = replace;
+                          updateSetting('replace', newReplace);
+                        }}
+                        className="flex-1 h-9"
+                      />
+                      <Input 
+                        value={replace} 
+                        placeholder="Replace"
+                        onChange={(e) => {
+                          updateSetting('replace', { 
+                            ...settings.replace, 
+                            [find]: e.target.value 
+                          });
+                        }}
+                        className="flex-1 h-9"
+                      />
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => {
+                          const newReplace = { ...settings.replace };
+                          delete newReplace[find];
+                          updateSetting('replace', newReplace);
+                        }}
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      updateSetting('replace', { 
+                        ...settings.replace, 
+                        '': '' 
+                      });
+                    }}
+                  >
+                    + Add Replacement
+                  </Button>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs">Custom Font URL (Optional)</Label>
+                  <Input 
+                    type="url"
+                    value={settings.fontUrl}
+                    onChange={(e) => updateSetting('fontUrl', e.target.value)}
+                    placeholder="https://example.com/font.ttf"
+                    className="h-9"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    ⚠️ Font family must match the font name in the file
+                  </p>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
           </Accordion>
         </div>
 
-        <DialogFooter className="gap-2">
-          <Button variant="outline" size="sm" onClick={resetToDefaults}>
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Reset
-          </Button>
-          <Button variant="secondary" size="sm" onClick={copyJSON}>
-            <Copy className="h-4 w-4 mr-2" />
-            Copy JSON
-          </Button>
-          <Button size="sm" onClick={handleSave}>
+        <DialogFooter className="flex justify-between items-center">
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={resetToDefaults}>
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset
+            </Button>
+            <Button variant="outline" size="sm" onClick={copyJSON}>
+              <Copy className="h-4 w-4 mr-2" />
+              Copy JSON
+            </Button>
+            <Button variant="outline" size="sm" onClick={copyFullTemplate}>
+              <Copy className="h-4 w-4 mr-2" />
+              Copy Full Template
+            </Button>
+          </div>
+          
+          <Button onClick={handleSave}>
             <Save className="h-4 w-4 mr-2" />
-            Apply Settings
+            Save & Apply
           </Button>
         </DialogFooter>
       </DialogContent>

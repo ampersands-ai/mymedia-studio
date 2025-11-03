@@ -233,21 +233,28 @@ serve(async (req) => {
       voiceID: storyboard.voice_id,
       introText: storyboard.intro_voiceover_text,
       
-      // Legacy subtitle settings (backward compatibility)
+      // json2video Core Subtitle Parameters
       subtitleStyle: storyboard.subtitle_settings?.style || 'boxed-word',
-      subtitleFontSize: storyboard.subtitle_settings?.fontSize || 140,
       subtitleAllCaps: storyboard.subtitle_settings?.allCaps ?? false,
       subtitleBoxColor: storyboard.subtitle_settings?.boxColor || '#000000',
       subtitleLineColor: storyboard.subtitle_settings?.lineColor || '#FFFFFF',
       subtitleWordColor: storyboard.subtitle_settings?.wordColor || '#FFFF00',
-      subtitlePosition: storyboard.subtitle_settings?.position || 'mid-bottom-center',
-      subtitleOutlineColor: storyboard.subtitle_settings?.outlineColor || '#000000',
-      subtitleOutlineWidth: storyboard.subtitle_settings?.outlineWidth || 8,
-      subtitleShadowColor: storyboard.subtitle_settings?.shadowColor || '#000000',
-      subtitleShadowOffset: storyboard.subtitle_settings?.shadowOffset || 0,
       subtitleMaxWordsPerLine: storyboard.subtitle_settings?.maxWordsPerLine || 4,
       
-      // Comprehensive subtitle settings (all new parameters)
+      // Custom positioning
+      subtitleX: storyboard.subtitle_settings?.x || 0,
+      subtitleY: storyboard.subtitle_settings?.y || 0,
+      
+      // Shadow (json2video uses shadowOffset)
+      subtitleShadowOffset: storyboard.subtitle_settings?.shadowOffset || 0,
+      
+      // Advanced features
+      subtitleKeywords: storyboard.subtitle_settings?.keywords || [],
+      subtitleReplace: storyboard.subtitle_settings?.replace || {},
+      subtitleFontUrl: storyboard.subtitle_settings?.fontUrl || '',
+      
+      // Comprehensive subtitle settings (all parameters)
+      subtitleFontSize: storyboard.subtitle_settings?.fontSize || 140,
       subtitleFontColor: storyboard.subtitle_settings?.fontColor || '#FFFFFF',
       subtitleFontWeight: storyboard.subtitle_settings?.fontWeight || 'bold',
       subtitleFontStyle: storyboard.subtitle_settings?.fontStyle || 'normal',
@@ -261,6 +268,10 @@ serve(async (req) => {
       subtitleBackgroundPadding: storyboard.subtitle_settings?.backgroundPadding || 20,
       subtitleBackgroundRadius: storyboard.subtitle_settings?.backgroundRadius || 10,
       
+      subtitleOutlineColor: storyboard.subtitle_settings?.outlineColor || '#000000',
+      subtitleOutlineWidth: storyboard.subtitle_settings?.outlineWidth ?? 8,
+      
+      subtitleShadowColor: storyboard.subtitle_settings?.shadowColor || '#000000',
       subtitleShadowBlur: storyboard.subtitle_settings?.shadowBlur || 10,
       subtitleShadowX: storyboard.subtitle_settings?.shadowX || 2,
       subtitleShadowY: storyboard.subtitle_settings?.shadowY || 2,

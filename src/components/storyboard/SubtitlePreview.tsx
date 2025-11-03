@@ -62,6 +62,78 @@ export function SubtitlePreview({ settings, className }: SubtitlePreviewProps) {
     ...getPositionStyles(),
   };
 
+  const renderSubtitleByStyle = () => {
+    const baseText = settings.allCaps ? "THE FUTURE IS HERE" : "The future is here";
+    const words = baseText.split(' ');
+    
+    switch (settings.style) {
+      case 'classic':
+        return (
+          <div style={subtitleStyles} className="inline-flex gap-1">
+            <span style={{ color: settings.lineColor }}>The future is </span>
+            <span style={{ color: settings.wordColor, fontWeight: 'bold' }}>here</span>
+          </div>
+        );
+      
+      case 'classic-progressive':
+        return (
+          <div style={subtitleStyles}>
+            {baseText}
+          </div>
+        );
+      
+      case 'classic-one-word':
+        return (
+          <div style={subtitleStyles}>
+            here
+          </div>
+        );
+      
+      case 'boxed-word':
+        return (
+          <div 
+            className="flex gap-2 justify-center flex-wrap"
+            style={{
+              ...getPositionStyles(),
+              position: 'absolute',
+            }}
+          >
+            {words.map((word, idx) => (
+              <div 
+                key={idx}
+                style={{
+                  fontFamily: settings.fontFamily,
+                  fontSize: `${settings.fontSize}px`,
+                  color: settings.lineColor,
+                  fontWeight: settings.fontWeight,
+                  backgroundColor: settings.boxColor,
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                }}
+              >
+                {word}
+              </div>
+            ))}
+          </div>
+        );
+      
+      case 'boxed-line':
+        return (
+          <div style={{
+            ...subtitleStyles,
+            backgroundColor: settings.boxColor,
+            padding: `${settings.backgroundPadding}px`,
+            borderRadius: `${settings.backgroundRadius}px`,
+          }}>
+            {baseText}
+          </div>
+        );
+      
+      default:
+        return <div style={subtitleStyles}>{baseText}</div>;
+    }
+  };
+
   return (
     <div className={cn("relative w-full aspect-video bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-lg overflow-hidden", className)}>
       {/* Mock video background */}
@@ -71,10 +143,7 @@ export function SubtitlePreview({ settings, className }: SubtitlePreviewProps) {
       
       {/* Active Screen Overlay - shows safe area */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* Border showing full screen bounds */}
         <div className="absolute inset-0 border-2 border-white/20 rounded-lg" />
-        
-        {/* Inner safe area guide (90% width/height) */}
         <div className="absolute inset-[5%] border border-dashed border-yellow-500/40 rounded-lg">
           <div className="absolute top-1 left-1 text-[10px] text-yellow-500/60 bg-black/30 px-1.5 py-0.5 rounded">
             Safe Area
@@ -82,20 +151,8 @@ export function SubtitlePreview({ settings, className }: SubtitlePreviewProps) {
         </div>
       </div>
       
-      {/* Subtitle text - positioned absolutely based on settings */}
-      <div
-        style={subtitleStyles}
-        className={cn(
-          "absolute font-bold leading-tight inline-block pointer-events-none",
-          settings.animation === 'fade' && "animate-in fade-in",
-          settings.animation === 'slide-up' && "animate-in slide-in-from-bottom-4",
-          settings.animation === 'slide-down' && "animate-in slide-in-from-top-4",
-          settings.animation === 'zoom' && "animate-in zoom-in-50",
-          settings.animation === 'bounce' && "animate-bounce"
-        )}
-      >
-        The future is here
-      </div>
+      {/* Subtitle rendering based on style */}
+      {renderSubtitleByStyle()}
 
       {/* Corner label */}
       <div className="absolute top-2 left-2 text-xs text-white/50 bg-black/30 px-2 py-1 rounded z-10">

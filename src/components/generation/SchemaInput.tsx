@@ -71,6 +71,12 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     word.charAt(0).toUpperCase() + word.slice(1)
   ).join(' ');
 
+  // Check if this is an array of image objects (e.g., frameImages for Seedance)
+  const isArrayOfImages = 
+    schema.type === "array" && 
+    schema.items?.type === "object" &&
+    schema.items?.properties?.inputImage?.format === "uri";
+
   // Check if this is an image upload field (by explicit format or specific field name)
   const isImageUpload = 
     (schema.format === "base64" || schema.format === "binary" || schema.format === "data-url") ||
@@ -90,7 +96,13 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     reader.onloadend = () => {
       const base64String = reader.result as string;
       setImagePreview(base64String);
-      onChange(base64String);
+      
+      // If this is an array of image objects, store as [{ inputImage: "base64" }]
+      if (isArrayOfImages) {
+        onChange([{ inputImage: base64String }]);
+      } else {
+        onChange(base64String);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -147,6 +159,81 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  // Handle array of image objects (e.g., frameImages for Seedance)
+  if (isArrayOfImages) {
+    const imageUrl = Array.isArray(value) && value.length > 0 ? value[0].inputImage : null;
+    
+    return (
+      <div className="space-y-2">
+        <Label>
+          {displayName}
+          {isRequired && <span className="text-destructive ml-1">*</span>}
+        </Label>
+        {schema.description && (
+          <p className="text-xs text-muted-foreground mb-2">{schema.description}</p>
+        )}
+        <div className="space-y-2">
+          {(imagePreview || imageUrl) ? (
+            <div className="space-y-2">
+              <div className="relative inline-block">
+                <img 
+                  src={imagePreview || imageUrl} 
+                  alt="Preview" 
+                  className="max-w-full h-auto max-h-48 rounded-lg border"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-6 w-6"
+                  onClick={clearImage}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                id={`image-upload-${name}`}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById(`image-upload-${name}`)?.click()}
+                className="w-full"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Change Image
+              </Button>
+            </div>
+          ) : (
+            <>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                id={`image-upload-${name}`}
+              />
+              <button
+                type="button"
+                onClick={() => document.getElementById(`image-upload-${name}`)?.click()}
+                className="w-full border-2 border-dashed border-border rounded-lg p-8 hover:border-primary/50 transition-colors bg-background"
+              >
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                  <span className="text-sm font-medium">Upload Image</span>
+                </div>
+              </button>
+            </>
+          )}
+        </div>
+      </div>
     );
   }
 

@@ -147,7 +147,9 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
           {/* Live Preview */}
           <div>
             <Label className="text-sm font-semibold mb-3 block">Live Preview</Label>
-            <SubtitlePreview settings={settings} />
+            <div className="max-w-2xl mx-auto">
+              <SubtitlePreview settings={settings} />
+            </div>
           </div>
 
           {/* Collapsible Sections */}

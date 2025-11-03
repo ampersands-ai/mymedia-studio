@@ -10,6 +10,7 @@ interface Scene {
   voice_over_text: string;
   image_prompt: string;
   image_preview_url?: string;
+  video_url?: string;
   is_edited: boolean;
   storyboard_id: string;
   created_at: string;

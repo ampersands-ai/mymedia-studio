@@ -13,6 +13,18 @@ export interface ProviderResponse {
   metadata: Record<string, any>;
 }
 
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  const CHUNK_SIZE = 0x8000; // 32KB chunks - safe for call stack
+  let binary = '';
+  
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    const chunk = bytes.subarray(i, i + CHUNK_SIZE);
+    binary += String.fromCharCode(...chunk);
+  }
+  
+  return btoa(binary);
+}
+
 async function convertFrameImagesToRunwareFormat(frameImages: string[]): Promise<Array<{inputImage: string}>> {
   const converted = [];
   
@@ -27,7 +39,7 @@ async function convertFrameImagesToRunwareFormat(frameImages: string[]): Promise
       
       const imageBuffer = await response.arrayBuffer();
       const uint8Array = new Uint8Array(imageBuffer);
-      const base64 = btoa(String.fromCharCode(...uint8Array));
+      const base64 = uint8ArrayToBase64(uint8Array);
       const contentType = response.headers.get('content-type') || 'image/png';
       const dataUri = `data:${contentType};base64,${base64}`;
       

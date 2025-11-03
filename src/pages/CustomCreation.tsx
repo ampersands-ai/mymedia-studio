@@ -1398,7 +1398,7 @@ const CustomCreation = () => {
                       const properties = currentModel.input_schema.properties as Record<string, any>;
                       const textKey = findPrimaryTextKey(properties);
                       const voiceKey = findPrimaryVoiceKey(properties, currentModel.id);
-                      const baseExclude = ['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls', 'duration', 'increment'];
+                      const baseExclude = ['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls', 'frameImages', 'duration', 'increment'];
                       const exclude = [...baseExclude, ...(textKey ? [textKey] : []), ...(voiceKey ? [voiceKey] : [])];
                       return (
                         <ModelParameterForm

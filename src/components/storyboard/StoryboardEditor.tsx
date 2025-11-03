@@ -103,7 +103,7 @@ export const StoryboardEditor = () => {
 
   const activeScene = scenes.find(s => s.id === activeSceneId) || scenes[0];
   const estimatedDuration = storyboard ? storyboard.duration : 0;
-  // Sanitize wildly incorrect estimates (e.g., legacy 800 credits)
+  // Calculate estimated render cost
   const rawEstimate = storyboard?.estimated_render_cost ?? 0;
   const expectedEstimate = (storyboard?.duration || 0) * 0.25; // 0.25 credits/sec
   const initialEstimate = (!Number.isFinite(rawEstimate) || rawEstimate <= 0 || rawEstimate > Math.max(100, expectedEstimate * 10))
@@ -147,10 +147,6 @@ export const StoryboardEditor = () => {
   
   const actualRenderCost = calculateRenderCost();
   const costDifference = actualRenderCost - initialEstimate;
-  
-  // Display price: show initial estimate if actual is same/higher, show actual if lower
-  const displayPrice = actualRenderCost >= initialEstimate ? initialEstimate : actualRenderCost;
-  const showSavings = actualRenderCost < initialEstimate;
 
   // Phase 5: Dynamic status messages based on rendering time
   useEffect(() => {
@@ -207,13 +203,10 @@ export const StoryboardEditor = () => {
       return;
     }
 
-    // Check if script increased and user needs to pay additional credits
-    if (actualRenderCost > initialEstimate) {
-      const additionalCharge = actualRenderCost - initialEstimate;
-      if ((tokenData?.tokens_remaining || 0) < additionalCharge) {
-        toast.error(`Insufficient credits. Need ${additionalCharge.toFixed(2)} more credits for script changes.`);
-        return;
-      }
+    // Check if user has enough credits for rendering
+    if ((tokenData?.tokens_remaining || 0) < actualRenderCost) {
+      toast.error(`Insufficient credits. Need ${actualRenderCost.toFixed(2)} credits to render video.`);
+      return;
     }
 
     await renderVideo();
@@ -705,11 +698,11 @@ export const StoryboardEditor = () => {
               <AlertDialogTrigger asChild>
                 <Button
                   size="lg"
-                  disabled={isRendering || (actualRenderCost > initialEstimate && (tokenData?.tokens_remaining || 0) < (actualRenderCost - initialEstimate))}
+                  disabled={isRendering || (tokenData?.tokens_remaining || 0) < actualRenderCost}
                   className="bg-gradient-to-r from-primary via-primary to-primary/80 hover:scale-105 transition-transform font-bold w-full sm:w-auto"
                 >
                   <Play className="w-5 h-5 mr-2" />
-                  Render Video ({displayPrice.toFixed(2)} credits)
+                  Render Video ({actualRenderCost.toFixed(2)} credits will be charged)
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -717,56 +710,36 @@ export const StoryboardEditor = () => {
                   <AlertDialogTitle>Render Video?</AlertDialogTitle>
                   <AlertDialogDescription className="space-y-2">
                     <p>
-                      This will create your final video with {scenes.length} scenes.
+                      This will create your final video with {scenes.length} scenes and charge your account.
                     </p>
                     <div className="space-y-2">
-                      {showSavings ? (
-                        <>
-                          <div className="flex justify-between items-center">
-                            <span className="text-muted-foreground">Originally charged:</span>
-                            <span className="line-through text-muted-foreground">{initialEstimate.toFixed(2)} credits</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="font-semibold">Final price:</span>
-                            <span className="font-bold text-green-600">{actualRenderCost.toFixed(2)} credits</span>
-                          </div>
-                          <p className="text-xs text-green-600">
-                            {Math.abs(costDifference).toFixed(2)} credits refund - script shortened!
-                          </p>
-                        </>
-                      ) : actualRenderCost > initialEstimate ? (
-                        <>
-                          <div className="flex justify-between items-center">
-                            <span className="text-muted-foreground">Originally charged:</span>
-                            <span>{initialEstimate.toFixed(2)} credits</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-muted-foreground">Script increase charge:</span>
-                            <span className="text-amber-600">+{costDifference.toFixed(2)} credits</span>
-                          </div>
-                          <div className="flex justify-between items-center pt-2 border-t">
-                            <span className="font-semibold">Total price:</span>
-                            <span className="font-bold">{actualRenderCost.toFixed(2)} credits</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Script expanded by {Math.floor(Math.abs(costDifference / 0.25) * 100)}+ characters
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex justify-between items-center">
-                            <span className="font-semibold">Final price:</span>
-                            <span className="font-bold">{displayPrice.toFixed(2)} credits</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Same as original - already charged.
-                          </p>
-                        </>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Base cost (from {estimatedDuration}s duration):</span>
+                        <span>{initialEstimate.toFixed(2)} credits</span>
+                      </div>
+                      {costDifference !== 0 && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Script adjustment:</span>
+                          <span className={costDifference > 0 ? "text-amber-600" : "text-green-600"}>
+                            {costDifference > 0 ? '+' : ''}{costDifference.toFixed(2)} credits
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center pt-2 border-t">
+                        <span className="font-semibold">You will be charged:</span>
+                        <span className="font-bold text-primary">{actualRenderCost.toFixed(2)} credits</span>
+                      </div>
+                      {costDifference !== 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {costDifference > 0 
+                            ? `Script expanded by ${Math.floor(Math.abs(costDifference / 0.25) * 100)}+ characters`
+                            : `Script shortened by ${Math.floor(Math.abs(costDifference / 0.25) * 100)}+ characters`}
+                        </p>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground pt-2 border-t">
-                      {actualRenderCost > initialEstimate && costDifference > (tokenData?.tokens_remaining || 0) 
-                        ? `Insufficient balance. Need ${costDifference.toFixed(2)} more credits.`
+                      {(tokenData?.tokens_remaining || 0) < actualRenderCost
+                        ? `Insufficient balance. Need ${actualRenderCost.toFixed(2)} credits to render.`
                         : `Current balance: ${Number(tokenData?.tokens_remaining || 0).toFixed(2)} credits`} • Est. time: ~60s
                     </p>
                   </AlertDialogDescription>

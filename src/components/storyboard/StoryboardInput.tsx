@@ -10,22 +10,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { Sparkles, Film, Coins, Volume2, Play, Loader2, Palette, Image as ImageIcon, Video as VideoIcon, Wand2, Music, ChevronDown, RotateCcw, Minus, Plus } from 'lucide-react';
+import { Sparkles, Film, Coins, Volume2, Play, Loader2, Palette, Image as ImageIcon, Video as VideoIcon, Wand2, Music, ChevronDown, Minus, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { BackgroundMusicSelector } from './BackgroundMusicSelector';
 import { VoiceSelector } from '@/components/generation/VoiceSelector';
-import { supabase } from '@/integrations/supabase/client';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import type { MediaType } from '@/types/video';
 import { Input } from '@/components/ui/input';
 import hyperRealisticImg from '@/assets/styles/hyper-realistic.jpg';
@@ -144,7 +133,6 @@ export function StoryboardInput() {
   const [backgroundMusicVolume, setBackgroundMusicVolume] = useState(draft?.backgroundMusicVolume || 5);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
   const [styleDialogOpen, setStyleDialogOpen] = useState(false);
-  const [showResetDialog, setShowResetDialog] = useState(false);
   
   // Advanced video settings
   const [aspectRatio, setAspectRatio] = useState(draft?.aspectRatio || 'instagram-story');
@@ -185,7 +173,7 @@ export function StoryboardInput() {
   const [enableCache, setEnableCache] = useState(draft?.enableCache ?? true);
   const [draftMode, setDraftMode] = useState(draft?.draftMode ?? false);
 
-  const { generateStoryboard, isGenerating, storyboard, clearStoryboard } = useStoryboard();
+  const { generateStoryboard, isGenerating } = useStoryboard();
   const { data: tokenData } = useUserTokens();
   
   // Save draft to localStorage (debounced)
@@ -210,9 +198,9 @@ export function StoryboardInput() {
       subtitleShadowOffset, subtitleMaxWordsPerLine, musicVolume, musicFadeIn, musicFadeOut,
       imageZoom, imagePosition, enableCache, draftMode, customWidth, customHeight]);
 
-  // Cost: 0.25 credits per second of video duration
-  const estimatedCost = duration * 0.25;
-  const canGenerate = topic.length >= 5 && topic.length <= 500 && (tokenData?.tokens_remaining || 0) >= estimatedCost;
+  // Estimated render cost (credits charged when rendering, not generation)
+  const estimatedRenderCost = duration * 0.25;
+  const canGenerate = topic.length >= 5 && topic.length <= 500;
 
   const handleSurpriseMe = () => {
     const randomTopic = TOPIC_SUGGESTIONS[Math.floor(Math.random() * TOPIC_SUGGESTIONS.length)];
@@ -226,79 +214,6 @@ export function StoryboardInput() {
     setVoiceDialogOpen(false);
   };
 
-  const handleReset = async () => {
-    // If there's an active storyboard, show confirmation dialog
-    if (storyboard?.id) {
-      setShowResetDialog(true);
-      return;
-    }
-    
-    // Just reset inputs if no storyboard
-    performReset();
-  };
-  
-  const performReset = async (deleteStoryboard = false) => {
-    // Delete storyboard if requested
-    if (deleteStoryboard && storyboard?.id) {
-      try {
-        const { error } = await supabase.functions.invoke('delete-storyboard', {
-          body: { storyboardId: storyboard.id }
-        });
-        
-        if (error) throw error;
-        
-        clearStoryboard();
-        toast.success('Storyboard deleted and form reset', { id: 'storyboard-reset' });
-      } catch (error: any) {
-        toast.error(error.message || 'Failed to delete storyboard', { id: 'delete-error' });
-        return;
-      }
-    }
-    
-    // Reset all fields
-    setTopic('');
-    setDuration(15);
-    setStyle('hyper-realistic');
-    setTone('engaging');
-    setVoiceID('en-US-AndrewMultilingualNeural');
-    setVoiceName('Andrew');
-    setMediaType('image');
-    setBackgroundMusicUrl('');
-    setBackgroundMusicVolume(5);
-    setAspectRatio('instagram-story');
-    setVideoQuality('high');
-    setCustomWidth(1920);
-    setCustomHeight(1080);
-    setSubtitleLanguage('auto');
-    setSubtitleModel('default');
-    setSubtitleStyle('boxed-word');
-    setSubtitleFontFamily('Oswald Bold');
-    setSubtitlePosition('mid-bottom-center');
-    setSubtitleFontSize(140);
-    setSubtitleAllCaps(false);
-    setSubtitleBoxColor('#000000');
-    setSubtitleLineColor('#FFFFFF');
-    setSubtitleWordColor('#FFFF00');
-    setSubtitleOutlineColor('#000000');
-    setSubtitleOutlineWidth(8);
-    setSubtitleShadowColor('#000000');
-    setSubtitleShadowOffset(0);
-    setSubtitleMaxWordsPerLine(4);
-    setMusicVolume(0.05);
-    setMusicFadeIn(2);
-    setMusicFadeOut(2);
-    setImageZoom(2);
-    setImagePosition('center-center');
-    setEnableCache(true);
-    setDraftMode(false);
-    
-    // Clear localStorage draft
-    localStorage.removeItem(DRAFT_KEY);
-    
-    if (!deleteStoryboard) {
-      toast.success('Form reset to defaults', { id: 'form-reset' });
-    }
-  };
 
   const handleGenerate = async () => {
     if (!canGenerate) {
@@ -306,8 +221,6 @@ export function StoryboardInput() {
         toast.error('Topic must be at least 5 characters', { id: 'topic-error' });
       } else if (topic.length > 500) {
         toast.error('Topic must be less than 500 characters', { id: 'topic-error' });
-      } else {
-        toast.error('Insufficient tokens', { id: 'token-error' });
       }
       return;
     }
@@ -361,25 +274,12 @@ export function StoryboardInput() {
   return (
     <Card className="relative overflow-hidden bg-card border-2">
       <CardHeader className="space-y-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-black flex items-center gap-2">
-            <Film className="w-5 h-5" />
-            CREATE STORYBOARD
-          </CardTitle>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleReset}
-            disabled={isGenerating}
-            className="gap-2"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            Reset
-          </Button>
-        </div>
+        <CardTitle className="text-xl font-black flex items-center gap-2">
+          <Film className="w-5 h-5" />
+          CREATE STORYBOARD
+        </CardTitle>
         <CardDescription className="text-sm">
-          Generate AI-powered video scripts with full editing control
+          Generate AI-powered video scripts with full editing control. Credits are charged when you render the video.
         </CardDescription>
       </CardHeader>
       
@@ -618,10 +518,10 @@ export function StoryboardInput() {
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2 text-sm">
               <Coins className="w-4 h-4 text-primary" />
-              <span>Estimated: <span className="font-bold">{estimatedCost.toFixed(2)}</span> credits</span>
+              <span>Estimated render cost: <span className="font-bold">{estimatedRenderCost.toFixed(2)}</span> credits</span>
             </div>
             <p className="text-xs text-muted-foreground ml-6">
-              Based on {duration}s duration. Final cost may vary based on script length.
+              Credits charged when you render the video. Cost based on {duration}s duration.
             </p>
           </div>
           <span className="text-sm">
@@ -655,30 +555,6 @@ export function StoryboardInput() {
           </p>
         )}
       </CardContent>
-      
-      {/* Reset Confirmation Dialog */}
-      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Reset Storyboard?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will delete your current storyboard and all scenes, and reset the form to defaults. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                performReset(true);
-                setShowResetDialog(false);
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Reset & Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Card>
   );
 }

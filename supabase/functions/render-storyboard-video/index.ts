@@ -163,46 +163,27 @@ serve(async (req) => {
     
     console.log(`[render-storyboard-video] Initial estimate: ${initialEstimate} credits, Actual cost: ${actualCost.toFixed(2)} credits`);
     
-    // If actual is lower, refund the difference
-    // Note: User was already charged initialEstimate when storyboard was created
+    // Charge the full actual cost at render time
+    console.log(`[render-storyboard-video] Charging ${actualCost.toFixed(2)} credits for video render`);
     
-    if (actualCost < initialEstimate) {
-      // Refund the difference
-      const refundAmount = initialEstimate - actualCost;
-      console.log(`[render-storyboard-video] Refunding ${refundAmount.toFixed(2)} credits`);
-      
-      const { error: refundError } = await supabaseClient.rpc('increment_tokens', {
-        user_id_param: user.id,
-        amount: refundAmount
-      });
-      
-      if (refundError) {
-        console.error('[render-storyboard-video] Failed to refund credits:', refundError);
-        // Don't throw - continue with render even if refund fails
-      }
-    } else if (actualCost > initialEstimate) {
-      // Script increased - charge the difference
-      const additionalCharge = actualCost - initialEstimate;
-      
-      // Check if user has enough credits
-      if (subscription.tokens_remaining < additionalCharge) {
-        return new Response(
-          JSON.stringify({ error: `Insufficient credits. Script changes require ${additionalCharge.toFixed(2)} additional credits.` }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      console.log(`[render-storyboard-video] Charging ${additionalCharge.toFixed(2)} additional credits for script increase`);
-      
-      const { error: chargeError } = await supabaseClient.rpc('increment_tokens', {
-        user_id_param: user.id,
-        amount: -additionalCharge
-      });
-      
-      if (chargeError) {
-        console.error('[render-storyboard-video] Failed to charge additional credits:', chargeError);
-        throw new Error('Failed to charge additional credits');
-      }
+    // Check if user has enough credits
+    if (subscription.tokens_remaining < actualCost) {
+      return new Response(
+        JSON.stringify({ 
+          error: `Insufficient credits. Need ${actualCost.toFixed(2)} credits to render video.` 
+        }),
+        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const { error: chargeError } = await supabaseClient.rpc('increment_tokens', {
+      user_id_param: user.id,
+      amount: -actualCost
+    });
+    
+    if (chargeError) {
+      console.error('[render-storyboard-video] Failed to charge credits:', chargeError);
+      throw new Error('Failed to charge credits');
     }
     
     // Update the actual cost in the storyboard
@@ -388,10 +369,10 @@ serve(async (req) => {
       const errorText = await json2videoResponse.text();
       console.error('[render-storyboard-video] JSON2Video API error:', json2videoResponse.status, errorText);
       
-      // Refund initial estimate (actual cost may have been higher due to script changes, but we limit refund to initial)
+      // Refund the charged credits since render failed
       await supabaseClient.rpc('increment_tokens', {
         user_id_param: user.id,
-        amount: initialEstimate
+        amount: actualCost
       });
       
       if (json2videoResponse.status === 429) {
@@ -412,10 +393,10 @@ serve(async (req) => {
     if (!json2videoProjectId) {
       console.error('[render-storyboard-video] JSON2Video did not return a project ID!');
       
-      // Refund initial estimate (actual cost may have been higher, but we limit refund to initial)
+      // Refund the charged credits since we can't track the render
       await supabaseClient.rpc('increment_tokens', {
         user_id_param: user.id,
-        amount: initialEstimate
+        amount: actualCost
       });
       
       throw new Error('JSON2Video API error: No project ID in response');

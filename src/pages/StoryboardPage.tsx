@@ -2,14 +2,27 @@ import { useState, useEffect } from 'react';
 import { StoryboardInput } from '@/components/storyboard/StoryboardInput';
 import { StoryboardEditor } from '@/components/storyboard/StoryboardEditor';
 import { useStoryboard } from '@/hooks/useStoryboard';
-import { Film, ChevronDown } from 'lucide-react';
+import { Film, ChevronDown, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function StoryboardPage() {
-  const { storyboard } = useStoryboard();
+  const { storyboard, clearStoryboard } = useStoryboard();
   const [showInputForm, setShowInputForm] = useState(true);
+  const [showResetDialog, setShowResetDialog] = useState(false);
 
   // Auto-collapse form when storyboard is generated, re-expand when cleared
   useEffect(() => {
@@ -20,18 +33,54 @@ export default function StoryboardPage() {
     }
   }, [storyboard]);
 
+  const handleReset = async () => {
+    if (storyboard?.id) {
+      setShowResetDialog(true);
+    }
+  };
+
+  const confirmReset = async () => {
+    try {
+      const { error } = await supabase.functions.invoke('delete-storyboard', {
+        body: { storyboardId: storyboard?.id }
+      });
+      
+      if (error) throw error;
+      
+      clearStoryboard();
+      toast.success('Storyboard deleted', { id: 'storyboard-reset' });
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete storyboard', { id: 'delete-error' });
+    }
+    setShowResetDialog(false);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Film className="h-8 w-8 text-primary" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Film className="h-8 w-8 text-primary" />
+              </div>
+              <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
+                AI STORYBOARD GENERATOR
+              </h1>
             </div>
-            <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
-              AI STORYBOARD GENERATOR
-            </h1>
+            {storyboard && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleReset}
+                className="gap-2"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reset
+              </Button>
+            )}
           </div>
           <p className="text-lg text-muted-foreground">
             Create professional faceless videos with full creative control
@@ -60,6 +109,24 @@ export default function StoryboardPage() {
         {/* Storyboard Editor */}
         {storyboard && <StoryboardEditor />}
       </div>
+
+      {/* Reset Confirmation Dialog */}
+      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Storyboard?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete your current storyboard. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmReset} className="bg-destructive hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

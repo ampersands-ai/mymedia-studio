@@ -64,24 +64,6 @@ serve(async (req) => {
     // Initial cost estimate: 0.25 credits per second of video duration
     const tokenCost = duration * 0.25;
 
-    // Check user token balance
-    const { data: subscription, error: subError } = await supabaseClient
-      .from('user_subscriptions')
-      .select('tokens_remaining')
-      .eq('user_id', user.id)
-      .single();
-
-    if (subError || !subscription) {
-      throw new Error('Could not fetch user subscription');
-    }
-
-    if (subscription.tokens_remaining < tokenCost) {
-      return new Response(
-        JSON.stringify({ error: 'Insufficient credits' }),
-        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     // Style-specific guidelines for enhanced prompts
     const STYLE_GUIDELINES: Record<string, string> = {
       'hyper-realistic': 'Ultra-realistic photography, 8K resolution, photorealistic lighting, professional camera, sharp focus, natural textures, high detail',
@@ -284,28 +266,7 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     
     console.log('[generate-storyboard] Original character count:', originalCharacterCount, '(intro:', introChars, ', scenes:', sceneChars, ')');
 
-    // Deduct tokens
-    const { error: deductError } = await supabaseClient.rpc('increment_tokens', {
-      user_id_param: user.id,
-      amount: -tokenCost
-    });
-
-    if (deductError) {
-      console.error('Credit deduction error:', deductError);
-      return new Response(
-        JSON.stringify({ 
-          error: `Failed to deduct credits: ${deductError.message}`,
-          details: deductError,
-          cost: tokenCost
-        }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // Create storyboard record
+    // Create storyboard record (no credit deduction - charged at render time)
     const { data: storyboard, error: storyboardError } = await supabaseClient
       .from('storyboards')
       .insert({
@@ -365,11 +326,6 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
 
     if (storyboardError) {
       console.error('Storyboard creation error:', storyboardError);
-      // Refund tokens
-      await supabaseClient.rpc('increment_tokens', {
-        user_id_param: user.id,
-        amount: tokenCost
-      });
       throw new Error('Failed to create storyboard');
     }
 

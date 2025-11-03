@@ -7,9 +7,7 @@ export interface ProviderRequest {
   parameters: Record<string, any>;
   api_endpoint?: string;
   payload_structure?: string;
-  userId?: string; // For storage path generation
-  generationId?: string; // For storage path generation
-  supabase?: any; // Supabase client for presigned URLs
+  uploadEndpoint?: string; // For video direct upload (presigned URL)
 }
 
 export interface ProviderResponse {

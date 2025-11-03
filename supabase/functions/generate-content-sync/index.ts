@@ -259,11 +259,6 @@ serve(async (req) => {
         model: model.id,
         prompt: effectivePrompt,
         parameters: parameters,
-        api_endpoint: model.api_endpoint,
-        payload_structure: model.payload_structure || 'flat',
-        userId: user.id,
-        generationId: generation.id,
-        supabase: supabase
       };
 
       console.log('[sync] Calling Runware provider...');

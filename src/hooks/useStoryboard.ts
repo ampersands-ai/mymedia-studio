@@ -743,100 +743,87 @@ export const useStoryboard = () => {
       throw new Error(`Insufficient credits. Need ${totalCost} credits to generate ${scenesToGenerate.length} previews.`);
     }
 
-    // 3. Generate in parallel batches with cancellation support
-    const BATCH_SIZE = model?.provider === 'runware' ? 10 : 5;
-    const results = [];
-
-    for (let batchStart = 0; batchStart < scenesToGenerate.length; batchStart += BATCH_SIZE) {
-      // Check for cancellation before each batch
+    // 2. Generate all previews SEQUENTIALLY (one at a time for stability)
+    const results: Array<{
+      sceneNumber: number;
+      success: boolean;
+      url?: string;
+      error?: string;
+    }> = [];
+    
+    // Generate scenes one by one
+    for (let i = 0; i < scenesToGenerate.length; i++) {
       if (signal.aborted) {
-        throw new Error('Generation cancelled by user');
+        throw new Error('Cancelled by user');
       }
-
-      const batch = scenesToGenerate.slice(batchStart, batchStart + BATCH_SIZE);
       
-      // Generate all scenes in this batch in parallel
-      const batchPromises = batch.map(async (scene, batchIndex) => {
-        const absoluteIndex = batchStart + batchIndex;
+      const scene = scenesToGenerate[i];
+      
+      // Update progress before starting this scene
+      onProgress?.(i + 1, scenesToGenerate.length);
+      
+      try {
+        // For intro scene, use intro image prompt
+        const promptToUse = scene.imagePrompt;
         
-        try {
-          // Update progress for this scene
-          onProgress?.(absoluteIndex + 1, scenesToGenerate.length);
+        // Determine if we should use sync or async endpoint
+        const functionName = model?.provider === 'runware' 
+          ? 'generate-content-sync' 
+          : 'generate-content';
 
-          const functionName = model?.provider === 'runware' 
-            ? 'generate-content-sync' 
-            : 'generate-content';
+        const { data, error } = await supabase.functions.invoke(functionName, {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: {
+            model_id: modelId,
+            prompt: promptToUse,
+            custom_parameters: {},
+          }
+        });
+        
+        if (error) {
+          // Better error handling for auth issues
+          if (error.message?.includes('Unauthorized') || error.message?.includes('401')) {
+            throw new Error('Authentication failed. Please try logging out and back in.');
+          }
+          throw error;
+        }
+        
+        // Handle async generation (polling required)
+        let outputUrl = data.output_url;
+        
+        if (!outputUrl && data.id) {
+          // Poll for completion
+          outputUrl = await pollForGenerationResult(data.id, signal);
+        }
 
-          const { data, error } = await supabase.functions.invoke(functionName, {
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-            },
-            body: {
-              model_id: modelId,
-              prompt: scene.imagePrompt,
-              custom_parameters: {},
-            }
+        // Update scene with preview URL
+        if (scene.isIntro) {
+          await updateIntroSceneMutation.mutateAsync({ 
+            field: 'intro_image_preview_url', 
+            value: outputUrl 
           });
-          
-          if (error) {
-            // Better error handling for auth issues
-            if (error.message?.includes('Unauthorized') || error.message?.includes('401')) {
-              throw new Error('Authentication failed. Please try logging out and back in.');
-            }
-            throw error;
-          }
-          
-          // Handle async generation (polling required)
-          let outputUrl = data.output_url;
-          if (!outputUrl && data.id) {
-            outputUrl = await pollForGenerationResult(data.id, signal);
-          }
-
-          // Update scene with preview URL
-          if (scene.isIntro) {
-            await updateIntroSceneMutation.mutateAsync({ 
-              field: 'intro_image_preview_url', 
-              value: outputUrl 
-            });
-          } else {
-            await updateSceneImageMutation.mutateAsync({ 
-              sceneId: scene.id, 
-              imageUrl: outputUrl 
-            });
-          }
-          
-          console.log(`✅ Generated preview for scene ${scene.sceneNumber}`);
-          
-          return { 
-            sceneNumber: scene.sceneNumber, 
-            success: true, 
-            url: outputUrl 
-          };
-        } catch (error: any) {
-          if (signal.aborted) {
-            throw new Error('Generation cancelled by user');
-          }
-          
-          console.error(`❌ Failed to generate preview for scene ${scene.sceneNumber}:`, error);
-          
-          return { 
-            sceneNumber: scene.sceneNumber, 
-            success: false, 
-            error: error.message 
-          };
-        }
-      });
-
-      // Wait for all scenes in this batch to complete
-      const batchResults = await Promise.allSettled(batchPromises);
-      
-      // Extract results from settled promises
-      for (const result of batchResults) {
-        if (result.status === 'fulfilled') {
-          results.push(result.value);
         } else {
-          console.error('Unexpected batch promise rejection:', result.reason);
+          await updateSceneImageMutation.mutateAsync({ 
+            sceneId: scene.id, 
+            imageUrl: outputUrl 
+          });
         }
+
+        results.push({
+          sceneNumber: scene.sceneNumber,
+          success: true,
+          url: outputUrl
+        });
+
+      } catch (error: any) {
+        console.error(`Failed to generate scene ${scene.sceneNumber}:`, error);
+        results.push({
+          sceneNumber: scene.sceneNumber,
+          success: false,
+          error: error.message
+        });
       }
     }
 

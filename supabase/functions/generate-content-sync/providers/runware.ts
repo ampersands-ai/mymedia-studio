@@ -288,45 +288,8 @@ export async function callRunware(
       throw new Error(`Runware generation failed: ${result.error}`);
     }
 
-    // Handle video with uploadEndpoint (direct upload to storage by Runware)
-    if (isVideo && presignedUrl && storagePath && request.supabase) {
-      console.log('[Runware Video] Video will be uploaded directly to storage by Runware');
-      
-      // Wait for upload to complete (give Runware time to upload)
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Verify file exists in storage
-      const folderPath = storagePath.substring(0, storagePath.lastIndexOf('/'));
-      const { data: fileData, error: fileError } = await request.supabase.storage
-        .from('generated-content')
-        .list(folderPath, { search: 'output.mp4' });
-      
-      if (fileError || !fileData || fileData.length === 0) {
-        console.error('[Runware Video] Upload verification failed:', fileError);
-        throw new Error('Video upload to storage failed - file not found after upload');
-      }
-      
-      const uploadedFile = fileData[0];
-      console.log('[Runware Video] Video successfully uploaded to storage:', storagePath, `(${uploadedFile.metadata?.size || 0} bytes)`);
-      
-      // Return response indicating file already in storage
-      return {
-        output_data: new Uint8Array(0), // Empty - already in storage
-        file_extension: 'mp4',
-        file_size: uploadedFile.metadata?.size || 0,
-        storage_path: storagePath, // Indicate video is already in storage
-        metadata: {
-          model: cleanModel,
-          positivePrompt: result.positivePrompt,
-          runware_cost: result.cost,
-          videoUUID: result.videoUUID,
-          duration: result.duration,
-          fps: result.fps,
-          width: result.width,
-          height: result.height,
-        }
-      };
-    }
+    // Note: Video direct upload handling is done in the main edge function
+    // This provider just calls Runware with uploadEndpoint if provided
 
     // For video without uploadEndpoint or images, use traditional download
     // Extract content URL (imageURL or videoURL)

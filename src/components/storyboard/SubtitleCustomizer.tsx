@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
-import { toast } from "sonner";
 import type { SubtitleSettings } from "@/types/subtitle";
 import { DEFAULT_SUBTITLE_SETTINGS } from "@/types/subtitle";
 import { SUBTITLE_PRESETS, FONT_FAMILIES, ANIMATION_TYPES, LANGUAGES, SUBTITLES_MODELS, FONT_WEIGHTS } from "@/config/subtitlePresets";
@@ -47,24 +46,20 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
         ...prev,
         ...preset.settings,
       }));
-      toast.success(`Applied ${preset.name} preset`);
     }
   };
 
   const resetToDefaults = () => {
     setSettings(DEFAULT_SUBTITLE_SETTINGS);
-    toast.success("Reset to default settings");
   };
 
   const copyJSON = () => {
     const json = JSON.stringify(settings, null, 2);
     navigator.clipboard.writeText(json);
-    toast.success("JSON copied to clipboard");
   };
 
   const handleSave = () => {
     onSave(settings);
-    toast.success("Subtitle settings saved");
     onOpenChange(false);
   };
 

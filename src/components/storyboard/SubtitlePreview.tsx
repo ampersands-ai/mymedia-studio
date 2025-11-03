@@ -69,25 +69,36 @@ export function SubtitlePreview({ settings, className }: SubtitlePreviewProps) {
         <div className="w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-600 via-slate-800 to-slate-900" />
       </div>
       
-      {/* Subtitle text */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div
-          style={subtitleStyles}
-          className={cn(
-            "font-bold leading-tight inline-block",
-            settings.animation === 'fade' && "animate-in fade-in",
-            settings.animation === 'slide-up' && "animate-in slide-in-from-bottom-4",
-            settings.animation === 'slide-down' && "animate-in slide-in-from-top-4",
-            settings.animation === 'zoom' && "animate-in zoom-in-50",
-            settings.animation === 'bounce' && "animate-bounce"
-          )}
-        >
-          The future is here
+      {/* Active Screen Overlay - shows safe area */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Border showing full screen bounds */}
+        <div className="absolute inset-0 border-2 border-white/20 rounded-lg" />
+        
+        {/* Inner safe area guide (90% width/height) */}
+        <div className="absolute inset-[5%] border border-dashed border-yellow-500/40 rounded-lg">
+          <div className="absolute top-1 left-1 text-[10px] text-yellow-500/60 bg-black/30 px-1.5 py-0.5 rounded">
+            Safe Area
+          </div>
         </div>
+      </div>
+      
+      {/* Subtitle text - positioned absolutely based on settings */}
+      <div
+        style={subtitleStyles}
+        className={cn(
+          "absolute font-bold leading-tight inline-block pointer-events-none",
+          settings.animation === 'fade' && "animate-in fade-in",
+          settings.animation === 'slide-up' && "animate-in slide-in-from-bottom-4",
+          settings.animation === 'slide-down' && "animate-in slide-in-from-top-4",
+          settings.animation === 'zoom' && "animate-in zoom-in-50",
+          settings.animation === 'bounce' && "animate-bounce"
+        )}
+      >
+        The future is here
       </div>
 
       {/* Corner label */}
-      <div className="absolute top-2 left-2 text-xs text-white/50 bg-black/30 px-2 py-1 rounded">
+      <div className="absolute top-2 left-2 text-xs text-white/50 bg-black/30 px-2 py-1 rounded z-10">
         Live Preview
       </div>
     </div>

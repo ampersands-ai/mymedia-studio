@@ -254,7 +254,7 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
                       max={300}
                       step={5}
                     />
-                    <p className="text-[10px] text-muted-foreground">Recommended: 90-150px</p>
+                    <p className="text-[10px] text-muted-foreground">Default: 40px (adjust as needed)</p>
                   </div>
 
                   <div className="space-y-2">

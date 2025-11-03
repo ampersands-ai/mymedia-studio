@@ -45,7 +45,7 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { storyboardId } = await req.json();
+    const { storyboardId, confirmRerender } = await req.json();
 
     // Generate unique render job ID for this request
     const uniqueRenderJobId = generateUniqueRenderJobId();
@@ -61,6 +61,70 @@ serve(async (req) => {
 
     if (storyboardError || !storyboard) {
       throw new Error('Storyboard not found or unauthorized');
+    }
+
+    // Check if this is a re-render request that needs confirmation
+    if (storyboard.status === 'complete' && storyboard.video_url && !confirmRerender) {
+      console.log('[render-storyboard-video] Storyboard already rendered, requiring confirmation');
+      
+      // Fetch scenes to calculate cost
+      const { data: scenes } = await supabaseClient
+        .from('storyboard_scenes')
+        .select('voice_over_text')
+        .eq('storyboard_id', storyboardId)
+        .order('order_number', { ascending: true });
+      
+      // Calculate the actual cost that will be charged
+      const initialEstimate = storyboard.estimated_render_cost || (storyboard.duration * 0.25);
+      const countChars = (text: string) => text?.trim().length || 0;
+      
+      const introChars = countChars(storyboard.intro_voiceover_text || '');
+      const sceneChars = (scenes || []).reduce((sum, scene) => sum + countChars(scene.voice_over_text), 0);
+      const currentTotalChars = introChars + sceneChars;
+      const originalChars = storyboard.original_character_count || currentTotalChars;
+      const charDifference = currentTotalChars - originalChars;
+      
+      let actualCost = initialEstimate;
+      if (charDifference >= 100) {
+        const additionalChunks = Math.floor(charDifference / 100);
+        actualCost += additionalChunks * 0.25;
+      } else if (charDifference <= -100) {
+        const reducedChunks = Math.floor(Math.abs(charDifference) / 100);
+        actualCost -= reducedChunks * 0.25;
+        actualCost = Math.max(0, actualCost);
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          requiresConfirmation: true,
+          existingVideoUrl: storyboard.video_url,
+          renderCost: parseFloat(actualCost.toFixed(2)),
+          message: 'This storyboard has already been rendered. Re-rendering will charge you again.'
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // If this is a confirmed re-render, reset the storyboard status
+    if (confirmRerender && storyboard.status === 'complete') {
+      console.log('[render-storyboard-video] Resetting storyboard status for re-render');
+      
+      const { error: resetError } = await supabaseClient
+        .from('storyboards')
+        .update({ 
+          status: 'rendering',
+          render_job_id: null,
+          video_url: null,
+          video_storage_path: null,
+        })
+        .eq('id', storyboardId);
+      
+      if (resetError) {
+        console.error('[render-storyboard-video] Failed to reset storyboard:', resetError);
+      }
     }
 
     // Fetch scenes to calculate total duration

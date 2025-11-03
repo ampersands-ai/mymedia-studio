@@ -76,6 +76,9 @@ export const StoryboardEditor = () => {
   const [introImagePrompt, setIntroImagePrompt] = useState(storyboard?.intro_image_prompt || '');
   const [showScenes, setShowScenes] = useState(storyboard?.status !== 'complete');
   const [showSubtitleCustomizer, setShowSubtitleCustomizer] = useState(false);
+  const [showRerenderDialog, setShowRerenderDialog] = useState(false);
+  const [rerenderCost, setRerenderCost] = useState(0);
+  const [existingVideoUrl, setExistingVideoUrl] = useState('');
 
   // Sync intro fields with storyboard
   useEffect(() => {
@@ -212,7 +215,32 @@ export const StoryboardEditor = () => {
       return;
     }
 
-    await renderVideo();
+    try {
+      const result = await renderVideo(false);
+      
+      if (result?.requiresConfirmation) {
+        setRerenderCost(result.renderCost);
+        setExistingVideoUrl(result.existingVideoUrl);
+        setShowRerenderDialog(true);
+        return;
+      }
+      
+      toast.success('Video rendering started!');
+    } catch (error: any) {
+      console.error('Render error:', error);
+      toast.error(error.message || 'Failed to start rendering');
+    }
+  };
+
+  const handleConfirmRerender = async () => {
+    setShowRerenderDialog(false);
+    try {
+      await renderVideo(true);
+      toast.success('Video re-rendering started!');
+    } catch (error: any) {
+      console.error('Re-render error:', error);
+      toast.error(error.message || 'Failed to start re-rendering');
+    }
   };
 
   const handleBack = () => {
@@ -799,6 +827,67 @@ export const StoryboardEditor = () => {
         </Card>
       )}
 
+
+      {/* Re-render Confirmation Dialog */}
+      <AlertDialog open={showRerenderDialog} onOpenChange={setShowRerenderDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-amber-500" />
+              Video Already Rendered
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4">
+              <p>
+                This storyboard has already been rendered. Re-rendering will create a new video and charge your account again.
+              </p>
+              
+              <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-semibold">Cost for re-rendering:</span>
+                  <span className="text-lg font-bold text-primary">{rerenderCost.toFixed(2)} credits</span>
+                </div>
+                <div className="flex justify-between items-center text-sm text-muted-foreground">
+                  <span>Current balance:</span>
+                  <span>{Number(tokenData?.tokens_remaining || 0).toFixed(2)} credits</span>
+                </div>
+                <div className="flex justify-between items-center text-sm text-muted-foreground">
+                  <span>Balance after re-render:</span>
+                  <span className={
+                    (tokenData?.tokens_remaining || 0) - rerenderCost < 0 
+                      ? "text-destructive font-semibold" 
+                      : ""
+                  }>
+                    {((tokenData?.tokens_remaining || 0) - rerenderCost).toFixed(2)} credits
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                💡 Tip: You can still view and download your existing video below. Only re-render if you've made changes to the script or settings.
+              </p>
+              
+              {(tokenData?.tokens_remaining || 0) < rerenderCost && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Insufficient credits. Please purchase more credits to re-render.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmRerender}
+              disabled={(tokenData?.tokens_remaining || 0) < rerenderCost}
+              className="bg-primary hover:bg-primary/90"
+            >
+              Re-render ({rerenderCost.toFixed(2)} credits)
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Final Video (appears below scenes after rendering) */}
       {storyboard?.status === 'complete' && storyboard?.video_url && (

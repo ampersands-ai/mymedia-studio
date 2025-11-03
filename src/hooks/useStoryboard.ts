@@ -401,15 +401,29 @@ export const useStoryboard = () => {
 
   // Render video mutation
   const renderVideoMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ confirmRerender = false }: { confirmRerender?: boolean } = {}) => {
       const { data, error } = await supabase.functions.invoke('render-storyboard-video', {
-        body: { storyboardId: currentStoryboardId },
+        body: { 
+          storyboardId: currentStoryboardId,
+          confirmRerender
+        },
       });
 
       if (error) throw error;
+      
+      // Check if confirmation is required
+      if (data?.requiresConfirmation) {
+        return { requiresConfirmation: true, ...data };
+      }
+      
       return data;
     },
     onSuccess: (data) => {
+      // If confirmation is required, don't start rendering yet
+      if (data?.requiresConfirmation) {
+        return;
+      }
+      
       setIsRendering(true);
       setRenderingStartTime(Date.now());
       // Store the estimated render time (2x video duration)
@@ -603,9 +617,10 @@ export const useStoryboard = () => {
     setActiveSceneId(scenes[newIndex].id);
   }, [activeSceneId, scenes]);
 
-  const renderVideo = useCallback(async () => {
-    await renderVideoMutation.mutateAsync();
-  }, [renderVideoMutation]);
+  const renderVideo = useCallback(async (confirmRerender = false) => {
+    if (!currentStoryboardId) return null;
+    return renderVideoMutation.mutateAsync({ confirmRerender });
+  }, [currentStoryboardId, renderVideoMutation]);
 
   const cancelRender = useCallback(() => {
     cancelRenderMutation.mutate();

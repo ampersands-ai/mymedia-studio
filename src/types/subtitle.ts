@@ -92,7 +92,7 @@ export const DEFAULT_SUBTITLE_SETTINGS: SubtitleSettings = {
   
   // Text styling
   fontFamily: 'Oswald Bold',
-  fontSize: 140,
+  fontSize: 40,
   fontColor: '#FFFFFF',
   fontWeight: 'bold',
   fontStyle: 'normal',

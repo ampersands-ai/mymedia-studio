@@ -14,14 +14,10 @@ export interface ProviderResponse {
 }
 
 function uint8ArrayToBase64(bytes: Uint8Array): string {
-  const CHUNK_SIZE = 0x8000; // 32KB chunks - safe for call stack
   let binary = '';
-  
-  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
-    const chunk = bytes.subarray(i, i + CHUNK_SIZE);
-    binary += String.fromCharCode(...chunk);
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
   }
-  
   return btoa(binary);
 }
 

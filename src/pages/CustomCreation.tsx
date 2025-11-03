@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2, Clock, Info, Camera, Share2, RefreshCw, CheckCircle2, Palette, ImagePlus, Video, Film, Music } from "lucide-react";
 import { useNativeCamera } from "@/hooks/useNativeCamera";
@@ -1317,6 +1319,65 @@ const CustomCreation = () => {
                 );
               })()}
 
+              {/* Duration and Increment - Outside Advanced Options */}
+              {selectedModel && filteredModels && (() => {
+                const currentModel = filteredModels.find(m => m.record_id === selectedModel);
+                const properties = currentModel?.input_schema?.properties as Record<string, any> | undefined;
+                
+                if (!properties) return null;
+                
+                // Check if duration or increment fields exist
+                const hasDuration = properties.duration;
+                const hasIncrement = properties.increment;
+                
+                if (!hasDuration && !hasIncrement) return null;
+                
+                return (
+                  <div className="space-y-4">
+                    {/* Duration Field */}
+                    {hasDuration && (
+                      <SchemaInput
+                        key="duration"
+                        name="duration"
+                        schema={properties.duration}
+                        value={modelParameters.duration}
+                        onChange={(value) => {
+                          setModelParameters(prev => ({ ...prev, duration: value }));
+                        }}
+                        required={currentModel.input_schema?.required?.includes('duration')}
+                        modelSchema={currentModel.input_schema}
+                        modelId={currentModel.id}
+                        provider={currentModel.provider}
+                      />
+                    )}
+                    
+                    {/* Increment Toggle */}
+                    {hasIncrement && (
+                      <div className="flex items-center justify-between space-x-2">
+                        <Label htmlFor="increment-toggle" className="text-sm font-medium">
+                          {properties.increment.title || 'Increment'}
+                          {currentModel.input_schema?.required?.includes('increment') && (
+                            <span className="text-destructive ml-1">*</span>
+                          )}
+                        </Label>
+                        <Switch
+                          id="increment-toggle"
+                          checked={!!modelParameters.increment}
+                          onCheckedChange={(checked) => {
+                            setModelParameters(prev => ({ ...prev, increment: checked }));
+                          }}
+                        />
+                      </div>
+                    )}
+                    {properties.increment?.description && (
+                      <p className="text-xs text-muted-foreground -mt-2">
+                        {properties.increment.description}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+
               {/* Collapsible Advanced Options */}
               <div ref={advancedOptionsRef}>
                 <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
@@ -1337,7 +1398,7 @@ const CustomCreation = () => {
                       const properties = currentModel.input_schema.properties as Record<string, any>;
                       const textKey = findPrimaryTextKey(properties);
                       const voiceKey = findPrimaryVoiceKey(properties, currentModel.id);
-                      const baseExclude = ['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls'];
+                      const baseExclude = ['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls', 'duration', 'increment'];
                       const exclude = [...baseExclude, ...(textKey ? [textKey] : []), ...(voiceKey ? [voiceKey] : [])];
                       return (
                         <ModelParameterForm

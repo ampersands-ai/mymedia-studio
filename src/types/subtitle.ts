@@ -26,39 +26,13 @@ export interface SubtitleSettings {
   // === Text Styling ===
   fontFamily: string;
   fontSize: number;
-  fontColor: string;
-  fontWeight: string;
-  fontStyle: 'normal' | 'italic';
-  textAlign: 'left' | 'center' | 'right';
-  textTransform: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
-  lineHeight: number;
-  letterSpacing: number;
-  
-  // === Background ===
-  backgroundColor: string;
-  backgroundOpacity: number;
-  backgroundPadding: number;
-  backgroundRadius: number;
   
   // === Outline ===
   outlineColor: string;
   outlineWidth: number;
   
-  // === Shadow (for modern preview) ===
-  shadowColor: string;
-  shadowBlur: number;
-  shadowX: number;
-  shadowY: number;
-  
   // === Positioning ===
   position: string;
-  offsetX: number;
-  offsetY: number;
-  maxWidth: number;
-  
-  // === Animation ===
-  animation: 'none' | 'fade' | 'slide-up' | 'slide-down' | 'zoom' | 'bounce';
-  animationDuration: number;
   
   // === Language ===
   subtitlesModel: 'default' | 'whisper' | 'azure' | 'google';
@@ -93,39 +67,13 @@ export const DEFAULT_SUBTITLE_SETTINGS: SubtitleSettings = {
   // Text styling
   fontFamily: 'Oswald Bold',
   fontSize: 40,
-  fontColor: '#FFFFFF',
-  fontWeight: 'bold',
-  fontStyle: 'normal',
-  textAlign: 'center',
-  textTransform: 'none',
-  lineHeight: 1.2,
-  letterSpacing: 0,
-  
-  // Background
-  backgroundColor: 'transparent',
-  backgroundOpacity: 0.8,
-  backgroundPadding: 20,
-  backgroundRadius: 10,
   
   // Outline
   outlineColor: '#000000',
   outlineWidth: 8,
   
-  // Shadow (modern preview)
-  shadowColor: '#000000',
-  shadowBlur: 10,
-  shadowX: 2,
-  shadowY: 2,
-  
   // Positioning
   position: 'mid-bottom-center',
-  offsetX: 0,
-  offsetY: 0,
-  maxWidth: 800,
-  
-  // Animation
-  animation: 'fade',
-  animationDuration: 0.3,
   
   // Language
   subtitlesModel: 'default',

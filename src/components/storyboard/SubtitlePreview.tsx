@@ -9,31 +9,31 @@ interface SubtitlePreviewProps {
 export function SubtitlePreview({ settings, className }: SubtitlePreviewProps) {
   const getPositionStyles = () => {
     const baseStyles: React.CSSProperties = {
-      transform: `translate(${settings.offsetX}px, ${settings.offsetY}px)`,
+      transform: `translate(${settings.x}px, ${settings.y}px)`,
     };
 
     switch (settings.position) {
       case "top-left":
-        return { ...baseStyles, top: "10%", left: "10%", transform: `translate(${settings.offsetX}px, ${settings.offsetY}px)` };
+        return { ...baseStyles, top: "10%", left: "10%", transform: `translate(${settings.x}px, ${settings.y}px)` };
       case "top-center":
-        return { ...baseStyles, top: "10%", left: "50%", transform: `translate(calc(-50% + ${settings.offsetX}px), ${settings.offsetY}px)` };
+        return { ...baseStyles, top: "10%", left: "50%", transform: `translate(calc(-50% + ${settings.x}px), ${settings.y}px)` };
       case "top-right":
-        return { ...baseStyles, top: "10%", right: "10%", transform: `translate(${settings.offsetX}px, ${settings.offsetY}px)` };
+        return { ...baseStyles, top: "10%", right: "10%", transform: `translate(${settings.x}px, ${settings.y}px)` };
       case "mid-left-center":
-        return { ...baseStyles, top: "50%", left: "10%", transform: `translate(${settings.offsetX}px, calc(-50% + ${settings.offsetY}px))` };
+        return { ...baseStyles, top: "50%", left: "10%", transform: `translate(${settings.x}px, calc(-50% + ${settings.y}px))` };
       case "mid-center":
-        return { ...baseStyles, top: "50%", left: "50%", transform: `translate(calc(-50% + ${settings.offsetX}px), calc(-50% + ${settings.offsetY}px))` };
+        return { ...baseStyles, top: "50%", left: "50%", transform: `translate(calc(-50% + ${settings.x}px), calc(-50% + ${settings.y}px))` };
       case "mid-right-center":
-        return { ...baseStyles, top: "50%", right: "10%", transform: `translate(${settings.offsetX}px, calc(-50% + ${settings.offsetY}px))` };
+        return { ...baseStyles, top: "50%", right: "10%", transform: `translate(${settings.x}px, calc(-50% + ${settings.y}px))` };
       case "mid-bottom-center":
-        return { ...baseStyles, bottom: "25%", left: "50%", transform: `translate(calc(-50% + ${settings.offsetX}px), ${settings.offsetY}px)` };
+        return { ...baseStyles, bottom: "25%", left: "50%", transform: `translate(calc(-50% + ${settings.x}px), ${settings.y}px)` };
       case "bottom-left":
-        return { ...baseStyles, bottom: "10%", left: "10%", transform: `translate(${settings.offsetX}px, ${settings.offsetY}px)` };
+        return { ...baseStyles, bottom: "10%", left: "10%", transform: `translate(${settings.x}px, ${settings.y}px)` };
       case "bottom-right":
-        return { ...baseStyles, bottom: "10%", right: "10%", transform: `translate(${settings.offsetX}px, ${settings.offsetY}px)` };
+        return { ...baseStyles, bottom: "10%", right: "10%", transform: `translate(${settings.x}px, ${settings.y}px)` };
       case "bottom-center":
       default:
-        return { ...baseStyles, bottom: "10%", left: "50%", transform: `translate(calc(-50% + ${settings.offsetX}px), ${settings.offsetY}px)` };
+        return { ...baseStyles, bottom: "10%", left: "50%", transform: `translate(calc(-50% + ${settings.x}px), ${settings.y}px)` };
     }
   };
 
@@ -41,24 +41,13 @@ export function SubtitlePreview({ settings, className }: SubtitlePreviewProps) {
     position: 'absolute',
     fontFamily: settings.fontFamily,
     fontSize: `${settings.fontSize}px`,
-    color: settings.fontColor,
-    fontWeight: settings.fontWeight,
-    fontStyle: settings.fontStyle,
-    textAlign: settings.textAlign as any,
-    textTransform: settings.textTransform as any,
-    lineHeight: settings.lineHeight,
-    letterSpacing: `${settings.letterSpacing}px`,
-    maxWidth: `${settings.maxWidth}px`,
-    padding: `${settings.backgroundPadding}px`,
-    borderRadius: `${settings.backgroundRadius}px`,
-    backgroundColor: settings.backgroundColor === 'transparent' 
-      ? 'transparent' 
-      : `${settings.backgroundColor}${Math.round(settings.backgroundOpacity * 255).toString(16).padStart(2, '0')}`,
+    color: settings.lineColor,
+    textAlign: 'center',
     WebkitTextStroke: settings.outlineWidth > 0 
       ? `${settings.outlineWidth}px ${settings.outlineColor}` 
       : undefined,
-    textShadow: settings.shadowBlur > 0 
-      ? `${settings.shadowX}px ${settings.shadowY}px ${settings.shadowBlur}px ${settings.shadowColor}`
+    textShadow: settings.shadowOffset > 0 
+      ? `0 ${settings.shadowOffset}px 0 rgba(0,0,0,0.5)`
       : undefined,
     ...getPositionStyles(),
   };
@@ -106,7 +95,6 @@ export function SubtitlePreview({ settings, className }: SubtitlePreviewProps) {
                   fontFamily: settings.fontFamily,
                   fontSize: `${settings.fontSize}px`,
                   color: settings.lineColor,
-                  fontWeight: settings.fontWeight,
                   backgroundColor: settings.boxColor,
                   padding: '8px 16px',
                   borderRadius: '8px',
@@ -123,8 +111,8 @@ export function SubtitlePreview({ settings, className }: SubtitlePreviewProps) {
           <div style={{
             ...subtitleStyles,
             backgroundColor: settings.boxColor,
-            padding: `${settings.backgroundPadding}px`,
-            borderRadius: `${settings.backgroundRadius}px`,
+            padding: '16px 24px',
+            borderRadius: '8px',
           }}>
             {baseText}
           </div>

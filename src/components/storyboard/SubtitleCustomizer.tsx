@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import type { SubtitleSettings } from "@/types/subtitle";
 import { DEFAULT_SUBTITLE_SETTINGS } from "@/types/subtitle";
-import { SUBTITLE_PRESETS, FONT_FAMILIES, SUBTITLE_STYLES, ANIMATION_TYPES, LANGUAGES, SUBTITLES_MODELS, FONT_WEIGHTS } from "@/config/subtitlePresets";
+import { SUBTITLE_PRESETS, FONT_FAMILIES, SUBTITLE_STYLES, LANGUAGES, SUBTITLES_MODELS } from "@/config/subtitlePresets";
 import { SubtitlePreview } from "./SubtitlePreview";
 import { PositionGridSelector } from "./PositionGridSelector";
 import { cn } from "@/lib/utils";
@@ -76,7 +76,6 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
         wordColor: settings.wordColor,
         outlineColor: settings.outlineColor,
         outlineWidth: settings.outlineWidth,
-        shadowColor: settings.shadowColor,
         shadowOffset: settings.shadowOffset,
         position: settings.position,
         maxWordsPerLine: settings.maxWordsPerLine,
@@ -84,7 +83,8 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
         y: settings.y,
         keywords: settings.keywords,
         replace: settings.replace,
-        fontUrl: settings.fontUrl
+        fontUrl: settings.fontUrl,
+        subtitleLanguage: settings.language
       }
     };
     
@@ -129,12 +129,12 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
                     style={{
                       fontFamily: preset.settings.fontFamily,
                       fontSize: '14px',
-                      color: preset.settings.fontColor,
-                      backgroundColor: preset.settings.backgroundColor === 'transparent' 
-                        ? 'transparent' 
-                        : `${preset.settings.backgroundColor}${Math.round((preset.settings.backgroundOpacity || 0.8) * 255).toString(16).padStart(2, '0')}`,
+                      color: preset.settings.lineColor,
+                      backgroundColor: ['boxed-line', 'boxed-word'].includes(preset.settings.style || '') 
+                        ? preset.settings.boxColor
+                        : 'transparent',
                       padding: '4px 8px',
-                      borderRadius: `${preset.settings.backgroundRadius}px`,
+                      borderRadius: '4px',
                     }}
                   >
                     Sample
@@ -220,30 +220,16 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
                 📝 Text Styling
               </AccordionTrigger>
               <AccordionContent className="space-y-4 pt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Font Family</Label>
-                    <Select value={settings.fontFamily} onValueChange={(v) => updateSetting('fontFamily', v)}>
-                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {FONT_FAMILIES.map(font => (
-                          <SelectItem key={font} value={font}>{font}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Font Weight</Label>
-                    <Select value={settings.fontWeight} onValueChange={(v) => updateSetting('fontWeight', v)}>
-                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {FONT_WEIGHTS.map(w => (
-                          <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Font Family</Label>
+                  <Select value={settings.fontFamily} onValueChange={(v) => updateSetting('fontFamily', v)}>
+                    <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {FONT_FAMILIES.map(font => (
+                        <SelectItem key={font} value={font}>{font}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -342,20 +328,12 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
                     <Slider value={[settings.outlineWidth]} onValueChange={([v]) => updateSetting('outlineWidth', v)} min={0} max={20} step={1} />
                     <p className="text-[10px] text-muted-foreground">0 = No outline</p>
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-xs">Shadow Color</Label>
-                    <div className="flex gap-2">
-                      <Input type="color" value={settings.shadowColor} onChange={(e) => updateSetting('shadowColor', e.target.value)} className="w-16 h-9 p-1" />
-                      <Input type="text" value={settings.shadowColor} onChange={(e) => updateSetting('shadowColor', e.target.value)} className="flex-1 h-9" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Shadow Offset: {settings.shadowOffset}px</Label>
-                    <Slider value={[settings.shadowOffset]} onValueChange={([v]) => updateSetting('shadowOffset', v)} min={0} max={50} step={1} />
-                    <p className="text-[10px] text-muted-foreground">0 = No shadow (json2video API)</p>
-                  </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Shadow Offset: {settings.shadowOffset}px</Label>
+                  <Slider value={[settings.shadowOffset]} onValueChange={([v]) => updateSetting('shadowOffset', v)} min={0} max={50} step={1} />
+                  <p className="text-[10px] text-muted-foreground">Simple vertical shadow offset (json2video API)</p>
                 </div>
               </AccordionContent>
             </AccordionItem>

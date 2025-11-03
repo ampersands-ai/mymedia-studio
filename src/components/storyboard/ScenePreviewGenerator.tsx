@@ -23,7 +23,7 @@ const APPROVED_STORYBOARD_IMAGE_MODEL_IDS = [
 
 // Approved video models for animation (image-to-video)
 const APPROVED_STORYBOARD_VIDEO_MODEL_IDS = [
-  // Add video model IDs here when available in database
+  'bytedance:2@2', // Seedance 1.0 Pro Fast (Runware)
 ] as const;
 
 const APPROVED_IMAGE_ORDER = [...APPROVED_STORYBOARD_IMAGE_MODEL_IDS];

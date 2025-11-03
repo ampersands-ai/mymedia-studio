@@ -317,34 +317,36 @@ export const ScenePreviewGenerator = ({
           {!hasExistingPreview ? (
             <>
               {/* Initial generation controls */}
-              <Select 
-                value={selectedModelId} 
-                onValueChange={setSelectedModelId}
-                disabled={availableModels.length === 0}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableModels.map(model => (
-                    <SelectItem key={model.id} value={model.id}>
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" />
-                        <span>{model.model_name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          (~{model.base_token_cost} token{model.base_token_cost !== 1 ? 's' : ''})
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {availableModels.length === 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {generationMode === 'animate' 
-                    ? 'No video models are currently available for animation. Please contact support to enable image-to-video models.'
-                    : 'No storyboard-approved models are currently available. Please try again later or contact support.'}
-                </p>
+              {availableModels.length > 0 ? (
+                <Select 
+                  value={selectedModelId} 
+                  onValueChange={setSelectedModelId}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableModels.map(model => (
+                      <SelectItem key={model.id} value={model.id}>
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4" />
+                          <span>{model.model_name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            (~{model.base_token_cost} token{model.base_token_cost !== 1 ? 's' : ''})
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="p-4 rounded-lg border border-border/50 bg-muted/20">
+                  <p className="text-sm text-muted-foreground">
+                    {generationMode === 'animate' 
+                      ? '🎬 Video models are not yet available. Image-to-video animation is coming soon!'
+                      : 'No image models are currently available. Please try again later or contact support.'}
+                  </p>
+                </div>
               )}
 
               <Button
@@ -371,47 +373,58 @@ export const ScenePreviewGenerator = ({
                   <span className="text-xs text-muted-foreground">Want to try a different model?</span>
                 </div>
                 
-                <Select 
-                  value={selectedModelId} 
-                  onValueChange={setSelectedModelId}
-                  disabled={availableModels.length === 0}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableModels.map(model => (
-                      <SelectItem key={model.id} value={model.id}>
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="w-4 h-4" />
-                          <span>{model.model_name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            (~{model.base_token_cost} credit{model.base_token_cost !== 1 ? 's' : ''})
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                <Button
-                  onClick={handleGenerate}
-                  disabled={isGenerating || isAsyncGeneration || (tokenData?.tokens_remaining || 0) < tokenCost || availableModels.length === 0}
-                  className="w-full"
-                  variant="outline"
-                >
-                  {generationMode === 'animate' ? (
-                    <>
-                      <Video className="w-4 h-4 mr-2" />
-                      Animate with {selectedModel?.model_name} ({tokenCost} credit{tokenCost !== 1 ? 's' : ''})
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Regenerate with {selectedModel?.model_name} ({tokenCost} credit{tokenCost !== 1 ? 's' : ''})
-                    </>
-                  )}
-                </Button>
+                {availableModels.length > 0 ? (
+                  <>
+                    <Select 
+                      value={selectedModelId} 
+                      onValueChange={setSelectedModelId}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableModels.map(model => (
+                          <SelectItem key={model.id} value={model.id}>
+                            <div className="flex items-center gap-2">
+                              <Sparkles className="w-4 h-4" />
+                              <span>{model.model_name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                (~{model.base_token_cost} credit{model.base_token_cost !== 1 ? 's' : ''})
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <Button
+                      onClick={handleGenerate}
+                      disabled={isGenerating || isAsyncGeneration || (tokenData?.tokens_remaining || 0) < tokenCost}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      {generationMode === 'animate' ? (
+                        <>
+                          <Video className="w-4 h-4 mr-2" />
+                          Animate with {selectedModel?.model_name} ({tokenCost} credit{tokenCost !== 1 ? 's' : ''})
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Regenerate with {selectedModel?.model_name} ({tokenCost} credit{tokenCost !== 1 ? 's' : ''})
+                        </>
+                      )}
+                    </Button>
+                  </>
+                ) : (
+                  <div className="p-4 rounded-lg border border-border/50 bg-muted/20">
+                    <p className="text-sm text-muted-foreground">
+                      {generationMode === 'animate' 
+                        ? '🎬 Video models are not yet available. Image-to-video animation is coming soon!'
+                        : 'No image models are currently available. Please try again later or contact support.'}
+                    </p>
+                  </div>
+                )}
 
                 {(tokenData?.tokens_remaining || 0) < tokenCost && (
                   <p className="text-xs text-destructive">

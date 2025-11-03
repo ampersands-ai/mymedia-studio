@@ -51,6 +51,62 @@ async function convertFrameImagesToRunwareFormat(frameImages: string[]): Promise
   return converted;
 }
 
+async function pollForVideoResult(taskUUID: string, apiKey: string, apiUrl: string): Promise<any> {
+  const maxAttempts = 8;
+  const delays = [1500, 2500, 4000, 6000, 8000, 10000, 12000, 15000]; // ~60s total
+  
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    await new Promise(resolve => setTimeout(resolve, delays[attempt]));
+    
+    console.log(`[Runware Poll] Attempt ${attempt + 1}/${maxAttempts} for taskUUID: ${taskUUID}`);
+    
+    const pollPayload = [
+      { taskType: "authentication", apiKey },
+      { taskType: "getResponse", taskUUID }
+    ];
+    
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(pollPayload),
+    });
+    
+    if (!response.ok) {
+      console.error(`[Runware Poll] HTTP ${response.status}`);
+      continue;
+    }
+    
+    const result = await response.json();
+    console.log(`[Runware Poll] Response:`, JSON.stringify(result));
+    
+    if (result.data) {
+      for (const item of result.data) {
+        if (item.taskUUID === taskUUID) {
+          // Check for errors
+          if (result.errors?.some((e: any) => e.taskUUID === taskUUID)) {
+            const error = result.errors.find((e: any) => e.taskUUID === taskUUID);
+            throw new Error(`Runware error: ${error.message || error.code}`);
+          }
+          
+          // Check if complete with video URL
+          if (item.status === "success" && item.videoURL) {
+            console.log(`[Runware Poll] Video ready: ${item.videoURL}`);
+            return item;
+          }
+          
+          // Still processing
+          if (item.status === "processing") {
+            console.log(`[Runware Poll] Still processing...`);
+            break;
+          }
+        }
+      }
+    }
+  }
+  
+  throw new Error("Video generation timed out after 60 seconds");
+}
+
 export async function callRunware(
   request: ProviderRequest
 ): Promise<ProviderResponse> {
@@ -198,8 +254,18 @@ export async function callRunware(
     }
 
     // Extract content URL (imageURL or videoURL)
-    const contentUrl = result.imageURL || result.videoURL;
-    if (!contentUrl) {
+    let contentUrl = result.imageURL || result.videoURL;
+    
+    // If no immediate URL for video, poll for async result
+    if (!contentUrl && isVideo) {
+      console.log("[Runware Video] No immediate URL, starting polling...");
+      const polledResult = await pollForVideoResult(taskUUID, RUNWARE_API_KEY, apiUrl);
+      contentUrl = polledResult.videoURL;
+      
+      if (!contentUrl) {
+        throw new Error("No video URL after polling");
+      }
+    } else if (!contentUrl) {
       throw new Error(`No ${isVideo ? 'video' : 'image'} URL in Runware response`);
     }
 

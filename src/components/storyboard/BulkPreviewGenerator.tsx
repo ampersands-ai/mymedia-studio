@@ -69,7 +69,7 @@ export const BulkPreviewGenerator = ({ storyboard, scenes, onGenerateAll }: Bulk
 
   const selectedModel = imageModels.find(m => m.id === selectedModelId) || imageModels[0];
   const tokenCost = selectedModel?.base_token_cost || 1;
-  const totalCost = tokenCost * totalToGenerate;
+  const totalCost = Math.round((tokenCost * totalToGenerate) * 100) / 100;
   const hasEnoughCredits = (tokenData?.tokens_remaining || 0) >= totalCost;
 
   const handleGenerate = async () => {

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { Upload, X, Volume2, FileText } from "lucide-react";
+import { Upload, X, Volume2, FileText, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
@@ -410,6 +410,73 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
         {schema.description && (
           <p className="text-xs text-muted-foreground ml-2">{schema.description}</p>
         )}
+      </div>
+    );
+  }
+
+  // Special handling for duration field - use increment/decrement buttons
+  if (name === "duration" && (schema.type === "number" || schema.type === "integer")) {
+    const numericValue = (value === "" || value === undefined || value === null) 
+      ? (schema.default ?? schema.minimum ?? 1) 
+      : value;
+    
+    const step = schema.type === "integer" ? 1 : (schema.step || 0.1);
+    const min = schema.minimum ?? 0;
+    const max = schema.maximum ?? 100;
+    
+    const handleDecrement = () => {
+      const newValue = Math.max(min, numericValue - step);
+      onChange(schema.type === "integer" ? Math.round(newValue) : newValue);
+    };
+    
+    const handleIncrement = () => {
+      const newValue = Math.min(max, numericValue + step);
+      onChange(schema.type === "integer" ? Math.round(newValue) : newValue);
+    };
+    
+    return (
+      <div className="space-y-2">
+        <Label>
+          {displayName}
+          {isRequired && <span className="text-destructive ml-1">*</span>}
+        </Label>
+        {schema.description && (
+          <p className="text-xs text-muted-foreground">{schema.description}</p>
+        )}
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={handleDecrement}
+            disabled={numericValue <= min}
+          >
+            <Minus className="h-4 w-4" />
+          </Button>
+          <div className="flex-1 text-center">
+            <Input
+              type="number"
+              value={numericValue}
+              onChange={(e) => {
+                const val = schema.type === "integer" ? parseInt(e.target.value) : parseFloat(e.target.value);
+                if (!isNaN(val)) onChange(Math.max(min, Math.min(max, val)));
+              }}
+              min={min}
+              max={max}
+              step={step}
+              className="text-center"
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={handleIncrement}
+            disabled={numericValue >= max}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     );
   }

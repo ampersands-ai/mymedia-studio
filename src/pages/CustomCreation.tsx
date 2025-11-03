@@ -1458,18 +1458,18 @@ const CustomCreation = () => {
                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                        {pollingGenerationId ? 'Processing...' : 'Generating...'}
                      </>
-                    ) : (
+                     ) : (
                       <div className="flex flex-row items-center justify-center gap-2 md:gap-3 w-full md:relative">
-                        <div className="flex items-center">
-                          <Sparkles className="mr-2 h-5 w-5" />
-                          Generate
+                        <div className="flex items-center flex-shrink-0">
+                          <Sparkles className="mr-2 h-5 w-5 flex-shrink-0" />
+                          <span className="whitespace-nowrap">Generate</span>
                         </div>
-                         <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded md:absolute md:right-2">
-                           <Coins className="h-4 w-4" />
-                           <span className="text-sm font-bold">(-{estimatedTokens.toFixed(2)}<span className="hidden md:inline"> credits</span>)</span>
+                         <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded md:absolute md:right-2 flex-shrink-0">
+                           <Coins className="h-4 w-4 flex-shrink-0" />
+                           <span className="text-sm font-bold whitespace-nowrap">(~{estimatedTokens.toFixed(2)}<span className="hidden md:inline"> credits</span>)</span>
                          </div>
                       </div>
-                    )}
+                     )}
                  </Button>
                  {pollingGenerationId && (
                    <p className="text-xs text-muted-foreground text-center">
@@ -1510,11 +1510,11 @@ const CustomCreation = () => {
                     </>
                   ) : (
                     <div className="flex items-center justify-center gap-2 w-full">
-                      <Sparkles className="h-5 w-5" />
-                      <span>Generate</span>
-                      <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded">
-                        <Coins className="h-4 w-4" />
-                        <span className="text-sm font-bold">-{estimatedTokens.toFixed(2)}</span>
+                      <Sparkles className="h-5 w-5 flex-shrink-0" />
+                      <span className="whitespace-nowrap">Generate</span>
+                      <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded flex-shrink-0">
+                        <Coins className="h-4 w-4 flex-shrink-0" />
+                        <span className="text-sm font-bold whitespace-nowrap">(~{estimatedTokens.toFixed(2)})</span>
                       </div>
                     </div>
                   )}

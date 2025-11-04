@@ -207,7 +207,7 @@ export default function AdminDashboard() {
             <ul className="list-disc list-inside space-y-2 text-sm">
               <li>
                 <strong>AI Models:</strong> Add, edit, or disable AI models and
-                configure their token costs
+                configure their credit costs
               </li>
               <li>
                 <strong>Templates:</strong> Create and manage content templates

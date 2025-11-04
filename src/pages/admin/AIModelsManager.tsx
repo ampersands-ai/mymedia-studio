@@ -289,7 +289,7 @@ export default function AIModelsManager() {
         <div>
           <h1 className="text-4xl font-black mb-2">AI MODELS</h1>
           <p className="text-muted-foreground">
-            Manage AI models, providers, and token costs
+            Manage AI models, providers, and credit costs
           </p>
         </div>
         <Button
@@ -568,7 +568,7 @@ export default function AIModelsManager() {
                       </div>
                     </TableCell>
                     <TableCell className="font-bold">
-                      {model.base_token_cost} tokens
+                      {model.base_token_cost} credits
                     </TableCell>
                     <TableCell>
                       {model.max_images === 0 ? (

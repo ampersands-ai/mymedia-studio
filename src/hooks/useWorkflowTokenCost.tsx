@@ -80,7 +80,7 @@ export const useWorkflowTokenCost = (
 
         setEstimatedTokens(Math.round(totalCost * 100) / 100);
       } catch (error) {
-        console.error("Error calculating workflow token cost:", error);
+        console.error("Error calculating workflow credit cost:", error);
         setEstimatedTokens(50);
       } finally {
         setIsCalculating(false);

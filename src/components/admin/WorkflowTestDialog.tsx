@@ -24,7 +24,7 @@ interface WorkflowTestDialogProps {
 export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTestDialogProps) => {
   const { user } = useAuth();
   const [inputs, setInputs] = useState<Record<string, any>>({});
-  const [result, setResult] = useState<{ url: string; tokens: number } | null>(null);
+  const [result, setResult] = useState<{ url: string; credits: number } | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
@@ -271,7 +271,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
 
       if (result?.final_output_url) {
         setStatusMessage('');
-        setResult({ url: result.final_output_url, tokens: result.tokens_used });
+        setResult({ url: result.final_output_url, credits: result.tokens_used });
         toast.success('Workflow test completed!');
       } else {
         setStatusMessage('');
@@ -467,7 +467,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
                 <CheckCircle2 className="h-5 w-5" />
                 <span className="font-semibold">Test Completed Successfully</span>
               </div>
-              <p className="text-sm text-muted-foreground mb-3">Tokens used: {result.tokens}</p>
+              <p className="text-sm text-muted-foreground mb-3">Credits used: {result.credits}</p>
               
               {/* Output Preview */}
               <div className="border rounded-lg overflow-hidden bg-background">

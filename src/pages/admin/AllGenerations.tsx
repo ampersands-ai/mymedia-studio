@@ -320,7 +320,7 @@ export default function AllGenerations() {
                   <TableHead>Prompt</TableHead>
                   <TableHead>Creation Type</TableHead>
                   <TableHead>Created</TableHead>
-                  <TableHead>Tokens</TableHead>
+                  <TableHead>Credits</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>

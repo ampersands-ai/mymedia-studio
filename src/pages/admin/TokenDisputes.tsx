@@ -227,7 +227,7 @@ export const TokenDisputes = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to refund tokens');
+        throw new Error('Failed to refund credits');
       }
 
       // Update dispute with refund amount and mark as resolved
@@ -238,7 +238,7 @@ export const TokenDisputes = () => {
           status: 'resolved',
           reviewed_at: new Date().toISOString(),
           reviewed_by: session.user.id,
-          admin_notes: `Refunded ${amount} tokens`
+          admin_notes: `Refunded ${amount} credits`
         })
         .eq('id', disputeId);
 
@@ -248,11 +248,11 @@ export const TokenDisputes = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['token-disputes'] });
-      toast.success('Tokens refunded and dispute resolved');
+      toast.success('Credits refunded and dispute resolved');
       setSelectedDispute(null);
     },
     onError: (error) => {
-      toast.error(`Failed to refund tokens: ${error.message}`);
+      toast.error(`Failed to refund credits: ${error.message}`);
       console.error(error);
     },
   });
@@ -276,12 +276,12 @@ export const TokenDisputes = () => {
         .select('id, user_id, generation:generations(tokens_used)')
         .in('id', disputeIds);
 
-      // Refund tokens if requested
+      // Refund credits if requested
       let refundedCount = 0;
       if (shouldRefund && disputes) {
         for (const dispute of disputes) {
-          const tokens = (dispute.generation as any)?.tokens_used || 0;
-          if (tokens > 0) {
+          const credits = (dispute.generation as any)?.tokens_used || 0;
+          if (credits > 0) {
             await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-user-tokens`, {
               method: 'POST',
               headers: {
@@ -290,7 +290,7 @@ export const TokenDisputes = () => {
               },
               body: JSON.stringify({
                 user_id: dispute.user_id,
-                amount: tokens,
+                amount: credits,
                 action: 'add'
               }),
             });
@@ -368,7 +368,7 @@ export const TokenDisputes = () => {
 
     // Check if already refunded
     if (selectedDispute.refund_amount && selectedDispute.refund_amount > 0) {
-      toast.error(`Tokens already refunded: ${selectedDispute.refund_amount} tokens were previously refunded`);
+      toast.error(`Credits already refunded: ${selectedDispute.refund_amount} credits were previously refunded`);
       return;
     }
 
@@ -381,14 +381,14 @@ export const TokenDisputes = () => {
 
     if (historyDispute) {
       if (historyDispute.refund_amount && historyDispute.refund_amount > 0) {
-        toast.error(`This generation was already refunded: ${historyDispute.refund_amount} tokens were previously refunded`);
+        toast.error(`This generation was already refunded: ${historyDispute.refund_amount} credits were previously refunded`);
       } else {
         toast.error(`This generation already has a ${historyDispute.status} dispute in history`);
       }
       return;
     }
     
-    if (confirm(`Refund ${selectedDispute.generation.tokens_used} tokens to ${selectedDispute.profile.email}?`)) {
+    if (confirm(`Refund ${selectedDispute.generation.tokens_used} credits to ${selectedDispute.profile.email}?`)) {
       refundTokensMutation.mutate({
         userId: selectedDispute.user_id,
         amount: selectedDispute.generation.tokens_used,
@@ -445,7 +445,7 @@ export const TokenDisputes = () => {
     const shouldRefund = action === 'resolve-refund';
     
     const confirmMsg = shouldRefund 
-      ? `Resolve ${validDisputes.length} disputes and refund tokens?`
+      ? `Resolve ${validDisputes.length} disputes and refund credits?`
       : action === 'reject'
       ? `Reject ${validDisputes.length} disputes?`
       : `Resolve ${validDisputes.length} disputes without refund?`;
@@ -482,8 +482,8 @@ export const TokenDisputes = () => {
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-6">
           <div>
-            <h1 className="text-3xl font-black">TOKEN DISPUTES</h1>
-            <p className="text-muted-foreground">Review and manage user-reported token issues</p>
+            <h1 className="text-3xl font-black">CREDIT DISPUTES</h1>
+            <p className="text-muted-foreground">Review and manage user-reported credit issues</p>
           </div>
           
           {/* View Mode Tabs */}
@@ -585,7 +585,7 @@ export const TokenDisputes = () => {
             <h3 className="text-lg font-semibold mb-2">No disputes found</h3>
             <p className="text-muted-foreground">
               {statusFilter === 'all' 
-                ? "There are no token disputes to review"
+                ? "There are no credit disputes to review"
                 : `No ${statusFilter} disputes at this time`}
             </p>
           </CardContent>
@@ -609,7 +609,7 @@ export const TokenDisputes = () => {
                   )}
                   <TableHead>User</TableHead>
                   <TableHead>Type</TableHead>
-                  <TableHead>Tokens</TableHead>
+                  <TableHead>Credits</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Generation Status</TableHead>
                   <TableHead>Date</TableHead>
@@ -646,7 +646,7 @@ export const TokenDisputes = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{dispute.generation.tokens_used} tokens</Badge>
+                        <Badge variant="outline">{dispute.generation.tokens_used} credits</Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -710,7 +710,7 @@ export const TokenDisputes = () => {
         <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {viewMode === 'history' ? 'Dispute History Record' : 'Token Dispute Details'}
+              {viewMode === 'history' ? 'Dispute History Record' : 'Credit Dispute Details'}
             </DialogTitle>
           </DialogHeader>
 
@@ -728,7 +728,7 @@ export const TokenDisputes = () => {
                   </div>
                   {selectedDispute.refund_amount && (
                     <div className="mt-2 text-sm text-muted-foreground">
-                      Refunded: {selectedDispute.refund_amount} tokens
+                      Refunded: {selectedDispute.refund_amount} credits
                     </div>
                   )}
                 </div>
@@ -751,9 +751,9 @@ export const TokenDisputes = () => {
                   </Badge>
                 </div>
                 <div>
-                  <div className="text-muted-foreground text-xs">Tokens</div>
+                  <div className="text-muted-foreground text-xs">Credits</div>
                   <Badge className="bg-orange-500 text-white text-xs">
-                    {selectedDispute.generation.tokens_used} tokens
+                    {selectedDispute.generation.tokens_used} credits
                   </Badge>
                 </div>
                 <div className="col-span-2">
@@ -873,7 +873,7 @@ export const TokenDisputes = () => {
                         ? 'Refunding...' 
                         : selectedDispute.refund_amount
                         ? 'Already Refunded'
-                        : `Refund ${selectedDispute.generation.tokens_used} Tokens`}
+                        : `Refund ${selectedDispute.generation.tokens_used} Credits`}
                     </Button>
                     <Button 
                       onClick={handleUpdateDispute}

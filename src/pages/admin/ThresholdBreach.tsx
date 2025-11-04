@@ -72,7 +72,7 @@ export default function ThresholdBreach() {
         <div>
           <h1 className="text-3xl font-black">Threshold Breach</h1>
           <p className="text-muted-foreground">
-            Credits where Kie AI charged more than our token calculation
+            Credits where Kie AI charged more than our credit calculation
           </p>
         </div>
       </div>
@@ -165,7 +165,7 @@ export default function ThresholdBreach() {
                     <TableHead>Generation ID</TableHead>
                     <TableHead>Model</TableHead>
                     <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Our Tokens</TableHead>
+                    <TableHead className="text-right">Our Credits</TableHead>
                     <TableHead className="text-right">Kie Credits</TableHead>
                     <TableHead className="text-right">Multiplier</TableHead>
                     <TableHead>Status</TableHead>
@@ -248,7 +248,7 @@ export default function ThresholdBreach() {
                   <p className="font-bold">{selectedBreach.model_id}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-muted-foreground">Our Tokens</p>
+                  <p className="text-sm font-bold text-muted-foreground">Our Credits</p>
                   <p className="text-lg font-black">{selectedBreach.our_tokens_charged}</p>
                 </div>
                 <div>

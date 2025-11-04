@@ -178,7 +178,7 @@ export default function TemplateLandingEditor() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="token_cost">Token Cost</Label>
+                <Label htmlFor="token_cost">Credit Cost</Label>
                 <Input id="token_cost" type="number" {...register("token_cost", { valueAsNumber: true })} />
               </div>
             </Card>

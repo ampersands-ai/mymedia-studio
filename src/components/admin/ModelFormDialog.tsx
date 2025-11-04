@@ -205,7 +205,7 @@ export function ModelFormDialog({
             {model ? "Edit Model" : "Add New Model"}
           </DialogTitle>
           <DialogDescription>
-            Configure AI model settings, token costs, and parameters
+            Configure AI model settings, credit costs, and parameters
           </DialogDescription>
         </DialogHeader>
 

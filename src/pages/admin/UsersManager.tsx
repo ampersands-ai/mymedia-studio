@@ -101,7 +101,7 @@ export default function UsersManager() {
 
       if (error) throw error;
 
-      toast.success(`Added ${amount} tokens to ${selectedUser.email}`);
+      toast.success(`Added ${amount} credits to ${selectedUser.email}`);
       setDialogOpen(false);
       setTokenAmount("");
       fetchUsers();
@@ -152,7 +152,7 @@ export default function UsersManager() {
               <TableRow>
                 <TableHead className="font-bold">Email</TableHead>
                 <TableHead className="font-bold">Full Name</TableHead>
-                <TableHead className="font-bold">Tokens</TableHead>
+                <TableHead className="font-bold">Credits</TableHead>
                 <TableHead className="font-bold">Plan</TableHead>
                 <TableHead className="font-bold">Role</TableHead>
                 <TableHead className="font-bold">Joined</TableHead>
@@ -177,7 +177,7 @@ export default function UsersManager() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="capitalize">
+                       <Badge variant="outline" className="capitalize">
                         {user.subscription?.plan || "freemium"}
                       </Badge>
                     </TableCell>
@@ -203,7 +203,7 @@ export default function UsersManager() {
                           }}
                         >
                           <Coins className="h-4 w-4 mr-1" />
-                          Add Tokens
+                          Add Credits
                         </Button>
                         <Button
                           variant={isAdmin ? "destructive" : "default"}
@@ -226,19 +226,19 @@ export default function UsersManager() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Tokens</DialogTitle>
+            <DialogTitle>Add Credits</DialogTitle>
             <DialogDescription>
-              Add tokens to {selectedUser?.email}'s account
+              Add credits to {selectedUser?.email}'s account
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground mb-2">
-                Current balance: {Number(selectedUser?.subscription?.tokens_remaining || 0).toFixed(2)} tokens
+                Current balance: {Number(selectedUser?.subscription?.tokens_remaining || 0).toFixed(2)} credits
               </p>
               <Input
                 type="number"
-                placeholder="Enter token amount"
+                placeholder="Enter credit amount"
                 value={tokenAmount}
                 onChange={(e) => setTokenAmount(e.target.value)}
                 min="1"
@@ -249,7 +249,7 @@ export default function UsersManager() {
                 Cancel
               </Button>
               <Button onClick={handleAddTokens} className="flex-1">
-                Add Tokens
+                Add Credits
               </Button>
             </div>
           </div>

@@ -19,7 +19,7 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
     { key: 'viewedTemplates', label: 'View template gallery', completed: progress.checklist.viewedTemplates },
     { key: 'selectedTemplate', label: 'Select a template', completed: progress.checklist.selectedTemplate },
     { key: 'enteredPrompt', label: 'Enter your prompt', completed: progress.checklist.enteredPrompt },
-    { key: 'viewedTokenCost', label: 'Review token cost', completed: progress.checklist.viewedTokenCost },
+    { key: 'viewedTokenCost', label: 'Review credit cost', completed: progress.checklist.viewedTokenCost },
     { key: 'completedFirstGeneration', label: 'Generate your first creation', completed: progress.checklist.completedFirstGeneration },
     { key: 'viewedResult', label: 'View the result', completed: progress.checklist.viewedResult },
     { key: 'downloadedResult', label: 'Download your creation', completed: progress.checklist.downloadedResult },

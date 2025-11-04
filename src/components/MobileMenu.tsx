@@ -20,10 +20,10 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface MobileMenuProps {
-  tokenBalance?: number;
+  creditBalance?: number;
 }
 
-export const MobileMenu = ({ tokenBalance }: MobileMenuProps) => {
+export const MobileMenu = ({ creditBalance }: MobileMenuProps) => {
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
   const navigate = useNavigate();

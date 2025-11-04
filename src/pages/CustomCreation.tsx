@@ -85,7 +85,7 @@ const CustomCreation = () => {
   const { data: allModels, isLoading: modelsLoading } = useModels();
   const { generate, isGenerating, error, clearError } = useGeneration();
   const { data: userTokens } = useUserTokens();
-  const tokenBalance = userTokens?.tokens_remaining || 0;
+  const creditBalance = userTokens?.tokens_remaining || 0;
   const [prompt, setPrompt] = useState("");
   const [contentType, setContentType] = useState<"image" | "video" | "music" | "text">("image");
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
@@ -685,10 +685,10 @@ const CustomCreation = () => {
     setLocalGenerating(true);
     
     // Preemptive credit balance check
-    if (tokenBalance && estimatedTokens > tokenBalance) {
+    if (creditBalance && estimatedTokens > creditBalance) {
       setLocalGenerating(false);
       toast.error("Insufficient credits", {
-        description: `This creation requires ${estimatedTokens} credits, but you only have ${tokenBalance}. Upgrade to continue.`,
+        description: `This creation requires ${estimatedTokens} credits, but you only have ${creditBalance}. Upgrade to continue.`,
         duration: 10000,
         action: {
           label: "View Plans",

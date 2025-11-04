@@ -15,7 +15,7 @@ interface WorkflowExecutionDialogProps {
   } | null;
   result?: {
     url: string;
-    tokens: number;
+    credits: number;
   } | null;
   onDownload: () => void;
 }
@@ -75,7 +75,7 @@ export const WorkflowExecutionDialog = ({
               )}
 
               <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>Tokens used: {result.tokens}</span>
+                <span>Credits used: {result.credits}</span>
               </div>
 
               <Button onClick={onDownload} className="w-full">

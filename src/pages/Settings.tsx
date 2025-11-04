@@ -319,7 +319,7 @@ const Settings = () => {
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="subscription">Subscription</TabsTrigger>
-            <TabsTrigger value="usage">Token Usage</TabsTrigger>
+            <TabsTrigger value="usage">Credit Usage</TabsTrigger>
             <TabsTrigger value="history">Generation Logs</TabsTrigger>
           </TabsList>
           

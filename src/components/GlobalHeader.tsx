@@ -20,7 +20,7 @@ export const GlobalHeader = () => {
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
   const { data: tokenData } = useUserTokens();
-  const tokenBalance = tokenData?.tokens_remaining ?? null;
+  const creditBalance = tokenData?.tokens_remaining ?? null;
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export const GlobalHeader = () => {
     }
   };
 
-  const getTokenConversions = (balance: number) => {
+  const getCreditConversions = (balance: number) => {
     return {
       videos: Math.floor(balance / 100),
       images: Math.floor(balance / 25),
@@ -115,13 +115,13 @@ export const GlobalHeader = () => {
               </button>
             )}
 
-            {tokenBalance !== null && (
+            {creditBalance !== null && (
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 flex items-center gap-2 hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md">
                     <Coins className="h-5 w-5 text-primary-orange" />
                     <span className="font-bold text-base">
-                      {tokenBalance.toLocaleString()}
+                      {creditBalance.toLocaleString()}
                     </span>
                   </button>
                 </PopoverTrigger>
@@ -137,7 +137,7 @@ export const GlobalHeader = () => {
                         Credit Balance
                       </p>
                       <p className="text-3xl font-black text-foreground mt-1">
-                        {tokenBalance.toLocaleString()}
+                        {creditBalance.toLocaleString()}
                       </p>
                     </div>
 
@@ -148,7 +148,7 @@ export const GlobalHeader = () => {
                       </p>
                       <div className="space-y-2">
                         {(() => {
-                          const conversions = getTokenConversions(tokenBalance);
+                          const conversions = getCreditConversions(creditBalance);
                           return (
                             <>
                               <div className="flex items-center justify-between py-2 px-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
@@ -210,7 +210,7 @@ export const GlobalHeader = () => {
 
           {/* Mobile Menu */}
           <div className="md:hidden">
-            <MobileMenu tokenBalance={tokenBalance ?? undefined} />
+            <MobileMenu creditBalance={creditBalance ?? undefined} />
           </div>
         </div>
       </nav>

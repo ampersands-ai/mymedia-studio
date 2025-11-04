@@ -122,7 +122,7 @@ export const DashboardLayout = () => {
               </div>
 
               {/* Mobile Menu */}
-              <MobileMenu tokenBalance={tokenData?.tokens_remaining} />
+              <MobileMenu creditBalance={tokenData?.tokens_remaining} />
             </div>
           </div>
         </div>

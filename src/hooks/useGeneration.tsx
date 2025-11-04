@@ -107,23 +107,23 @@ export const useGeneration = () => {
         }
         
         // Enhanced 402 handling with structured error
-        if (error.message?.includes("402") || error.message?.toLowerCase().includes("insufficient tokens")) {
-          let tokenDetails: { required?: number; available?: number } = {};
+        if (error.message?.includes("402") || error.message?.toLowerCase().includes("insufficient")) {
+          let creditDetails: { required?: number; available?: number } = {};
           try {
             // Try to parse error context from edge function response
             const errorMatch = error.message.match(/required[:\s]+(\d+)[,\s]+available[:\s]+(\d+)/i);
             if (errorMatch) {
-              tokenDetails.required = parseInt(errorMatch[1]);
-              tokenDetails.available = parseInt(errorMatch[2]);
+              creditDetails.required = parseInt(errorMatch[1]);
+              creditDetails.available = parseInt(errorMatch[2]);
             }
           } catch (e) {
             // If parsing fails, continue with basic error
           }
           
           throw new Error(JSON.stringify({
-            type: "INSUFFICIENT_TOKENS",
-            message: "Insufficient tokens",
-            ...tokenDetails
+            type: "INSUFFICIENT_CREDITS",
+            message: "Insufficient credits",
+            ...creditDetails
           }));
         }
         

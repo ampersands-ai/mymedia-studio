@@ -37,8 +37,8 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting }:
   const requiredFields = workflow.user_input_fields?.filter(f => f.required) || [];
   const { estimatedTokens, isCalculating } = useWorkflowTokenCost(workflow, inputs);
   
-  const tokenBalance = userTokens?.tokens_remaining || 0;
-  const hasEnoughTokens = tokenBalance >= estimatedTokens;
+  const creditBalance = userTokens?.tokens_remaining || 0;
+  const hasEnoughCredits = creditBalance >= estimatedTokens;
 
   const handleInputChange = (fieldName: string, value: any) => {
     setInputs(prev => ({ ...prev, [fieldName]: value }));
@@ -355,8 +355,8 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting }:
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Your balance:</span>
-            <span className={hasEnoughTokens ? "text-green-600 font-semibold" : "text-destructive font-semibold"}>
-              {Number(tokenBalance).toFixed(2)} credits
+            <span className={hasEnoughCredits ? "text-green-600 font-semibold" : "text-destructive font-semibold"}>
+              {Number(creditBalance).toFixed(2)} credits
             </span>
           </div>
         </div>

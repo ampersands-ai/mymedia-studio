@@ -26,7 +26,7 @@ export const useUserTokens = () => {
             filter: `user_id=eq.${user.id}`
           },
           (payload) => {
-            console.log('Token update received:', payload.new);
+            console.log('Credit update received:', payload.new);
             queryClient.setQueryData(['user-tokens', user.id], payload.new);
           }
         )
@@ -39,7 +39,7 @@ export const useUserTokens = () => {
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
             setIsConnected(true);
-            console.log('Connected to user tokens realtime');
+            console.log('Connected to user credits realtime');
           }
         });
 

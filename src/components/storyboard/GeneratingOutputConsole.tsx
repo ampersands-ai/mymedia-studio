@@ -102,11 +102,11 @@ export const GeneratingOutputConsole = ({
               <span className="sm:hidden">Cancel</span>
             </Button>
           </AlertDialogTrigger>
-          <AlertDialogContent>
+            <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Cancel Video Rendering?</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure? Your tokens will NOT be refunded as the job has already started.
+                Are you sure? Your credits will NOT be refunded as the job has already started.
                 
                 <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-md">
                   <p className="text-sm text-amber-600 dark:text-amber-400">

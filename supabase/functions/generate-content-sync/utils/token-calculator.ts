@@ -1,3 +1,4 @@
+// Calculate the credit cost based on base cost, multipliers, and parameters
 export function calculateTokenCost(
   baseCost: number,
   costMultipliers: Record<string, any>, // Now can be nested

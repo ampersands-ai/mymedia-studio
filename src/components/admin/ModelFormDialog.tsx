@@ -305,7 +305,7 @@ export function ModelFormDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="base_token_cost">Base Token Cost *</Label>
+              <Label htmlFor="base_token_cost">Base Credit Cost *</Label>
               <Input
                 id="base_token_cost"
                 type="number"
@@ -400,7 +400,7 @@ export function ModelFormDialog({
 
           <div className="space-y-2">
             <Label htmlFor="cost_multipliers">
-              Cost Multipliers (JSON)
+              Credit Cost Multipliers (JSON)
             </Label>
             <Textarea
               id="cost_multipliers"
@@ -413,7 +413,7 @@ export function ModelFormDialog({
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              Define cost multipliers for different options (e.g., HD, uploaded
+              Define credit cost multipliers for different options (e.g., HD, uploaded
               images)
             </p>
           </div>

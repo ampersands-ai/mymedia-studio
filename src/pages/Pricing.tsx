@@ -16,8 +16,8 @@ const plans = [
     price: "FREE",
     monthlyPrice: "FREE",
     annualPrice: "FREE",
-    tokens: "5",
-    perToken: "Always Free",
+    credits: "5",
+    perCredit: "Always Free",
     features: [
       "Watermark on videos",
       "Limited access",
@@ -32,8 +32,8 @@ const plans = [
     monthlyPrice: "$9.99",
     annualPrice: "$7.99",
     period: "/mo",
-    tokens: "100",
-    perToken: "$0.08 per credit",
+    credits: "100",
+    perCredit: "$0.08 per credit",
     features: [
       "No watermark",
       "Global availability",
@@ -50,8 +50,8 @@ const plans = [
     monthlyPrice: "$24.99",
     annualPrice: "$19.99",
     period: "/mo",
-    tokens: "325",
-    perToken: "$0.061 per credit",
+    credits: "325",
+    perCredit: "$0.061 per credit",
     features: [
       "No watermark",
       "Unlimited image & text gens",
@@ -68,8 +68,8 @@ const plans = [
     monthlyPrice: "$49.99",
     annualPrice: "$39.99",
     period: "/mo",
-    tokens: "750",
-    perToken: "$0.053 per credit",
+    credits: "750",
+    perCredit: "$0.053 per credit",
     features: [
       "No watermark",
       "Commercial license",
@@ -86,8 +86,8 @@ const plans = [
     monthlyPrice: "$119.99",
     annualPrice: "$89.99",
     period: "/mo",
-    tokens: "2,000",
-    perToken: "$0.045 per credit",
+    credits: "2,000",
+    perCredit: "$0.045 per credit",
     features: [
       "No watermark",
       "Commercial license",
@@ -400,7 +400,7 @@ const Pricing = () => {
                     )}
                   </div>
                   <div className="text-xs text-muted-foreground pt-2">
-                    {plan.tokens} credits
+                    {plan.credits} credits
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -438,7 +438,7 @@ const Pricing = () => {
                 <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
                   <table className="w-full min-w-[600px]">
                     <thead>
-                      <tr className="border-b-2 border-black">
+                        <tr className="border-b-2 border-black">
                         <th className="py-4 px-4 text-left font-black">Plan</th>
                         <th className="py-4 px-4 text-center font-black">Price</th>
                         <th className="py-4 px-4 text-center font-black">Credits</th>
@@ -452,7 +452,7 @@ const Pricing = () => {
                           <td className="py-4 px-4 text-center font-medium">
                             {plan.monthlyPrice === "FREE" ? "FREE" : isAnnual ? plan.annualPrice + "/mo" : plan.monthlyPrice + "/mo"}
                           </td>
-                          <td className="py-4 px-4 text-center text-muted-foreground">{plan.tokens}</td>
+                          <td className="py-4 px-4 text-center text-muted-foreground">{plan.credits}</td>
                           <td className="py-4 px-4 text-center text-sm text-muted-foreground">
                             {plan.name === "Freemium" && "Testing & trying"}
                             {plan.name === "Explorer" && "APAC/LATAM entry"}

@@ -45,7 +45,11 @@ export const HeroSection = () => {
               activeVideo.play().catch(err => console.warn('Video play failed:', err));
             }
           }}
-          autoplay={false}
+          autoplay={{
+            delay: 5000,
+            disableOnInteraction: false,
+            waitForTransition: true,
+          }}
           effect="fade"
           fadeEffect={{
             crossFade: true

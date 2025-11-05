@@ -580,8 +580,7 @@ serve(async (req) => {
           api_endpoint: model.api_endpoint,
           payload_structure: model.payload_structure || 'wrapper',
           userId: user.id,
-          generationId: generation.id,
-          supabase: supabase
+          generationId: generation.id
         };
         
         // Only include prompt if model has prompt field

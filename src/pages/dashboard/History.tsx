@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,8 +14,11 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOnboarding } from "@/hooks/useOnboarding";
-import { Skeleton } from "@/components/ui/skeleton";
 import { OptimizedGenerationImage } from "@/components/generation/OptimizedGenerationImage";
+import { GallerySkeleton } from "@/components/ui/skeletons/GallerySkeleton";
+import { LoadingTransition } from "@/components/ui/loading-transition";
+import { useImagePreloader } from "@/hooks/useImagePreloader";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Component to render image with optimized loading (no signed URL needed for public bucket)
 const ImageWithOptimizedLoading = ({ generation, className }: { generation: Generation; className?: string }) => {
@@ -319,7 +322,7 @@ const History = () => {
     }
   }, [previewGeneration, progress]);
 
-  const { data: generations, refetch, isRefetching } = useQuery<Generation[]>({
+  const { data: generations, refetch, isRefetching, isLoading: isLoadingGenerations } = useQuery<Generation[]>({
     queryKey: ["generations", user?.id, currentPage],
     queryFn: async () => {
       const offset = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -500,6 +503,23 @@ const History = () => {
       );
       return hasPending ? 60000 : false; // 60 seconds
     },
+  });
+
+  // Extract image URLs from current page generations for preloading
+  const imageUrls = useMemo(() => {
+    if (!generations) return [];
+    return generations
+      .filter(g => g.type === 'image' && g.storage_path && g.status === 'completed')
+      .map(g => {
+        const versionedPath = `${g.storage_path}${g.storage_path!.includes('?') ? '&' : '?'}v=${encodeURIComponent(g.created_at)}`;
+        return versionedPath;
+      });
+  }, [generations]);
+
+  // Preload images for current page
+  const { isLoading: isLoadingImages } = useImagePreloader(imageUrls, {
+    timeout: 4000,
+    minLoadedPercentage: 60
   });
 
   const handleDelete = async (id: string) => {
@@ -796,45 +816,50 @@ const History = () => {
         </Tabs>
       </div>
 
-      {!filteredGenerations || filteredGenerations.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            {statusFilter === 'all' && (
-              <>
-                <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl font-bold mb-2">No creations yet</h3>
-                <p className="text-muted-foreground mb-6">
-                  Start creating to see your content here
-                </p>
-                <Button onClick={() => (window.location.href = "/dashboard/custom-creation")} className="bg-primary hover:bg-primary/90">
-                  Start Creating
-                </Button>
-              </>
-            )}
-            {statusFilter === 'completed' && (
-              <>
-                <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl font-bold mb-2">No successful generations yet</h3>
-                <p className="text-muted-foreground">
-                  Your completed creations will appear here
-                </p>
-              </>
-            )}
-            {statusFilter === 'failed' && (
-              <>
-                <Sparkles className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                <h3 className="text-xl font-bold mb-2">No failed generations!</h3>
-                <p className="text-muted-foreground">
-                  All your generations have been successful
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-          {filteredGenerations.map((generation) => (
-            <Card 
+      <LoadingTransition
+        isLoading={isLoadingGenerations || isLoadingImages}
+        skeleton={<GallerySkeleton count={12} />}
+        transition="fade"
+      >
+        {!filteredGenerations || filteredGenerations.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              {statusFilter === 'all' && (
+                <>
+                  <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-xl font-bold mb-2">No creations yet</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Start creating to see your content here
+                  </p>
+                  <Button onClick={() => (window.location.href = "/dashboard/custom-creation")} className="bg-primary hover:bg-primary/90">
+                    Start Creating
+                  </Button>
+                </>
+              )}
+              {statusFilter === 'completed' && (
+                <>
+                  <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-xl font-bold mb-2">No successful generations yet</h3>
+                  <p className="text-muted-foreground">
+                    Your completed creations will appear here
+                  </p>
+                </>
+              )}
+              {statusFilter === 'failed' && (
+                <>
+                  <Sparkles className="h-12 w-12 mx-auto mb-4 text-green-500" />
+                  <h3 className="text-xl font-bold mb-2">No failed generations!</h3>
+                  <p className="text-muted-foreground">
+                    All your generations have been successful
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            {filteredGenerations.map((generation) => (
+              <Card
               key={generation.id} 
               className="overflow-hidden cursor-pointer hover-lift"
               onClick={() => setPreviewGeneration(generation)}
@@ -937,6 +962,7 @@ const History = () => {
           ))}
         </div>
       )}
+      </LoadingTransition>
 
       {/* Pagination Controls */}
       {filteredGenerations && filteredGenerations.length > 0 && (

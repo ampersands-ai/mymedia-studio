@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,8 +10,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Package, Users, TrendingUp, Layers, Wand2, Coins, Shirt, Plane, Search, Image as ImageIcon, Video } from "lucide-react";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { OptimizedImage } from "@/components/ui/optimized-image";
-import { Skeleton } from "@/components/ui/skeleton";
 import { TemplateSkeleton } from "@/components/ui/skeletons";
+import { LoadingTransition } from "@/components/ui/loading-transition";
+import { useImagePreloader } from "@/hooks/useImagePreloader";
 import { createSignedUrl } from "@/lib/storage-utils";
 
 
@@ -240,6 +241,23 @@ const Templates = () => {
   const imageCount = templates.filter(t => getWorkflowContentType(t) === 'Image').length;
   const videoCount = templates.filter(t => getWorkflowContentType(t) === 'Video').length;
 
+  // Extract all image URLs for preloading
+  const imageUrls = useMemo(() => {
+    const urls: string[] = [];
+    filteredTemplates.forEach(template => {
+      if (signedUrls[template.id]?.before) urls.push(signedUrls[template.id].before!);
+      if (signedUrls[template.id]?.after) urls.push(signedUrls[template.id].after!);
+      if (template.thumbnail_url) urls.push(template.thumbnail_url);
+    });
+    return urls;
+  }, [filteredTemplates, signedUrls]);
+
+  // Preload images
+  const { isLoading: isLoadingImages } = useImagePreloader(imageUrls, {
+    timeout: 5000,
+    minLoadedPercentage: 70
+  });
+
   const handleUseTemplate = (template: any) => {
     if (!user) {
       navigate('/auth');
@@ -412,40 +430,46 @@ const Templates = () => {
       {/* Templates Grid */}
       <section className="bg-background">
         <div className="container mx-auto px-4 py-8 md:py-12">
-          <div className="max-w-7xl mx-auto space-y-12">
-            {productTemplates.length > 0 && renderCarousel(productTemplates, "Product")}
-            {marketingTemplates.length > 0 && renderCarousel(marketingTemplates, "Marketing")}
-            {fantasyTemplates.length > 0 && renderCarousel(fantasyTemplates, "Fantasy")}
-            {portraitsTemplates.length > 0 && renderCarousel(portraitsTemplates, "Portraits")}
-            {abstractTemplates.length > 0 && renderCarousel(abstractTemplates, "Abstract")}
-            {fashionTemplates.length > 0 && renderCarousel(fashionTemplates, "Fashion")}
-            {travelTemplates.length > 0 && renderCarousel(travelTemplates, "Travel")}
-            {babyMilestonesTemplates.length > 0 && renderCarousel(babyMilestonesTemplates, "Baby Milestones")}
-            
-            {/* Empty State */}
-            {!isLoading && filteredTemplates.length === 0 && (
-              <div className="text-center py-12">
-                <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-lg text-muted-foreground">No templates found matching your search.</p>
+          <LoadingTransition
+            isLoading={isLoading || isLoadingImages}
+            skeleton={
+              <div className="max-w-7xl mx-auto space-y-8">
+                <div className="space-y-4">
+                  <div className="skeleton h-8 w-48" />
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                    <TemplateSkeleton count={6} />
+                  </div>
+                </div>
               </div>
-            )}
+            }
+            transition="fade"
+          >
+            <div className="max-w-7xl mx-auto space-y-12">
+              {productTemplates.length > 0 && renderCarousel(productTemplates, "Product")}
+              {marketingTemplates.length > 0 && renderCarousel(marketingTemplates, "Marketing")}
+              {fantasyTemplates.length > 0 && renderCarousel(fantasyTemplates, "Fantasy")}
+              {portraitsTemplates.length > 0 && renderCarousel(portraitsTemplates, "Portraits")}
+              {abstractTemplates.length > 0 && renderCarousel(abstractTemplates, "Abstract")}
+              {fashionTemplates.length > 0 && renderCarousel(fashionTemplates, "Fashion")}
+              {travelTemplates.length > 0 && renderCarousel(travelTemplates, "Travel")}
+              {babyMilestonesTemplates.length > 0 && renderCarousel(babyMilestonesTemplates, "Baby Milestones")}
+              
+              {/* Empty State */}
+              {filteredTemplates.length === 0 && (
+                <div className="text-center py-12">
+                  <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-lg text-muted-foreground">No templates found matching your search.</p>
+                </div>
+              )}
 
-            {/* Loading and Empty States */}
-            {isLoading && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                  <TemplateSkeleton key={i} />
-                ))}
-              </div>
-            )}
-
-            {!isLoading && templates.length === 0 && (
-              <div className="text-center py-12">
-                <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">No templates available.</p>
-              </div>
-            )}
-          </div>
+              {templates.length === 0 && (
+                <div className="text-center py-12">
+                  <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">No templates available.</p>
+                </div>
+              )}
+            </div>
+          </LoadingTransition>
         </div>
       </section>
 

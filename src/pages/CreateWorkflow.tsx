@@ -200,7 +200,7 @@ const CreateWorkflow = () => {
                         </div>
                       ) : templateBeforeImage && templateAfterImage ? (
               <div className="w-full max-w-2xl space-y-4">
-                <div className="w-full aspect-video">
+                <div className="w-full h-[500px]">
                   <BeforeAfterSlider
                     beforeImage={templateBeforeImage}
                     afterImage={templateAfterImage}

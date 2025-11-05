@@ -22,8 +22,8 @@ export const MinimalSidebar = ({ className }: MinimalSidebarProps) => {
 
   const navItems = [
     { icon: User, label: "Profile", href: "/dashboard/settings" },
-    { icon: Image, label: "Gallery", href: "/dashboard/templates" },
-    { icon: Search, label: "Search", href: "/dashboard/create" },
+    { icon: Image, label: "Create", href: "/create-minimal" },
+    { icon: Search, label: "Gallery", href: "/dashboard/templates" },
     { icon: Share2, label: "Share", href: "/community" },
     { icon: Volume2, label: "Audio", href: "/dashboard/video-studio" },
   ];

@@ -21,6 +21,7 @@ import { useRoutePreload } from "./hooks/useRoutePreload";
 // Lazy load pages for better performance
 const IndexV2 = lazy(() => import("./pages/IndexV2"));
 const IndexMinimal = lazy(() => import("./pages/IndexMinimal"));
+const CreateMinimal = lazy(() => import("./pages/CreateMinimal"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Create = lazy(() => import("./pages/Create"));
 const CreateWorkflow = lazy(() => import("./pages/CreateWorkflow"));
@@ -112,7 +113,8 @@ const AppContent = () => {
           <Analytics />
               <Routes>
                 <Route path="/" element={<IndexV2 />} />
-                <Route path="/minimal" element={<IndexMinimal />} />
+          <Route path="/minimal" element={<IndexMinimal />} />
+          <Route path="/create-minimal" element={<CreateMinimal />} />
                 <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route path="create" element={<Create />} />

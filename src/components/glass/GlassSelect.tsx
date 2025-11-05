@@ -11,7 +11,7 @@ export const GlassSelect = forwardRef<HTMLSelectElement, GlassSelectProps>(
     return (
       <div className="space-y-2">
         {label && (
-          <label className="text-sm font-light text-gray-400">
+          <label className="minimal-label">
             {label}
           </label>
         )}
@@ -19,11 +19,11 @@ export const GlassSelect = forwardRef<HTMLSelectElement, GlassSelectProps>(
           <select
             ref={ref}
             className={cn(
-              "w-full px-4 py-3 rounded-2xl appearance-none",
-              "backdrop-blur-xl bg-white/5 border border-white/10",
-              "text-gray-200",
-              "focus:outline-none focus:border-white/20 focus:bg-white/10",
-              "transition-all duration-300 cursor-pointer",
+              "w-full px-4 py-3 rounded-xl appearance-none text-base",
+              "bg-gray-800 border border-gray-700",
+              "text-white",
+              "focus:outline-none focus:border-gray-600 focus:bg-gray-750",
+              "transition-all duration-200 cursor-pointer",
               className
             )}
             {...props}

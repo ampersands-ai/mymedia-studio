@@ -1,21 +1,17 @@
 import { ArrowRight, Play, Sparkles } from 'lucide-react';
 import { GradientButton } from '@/components/ui/gradient-button';
 import { AnimatedBadge } from '@/components/ui/animated-badge';
-import { GlassCard } from '@/components/ui/glass-card';
-import { OptimizedVideo } from '@/components/ui/optimized-video';
 import { Link } from 'react-router-dom';
 import { useScrollY } from '@/hooks/useScrollY';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade } from 'swiper/modules';
-import { useState } from 'react';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 
 export const HeroSection = () => {
   const scrollY = useScrollY();
   const isMobile = useIsMobile();
-  const [swiperInstance, setSwiperInstance] = useState<any>(null);
   
   // Disable parallax on mobile for better performance
   const parallaxY = isMobile ? 0 : scrollY;
@@ -26,96 +22,98 @@ export const HeroSection = () => {
       <div className="absolute inset-0">
         <Swiper
           modules={[Autoplay, EffectFade]}
-          onSwiper={setSwiperInstance}
-          onSlideChange={(swiper) => {
-            const activeSlide = swiper.slides[swiper.activeIndex];
-            const video = activeSlide?.querySelector('video');
-            
-            // Preload next video
-            const nextIndex = (swiper.activeIndex + 1) % swiper.slides.length;
-            const nextVideo = swiper.slides[nextIndex]?.querySelector('video');
-            if (nextVideo && !nextVideo.src) {
-              const dataSrc = nextVideo.getAttribute('data-src');
-              if (dataSrc) {
-                nextVideo.src = dataSrc;
-                nextVideo.load();
-              }
-            }
-            
-            if (video?.paused) {
-              video.play().catch(err => console.warn('Video play failed:', err));
-            }
-          }}
           autoplay={{
-            delay: 8000,
+            delay: 6000,
             disableOnInteraction: false,
-            waitForTransition: true,
+            waitForTransition: false,
           }}
           effect="fade"
           fadeEffect={{
             crossFade: true
           }}
           loop={true}
-          speed={800}
+          speed={400}
+          allowTouchMove={false}
+          resistance={false}
+          preventInteractionOnTransition={true}
           className="w-full h-full"
         >
           <SwiperSlide>
-            <OptimizedVideo
+            <video
               src="/hero-demo.mp4"
-              autoPlay={true}
-              loop={true}
-              muted={true}
-              className="w-full h-screen object-cover"
+              autoPlay
+              loop
+              muted
+              playsInline
+              disablePictureInPicture
+              preload="auto"
+              className="w-full h-screen object-cover will-change-opacity transform-gpu"
+              style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
             />
           </SwiperSlide>
           <SwiperSlide>
             <video
-              data-src="/hero-demo-2.mp4"
+              src="/hero-demo-2.mp4"
+              autoPlay
+              loop
               muted
               playsInline
-              preload="metadata"
-              loop
-              className="w-full h-screen object-cover"
+              disablePictureInPicture
+              preload="auto"
+              className="w-full h-screen object-cover will-change-opacity transform-gpu"
+              style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
             />
           </SwiperSlide>
           <SwiperSlide>
             <video
-              data-src="/hero-demo-3.mp4"
+              src="/hero-demo-3.mp4"
+              autoPlay
+              loop
               muted
               playsInline
-              preload="metadata"
-              loop
-              className="w-full h-screen object-cover"
+              disablePictureInPicture
+              preload="auto"
+              className="w-full h-screen object-cover will-change-opacity transform-gpu"
+              style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
             />
           </SwiperSlide>
           <SwiperSlide>
             <video
-              data-src="/hero-demo-4.mp4"
+              src="/hero-demo-4.mp4"
+              autoPlay
+              loop
               muted
               playsInline
-              preload="metadata"
-              loop
-              className="w-full h-screen object-cover"
+              disablePictureInPicture
+              preload="auto"
+              className="w-full h-screen object-cover will-change-opacity transform-gpu"
+              style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
             />
           </SwiperSlide>
           <SwiperSlide>
             <video
-              data-src="/hero-demo-5.mp4"
+              src="/hero-demo-5.mp4"
+              autoPlay
+              loop
               muted
               playsInline
-              preload="metadata"
-              loop
-              className="w-full h-screen object-cover"
+              disablePictureInPicture
+              preload="auto"
+              className="w-full h-screen object-cover will-change-opacity transform-gpu"
+              style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
             />
           </SwiperSlide>
           <SwiperSlide>
             <video
-              data-src="/hero-demo-6.mp4"
+              src="/hero-demo-6.mp4"
+              autoPlay
+              loop
               muted
               playsInline
-              preload="metadata"
-              loop
-              className="w-full h-screen object-cover"
+              disablePictureInPicture
+              preload="auto"
+              className="w-full h-screen object-cover will-change-opacity transform-gpu"
+              style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
             />
           </SwiperSlide>
         </Swiper>

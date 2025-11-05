@@ -58,7 +58,7 @@ export const GlobalHeader = () => {
       "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
       isScrolled 
         ? "backdrop-blur-xl bg-card/80 shadow-lg border-b border-border/30" 
-        : "bg-transparent"
+        : "backdrop-blur-sm bg-black/20"
     )}>
       <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
@@ -74,7 +74,7 @@ export const GlobalHeader = () => {
               priority={true}
               isSupabaseImage={false}
             />
-            <span className="text-xl font-bold text-foreground">
+            <span className="text-xl font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
               artifio.ai
             </span>
           </Link>
@@ -83,19 +83,19 @@ export const GlobalHeader = () => {
           <nav className="hidden md:flex items-center space-x-8">
             <button 
               onClick={() => navigate("/features")}
-              className="text-foreground/80 hover:text-primary-orange transition-colors font-medium"
+              className="text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
             >
               Features
             </button>
             <button 
               onClick={() => navigate("/pricing")}
-              className="text-foreground/80 hover:text-primary-orange transition-colors font-medium"
+              className="text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
             >
               Pricing
             </button>
             <button 
               onClick={() => navigate("/blog")}
-              className="text-foreground/80 hover:text-primary-orange transition-colors font-medium"
+              className="text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
             >
               Blog
             </button>

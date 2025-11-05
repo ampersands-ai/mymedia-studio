@@ -46,7 +46,7 @@ export const HeroSection = () => {
             }
           }}
           autoplay={{
-            delay: 5000,
+            delay: 8000,
             disableOnInteraction: false,
             waitForTransition: true,
           }}
@@ -65,7 +65,7 @@ export const HeroSection = () => {
               muted
               playsInline
               loop
-              className={`w-full h-screen ${isMobile ? 'object-contain' : 'object-cover'}`}
+              className="w-full h-screen object-cover"
             />
           </SwiperSlide>
           <SwiperSlide>
@@ -75,7 +75,7 @@ export const HeroSection = () => {
               muted
               playsInline
               loop
-              className={`w-full h-screen ${isMobile ? 'object-contain' : 'object-cover'}`}
+              className="w-full h-screen object-cover"
             />
           </SwiperSlide>
           <SwiperSlide>
@@ -85,7 +85,7 @@ export const HeroSection = () => {
               muted
               playsInline
               loop
-              className={`w-full h-screen ${isMobile ? 'object-contain' : 'object-cover'}`}
+              className="w-full h-screen object-cover"
             />
           </SwiperSlide>
           <SwiperSlide>
@@ -95,7 +95,7 @@ export const HeroSection = () => {
               muted
               playsInline
               loop
-              className={`w-full h-screen ${isMobile ? 'object-contain' : 'object-cover'}`}
+              className="w-full h-screen object-cover"
             />
           </SwiperSlide>
           <SwiperSlide>
@@ -105,7 +105,7 @@ export const HeroSection = () => {
               muted
               playsInline
               loop
-              className={`w-full h-screen ${isMobile ? 'object-contain' : 'object-cover'}`}
+              className="w-full h-screen object-cover"
             />
           </SwiperSlide>
           <SwiperSlide>
@@ -115,7 +115,7 @@ export const HeroSection = () => {
               muted
               playsInline
               loop
-              className={`w-full h-screen ${isMobile ? 'object-contain' : 'object-cover'}`}
+              className="w-full h-screen object-cover"
             />
           </SwiperSlide>
           <SwiperSlide>
@@ -125,7 +125,7 @@ export const HeroSection = () => {
               muted
               playsInline
               loop
-              className={`w-full h-screen ${isMobile ? 'object-contain' : 'object-cover'}`}
+              className="w-full h-screen object-cover"
             />
           </SwiperSlide>
         </Swiper>

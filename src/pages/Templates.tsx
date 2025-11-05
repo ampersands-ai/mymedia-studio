@@ -273,8 +273,8 @@ const Templates = () => {
     travelTemplates, babyMilestonesTemplates, signedUrls
   ]);
 
-  // Preload images with shorter timeout
-  const { isLoading: isLoadingImages } = useImagePreloader(imageUrls, {
+  // Preload images with shorter timeout (no gating on isLoading)
+  useImagePreloader(imageUrls, {
     timeout: 3000,
     minLoadedPercentage: 70
   });
@@ -467,12 +467,8 @@ const Templates = () => {
       {/* Templates Grid */}
       <section className="bg-background">
         <div className="container mx-auto px-4 py-8 md:py-12">
-          <LoadingTransition
-            isLoading={
-              isLoading || 
-              isLoadingImages || 
-              Object.keys(signedUrls).length === 0
-            }
+      <LoadingTransition
+        isLoading={isLoading && templates.length === 0}
             skeleton={
               <div className="max-w-7xl mx-auto space-y-8">
                 <div className="space-y-4">

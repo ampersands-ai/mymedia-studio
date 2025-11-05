@@ -21,9 +21,9 @@ export const HeroSection = () => {
   const parallaxY = isMobile ? 0 : scrollY;
 
   return (
-    <section className="relative min-h-screen overflow-hidden">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Full-screen video background */}
-      <div className="fixed inset-0 z-0">
+      <div className="absolute inset-0">
         <Swiper
           modules={[Autoplay, EffectFade]}
           onSwiper={setSwiperInstance}
@@ -135,7 +135,7 @@ export const HeroSection = () => {
       </div>
 
       {/* Content overlay with backdrop blur */}
-      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 pt-32 pb-20 text-left flex items-center min-h-screen">
+      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 pt-32 pb-20 text-left">
         <div className="space-y-8 flex flex-col max-w-4xl backdrop-blur-sm bg-black/20 rounded-3xl p-8 ml-0">
           {/* Badge */}
           <AnimatedBadge icon={Sparkles}>

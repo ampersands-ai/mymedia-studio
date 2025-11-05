@@ -134,7 +134,7 @@ export const HeroSection = () => {
 
           {/* Main headline with enhanced text shadow */}
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold leading-tight drop-shadow-2xl">
-            <span className="text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">Create Professional{' '}</span>
+            <span className="text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">Professional{' '}</span>
             <span className="bg-gradient-to-r from-primary-yellow via-primary-orange to-accent-purple bg-clip-text text-transparent animate-gradient drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
               AI Content
             </span>{' '}

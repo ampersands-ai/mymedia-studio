@@ -7,7 +7,8 @@ import {
   Share2, 
   Volume2, 
   ShoppingCart,
-  X
+  X,
+  Film
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -23,6 +24,7 @@ export const MinimalSidebar = ({ className }: MinimalSidebarProps) => {
   const navItems = [
     { icon: User, label: "Profile", href: "/dashboard/settings" },
     { icon: Image, label: "Create", href: "/create-minimal" },
+    { icon: Film, label: "Storyboard", href: "/storyboard-minimal" },
     { icon: Search, label: "Gallery", href: "/dashboard/templates" },
     { icon: Share2, label: "Share", href: "/community" },
     { icon: Volume2, label: "Audio", href: "/dashboard/video-studio" },

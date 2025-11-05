@@ -60,60 +60,71 @@ export const HeroSection = () => {
           className="w-full h-full"
         >
           <SwiperSlide>
-            <OptimizedVideo
-              src="/hero-demo.mp4"
-              autoPlay={true}
-              loop={true}
-              muted={true}
-              className="w-full h-screen object-cover"
-            />
-          </SwiperSlide>
-          <SwiperSlide>
             <video
-              data-src="/hero-demo-2.mp4"
+              src="/hero-1.mp4"
+              autoPlay
               muted
               playsInline
-              preload="metadata"
               loop
               className="w-full h-screen object-cover"
             />
           </SwiperSlide>
           <SwiperSlide>
             <video
-              data-src="/hero-demo-3.mp4"
+              src="/hero-2.mp4"
+              autoPlay
               muted
               playsInline
-              preload="metadata"
               loop
               className="w-full h-screen object-cover"
             />
           </SwiperSlide>
           <SwiperSlide>
             <video
-              data-src="/hero-demo-4.mp4"
+              src="/hero-3.mp4"
+              autoPlay
               muted
               playsInline
-              preload="metadata"
               loop
               className="w-full h-screen object-cover"
             />
           </SwiperSlide>
           <SwiperSlide>
             <video
-              data-src="/hero-demo-5.mp4"
+              src="/hero-4.mp4"
+              autoPlay
               muted
               playsInline
-              preload="metadata"
               loop
               className="w-full h-screen object-cover"
             />
           </SwiperSlide>
           <SwiperSlide>
             <video
-              data-src="/hero-demo-6.mp4"
+              src="/hero-5.mp4"
+              autoPlay
               muted
               playsInline
-              preload="metadata"
+              loop
+              className="w-full h-screen object-cover"
+            />
+          </SwiperSlide>
+          <SwiperSlide>
+            <video
+              src="/hero-6.mp4"
+              autoPlay
+              muted
+              playsInline
+              loop
+              className="w-full h-screen object-cover"
+            />
+          </SwiperSlide>
+          <SwiperSlide>
+            <video
+              src="/hero-7.mp4"
+              autoPlay
+              muted
+              playsInline
               loop
               className="w-full h-screen object-cover"
             />
@@ -125,8 +136,8 @@ export const HeroSection = () => {
       </div>
 
       {/* Content overlay with backdrop blur */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 text-center">
-        <div className="space-y-8 flex flex-col items-center max-w-4xl mx-auto backdrop-blur-sm bg-black/20 rounded-3xl p-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 text-left">
+        <div className="space-y-8 flex flex-col max-w-4xl backdrop-blur-sm bg-black/20 rounded-3xl p-8">
           {/* Badge */}
           <AnimatedBadge icon={Sparkles}>
             Trusted by 10,000+ creators
@@ -148,7 +159,7 @@ export const HeroSection = () => {
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-start">
             <Link to="/create">
               <GradientButton size="lg" className="group w-full sm:w-auto">
                 Start Creating Free
@@ -163,7 +174,7 @@ export const HeroSection = () => {
           </div>
 
           {/* Stats */}
-          <div className="flex flex-wrap gap-8 pt-4 justify-center">
+          <div className="flex flex-wrap gap-8 pt-4 justify-start">
             <div>
               <div className="text-3xl font-bold text-white">
                 1M+

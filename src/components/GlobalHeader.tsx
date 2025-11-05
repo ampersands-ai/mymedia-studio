@@ -103,6 +103,16 @@ export const GlobalHeader = () => {
 
           {/* Right Side - Actions */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Design Toggle - Only show on homepage */}
+            {location.pathname === "/" && (
+              <Link to="/minimal">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  Try Minimal Design
+                </Button>
+              </Link>
+            )}
+            
             <ThemeToggle />
 
             {user && (

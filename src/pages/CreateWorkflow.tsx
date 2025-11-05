@@ -199,14 +199,14 @@ const CreateWorkflow = () => {
                           </p>
                         </div>
                       ) : templateBeforeImage && templateAfterImage ? (
-              <div className="w-full max-w-2xl space-y-4">
-                <div className="w-full h-[500px]">
+              <div className="w-full max-w-2xl space-y-4 flex flex-col items-center">
+                <div className="relative max-h-[600px] w-auto">
                   <BeforeAfterSlider
-                    beforeImage={templateBeforeImage}
-                    afterImage={templateAfterImage}
+                    beforeImage={templateAfterImage}
+                    afterImage={templateBeforeImage}
                     beforeLabel="Before"
                     afterLabel="After"
-                    className="rounded-lg overflow-hidden shadow-lg"
+                    className="rounded-lg overflow-hidden shadow-lg max-h-[600px]"
                   />
                 </div>
                 <p className="text-sm text-muted-foreground">

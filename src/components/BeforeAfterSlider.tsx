@@ -55,7 +55,7 @@ const BeforeAfterSliderComponent = ({
   return (
     <div
       ref={containerRef}
-      className={cn("relative w-full h-full overflow-hidden select-none", className)}
+      className={cn("relative w-auto h-auto overflow-hidden select-none", className)}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       role="slider"
@@ -75,7 +75,7 @@ const BeforeAfterSliderComponent = ({
         src={beforeImage}
         alt={beforeLabel}
         className={cn(
-          "absolute inset-0 w-full h-full object-contain transition-opacity duration-300",
+          "block max-w-full h-auto transition-opacity duration-300",
           beforeLoaded ? "opacity-100" : "opacity-0"
         )}
         draggable={false}
@@ -95,7 +95,7 @@ const BeforeAfterSliderComponent = ({
           src={afterImage}
           alt={afterLabel}
           className={cn(
-            "absolute inset-0 w-full h-full object-contain transition-opacity duration-300",
+            "block max-w-full h-auto transition-opacity duration-300",
             afterLoaded ? "opacity-100" : "opacity-0"
           )}
           draggable={false}

@@ -70,22 +70,31 @@ export const extractStoragePath = (url: string | null): string => {
   if (!url) return '';
   
   try {
-    // If it's already a simple path without URL, return it
+    // If it's already a simple path without URL, return it cleaned
     if (!url.startsWith('http')) {
       return url.split('?')[0].replace(/^\/+/, '');
     }
     
-    // Parse URL and extract path after bucket name
+    // Parse URL and extract path
     const urlObj = new URL(url);
+    
+    // Try to match with bucket name in path
     const pathMatch = urlObj.pathname.match(/\/generated-content\/(.+)$/);
     if (pathMatch) {
       return pathMatch[1].split('?')[0];
     }
     
-    // Fallback: clean up the URL
-    return url.split('?')[0].replace(/^\/+/, '');
+    // Fallback: try to match /object/public/{bucket}/{path}
+    const publicMatch = urlObj.pathname.match(/\/object\/public\/[^/]+\/(.+)$/);
+    if (publicMatch) {
+      return publicMatch[1].split('?')[0];
+    }
+    
+    // Last resort: clean the pathname
+    return urlObj.pathname.split('?')[0].replace(/^\/+/, '');
   } catch (error) {
     console.warn('Failed to extract path from URL:', url, error);
-    return url;
+    // Return the original URL cleaned as fallback
+    return url.split('?')[0].replace(/^\/+/, '');
   }
 };

@@ -12,6 +12,7 @@ import { useNativeDownload } from "@/hooks/useNativeDownload";
 import { ArrowLeft, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const CreateWorkflow = () => {
   const [searchParams] = useSearchParams();
@@ -28,6 +29,7 @@ const CreateWorkflow = () => {
   const generationStartTimeRef = useRef<number | null>(null);
   const [templateBeforeImage, setTemplateBeforeImage] = useState<string | null>(null);
   const [templateAfterImage, setTemplateAfterImage] = useState<string | null>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
   useEffect(() => {
     if (!workflowId) {
@@ -37,15 +39,38 @@ const CreateWorkflow = () => {
 
   useEffect(() => {
     const loadTemplateImages = async () => {
-      if (!workflow?.before_image_url && !workflow?.after_image_url) return;
+      console.log('🖼️ Loading template images...', {
+        before_image_url: workflow?.before_image_url,
+        after_image_url: workflow?.after_image_url
+      });
       
-      const [beforeUrl, afterUrl] = await Promise.all([
-        workflow.before_image_url ? createSignedUrl('generated-content', extractStoragePath(workflow.before_image_url)) : null,
-        workflow.after_image_url ? createSignedUrl('generated-content', extractStoragePath(workflow.after_image_url)) : null,
-      ]);
+      if (!workflow?.before_image_url && !workflow?.after_image_url) {
+        console.log('⚠️ No template images available');
+        return;
+      }
       
-      setTemplateBeforeImage(beforeUrl);
-      setTemplateAfterImage(afterUrl);
+      setIsLoadingPreview(true);
+      
+      try {
+        const beforePath = workflow.before_image_url ? extractStoragePath(workflow.before_image_url) : null;
+        const afterPath = workflow.after_image_url ? extractStoragePath(workflow.after_image_url) : null;
+        
+        console.log('📁 Extracted paths:', { beforePath, afterPath });
+        
+        const [beforeUrl, afterUrl] = await Promise.all([
+          beforePath ? createSignedUrl('generated-content', beforePath) : null,
+          afterPath ? createSignedUrl('generated-content', afterPath) : null,
+        ]);
+        
+        console.log('🔗 Signed URLs:', { beforeUrl, afterUrl });
+        
+        setTemplateBeforeImage(beforeUrl);
+        setTemplateAfterImage(afterUrl);
+      } catch (error) {
+        console.error('❌ Failed to load template images:', error);
+      } finally {
+        setIsLoadingPreview(false);
+      }
     };
     
     loadTemplateImages();
@@ -166,7 +191,14 @@ const CreateWorkflow = () => {
                 <div className="p-4 md:p-6">
                   {!isExecuting && !result && (
                     <div className="flex flex-col items-center justify-center min-h-[400px] lg:min-h-[calc(100vh-200px)] text-center px-4">
-                      {templateBeforeImage && templateAfterImage ? (
+                      {isLoadingPreview ? (
+                        <div className="w-full max-w-2xl space-y-4">
+                          <Skeleton className="w-full aspect-video rounded-lg" />
+                          <p className="text-sm text-muted-foreground">
+                            Loading preview...
+                          </p>
+                        </div>
+                      ) : templateBeforeImage && templateAfterImage ? (
                         <div className="w-full max-w-2xl space-y-4">
                           <BeforeAfterSlider
                             beforeImage={templateBeforeImage}
@@ -185,6 +217,9 @@ const CreateWorkflow = () => {
                             src={templateAfterImage || templateBeforeImage!}
                             alt="Template preview"
                             className="w-full rounded-lg shadow-lg"
+                            onError={(e) => {
+                              console.error('❌ Failed to load image:', e.currentTarget.src);
+                            }}
                           />
                           <p className="text-sm text-muted-foreground">
                             Preview of what you'll create

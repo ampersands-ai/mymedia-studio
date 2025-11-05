@@ -14,7 +14,6 @@ import { TemplateSkeleton } from "@/components/ui/skeletons";
 import { LoadingTransition } from "@/components/ui/loading-transition";
 import { useImagePreloader } from "@/hooks/useImagePreloader";
 import { createSignedUrl } from "@/lib/storage-utils";
-import { cn } from "@/lib/utils";
 
 
 const Templates = () => {
@@ -31,9 +30,6 @@ const Templates = () => {
   // State for search and content type filtering
   const [searchQuery, setSearchQuery] = useState("");
   const [contentTypeFilter, setContentTypeFilter] = useState<'all' | 'image' | 'video'>('all');
-  
-  // State for image dimensions to calculate dynamic aspect ratios
-  const [imageDimensions, setImageDimensions] = useState<Record<string, { width: number; height: number }>>({});
 
   useEffect(() => {
     document.title = "Templates - Artifio.ai";
@@ -297,39 +293,6 @@ const Templates = () => {
     }
   };
 
-  // Handle image load to capture dimensions
-  const handleImageLoad = (templateId: string, event: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = event.currentTarget;
-    setImageDimensions(prev => ({
-      ...prev,
-      [templateId]: {
-        width: img.naturalWidth,
-        height: img.naturalHeight
-      }
-    }));
-  };
-
-  // Get dynamic aspect ratio class based on image dimensions
-  const getAspectRatioClass = (templateId: string): string => {
-    const dims = imageDimensions[templateId];
-    
-    if (!dims) {
-      // Default to 3:4 portrait while loading
-      return 'aspect-[3/4]';
-    }
-    
-    const ratio = dims.width / dims.height;
-    
-    // Landscape images (wider than tall)
-    if (ratio > 1.2) return 'aspect-[4/3]';
-    
-    // Nearly square images
-    if (ratio >= 0.9 && ratio <= 1.1) return 'aspect-square';
-    
-    // Portrait images (taller than wide)
-    return 'aspect-[3/4]';
-  };
-
   // Helper to check if template is in first carousel
   const isInFirstCarousel = (template: any) => {
     const firstCategory = 
@@ -368,10 +331,7 @@ const Templates = () => {
                 return (
                   <CarouselItem key={template.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
                     <Card className="group hover:shadow-brutal transition-all overflow-hidden border-2 border-black">
-                      <div className={cn(
-                        "relative overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10 transition-all duration-300",
-                        getAspectRatioClass(template.id)
-                      )}>
+                      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10">
                         {signedUrls[template.id]?.before && signedUrls[template.id]?.after ? (
                           <BeforeAfterSlider
                             beforeImage={signedUrls[template.id].after!}
@@ -381,7 +341,6 @@ const Templates = () => {
                             defaultPosition={25}
                             showHint={true}
                             className="w-full h-full"
-                            onImageLoad={(e) => handleImageLoad(template.id, e)}
                           />
                         ) : signedUrls[template.id]?.before || signedUrls[template.id]?.after ? (
                           <img 
@@ -390,7 +349,6 @@ const Templates = () => {
                             className="w-full h-full object-cover"
                             loading={isInFirstCarousel(template) ? undefined : "lazy"}
                             decoding="async"
-                            onLoad={(e) => handleImageLoad(template.id, e)}
                             onError={(e) => {
                               // Fallback to thumbnail if signed URL fails
                               if (template.thumbnail_url) {

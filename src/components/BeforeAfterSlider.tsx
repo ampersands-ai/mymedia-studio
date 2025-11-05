@@ -10,7 +10,6 @@ interface BeforeAfterSliderProps {
   defaultPosition?: number;
   className?: string;
   showHint?: boolean;
-  onImageLoad?: (e: React.SyntheticEvent<HTMLImageElement>) => void;
 }
 
 const BeforeAfterSliderComponent = ({
@@ -21,7 +20,6 @@ const BeforeAfterSliderComponent = ({
   defaultPosition = 50,
   className,
   showHint = false,
-  onImageLoad,
 }: BeforeAfterSliderProps) => {
   const [position, setPosition] = useState(defaultPosition);
   const [showHintText, setShowHintText] = useState(showHint);
@@ -83,10 +81,7 @@ const BeforeAfterSliderComponent = ({
         draggable={false}
         loading="lazy"
         decoding="async"
-        onLoad={(e) => {
-          setBeforeLoaded(true);
-          onImageLoad?.(e);
-        }}
+        onLoad={() => setBeforeLoaded(true)}
       />
 
       {/* After Image (Clipped layer) */}

@@ -28,22 +28,21 @@ export const HeroSection = () => {
           modules={[Autoplay, EffectFade]}
           onSwiper={setSwiperInstance}
           onSlideChange={(swiper) => {
-            const activeSlide = swiper.slides[swiper.activeIndex];
-            const video = activeSlide?.querySelector('video');
-            
-            // Preload next video
-            const nextIndex = (swiper.activeIndex + 1) % swiper.slides.length;
-            const nextVideo = swiper.slides[nextIndex]?.querySelector('video');
-            if (nextVideo && !nextVideo.src) {
-              const dataSrc = nextVideo.getAttribute('data-src');
-              if (dataSrc) {
-                nextVideo.src = dataSrc;
-                nextVideo.load();
+            // Pause all videos
+            swiper.slides.forEach(slide => {
+              const video = slide.querySelector('video');
+              if (video) {
+                video.pause();
               }
-            }
+            });
+
+            // Play and reset current video
+            const activeSlide = swiper.slides[swiper.activeIndex];
+            const activeVideo = activeSlide?.querySelector('video') as HTMLVideoElement;
             
-            if (video?.paused) {
-              video.play().catch(err => console.warn('Video play failed:', err));
+            if (activeVideo) {
+              activeVideo.currentTime = 0;
+              activeVideo.play().catch(err => console.warn('Video play failed:', err));
             }
           }}
           autoplay={{

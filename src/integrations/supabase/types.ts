@@ -272,6 +272,42 @@ export type Database = {
         }
         Relationships: []
       }
+      cinematic_prompts: {
+        Row: {
+          category: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          prompt: string
+          quality_score: number | null
+          source: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          prompt: string
+          quality_score?: number | null
+          source?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          prompt?: string
+          quality_score?: number | null
+          source?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       community_creations: {
         Row: {
           content_type: string

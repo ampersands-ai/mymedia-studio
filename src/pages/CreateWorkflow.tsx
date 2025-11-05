@@ -199,18 +199,20 @@ const CreateWorkflow = () => {
                           </p>
                         </div>
                       ) : templateBeforeImage && templateAfterImage ? (
-                        <div className="w-full max-w-2xl space-y-4">
-                          <BeforeAfterSlider
-                            beforeImage={templateBeforeImage}
-                            afterImage={templateAfterImage}
-                            beforeLabel="Before"
-                            afterLabel="After"
-                            className="rounded-lg overflow-hidden shadow-lg"
-                          />
-                          <p className="text-sm text-muted-foreground">
-                            Preview of what you'll create
-                          </p>
-                        </div>
+              <div className="w-full max-w-2xl space-y-4">
+                <div className="w-full aspect-video">
+                  <BeforeAfterSlider
+                    beforeImage={templateBeforeImage}
+                    afterImage={templateAfterImage}
+                    beforeLabel="Before"
+                    afterLabel="After"
+                    className="rounded-lg overflow-hidden shadow-lg"
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Preview of what you'll create
+                </p>
+              </div>
                       ) : templateAfterImage || templateBeforeImage ? (
                         <div className="w-full max-w-2xl space-y-4">
                           <img

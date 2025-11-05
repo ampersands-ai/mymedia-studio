@@ -120,29 +120,29 @@ export const HeroSection = () => {
           </SwiperSlide>
         </Swiper>
         
-        {/* Dark overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/40" />
+        {/* Enhanced gradient vignette overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
       </div>
 
-      {/* Content overlay */}
+      {/* Content overlay with backdrop blur */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 text-center">
-        <div className="space-y-8 flex flex-col items-center max-w-4xl mx-auto">
+        <div className="space-y-8 flex flex-col items-center max-w-4xl mx-auto backdrop-blur-sm bg-black/20 rounded-3xl p-8">
           {/* Badge */}
           <AnimatedBadge icon={Sparkles}>
             Trusted by 10,000+ creators
           </AnimatedBadge>
 
-          {/* Main headline */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold leading-tight">
-            Create Professional{' '}
-            <span className="bg-gradient-to-r from-primary-yellow via-primary-orange to-accent-purple bg-clip-text text-transparent animate-gradient">
+          {/* Main headline with enhanced text shadow */}
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold leading-tight drop-shadow-2xl">
+            <span className="text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">Create Professional{' '}</span>
+            <span className="bg-gradient-to-r from-primary-yellow via-primary-orange to-accent-purple bg-clip-text text-transparent animate-gradient drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
               AI Content
             </span>{' '}
-            in Seconds
+            <span className="text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">in Seconds</span>
           </h1>
 
-          {/* Subheadline */}
-          <p className="text-xl md:text-2xl text-white/90 max-w-2xl">
+          {/* Subheadline with text shadow */}
+          <p className="text-xl md:text-2xl text-white/90 max-w-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
             30+ AI models for video, image, and audio generation. 
             One platform, unlimited creativity. No design skills needed.
           </p>

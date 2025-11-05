@@ -136,7 +136,7 @@ export const HeroSection = () => {
       </div>
 
       {/* Content overlay with backdrop blur */}
-      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 pt-32 pb-20 text-center">
+      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 pt-32 pb-20 text-left">
         <div className="space-y-8 flex flex-col max-w-4xl backdrop-blur-sm bg-black/20 rounded-3xl p-8 ml-0">
           {/* Badge */}
           <AnimatedBadge icon={Sparkles}>
@@ -159,7 +159,7 @@ export const HeroSection = () => {
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-start">
             <Link to="/create">
               <GradientButton size="lg" className="group w-full sm:w-auto">
                 Start Creating Free
@@ -174,7 +174,7 @@ export const HeroSection = () => {
           </div>
 
           {/* Stats */}
-          <div className="flex flex-wrap gap-8 pt-4 justify-center">
+          <div className="flex flex-wrap gap-8 pt-4 justify-start">
             <div>
               <div className="text-3xl font-bold text-white">
                 1M+

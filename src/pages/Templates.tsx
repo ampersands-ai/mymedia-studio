@@ -241,22 +241,54 @@ const Templates = () => {
   const imageCount = templates.filter(t => getWorkflowContentType(t) === 'Image').length;
   const videoCount = templates.filter(t => getWorkflowContentType(t) === 'Video').length;
 
-  // Extract all image URLs for preloading
+  // Extract image URLs for ONLY the first visible carousel
   const imageUrls = useMemo(() => {
     const urls: string[] = [];
-    filteredTemplates.forEach(template => {
+    
+    // Determine which category has templates to show first
+    const firstCategoryTemplates = 
+      productTemplates.length > 0 ? productTemplates :
+      marketingTemplates.length > 0 ? marketingTemplates :
+      fantasyTemplates.length > 0 ? fantasyTemplates :
+      portraitsTemplates.length > 0 ? portraitsTemplates :
+      abstractTemplates.length > 0 ? abstractTemplates :
+      fashionTemplates.length > 0 ? fashionTemplates :
+      travelTemplates.length > 0 ? travelTemplates :
+      babyMilestonesTemplates.length > 0 ? babyMilestonesTemplates :
+      [];
+    
+    // Only preload images from first carousel (max 12 items)
+    const firstCarouselTemplates = firstCategoryTemplates.slice(0, 12);
+    
+    firstCarouselTemplates.forEach(template => {
       if (signedUrls[template.id]?.before) urls.push(signedUrls[template.id].before!);
       if (signedUrls[template.id]?.after) urls.push(signedUrls[template.id].after!);
       if (template.thumbnail_url) urls.push(template.thumbnail_url);
     });
+    
     return urls;
-  }, [filteredTemplates, signedUrls]);
+  }, [
+    productTemplates, marketingTemplates, fantasyTemplates, 
+    portraitsTemplates, abstractTemplates, fashionTemplates,
+    travelTemplates, babyMilestonesTemplates, signedUrls
+  ]);
 
-  // Preload images
+  // Preload images with shorter timeout
   const { isLoading: isLoadingImages } = useImagePreloader(imageUrls, {
-    timeout: 5000,
+    timeout: 3000,
     minLoadedPercentage: 70
   });
+
+  // Enforce minimum skeleton display time to prevent flash
+  const [minDisplayTimeElapsed, setMinDisplayTimeElapsed] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMinDisplayTimeElapsed(true);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleUseTemplate = (template: any) => {
     if (!user) {
@@ -272,11 +304,27 @@ const Templates = () => {
     }
   };
 
+  // Helper to check if template is in first carousel
+  const isInFirstCarousel = (template: any) => {
+    const firstCategory = 
+      productTemplates.length > 0 ? productTemplates :
+      marketingTemplates.length > 0 ? marketingTemplates :
+      fantasyTemplates.length > 0 ? fantasyTemplates :
+      portraitsTemplates.length > 0 ? portraitsTemplates :
+      abstractTemplates.length > 0 ? abstractTemplates :
+      fashionTemplates.length > 0 ? fashionTemplates :
+      travelTemplates.length > 0 ? travelTemplates :
+      babyMilestonesTemplates.length > 0 ? babyMilestonesTemplates :
+      [];
+    
+    return firstCategory.slice(0, 12).some(t => t.id === template.id);
+  };
+
   const renderCarousel = (categoryTemplates: any[], categoryName: string) => {
     if (categoryTemplates.length === 0) return null;
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 animate-fade-in">
         <h2 className="text-2xl md:text-3xl font-black">{categoryName}</h2>
         <Carousel 
           className="w-full"
@@ -310,7 +358,7 @@ const Templates = () => {
                             src={(signedUrls[template.id]?.after || signedUrls[template.id]?.before)!}
                             alt={template.name || ''}
                             className="w-full h-full object-cover"
-                            loading="lazy"
+                            loading={isInFirstCarousel(template) ? undefined : "lazy"}
                             decoding="async"
                             onError={(e) => {
                               // Fallback to thumbnail if signed URL fails
@@ -431,7 +479,13 @@ const Templates = () => {
       <section className="bg-background">
         <div className="container mx-auto px-4 py-8 md:py-12">
           <LoadingTransition
-            isLoading={isLoading || isLoadingImages}
+            isLoading={
+              isLoading || 
+              isLoadingImages || 
+              !minDisplayTimeElapsed ||
+              Object.keys(signedUrls).length === 0
+            }
+            minDisplayTime={300}
             skeleton={
               <div className="max-w-7xl mx-auto space-y-8">
                 <div className="space-y-4">

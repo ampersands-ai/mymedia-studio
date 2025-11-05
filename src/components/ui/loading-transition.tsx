@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 interface LoadingTransitionProps {
@@ -7,6 +7,7 @@ interface LoadingTransitionProps {
   children: ReactNode;
   transition?: 'fade' | 'slide-up' | 'scale';
   className?: string;
+  minDisplayTime?: number;
 }
 
 export function LoadingTransition({
@@ -14,15 +15,34 @@ export function LoadingTransition({
   skeleton,
   children,
   transition = 'fade',
-  className
+  className,
+  minDisplayTime = 0
 }: LoadingTransitionProps) {
+  const [showSkeleton, setShowSkeleton] = useState(isLoading);
+  const [hasShownSkeleton, setHasShownSkeleton] = useState(false);
+  
+  useEffect(() => {
+    if (isLoading) {
+      setShowSkeleton(true);
+      setHasShownSkeleton(true);
+    } else if (hasShownSkeleton && minDisplayTime > 0) {
+      // Enforce minimum display time
+      const timer = setTimeout(() => {
+        setShowSkeleton(false);
+      }, minDisplayTime);
+      return () => clearTimeout(timer);
+    } else {
+      setShowSkeleton(false);
+    }
+  }, [isLoading, minDisplayTime, hasShownSkeleton]);
+  
   const transitionClasses = {
     fade: 'animate-fade-in',
     'slide-up': 'animate-slide-up',
     scale: 'animate-scale-in'
   };
   
-  if (isLoading) {
+  if (showSkeleton) {
     return <div className={className}>{skeleton}</div>;
   }
   

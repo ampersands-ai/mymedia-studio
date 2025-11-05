@@ -18,17 +18,25 @@ export function useImagePreloader(
   const [loadedCount, setLoadedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [hasTimedOut, setHasTimedOut] = useState(false);
+  const [isWaitingForUrls, setIsWaitingForUrls] = useState(true);
   
   // Filter out null/undefined URLs
   const validUrls = imageUrls.filter((url): url is string => !!url);
   const totalImages = validUrls.length;
   
   useEffect(() => {
-    // No images to load
+    // If no images AND we've been waiting less than timeout, keep loading
     if (totalImages === 0) {
-      setIsLoading(false);
-      return;
+      if (!hasTimedOut) {
+        setIsWaitingForUrls(true);
+        return; // Don't set isLoading to false yet
+      } else {
+        setIsLoading(false); // Timeout reached, stop waiting
+        return;
+      }
     }
+    
+    setIsWaitingForUrls(false);
     
     let timeoutId: NodeJS.Timeout;
     let isMounted = true;
@@ -85,8 +93,8 @@ export function useImagePreloader(
   }, [validUrls.join(','), timeout, minLoadedPercentage, totalImages]);
   
   return {
-    isLoading,
-    progress: totalImages > 0 ? (loadedCount / totalImages) * 100 : 100,
+    isLoading: isLoading || isWaitingForUrls,
+    progress: totalImages > 0 ? (loadedCount / totalImages) * 100 : 0,
     loadedCount,
     totalImages,
     hasTimedOut

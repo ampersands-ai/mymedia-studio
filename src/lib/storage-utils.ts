@@ -61,3 +61,31 @@ export function getVoicePreviewUrl(voiceId: string): string {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   return `${supabaseUrl}/storage/v1/object/public/voice-previews/${voiceId}.mp3`;
 }
+
+/**
+ * Extract file path from a storage URL or path string
+ * Handles both public URLs and direct path strings
+ */
+export const extractStoragePath = (url: string | null): string => {
+  if (!url) return '';
+  
+  try {
+    // If it's already a simple path without URL, return it
+    if (!url.startsWith('http')) {
+      return url.split('?')[0].replace(/^\/+/, '');
+    }
+    
+    // Parse URL and extract path after bucket name
+    const urlObj = new URL(url);
+    const pathMatch = urlObj.pathname.match(/\/generated-content\/(.+)$/);
+    if (pathMatch) {
+      return pathMatch[1].split('?')[0];
+    }
+    
+    // Fallback: clean up the URL
+    return url.split('?')[0].replace(/^\/+/, '');
+  } catch (error) {
+    console.warn('Failed to extract path from URL:', url, error);
+    return url;
+  }
+};

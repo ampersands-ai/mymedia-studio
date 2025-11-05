@@ -51,9 +51,10 @@ import { formatEstimatedTime } from "@/lib/time-utils";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
 import { useImageUrl, useVideoUrl, useAudioUrl } from "@/hooks/media";
-import { createSignedUrl } from "@/lib/storage-utils";
+import { createSignedUrl, extractStoragePath } from "@/lib/storage-utils";
 import { OutputGrid } from "@/components/generation/OutputGrid";
 import { OutputLightbox } from "@/components/generation/OutputLightbox";
+import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { downloadMultipleOutputs } from "@/lib/download-utils";
 import { trackEvent } from "@/lib/posthog";
 import { useUserTokens } from "@/hooks/useUserTokens";
@@ -140,6 +141,8 @@ const CustomCreation = () => {
   const outputSectionRef = useRef<HTMLDivElement>(null);
   const [captionExpanded, setCaptionExpanded] = useState(false);
   const [hashtagsExpanded, setHashtagsExpanded] = useState(false);
+  const [templateBeforeImage, setTemplateBeforeImage] = useState<string | null>(null);
+  const [templateAfterImage, setTemplateAfterImage] = useState<string | null>(null);
 
   // Filter models by selected group
   const filteredModels = allModels?.filter(model => {
@@ -301,6 +304,42 @@ const CustomCreation = () => {
       metaDescription.setAttribute('content', 'Create custom AI-generated content with advanced controls and fine-tuning options.');
     }
   }, []);
+
+  useEffect(() => {
+    const loadTemplateImages = async () => {
+      if (!selectedModel) {
+        setTemplateBeforeImage(null);
+        setTemplateAfterImage(null);
+        return;
+      }
+      
+      const currentModel = filteredModels.find(m => m.record_id === selectedModel);
+      if (!currentModel) {
+        setTemplateBeforeImage(null);
+        setTemplateAfterImage(null);
+        return;
+      }
+      
+      // Try to find a content template with this model
+      const { data: templateData } = await supabase
+        .from('content_templates')
+        .select('thumbnail_url')
+        .eq('model_record_id', selectedModel)
+        .limit(1)
+        .maybeSingle();
+      
+      if (templateData?.thumbnail_url) {
+        const thumbnailUrl = await createSignedUrl('generated-content', extractStoragePath(templateData.thumbnail_url));
+        setTemplateAfterImage(thumbnailUrl);
+        setTemplateBeforeImage(null);
+      } else {
+        setTemplateBeforeImage(null);
+        setTemplateAfterImage(null);
+      }
+    };
+    
+    loadTemplateImages();
+  }, [selectedModel, filteredModels]);
 
 
   // Auto-save on state changes
@@ -1880,13 +1919,39 @@ const CustomCreation = () => {
                   </Card>
                 </div>
               ) : (
-                <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
-                  <div className="text-center p-4 md:p-8">
-                    <ImageIcon className="h-12 w-12 md:h-16 md:w-16 mx-auto mb-4 text-muted-foreground/50" />
-                    <p className="text-sm md:text-base text-muted-foreground">
-                      Your generated content will appear here
-                    </p>
-                  </div>
+                <div className="flex flex-col items-center justify-center min-h-[400px] lg:min-h-[calc(100vh-200px)] p-4">
+                  {templateBeforeImage && templateAfterImage ? (
+                    <div className="w-full max-w-2xl space-y-4">
+                      <BeforeAfterSlider
+                        beforeImage={templateBeforeImage}
+                        afterImage={templateAfterImage}
+                        beforeLabel="Before"
+                        afterLabel="After"
+                        className="rounded-lg overflow-hidden shadow-lg"
+                      />
+                      <p className="text-sm text-muted-foreground text-center">
+                        Preview of what you'll create
+                      </p>
+                    </div>
+                  ) : templateAfterImage || templateBeforeImage ? (
+                    <div className="w-full max-w-2xl space-y-4">
+                      <img
+                        src={templateAfterImage || templateBeforeImage!}
+                        alt="Template preview"
+                        className="w-full rounded-lg shadow-lg"
+                      />
+                      <p className="text-sm text-muted-foreground text-center">
+                        Preview of what you'll create
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <ImageIcon className="h-12 w-12 md:h-16 md:w-16 mx-auto mb-4 text-muted-foreground/50" />
+                      <p className="text-sm md:text-base text-muted-foreground">
+                        Your generated content will appear here
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

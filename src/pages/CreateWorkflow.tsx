@@ -6,11 +6,12 @@ import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
 import { WorkflowInputPanel } from "@/components/generation/WorkflowInputPanel";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
-import { createSignedUrl } from "@/lib/storage-utils";
+import { createSignedUrl, extractStoragePath } from "@/lib/storage-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNativeDownload } from "@/hooks/useNativeDownload";
 import { ArrowLeft, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 
 const CreateWorkflow = () => {
   const [searchParams] = useSearchParams();
@@ -25,12 +26,30 @@ const CreateWorkflow = () => {
   const [result, setResult] = useState<{ url: string; tokens: number } | null>(null);
   const [generationCompleteTime, setGenerationCompleteTime] = useState<number | null>(null);
   const generationStartTimeRef = useRef<number | null>(null);
+  const [templateBeforeImage, setTemplateBeforeImage] = useState<string | null>(null);
+  const [templateAfterImage, setTemplateAfterImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!workflowId) {
       navigate("/dashboard/custom-creation");
     }
   }, [workflowId, navigate]);
+
+  useEffect(() => {
+    const loadTemplateImages = async () => {
+      if (!workflow?.before_image_url && !workflow?.after_image_url) return;
+      
+      const [beforeUrl, afterUrl] = await Promise.all([
+        workflow.before_image_url ? createSignedUrl('generated-content', extractStoragePath(workflow.before_image_url)) : null,
+        workflow.after_image_url ? createSignedUrl('generated-content', extractStoragePath(workflow.after_image_url)) : null,
+      ]);
+      
+      setTemplateBeforeImage(beforeUrl);
+      setTemplateAfterImage(afterUrl);
+    };
+    
+    loadTemplateImages();
+  }, [workflow]);
 
   const handleExecute = async (formattedInputs: Record<string, any>) => {
     if (!workflow) return;
@@ -147,15 +166,43 @@ const CreateWorkflow = () => {
                 <div className="p-4 md:p-6">
                   {!isExecuting && !result && (
                     <div className="flex flex-col items-center justify-center min-h-[400px] lg:min-h-[calc(100vh-200px)] text-center px-4">
-                      <div className="w-16 h-16 mb-4 text-muted-foreground/30">
-                        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M50 20L60 40L80 45L65 60L68 80L50 70L32 80L35 60L20 45L40 40L50 20Z" 
-                                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                      <p className="text-muted-foreground text-sm max-w-md">
-                        Fill in the inputs and click Create to generate your content
-                      </p>
+                      {templateBeforeImage && templateAfterImage ? (
+                        <div className="w-full max-w-2xl space-y-4">
+                          <BeforeAfterSlider
+                            beforeImage={templateBeforeImage}
+                            afterImage={templateAfterImage}
+                            beforeLabel="Before"
+                            afterLabel="After"
+                            className="rounded-lg overflow-hidden shadow-lg"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Preview of what you'll create
+                          </p>
+                        </div>
+                      ) : templateAfterImage || templateBeforeImage ? (
+                        <div className="w-full max-w-2xl space-y-4">
+                          <img
+                            src={templateAfterImage || templateBeforeImage!}
+                            alt="Template preview"
+                            className="w-full rounded-lg shadow-lg"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Preview of what you'll create
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="w-16 h-16 mb-4 text-muted-foreground/30">
+                            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M50 20L60 40L80 45L65 60L68 80L50 70L32 80L35 60L20 45L40 40L50 20Z" 
+                                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                          <p className="text-muted-foreground text-sm max-w-md">
+                            Fill in the inputs and click Create to generate your content
+                          </p>
+                        </>
+                      )}
                     </div>
                   )}
 

@@ -279,17 +279,6 @@ const Templates = () => {
     minLoadedPercentage: 70
   });
 
-  // Enforce minimum skeleton display time to prevent flash
-  const [minDisplayTimeElapsed, setMinDisplayTimeElapsed] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setMinDisplayTimeElapsed(true);
-    }, 300);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
   const handleUseTemplate = (template: any) => {
     if (!user) {
       navigate('/auth');
@@ -482,10 +471,8 @@ const Templates = () => {
             isLoading={
               isLoading || 
               isLoadingImages || 
-              !minDisplayTimeElapsed ||
               Object.keys(signedUrls).length === 0
             }
-            minDisplayTime={300}
             skeleton={
               <div className="max-w-7xl mx-auto space-y-8">
                 <div className="space-y-4">

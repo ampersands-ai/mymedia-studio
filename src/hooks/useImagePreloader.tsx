@@ -24,11 +24,17 @@ export function useImagePreloader(
   const totalImages = validUrls.length;
   
   useEffect(() => {
+    // Reset state when URLs change
+    setLoadedCount(0);
+    setHasTimedOut(false);
+    
     // If no images, stop loading immediately
     if (totalImages === 0) {
       setIsLoading(false);
       return;
     }
+    
+    setIsLoading(true);
     
     let timeoutId: NodeJS.Timeout;
     let isMounted = true;

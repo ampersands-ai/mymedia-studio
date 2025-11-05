@@ -136,8 +136,8 @@ export const HeroSection = () => {
       </div>
 
       {/* Content overlay with backdrop blur */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 text-center">
-        <div className="space-y-8 flex flex-col max-w-4xl backdrop-blur-sm bg-black/20 rounded-3xl p-8">
+      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 pt-32 pb-20 text-center">
+        <div className="space-y-8 flex flex-col max-w-4xl backdrop-blur-sm bg-black/20 rounded-3xl p-8 ml-0">
           {/* Badge */}
           <AnimatedBadge icon={Sparkles}>
             Trusted by 10,000+ creators

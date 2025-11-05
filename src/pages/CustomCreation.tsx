@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { cinematicPortraitPrompts } from "@/data/cinematicPortraitPrompts";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
@@ -964,11 +965,18 @@ const CustomCreation = () => {
     setGeneratingSurprise(true);
     
     try {
-      // Import the daily prompt function
-      const { getDailyCinematicPrompt } = require('@/data/cinematicPortraitPrompts');
+      // Date-based seed ensures different prompts each day
+      const dayOfYear = Math.floor(
+        (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
+      );
       
-      // Get a daily-rotating prompt
-      const selectedPrompt = getDailyCinematicPrompt();
+      // Add random offset for variety within the day
+      const randomOffset = Math.floor(Math.random() * 30);
+      
+      // Calculate index with daily rotation
+      const index = (dayOfYear * 7 + randomOffset) % cinematicPortraitPrompts.length;
+      
+      const selectedPrompt = cinematicPortraitPrompts[index];
       setPrompt(selectedPrompt);
       
       toast.success("Cinematic portrait prompt loaded!");

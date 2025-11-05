@@ -75,7 +75,7 @@ const BeforeAfterSliderComponent = ({
         src={beforeImage}
         alt={beforeLabel}
         className={cn(
-          "block max-w-full h-auto transition-opacity duration-300",
+          "w-full h-full object-cover transition-opacity duration-300",
           beforeLoaded ? "opacity-100" : "opacity-0"
         )}
         draggable={false}
@@ -95,7 +95,7 @@ const BeforeAfterSliderComponent = ({
           src={afterImage}
           alt={afterLabel}
           className={cn(
-            "block max-w-full h-auto transition-opacity duration-300",
+            "w-full h-full object-cover transition-opacity duration-300",
             afterLoaded ? "opacity-100" : "opacity-0"
           )}
           draggable={false}

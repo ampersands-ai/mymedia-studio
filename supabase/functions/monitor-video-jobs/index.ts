@@ -18,8 +18,8 @@ Deno.serve(async (req) => {
 
     console.log('Starting video job timeout monitoring...');
 
-    // Find jobs older than 45 minutes that are still processing
-    const cutoffTime = new Date(Date.now() - 45 * 60 * 1000); // 45 minutes ago
+    // Find jobs older than 4 hours that are still processing
+    const cutoffTime = new Date(Date.now() - 4 * 60 * 60 * 1000); // 4 hours ago
     
     const { data: stuckJobs, error } = await supabase
       .from('video_jobs')
@@ -63,10 +63,10 @@ Deno.serve(async (req) => {
         .from('video_jobs')
         .update({
           status: 'failed',
-          error_message: 'Video generation exceeded 45 minutes. Credits refunded automatically.',
+          error_message: 'Video generation exceeded 4 hours. Credits refunded automatically.',
           error_details: {
             timeout: true,
-            duration_minutes: 45,
+            duration_hours: 4,
             auto_refunded: true,
             original_status: job.status
           }
@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
           resource_id: job.id,
           metadata: {
             tokens_refunded: job.cost_tokens,
-            reason: 'timeout_45min',
+            reason: 'timeout_4hr',
             job_topic: job.topic,
             original_status: job.status
           }

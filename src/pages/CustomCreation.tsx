@@ -960,24 +960,21 @@ const CustomCreation = () => {
     toast.success("Reset complete");
   };
 
-  const handleSurpriseMe = async () => {
+  const handleSurpriseMe = () => {
     setGeneratingSurprise(true);
+    
     try {
-      const { data, error } = await supabase.functions.invoke('generate-random-prompt', {
-        body: { contentType: contentType }
-      });
-
-      if (error) throw error;
-
-      if (data?.prompt) {
-        setPrompt(data.prompt);
-        toast.success("Unique prompt generated!");
-      } else {
-        throw new Error("No prompt returned");
-      }
+      // Import the daily prompt function
+      const { getDailyCinematicPrompt } = require('@/data/cinematicPortraitPrompts');
+      
+      // Get a daily-rotating prompt
+      const selectedPrompt = getDailyCinematicPrompt();
+      setPrompt(selectedPrompt);
+      
+      toast.success("Cinematic portrait prompt loaded!");
     } catch (error) {
       console.error('Surprise me error:', error);
-      toast.error("Failed to generate prompt. Please try again.");
+      toast.error("Failed to load prompt. Please try again.");
     } finally {
       setGeneratingSurprise(false);
     }

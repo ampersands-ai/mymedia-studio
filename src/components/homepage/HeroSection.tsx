@@ -20,6 +20,30 @@ export const HeroSection = () => {
   // Disable parallax on mobile for better performance
   const parallaxY = isMobile ? 0 : scrollY;
 
+  // Define video sources
+  const desktopVideos = [
+    '/hero-1.mp4',
+    '/hero-2.mp4',
+    '/hero-3.mp4',
+    '/hero-4.mp4',
+    '/hero-5.mp4',
+    '/hero-6.mp4',
+    '/hero-7.mp4',
+  ];
+
+  const mobileVideos = [
+    '/hero-1-mobile.mp4',
+    '/hero-2-mobile.mp4',
+    '/hero-3-mobile.mp4',
+    '/hero-4-mobile.mp4',
+    '/hero-5-mobile.mp4',
+    '/hero-6-mobile.mp4',
+    '/hero-7-mobile.mp4',
+  ];
+
+  // Select appropriate videos based on device
+  const videos = isMobile ? mobileVideos : desktopVideos;
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Full-screen video background */}
@@ -58,76 +82,18 @@ export const HeroSection = () => {
           speed={800}
           className="w-full h-full"
         >
-          <SwiperSlide>
-            <video
-              src="/hero-1.mp4"
-              autoPlay
-              muted
-              playsInline
-              loop
-              className="w-full h-screen object-cover"
-            />
-          </SwiperSlide>
-          <SwiperSlide>
-            <video
-              src="/hero-2.mp4"
-              autoPlay
-              muted
-              playsInline
-              loop
-              className="w-full h-screen object-cover"
-            />
-          </SwiperSlide>
-          <SwiperSlide>
-            <video
-              src="/hero-3.mp4"
-              autoPlay
-              muted
-              playsInline
-              loop
-              className="w-full h-screen object-cover"
-            />
-          </SwiperSlide>
-          <SwiperSlide>
-            <video
-              src="/hero-4.mp4"
-              autoPlay
-              muted
-              playsInline
-              loop
-              className="w-full h-screen object-cover"
-            />
-          </SwiperSlide>
-          <SwiperSlide>
-            <video
-              src="/hero-5.mp4"
-              autoPlay
-              muted
-              playsInline
-              loop
-              className="w-full h-screen object-cover"
-            />
-          </SwiperSlide>
-          <SwiperSlide>
-            <video
-              src="/hero-6.mp4"
-              autoPlay
-              muted
-              playsInline
-              loop
-              className="w-full h-screen object-cover"
-            />
-          </SwiperSlide>
-          <SwiperSlide>
-            <video
-              src="/hero-7.mp4"
-              autoPlay
-              muted
-              playsInline
-              loop
-              className="w-full h-screen object-cover"
-            />
-          </SwiperSlide>
+          {videos.map((videoSrc, index) => (
+            <SwiperSlide key={index}>
+              <video
+                src={videoSrc}
+                autoPlay
+                muted
+                playsInline
+                loop
+                className="w-full h-screen object-cover"
+              />
+            </SwiperSlide>
+          ))}
         </Swiper>
         
         {/* Enhanced gradient vignette overlay for better text readability */}

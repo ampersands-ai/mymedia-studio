@@ -47,14 +47,17 @@ export function useGenerateSunoVideo() {
 
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       toast.success('🎬 Video generation started!', {
         description: 'Your music video will be ready in ~30 seconds',
         duration: 5000
       });
       
-      // Invalidate generations query to trigger refetch
+      // Invalidate all relevant queries to trigger immediate UI updates
       queryClient.invalidateQueries({ queryKey: ['generations'] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['child-video-generations', variables.generationId] 
+      });
     },
     onError: (error: any) => {
       console.error('Video generation error:', error);

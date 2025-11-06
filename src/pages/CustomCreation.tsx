@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { cinematicPortraitPrompts } from "@/data/cinematicPortraitPrompts";
@@ -11,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2, Clock, Info, Camera, Share2, RefreshCw, CheckCircle2, Palette, ImagePlus, Video, Film, Music } from "lucide-react";
+import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2, Clock, Info, Camera, Share2, RefreshCw, CheckCircle2, Palette, ImagePlus, Video, Film, Music, XCircle } from "lucide-react";
 import { useNativeCamera } from "@/hooks/useNativeCamera";
 import { triggerHaptic } from "@/utils/capacitor-utils";
 import { SessionWarning } from "@/components/SessionWarning";
@@ -59,6 +60,7 @@ import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { downloadMultipleOutputs } from "@/lib/download-utils";
 import { useGenerateSunoVideo } from "@/hooks/useGenerateSunoVideo";
 import { VideoFromAudioPreview } from "@/components/generation/VideoFromAudioPreview";
+import { VideoGenerationProgress } from "@/components/video/VideoGenerationProgress";
 import { trackEvent } from "@/lib/posthog";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -79,6 +81,7 @@ const CREATION_GROUPS = [
 const CustomCreation = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const { pickImage, pickMultipleImages, isLoading: cameraLoading, isNative } = useNativeCamera();
   const [selectedGroup, setSelectedGroup] = useState<CreationGroup>(() => {
@@ -149,12 +152,61 @@ const CustomCreation = () => {
   const [templateAfterImage, setTemplateAfterImage] = useState<string | null>(null);
   const { generateVideo, isGenerating: isGeneratingVideo } = useGenerateSunoVideo();
   const [generatingVideoIndex, setGeneratingVideoIndex] = useState<number | null>(null);
-  const [childVideoGenerations, setChildVideoGenerations] = useState<Array<{
-    id: string;
-    storage_path: string;
-    output_index: number;
-    status: string;
-  }>>([]);
+
+  // Query child video generations for audio outputs - includes ALL statuses with polling
+  const { data: childVideoGenerations = [] } = useQuery({
+    queryKey: ['child-video-generations', pollingGenerationId],
+    queryFn: async () => {
+      if (!pollingGenerationId) return [];
+      
+      const { data, error } = await supabase
+        .from('generations')
+        .select('id, storage_path, output_index, status, type')
+        .eq('parent_generation_id', pollingGenerationId)
+        .eq('type', 'video')
+        .order('output_index', { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!pollingGenerationId,
+    refetchInterval: (query) => {
+      // Poll every 5 seconds if any videos are pending/processing
+      const data = query.state.data || [];
+      const hasProcessing = data.some((v: any) => 
+        v.status === 'pending' || v.status === 'processing'
+      );
+      return hasProcessing ? 5000 : false;
+    },
+  });
+
+  // Add realtime subscription for video generation updates
+  useEffect(() => {
+    if (!pollingGenerationId) return;
+
+    const channel = supabase
+      .channel(`video-generations-${pollingGenerationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'generations',
+          filter: `parent_generation_id=eq.${pollingGenerationId}`,
+        },
+        (payload) => {
+          console.log('🔔 Video generation updated:', payload);
+          queryClient.invalidateQueries({ 
+            queryKey: ['child-video-generations', pollingGenerationId] 
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [pollingGenerationId, queryClient]);
 
   // Filter models by selected group
   const filteredModels = allModels?.filter(model => {
@@ -422,10 +474,7 @@ const CustomCreation = () => {
 
           console.log('🔍 Video children found:', videoChildren?.length || 0, videoChildren);
 
-          // Update child video generations state
-          if (videoChildren) {
-            setChildVideoGenerations(videoChildren);
-          }
+          // Query will auto-update via invalidation
 
           // Update onboarding progress for first generation
           if (progress && !progress.checklist.completedFirstGeneration) {
@@ -514,8 +563,11 @@ const CustomCreation = () => {
             .eq('type', 'video')
             .order('output_index', { ascending: true });
 
+          // Query will auto-update via invalidation
           if (videoChildren && videoChildren.length > 0) {
-            setChildVideoGenerations(videoChildren);
+            queryClient.invalidateQueries({ 
+              queryKey: ['child-video-generations', pollingGenerationId] 
+            });
           }
         }
       }
@@ -1026,7 +1078,7 @@ const CustomCreation = () => {
     
     // Clear video generation state
     setGeneratingVideoIndex(null);
-    setChildVideoGenerations([]);
+    queryClient.invalidateQueries({ queryKey: ['child-video-generations'] });
     
     setShowResetDialog(false);
     toast.success("Reset complete");
@@ -1742,16 +1794,26 @@ const CustomCreation = () => {
                                         });
                                       }}
                                     />
-                                  ) : (
-                                    <Card className="p-4 bg-muted/50">
-                                      <div className="flex items-center gap-2">
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                        <span className="text-sm text-muted-foreground">
-                                          Generating video for Track #{video.output_index + 1}...
+                                  ) : video.status === 'pending' || video.status === 'processing' ? (
+                                    <VideoGenerationProgress
+                                      generationId={video.id}
+                                      outputIndex={video.output_index}
+                                      onStatusChange={() => {
+                                        queryClient.invalidateQueries({ 
+                                          queryKey: ['child-video-generations', pollingGenerationId] 
+                                        });
+                                      }}
+                                    />
+                                  ) : video.status === 'failed' ? (
+                                    <Card className="p-4 bg-destructive/10 border-destructive/20">
+                                      <div className="flex items-center gap-2 text-destructive">
+                                        <XCircle className="h-4 w-4" />
+                                        <span className="text-sm">
+                                          Video generation failed for Track #{video.output_index + 1}
                                         </span>
                                       </div>
                                     </Card>
-                                  )}
+                                  ) : null}
                                 </div>
                               ))}
                             </div>

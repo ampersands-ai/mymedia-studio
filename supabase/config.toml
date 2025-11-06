@@ -69,6 +69,9 @@ verify_jwt = true
 [functions.generate-suno-mp4]
 verify_jwt = true
 
+[functions.check-video-generation-status]
+verify_jwt = true
+
 [functions.create-video-job]
 verify_jwt = true
 

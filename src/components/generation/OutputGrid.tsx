@@ -31,7 +31,7 @@ export const OutputGrid = ({
   userTokensRemaining
 }: OutputGridProps) => {
   const isAudio = contentType === 'audio';
-  const MP4_TOKEN_COST = 5;
+  const MP4_TOKEN_COST = 1;
   const hasInsufficientCredits = userTokensRemaining !== undefined && userTokensRemaining < MP4_TOKEN_COST;
   const isButtonDisabled = (index: number) => generatingVideoIndex === index || hasInsufficientCredits;
   // Single output - show full size

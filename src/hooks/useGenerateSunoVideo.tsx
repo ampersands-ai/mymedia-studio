@@ -72,7 +72,7 @@ export function useGenerateSunoVideo() {
       if (status === 401) {
         description = 'Please sign in again to continue';
       } else if (status === 402) {
-        description = 'You need 5 credits to generate a video. Please add more credits.';
+        description = 'You need 1 credit to generate a video. Please add more credits.';
       } else if (status === 400) {
         // Use backend validation message
         description = errorMessage;

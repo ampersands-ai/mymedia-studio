@@ -149,7 +149,7 @@ serve(async (req) => {
     console.log(`📋 Extracted Data:`, { taskId, audioId, output_index });
 
     // Check token balance
-    const MP4_TOKEN_COST = 5;
+    const MP4_TOKEN_COST = 1;
     const { data: subscription } = await supabaseClient
       .from('user_subscriptions')
       .select('tokens_remaining')

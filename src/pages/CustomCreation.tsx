@@ -1682,6 +1682,7 @@ const CustomCreation = () => {
                                 : undefined
                             }
                             generatingVideoIndex={generatingVideoIndex}
+                            userTokensRemaining={creditBalance}
                             onDownloadSuccess={() => {
                               if (progress && !progress.checklist.downloadedResult) {
                                 updateProgress({ downloadedResult: true });

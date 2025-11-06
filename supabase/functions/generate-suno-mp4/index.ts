@@ -21,6 +21,7 @@ serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     if (authError || !user) {
+      console.error('❌ Authentication failed:', authError);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }), 
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -30,6 +31,7 @@ serve(async (req) => {
     const { generation_id, output_index = 0, author, domain_name } = await req.json();
 
     if (!generation_id) {
+      console.error('❌ Missing generation_id in request');
       return new Response(
         JSON.stringify({ error: 'generation_id is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -46,6 +48,7 @@ serve(async (req) => {
       .single();
 
     if (fetchError || !audioGen) {
+      console.error('❌ Generation not found:', { generation_id, fetchError });
       return new Response(
         JSON.stringify({ error: 'Generation not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -54,6 +57,7 @@ serve(async (req) => {
 
     // Validate ownership
     if (audioGen.user_id !== user.id) {
+      console.error('❌ Unauthorized access attempt:', { generation_id, user_id: user.id, owner_id: audioGen.user_id });
       return new Response(
         JSON.stringify({ error: 'Unauthorized - generation belongs to another user' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -62,6 +66,7 @@ serve(async (req) => {
 
     // Validate it's an audio generation
     if (audioGen.type !== 'audio') {
+      console.error('❌ Wrong generation type:', { generation_id, type: audioGen.type });
       return new Response(
         JSON.stringify({ error: 'Generation must be of type "audio"' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -70,6 +75,7 @@ serve(async (req) => {
 
     // Validate generation is completed
     if (audioGen.status !== 'completed') {
+      console.error('❌ Audio not completed:', { generation_id, status: audioGen.status });
       return new Response(
         JSON.stringify({ error: `Audio generation must be completed (current status: ${audioGen.status})` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -93,6 +99,7 @@ serve(async (req) => {
     });
 
     if (!taskId) {
+      console.error('❌ Missing taskId:', { generation_id, providerResponse });
       return new Response(
         JSON.stringify({ error: 'Missing taskId in audio generation response' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -100,6 +107,7 @@ serve(async (req) => {
     }
 
     if (!items || items.length === 0 || output_index >= items.length) {
+      console.error('❌ Invalid output_index:', { generation_id, output_index, itemsLength: items.length });
       return new Response(
         JSON.stringify({ error: `Invalid output_index ${output_index} (available: 0-${items.length - 1})` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -108,6 +116,7 @@ serve(async (req) => {
 
     const audioId = items[output_index]?.id;
     if (!audioId) {
+      console.error('❌ Missing audioId:', { generation_id, output_index, item: items[output_index] });
       return new Response(
         JSON.stringify({ error: `Missing audioId for output ${output_index}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -125,6 +134,11 @@ serve(async (req) => {
       .single();
 
     if (!subscription || subscription.tokens_remaining < MP4_TOKEN_COST) {
+      console.error('❌ Insufficient credits:', { 
+        user_id: user.id, 
+        available: subscription?.tokens_remaining || 0, 
+        required: MP4_TOKEN_COST 
+      });
       return new Response(
         JSON.stringify({ error: 'Insufficient credits', required: MP4_TOKEN_COST }),
         { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -206,7 +220,12 @@ serve(async (req) => {
     const kieData = await kieResponse.json();
 
     if (!kieResponse.ok) {
-      console.error('Kie.ai API error:', kieData);
+      console.error('❌ Kie.ai API error:', { 
+        status: kieResponse.status, 
+        statusText: kieResponse.statusText,
+        error: kieData,
+        payload: kiePayload
+      });
       
       // Mark generation as failed and refund tokens
       await supabaseClient

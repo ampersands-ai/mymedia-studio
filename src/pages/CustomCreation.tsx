@@ -57,6 +57,8 @@ import { OutputGrid } from "@/components/generation/OutputGrid";
 import { OutputLightbox } from "@/components/generation/OutputLightbox";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { downloadMultipleOutputs } from "@/lib/download-utils";
+import { useGenerateSunoVideo } from "@/hooks/useGenerateSunoVideo";
+import { VideoFromAudioPreview } from "@/components/generation/VideoFromAudioPreview";
 import { trackEvent } from "@/lib/posthog";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -144,6 +146,14 @@ const CustomCreation = () => {
   const [hashtagsExpanded, setHashtagsExpanded] = useState(false);
   const [templateBeforeImage, setTemplateBeforeImage] = useState<string | null>(null);
   const [templateAfterImage, setTemplateAfterImage] = useState<string | null>(null);
+  const { generateVideo, isGenerating: isGeneratingVideo } = useGenerateSunoVideo();
+  const [generatingVideoIndex, setGeneratingVideoIndex] = useState<number | null>(null);
+  const [childVideoGenerations, setChildVideoGenerations] = useState<Array<{
+    id: string;
+    storage_path: string;
+    output_index: number;
+    status: string;
+  }>>([]);
 
   // Filter models by selected group
   const filteredModels = allModels?.filter(model => {
@@ -387,12 +397,26 @@ const CustomCreation = () => {
             duration: 8000
           });
         } else if (parentData.status === 'completed') {
-          // Fetch all child outputs (if any)
+          // Fetch all child audio outputs
           const { data: childrenData } = await supabase
             .from('generations')
-            .select('id, storage_path, output_index')
+            .select('id, storage_path, output_index, type')
             .eq('parent_generation_id', generationId)
+            .eq('type', parentData.type) // Only fetch same type (audio/image/video)
             .order('output_index', { ascending: true });
+
+          // Fetch child video generations (MP4s from audio)
+          const { data: videoChildren } = await supabase
+            .from('generations')
+            .select('id, storage_path, output_index, status, type')
+            .eq('parent_generation_id', generationId)
+            .eq('type', 'video')
+            .order('output_index', { ascending: true });
+
+          // Update child video generations state
+          if (videoChildren) {
+            setChildVideoGenerations(videoChildren);
+          }
 
           // Update onboarding progress for first generation
           if (progress && !progress.checklist.completedFirstGeneration) {
@@ -468,6 +492,20 @@ const CustomCreation = () => {
         } else {
           // Generation failed - dismiss loading toast
           toast.dismiss('generation-progress');
+        }
+      } else {
+        // Still processing - continue polling and check for child video generations
+        if (parentData.type === 'audio') {
+          const { data: videoChildren } = await supabase
+            .from('generations')
+            .select('id, storage_path, output_index, status, type')
+            .eq('parent_generation_id', generationId)
+            .eq('type', 'video')
+            .order('output_index', { ascending: true });
+
+          if (videoChildren && videoChildren.length > 0) {
+            setChildVideoGenerations(videoChildren);
+          }
         }
       }
     } catch (error) {
@@ -1616,7 +1654,66 @@ const CustomCreation = () => {
                                 }
                               );
                             }}
+                            onGenerateVideo={
+                              selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type === 'audio' && pollingGenerationId
+                                ? (outputIndex) => {
+                                    setGeneratingVideoIndex(outputIndex);
+                                    generateVideo({ 
+                                      generationId: pollingGenerationId, 
+                                      outputIndex 
+                                    }, {
+                                      onSuccess: () => {
+                                        setGeneratingVideoIndex(null);
+                                      },
+                                      onError: () => {
+                                        setGeneratingVideoIndex(null);
+                                      }
+                                    });
+                                  }
+                                : undefined
+                            }
+                            generatingVideoIndex={generatingVideoIndex}
                           />
+
+                          {/* Display child video generations */}
+                          {childVideoGenerations.length > 0 && (
+                            <div className="space-y-3 mt-4">
+                              <h3 className="text-sm font-semibold text-muted-foreground">Generated Videos</h3>
+                              {childVideoGenerations.map((video) => (
+                                <div key={video.id}>
+                                  {video.status === 'completed' ? (
+                                    <VideoFromAudioPreview
+                                      storagePath={video.storage_path}
+                                      outputIndex={video.output_index}
+                                      onRegenerate={() => {
+                                        setGeneratingVideoIndex(video.output_index);
+                                        generateVideo({ 
+                                          generationId: pollingGenerationId!, 
+                                          outputIndex: video.output_index 
+                                        }, {
+                                          onSuccess: () => {
+                                            setGeneratingVideoIndex(null);
+                                          },
+                                          onError: () => {
+                                            setGeneratingVideoIndex(null);
+                                          }
+                                        });
+                                      }}
+                                    />
+                                  ) : (
+                                    <Card className="p-4 bg-muted/50">
+                                      <div className="flex items-center gap-2">
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <span className="text-sm text-muted-foreground">
+                                          Generating video for Track #{video.output_index + 1}...
+                                        </span>
+                                      </div>
+                                    </Card>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
 
                           <OutputLightbox
                             outputs={generatedOutputs}

@@ -66,6 +66,9 @@ verify_jwt = true
 [functions.workflow-executor]
 verify_jwt = true
 
+[functions.generate-suno-mp4]
+verify_jwt = true
+
 [functions.create-video-job]
 verify_jwt = true
 

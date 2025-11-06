@@ -368,42 +368,40 @@ serve(async (req) => {
       );
     }
 
-    // Handle partial callbacks (first, text) - check if they have valid URLs before deciding
-    if (callbackType && callbackType.toLowerCase() !== 'complete') {
-      console.log(`🔔 Received partial callback: ${callbackType}`);
-      
-      // For audio generations, check if all items have valid audio URLs
-      if (generation.type === 'audio' && Array.isArray(items) && items.length > 0) {
-        const availableUrls = items
-          .map((item: any) => item?.audio_url || item?.source_audio_url || item?.stream_audio_url)
-          .filter(Boolean);
-        
-        console.log(`🎵 Checking audio URLs in ${callbackType} callback:`);
-        console.log(`   - Items count: ${items.length}`);
-        console.log(`   - Available URLs: ${availableUrls.length}`);
-        
-        // If all items have valid URLs, process this callback as complete
-        if (availableUrls.length === items.length && availableUrls.length > 0) {
-          console.log(`✅ All ${items.length} audio URLs available in ${callbackType} callback - processing as complete!`);
-          // Continue to normal processing below
-        } else {
-          console.log(`⏸️ Not all audio URLs ready (${availableUrls.length}/${items.length}) - waiting for complete callback`);
-          await supabase
-            .from('generations')
-            .update({ 
-              status: 'processing', 
-              provider_response: payload 
-            })
-            .eq('id', generation.id);
-
-          return new Response(
-            JSON.stringify({ success: true, message: `Partial webhook (${callbackType}) acknowledged - waiting for all URLs` }),
-            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-      } else {
-        // For non-audio or no items, keep existing behavior
-        console.log(`⏸️ Partial ${callbackType} callback - updating to processing`);
+    // ========================================
+    // TYPE-SPECIFIC PROCESSING PATHS
+    // Each content type has independent validation and handling
+    // ========================================
+    
+    // Helper: Check if image results are complete
+    const hasImageResults = (items: any[]): boolean => {
+      return Array.isArray(items) && items.length > 0 && 
+             items.every(item => item?.image_url || item?.source_image_url);
+    };
+    
+    // Helper: Check if audio results are complete
+    const hasAudioResults = (items: any[]): boolean => {
+      return Array.isArray(items) && items.length > 0 && 
+             items.every(item => item?.audio_url || item?.source_audio_url || item?.stream_audio_url);
+    };
+    
+    // Helper: Check if video results are complete
+    const hasVideoResults = (items: any[]): boolean => {
+      return payload.data?.video_url || 
+             (Array.isArray(items) && items.length > 0 && 
+              items.every(item => item?.video_url || item?.source_video_url));
+    };
+    
+    // Route to type-specific handler
+    if (generation.type === 'image') {
+      // ========================================
+      // IMAGE-SPECIFIC PATH
+      // ========================================
+      if (hasImageResults(items)) {
+        console.log('✅ Image has complete results - processing immediately');
+        // Continue to success processing below
+      } else if (callbackType && callbackType.toLowerCase() !== 'complete') {
+        console.log(`⏸️ Partial image callback (${callbackType}) - waiting for complete results`);
         await supabase
           .from('generations')
           .update({ 
@@ -413,11 +411,63 @@ serve(async (req) => {
           .eq('id', generation.id);
 
         return new Response(
-          JSON.stringify({ success: true, message: `Partial webhook (${callbackType}) acknowledged` }),
+          JSON.stringify({ success: true, message: `Partial image webhook (${callbackType}) acknowledged` }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } 
+    else if (generation.type === 'audio') {
+      // ========================================
+      // AUDIO-SPECIFIC PATH
+      // ========================================
+      if (hasAudioResults(items)) {
+        console.log(`✅ Audio has complete results (${items.length} URLs) - processing immediately`);
+        // Continue to success processing below
+      } else if (callbackType && callbackType.toLowerCase() !== 'complete') {
+        const availableUrls = items
+          .map((item: any) => item?.audio_url || item?.source_audio_url || item?.stream_audio_url)
+          .filter(Boolean);
+        
+        console.log(`⏸️ Partial audio callback (${callbackType}) - URLs: ${availableUrls.length}/${items.length}`);
+        await supabase
+          .from('generations')
+          .update({ 
+            status: 'processing', 
+            provider_response: payload 
+          })
+          .eq('id', generation.id);
+
+        return new Response(
+          JSON.stringify({ success: true, message: `Partial audio webhook (${callbackType}) acknowledged - waiting for all URLs` }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
     }
+    else if (generation.type === 'video') {
+      // ========================================
+      // VIDEO-SPECIFIC PATH
+      // ========================================
+      if (hasVideoResults(items)) {
+        console.log('✅ Video has complete results - processing immediately');
+        // Continue to success processing below
+      } else if (callbackType && callbackType.toLowerCase() !== 'complete') {
+        console.log(`⏸️ Partial video callback (${callbackType}) - waiting for complete results`);
+        await supabase
+          .from('generations')
+          .update({ 
+            status: 'processing', 
+            provider_response: payload 
+          })
+          .eq('id', generation.id);
+
+        return new Response(
+          JSON.stringify({ success: true, message: `Partial video webhook (${callbackType}) acknowledged` }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+    
+    console.log(`🎯 Proceeding to success processing for ${generation.type}`);
 
     // Handle success (support multiple formats including Kie.ai items-based format)
     if (isSuccess && (resultJson || payload.data?.info || video_url || (Array.isArray(items) && items.length > 0))) {

@@ -101,15 +101,17 @@ export const HeroSection = () => {
       </div>
 
       {/* Content overlay with backdrop blur */}
-      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 pt-32 pb-20 flex justify-end md:justify-start">
-        <div className="space-y-8 flex flex-col max-w-4xl backdrop-blur-sm bg-black/20 rounded-3xl p-6 md:p-8 text-left">
+      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 pt-24 pb-20 flex items-center justify-center md:justify-start">
+        <div className="space-y-6 md:space-y-8 flex flex-col w-full max-w-4xl backdrop-blur-sm bg-black/30 rounded-3xl p-4 sm:p-6 md:p-8">
           {/* Badge */}
-          <AnimatedBadge icon={Sparkles}>
-            Trusted by 10,000+ creators
-          </AnimatedBadge>
+          <div className="flex justify-start">
+            <AnimatedBadge icon={Sparkles}>
+              Trusted by 10,000+ creators
+            </AnimatedBadge>
+          </div>
 
           {/* Main headline with enhanced text shadow */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold leading-tight drop-shadow-2xl">
+          <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold leading-tight drop-shadow-2xl">
             <span className="text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">Professional{' '}</span>
             <span className="bg-gradient-to-r from-primary-yellow via-primary-orange to-accent-purple bg-clip-text text-transparent animate-gradient drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
               AI Content
@@ -118,23 +120,23 @@ export const HeroSection = () => {
           </h1>
 
           {/* Subheadline with text shadow */}
-          <p className="text-xl md:text-2xl text-white/90 max-w-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
+          <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
             30+ AI models for video, image, and audio generation. 
             One platform, unlimited creativity. No design skills needed.
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-start">
-            <Link to="/create">
-              <GradientButton size="lg" className="group w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <Link to="/create" className="w-full sm:w-auto">
+              <GradientButton size="lg" className="group w-full">
                 Start Creating Free
                 <ArrowRight className="inline ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </GradientButton>
             </Link>
             
-            <button className="px-8 py-4 rounded-full border-2 border-white/30 hover:border-white/60 transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 text-white backdrop-blur-sm bg-white/10">
-              <Play className="w-5 h-5" />
-              <span className="font-semibold">Watch Demo</span>
+            <button className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-full border-2 border-white/30 hover:border-white/60 transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 text-white backdrop-blur-sm bg-white/10">
+              <Play className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="font-semibold text-sm sm:text-base">Watch Demo</span>
             </button>
           </div>
 

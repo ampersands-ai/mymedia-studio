@@ -25,6 +25,9 @@ export function useGenerateSunoVideo() {
         body: { 
           generation_id: generationId, 
           output_index: outputIndex 
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
       

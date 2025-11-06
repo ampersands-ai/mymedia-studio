@@ -81,6 +81,7 @@ serve(async (req) => {
       .from('generations')
       .select('*, ai_models(model_name, estimated_time_seconds)')
       .eq('provider_task_id', taskId)
+      .is('parent_generation_id', null)
       .single();
 
     if (findError || !generation) {

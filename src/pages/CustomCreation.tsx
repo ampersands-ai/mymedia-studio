@@ -1000,13 +1000,34 @@ const CustomCreation = () => {
   }, [selectedModel, modelParameters, uploadedImages, selectedGroup, filteredModels, generateCaption]);
 
   const handleResetConfirm = () => {
+    // Clear input state
     setPrompt("");
     setUploadedImages([]);
-    setGeneratedOutput(null);
     setResolution("Native");
     setModelParameters({});
-    setCaptionData(null);
     setGenerateCaption(false);
+    
+    // Clear generation output state
+    setGeneratedOutput(null);
+    setGeneratedOutputs([]);
+    setCaptionData(null);
+    setSelectedOutputIndex(0);
+    setShowLightbox(false);
+    setGenerationCompleteTime(null);
+    
+    // Clear polling and generation tracking
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    setPollingGenerationId(null);
+    setParentGenerationId(null);
+    setLocalGenerating(false);
+    
+    // Clear video generation state
+    setGeneratingVideoIndex(null);
+    setChildVideoGenerations([]);
+    
     setShowResetDialog(false);
     toast.success("Reset complete");
   };

@@ -129,6 +129,7 @@ const CustomCreation = () => {
   const [modelParameters, setModelParameters] = useState<Record<string, any>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pollingGenerationId, setPollingGenerationId] = useState<string | null>(null);
+  const [parentGenerationId, setParentGenerationId] = useState<string | null>(null); // Store parent ID for video generation
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [generatedOutputs, setGeneratedOutputs] = useState<Array<{
     id: string;
@@ -375,7 +376,8 @@ const CustomCreation = () => {
           clearInterval(pollIntervalRef.current);
           pollIntervalRef.current = null;
         }
-        // Don't clear pollingGenerationId here - keep it for video generation button
+        // Store parent generation ID for video generation
+        setParentGenerationId(generationId);
         setLocalGenerating(false);
 
         if (parentData.status === 'failed') {
@@ -759,6 +761,7 @@ const CustomCreation = () => {
       pollIntervalRef.current = null;
     }
     setPollingGenerationId(null);
+    setParentGenerationId(null); // Clear parent ID too
     
     // Reset generation tracking and ALL output state
     generationStartTimeRef.current = Date.now();
@@ -1664,17 +1667,20 @@ const CustomCreation = () => {
                               );
                             }}
                             onGenerateVideo={
-                              selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type === 'audio' && generatedOutputs.length > 0
+                              selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type === 'audio' && parentGenerationId
                                 ? (outputIndex) => {
+                                    console.log('🎬 Generating video for parent:', parentGenerationId, 'output:', outputIndex);
                                     setGeneratingVideoIndex(outputIndex);
                                     generateVideo({ 
-                                      generationId: pollingGenerationId || generatedOutputs[0].id, 
+                                      generationId: parentGenerationId, 
                                       outputIndex 
                                     }, {
                                       onSuccess: () => {
+                                        console.log('✅ Video generation successful');
                                         setGeneratingVideoIndex(null);
                                       },
                                       onError: () => {
+                                        console.error('❌ Video generation failed');
                                         setGeneratingVideoIndex(null);
                                       }
                                     });

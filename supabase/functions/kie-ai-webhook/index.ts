@@ -632,44 +632,56 @@ serve(async (req) => {
 
       console.log(`✅ Found ${resultUrls.length} output(s) to process`);
 
-      // Process first output (update parent generation)
-      const firstUrl = resultUrls[0];
-      console.log('Downloading first result from:', firstUrl);
+      // For multi-output, we'll create children for ALL URLs and keep parent as container
+      // For single-output, we'll update the parent with the one result
+      const isMultiOutput = resultUrls.length > 1;
+      
+      let storagePath: string | null = null;
+      let publicUrl: string | null = null;
+      let output_data: Uint8Array | null = null;
+      
+      if (!isMultiOutput) {
+        // Single output: download and upload for parent generation
+        const firstUrl = resultUrls[0];
+        console.log('Single output: Downloading result from:', firstUrl);
 
-      const contentResponse = await fetch(firstUrl);
-      if (!contentResponse.ok) {
-        throw new Error(`Failed to download result: ${contentResponse.status}`);
+        const contentResponse = await fetch(firstUrl);
+        if (!contentResponse.ok) {
+          throw new Error(`Failed to download result: ${contentResponse.status}`);
+        }
+
+        const arrayBuffer = await contentResponse.arrayBuffer();
+        output_data = new Uint8Array(arrayBuffer);
+        
+        // Determine file extension
+        const contentType = contentResponse.headers.get('content-type') || '';
+        const fileExtension = determineFileExtension(contentType, firstUrl);
+        
+        console.log('Downloaded successfully. Size:', output_data.length, 'Extension:', fileExtension);
+
+        // Upload to storage
+        storagePath = await uploadToStorage(
+          supabase,
+          generation.user_id,
+          generation.id,
+          output_data,
+          fileExtension,
+          generation.type
+        );
+
+        console.log('Uploaded to storage:', storagePath);
+
+        // Generate public URL since bucket is public
+        const urlData = await supabase
+          .storage
+          .from('generated-content')
+          .getPublicUrl(storagePath);
+
+        publicUrl = urlData?.data?.publicUrl || null;
+        console.log('Generated public URL:', publicUrl);
+      } else {
+        console.log('Multi-output: Parent will be a container, children will be created for all URLs');
       }
-
-      const arrayBuffer = await contentResponse.arrayBuffer();
-      const output_data = new Uint8Array(arrayBuffer);
-      
-      // Determine file extension
-      const contentType = contentResponse.headers.get('content-type') || '';
-      const fileExtension = determineFileExtension(contentType, firstUrl);
-      
-      console.log('Downloaded successfully. Size:', output_data.length, 'Extension:', fileExtension);
-
-      // Upload to storage
-      const storagePath = await uploadToStorage(
-        supabase,
-        generation.user_id,
-        generation.id,
-        output_data,
-        fileExtension,
-        generation.type
-      );
-
-      console.log('Uploaded to storage:', storagePath);
-
-      // Generate public URL since bucket is public
-      const { data: urlData } = await supabase
-        .storage
-        .from('generated-content')
-        .getPublicUrl(storagePath);
-
-      const publicUrl = urlData?.publicUrl || null;
-      console.log('Generated public URL:', publicUrl);
 
       // Compare our token calculation with Kie's actual charges (before completion)
       if (consumeCredits !== undefined && consumeCredits !== generation.tokens_used) {
@@ -703,12 +715,12 @@ serve(async (req) => {
         // Don't fail the generation, just log
       }
 
-      // Process additional outputs (2nd, 3rd, etc.) BEFORE marking parent as complete
-      console.log(`🔄 Checking for additional outputs. Total URLs: ${resultUrls.length}`);
+      // Process child outputs for multi-output tasks BEFORE marking parent as complete
+      console.log(`🔄 Checking for child outputs. Total URLs: ${resultUrls.length}, Multi-output: ${isMultiOutput}`);
       
-      if (resultUrls.length > 1) {
-        console.log(`🎉 Found ${resultUrls.length - 1} additional output(s) to process!`);
-        console.log(`📋 Additional URLs:`, resultUrls.slice(1));
+      if (isMultiOutput) {
+        console.log(`🎉 Multi-output task! Creating ${resultUrls.length} child generation(s)`);
+        console.log(`📋 All URLs:`, resultUrls);
         
         // Check existing children for idempotency
         const { data: existingChildren, error: checkError } = await supabase
@@ -724,7 +736,8 @@ serve(async (req) => {
         const existingIndexes = new Set(existingChildren?.map(c => c.output_index) || []);
         console.log(`📊 Existing child indexes:`, Array.from(existingIndexes));
         
-        for (let i = 1; i < resultUrls.length; i++) {
+        // Create children for ALL URLs starting from index 0
+        for (let i = 0; i < resultUrls.length; i++) {
           // Skip if this index already exists
           if (existingIndexes.has(i)) {
             console.log(`⏭️ [Output ${i + 1}] Skipping - already exists`);
@@ -817,18 +830,19 @@ serve(async (req) => {
           }
         }
         
-        console.log(`✅ Finished processing all ${resultUrls.length - 1} additional output(s)`);
+        console.log(`✅ Finished processing all ${resultUrls.length} child output(s)`);
       } else {
-        console.log(`ℹ️ No additional outputs to process (only 1 URL found)`);
+        console.log(`ℹ️ Single-output task - no children needed`);
       }
 
       // NOW update parent generation to completed (after all children are created)
       console.log('🎯 All outputs processed. Now marking parent as completed...');
       
       // For multi-output tasks, keep parent as container (no storage_path)
+      // For single-output tasks, set the storage path
       const updateData: any = {
         status: 'completed',
-        file_size_bytes: output_data.length,
+        file_size_bytes: output_data ? output_data.length : null,
         provider_response: {
           ...payload,
           // Extract key metrics for easy querying
@@ -839,14 +853,14 @@ serve(async (req) => {
           timestamp: new Date().toISOString()
         },
         output_index: 0,
-        is_batch_output: resultUrls.length > 1
+        is_batch_output: isMultiOutput
       };
       
       // Only set storage_path and output_url for single-output tasks
-      if (resultUrls.length === 1) {
+      if (!isMultiOutput && storagePath) {
         updateData.storage_path = storagePath;
         updateData.output_url = publicUrl;
-        console.log('📝 Single output - setting parent storage_path');
+        console.log('📝 Single output - setting parent storage_path:', storagePath);
       } else {
         console.log('📦 Multi-output - keeping parent as container (no storage_path)');
       }
@@ -872,7 +886,7 @@ serve(async (req) => {
         metadata: {
           model_id: generation.model_id,
           tokens_used: generation.tokens_used,
-          file_size: output_data.length,
+          file_size: output_data?.length || null,
           total_outputs: resultUrls.length,
           webhook_callback: true
         }

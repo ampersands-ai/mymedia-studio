@@ -290,8 +290,8 @@ serve(async (req) => {
     console.log('✅ Layer 4 passed: Idempotency check completed');
     console.log('🔒 All security layers passed - processing webhook for generation:', generation.id);
 
-    // Parse items from resultJson (KIE.ai sends it as JSON string)
-    let items = [];
+    // Parse items from resultJson (KIE.ai sends it as JSON string) and new data.info formats
+    let items: any[] = [];
     try {
       if (resultJson) {
         const parsed = JSON.parse(resultJson);
@@ -307,13 +307,42 @@ serve(async (req) => {
           }));
         }
       }
-      // Fallback to old format
+
+      // Fallbacks: old data.data format, then new data.info.result_urls/resultUrls
       if (items.length === 0) {
-        items = payload.data?.data || [];
+        if (Array.isArray(payload.data?.data)) {
+          items = payload.data.data;
+        } else if (payload.data?.info) {
+          const info = payload.data.info;
+          const urls: string[] = (info.resultUrls ?? info.result_urls ?? []) as string[];
+          if (Array.isArray(urls) && urls.length > 0) {
+            items = urls.map((url: string) => ({
+              image_url: url,
+              audio_url: url,
+              video_url: url,
+              source_image_url: url,
+              source_audio_url: url,
+              source_video_url: url
+            }));
+          }
+        }
       }
     } catch (e) {
-      console.error('Failed to parse resultJson:', e);
-      items = payload.data?.data || [];
+      console.error('Failed to parse resultJson or build items:', e);
+      const info = payload.data?.info;
+      const urls: string[] = (info?.resultUrls ?? info?.result_urls ?? []) as string[];
+      if (Array.isArray(urls) && urls.length > 0) {
+        items = urls.map((url: string) => ({
+          image_url: url,
+          audio_url: url,
+          video_url: url,
+          source_image_url: url,
+          source_audio_url: url,
+          source_video_url: url
+        }));
+      } else {
+        items = payload.data?.data || [];
+      }
     }
     
     console.log('Callback type:', callbackType, 'Items count:', items.length);
@@ -397,23 +426,41 @@ serve(async (req) => {
     // Each content type has independent validation and handling
     // ========================================
     
+    // Helper: Check for URLs in new info/resultJson formats
+    const hasUrlsInInfo = (): boolean => {
+      const info = payload.data?.info;
+      const urls = (info?.resultUrls ?? info?.result_urls) as string[] | undefined;
+      return Array.isArray(urls) && urls.length > 0;
+    };
+
+    const hasUrlsInResultJson = (): boolean => {
+      if (!resultJson) return false;
+      try {
+        const parsed = JSON.parse(resultJson);
+        const urls = parsed?.resultUrls || (parsed?.resultUrl ? [parsed.resultUrl] : []);
+        return Array.isArray(urls) && urls.length > 0;
+      } catch { return false; }
+    };
+
     // Helper: Check if image results are complete
     const hasImageResults = (items: any[]): boolean => {
-      return Array.isArray(items) && items.length > 0 && 
+      const fromItems = Array.isArray(items) && items.length > 0 &&
              items.every(item => item?.image_url || item?.source_image_url);
+      return fromItems || hasUrlsInInfo() || hasUrlsInResultJson();
     };
     
     // Helper: Check if audio results are complete
     const hasAudioResults = (items: any[]): boolean => {
-      return Array.isArray(items) && items.length > 0 && 
+      const fromItems = Array.isArray(items) && items.length > 0 &&
              items.every(item => item?.audio_url || item?.source_audio_url || item?.stream_audio_url);
+      return fromItems || hasUrlsInInfo() || hasUrlsInResultJson();
     };
     
     // Helper: Check if video results are complete
     const hasVideoResults = (items: any[]): boolean => {
-      return payload.data?.video_url || 
-             (Array.isArray(items) && items.length > 0 && 
-              items.every(item => item?.video_url || item?.source_video_url));
+      const fromItems = Array.isArray(items) && items.length > 0 &&
+               items.every(item => item?.video_url || item?.source_video_url);
+      return Boolean(payload.data?.video_url) || fromItems || hasUrlsInInfo() || hasUrlsInResultJson();
     };
     
     // Route to type-specific handler

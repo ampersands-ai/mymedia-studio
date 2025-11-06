@@ -77,12 +77,34 @@ serve(async (req) => {
     }
     
     // SECURITY: Verify the task exists in our database and fetch model metadata
-    const { data: generation, error: findError } = await supabase
-      .from('generations')
-      .select('*, ai_models(model_name, estimated_time_seconds)')
-      .eq('provider_task_id', taskId)
-      .is('parent_generation_id', null)
-      .single();
+    // Add retry logic for race condition where webhook arrives before DB update
+    let generation: any = null;
+    let findError: any = null;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount <= maxRetries) {
+      const { data, error } = await supabase
+        .from('generations')
+        .select('*, ai_models(model_name, estimated_time_seconds)')
+        .eq('provider_task_id', taskId)
+        .is('parent_generation_id', null)
+        .single();
+      
+      if (data) {
+        generation = data;
+        break;
+      }
+      
+      findError = error;
+      
+      if (retryCount < maxRetries) {
+        console.log(`⏳ Generation not found, retry ${retryCount + 1}/${maxRetries} after delay...`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // 1s, 2s, 3s
+      }
+      
+      retryCount++;
+    }
 
     if (findError || !generation) {
       console.error('Security: Rejected webhook for unknown task:', taskId, findError);

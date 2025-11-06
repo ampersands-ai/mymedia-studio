@@ -80,8 +80,8 @@ export const AudioWaveform = ({ audioUrl, className }: AudioWaveformProps) => {
           <Music className="h-6 w-6 text-green-600 dark:text-green-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium">Audio File</p>
-          <p className="text-xs text-muted-foreground">Generated audio content</p>
+          <p className="text-sm font-medium break-words">Audio File</p>
+          <p className="text-xs text-muted-foreground break-words">Generated audio content</p>
         </div>
       </div>
 

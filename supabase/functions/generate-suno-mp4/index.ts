@@ -78,8 +78,19 @@ serve(async (req) => {
 
     // Extract taskId and audioId from provider_response
     const providerResponse = audioGen.provider_response as any;
-    const taskId = providerResponse?.data?.taskId || providerResponse?.taskId;
-    const items = providerResponse?.data?.items || [];
+    
+    // Handle different response structures (snake_case vs camelCase, data vs items)
+    const taskId = providerResponse?.data?.task_id || providerResponse?.data?.taskId || providerResponse?.taskId;
+    const items = providerResponse?.data?.data || providerResponse?.data?.items || [];
+    
+    console.log(`🔍 Provider Response Structure:`, {
+      hasTaskId: !!providerResponse?.data?.task_id,
+      hasTaskIdCamel: !!providerResponse?.data?.taskId,
+      hasDataArray: !!providerResponse?.data?.data,
+      hasItemsArray: !!providerResponse?.data?.items,
+      itemsLength: items.length,
+      extractedTaskId: taskId
+    });
 
     if (!taskId) {
       return new Response(

@@ -20,6 +20,36 @@ export const useGenerationPolling = (
 
     console.log('[useGenerationPolling] Starting polling for generation:', generationId);
 
+    // Initial fetch to get current status immediately
+    const fetchInitialStatus = async () => {
+      const { data, error: fetchError } = await supabase
+        .from('generations')
+        .select('status, output_url, provider_response')
+        .eq('id', generationId)
+        .single();
+
+      if (fetchError) {
+        console.error('[useGenerationPolling] Initial fetch error:', fetchError);
+        return;
+      }
+
+      if (data) {
+        console.log('[useGenerationPolling] Initial status:', data.status);
+        setStatus(data.status as 'pending' | 'processing' | 'completed' | 'failed');
+        
+        if (data.status === 'completed') {
+          setOutputUrl(data.output_url);
+          console.log('[useGenerationPolling] Already completed:', data.output_url);
+        } else if (data.status === 'failed') {
+          const providerResponse = data.provider_response as any;
+          const errorMsg = providerResponse?.error || 'Generation failed';
+          setError(errorMsg);
+        }
+      }
+    };
+
+    fetchInitialStatus();
+
     // Set up realtime subscription
     const channel = supabase
       .channel(`generation-${generationId}`)

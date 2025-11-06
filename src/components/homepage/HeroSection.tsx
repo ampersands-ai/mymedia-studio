@@ -9,6 +9,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade } from 'swiper/modules';
 import { useState } from 'react';
+import { PartnerLogosCarousel } from './PartnerLogosCarousel';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 
@@ -137,33 +138,8 @@ export const HeroSection = () => {
             </button>
           </div>
 
-          {/* Stats */}
-          <div className="flex flex-wrap gap-8 pt-4 justify-start">
-            <div>
-              <div className="text-3xl font-bold text-white">
-                1M+
-              </div>
-              <div className="text-sm text-white/80">
-                Generations Created
-              </div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-white">
-                30+
-              </div>
-              <div className="text-sm text-white/80">
-                AI Models
-              </div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-white">
-                $79
-              </div>
-              <div className="text-sm text-white/80">
-                Saved per Month
-              </div>
-            </div>
-          </div>
+          {/* Partner Logos Carousel */}
+          <PartnerLogosCarousel />
         </div>
       </div>
 

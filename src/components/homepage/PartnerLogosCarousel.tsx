@@ -73,7 +73,7 @@ export const PartnerLogosCarousel = () => {
           slidesPerView="auto"
           spaceBetween={40}
           loop={true}
-          speed={3000}
+          speed={1500}
           autoplay={{
             delay: 0,
             disableOnInteraction: false,
@@ -89,7 +89,7 @@ export const PartnerLogosCarousel = () => {
                 <img
                   src={partner.logo}
                   alt={`${partner.name} logo`}
-                  className="h-6 md:h-8 w-auto object-contain opacity-90 hover:opacity-100 hover:scale-110 transition-all duration-300"
+                  className="h-6 md:h-8 w-auto object-contain opacity-90 hover:opacity-100 hover:scale-110 transition-all duration-300 drop-shadow-[0_0_12px_rgba(253,176,34,0.3)] hover:drop-shadow-[0_0_20px_rgba(253,176,34,0.5)]"
                 />
               </div>
             </SwiperSlide>

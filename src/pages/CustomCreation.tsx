@@ -155,21 +155,21 @@ const CustomCreation = () => {
 
   // Query child generations for audio outputs - includes both audio and video types
   const { data: childVideoGenerations = [] } = useQuery({
-    queryKey: ['child-video-generations', pollingGenerationId],
+    queryKey: ['child-video-generations', parentGenerationId],
     queryFn: async () => {
-      if (!pollingGenerationId) return [];
+      if (!parentGenerationId) return [];
       
       const { data, error } = await supabase
         .from('generations')
         .select('id, storage_path, output_index, status, type')
-        .eq('parent_generation_id', pollingGenerationId)
+        .eq('parent_generation_id', parentGenerationId)
         .in('type', ['audio', 'video'])
         .order('output_index', { ascending: true });
       
       if (error) throw error;
       return data || [];
     },
-    enabled: !!pollingGenerationId,
+    enabled: !!parentGenerationId,
     refetchInterval: (query) => {
       // Poll every 5 seconds if any videos are pending/processing
       const data = query.state.data || [];
@@ -182,22 +182,22 @@ const CustomCreation = () => {
 
   // Add realtime subscription for video generation updates
   useEffect(() => {
-    if (!pollingGenerationId) return;
+    if (!parentGenerationId) return;
 
     const channel = supabase
-      .channel(`video-generations-${pollingGenerationId}`)
+      .channel(`video-generations-${parentGenerationId}`)
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
           table: 'generations',
-          filter: `parent_generation_id=eq.${pollingGenerationId}`,
+          filter: `parent_generation_id=eq.${parentGenerationId}`,
         },
         (payload) => {
           console.log('🔔 Video generation updated:', payload);
           queryClient.invalidateQueries({ 
-            queryKey: ['child-video-generations', pollingGenerationId] 
+            queryKey: ['child-video-generations', parentGenerationId] 
           });
         }
       )
@@ -206,7 +206,7 @@ const CustomCreation = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [pollingGenerationId, queryClient]);
+  }, [parentGenerationId, queryClient]);
 
   // Filter models by selected group
   const filteredModels = allModels?.filter(model => {
@@ -423,13 +423,14 @@ const CustomCreation = () => {
 
       // Check if generation is complete or failed
       if (parentData.status === 'completed' || parentData.status === 'failed') {
-        // Stop polling interval but keep pollingGenerationId for video generation
+        // Stop polling interval and clear state
         if (pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current);
           pollIntervalRef.current = null;
         }
-        // Store parent generation ID for video generation
-        setParentGenerationId(generationId);
+        setParentGenerationId(generationId); // Store for child video tracking
+        console.log('✅ Cleared pollingGenerationId, set parentGenerationId:', generationId);
+        setPollingGenerationId(null); // Clear to re-enable CTA
         setLocalGenerating(false);
 
         if (parentData.status === 'failed') {
@@ -453,7 +454,7 @@ const CustomCreation = () => {
         } else if (parentData.status === 'completed') {
           console.log('🔍 Parent generation data:', parentData);
           
-          // Fetch all child audio outputs
+          // Fetch all child outputs
           const { data: childrenData, error: childrenError } = await supabase
             .from('generations')
             .select('id, storage_path, output_url, output_index, type')
@@ -463,18 +464,6 @@ const CustomCreation = () => {
 
           console.log('🔍 Child outputs found:', childrenData?.length || 0, childrenData);
           if (childrenError) console.error('❌ Error fetching children:', childrenError);
-
-          // Fetch child video generations (MP4s from audio)
-          const { data: videoChildren } = await supabase
-            .from('generations')
-            .select('id, storage_path, output_index, status, type')
-            .eq('parent_generation_id', generationId)
-            .eq('type', 'video')
-            .order('output_index', { ascending: true });
-
-          console.log('🔍 Video children found:', videoChildren?.length || 0, videoChildren);
-
-          // Query will auto-update via invalidation
 
           // Update onboarding progress for first generation
           if (progress && !progress.checklist.completedFirstGeneration) {
@@ -488,7 +477,7 @@ const CustomCreation = () => {
             updateProgress({ viewedResult: true });
           }
 
-          // Combine parent + children
+          // Build valid outputs (parent + children with storage_path)
           const allOutputs = [
             {
               id: parentData.id,
@@ -498,10 +487,16 @@ const CustomCreation = () => {
             ...(childrenData || [])
           ];
 
-          console.log('🔍 All outputs combined:', allOutputs.length, allOutputs);
+          // Filter to only outputs with storage_path
+          const validOutputs = allOutputs.filter(o => !!o.storage_path);
+          console.log('🔍 Valid outputs (with storage_path):', validOutputs.length, validOutputs);
 
-          setGeneratedOutputs(allOutputs);
-          setGeneratedOutput(parentData.storage_path); // For backward compat
+          setGeneratedOutputs(validOutputs);
+          
+          // Set primary output: prefer first valid child if parent has no storage_path
+          const primaryOutput = validOutputs[0]?.storage_path ?? parentData.storage_path ?? null;
+          console.log('🎯 Selected primary output:', primaryOutput);
+          setGeneratedOutput(primaryOutput);
           setSelectedOutputIndex(0); // Reset to newest generation
           setGenerationCompleteTime(Date.now());
           
@@ -514,12 +509,12 @@ const CustomCreation = () => {
           
           toast.success('✨ Your creation is ready!', { 
             id: 'generation-progress',
-            description: `${allOutputs.length} output${allOutputs.length > 1 ? 's' : ''} generated successfully`
+            description: `${validOutputs.length} output${validOutputs.length > 1 ? 's' : ''} generated successfully`
           });
 
           // Generate caption if checkbox was checked
-          if (generateCaption && allOutputs.length > 0) {
-            const firstOutput = allOutputs[0];
+          if (generateCaption && validOutputs.length > 0) {
+            const firstOutput = validOutputs[0];
             setIsGeneratingCaption(true);
             
             try {
@@ -549,6 +544,15 @@ const CustomCreation = () => {
               setIsGeneratingCaption(false);
             }
           }
+        } else if (parentData.status === 'failed') {
+          // Stop polling on failure
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+          setPollingGenerationId(null);
+          setLocalGenerating(false);
+          toast.dismiss('generation-progress');
         } else {
           // Generation failed - dismiss loading toast
           toast.dismiss('generation-progress');
@@ -566,7 +570,7 @@ const CustomCreation = () => {
           // Query will auto-update via invalidation
           if (videoChildren && videoChildren.length > 0) {
             queryClient.invalidateQueries({ 
-              queryKey: ['child-video-generations', pollingGenerationId] 
+              queryKey: ['child-video-generations', parentGenerationId] 
             });
           }
         }
@@ -1782,7 +1786,7 @@ const CustomCreation = () => {
                                       onRegenerate={() => {
                                         setGeneratingVideoIndex(video.output_index);
                                         generateVideo({ 
-                                          generationId: pollingGenerationId!, 
+                                          generationId: parentGenerationId!, 
                                           outputIndex: video.output_index 
                                         }, {
                                           onSuccess: () => {
@@ -1800,7 +1804,7 @@ const CustomCreation = () => {
                                       outputIndex={video.output_index}
                                       onStatusChange={() => {
                                         queryClient.invalidateQueries({ 
-                                          queryKey: ['child-video-generations', pollingGenerationId] 
+                                          queryKey: ['child-video-generations', parentGenerationId] 
                                         });
                                       }}
                                     />

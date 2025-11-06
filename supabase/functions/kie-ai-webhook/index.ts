@@ -290,59 +290,79 @@ serve(async (req) => {
     console.log('✅ Layer 4 passed: Idempotency check completed');
     console.log('🔒 All security layers passed - processing webhook for generation:', generation.id);
 
+    // Helper: Normalize result URLs from various formats and map to correct type-specific fields
+    const normalizeResultUrls = (payload: any, resultJson: string | null, generationType: string): string[] => {
+      const urls: string[] = [];
+      
+      // Try resultJson first (old format)
+      if (resultJson) {
+        try {
+          const parsed = JSON.parse(resultJson);
+          if (Array.isArray(parsed.resultUrls)) {
+            urls.push(...parsed.resultUrls);
+            console.log('📄 Normalized URLs from resultJson:', urls.length);
+          } else if (parsed.resultUrl) {
+            urls.push(parsed.resultUrl);
+            console.log('📄 Normalized single URL from resultJson');
+          }
+        } catch (e) {
+          console.error('Failed to parse resultJson:', e);
+        }
+      }
+      
+      // Try new data.info format (snake_case and camelCase)
+      if (urls.length === 0 && payload.data?.info) {
+        const info = payload.data.info;
+        const infoUrls = info.result_urls ?? info.resultUrls;
+        if (Array.isArray(infoUrls) && infoUrls.length > 0) {
+          urls.push(...infoUrls);
+          console.log('ℹ️ Normalized URLs from data.info:', urls.length);
+        }
+      }
+      
+      // Fallback to old data.data format
+      if (urls.length === 0 && Array.isArray(payload.data?.data)) {
+        console.log('📦 Using old data.data format');
+        return []; // Return empty to signal we should use items format
+      }
+      
+      console.log(`✅ Normalized ${urls.length} URL(s) for type: ${generationType}`);
+      return urls;
+    };
+
     // Parse items from resultJson (KIE.ai sends it as JSON string) and new data.info formats
     let items: any[] = [];
     try {
-      if (resultJson) {
-        const parsed = JSON.parse(resultJson);
-        // Convert resultUrls array to items format expected by helper functions
-        if (parsed.resultUrls && Array.isArray(parsed.resultUrls)) {
-          items = parsed.resultUrls.map((url: string) => ({
-            image_url: url,
-            audio_url: url,
-            video_url: url,
-            source_image_url: url,
-            source_audio_url: url,
-            source_video_url: url
-          }));
-        }
-      }
-
-      // Fallbacks: old data.data format, then new data.info.result_urls/resultUrls
-      if (items.length === 0) {
-        if (Array.isArray(payload.data?.data)) {
-          items = payload.data.data;
-        } else if (payload.data?.info) {
-          const info = payload.data.info;
-          const urls: string[] = (info.resultUrls ?? info.result_urls ?? []) as string[];
-          if (Array.isArray(urls) && urls.length > 0) {
-            items = urls.map((url: string) => ({
-              image_url: url,
-              audio_url: url,
-              video_url: url,
-              source_image_url: url,
-              source_audio_url: url,
-              source_video_url: url
-            }));
+      // First try to normalize URLs
+      const normalizedUrls = normalizeResultUrls(payload, resultJson, generation.type);
+      
+      if (normalizedUrls.length > 0) {
+        // Map normalized URLs to correct type-specific fields
+        items = normalizedUrls.map((url: string) => {
+          const item: any = {};
+          
+          if (generation.type === 'image') {
+            item.image_url = url;
+            item.source_image_url = url;
+          } else if (generation.type === 'audio') {
+            item.audio_url = url;
+            item.source_audio_url = url;
+          } else if (generation.type === 'video') {
+            item.video_url = url;
+            item.source_video_url = url;
           }
-        }
+          
+          return item;
+        });
+        console.log(`✅ Mapped ${items.length} URLs to ${generation.type}-specific fields`);
+      } else {
+        // Fallback to old data.data format (items already have type-specific fields)
+        items = payload.data?.data || [];
+        console.log(`📦 Using old data.data format with ${items.length} items`);
       }
     } catch (e) {
-      console.error('Failed to parse resultJson or build items:', e);
-      const info = payload.data?.info;
-      const urls: string[] = (info?.resultUrls ?? info?.result_urls ?? []) as string[];
-      if (Array.isArray(urls) && urls.length > 0) {
-        items = urls.map((url: string) => ({
-          image_url: url,
-          audio_url: url,
-          video_url: url,
-          source_image_url: url,
-          source_audio_url: url,
-          source_video_url: url
-        }));
-      } else {
-        items = payload.data?.data || [];
-      }
+      console.error('Failed to parse and normalize results:', e);
+      items = payload.data?.data || [];
     }
     
     console.log('Callback type:', callbackType, 'Items count:', items.length);
@@ -690,7 +710,27 @@ serve(async (req) => {
         console.log(`🎉 Found ${resultUrls.length - 1} additional output(s) to process!`);
         console.log(`📋 Additional URLs:`, resultUrls.slice(1));
         
+        // Check existing children for idempotency
+        const { data: existingChildren, error: checkError } = await supabase
+          .from('generations')
+          .select('output_index')
+          .eq('parent_generation_id', generation.id)
+          .order('output_index', { ascending: true });
+        
+        if (checkError) {
+          console.error('⚠️ Failed to check existing children:', checkError);
+        }
+        
+        const existingIndexes = new Set(existingChildren?.map(c => c.output_index) || []);
+        console.log(`📊 Existing child indexes:`, Array.from(existingIndexes));
+        
         for (let i = 1; i < resultUrls.length; i++) {
+          // Skip if this index already exists
+          if (existingIndexes.has(i)) {
+            console.log(`⏭️ [Output ${i + 1}] Skipping - already exists`);
+            continue;
+          }
+          
           try {
             const url = resultUrls[i];
             console.log(`⬇️ [Output ${i + 1}/${resultUrls.length}] Starting download from:`, url);
@@ -784,25 +824,36 @@ serve(async (req) => {
 
       // NOW update parent generation to completed (after all children are created)
       console.log('🎯 All outputs processed. Now marking parent as completed...');
+      
+      // For multi-output tasks, keep parent as container (no storage_path)
+      const updateData: any = {
+        status: 'completed',
+        file_size_bytes: output_data.length,
+        provider_response: {
+          ...payload,
+          // Extract key metrics for easy querying
+          kie_credits_consumed: consumeCredits || null,
+          kie_credits_remaining: remainedCredits || null,
+          kie_processing_time_seconds: costTime || null,
+          our_tokens_charged: generation.tokens_used, // For comparison
+          timestamp: new Date().toISOString()
+        },
+        output_index: 0,
+        is_batch_output: resultUrls.length > 1
+      };
+      
+      // Only set storage_path and output_url for single-output tasks
+      if (resultUrls.length === 1) {
+        updateData.storage_path = storagePath;
+        updateData.output_url = publicUrl;
+        console.log('📝 Single output - setting parent storage_path');
+      } else {
+        console.log('📦 Multi-output - keeping parent as container (no storage_path)');
+      }
+      
       const { error: updateError } = await supabase
         .from('generations')
-        .update({
-          status: 'completed',
-          storage_path: storagePath,
-          output_url: publicUrl,
-          file_size_bytes: output_data.length,
-          provider_response: {
-            ...payload,
-            // Extract key metrics for easy querying
-            kie_credits_consumed: consumeCredits || null,
-            kie_credits_remaining: remainedCredits || null,
-            kie_processing_time_seconds: costTime || null,
-            our_tokens_charged: generation.tokens_used, // For comparison
-            timestamp: new Date().toISOString()
-          },
-          output_index: 0,
-          is_batch_output: resultUrls.length > 1
-        })
+        .update(updateData)
         .eq('id', generation.id);
 
       if (updateError) {

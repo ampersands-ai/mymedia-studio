@@ -1686,7 +1686,32 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_content_history: {
+        Row: {
+          ai_caption: string | null
+          ai_hashtags: string[] | null
+          caption_generated_at: string | null
+          created_at: string | null
+          enhanced_prompt: string | null
+          id: string | null
+          is_batch_output: boolean | null
+          output_index: number | null
+          output_url: string | null
+          parent_generation_id: string | null
+          prompt: string | null
+          provider_response: Json | null
+          source_table: string | null
+          status: string | null
+          storage_path: string | null
+          storyboard_id: string | null
+          tokens_used: number | null
+          type: string | null
+          user_id: string | null
+          video_job_id: string | null
+          workflow_execution_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_and_fail_stuck_jobs: { Args: never; Returns: undefined }

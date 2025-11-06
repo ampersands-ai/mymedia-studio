@@ -155,8 +155,11 @@ interface Generation {
   output_index?: number;
   is_batch_output?: boolean;
   workflow_execution_id?: string | null;
-  is_video_job?: boolean; // Flag for video jobs
-  video_job_data?: any; // Original video job data
+  is_video_job?: boolean;
+  video_job_data?: any;
+  source_table?: 'generation' | 'video_job' | 'storyboard';
+  video_job_id?: string | null;
+  storyboard_id?: string | null;
 }
 
 // Component to render video with signed URL and hover-to-play
@@ -275,6 +278,7 @@ const History = () => {
   const { user } = useAuth();
   const [previewGeneration, setPreviewGeneration] = useState<Generation | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'failed'>('completed');
+  const [contentTypeFilter, setContentTypeFilter] = useState<'all' | 'image' | 'video' | 'audio' | 'storyboard'>('all');
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportingGeneration, setReportingGeneration] = useState<Generation | null>(null);
@@ -288,7 +292,7 @@ const History = () => {
   // Reset to page 1 when filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter]);
+  }, [statusFilter, contentTypeFilter]);
 
   // SECURITY: Check if generation already has a dispute
   const { data: disputeStatus } = useQuery({
@@ -322,186 +326,99 @@ const History = () => {
     }
   }, [previewGeneration, progress]);
 
+  // Fetch total count for pagination
+  const { data: totalCount } = useQuery({
+    queryKey: ["generations-count", user?.id, statusFilter, contentTypeFilter],
+    queryFn: async () => {
+      let query = supabase
+        .from("user_content_history")
+        .select("id", { count: 'exact', head: true })
+        .eq("user_id", user!.id);
+      
+      if (statusFilter === 'completed') {
+        query = query.eq('status', 'completed');
+      } else if (statusFilter === 'failed') {
+        query = query.eq('status', 'failed');
+      }
+      
+      if (contentTypeFilter === 'storyboard') {
+        query = query.eq('source_table', 'storyboard');
+      } else if (contentTypeFilter === 'video') {
+        query = query.eq('type', 'video');
+      } else if (contentTypeFilter !== 'all') {
+        query = query.eq('type', contentTypeFilter);
+      }
+      
+      const { count } = await query;
+      return count || 0;
+    },
+    enabled: !!user,
+  });
+
+  // Fetch generations from unified view with server-side pagination
   const { data: generations, refetch, isRefetching, isLoading: isLoadingGenerations } = useQuery<Generation[]>({
-    queryKey: ["generations", user?.id, currentPage],
+    queryKey: ["generations", user?.id, currentPage, statusFilter, contentTypeFilter],
     queryFn: async () => {
       const offset = (currentPage - 1) * ITEMS_PER_PAGE;
       
-      // First get generations (including batch output fields) with pagination
-      const { data: genData, error: genError } = await supabase
-        .from("generations")
+      // Build query on the unified view
+      let query = supabase
+        .from("user_content_history")
         .select("*")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false })
-        .order("output_index", { ascending: true })
-        .range(offset, offset + ITEMS_PER_PAGE - 1);
-
-      if (genError) throw genError;
-
-      // Get completed AND failed video jobs with pagination
-      const { data: videoData, error: videoError } = await supabase
-        .from("video_jobs")
-        .select("*")
-        .eq("user_id", user!.id)
-        .in("status", ["completed", "failed"])
-        .order("created_at", { ascending: false })
-        .range(offset, offset + ITEMS_PER_PAGE - 1);
-
-      if (videoError) console.error("Error fetching video jobs:", videoError);
+        .eq("user_id", user!.id);
       
-      // Get storyboards (complete, failed, or rendering) with pagination
-      const { data: storyboardData, error: storyboardError } = await supabase
-        .from("storyboards")
-        .select("*")
-        .eq("user_id", user!.id)
-        .in("status", ["complete", "failed", "rendering"])
+      // Apply status filter
+      if (statusFilter === 'completed') {
+        query = query.eq('status', 'completed');
+      } else if (statusFilter === 'failed') {
+        query = query.eq('status', 'failed');
+      }
+      
+      // Apply content type filter
+      if (contentTypeFilter === 'storyboard') {
+        query = query.eq('source_table', 'storyboard');
+      } else if (contentTypeFilter === 'video') {
+        query = query.eq('type', 'video');
+      } else if (contentTypeFilter !== 'all') {
+        query = query.eq('type', contentTypeFilter);
+      }
+      
+      // Apply pagination and ordering
+      const { data, error } = await query
         .order("created_at", { ascending: false })
         .range(offset, offset + ITEMS_PER_PAGE - 1);
 
-      if (storyboardError) console.error("Error fetching storyboards:", storyboardError);
-
-      // Then get all disputes for this user
-      const { data: disputes, error: disputeError } = await supabase
+      if (error) throw error;
+      
+      // Fetch disputes for these generations
+      const generationIds = data?.map(g => g.id) || [];
+      const { data: disputes } = await supabase
         .from("token_dispute_reports")
         .select("generation_id, status")
-        .eq("user_id", user!.id);
-
-      if (disputeError) console.error("Error fetching disputes:", disputeError);
-
-      // Map disputes to generations
+        .eq("user_id", user!.id)
+        .in("generation_id", generationIds);
+      
       const disputeMap = new Map(disputes?.map(d => [d.generation_id, d.status]) || []);
       
-      const enrichedGenerations = genData.map(gen => ({
-        ...gen,
-        has_dispute: disputeMap.has(gen.id),
-        dispute_status: disputeMap.get(gen.id),
+      // Enrich with dispute info and source markers
+      const enriched = (data || []).map(item => ({
+        ...item,
+        has_dispute: disputeMap.has(item.id),
+        dispute_status: disputeMap.get(item.id),
+        is_video_job: item.source_table === 'video_job',
+        video_job_data: item.video_job_id ? { id: item.video_job_id } : null,
       }));
 
-      // Convert video jobs to generation-like format for unified display
-      const videoGenerations = (videoData || []).map(video => {
-        return {
-          id: video.id,
-          type: 'video',
-          prompt: `Faceless Video: ${video.topic}`,
-          output_url: video.final_video_url,
-          storage_path: video.storage_path, // Use storage_path for deduplication
-          status: video.status,
-          tokens_used: video.cost_tokens,
-          created_at: video.created_at,
-          enhanced_prompt: null,
-          ai_caption: video.ai_caption || null,
-          ai_hashtags: video.ai_hashtags || null,
-          caption_generated_at: video.caption_generated_at,
-          provider_response: video.error_message ? { data: { failMsg: video.error_message } } : undefined,
-          has_dispute: false,
-          dispute_status: undefined,
-          parent_generation_id: null,
-          output_index: 0,
-          is_batch_output: false,
-          workflow_execution_id: null,
-          is_video_job: true,
-          video_job_data: video
-        };
-      });
-      
-      // Convert storyboards to generation-like format
-      const storyboardGenerations = (storyboardData || []).map(sb => {
-        // Check if video is in Supabase Storage
-        const hasStoragePath = sb.video_storage_path && 
-                              sb.video_storage_path.startsWith('storyboard-videos/');
-        
-        return {
-          id: sb.id,
-          type: 'video',
-          prompt: `Storyboard: ${sb.topic}`,
-          // Prioritize storage path, fallback to external URL
-          output_url: hasStoragePath ? sb.video_storage_path : (sb.video_url || ''),
-          storage_path: hasStoragePath ? sb.video_storage_path : null,
-          // Normalize status
-          status: sb.status === 'complete' ? 'completed' : sb.status,
-          tokens_used: sb.tokens_cost || sb.estimated_render_cost || 0,
-          created_at: sb.created_at,
-          enhanced_prompt: null,
-          ai_caption: null,
-          ai_hashtags: null,
-          caption_generated_at: null,
-          provider_response: undefined,
-          has_dispute: false,
-          dispute_status: undefined,
-          parent_generation_id: null,
-          output_index: 0,
-          is_batch_output: false,
-          workflow_execution_id: null,
-          is_video_job: false,
-          video_job_data: null
-        };
-      });
-
-      // Filter out generation entries that have the same storage_path as video jobs or storyboards
-      const videoStoragePaths = new Set(
-        (videoData || [])
-          .map(vj => vj.storage_path)
-          .filter(Boolean) // Remove null/undefined
-      );
-      
-      const storyboardStoragePaths = new Set(
-        (storyboardData || [])
-          .map(sb => sb.video_storage_path)
-          .filter(Boolean)
-      );
-      
-      const regularGenerations = enrichedGenerations.filter(gen => 
-        !gen.storage_path || 
-        (!videoStoragePaths.has(gen.storage_path) && !storyboardStoragePaths.has(gen.storage_path))
-      );
-
-      // Combine regular generations, video jobs, and storyboards (no duplicates)
-      const all: Generation[] = ([...regularGenerations, ...videoGenerations, ...storyboardGenerations] as unknown) as Generation[];
-
-      const uniqueMap = new Map<string, Generation>();
-      for (const item of all) {
-        // Use storage_path as primary key for deduplication
-        let key: string;
-        
-        if (item.storage_path) {
-          // Normalize storage_path by removing query parameters
-          const cleanPath = item.storage_path.split('?')[0];
-          key = `path:${cleanPath}`;
-        } else if (item.output_url) {
-          // Extract path from URL if no storage_path
-          const match = item.output_url.match(/\/object\/public\/[^/]+\/(.+?)(?:\?|$)/);
-          key = match ? `path:${match[1]}` : `url:${item.output_url}`;
-        } else {
-          key = `id:${item.id}`;
-        }
-        
-        const existing = uniqueMap.get(key);
-        
-        if (!existing) {
-          uniqueMap.set(key, item);
-        } else {
-          // Always prefer video_job entries over generation entries
-          if (!existing.is_video_job && item.is_video_job) {
-            uniqueMap.set(key, item);
-          }
-        }
-      }
-
-      const combined = Array.from(uniqueMap.values()).sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-
-      return combined as Generation[];
+      return enriched as Generation[];
     },
     enabled: !!user,
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
     refetchInterval: (query) => {
-      // Auto-refetch every minute if there are pending/processing generations
       const hasPending = query.state.data?.some(g => 
         g.status === 'pending' || g.status === 'processing'
       );
-      return hasPending ? 60000 : false; // 60 seconds
+      return hasPending ? 60000 : false;
     },
   });
 
@@ -778,12 +695,10 @@ const History = () => {
     document.title = "My Creations - Artifio.ai";
   }, []);
 
-  // Filter generations based on status filter
-  const filteredGenerations = generations?.filter(g => {
-    if (statusFilter === 'completed') return g.status === 'completed';
-    if (statusFilter === 'failed') return g.status === 'failed';
-    return true; // 'all'
-  }) || [];
+  // Filtering now happens in the query, use generations directly
+  const filteredGenerations = generations || [];
+
+  const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
 
   // No loading state - show empty state immediately or render data
   return (
@@ -806,15 +721,42 @@ const History = () => {
         </Button>
       </div>
 
-      <div className="mb-6">
-        <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
-          <TabsList className="grid w-full max-w-md grid-cols-3">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="completed">Successful</TabsTrigger>
-            <TabsTrigger value="failed">Failed</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
+        <div className="mb-6">
+          <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+            <TabsList className="grid w-full max-w-md grid-cols-3">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="completed">Successful</TabsTrigger>
+              <TabsTrigger value="failed">Failed</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
+        <div className="mb-6">
+          <Tabs value={contentTypeFilter} onValueChange={(v) => setContentTypeFilter(v as typeof contentTypeFilter)}>
+            <TabsList className="grid w-full max-w-2xl grid-cols-5">
+              <TabsTrigger value="all">
+                <Sparkles className="h-4 w-4 mr-1" />
+                All
+              </TabsTrigger>
+              <TabsTrigger value="image">
+                <ImageIcon className="h-4 w-4 mr-1" />
+                Images
+              </TabsTrigger>
+              <TabsTrigger value="video">
+                <Video className="h-4 w-4 mr-1" />
+                Videos
+              </TabsTrigger>
+              <TabsTrigger value="audio">
+                <Music className="h-4 w-4 mr-1" />
+                Audio
+              </TabsTrigger>
+              <TabsTrigger value="storyboard">
+                <FileText className="h-4 w-4 mr-1" />
+                Storyboards
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
       <LoadingTransition
         isLoading={isLoadingGenerations || isLoadingImages}

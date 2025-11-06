@@ -12,22 +12,10 @@ export function useGenerateSunoVideo() {
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: async ({ generationId, outputIndex }: GenerateVideoParams) => {
-      // Refresh session to ensure fresh token
-      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
-      if (sessionError || !session) {
-        throw { 
-          status: 401, 
-          message: 'Session expired. Please refresh the page and try again.' 
-        };
-      }
-      
       const { data, error } = await supabase.functions.invoke('generate-suno-mp4', {
         body: { 
           generation_id: generationId, 
           output_index: outputIndex 
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
         }
       });
       

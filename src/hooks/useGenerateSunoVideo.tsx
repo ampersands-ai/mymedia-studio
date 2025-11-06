@@ -12,18 +12,39 @@ export function useGenerateSunoVideo() {
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: async ({ generationId, outputIndex }: GenerateVideoParams) => {
-      const { data, error } = await supabase.functions.invoke('generate-suno-mp4', {
-        body: { 
-          generation_id: generationId, 
-          output_index: outputIndex 
-        }
-      });
-      
-      if (error) {
-        // Parse HTTP status from error if available
-        const status = (error as any)?.status;
-        throw { ...error, status };
+      // Ensure we have a valid user session and forward it explicitly
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw {
+          status: 401,
+          message: 'Please sign in again to continue'
+        };
       }
+
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-suno-mp4`;
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+        },
+        body: JSON.stringify({
+          generation_id: generationId,
+          output_index: outputIndex
+        })
+      });
+
+      let data: any = null;
+      try { data = await resp.json(); } catch { /* ignore non-JSON */ }
+
+      if (!resp.ok) {
+        const status = resp.status;
+        const message = data?.error || data?.message || 'Failed to start video generation';
+        const details = data?.details || data?.error || undefined;
+        throw { status, message, details };
+      }
+
       return data;
     },
     onSuccess: (data) => {

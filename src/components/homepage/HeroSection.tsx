@@ -71,7 +71,7 @@ export const HeroSection = () => {
             }
           }}
           autoplay={{
-            delay: 4000,
+            delay: 7000,
             disableOnInteraction: false,
             waitForTransition: true,
           }}

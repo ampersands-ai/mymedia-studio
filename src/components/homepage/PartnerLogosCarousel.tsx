@@ -73,12 +73,17 @@ export const PartnerLogosCarousel = () => {
           slidesPerView="auto"
           spaceBetween={40}
           loop={true}
-          speed={1500}
+          loopAdditionalSlides={partners.length}
+          speed={3000}
           autoplay={{
             delay: 0,
             disableOnInteraction: false,
+            pauseOnMouseEnter: false,
           }}
-          freeMode={true}
+          freeMode={{
+            enabled: true,
+            momentum: false,
+          }}
           allowTouchMove={false}
           className="partner-logos-swiper"
         >

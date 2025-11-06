@@ -19,14 +19,31 @@ serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     );
 
-    // Early authentication check with better error message
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
-      console.error('❌ Authentication failed:', authError);
+    // Explicitly extract and validate JWT token from Authorization header
+    const authHeader = req.headers.get('Authorization') || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+    
+    // Safe server-side logging without leaking token
+    console.log('🔐 Auth header received:', { hasAuth: !!authHeader, tokenLen: token.length });
+
+    if (!token) {
       return new Response(
         JSON.stringify({ 
-          error: 'Authentication required',
-          details: 'Please refresh the page and try again'
+          error: 'Authentication required', 
+          details: 'Missing bearer token' 
+        }), 
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Pass token explicitly to getUser to ensure proper authentication
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    if (authError || !user) {
+      console.error('❌ Authentication failed via token:', authError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Authentication failed', 
+          details: 'Invalid or expired token' 
         }), 
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );

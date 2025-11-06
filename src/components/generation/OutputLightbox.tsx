@@ -167,7 +167,7 @@ export const OutputLightbox = ({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent 
-          className="max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-sm shadow-2xl animate-slide-up"
+          className="max-w-2xl max-h-[90vh] overflow-hidden backdrop-blur-sm shadow-2xl animate-slide-up"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}

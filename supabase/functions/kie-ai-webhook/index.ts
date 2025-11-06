@@ -78,6 +78,7 @@ serve(async (req) => {
     
     // SECURITY: Verify the task exists in our database and fetch model metadata
     // Add retry logic for race condition where webhook arrives before DB update
+    // Remove parent_generation_id filter to allow child MP4 generations
     let generation: any = null;
     let findError: any = null;
     let retryCount = 0;
@@ -88,8 +89,9 @@ serve(async (req) => {
         .from('generations')
         .select('*, ai_models(model_name, estimated_time_seconds)')
         .eq('provider_task_id', taskId)
-        .is('parent_generation_id', null)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
       
       if (data) {
         generation = data;

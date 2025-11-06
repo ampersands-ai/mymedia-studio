@@ -363,7 +363,8 @@ serve(async (req) => {
 
     // Handle success (support multiple formats including Kie.ai items-based format)
     if (isSuccess && (resultJson || payload.data?.info || video_url || (Array.isArray(items) && items.length > 0))) {
-      console.log('Processing successful generation');
+      console.log('🎯 Processing successful generation - callbackType:', callbackType);
+      console.log('📊 Items array length:', items.length);
       
       // Support multiple URL formats
       let resultUrls: string[] = [];
@@ -371,45 +372,66 @@ serve(async (req) => {
       if (video_url) {
         // Direct video_url field
         resultUrls = [video_url];
+        console.log('📹 Using direct video_url:', video_url);
       } else if (resultJson) {
         // Old format: parse resultJson
         const result = JSON.parse(resultJson);
         resultUrls = result.resultUrls || [result.resultUrl].filter(Boolean);
+        console.log('📄 Using resultJson format, URLs found:', resultUrls.length);
       } else if (payload.data?.info) {
         // New format: use data.info
         resultUrls = payload.data.info.resultUrls || payload.data.info.result_urls || [];
+        console.log('ℹ️ Using data.info format, URLs found:', resultUrls.length);
       } else if (Array.isArray(items) && items.length > 0) {
         // Kie.ai items-based format - extract URLs based on generation type
-        console.log('Processing Kie.ai items-based format for type:', generation.type);
+        console.log('🔍 Processing Kie.ai items-based format');
+        console.log('📦 Generation type:', generation.type);
+        console.log('📦 Items count:', items.length);
+        
+        // Log each item's structure for debugging
+        items.forEach((item: any, idx: number) => {
+          console.log(`📦 Item ${idx + 1} keys:`, Object.keys(item));
+          if (generation.type === 'audio') {
+            console.log(`🎵 Item ${idx + 1} audio fields:`, {
+              audio_url: item?.audio_url || 'EMPTY',
+              source_audio_url: item?.source_audio_url || 'EMPTY',
+              stream_audio_url: item?.stream_audio_url || 'EMPTY'
+            });
+          }
+        });
         
         if (generation.type === 'audio') {
           // For audio: prefer audio_url, fallback to source_audio_url, then stream_audio_url
           resultUrls = items
             .map((item: any) => item?.audio_url || item?.source_audio_url || item?.stream_audio_url)
             .filter(Boolean);
-          console.log('Extracted audio URLs:', resultUrls);
+          console.log('🎵 Extracted audio URLs:', resultUrls);
+          console.log('🎵 Audio URLs count:', resultUrls.length);
         } else if (generation.type === 'image') {
           // For images: prefer image_url, fallback to source_image_url
           resultUrls = items
             .map((item: any) => item?.image_url || item?.source_image_url)
             .filter(Boolean);
-          console.log('Extracted image URLs:', resultUrls);
+          console.log('🖼️ Extracted image URLs:', resultUrls);
+          console.log('🖼️ Image URLs count:', resultUrls.length);
         } else {
           // For video/other: try multiple fields
           resultUrls = items
             .map((item: any) => item?.video_url || item?.source_video_url || item?.url)
             .filter(Boolean);
-          console.log('Extracted video/other URLs:', resultUrls);
+          console.log('🎬 Extracted video/other URLs:', resultUrls);
+          console.log('🎬 Video URLs count:', resultUrls.length);
         }
       }
 
       if (resultUrls.length === 0) {
-        console.error('No result URLs found. Payload keys:', Object.keys(payload.data || {}));
-        console.error('Items sample:', items[0] ? Object.keys(items[0]) : 'No items');
+        console.error('❌ No result URLs found. Payload keys:', Object.keys(payload.data || {}));
+        console.error('❌ Items sample:', items[0] ? Object.keys(items[0]) : 'No items');
+        console.error('❌ Full items array:', JSON.stringify(items, null, 2));
         throw new Error('No result URLs found in response');
       }
 
-      console.log(`Found ${resultUrls.length} output(s) to process`);
+      console.log(`✅ Found ${resultUrls.length} output(s) to process`);
 
       // Process first output (update parent generation)
       const firstUrl = resultUrls[0];
@@ -512,17 +534,20 @@ serve(async (req) => {
       }
 
       // Process additional outputs (2nd, 3rd, etc.)
+      console.log(`🔄 Checking for additional outputs. Total URLs: ${resultUrls.length}`);
+      
       if (resultUrls.length > 1) {
-        console.log(`Processing ${resultUrls.length - 1} additional output(s)`);
+        console.log(`🎉 Found ${resultUrls.length - 1} additional output(s) to process!`);
+        console.log(`📋 Additional URLs:`, resultUrls.slice(1));
         
         for (let i = 1; i < resultUrls.length; i++) {
           try {
             const url = resultUrls[i];
-            console.log(`Downloading output ${i + 1} from:`, url);
+            console.log(`⬇️ [Output ${i + 1}/${resultUrls.length}] Starting download from:`, url);
 
             const response = await fetch(url);
             if (!response.ok) {
-              console.error(`Failed to download output ${i + 1}:`, response.status);
+              console.error(`❌ [Output ${i + 1}] Download failed with status:`, response.status);
               continue;
             }
 
@@ -531,8 +556,11 @@ serve(async (req) => {
             const type = response.headers.get('content-type') || '';
             const ext = determineFileExtension(type, url);
 
+            console.log(`✅ [Output ${i + 1}] Downloaded successfully. Size: ${data.length} bytes, Extension: ${ext}`);
+
             // Create a unique ID for this child generation
             const childId = crypto.randomUUID();
+            console.log(`🆔 [Output ${i + 1}] Generated child ID:`, childId);
 
             // Upload child output to storage
             const childStoragePath = await uploadToStorage(
@@ -544,10 +572,10 @@ serve(async (req) => {
               generation.type
             );
 
-            console.log(`Uploaded output ${i + 1} to storage:`, childStoragePath);
+            console.log(`☁️ [Output ${i + 1}] Uploaded to storage:`, childStoragePath);
 
             // Create child generation record
-            const { error: insertError } = await supabase
+            const { data: insertData, error: insertError } = await supabase
               .from('generations')
               .insert({
                 id: childId,
@@ -570,17 +598,28 @@ serve(async (req) => {
                 parent_generation_id: generation.id,
                 output_index: i,
                 is_batch_output: true
-              });
+              })
+              .select();
 
             if (insertError) {
-              console.error(`Failed to create child generation ${i + 1}:`, insertError);
+              console.error(`❌ [Output ${i + 1}] Failed to create child generation:`, insertError);
+              console.error(`❌ [Output ${i + 1}] Insert error details:`, JSON.stringify(insertError, null, 2));
             } else {
-              console.log(`Child generation ${i + 1} created successfully:`, childId);
+              console.log(`✅ [Output ${i + 1}] Child generation created successfully!`);
+              console.log(`✅ [Output ${i + 1}] Child generation ID:`, childId);
+              console.log(`✅ [Output ${i + 1}] Parent generation ID:`, generation.id);
+              console.log(`✅ [Output ${i + 1}] Output index:`, i);
             }
           } catch (childError: any) {
-            console.error(`Error processing output ${i + 1}:`, childError.message);
+            console.error(`❌ [Output ${i + 1}] Error processing:`, childError.message);
+            console.error(`❌ [Output ${i + 1}] Full error:`, childError);
+            console.error(`❌ [Output ${i + 1}] Stack trace:`, childError.stack);
           }
         }
+        
+        console.log(`✅ Finished processing all ${resultUrls.length - 1} additional output(s)`);
+      } else {
+        console.log(`ℹ️ No additional outputs to process (only 1 URL found)`);
       }
 
       // Log audit

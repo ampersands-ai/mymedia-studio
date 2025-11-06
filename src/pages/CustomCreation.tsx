@@ -153,7 +153,7 @@ const CustomCreation = () => {
   const { generateVideo, isGenerating: isGeneratingVideo } = useGenerateSunoVideo();
   const [generatingVideoIndex, setGeneratingVideoIndex] = useState<number | null>(null);
 
-  // Query child video generations for audio outputs - includes ALL statuses with polling
+  // Query child generations for audio outputs - includes both audio and video types
   const { data: childVideoGenerations = [] } = useQuery({
     queryKey: ['child-video-generations', pollingGenerationId],
     queryFn: async () => {
@@ -163,7 +163,7 @@ const CustomCreation = () => {
         .from('generations')
         .select('id, storage_path, output_index, status, type')
         .eq('parent_generation_id', pollingGenerationId)
-        .eq('type', 'video')
+        .in('type', ['audio', 'video'])
         .order('output_index', { ascending: true });
       
       if (error) throw error;
@@ -560,7 +560,7 @@ const CustomCreation = () => {
             .from('generations')
             .select('id, storage_path, output_index, status, type')
             .eq('parent_generation_id', generationId)
-            .eq('type', 'video')
+            .in('type', ['audio', 'video'])
             .order('output_index', { ascending: true });
 
           // Query will auto-update via invalidation

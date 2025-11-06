@@ -604,36 +604,7 @@ serve(async (req) => {
       const publicUrl = urlData?.publicUrl || null;
       console.log('Generated public URL:', publicUrl);
 
-      // Update generation record to completed
-      const { error: updateError } = await supabase
-        .from('generations')
-        .update({
-          status: 'completed',
-          storage_path: storagePath,
-          output_url: publicUrl,
-          file_size_bytes: output_data.length,
-          provider_response: {
-            ...payload,
-            // Extract key metrics for easy querying
-            kie_credits_consumed: consumeCredits || null,
-            kie_credits_remaining: remainedCredits || null,
-            kie_processing_time_seconds: costTime || null,
-            our_tokens_charged: generation.tokens_used, // For comparison
-            timestamp: new Date().toISOString()
-          },
-          output_index: 0,
-          is_batch_output: resultUrls.length > 1
-        })
-        .eq('id', generation.id);
-
-      if (updateError) {
-        console.error('Failed to update generation:', updateError);
-        throw updateError;
-      }
-
-      console.log('Generation completed successfully:', generation.id);
-
-      // Compare our token calculation with Kie's actual charges
+      // Compare our token calculation with Kie's actual charges (before completion)
       if (consumeCredits !== undefined && consumeCredits !== generation.tokens_used) {
         console.warn('Credit mismatch detected:', {
           generation_id: generation.id,
@@ -643,7 +614,7 @@ serve(async (req) => {
         });
       }
 
-      // Insert audit record for credit tracking
+      // Insert audit record for credit tracking (before completion)
       const { error: auditError } = await supabase
         .from('kie_credit_audits')
         .insert({
@@ -665,7 +636,7 @@ serve(async (req) => {
         // Don't fail the generation, just log
       }
 
-      // Process additional outputs (2nd, 3rd, etc.)
+      // Process additional outputs (2nd, 3rd, etc.) BEFORE marking parent as complete
       console.log(`🔄 Checking for additional outputs. Total URLs: ${resultUrls.length}`);
       
       if (resultUrls.length > 1) {
@@ -763,6 +734,36 @@ serve(async (req) => {
       } else {
         console.log(`ℹ️ No additional outputs to process (only 1 URL found)`);
       }
+
+      // NOW update parent generation to completed (after all children are created)
+      console.log('🎯 All outputs processed. Now marking parent as completed...');
+      const { error: updateError } = await supabase
+        .from('generations')
+        .update({
+          status: 'completed',
+          storage_path: storagePath,
+          output_url: publicUrl,
+          file_size_bytes: output_data.length,
+          provider_response: {
+            ...payload,
+            // Extract key metrics for easy querying
+            kie_credits_consumed: consumeCredits || null,
+            kie_credits_remaining: remainedCredits || null,
+            kie_processing_time_seconds: costTime || null,
+            our_tokens_charged: generation.tokens_used, // For comparison
+            timestamp: new Date().toISOString()
+          },
+          output_index: 0,
+          is_batch_output: resultUrls.length > 1
+        })
+        .eq('id', generation.id);
+
+      if (updateError) {
+        console.error('Failed to update generation:', updateError);
+        throw updateError;
+      }
+
+      console.log('✅ Parent generation marked as completed:', generation.id);
 
       // Log audit
       await supabase.from('audit_logs').insert({

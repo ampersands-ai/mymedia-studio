@@ -98,6 +98,11 @@ export const HeroSection = () => {
         
         {/* Enhanced gradient vignette overlay for better text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
+        
+        {/* Video credit label */}
+        <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-20 px-3 py-1.5 rounded-lg bg-black/50 backdrop-blur-sm">
+          <span className="text-xs sm:text-sm text-white/80 font-medium">made on artifio.ai</span>
+        </div>
       </div>
 
       {/* Content overlay with backdrop blur */}

@@ -19,6 +19,7 @@ export function VideoGenerationProgress({
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isChecking, setIsChecking] = useState(false);
 
+  // Timer effect
   useEffect(() => {
     const interval = setInterval(() => {
       setElapsedSeconds(prev => prev + 1);
@@ -26,6 +27,37 @@ export function VideoGenerationProgress({
 
     return () => clearInterval(interval);
   }, []);
+
+  // Automatic polling effect - check status every 5 seconds
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const { data: generation } = await supabase
+          .from('generations')
+          .select('status')
+          .eq('id', generationId)
+          .single();
+
+        if (generation?.status === 'completed' || generation?.status === 'failed') {
+          console.log(`✅ Video generation ${generation.status}:`, generationId);
+          onStatusChange?.();
+        }
+      } catch (error) {
+        console.error('Auto-polling error:', error);
+      }
+    };
+
+    // Initial check after 5 seconds
+    const initialTimeout = setTimeout(checkStatus, 5000);
+    
+    // Then check every 5 seconds
+    const pollInterval = setInterval(checkStatus, 5000);
+
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(pollInterval);
+    };
+  }, [generationId, onStatusChange]);
 
   const handleCheckStatus = async () => {
     setIsChecking(true);

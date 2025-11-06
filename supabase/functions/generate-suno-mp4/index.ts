@@ -187,7 +187,7 @@ serve(async (req) => {
           audioId,
           author: author || null,
           domain_name: domain_name || null,
-          webhook_verify_token: webhookVerifyToken,
+          _webhook_token: webhookVerifyToken,
           source: 'mp4_from_suno'
         }
       })
@@ -242,6 +242,15 @@ serve(async (req) => {
 
     const kieData = await kieResponse.json();
 
+    console.log('📥 Kie.ai API Response:', JSON.stringify(kieData, null, 2));
+    console.log('📊 Response structure:', {
+      hasCode: 'code' in kieData,
+      hasData: 'data' in kieData,
+      hasTaskId: !!kieData.data?.taskId,
+      code: kieData.code,
+      msg: kieData.msg
+    });
+
     if (!kieResponse.ok) {
       console.error('❌ Kie.ai API error:', { 
         status: kieResponse.status, 
@@ -270,8 +279,32 @@ serve(async (req) => {
       );
     }
 
+    // Validate response structure
+    if (kieData.code !== 200 || !kieData.data?.taskId) {
+      console.error('❌ Invalid Kie.ai response:', JSON.stringify(kieData, null, 2));
+      
+      // Fail generation and refund
+      await supabaseClient
+        .from('generations')
+        .update({ 
+          status: 'failed',
+          provider_response: kieData 
+        })
+        .eq('id', videoGen.id);
+      
+      await supabaseClient.rpc('increment_tokens', {
+        user_id_param: user.id,
+        amount: MP4_TOKEN_COST
+      });
+      
+      return new Response(
+        JSON.stringify({ error: `Invalid API response: ${kieData.msg || 'Missing taskId'}` }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Update generation with provider task ID
-    const mp4TaskId = kieData.taskId || kieData.id;
+    const mp4TaskId = kieData.data?.taskId;
     await supabaseClient
       .from('generations')
       .update({ 

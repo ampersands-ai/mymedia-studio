@@ -91,26 +91,24 @@ serve(async (req) => {
       throw new Error('KIE_AI_API_KEY not configured');
     }
 
-    const kieResponse = await fetch('https://api.kie.ai/v1/multimedia/audio2video', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': kieApiKey
-      },
-      body: JSON.stringify({
-        action: 'query',
-        taskId: kieTaskId
-      })
-    });
+    const kieResponse = await fetch(
+      `https://api.kie.ai/api/v1/mp4/record-info?taskId=${kieTaskId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${kieApiKey}`
+        }
+      }
+    );
 
     const kieData = await kieResponse.json();
     console.log('📊 Kie.ai response:', JSON.stringify(kieData));
 
     // Check if task completed successfully
-    const state = kieData.data?.state;
-    const videoUrl = kieData.data?.video_url;
+    const successFlag = kieData.data?.successFlag;
+    const videoUrl = kieData.data?.response?.videoUrl;
 
-    if (state === 'success' && videoUrl) {
+    if (successFlag === 'SUCCESS' && videoUrl) {
       console.log('✅ Task completed! Processing video:', videoUrl);
 
       // Download and store video
@@ -160,7 +158,11 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
 
-    } else if (state === 'failed' || kieData.code === 400) {
+    } else if (
+      successFlag === 'CREATE_TASK_FAILED' || 
+      successFlag === 'GENERATE_MP4_FAILED' ||
+      kieData.data?.errorCode !== 0
+    ) {
       console.error('❌ Task failed on Kie.ai side');
 
       // Mark as failed and refund

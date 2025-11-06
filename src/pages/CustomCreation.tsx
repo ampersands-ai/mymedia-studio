@@ -491,10 +491,21 @@ const CustomCreation = () => {
           const validOutputs = allOutputs.filter(o => !!o.storage_path);
           console.log('🔍 Valid outputs (with storage_path):', validOutputs.length, validOutputs);
 
+          // Only proceed if we have at least one valid output
+          if (validOutputs.length === 0) {
+            console.error('❌ No valid outputs found with storage_path');
+            toast.error('Generation completed but outputs are not ready. Please check History.', {
+              id: 'generation-progress'
+            });
+            setPollingGenerationId(null);
+            setLocalGenerating(false);
+            return;
+          }
+
           setGeneratedOutputs(validOutputs);
           
-          // Set primary output: prefer first valid child if parent has no storage_path
-          const primaryOutput = validOutputs[0]?.storage_path ?? parentData.storage_path ?? null;
+          // Set primary output: use first valid output (guaranteed to exist)
+          const primaryOutput = validOutputs[0].storage_path;
           console.log('🎯 Selected primary output:', primaryOutput);
           setGeneratedOutput(primaryOutput);
           setSelectedOutputIndex(0); // Reset to newest generation

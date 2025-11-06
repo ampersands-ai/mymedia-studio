@@ -16,7 +16,7 @@ import { useVideoPreload } from "@/hooks/useVideoPreload";
 import { extractPosterFrame, PosterCache } from "@/utils/video-poster";
 
 interface OptimizedGenerationPreviewProps {
-  storagePath: string;
+  storagePath: string | null;
   contentType: string;
   className?: string;
 }
@@ -30,6 +30,21 @@ export const OptimizedGenerationPreview = ({
   contentType, 
   className 
 }: OptimizedGenerationPreviewProps) => {
+  // Handle null storage path
+  if (!storagePath) {
+    return (
+      <div className={cn("flex items-center justify-center bg-muted rounded-lg min-h-[200px]", className)}>
+        {contentType === "video" ? (
+          <Video className="h-8 w-8 text-muted-foreground" />
+        ) : contentType === "audio" ? (
+          <Music className="h-8 w-8 text-muted-foreground" />
+        ) : (
+          <div className="h-8 w-8 text-muted-foreground" />
+        )}
+      </div>
+    );
+  }
+
   const { shareFile, canShare } = useNativeShare();
   const { downloadFile } = useNativeDownload();
   const isMobile = useIsMobile();

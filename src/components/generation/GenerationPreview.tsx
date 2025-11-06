@@ -12,12 +12,21 @@ import { triggerHaptic } from "@/utils/capacitor-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface GenerationPreviewProps {
-  storagePath: string;
+  storagePath: string | null;
   contentType: string;
   className?: string;
 }
 
 export const GenerationPreview = ({ storagePath, contentType, className }: GenerationPreviewProps) => {
+  // Handle null storage path
+  if (!storagePath) {
+    return (
+      <div className={`${className} flex items-center justify-center bg-muted`}>
+        <ImageIcon className="h-8 w-8 text-muted-foreground" />
+      </div>
+    );
+  }
+
   // Use content-type-specific hooks from new architecture
   const { url: imageUrl, isLoading: imageLoading, error: imageError } = useImageUrl(
     contentType === 'image' ? storagePath : null,

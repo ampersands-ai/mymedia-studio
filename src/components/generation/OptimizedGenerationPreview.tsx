@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { OptimizedGenerationImage } from "./OptimizedGenerationImage";
+import { AudioWaveform } from "./AudioWaveform";
 import { Video, Music, Download, Share2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -199,7 +200,7 @@ export const OptimizedGenerationPreview = ({
     );
   }
 
-  // For audio - show audio player with direct public URL
+  // For audio - show waveform visualization
   if (contentType === "audio") {
     if (!audioUrl || !storagePath) {
       return (
@@ -215,49 +216,10 @@ export const OptimizedGenerationPreview = ({
     }
 
     return (
-      <div className="relative group">
-        <div className="flex flex-col gap-4 p-6 bg-gradient-to-br from-background to-muted/30 rounded-lg border">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <Music className="h-6 w-6 text-green-600 dark:text-green-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">Audio File</p>
-              <p className="text-xs text-muted-foreground">Generated audio content</p>
-            </div>
-          </div>
-          
-          <audio
-            src={audioUrl}
-            className="w-full"
-            controls
-            preload="metadata"
-            onError={() => {
-              console.warn('Audio load failed, trying fallback URL');
-              setAudioError(true);
-            }}
-          />
-          
-          {/* Action buttons */}
-          <div className="flex gap-2 justify-end">
-            {canShare && (
-              <Button variant="outline" size="sm" onClick={(e) => {
-                e.stopPropagation();
-                handleShare();
-              }}>
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
-              </Button>
-            )}
-            <Button variant="outline" size="sm" onClick={(e) => {
-              e.stopPropagation();
-              handleDownload();
-            }}>
-              <Download className="h-4 w-4 mr-2" />
-              Download
-            </Button>
-          </div>
-        </div>
+      <div className="p-6 bg-gradient-to-br from-background to-muted/30 rounded-lg border">
+        <AudioWaveform 
+          audioUrl={audioError && fallbackSignedUrl ? fallbackSignedUrl : audioUrl} 
+        />
       </div>
     );
   }

@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { OptimizedGenerationPreview } from "./OptimizedGenerationPreview";
+import { downloadSingleOutput } from "@/lib/download-utils";
 
 interface OutputGridProps {
   outputs: Array<{
@@ -14,6 +15,7 @@ interface OutputGridProps {
   onDownloadAll?: () => void;
   onGenerateVideo?: (outputIndex: number) => void;
   generatingVideoIndex?: number | null;
+  onDownloadSuccess?: () => void;
 }
 
 export const OutputGrid = ({ 
@@ -22,7 +24,8 @@ export const OutputGrid = ({
   onSelectOutput, 
   onDownloadAll,
   onGenerateVideo,
-  generatingVideoIndex
+  generatingVideoIndex,
+  onDownloadSuccess
 }: OutputGridProps) => {
   const isAudio = contentType === 'audio';
   // Single output - show full size
@@ -87,6 +90,19 @@ export const OutputGrid = ({
               >
                 #{output.output_index + 1}
               </Badge>
+
+              {/* Download button (top-left) */}
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute top-2 left-2 z-10 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  downloadSingleOutput(output.storage_path, output.output_index, contentType, onDownloadSuccess);
+                }}
+              >
+                <Download className="h-4 w-4" />
+              </Button>
 
               {/* Thumbnail */}
               <div className={isAudio 

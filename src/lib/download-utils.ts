@@ -2,6 +2,41 @@ import JSZip from 'jszip';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export async function downloadSingleOutput(
+  storagePath: string,
+  outputIndex: number,
+  contentType: string,
+  onDownloadSuccess?: () => void
+) {
+  try {
+    const { data, error } = await supabase.storage
+      .from('generated-content')
+      .createSignedUrl(storagePath, 60);
+    
+    if (error || !data?.signedUrl) {
+      toast.error('Failed to create download link');
+      return;
+    }
+    
+    const response = await fetch(data.signedUrl);
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const extension = storagePath.split('.').pop() || 'file';
+    a.download = `output-${outputIndex + 1}-${Date.now()}.${extension}`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    toast.success('Download started!');
+    onDownloadSuccess?.();
+  } catch (error) {
+    console.error('Download error:', error);
+    toast.error('Failed to download');
+  }
+}
+
 export async function downloadMultipleOutputs(
   outputs: Array<{ id: string; storage_path: string; output_index: number }>,
   contentType: string,
@@ -9,33 +44,7 @@ export async function downloadMultipleOutputs(
 ) {
   // Single output - direct download using signed URL
   if (outputs.length === 1) {
-    try {
-      const { data, error } = await supabase.storage
-        .from('generated-content')
-        .createSignedUrl(outputs[0].storage_path, 60);
-      
-      if (error || !data?.signedUrl) {
-        toast.error('Failed to create download link');
-        return;
-      }
-      
-      const response = await fetch(data.signedUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const extension = outputs[0].storage_path.split('.').pop() || 'file';
-      a.download = `output-1-${Date.now()}.${extension}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      toast.success('Download started!');
-      onDownloadSuccess?.();
-    } catch (error) {
-      console.error('Download error:', error);
-      toast.error('Failed to download');
-    }
+    await downloadSingleOutput(outputs[0].storage_path, outputs[0].output_index, contentType, onDownloadSuccess);
     return;
   }
 

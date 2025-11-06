@@ -370,12 +370,12 @@ const CustomCreation = () => {
 
       // Check if generation is complete or failed
       if (parentData.status === 'completed' || parentData.status === 'failed') {
-        // Stop polling
+        // Stop polling interval but keep pollingGenerationId for video generation
         if (pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current);
           pollIntervalRef.current = null;
         }
-        setPollingGenerationId(null);
+        // Don't clear pollingGenerationId here - keep it for video generation button
         setLocalGenerating(false);
 
         if (parentData.status === 'failed') {
@@ -1655,11 +1655,11 @@ const CustomCreation = () => {
                               );
                             }}
                             onGenerateVideo={
-                              selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type === 'audio' && pollingGenerationId
+                              selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type === 'audio' && generatedOutputs.length > 0
                                 ? (outputIndex) => {
                                     setGeneratingVideoIndex(outputIndex);
                                     generateVideo({ 
-                                      generationId: pollingGenerationId, 
+                                      generationId: pollingGenerationId || generatedOutputs[0].id, 
                                       outputIndex 
                                     }, {
                                       onSuccess: () => {
@@ -1673,6 +1673,11 @@ const CustomCreation = () => {
                                 : undefined
                             }
                             generatingVideoIndex={generatingVideoIndex}
+                            onDownloadSuccess={() => {
+                              if (progress && !progress.checklist.downloadedResult) {
+                                updateProgress({ downloadedResult: true });
+                              }
+                            }}
                           />
 
                           {/* Display child video generations */}
@@ -1730,41 +1735,6 @@ const CustomCreation = () => {
                             }}
                           />
 
-                          {/* Action Buttons Row */}
-                          {generatedOutputs.length > 0 && (
-                            <div className="grid grid-cols-2 gap-2 md:gap-3 animate-fade-in">
-                              <Button
-                                onClick={async () => {
-                                  await downloadMultipleOutputs(
-                                    generatedOutputs,
-                                    selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type || "image",
-                                    () => {
-                                      if (progress && !progress.checklist.downloadedResult) {
-                                        updateProgress({ downloadedResult: true });
-                                      }
-                                    }
-                                  );
-                                }}
-                                className="w-full bg-primary-500 hover:bg-primary-600 text-neutral-900 font-bold border border-primary-600 shadow-sm hover:shadow-md transition-all"
-                                size="default"
-                              >
-                                <Download className="h-4 w-4 mr-2" />
-                                Download
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  // TODO: Implement share functionality
-                                  toast.info("Share feature coming soon!");
-                                }}
-                                variant="outline"
-                                className="w-full border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all"
-                                size="default"
-                              >
-                                <Share2 className="h-4 w-4 mr-2" />
-                                Share
-                              </Button>
-                            </div>
-                          )}
 
                           {/* Caption & Hashtags Display */}
                           {captionData && (

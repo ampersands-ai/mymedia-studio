@@ -290,10 +290,34 @@ serve(async (req) => {
     console.log('✅ Layer 4 passed: Idempotency check completed');
     console.log('🔒 All security layers passed - processing webhook for generation:', generation.id);
 
-    // Items array
-    const items = payload.data?.data || [];
+    // Parse items from resultJson (KIE.ai sends it as JSON string)
+    let items = [];
+    try {
+      if (resultJson) {
+        const parsed = JSON.parse(resultJson);
+        // Convert resultUrls array to items format expected by helper functions
+        if (parsed.resultUrls && Array.isArray(parsed.resultUrls)) {
+          items = parsed.resultUrls.map((url: string) => ({
+            image_url: url,
+            audio_url: url,
+            video_url: url,
+            source_image_url: url,
+            source_audio_url: url,
+            source_video_url: url
+          }));
+        }
+      }
+      // Fallback to old format
+      if (items.length === 0) {
+        items = payload.data?.data || [];
+      }
+    } catch (e) {
+      console.error('Failed to parse resultJson:', e);
+      items = payload.data?.data || [];
+    }
     
     console.log('Callback type:', callbackType, 'Items count:', items.length);
+    console.log('Parsed items:', JSON.stringify(items, null, 2));
 
     // Support both old format (state field) and new format (code field)
     const isSuccess = state === 'success' || payload.code === 200 || (payload.msg && payload.msg.toLowerCase().includes('success'));

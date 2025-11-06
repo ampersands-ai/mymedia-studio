@@ -205,18 +205,25 @@ serve(async (req) => {
     
     console.log('✅ Layer 3 passed: Webhook timing validated');
     
+    // Extract Kie.ai callback type early for idempotency
+    const callbackType = payload.data?.callbackType || payload.data?.callback_type || 'unknown';
+    
     // === LAYER 4: IDEMPOTENCY PROTECTION ===
-    // Check if we've already processed this webhook (duplicate/replay)
+    // Check if we've already processed this specific webhook callback
+    // Use taskId + callbackType to allow multiple callbacks per task (text, first, complete)
+    const idempotencyKey = `${taskId}-${callbackType}`;
+    
     const { data: existingEvent, error: eventCheckError } = await supabase
       .from('webhook_events')
       .select('id')
       .eq('event_type', 'kie_ai_callback')
-      .eq('idempotency_key', taskId)
+      .eq('idempotency_key', idempotencyKey)
       .maybeSingle();
 
     if (existingEvent) {
       console.warn('⚠️ SECURITY LAYER 4: Duplicate webhook detected (idempotency check)', {
         taskId,
+        callbackType,
         generation_id: generation.id,
         previous_event_id: existingEvent.id
       });
@@ -227,6 +234,7 @@ serve(async (req) => {
         metadata: {
           generation_id: generation.id,
           task_id: taskId,
+          callback_type: callbackType,
           previous_event_id: existingEvent.id
         }
       });
@@ -246,7 +254,7 @@ serve(async (req) => {
       .from('webhook_events')
       .insert({
         event_type: 'kie_ai_callback',
-        idempotency_key: taskId
+        idempotency_key: idempotencyKey
       });
 
     if (eventInsertError) {
@@ -257,8 +265,7 @@ serve(async (req) => {
     console.log('✅ Layer 4 passed: Idempotency check completed');
     console.log('🔒 All security layers passed - processing webhook for generation:', generation.id);
 
-    // Extract Kie.ai callback type and items array
-    const callbackType = payload.data?.callbackType || payload.data?.callback_type;
+    // Items array
     const items = payload.data?.data || [];
     
     console.log('Callback type:', callbackType, 'Items count:', items.length);

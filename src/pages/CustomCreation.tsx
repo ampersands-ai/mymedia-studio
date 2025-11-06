@@ -397,13 +397,18 @@ const CustomCreation = () => {
             duration: 8000
           });
         } else if (parentData.status === 'completed') {
+          console.log('🔍 Parent generation data:', parentData);
+          
           // Fetch all child audio outputs
-          const { data: childrenData } = await supabase
+          const { data: childrenData, error: childrenError } = await supabase
             .from('generations')
             .select('id, storage_path, output_index, type')
             .eq('parent_generation_id', generationId)
             .eq('type', parentData.type) // Only fetch same type (audio/image/video)
             .order('output_index', { ascending: true });
+
+          console.log('🔍 Child outputs found:', childrenData?.length || 0, childrenData);
+          if (childrenError) console.error('❌ Error fetching children:', childrenError);
 
           // Fetch child video generations (MP4s from audio)
           const { data: videoChildren } = await supabase
@@ -412,6 +417,8 @@ const CustomCreation = () => {
             .eq('parent_generation_id', generationId)
             .eq('type', 'video')
             .order('output_index', { ascending: true });
+
+          console.log('🔍 Video children found:', videoChildren?.length || 0, videoChildren);
 
           // Update child video generations state
           if (videoChildren) {
@@ -439,6 +446,8 @@ const CustomCreation = () => {
             },
             ...(childrenData || [])
           ];
+
+          console.log('🔍 All outputs combined:', allOutputs.length, allOutputs);
 
           setGeneratedOutputs(allOutputs);
           setGeneratedOutput(parentData.storage_path); // For backward compat

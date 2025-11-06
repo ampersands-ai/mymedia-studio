@@ -1686,6 +1686,173 @@ export type Database = {
       }
     }
     Views: {
+      community_creations_public: {
+        Row: {
+          content_type: string | null
+          created_at: string | null
+          generation_id: string | null
+          id: string | null
+          is_featured: boolean | null
+          likes_count: number | null
+          model_id: string | null
+          model_record_id: string | null
+          output_url: string | null
+          prompt: string | null
+          shared_at: string | null
+          user_id: string | null
+          views_count: number | null
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string | null
+          generation_id?: string | null
+          id?: string | null
+          is_featured?: boolean | null
+          likes_count?: number | null
+          model_id?: string | null
+          model_record_id?: string | null
+          output_url?: string | null
+          prompt?: string | null
+          shared_at?: string | null
+          user_id?: never
+          views_count?: number | null
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string | null
+          generation_id?: string | null
+          id?: string | null
+          is_featured?: boolean | null
+          likes_count?: number | null
+          model_id?: string | null
+          model_record_id?: string | null
+          output_url?: string | null
+          prompt?: string | null
+          shared_at?: string | null
+          user_id?: never
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_creations_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: true
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_creations_model_record_id_fkey"
+            columns: ["model_record_id"]
+            isOneToOne: false
+            referencedRelation: "ai_models"
+            referencedColumns: ["record_id"]
+          },
+        ]
+      }
+      template_landing_pages_public: {
+        Row: {
+          category_slug: string | null
+          created_at: string | null
+          default_settings: Json | null
+          demo_video_url: string | null
+          example_images: Json | null
+          faqs: Json | null
+          hero_after_image: string | null
+          hero_before_image: string | null
+          id: string | null
+          is_published: boolean | null
+          keywords: string[] | null
+          long_description: string | null
+          meta_description: string | null
+          meta_title: string | null
+          published_at: string | null
+          related_template_ids: string[] | null
+          schema_markup: Json | null
+          slug: string | null
+          steps: Json | null
+          subtitle: string | null
+          target_audience: string[] | null
+          thumbnail_url: string | null
+          tips: Json | null
+          title: string | null
+          token_cost: number | null
+          tutorial_content: string | null
+          updated_at: string | null
+          use_cases: Json | null
+          workflow_id: string | null
+        }
+        Insert: {
+          category_slug?: string | null
+          created_at?: string | null
+          default_settings?: Json | null
+          demo_video_url?: string | null
+          example_images?: Json | null
+          faqs?: Json | null
+          hero_after_image?: string | null
+          hero_before_image?: string | null
+          id?: string | null
+          is_published?: boolean | null
+          keywords?: string[] | null
+          long_description?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          related_template_ids?: string[] | null
+          schema_markup?: Json | null
+          slug?: string | null
+          steps?: Json | null
+          subtitle?: string | null
+          target_audience?: string[] | null
+          thumbnail_url?: string | null
+          tips?: Json | null
+          title?: string | null
+          token_cost?: number | null
+          tutorial_content?: string | null
+          updated_at?: string | null
+          use_cases?: Json | null
+          workflow_id?: string | null
+        }
+        Update: {
+          category_slug?: string | null
+          created_at?: string | null
+          default_settings?: Json | null
+          demo_video_url?: string | null
+          example_images?: Json | null
+          faqs?: Json | null
+          hero_after_image?: string | null
+          hero_before_image?: string | null
+          id?: string | null
+          is_published?: boolean | null
+          keywords?: string[] | null
+          long_description?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          related_template_ids?: string[] | null
+          schema_markup?: Json | null
+          slug?: string | null
+          steps?: Json | null
+          subtitle?: string | null
+          target_audience?: string[] | null
+          thumbnail_url?: string | null
+          tips?: Json | null
+          title?: string | null
+          token_cost?: number | null
+          tutorial_content?: string | null
+          updated_at?: string | null
+          use_cases?: Json | null
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_category"
+            columns: ["category_slug"]
+            isOneToOne: false
+            referencedRelation: "template_categories"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       user_content_history: {
         Row: {
           ai_caption: string | null

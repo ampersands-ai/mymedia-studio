@@ -58,11 +58,10 @@ export function useTemplateLanding(category: string, slug: string) {
     queryKey: ["template-landing", category, slug],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
-        .from("template_landing_pages")
+        .from("template_landing_pages_public")
         .select("*")
         .eq("category_slug", category)
         .eq("slug", slug)
-        .eq("is_published", true)
         .single();
 
       if (error) throw error;
@@ -95,10 +94,9 @@ export function useRelatedTemplates(templateIds: string[] | null) {
       if (!templateIds || templateIds.length === 0) return [];
 
       const { data, error } = await (supabase as any)
-        .from("template_landing_pages")
+        .from("template_landing_pages_public")
         .select("id, slug, category_slug, title, subtitle, thumbnail_url, token_cost")
         .in("id", templateIds)
-        .eq("is_published", true)
         .limit(4);
 
       if (error) throw error;

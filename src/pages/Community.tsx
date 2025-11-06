@@ -62,7 +62,7 @@ const Community = () => {
       setLoading(true);
       
       let query = supabase
-        .from("community_creations")
+        .from("community_creations_public")
         .select(`
           *,
           generations!inner(storage_path, workflow_execution_id)

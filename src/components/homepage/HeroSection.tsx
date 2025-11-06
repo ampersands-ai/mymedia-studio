@@ -89,7 +89,6 @@ export const HeroSection = () => {
                 autoPlay
                 muted
                 playsInline
-                loop
                 className="w-full h-screen object-cover"
               />
             </SwiperSlide>

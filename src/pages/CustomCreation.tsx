@@ -402,7 +402,7 @@ const CustomCreation = () => {
           // Fetch all child audio outputs
           const { data: childrenData, error: childrenError } = await supabase
             .from('generations')
-            .select('id, storage_path, output_index, type')
+            .select('id, storage_path, output_url, output_index, type')
             .eq('parent_generation_id', generationId)
             .eq('type', parentData.type) // Only fetch same type (audio/image/video)
             .order('output_index', { ascending: true });

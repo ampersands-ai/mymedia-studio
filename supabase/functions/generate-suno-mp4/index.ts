@@ -19,14 +19,20 @@ serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     );
 
+    // Early authentication check with better error message
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     if (authError || !user) {
       console.error('❌ Authentication failed:', authError);
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }), 
+        JSON.stringify({ 
+          error: 'Authentication required',
+          details: 'Please refresh the page and try again'
+        }), 
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    console.log('✅ User authenticated:', user.id);
 
     const { generation_id, output_index = 0, author, domain_name } = await req.json();
 

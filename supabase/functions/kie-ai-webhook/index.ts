@@ -607,6 +607,15 @@ serve(async (req) => {
 
             console.log(`☁️ [Output ${i + 1}] Uploaded to storage:`, childStoragePath);
 
+            // Generate public URL for child output
+            const { data: childUrlData } = supabase
+              .storage
+              .from('generated-content')
+              .getPublicUrl(childStoragePath);
+
+            const childPublicUrl = childUrlData?.publicUrl || null;
+            console.log(`🔗 [Output ${i + 1}] Generated public URL:`, childPublicUrl);
+
             // Create child generation record
             const { data: insertData, error: insertError } = await supabase
               .from('generations')
@@ -624,6 +633,7 @@ serve(async (req) => {
                 tokens_used: 0, // Don't double-charge tokens
                 status: 'completed',
                 storage_path: childStoragePath,
+                output_url: childPublicUrl,
                 file_size_bytes: data.length,
                 provider_task_id: generation.provider_task_id,
                 provider_request: generation.provider_request,

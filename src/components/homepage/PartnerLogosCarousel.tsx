@@ -89,7 +89,7 @@ export const PartnerLogosCarousel = () => {
                 <img
                   src={partner.logo}
                   alt={`${partner.name} logo`}
-                  className="h-6 md:h-8 w-auto object-contain grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
+                  className="h-6 md:h-8 w-auto object-contain opacity-90 hover:opacity-100 hover:scale-110 transition-all duration-300"
                 />
               </div>
             </SwiperSlide>

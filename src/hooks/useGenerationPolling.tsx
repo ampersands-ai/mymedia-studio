@@ -26,7 +26,7 @@ export const useGenerationPolling = (
         .from('generations')
         .select('status, output_url, provider_response')
         .eq('id', generationId)
-        .single();
+        .maybeSingle();
 
       if (fetchError) {
         console.error('[useGenerationPolling] Initial fetch error:', fetchError);
@@ -35,15 +35,44 @@ export const useGenerationPolling = (
 
       if (data) {
         console.log('[useGenerationPolling] Initial status:', data.status);
-        setStatus(data.status as 'pending' | 'processing' | 'completed' | 'failed');
-        
-        if (data.status === 'completed') {
+
+        // If we already have an output URL, treat as completed immediately
+        if (data.output_url) {
           setOutputUrl(data.output_url);
-          console.log('[useGenerationPolling] Already completed:', data.output_url);
-        } else if (data.status === 'failed') {
+          setStatus('completed');
+          console.log('[useGenerationPolling] Initial: derived completed from output_url');
+          return;
+        }
+
+        setStatus(data.status as 'pending' | 'processing' | 'completed' | 'failed');
+
+        if (data.status === 'failed') {
           const providerResponse = data.provider_response as any;
           const errorMsg = providerResponse?.error || 'Generation failed';
           setError(errorMsg);
+          return;
+        }
+
+        // Fallback: if parent has no output_url yet, check for completed children
+        try {
+          const { data: child, error: childError } = await supabase
+            .from('generations')
+            .select('output_url, output_index, status')
+            .eq('parent_generation_id', generationId)
+            .eq('status', 'completed')
+            .order('output_index', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+
+          if (childError) {
+            console.warn('[useGenerationPolling] Initial: child lookup error:', childError);
+          } else if (child?.output_url) {
+            setOutputUrl(child.output_url);
+            setStatus('completed');
+            console.log('[useGenerationPolling] Initial: derived completed from child output_url');
+          }
+        } catch (e) {
+          console.warn('[useGenerationPolling] Initial: child lookup threw error:', e);
         }
       }
     };
@@ -61,14 +90,40 @@ export const useGenerationPolling = (
           table: 'generations',
           filter: `id=eq.${generationId}`
         },
-        (payload: any) => {
+        async (payload: any) => {
           console.log('[useGenerationPolling] Realtime update:', payload.new);
           const newStatus = payload.new.status as 'pending' | 'processing' | 'completed' | 'failed';
+
+          // If we receive an output URL, consider it completed immediately
+          if (payload.new.output_url) {
+            setOutputUrl(payload.new.output_url);
+            setStatus('completed');
+            console.log('[useGenerationPolling] Realtime: derived completed from output_url');
+            return;
+          }
+
           setStatus(newStatus);
           
           if (newStatus === 'completed') {
-            setOutputUrl(payload.new.output_url);
-            console.log('[useGenerationPolling] Generation completed:', payload.new.output_url);
+            // Fallback for cases where status is completed but URL not yet copied on parent
+            try {
+              const { data: child } = await supabase
+                .from('generations')
+                .select('output_url, output_index, status')
+                .eq('parent_generation_id', generationId)
+                .eq('status', 'completed')
+                .order('output_index', { ascending: true })
+                .limit(1)
+                .maybeSingle();
+
+              if (child?.output_url) {
+                setOutputUrl(child.output_url);
+                setStatus('completed');
+                console.log('[useGenerationPolling] Realtime: derived completed from child output_url');
+              }
+            } catch (e) {
+              console.warn('[useGenerationPolling] Realtime: child lookup error:', e);
+            }
           } else if (newStatus === 'failed') {
             const providerResponse = payload.new.provider_response as any;
             const errorMsg = providerResponse?.error || 'Generation failed';
@@ -85,7 +140,7 @@ export const useGenerationPolling = (
         .from('generations')
         .select('status, output_url, provider_response')
         .eq('id', generationId)
-        .single();
+        .maybeSingle();
 
       if (fetchError) {
         console.error('[useGenerationPolling] Poll error:', fetchError);
@@ -94,18 +149,48 @@ export const useGenerationPolling = (
 
       if (data) {
         console.log('[useGenerationPolling] Poll update:', data.status);
+
+        // If output URL is present, complete immediately
+        if (data.output_url) {
+          setOutputUrl(data.output_url);
+          setStatus('completed');
+          console.log('[useGenerationPolling] Poll: derived completed from output_url');
+          clearInterval(pollInterval);
+          return;
+        }
+
         setStatus(data.status as 'pending' | 'processing' | 'completed' | 'failed');
         
-        if (data.status === 'completed') {
-          setOutputUrl(data.output_url);
-          console.log('[useGenerationPolling] Poll: Generation completed');
-          clearInterval(pollInterval);
-        } else if (data.status === 'failed') {
+        if (data.status === 'failed') {
           const providerResponse = data.provider_response as any;
           const errorMsg = providerResponse?.error || 'Generation failed';
           setError(errorMsg);
           console.error('[useGenerationPolling] Poll: Generation failed');
           clearInterval(pollInterval);
+          return;
+        }
+
+        if (data.status === 'completed' || data.status === 'processing') {
+          // Fallback: check completed children for output_url
+          try {
+            const { data: child } = await supabase
+              .from('generations')
+              .select('output_url, output_index, status')
+              .eq('parent_generation_id', generationId)
+              .eq('status', 'completed')
+              .order('output_index', { ascending: true })
+              .limit(1)
+              .maybeSingle();
+
+            if (child?.output_url) {
+              setOutputUrl(child.output_url);
+              setStatus('completed');
+              console.log('[useGenerationPolling] Poll: derived completed from child output_url');
+              clearInterval(pollInterval);
+            }
+          } catch (e) {
+            console.warn('[useGenerationPolling] Poll: child lookup error:', e);
+          }
         }
       }
     }, 3000);

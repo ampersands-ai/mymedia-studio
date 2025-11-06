@@ -167,7 +167,7 @@ export const OutputLightbox = ({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent 
-          className="max-w-2xl max-h-[90vh] overflow-hidden backdrop-blur-sm shadow-2xl animate-slide-up"
+          className="max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-sm shadow-2xl animate-slide-up pb-6"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
@@ -271,7 +271,7 @@ export const OutputLightbox = ({
           </div>
 
           {/* Keyboard Shortcuts Hint */}
-          <div className="text-center mt-2">
+          <div className="text-center mt-4 pb-2">
             <p className="text-xs text-muted-foreground">
               <span className="hidden md:inline">
                 Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">←</kbd> <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">→</kbd> to navigate • 

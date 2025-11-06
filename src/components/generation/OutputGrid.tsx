@@ -30,13 +30,16 @@ export const OutputGrid = ({
     return (
       <div className="space-y-3">
         <div 
-          className="relative aspect-square bg-background rounded-lg overflow-hidden border cursor-pointer hover:border-primary transition-colors"
+          className={isAudio 
+            ? "relative bg-background rounded-lg overflow-hidden border cursor-pointer hover:border-primary transition-colors"
+            : "relative aspect-square bg-background rounded-lg overflow-hidden border cursor-pointer hover:border-primary transition-colors"
+          }
           onClick={() => onSelectOutput(0)}
         >
           <OptimizedGenerationPreview
             storagePath={outputs[0].storage_path}
             contentType={contentType}
-            className="w-full h-full object-contain"
+            className={isAudio ? "w-full" : "w-full h-full object-contain"}
           />
         </div>
         
@@ -70,11 +73,11 @@ export const OutputGrid = ({
   return (
     <div className="space-y-3">
       {/* Grid of thumbnails */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className={isAudio ? "grid grid-cols-1 md:grid-cols-2 gap-3" : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"}>
         {outputs.map((output, index) => (
           <div key={output.id} className="space-y-2">
             <div
-              className="relative aspect-square cursor-pointer group"
+              className={isAudio ? "relative cursor-pointer group" : "relative aspect-square cursor-pointer group"}
               onClick={() => onSelectOutput(index)}
             >
               {/* Output number badge */}
@@ -86,11 +89,14 @@ export const OutputGrid = ({
               </Badge>
 
               {/* Thumbnail */}
-              <div className="relative w-full h-full rounded-lg overflow-hidden border-2 border-transparent group-hover:border-primary transition-all group-hover:scale-[1.02] bg-background">
+              <div className={isAudio 
+                ? "relative w-full rounded-lg overflow-hidden border-2 border-transparent group-hover:border-primary transition-all bg-background" 
+                : "relative w-full h-full rounded-lg overflow-hidden border-2 border-transparent group-hover:border-primary transition-all group-hover:scale-[1.02] bg-background"
+              }>
                 <OptimizedGenerationPreview
                   storagePath={output.storage_path}
                   contentType={contentType}
-                  className="w-full h-full object-cover"
+                  className={isAudio ? "w-full" : "w-full h-full object-cover"}
                 />
               </div>
 

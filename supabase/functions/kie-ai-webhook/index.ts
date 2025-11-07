@@ -642,43 +642,108 @@ serve(async (req) => {
       
       if (!isMultiOutput) {
         // Single output: download and upload for parent generation
-        const firstUrl = resultUrls[0];
-        console.log('Single output: Downloading result from:', firstUrl);
+        try {
+          const firstUrl = resultUrls[0];
+          console.log('Single output: Downloading result from:', firstUrl);
 
-        const contentResponse = await fetch(firstUrl);
-        if (!contentResponse.ok) {
-          throw new Error(`Failed to download result: ${contentResponse.status}`);
+          const contentResponse = await fetch(firstUrl);
+          if (!contentResponse.ok) {
+            throw new Error(`Failed to download result: ${contentResponse.status}`);
+          }
+
+          const arrayBuffer = await contentResponse.arrayBuffer();
+          output_data = new Uint8Array(arrayBuffer);
+          
+          // Determine file extension
+          const contentType = contentResponse.headers.get('content-type') || '';
+          const fileExtension = determineFileExtension(contentType, firstUrl);
+          
+          console.log('Downloaded successfully. Size:', output_data.length, 'Extension:', fileExtension);
+
+          // Upload to storage - wrapped in try-catch for resilience
+          try {
+            storagePath = await uploadToStorage(
+              supabase,
+              generation.user_id,
+              generation.id,
+              output_data,
+              fileExtension,
+              generation.type
+            );
+
+            console.log('✅ Uploaded to storage:', storagePath);
+
+            // Generate public URL since bucket is public
+            const urlData = await supabase
+              .storage
+              .from('generated-content')
+              .getPublicUrl(storagePath);
+
+            publicUrl = urlData?.data?.publicUrl || null;
+            console.log('✅ Generated public URL:', publicUrl);
+            
+          } catch (storageError: any) {
+            console.error('❌ Storage upload failed (marking generation as failed):', storageError);
+            console.error('❌ Full storage error:', JSON.stringify(storageError, null, 2));
+            
+            // Mark generation as failed immediately
+            await supabase.from('generations').update({
+              status: 'failed',
+              provider_response: {
+                error: 'Storage upload failed after generation completed',
+                storage_error: storageError.message || 'Unknown storage error',
+                timestamp: new Date().toISOString()
+              }
+            }).eq('id', generation.id);
+            
+            // Refund tokens
+            await supabase.rpc('increment_tokens', {
+              user_id_param: generation.user_id,
+              amount: generation.tokens_used
+            });
+            
+            console.log('🔄 Tokens refunded due to storage failure');
+            
+            // Return success to provider (don't retry)
+            return new Response(
+              JSON.stringify({ 
+                success: true, 
+                message: 'Generation completed but storage failed - user refunded' 
+              }),
+              { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          
+        } catch (downloadError: any) {
+          // Download from provider failed
+          console.error('❌ Failed to download result from provider:', downloadError);
+          console.error('❌ Full download error:', JSON.stringify(downloadError, null, 2));
+          
+          await supabase.from('generations').update({
+            status: 'failed',
+            provider_response: {
+              error: 'Failed to download result from provider',
+              download_error: downloadError.message || 'Unknown download error',
+              timestamp: new Date().toISOString()
+            }
+          }).eq('id', generation.id);
+          
+          // Refund tokens
+          await supabase.rpc('increment_tokens', {
+            user_id_param: generation.user_id,
+            amount: generation.tokens_used
+          });
+          
+          console.log('🔄 Tokens refunded due to download failure');
+          
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              message: 'Download from provider failed - user refunded' 
+            }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
-
-        const arrayBuffer = await contentResponse.arrayBuffer();
-        output_data = new Uint8Array(arrayBuffer);
-        
-        // Determine file extension
-        const contentType = contentResponse.headers.get('content-type') || '';
-        const fileExtension = determineFileExtension(contentType, firstUrl);
-        
-        console.log('Downloaded successfully. Size:', output_data.length, 'Extension:', fileExtension);
-
-        // Upload to storage
-        storagePath = await uploadToStorage(
-          supabase,
-          generation.user_id,
-          generation.id,
-          output_data,
-          fileExtension,
-          generation.type
-        );
-
-        console.log('Uploaded to storage:', storagePath);
-
-        // Generate public URL since bucket is public
-        const urlData = await supabase
-          .storage
-          .from('generated-content')
-          .getPublicUrl(storagePath);
-
-        publicUrl = urlData?.data?.publicUrl || null;
-        console.log('Generated public URL:', publicUrl);
       } else {
         console.log('Multi-output: Parent will be a container, children will be created for all URLs');
       }
@@ -765,28 +830,36 @@ serve(async (req) => {
             const childId = crypto.randomUUID();
             console.log(`🆔 [Output ${i + 1}] Generated child ID:`, childId);
 
-            // Upload child output to storage
-            const childStoragePath = await uploadToStorage(
-              supabase,
-              generation.user_id,
-              childId,
-              data,
-              ext,
-              generation.type
-            );
+            // TRY to upload to storage - gracefully handle failure
+            let childStoragePath: string | null = null;
+            let childPublicUrl: string | null = null;
+            
+            try {
+              childStoragePath = await uploadToStorage(
+                supabase,
+                generation.user_id,
+                childId,
+                data,
+                ext,
+                generation.type
+              );
+              console.log(`☁️ [Output ${i + 1}] Uploaded to storage:`, childStoragePath);
 
-            console.log(`☁️ [Output ${i + 1}] Uploaded to storage:`, childStoragePath);
+              const { data: childUrlData } = supabase
+                .storage
+                .from('generated-content')
+                .getPublicUrl(childStoragePath);
+              childPublicUrl = childUrlData?.publicUrl || null;
+              console.log(`🔗 [Output ${i + 1}] Public URL:`, childPublicUrl);
+              
+            } catch (storageError: any) {
+              console.error(`❌ [Output ${i + 1}] Storage upload failed:`, storageError.message);
+              console.error(`❌ [Output ${i + 1}] Full storage error:`, JSON.stringify(storageError, null, 2));
+              // Continue without this child - better to have some outputs than none
+              continue;
+            }
 
-            // Generate public URL for child output
-            const { data: childUrlData } = supabase
-              .storage
-              .from('generated-content')
-              .getPublicUrl(childStoragePath);
-
-            const childPublicUrl = childUrlData?.publicUrl || null;
-            console.log(`🔗 [Output ${i + 1}] Generated public URL:`, childPublicUrl);
-
-            // Create child generation record
+            // Create child generation record only if storage succeeded
             const { data: insertData, error: insertError } = await supabase
               .from('generations')
               .insert({
@@ -825,8 +898,9 @@ serve(async (req) => {
             }
           } catch (childError: any) {
             console.error(`❌ [Output ${i + 1}] Error processing:`, childError.message);
-            console.error(`❌ [Output ${i + 1}] Full error:`, childError);
+            console.error(`❌ [Output ${i + 1}] Full error:`, JSON.stringify(childError, null, 2));
             console.error(`❌ [Output ${i + 1}] Stack trace:`, childError.stack);
+            // Continue to next output - don't let one failure block all outputs
           }
         }
         
@@ -928,10 +1002,11 @@ async function uploadToStorage(
   const fileName = `${generationId}.${fileExtension}`;
   const storagePath = `${userId}/${dateFolder}/${fileName}`;
   
-  console.log('Uploading to storage:', storagePath, 'Size:', fileData.length);
+  console.log('📤 Uploading to storage:', storagePath, 'Size:', fileData.length);
 
   // Determine MIME type
   const mimeType = getMimeType(fileExtension, contentType);
+  console.log('📄 MIME type:', mimeType);
   
   const { error: uploadError } = await supabase.storage
     .from('generated-content')
@@ -942,10 +1017,19 @@ async function uploadToStorage(
     });
 
   if (uploadError) {
-    console.error('Storage upload error:', uploadError);
-    throw new Error(`Failed to upload to storage: ${uploadError.message}`);
+    // Log detailed error for debugging (handles both JSON and HTML responses)
+    console.error('❌ Storage upload error details:', {
+      message: uploadError.message,
+      statusCode: (uploadError as any).statusCode,
+      error: (uploadError as any).error,
+      fullError: JSON.stringify(uploadError, null, 2)
+    });
+    
+    // Throw with clear message (will be caught by calling code)
+    throw new Error(`Storage upload failed: ${uploadError.message || 'Unknown error'}`);
   }
 
+  console.log('✅ Storage upload successful:', storagePath);
   return storagePath;
 }
 

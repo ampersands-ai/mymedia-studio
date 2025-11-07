@@ -6,7 +6,7 @@ import { Loader2, Sparkles, RefreshCw, Image as ImageIcon, Video } from 'lucide-
 import { useGeneration } from '@/hooks/useGeneration';
 import { useModels } from '@/hooks/useModels';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { useGenerationPolling } from '@/hooks/useGenerationPolling';
+import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -50,12 +50,15 @@ export const ScenePreviewGenerator = ({
   const [selectedModelId, setSelectedModelId] = useState<string>('runware:100@1');
   const [pendingGenerationId, setPendingGenerationId] = useState<string | null>(null);
   const [isAsyncGeneration, setIsAsyncGeneration] = useState(false);
+  const [pollStatus, setPollStatus] = useState<string>('pending');
+  const [pollOutputUrl, setPollOutputUrl] = useState<string | null>(null);
   
   const { generate, isGenerating, result, error } = useGeneration();
   const { data: models } = useModels();
   const { data: tokenData } = useUserTokens();
   const queryClient = useQueryClient();
   const lastHandledUrlRef = useRef<string | null>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // DEBUG: Log raw models data on mount
   useEffect(() => {
@@ -66,10 +69,54 @@ export const ScenePreviewGenerator = ({
     }
   }, [models]);
   
-  const { status: pollStatus, outputUrl: pollOutputUrl, error: pollError } = useGenerationPolling(
-    pendingGenerationId,
-    isAsyncGeneration
-  );
+  // Inline polling for async generation
+  useEffect(() => {
+    if (!pendingGenerationId || !isAsyncGeneration) return;
+
+    const pollGeneration = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('generations')
+          .select('status, storage_path')
+          .eq('id', pendingGenerationId)
+          .single();
+
+        if (error) throw error;
+
+        setPollStatus(data.status);
+
+        if (data.status === 'completed' && data.storage_path) {
+          setPollOutputUrl(data.storage_path);
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+        } else if (data.status === 'failed') {
+          toast.error('Generation failed');
+          setPollStatus('failed');
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+        }
+      } catch (error) {
+        console.error('[ScenePreviewGenerator] Polling error:', error);
+      }
+    };
+
+    // Initial poll
+    pollGeneration();
+
+    // Poll every 3 seconds
+    pollIntervalRef.current = setInterval(pollGeneration, 3000);
+
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
+  }, [pendingGenerationId, isAsyncGeneration]);
 
   // Compute display URL from result or scene prop
   const displayUrl = result?.output_url ?? pollOutputUrl ?? scene.image_preview_url ?? null;
@@ -98,13 +145,16 @@ export const ScenePreviewGenerator = ({
       onImageGenerated(scene.id, pollOutputUrl);
       setIsAsyncGeneration(false);
       setPendingGenerationId(null);
-    } else if (pollStatus === 'failed' && pollError) {
-      console.error('[ScenePreviewGenerator] Async generation failed:', pollError);
-      toast.error(pollError);
+      setPollStatus('pending');
+      setPollOutputUrl(null);
+    } else if (pollStatus === 'failed') {
+      console.error('[ScenePreviewGenerator] Async generation failed');
       setIsAsyncGeneration(false);
       setPendingGenerationId(null);
+      setPollStatus('pending');
+      setPollOutputUrl(null);
     }
-  }, [pollStatus, pollOutputUrl, pollError, scene.id, onImageGenerated]);
+  }, [pollStatus, pollOutputUrl, scene.id, onImageGenerated]);
 
   // Log errors to console instead of toasting
   useEffect(() => {

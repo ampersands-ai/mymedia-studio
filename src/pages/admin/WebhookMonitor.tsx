@@ -4,6 +4,7 @@ import { LiveWebhookFeed } from "@/components/admin/webhook/LiveWebhookFeed";
 import { ErrorAnalysisPanel } from "@/components/admin/webhook/ErrorAnalysisPanel";
 import { WebhookCharts } from "@/components/admin/webhook/WebhookCharts";
 import { WebhookActionsPanel } from "@/components/admin/webhook/WebhookActionsPanel";
+import { AlertSettingsPanel } from "@/components/admin/webhook/AlertSettingsPanel";
 import { Badge } from "@/components/ui/badge";
 import { Activity } from "lucide-react";
 
@@ -70,6 +71,9 @@ const WebhookMonitor = () => {
 
       {/* Charts */}
       <WebhookCharts providerStats={providerStats} />
+
+      {/* Alert Settings */}
+      <AlertSettingsPanel />
     </div>
   );
 };

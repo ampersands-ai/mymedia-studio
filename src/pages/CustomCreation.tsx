@@ -1,366 +1,195 @@
-import { useState, useEffect, useRef } from "react";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { getSurpriseMePrompt } from "@/data/surpriseMePrompts";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { ImageIcon, Upload, Coins, Sparkles, Download, History, Play, ChevronRight, Loader2, Clock, Info, Camera, Share2, RefreshCw, CheckCircle2, Palette, ImagePlus, Video, Film, Music, XCircle } from "lucide-react";
-import { useNativeCamera } from "@/hooks/useNativeCamera";
-import { triggerHaptic } from "@/utils/capacitor-utils";
 import { SessionWarning } from "@/components/SessionWarning";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { SuccessConfetti } from "@/components/onboarding/SuccessConfetti";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-import { TemplateCard } from "@/components/TemplateCard";
-import { useGeneration } from "@/hooks/useGeneration";
 import { useModels } from "@/hooks/useModels";
-import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
-import { ModelParameterForm } from "@/components/generation/ModelParameterForm";
-import { SchemaInput } from "@/components/generation/SchemaInput";
-import { formatEstimatedTime } from "@/lib/time-utils";
-import { GenerationPreview } from "@/components/generation/GenerationPreview";
-import { GenerationProgress } from "@/components/generation/GenerationProgress";
-import { useImageUrl, useVideoUrl, useAudioUrl } from "@/hooks/media";
-import { createSignedUrl, extractStoragePath } from "@/lib/storage-utils";
-import { OutputGrid } from "@/components/generation/OutputGrid";
-import { OutputLightbox } from "@/components/generation/OutputLightbox";
-import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
-import { downloadMultipleOutputs } from "@/lib/download-utils";
-import { useGenerateSunoVideo } from "@/hooks/useGenerateSunoVideo";
-import { VideoFromAudioPreview } from "@/components/generation/VideoFromAudioPreview";
-import { VideoGenerationProgress } from "@/components/video/VideoGenerationProgress";
-import { trackEvent } from "@/lib/posthog";
-import { useUserTokens } from "@/hooks/useUserTokens";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-// Group type definition
-type CreationGroup = "image_editing" | "prompt_to_image" | "prompt_to_video" | "image_to_video" | "prompt_to_audio";
-
-// Group configuration
-const CREATION_GROUPS = [
-  { id: "image_editing" as CreationGroup, label: "Image Editing", Icon: Palette, description: "Modify existing images" },
-  { id: "prompt_to_image" as CreationGroup, label: "Prompt to Image", Icon: ImagePlus, description: "Generate images from text" },
-  { id: "prompt_to_video" as CreationGroup, label: "Prompt to Video", Icon: Video, description: "Generate videos from text" },
-  { id: "image_to_video" as CreationGroup, label: "Image to Video", Icon: Film, description: "Animate images into videos" },
-  { id: "prompt_to_audio" as CreationGroup, label: "Prompt to Audio", Icon: Music, description: "Generate audio from text" },
-];
-
+import { useUserTokens } from "@/hooks/useUserTokens";
+import { CREATION_GROUPS, type CreationGroup } from "@/constants/creation-groups";
+import { useCustomCreationState } from "@/hooks/useCustomCreationState";
+import { useGenerationPolling } from "@/hooks/useGenerationPolling";
+import { useCustomGeneration } from "@/hooks/useCustomGeneration";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import { useCaptionGeneration } from "@/hooks/useCaptionGeneration";
+import { useVideoGeneration } from "@/hooks/useVideoGeneration";
+import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
+import { CreationGroupSelector } from "@/components/custom-creation/CreationGroupSelector";
+import { InputPanel } from "@/components/custom-creation/InputPanel";
+import { OutputPanel } from "@/components/custom-creation/OutputPanel";
+import { MobileStickyButton } from "@/components/custom-creation/MobileStickyButton";
+import { BestPracticesCard } from "@/components/custom-creation/BestPracticesCard";
+import { supabase } from "@/integrations/supabase/client";
+import { createSignedUrl, extractStoragePath } from "@/lib/storage-utils";
+import { downloadMultipleOutputs } from "@/lib/download-utils";
+import { getSurpriseMePrompt } from "@/data/surpriseMePrompts";
+import { toast } from "sonner";
 
 const CustomCreation = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const isMobile = useIsMobile();
-  const { pickImage, pickMultipleImages, isLoading: cameraLoading, isNative } = useNativeCamera();
-  const [selectedGroup, setSelectedGroup] = useState<CreationGroup>(() => {
-    const saved = localStorage.getItem('customCreation_selectedGroup');
-    return (saved as CreationGroup) || "prompt_to_image";
-  });
-
-  const { data: allModels, isLoading: modelsLoading } = useModels();
-  const { generate, isGenerating, error, clearError } = useGeneration();
-  const { data: userTokens } = useUserTokens();
-  const creditBalance = userTokens?.tokens_remaining || 0;
-  const [prompt, setPrompt] = useState("");
-  const [contentType, setContentType] = useState<"image" | "video" | "music" | "text">("image");
-  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string | null>(null);
-  const [resolution, setResolution] = useState<"Native" | "HD">("Native");
-  const [generatedOutput, setGeneratedOutput] = useState<string | null>(null);
-  const [estimatedTokens, setEstimatedTokens] = useState(50);
-  const [advancedOpen, setAdvancedOpen] = useState(() => {
-    const saved = localStorage.getItem('customCreation_advancedOpen');
-    return saved === 'true';
-  });
-  const advancedOptionsRef = useRef<HTMLDivElement>(null);
-  const [enhancePrompt, setEnhancePrompt] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem('customCreation_selectedGroup', selectedGroup);
-  }, [selectedGroup]);
-
-  useEffect(() => {
-    localStorage.setItem('customCreation_advancedOpen', advancedOpen.toString());
-    // Auto-scroll to Advanced Options when opened on mobile
-    if (advancedOpen && advancedOptionsRef.current && window.innerWidth < 768) {
-      setTimeout(() => {
-        advancedOptionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 100);
-    }
-  }, [advancedOpen]);
-  const [generateCaption, setGenerateCaption] = useState(false);
-  const [captionData, setCaptionData] = useState<{
-    caption: string;
-    hashtags: string[];
-    generated_at: string;
-  } | null>(null);
-  const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
-  const [localGenerating, setLocalGenerating] = useState(false);
-  const [showResetDialog, setShowResetDialog] = useState(false);
-  const [modelParameters, setModelParameters] = useState<Record<string, any>>({});
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [pollingGenerationId, setPollingGenerationId] = useState<string | null>(null);
-  const [parentGenerationId, setParentGenerationId] = useState<string | null>(null); // Store parent ID for video generation
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [generatedOutputs, setGeneratedOutputs] = useState<Array<{
-    id: string;
-    storage_path: string;
-    output_index: number;
-  }>>([]);
-  const [selectedOutputIndex, setSelectedOutputIndex] = useState<number>(0);
-  const [showLightbox, setShowLightbox] = useState(false);
-  const generationStartTimeRef = useRef<number | null>(null);
-  const [generationCompleteTime, setGenerationCompleteTime] = useState<number | null>(null);
-  const { progress, updateProgress, markComplete, dismiss, setFirstGeneration } = useOnboarding();
-  const [showConfetti, setShowConfetti] = useState(false);
   const outputSectionRef = useRef<HTMLDivElement>(null);
-  const [captionExpanded, setCaptionExpanded] = useState(false);
-  const [hashtagsExpanded, setHashtagsExpanded] = useState(false);
-  const [templateBeforeImage, setTemplateBeforeImage] = useState<string | null>(null);
-  const [templateAfterImage, setTemplateAfterImage] = useState<string | null>(null);
-  const { generateVideo, isGenerating: isGeneratingVideo } = useGenerateSunoVideo();
-  const [generatingVideoIndex, setGeneratingVideoIndex] = useState<number | null>(null);
 
-  // Query child generations for audio outputs - includes both audio and video types
-  const { data: childVideoGenerations = [] } = useQuery({
-    queryKey: ['child-video-generations', parentGenerationId],
-    queryFn: async () => {
-      if (!parentGenerationId) return [];
-      
-      const { data, error } = await supabase
-        .from('generations')
-        .select('id, storage_path, output_index, status, type')
-        .eq('parent_generation_id', parentGenerationId)
-        .in('type', ['audio', 'video'])
-        .order('output_index', { ascending: true });
-      
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!parentGenerationId,
-    refetchInterval: (query) => {
-      // Poll every 5 seconds if any videos are pending/processing
-      const data = query.state.data || [];
-      const hasProcessing = data.some((v: any) => 
-        v.status === 'pending' || v.status === 'processing'
-      );
-      return hasProcessing ? 5000 : false;
-    },
-  });
+  // State management
+  const { 
+    state, 
+    updateState, 
+    resetState,
+    setPrompt: setStatePrompt,
+    setSelectedModel: setStateSelectedModel,
+    setSelectedGroup: setStateSelectedGroup
+  } = useCustomCreationState();
 
-  // Add realtime subscription for video generation updates
-  useEffect(() => {
-    if (!parentGenerationId) return;
-
-    const channel = supabase
-      .channel(`video-generations-${parentGenerationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'generations',
-          filter: `parent_generation_id=eq.${parentGenerationId}`,
-        },
-        (payload) => {
-          console.log('🔔 Video generation updated:', payload);
-          queryClient.invalidateQueries({ 
-            queryKey: ['child-video-generations', parentGenerationId] 
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [parentGenerationId, queryClient]);
+  // Models and user data
+  const { data: allModels, isLoading: modelsLoading } = useModels();
+  const { data: userTokens } = useUserTokens();
+  const { progress, updateProgress, setFirstGeneration, markComplete, dismiss } = useOnboarding();
 
   // Filter models by selected group
   const filteredModels = allModels?.filter(model => {
     const groups = model.groups as string[] || [];
-    return groups.includes(selectedGroup);
+    return groups.includes(state.selectedGroup);
   }).sort((a, b) => a.base_token_cost - b.base_token_cost) || [];
 
-  // Helper function to get required fields from model schema
-  const getSchemaRequiredFields = (): string[] => {
-    if (!selectedModel) return [];
-    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-    return currentModel?.input_schema?.required || [];
-  };
+  // Get current model
+  const currentModel = filteredModels.find(m => m.record_id === state.selectedModel);
 
-  // Dynamically detect image field from schema
-  const getImageFieldInfo = (): { fieldName: string | null; isRequired: boolean; isArray: boolean; maxImages: number } => {
-    if (!selectedModel) return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
-    
-    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-    if (!currentModel?.input_schema?.properties) return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
-    
-    const properties = currentModel.input_schema.properties;
-    const required = currentModel.input_schema.required || [];
-    
-    // Look for image-like fields
-    const imageFieldNames = ['inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'filesURL', 'file_urls', 'fileUrls', 'reference_image_urls', 'frameImages'];
-    for (const fieldName of imageFieldNames) {
-      if (properties[fieldName]) {
-        const schema = properties[fieldName];
-        const isArray = schema.type === 'array';
-        const isRequired = required.includes(fieldName);
-        const maxImages = currentModel.max_images ?? 0;
-        return { fieldName, isRequired, isArray, maxImages };
-      }
-    }
-    
-    return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
-  };
+  // Schema helpers
+  const schemaHelpers = useSchemaHelpers();
+  const imageFieldInfo = schemaHelpers.getImageFieldInfo(currentModel);
 
-  // Heuristic: find primary long-text field key (prompt/script/etc.)
-  const findPrimaryTextKey = (properties: Record<string, any> | undefined): string | undefined => {
-    if (!properties) return undefined;
-    const keywords = ["input text", "text", "prompt", "script", "caption", "description"];
+  // Generation polling
+  const { startPolling, stopPolling, isPolling } = useGenerationPolling({
+    onComplete: (outputs, parentId) => {
+      updateState({
+        generatedOutputs: outputs,
+        generatedOutput: outputs[0]?.storage_path || null,
+        selectedOutputIndex: 0,
+        generationCompleteTime: Date.now(),
+        localGenerating: false,
+        pollingGenerationId: null,
+        parentGenerationId: parentId || null,
+      });
 
-    let bestKey: string | undefined;
-    let bestScore = -Infinity;
-
-    for (const [key, schema] of Object.entries(properties)) {
-      const title = (schema?.title || "").toLowerCase();
-      const desc = (schema?.description || "").toLowerCase();
-      const name = key.toLowerCase();
-
-      // Ignore non-textual fields
-      const isFileLike = ["image", "file", "url", "upload"].some(k => name.includes(k) || title.includes(k) || desc.includes(k));
-      if (isFileLike) continue;
-
-      let score = 0;
-      if (schema?.type === "string") score += 2;
-      if (!schema?.enum) score += 1;
-      if (["textarea", "markdown"].includes(schema?.format)) score += 4;
-      const maxLen = typeof schema?.maxLength === "number" ? schema.maxLength : 0;
-      if (maxLen >= 200) score += 3;
-      if (maxLen >= 500) score += 1;
-
-      for (const kw of keywords) {
-        if (name.includes(kw) || title.includes(kw) || desc.includes(kw)) score += 2;
+      // Update onboarding progress
+      if (progress && !progress.checklist.completedFirstGeneration) {
+        updateProgress({ completedFirstGeneration: true });
+        setFirstGeneration(outputs[0]?.id || '');
       }
 
-      if (score > bestScore) {
-        bestScore = score;
-        bestKey = key;
-      }
-    }
+      // Auto-scroll to output on mobile
+      setTimeout(() => {
+        if (outputSectionRef.current && window.innerWidth < 1024) {
+          outputSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
 
-    return bestScore >= 3 ? bestKey : undefined;
+      // Generate caption if enabled
+      if (state.generateCaption && outputs.length > 0) {
+        generateCaption();
+      }
+    },
+    onError: () => {
+      updateState({ localGenerating: false, pollingGenerationId: null });
+    },
+    onTimeout: () => {
+      updateState({ localGenerating: false, pollingGenerationId: null });
+    }
+  });
+
+  // Image upload
+  const {
+    uploadedImages,
+    setUploadedImages,
+    fileInputRef,
+    handleFileUpload,
+    removeImage,
+    uploadImagesToStorage,
+    handleNativeCameraPick,
+    cameraLoading,
+    isNative
+  } = useImageUpload(currentModel);
+
+  // Caption generation
+  const {
+    captionData,
+    isGeneratingCaption,
+    generateCaption,
+    regenerateCaption,
+    copyCaptionToClipboard,
+    copyHashtagsToClipboard,
+  } = useCaptionGeneration(
+    state.generatedOutputs,
+    state.prompt,
+    state.selectedModel,
+    filteredModels
+  );
+
+  // Video generation
+  const {
+    childVideoGenerations,
+    generatingVideoIndex,
+    handleGenerateVideo,
+    isGeneratingVideo,
+  } = useVideoGeneration(state.parentGenerationId);
+
+  // Custom generation logic
+  const {
+    handleGenerate,
+    handleSurpriseMe,
+    estimatedTokens,
+    isGenerating,
+  } = useCustomGeneration({
+    state,
+    updateState,
+    startPolling,
+    uploadImagesToStorage,
+    imageFieldInfo,
+    filteredModels,
+    onboardingProgress: progress,
+    updateProgress,
+    setFirstGeneration,
+    userTokens: userTokens?.tokens_remaining || 0,
+  });
+
+  // Surprise Me handler
+  const onSurpriseMe = () => {
+    updateState({ generatingSurprise: true });
+    const surprisePrompt = getSurpriseMePrompt(state.selectedGroup);
+    setStatePrompt(surprisePrompt);
+    toast.success("Surprise prompt generated!");
+    updateState({ generatingSurprise: false });
   };
 
-  // Heuristic: find primary voice field key for ElevenLabs models
-  const findPrimaryVoiceKey = (properties: Record<string, any> | undefined, modelId?: string): string | undefined => {
-    if (!properties) return undefined;
-    if (!modelId || !modelId.toLowerCase().includes("elevenlabs")) return undefined;
-
-    const keywords = ["voice", "voice_id", "voice name"];  
-    let bestKey: string | undefined;
-    let bestScore = -Infinity;
-
-    for (const [key, schema] of Object.entries(properties)) {
-      const title = (schema?.title || "").toLowerCase();
-      const desc = (schema?.description || "").toLowerCase();
-      const name = key.toLowerCase();
-
-      let score = 0;
-      if (Array.isArray(schema?.enum) && schema.enum.length > 0) score += 2;
-      for (const kw of keywords) {
-        if (name.includes(kw) || title.includes(kw) || desc.includes(kw)) score += 3;
-      }
-
-      if (score > bestScore) {
-        bestScore = score;
-        bestKey = key;
-      }
+  // Download all outputs
+  const handleDownloadAll = async () => {
+    if (!user?.id || state.generatedOutputs.length === 0) return;
+    
+    await downloadMultipleOutputs(
+      state.generatedOutputs,
+      currentModel?.content_type || 'image',
+      currentModel?.content_type || 'image'
+    );
+    
+    // Track onboarding: downloadedResult
+    if (progress && !progress.checklist.downloadedResult) {
+      updateProgress({ downloadedResult: true });
     }
-
-    return bestScore >= 4 ? bestKey : undefined;
   };
 
-  const imageFieldInfo = getImageFieldInfo();
-  const isImageRequired = imageFieldInfo.isRequired;
-  const imageFieldName = imageFieldInfo.fieldName;
-  const isImageArray = imageFieldInfo.isArray;
-  const maxImages = imageFieldInfo.maxImages;
-
-  // Check schema requirements for main form fields
-  const schemaRequired = getSchemaRequiredFields();
-  const isPromptRequiredBySchema = schemaRequired.includes('prompt');
-
-  // Get current model schema
-  const currentModelForSchema = filteredModels.find(m => m.record_id === selectedModel);
-  const modelSchema = currentModelForSchema?.input_schema;
-
-  // Use only schema-based requirements
-  const isPromptRequired = isPromptRequiredBySchema;
-  const [generatingSurprise, setGeneratingSurprise] = useState(false);
-
-  // Determine max prompt length based on model and customMode
-  const getMaxPromptLength = (): number => {
-    if (!selectedModel) return 5000;
+  // Lightbox navigation
+  const handleNavigateLightbox = (direction: 'prev' | 'next') => {
+    const newIndex = direction === 'next' 
+      ? (state.selectedOutputIndex + 1) % state.generatedOutputs.length
+      : (state.selectedOutputIndex - 1 + state.generatedOutputs.length) % state.generatedOutputs.length;
     
-    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-    if (!currentModel) return 5000;
-    
-    // Check if this is a Kie.ai audio model with customMode false
-    const isKieAiAudio = currentModel.provider === 'kie_ai' && currentModel.content_type === 'audio';
-    const customMode = modelParameters.customMode;
-    
-    // Kie.ai audio in non-custom mode has 500 char limit
-    if (isKieAiAudio && customMode === false) {
-      return 500;
-    }
-    
-    // Default limit for all other cases
-    return 5000;
+    updateState({ selectedOutputIndex: newIndex });
   };
 
-  const maxPromptLength = getMaxPromptLength();
-
-  // Truncate prompt if it exceeds the new limit when model/parameters change
-  useEffect(() => {
-    if (prompt.length > maxPromptLength) {
-      setPrompt(prompt.slice(0, maxPromptLength));
-      toast.info(`Prompt truncated to ${maxPromptLength} characters for this model configuration`);
-    }
-  }, [maxPromptLength]); // Only depend on maxPromptLength, not prompt
-
+  // SEO metadata
   useEffect(() => {
     document.title = "Custom Creation Studio - artifio.ai";
     const metaDescription = document.querySelector('meta[name="description"]');
@@ -369,1877 +198,231 @@ const CustomCreation = () => {
     }
   }, []);
 
+  // Load template preview images
   useEffect(() => {
     const loadTemplateImages = async () => {
-      if (!selectedModel) {
-        setTemplateBeforeImage(null);
-        setTemplateAfterImage(null);
+      if (!state.selectedModel) {
+        updateState({ templateBeforeImage: null, templateAfterImage: null });
         return;
       }
       
-      const currentModel = filteredModels.find(m => m.record_id === selectedModel);
+      const currentModel = filteredModels.find(m => m.record_id === state.selectedModel);
       if (!currentModel) {
-        setTemplateBeforeImage(null);
-        setTemplateAfterImage(null);
+        updateState({ templateBeforeImage: null, templateAfterImage: null });
         return;
       }
       
-      // Try to find a content template with this model
       const { data: templateData } = await supabase
         .from('content_templates')
         .select('thumbnail_url')
-        .eq('model_record_id', selectedModel)
+        .eq('model_record_id', state.selectedModel)
         .limit(1)
         .maybeSingle();
       
       if (templateData?.thumbnail_url) {
         const thumbnailUrl = await createSignedUrl('generated-content', extractStoragePath(templateData.thumbnail_url));
-        setTemplateAfterImage(thumbnailUrl);
-        setTemplateBeforeImage(null);
+        updateState({ templateAfterImage: thumbnailUrl, templateBeforeImage: null });
       } else {
-        setTemplateBeforeImage(null);
-        setTemplateAfterImage(null);
+        updateState({ templateBeforeImage: null, templateAfterImage: null });
       }
     };
     
     loadTemplateImages();
-  }, [selectedModel, filteredModels]);
-
-
-  // Auto-save on state changes
-
-
-  // Polling function to check generation status
-  const pollGenerationStatus = async (generationId: string) => {
-    try {
-      // Fetch parent generation
-      const { data: parentData, error: parentError } = await supabase
-        .from('generations')
-        .select('id, status, storage_path, type, output_index, is_batch_output')
-        .eq('id', generationId)
-        .single();
-
-      if (parentError) throw parentError;
-
-      // Check if generation is complete or failed
-      if (parentData.status === 'completed' || parentData.status === 'failed') {
-        // Stop polling interval and clear state
-        if (pollIntervalRef.current) {
-          clearInterval(pollIntervalRef.current);
-          pollIntervalRef.current = null;
-        }
-        setParentGenerationId(generationId); // Store for child video tracking
-        console.log('✅ Cleared pollingGenerationId, set parentGenerationId:', generationId);
-        setPollingGenerationId(null); // Clear to re-enable CTA
-        setLocalGenerating(false);
-
-        if (parentData.status === 'failed') {
-          // Fetch the full generation to get error details
-          const { data: fullGenData } = await supabase
-            .from('generations')
-            .select('provider_response')
-            .eq('id', generationId)
-            .single();
-          
-          const providerResponse = fullGenData?.provider_response as any;
-          const errorMessage = providerResponse?.error || 
-                               providerResponse?.full_response?.data?.failMsg ||
-                               'Generation failed. Please try again.';
-          
-          toast.error('Generation failed', {
-            description: errorMessage,
-            id: 'generation-progress',
-            duration: 8000
-          });
-        } else if (parentData.status === 'completed') {
-          console.log('🔍 Parent generation data:', parentData);
-          
-          // Fetch all child outputs
-          const { data: childrenData, error: childrenError } = await supabase
-            .from('generations')
-            .select('id, storage_path, output_url, output_index, type')
-            .eq('parent_generation_id', generationId)
-            .eq('type', parentData.type) // Only fetch same type (audio/image/video)
-            .order('output_index', { ascending: true });
-
-          console.log('🔍 Child outputs found:', childrenData?.length || 0, childrenData);
-          if (childrenError) console.error('❌ Error fetching children:', childrenError);
-
-          // Update onboarding progress for first generation
-          if (progress && !progress.checklist.completedFirstGeneration) {
-            updateProgress({ completedFirstGeneration: true });
-            setFirstGeneration(generationId);
-            setShowConfetti(true);
-          }
-
-          // Track onboarding: viewedResult
-          if (progress && !progress.checklist.viewedResult) {
-            updateProgress({ viewedResult: true });
-          }
-
-          // Build valid outputs (parent + children with storage_path)
-          const allOutputs = [
-            {
-              id: parentData.id,
-              storage_path: parentData.storage_path,
-              output_index: 0
-            },
-            ...(childrenData || [])
-          ];
-
-          // Filter to only outputs with storage_path
-          const validOutputs = allOutputs.filter(o => !!o.storage_path);
-          console.log('🔍 Valid outputs (with storage_path):', validOutputs.length, validOutputs);
-
-          // Debug: Show all storage paths
-          console.log('🔍 DEBUG - All outputs with storage paths:', 
-            validOutputs.map(o => ({ 
-              id: o.id, 
-              path: o.storage_path.substring(Math.max(0, o.storage_path.length - 20)), 
-              index: o.output_index 
-            }))
-          );
-
-          // Remove duplicates by storage_path
-          const uniqueOutputs = validOutputs.filter((output, index, self) =>
-            index === self.findIndex(o => o.storage_path === output.storage_path)
-          );
-          
-          if (uniqueOutputs.length !== validOutputs.length) {
-            console.warn(`⚠️ Removed ${validOutputs.length - uniqueOutputs.length} duplicate outputs`);
-          }
-
-          // Only proceed if we have at least one valid output
-          if (uniqueOutputs.length === 0) {
-            console.error('❌ No valid outputs found with storage_path');
-            toast.error('Generation completed but outputs are not ready. Please check History.', {
-              id: 'generation-progress'
-            });
-            setPollingGenerationId(null);
-            setLocalGenerating(false);
-            return;
-          }
-
-          setGeneratedOutputs(uniqueOutputs);
-          
-          // Set primary output: use first unique output (guaranteed to exist)
-          const primaryOutput = uniqueOutputs[0].storage_path;
-          console.log('🎯 Selected primary output:', primaryOutput);
-          setGeneratedOutput(primaryOutput);
-          setSelectedOutputIndex(0); // Reset to newest generation
-          setGenerationCompleteTime(Date.now());
-          
-          // Auto-scroll to output section on mobile
-          setTimeout(() => {
-            if (outputSectionRef.current && window.innerWidth < 1024) {
-              outputSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          }, 300);
-          
-          toast.success('✨ Your creation is ready!', { 
-            id: 'generation-progress',
-            description: `${uniqueOutputs.length} output${uniqueOutputs.length > 1 ? 's' : ''} generated successfully`
-          });
-
-          // Generate caption if checkbox was checked
-          if (generateCaption && uniqueOutputs.length > 0) {
-            const firstOutput = uniqueOutputs[0];
-            setIsGeneratingCaption(true);
-            
-            try {
-              const selectedModelData = filteredModels.find(m => m.record_id === selectedModel);
-              const { data: captionResult, error: captionError } = await supabase.functions.invoke('generate-caption', {
-                body: {
-                  generation_id: firstOutput.id,
-                  prompt: prompt,
-                  content_type: selectedModelData?.content_type || 'image',
-                  model_name: selectedModelData?.model_name || 'AI Model'
-                }
-              });
-              
-              if (captionError) throw captionError;
-              
-              setCaptionData({
-                caption: captionResult.caption,
-                hashtags: captionResult.hashtags,
-                generated_at: captionResult.generated_at
-              });
-              
-              toast.success("Caption and hashtags generated!");
-            } catch (err) {
-              console.error("Caption generation failed:", err);
-              toast.error("Failed to generate caption. Your content is ready though!");
-            } finally {
-              setIsGeneratingCaption(false);
-            }
-          }
-        } else if (parentData.status === 'failed') {
-          // Stop polling on failure
-          if (pollIntervalRef.current) {
-            clearInterval(pollIntervalRef.current);
-            pollIntervalRef.current = null;
-          }
-          setPollingGenerationId(null);
-          setLocalGenerating(false);
-          toast.dismiss('generation-progress');
-        } else {
-          // Generation failed - dismiss loading toast
-          toast.dismiss('generation-progress');
-        }
-      } else {
-        // Still processing - continue polling and check for child video generations
-        if (parentData.type === 'audio') {
-          const { data: videoChildren } = await supabase
-            .from('generations')
-            .select('id, storage_path, output_index, status, type')
-            .eq('parent_generation_id', generationId)
-            .in('type', ['audio', 'video'])
-            .order('output_index', { ascending: true });
-
-          // Query will auto-update via invalidation
-          if (videoChildren && videoChildren.length > 0) {
-            queryClient.invalidateQueries({ 
-              queryKey: ['child-video-generations', parentGenerationId] 
-            });
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Polling error:', error);
-    }
-  };
-
-  // Start polling after generation request with optimized intervals
-  useEffect(() => {
-    if (pollingGenerationId) {
-      const startTime = Date.now();
-      const MAX_POLLING_DURATION = 20 * 60 * 1000; // 20 minutes
-      
-      let currentInterval = 5000; // Start with 5s
-      
-      const pollWithDynamicInterval = () => {
-        const elapsed = Date.now() - startTime;
-        
-        // Stop if exceeded max duration
-        if (elapsed >= MAX_POLLING_DURATION) {
-          if (pollIntervalRef.current) {
-            clearInterval(pollIntervalRef.current);
-            pollIntervalRef.current = null;
-          }
-          setPollingGenerationId(null);
-          setLocalGenerating(false);
-          toast.info('Generation is taking longer than expected. Check History for updates.', { 
-            id: 'generation-progress' 
-          });
-          return;
-        }
-        
-        // Adjust interval based on elapsed time
-        let newInterval = currentInterval;
-        if (elapsed < 2 * 60 * 1000) {
-          // First 2 minutes: 5s interval
-          newInterval = 5000;
-        } else if (elapsed < 5 * 60 * 1000) {
-          // 2-5 minutes: 15s interval
-          newInterval = 15000;
-        } else {
-          // After 5 minutes: 30s interval
-          newInterval = 30000;
-        }
-        
-        // If interval changed, restart with new interval
-        if (newInterval !== currentInterval) {
-          currentInterval = newInterval;
-          if (pollIntervalRef.current) {
-            clearInterval(pollIntervalRef.current);
-            pollIntervalRef.current = setInterval(pollWithDynamicInterval, currentInterval);
-          }
-        }
-        
-        pollGenerationStatus(pollingGenerationId);
-      };
-      
-      // Initial immediate poll
-      pollGenerationStatus(pollingGenerationId);
-      
-      // Set up interval
-      pollIntervalRef.current = setInterval(pollWithDynamicInterval, currentInterval);
-      
-      // Cleanup on unmount
-      return () => {
-        if (pollIntervalRef.current) {
-          clearInterval(pollIntervalRef.current);
-          pollIntervalRef.current = null;
-        }
-      };
-    }
-  }, [pollingGenerationId]);
-
-  // Reset model selection when group changes
-  useEffect(() => {
-    setSelectedModel(null);
-  }, [selectedGroup]);
-
-  // Track onboarding: selectedTemplate
-  useEffect(() => {
-    if (selectedModel && progress && !progress.checklist.selectedTemplate) {
-      updateProgress({ selectedTemplate: true });
-    }
-  }, [selectedModel, progress, updateProgress]);
-
-  // Track onboarding: enteredPrompt
-  useEffect(() => {
-    if (prompt.length > 10 && progress && !progress.checklist.enteredPrompt) {
-      updateProgress({ enteredPrompt: true });
-    }
-  }, [prompt, progress, updateProgress]);
-
-  // Track onboarding: viewedTokenCost
-  useEffect(() => {
-    if (estimatedTokens > 0 && progress && !progress.checklist.viewedTokenCost) {
-      updateProgress({ viewedTokenCost: true });
-    }
-  }, [estimatedTokens, progress, updateProgress]);
+  }, [state.selectedModel, filteredModels]);
 
   // Auto-select first model when filtered models change
   useEffect(() => {
-    if (filteredModels.length > 0 && !selectedModel) {
-      setSelectedModel(String(filteredModels[0].record_id));
+    if (filteredModels.length > 0 && !state.selectedModel) {
+      setStateSelectedModel(String(filteredModels[0].record_id));
     }
-  }, [filteredModels, selectedModel]);
+  }, [filteredModels, state.selectedModel, setStateSelectedModel]);
 
-  // Initialize schema defaults into modelParameters when model changes
+  // Track onboarding: selected template/model
   useEffect(() => {
-    if (!selectedModel) return;
-    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-    const props = currentModel?.input_schema?.properties;
-    if (!props) return;
-
-    const defaults: Record<string, any> = {};
-    for (const [key, schema] of Object.entries<any>(props)) {
-      if (schema?.default !== undefined && modelParameters[key] === undefined) {
-        defaults[key] = schema.default;
-      }
+    if (state.selectedModel && progress && !progress.checklist.selectedTemplate) {
+      updateProgress({ selectedTemplate: true });
     }
-    if (Object.keys(defaults).length > 0) {
-      setModelParameters(prev => ({ ...defaults, ...prev }));
-    }
-  }, [selectedModel, filteredModels]);
+  }, [state.selectedModel, progress, updateProgress]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    
-    // Get current model's max_images limit
-    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-    const modelMaxImages = currentModel?.max_images ?? 0;
-    
-    // If max_images is 0, don't allow uploads
-    if (modelMaxImages === 0) {
-      toast.error("This model does not accept image uploads");
-      return;
-    }
-    
-    // Determine effective max images
-    let effectiveMax = modelMaxImages;
-    
-    // For single image fields, max is 1
-    if (!isImageArray && imageFieldName) {
-      effectiveMax = 1;
-    }
-    
-    // Check if adding files would exceed limit
-    if (uploadedImages.length + files.length > effectiveMax) {
-      if (effectiveMax === 1) {
-        // Single image: replace existing
-        toast.info("Replacing existing image");
-        setUploadedImages([]); // Clear existing
-      } else {
-        toast.error(`Maximum ${effectiveMax} image(s) allowed for this model`);
-        return;
-      }
-    }
-    
-    const validFiles: File[] = [];
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    
-    for (const file of files) {
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error(`"${file.name}" is too large (max 10MB)`);
-        continue;
-      }
-      
-      if (!validTypes.includes(file.type)) {
-        toast.error(`"${file.name}" has invalid type. Only JPEG, PNG, and WebP allowed.`);
-        continue;
-      }
-      
-      validFiles.push(file);
-    }
-    
-    if (validFiles.length > 0) {
-      // For single image, replace; for array, append
-      if (effectiveMax === 1) {
-        setUploadedImages(validFiles.slice(0, 1));
-      } else {
-        setUploadedImages([...uploadedImages, ...validFiles]);
-      }
-      toast.success(`${validFiles.length} image(s) uploaded successfully`);
-    }
-  };
-
-  const removeImage = (index: number) => {
-    setUploadedImages(uploadedImages.filter((_, i) => i !== index));
-  };
-
-  const handleGenerate = async () => {
-    // Validate prompt requirement
-    if (isPromptRequired && !prompt.trim()) {
-      toast.error("Please enter a prompt");
-      return;
-    }
-    
-    // Validate prompt length
-    if (prompt.trim().length > maxPromptLength) {
-      toast.error(`Prompt must be less than ${maxPromptLength} characters`);
-      return;
-    }
-    
-    // Validate image requirement
-    if (isImageRequired && uploadedImages.length === 0) {
-      toast.error("Please upload at least one image for this creation type");
-      return;
-    }
-
-    // Validate model selection
-    if (!selectedModel) {
-      toast.error("Please select a model");
-      return;
-    }
-
-      // Validate required fields from model schema (advanced options)
-    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-    if (currentModel?.input_schema) {
-      const requiredFields = currentModel.input_schema.required || [];
-      const schemaProperties = currentModel.input_schema.properties || {};
-      const excludeFields = ['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls', 'frameImages']; // Already validated above
-
-      for (const field of requiredFields) {
-        if (excludeFields.includes(field)) continue;
-        
-        const value = modelParameters[field];
-        if (value === undefined || value === null || value === '') {
-          const fieldTitle = schemaProperties[field]?.title || field;
-          toast.error(`Please provide a value for: ${fieldTitle}`);
-          return;
-        }
-      }
-    }
-
-    if (!user?.id) {
-      toast.error("Please sign in to upload images");
-      return;
-    }
-    
-    // Clear any existing poll interval
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current);
-      pollIntervalRef.current = null;
-    }
-    setPollingGenerationId(null);
-    setParentGenerationId(null); // Clear parent ID too
-    
-    // Reset generation tracking and ALL output state
-    generationStartTimeRef.current = Date.now();
-    setGenerationCompleteTime(null);
-    setGeneratedOutput(null);
-    setGeneratedOutputs([]); // Clear previous outputs array
-    setSelectedOutputIndex(0); // Reset selection
-    setCaptionData(null); // Clear previous caption
-    setShowLightbox(false); // Close any open lightbox
-    
-    setLocalGenerating(true);
-    
-    // Preemptive credit balance check
-    if (creditBalance && estimatedTokens > creditBalance) {
-      setLocalGenerating(false);
-      toast.error("Insufficient credits", {
-        description: `This creation requires ${estimatedTokens} credits, but you only have ${creditBalance}. Upgrade to continue.`,
-        duration: 10000,
-        action: {
-          label: "View Plans",
-          onClick: () => navigate("/pricing")
-        }
-      });
-      return;
-    }
-    
-    try {
-      // Build customParameters, filtering out conditional fields whose dependencies aren't met
-      const customParameters: Record<string, any> = {};
-      const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-      const inputSchema = (currentModel as any)?.input_schema;
-      const conditionalFields = inputSchema?.conditionalFields || {};
-
-      // Add all parameters from modelParameters, but exclude conditional ones whose deps aren't satisfied
-      for (const [key, value] of Object.entries(modelParameters)) {
-        const fieldConfig = conditionalFields[key];
-        
-        // If field has dependencies, check if they're satisfied
-        if (fieldConfig?.dependsOn) {
-          let shouldInclude = true;
-          for (const [depKey, depValue] of Object.entries(fieldConfig.dependsOn)) {
-            if (modelParameters[depKey] !== depValue) {
-              shouldInclude = false;
-              break;
-            }
-          }
-          if (!shouldInclude) {
-            console.log(`Excluding conditional parameter '${key}' because dependencies not met:`, fieldConfig.dependsOn);
-            continue; // Skip this parameter
-          }
-        }
-        
-        customParameters[key] = value;
-      }
-
-      // Ensure customMode has explicit default if undefined
-      if (inputSchema?.properties?.customMode && customParameters.customMode === undefined) {
-        customParameters.customMode = false;
-      }
-
-      console.log('Final custom parameters after filtering:', customParameters);
-
-      // Upload images to storage if required
-      if (imageFieldName && uploadedImages.length > 0) {
-        const timestamp = Date.now();
-        const imageUrls: string[] = [];
-
-        for (let i = 0; i < uploadedImages.length; i++) {
-          const file = uploadedImages[i];
-          const fileExt = file.name.split('.').pop();
-          const filePath = `${user?.id}/uploads/${timestamp}/${i}.${fileExt}`;
-
-          const { error: uploadError } = await supabase.storage
-            .from('generated-content')
-            .upload(filePath, file, {
-              cacheControl: '3600',
-              upsert: false
-            });
-
-          if (uploadError) {
-            toast.error(`Failed to upload image: ${file.name}`);
-            console.error('Upload error:', uploadError);
-            return;
-          }
-
-          // Generate signed URL for secure access (valid for 1 hour)
-          const { data: signedData, error: signedError } = await supabase.storage
-            .from('generated-content')
-            .createSignedUrl(filePath, 3600);
-
-          if (signedError || !signedData) {
-            toast.error(`Failed to create secure URL for: ${file.name}`);
-            console.error('Signed URL error:', signedError);
-            return;
-          }
-
-          imageUrls.push(signedData.signedUrl);
-        }
-
-        // Set parameter based on field type (single string or array)
-        if (isImageArray) {
-          customParameters[imageFieldName] = imageUrls;
-        } else {
-          customParameters[imageFieldName] = imageUrls[0]; // Single image
-        }
-        console.log(`Uploaded images to ${imageFieldName}:`, isImageArray ? imageUrls : imageUrls[0]);
-      }
-
-      console.log('Generation payload:', {
-        model_record_id: selectedModel,
-        prompt: prompt.trim(),
-        custom_parameters: customParameters
-      });
-
-      const result = await generate({
-        model_record_id: selectedModel,
-        prompt: prompt.trim(),
-        custom_parameters: customParameters,
-        enhance_prompt: enhancePrompt,
-      });
-
-
-      // Start polling using normalized ID
-      const genId = result?.id || result?.generation_id;
-      if (genId) {
-        setPollingGenerationId(genId);
-      }
-
-      if (result?.output_url) {
-        setGeneratedOutput(result.output_url);
-        setGenerationCompleteTime(Date.now());
-        toast.success('Generation complete!', { id: 'generation-progress' });
-      }
-    } catch (error: any) {
-      // Handle SESSION_EXPIRED error specifically
-      if (error.message === "SESSION_EXPIRED") {
-        toast.error("Session expired", {
-          description: "Please log in again. Your work has been saved.",
-          duration: 5000
-        });
-        setTimeout(() => {
-          navigate("/auth");
-        }, 2000);
-        return;
-      }
-      
-      // Handle INSUFFICIENT_TOKENS error
-      if (error.message?.includes("INSUFFICIENT_TOKENS")) {
-        let parsedError: any = {};
-        try {
-          parsedError = JSON.parse(error.message);
-        } catch (e) {
-          parsedError = { type: "INSUFFICIENT_TOKENS" };
-        }
-        
-        toast.error("Insufficient tokens", {
-          description: parsedError.required 
-            ? `You need ${parsedError.required} tokens but only have ${parsedError.available || 0}. Upgrade to continue creating.`
-            : "You don't have enough tokens. Upgrade your plan to continue creating amazing content.",
-          duration: 10000,
-          action: {
-            label: "View Plans",
-            onClick: () => navigate("/pricing")
-          }
-        });
-        
-        // Track insufficient tokens event for analytics
-        trackEvent('insufficient_tokens_error', {
-          required_tokens: parsedError.required,
-          available_tokens: parsedError.available,
-          model_id: selectedModel,
-        });
-        
-        return; // Don't show generic error
-      }
-      
-      console.error('Generation error:', error);
-      generationStartTimeRef.current = null;
-      // Error already handled in useGeneration hook
-    } finally {
-      setLocalGenerating(false);
-    }
-  };
-
-  const calculateTokens = () => {
-    if (!selectedModel || !filteredModels) return 50;
-
-    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-    if (!currentModel) return 50;
-
-    let tokens = currentModel.base_token_cost;
-    const multipliers = currentModel.cost_multipliers || {};
-    
-    for (const [paramName, multiplierConfig] of Object.entries(multipliers)) {
-      const paramValue = modelParameters[paramName];
-      
-      if (paramValue === undefined || paramValue === null) continue;
-      
-      // Handle nested object (parameter-first structure)
-      // Example: { "quality": { "Standard": 1, "HD": 1.5 } }
-      if (typeof multiplierConfig === 'object' && !Array.isArray(multiplierConfig)) {
-        // Get multiplier for the specific value, default to 1 if not defined
-        const multiplier = multiplierConfig[paramValue] ?? 1;
-        if (typeof multiplier === 'number') {
-          tokens *= multiplier;
-        }
-      }
-      // Legacy: Handle flat number (for backward compatibility)
-      else if (typeof multiplierConfig === 'number') {
-        if (typeof paramValue === 'boolean' && paramValue === true) {
-          tokens *= multiplierConfig;
-        }
-        else if (Array.isArray(paramValue)) {
-          tokens += (multiplierConfig * paramValue.length);
-        }
-        else if (typeof paramValue === 'number') {
-          tokens += (multiplierConfig * paramValue);
-        }
-      }
-    }
-    
-    // Legacy: Add cost for uploaded images if multiplier exists
-    if (uploadedImages.length > 0 && multipliers.uploaded_image) {
-      tokens += uploadedImages.length * multipliers.uploaded_image;
-    }
-    
-    return Math.round(tokens * 100) / 100; // Round to 2 decimal places instead of ceiling
-  };
-
+  // Track onboarding: entered prompt
   useEffect(() => {
-    let baseTokens = calculateTokens();
-    if (generateCaption) {
-      baseTokens += 8; // Add caption generation cost
+    if (state.prompt.length > 10 && progress && !progress.checklist.enteredPrompt) {
+      updateProgress({ enteredPrompt: true });
     }
-    setEstimatedTokens(baseTokens);
-  }, [selectedModel, modelParameters, uploadedImages, selectedGroup, filteredModels, generateCaption]);
+  }, [state.prompt, progress, updateProgress]);
 
-  const handleResetConfirm = () => {
-    // Clear input state
-    setPrompt("");
-    setUploadedImages([]);
-    setResolution("Native");
-    setModelParameters({});
-    setGenerateCaption(false);
-    
-    // Clear generation output state
-    setGeneratedOutput(null);
-    setGeneratedOutputs([]);
-    setCaptionData(null);
-    setSelectedOutputIndex(0);
-    setShowLightbox(false);
-    setGenerationCompleteTime(null);
-    
-    // Clear polling and generation tracking
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current);
-      pollIntervalRef.current = null;
-    }
-    setPollingGenerationId(null);
-    setParentGenerationId(null);
-    setLocalGenerating(false);
-    
-    // Clear video generation state
-    setGeneratingVideoIndex(null);
-    queryClient.invalidateQueries({ queryKey: ['child-video-generations'] });
-    
-    setShowResetDialog(false);
-    toast.success("Reset complete");
-  };
+  // Compute schema-derived values for InputPanel
+  const modelSchema = currentModel?.input_schema;
+  const textKey = schemaHelpers.findPrimaryTextKey(modelSchema?.properties);
+  const voiceKey = schemaHelpers.findPrimaryVoiceKey(modelSchema?.properties, state.selectedModel || undefined);
+  const hasPromptField = !!textKey;
+  const isPromptRequired = (modelSchema?.required || []).includes(textKey || 'prompt');
+  const maxPromptLength = schemaHelpers.getMaxPromptLength(currentModel, state.modelParameters.customMode);
+  const hasDuration = !!(modelSchema?.properties?.duration);
+  const hasIncrement = !!(modelSchema?.properties?.increment || modelSchema?.properties?.incrementBySeconds);
+  
+  const advancedOptionsRef = useRef<HTMLDivElement>(null);
 
-  const handleSurpriseMe = () => {
-    setGeneratingSurprise(true);
-    
-    try {
-      const selectedPrompt = getSurpriseMePrompt(selectedGroup);
-      setPrompt(selectedPrompt);
-      
-      const promptTypeLabels = {
-        'image_editing': 'Image editing',
-        'prompt_to_image': 'Image generation',
-        'prompt_to_video': 'Video generation',
-        'image_to_video': 'Image animation',
-        'prompt_to_audio': 'Audio generation'
-      };
-      
-      toast.success(`${promptTypeLabels[selectedGroup]} prompt loaded!`);
-    } catch (error) {
-      console.error('Surprise me error:', error);
-      toast.error("Failed to load prompt. Please try again.");
-    } finally {
-      setGeneratingSurprise(false);
-    }
-  };
+  const contentType = currentModel?.content_type || 'image';
 
-  // Show empty state immediately if no models
-  if (!modelsLoading && (!allModels || allModels.length === 0)) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8 text-center">
-          <h2 className="text-4xl font-black mb-4">NO MODELS AVAILABLE</h2>
-          <p className="text-lg text-muted-foreground">Please contact your administrator to add AI models.</p>
-        </div>
-      </div>
-    );
-  }
+  // Determine if generation button should be disabled
+  const isGenerateDisabled = 
+    isGenerating || 
+    state.localGenerating || 
+    !state.selectedModel ||
+    (imageFieldInfo.isRequired && uploadedImages.length === 0);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <div className="flex-1 bg-background pb-32 md:pb-8">
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
-        
-        <div className="relative z-10 container mx-auto px-4 py-4 md:py-8">
-          <SessionWarning />
-          
-        {/* Group Selection */}
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-2 justify-center">
-            {CREATION_GROUPS.map((group) => (
-              <button
-                key={group.id}
-                onClick={() => setSelectedGroup(group.id)}
-                className={cn(
-                  "p-2 md:p-3 rounded-xl transition-all duration-200 flex flex-col items-center gap-2 min-w-[100px] group",
-                  selectedGroup === group.id
-                    ? "bg-primary-500 shadow-[0_0_20px_rgba(var(--primary-rgb),0.4)] text-neutral-900 font-bold border-2 border-primary"
-                    : "bg-neutral-100 border border-gray-200 text-neutral-600 hover:bg-neutral-200 hover:text-secondary-700 hover:border-gray-300 shadow-sm hover:shadow-md"
-                )}
-              >
-                <group.Icon className="h-7 w-7 md:h-9 md:w-9 transition-transform duration-300 group-hover:animate-[bounce_0.6s_ease-in-out]" />
-                <span className="font-semibold text-xs md:text-sm">{group.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Mobile-First Layout - Stacked vertically on mobile, side-by-side on desktop */}
-        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
-          {/* Input Panel */}
-          <Card className="bg-card border border-gray-200 shadow-sm rounded-xl order-1">
-            <div className="border-b border-gray-200 px-4 md:px-6 py-3 md:py-4 bg-muted/30">
-              <h2 className="text-base md:text-lg font-bold">Input</h2>
-            </div>
-
-            <div className="p-4 md:p-8 space-y-6 pb-32 md:pb-8">
-              {/* Model Selection */}
-              {filteredModels.length > 0 && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">AI Model</label>
-                  <Select
-                    value={selectedModel || undefined}
-                    onValueChange={(value) => setSelectedModel(value)}
-                  >
-                     <SelectTrigger className="w-full h-auto py-3 px-4 bg-background border border-gray-200 hover:border-gray-300 shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/30 rounded-lg font-bold">
-                      <SelectValue placeholder="Select a model...">
-                        {selectedModel && (() => {
-                          const model = filteredModels.find(m => String(m.record_id) === selectedModel);
-                          if (!model) return null;
-                          return (
-                            <div className="flex items-center gap-2 w-full">
-                              {model.logo_url && (
-                                <img 
-                                  src={model.logo_url} 
-                                  alt={model.model_name}
-                                  className="w-5 h-5 object-contain flex-shrink-0"
-                                />
-                              )}
-                              <span className="font-bold text-sm flex-1 min-w-0 truncate">{model.model_name}</span>
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                <Badge variant="secondary" className="text-xs">
-                                  {model.base_token_cost} tokens
-                                </Badge>
-                                {model.estimated_time_seconds !== null && model.estimated_time_seconds !== undefined && (
-                                  <Badge variant="secondary" className="text-xs flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    ~{formatEstimatedTime(model.estimated_time_seconds)}
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="bg-background border border-gray-200 shadow-lg rounded-lg z-50 max-w-[calc(100vw-2rem)] max-h-[60vh] overflow-y-auto">
-                      {filteredModels.map((model) => {
-                        const modelGroups = (model.groups as string[]) || [];
-                        const otherGroups = modelGroups.filter(g => g !== selectedGroup);
-                        const isSelected = String(selectedModel) === String(model.record_id);
-                        
-                        return (
-                          <SelectItem
-                            key={String(model.record_id)}
-                            value={String(model.record_id)}
-                            className={cn(
-                              "cursor-pointer py-3 px-2 md:px-4 border-2 my-1 mx-1 rounded transition-all !pl-2 md:!pl-3 !pr-2 md:!pr-3 [&>span.absolute.left-2]:hidden",
-                              isSelected
-                                ? "bg-primary-500 hover:bg-primary-600 text-neutral-900 font-bold border-black"
-                                : "hover:bg-muted border-border"
-                            )}
-                          >
-                            <div className="flex items-center gap-2 w-full">
-                              {model.logo_url && (
-                                <img 
-                                  src={model.logo_url} 
-                                  alt={model.model_name}
-                                  className="w-5 h-5 object-contain flex-shrink-0"
-                                />
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between w-full gap-2 md:gap-4">
-                                  <span className="font-bold text-xs md:text-sm flex-shrink min-w-0 truncate">{model.model_name}</span>
-                                  <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-                                    <Badge variant="secondary" className="text-[10px] md:text-xs whitespace-nowrap">
-                                      {model.base_token_cost} tokens
-                                    </Badge>
-                                    {model.estimated_time_seconds !== null && model.estimated_time_seconds !== undefined && (
-                                      <Badge variant="secondary" className="text-[10px] md:text-xs flex items-center gap-0.5 md:gap-1 whitespace-nowrap">
-                                        <Clock className="h-2.5 md:h-3 w-2.5 md:w-3" />
-                                        ~{formatEstimatedTime(model.estimated_time_seconds)}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                                {otherGroups.length > 0 && (
-                                  <div className="mt-1">
-                                    <span className={cn(
-                                      "text-[10px] md:text-xs",
-                                      isSelected ? "text-white/60" : "text-muted-foreground/60"
-                                    )}>
-                                      Also in: {otherGroups.map(g => 
-                                        CREATION_GROUPS.find(cg => cg.id === g)?.label
-                                      ).join(", ")}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {filteredModels.length === 0 && !modelsLoading && (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No models available for this creation type</p>
-                </div>
-              )}
-
-              {/* Prompt - Only show if prompt field exists in schema */}
-              {modelSchema?.properties?.prompt && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">
-                      Prompt {isPromptRequired && <span className="text-destructive">*</span>}
-                    </label>
-                    <div className="flex gap-2">
-                       <Button
-                         variant="outline"
-                         size="sm"
-                         onClick={handleSurpriseMe}
-                         className="h-10 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white font-bold border border-gray-200 shadow-sm hover:shadow-md hover:opacity-90 transition-all"
-                         disabled={localGenerating || isGenerating || generatingSurprise || !!pollingGenerationId}
-                       >
-                        {generatingSurprise ? (
-                          <>
-                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="h-3 w-3 mr-1" />
-                            Surprise Me
-                          </>
-                        )}
-                      </Button>
-                       <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEnhancePrompt(!enhancePrompt)}
-                        className={cn(
-                          "h-10 transition-all font-bold",
-                          enhancePrompt 
-                            ? "bg-primary-500 text-neutral-900 hover:bg-primary-600 ring-2 ring-primary/20 border border-primary/30" 
-                            : "bg-white text-neutral-700 hover:bg-neutral-100 border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300"
-                        )}
-                      >
-                        {enhancePrompt ? "✓ " : ""}Enhance
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* Generate Caption Checkbox */}
-                  <div className="flex items-center space-x-2 pt-2">
-                    <Checkbox
-                      id="generate-caption"
-                      checked={generateCaption}
-                      onCheckedChange={(checked) => setGenerateCaption(checked as boolean)}
-                      disabled={localGenerating || isGenerating || !!pollingGenerationId}
-                    />
-                    <label 
-                      htmlFor="generate-caption" 
-                      className="text-sm font-medium cursor-pointer flex items-center gap-1"
-                    >
-                      Generate caption & hashtags 
-                      <Badge variant="secondary" className="text-xs">+8 tokens</Badge>
-                    </label>
-                  </div>
-                  
-                   <Textarea
-                     value={prompt}
-                     onChange={(e) => setPrompt(e.target.value)}
-                     placeholder="Describe what you want to create..."
-                     className="min-h-[160px] md:min-h-[180px] resize-none text-sm md:text-base"
-                     disabled={localGenerating || isGenerating || !!pollingGenerationId}
-                     required={isPromptRequired}
-                     maxLength={maxPromptLength}
-                   />
-                  <div className="flex justify-between items-center">
-                    {maxPromptLength === 500 && (
-                      <div className="flex items-center gap-1.5 text-xs text-orange-600 dark:text-orange-400">
-                        <Info className="h-3.5 w-3.5" />
-                        <span className="font-medium">Non-custom mode limit</span>
-                      </div>
-                    )}
-                    <span className={cn(
-                      "text-xs ml-auto",
-                      prompt.length > maxPromptLength ? "text-destructive font-medium" : "text-muted-foreground"
-                    )}>
-                      {prompt.length} / {maxPromptLength} characters
-                    </span>
-                  </div>
-                </div>
-              )}
-
-
-              {/* Image Upload - Native camera support on mobile */}
-              {imageFieldName && maxImages > 0 && (
-                <div className="space-y-3">
-                  <label className="text-sm font-medium">
-                    {maxImages === 1 ? 'Image' : 'Images'} {isImageRequired && <span className="text-destructive">*</span>}
-                  </label>
-
-                  {uploadedImages.map((file, index) => (
-                    <div key={index} className="flex items-center gap-2 p-2 md:p-3 border rounded-lg bg-muted/30">
-                      <div className="w-16 h-16 md:w-20 md:h-20 border rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                        <img src={URL.createObjectURL(file)} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-xs md:text-sm flex-1 truncate">File {index + 1}</span>
-                      <Button variant="ghost" size="sm" onClick={() => removeImage(index)} className="h-8 text-xs">
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
-
-                  {/* Native camera buttons (mobile) or file input (web) */}
-                  {isNative ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={async () => {
-                          const file = await pickImage('camera');
-                          if (file) {
-                            handleFileUpload({ target: { files: [file] } } as any);
-                            await triggerHaptic('light');
-                          }
-                        }}
-                        disabled={cameraLoading || (maxImages ? uploadedImages.length >= maxImages : false)}
-                        className="w-full border-dashed h-11"
-                      >
-                        <Camera className="h-4 w-4 mr-2" />
-                        Camera
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={async () => {
-                          if (maxImages === 1) {
-                            const file = await pickImage('gallery');
-                            if (file) {
-                              handleFileUpload({ target: { files: [file] } } as any);
-                              await triggerHaptic('light');
-                            }
-                          } else {
-                            const files = await pickMultipleImages(maxImages - uploadedImages.length);
-                            if (files.length > 0) {
-                              handleFileUpload({ target: { files } } as any);
-                              await triggerHaptic('light');
-                            }
-                          }
-                        }}
-                        disabled={cameraLoading || (maxImages ? uploadedImages.length >= maxImages : false)}
-                        className="w-full border-dashed h-11"
-                      >
-                        <ImageIcon className="h-4 w-4 mr-2" />
-                        Gallery
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <input ref={fileInputRef} type="file" accept="image/*" multiple={maxImages !== 1} onChange={handleFileUpload} className="hidden" />
-                      <Button
-                        variant="outline"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={maxImages ? uploadedImages.length >= maxImages : false}
-                        className="w-full border-dashed h-11 md:h-10"
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        {maxImages === 1 
-                          ? `Upload Image ${uploadedImages.length > 0 ? '(Replace)' : ''}` 
-                          : maxImages 
-                            ? `Add Images (${uploadedImages.length}/${maxImages})` 
-                            : `Add Images (${uploadedImages.length})`
-                        }
-                      </Button>
-                    </>
-                  )}
-                  
-                  {isImageRequired && uploadedImages.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      This model requires at least one image
-                    </p>
-                  )}
-                </div>
-              )}
-
-
-              {/* Primary Input Fields (Text & Voice) - Exclude prompt as it's rendered above */}
-              {selectedModel && filteredModels && (() => {
-                const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-                if (!currentModel?.input_schema?.properties) return null;
-                
-                const properties = currentModel.input_schema.properties as Record<string, any>;
-                let textKey = findPrimaryTextKey(properties);
-                const voiceKey = findPrimaryVoiceKey(properties, currentModel.id);
-
-                // Exclude "prompt" as it's already rendered above
-                if (textKey === 'prompt') textKey = null;
-
-                console.debug('[Primary Inputs]', { textKey, voiceKey, modelId: currentModel.id });
-                if (!textKey && !voiceKey) return null;
-                
-                return (
-                  <div className="space-y-4">
-                    {textKey && properties[textKey] && (
-                      <SchemaInput
-                        name={textKey}
-                        schema={properties[textKey]}
-                        value={modelParameters[textKey]}
-                        onChange={(val) => setModelParameters({ ...modelParameters, [textKey]: val })}
-                        required={currentModel.input_schema.required?.includes(textKey)}
-                        modelSchema={currentModel.input_schema}
-                        allValues={modelParameters}
-                        modelId={currentModel.id}
-                      />
-                    )}
-                    {voiceKey && properties[voiceKey] && (
-                      <SchemaInput
-                        name={voiceKey}
-                        schema={properties[voiceKey]}
-                        value={modelParameters[voiceKey]}
-                        onChange={(val) => setModelParameters({ ...modelParameters, [voiceKey]: val })}
-                        required={currentModel.input_schema.required?.includes(voiceKey)}
-                        modelSchema={currentModel.input_schema}
-                        allValues={modelParameters}
-                        modelId={currentModel.id}
-                      />
-                    )}
-                  </div>
-                );
-              })()}
-
-              {/* Duration and Increment - Outside Advanced Options */}
-              {selectedModel && filteredModels && (() => {
-                const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-                const properties = currentModel?.input_schema?.properties as Record<string, any> | undefined;
-                
-                if (!properties) return null;
-                
-                // Check if duration or increment fields exist
-                const hasDuration = properties.duration;
-                const hasIncrement = properties.increment;
-                
-                if (!hasDuration && !hasIncrement) return null;
-                
-                return (
-                  <div className="space-y-4">
-                    {/* Duration Field */}
-                    {hasDuration && (
-                      <SchemaInput
-                        key="duration"
-                        name="duration"
-                        schema={properties.duration}
-                        value={modelParameters.duration}
-                        onChange={(value) => {
-                          setModelParameters(prev => ({ ...prev, duration: value }));
-                        }}
-                        required={currentModel.input_schema?.required?.includes('duration')}
-                        modelSchema={currentModel.input_schema}
-                        modelId={currentModel.id}
-                        provider={currentModel.provider}
-                      />
-                    )}
-                    
-                    {/* Increment Toggle */}
-                    {hasIncrement && (
-                      <div className="flex items-center justify-between space-x-2">
-                        <Label htmlFor="increment-toggle" className="text-sm font-medium">
-                          {properties.increment.title || 'Increment'}
-                          {currentModel.input_schema?.required?.includes('increment') && (
-                            <span className="text-destructive ml-1">*</span>
-                          )}
-                        </Label>
-                        <Switch
-                          id="increment-toggle"
-                          checked={!!modelParameters.increment}
-                          onCheckedChange={(checked) => {
-                            setModelParameters(prev => ({ ...prev, increment: checked }));
-                          }}
-                        />
-                      </div>
-                    )}
-                    {properties.increment?.description && (
-                      <p className="text-xs text-muted-foreground -mt-2">
-                        {properties.increment.description}
-                      </p>
-                    )}
-                  </div>
-                );
-              })()}
-
-              {/* Collapsible Advanced Options */}
-              <div ref={advancedOptionsRef}>
-                <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-                  <CollapsibleTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      className="w-full h-14 md:h-10 border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all"
-                    >
-                      <span className="font-semibold">Advanced Options</span>
-                      <ChevronRight className={`h-4 w-4 ml-auto transition-transform ${advancedOpen ? 'rotate-90' : ''}`} />
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-4 mt-4">
-                  {/* Dynamic Model Parameters */}
-                  {selectedModel && filteredModels && (() => {
-                    const currentModel = filteredModels.find(m => m.record_id === selectedModel);
-                    return currentModel?.input_schema ? (() => {
-                      const properties = currentModel.input_schema.properties as Record<string, any>;
-                      const textKey = findPrimaryTextKey(properties);
-                      const voiceKey = findPrimaryVoiceKey(properties, currentModel.id);
-                      const baseExclude = ['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls', 'frameImages', 'duration', 'increment'];
-                      const exclude = [...baseExclude, ...(textKey ? [textKey] : []), ...(voiceKey ? [voiceKey] : [])];
-                      return (
-                        <ModelParameterForm
-                          modelSchema={currentModel.input_schema}
-                          onChange={setModelParameters}
-                          currentValues={modelParameters}
-                          excludeFields={exclude}
-                          modelId={currentModel.id}
-                          provider={currentModel.provider}
-                        />
-                      );
-                    })() : (
-                      // Legacy Resolution fallback if no schema
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Resolution</label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
-                            variant={resolution === "Native" ? "default" : "outline"}
-                            onClick={() => setResolution("Native")}
-                            className="h-11 md:h-10"
-                          >
-                            Native
-                          </Button>
-                          <Button
-                            variant={resolution === "HD" ? "default" : "outline"}
-                            onClick={() => setResolution("HD")}
-                            className="h-11 md:h-10"
-                          >
-                            HD
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </CollapsibleContent>
-              </Collapsible>
-              </div>
-
-               {/* Action Buttons */}
-               <div className="hidden md:flex flex-col gap-2">
-                 <Button 
-                   onClick={handleGenerate} 
-                   disabled={
-                     localGenerating || 
-                     isGenerating || 
-                     !!pollingGenerationId ||
-                     !selectedModel || 
-                     (isPromptRequired && !prompt.trim()) || 
-                     (isImageRequired && uploadedImages.length === 0)
-                   }
-                   size="lg"
-                   className="w-full h-12 md:h-11 text-base font-bold bg-primary-500 hover:bg-primary-600 text-neutral-900 border-2 border-primary-600 shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40"
-                   title={pollingGenerationId ? "Generation in progress - please wait for it to complete" : ""}
-                 >
-                   {(localGenerating || isGenerating || pollingGenerationId) ? (
-                     <>
-                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                       {pollingGenerationId ? 'Processing...' : 'Generating...'}
-                     </>
-                     ) : (
-                      <div className="flex flex-row items-center justify-center gap-2 md:gap-3 w-full md:relative">
-                        <div className="flex items-center flex-shrink-0">
-                          <Sparkles className="mr-2 h-5 w-5 flex-shrink-0" />
-                          <span className="whitespace-nowrap">Generate</span>
-                        </div>
-                         <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded md:absolute md:right-2 flex-shrink-0">
-                           <Coins className="h-4 w-4 flex-shrink-0" />
-                           <span className="text-sm font-bold whitespace-nowrap">(~{estimatedTokens.toFixed(2)}<span className="hidden md:inline"> credits</span>)</span>
-                         </div>
-                      </div>
-                     )}
-                 </Button>
-                 {pollingGenerationId && (
-                   <p className="text-xs text-muted-foreground text-center">
-                     Please wait for the current generation to complete before starting a new one
-                   </p>
-                 )}
-                 <Button
-                  onClick={() => setShowResetDialog(true)} 
-                  variant="outline" 
-                  size="lg" 
-                  className="w-full h-11 md:h-10"
-                  disabled={localGenerating || isGenerating}
-                >
-                  Reset
-                </Button>
-              </div>
-              
-              {/* Mobile Sticky Generate Button */}
-              <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-40 safe-area-padding-bottom">
-                <Button 
-                  onClick={handleGenerate} 
-                  disabled={
-                    localGenerating || 
-                    isGenerating || 
-                    !!pollingGenerationId ||
-                    !selectedModel || 
-                    (isPromptRequired && !prompt.trim()) || 
-                    (isImageRequired && uploadedImages.length === 0)
-                  }
-                  size="lg"
-                  className="w-full h-14 text-base font-bold bg-primary-500 hover:bg-primary-600 text-neutral-900 border-2 border-primary-600 shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40"
-                  title={pollingGenerationId ? "Generation in progress - please wait for it to complete" : ""}
-                >
-                  {(localGenerating || isGenerating || pollingGenerationId) ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      {pollingGenerationId ? 'Processing...' : 'Generating...'}
-                    </>
-                  ) : (
-                    <div className="flex items-center justify-center gap-2 w-full">
-                      <Sparkles className="h-5 w-5 flex-shrink-0" />
-                      <span className="whitespace-nowrap">Generate</span>
-                      <div className="flex items-center gap-1.5 bg-black/10 px-2.5 py-1 rounded flex-shrink-0">
-                        <Coins className="h-4 w-4 flex-shrink-0" />
-                        <span className="text-sm font-bold whitespace-nowrap">(~{estimatedTokens.toFixed(2)})</span>
-                      </div>
-                    </div>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </Card>
-
-          {/* Output Panel */}
-          <Card ref={outputSectionRef} className="bg-card border border-gray-200 shadow-sm rounded-xl order-2">
-            <div className="border-b border-gray-200 px-4 md:px-6 py-3 md:py-4 bg-muted/30">
-              <h2 className="text-base md:text-lg font-bold">Output</h2>
-            </div>
-
-            <div className="p-4 md:p-6">
-              {(localGenerating || isGenerating || pollingGenerationId || generatedOutput) && generationStartTimeRef.current ? (
-                <div className="space-y-4">
-                  <Card className="border border-gray-200 shadow-sm bg-muted/50 rounded-xl">
-                    <CardContent className="p-4 space-y-4">
-                      <div className="flex items-start gap-2">
-                        <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <p className="text-xs text-muted-foreground">
-                          Feel free to navigate away - your generation will be saved in History
-                        </p>
-                      </div>
-
-              <GenerationProgress
-                startTime={generationStartTimeRef.current}
-                isComplete={!!generatedOutput}
-                completedAt={generationCompleteTime || undefined}
-                estimatedTimeSeconds={
-                  selectedModel 
-                    ? filteredModels.find(m => m.record_id === selectedModel)?.estimated_time_seconds 
-                    : null
-                }
-              />
-
-                      {generatedOutputs.length > 0 ? (
-                        <div className="space-y-3 pt-2">
-                          <OutputGrid
-                            outputs={generatedOutputs}
-                            contentType={selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type || "image"}
-                            onSelectOutput={(index) => {
-                              setSelectedOutputIndex(index);
-                              setShowLightbox(true);
-                            }}
-                            onDownloadAll={async () => {
-                              await downloadMultipleOutputs(
-                                generatedOutputs,
-                                selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type || "image",
-                                () => {
-                                  if (progress && !progress.checklist.downloadedResult) {
-                                    updateProgress({ downloadedResult: true });
-                                  }
-                                }
-                              );
-                            }}
-                            onGenerateVideo={
-                              selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type === 'audio' && parentGenerationId
-                                ? (outputIndex) => {
-                                    console.log('🎬 Generating video for parent:', parentGenerationId, 'output:', outputIndex);
-                                    setGeneratingVideoIndex(outputIndex);
-                                    generateVideo({ 
-                                      generationId: parentGenerationId, 
-                                      outputIndex 
-                                    }, {
-                                      onSuccess: () => {
-                                        console.log('✅ Video generation successful');
-                                        setGeneratingVideoIndex(null);
-                                      },
-                                      onError: () => {
-                                        console.error('❌ Video generation failed');
-                                        setGeneratingVideoIndex(null);
-                                      }
-                                    });
-                                  }
-                                : undefined
-                            }
-                            generatingVideoIndex={generatingVideoIndex}
-                            userTokensRemaining={creditBalance}
-                            onDownloadSuccess={() => {
-                              if (progress && !progress.checklist.downloadedResult) {
-                                updateProgress({ downloadedResult: true });
-                              }
-                            }}
-                          />
-
-                          {/* Display child video generations */}
-                          {childVideoGenerations.filter(v => v.type === 'video').length > 0 && (
-                            <div className="space-y-3 mt-4">
-                              <h3 className="text-sm font-semibold text-muted-foreground">Generated Videos</h3>
-                              {childVideoGenerations.filter(v => v.type === 'video').map((video) => (
-                                <div key={video.id}>
-                                  {video.status === 'completed' ? (
-                                    <VideoFromAudioPreview
-                                      storagePath={video.storage_path}
-                                      outputIndex={video.output_index}
-                                      onRegenerate={() => {
-                                        setGeneratingVideoIndex(video.output_index);
-                                        generateVideo({ 
-                                          generationId: parentGenerationId!, 
-                                          outputIndex: video.output_index 
-                                        }, {
-                                          onSuccess: () => {
-                                            setGeneratingVideoIndex(null);
-                                          },
-                                          onError: () => {
-                                            setGeneratingVideoIndex(null);
-                                          }
-                                        });
-                                      }}
-                                    />
-                                  ) : video.status === 'pending' || video.status === 'processing' ? (
-                                    <VideoGenerationProgress
-                                      generationId={video.id}
-                                      outputIndex={video.output_index}
-                                      onStatusChange={() => {
-                                        queryClient.invalidateQueries({ 
-                                          queryKey: ['child-video-generations', parentGenerationId] 
-                                        });
-                                      }}
-                                    />
-                                  ) : video.status === 'failed' ? (
-                                    <Card className="p-4 bg-destructive/10 border-destructive/20">
-                                      <div className="flex items-center gap-2 text-destructive">
-                                        <XCircle className="h-4 w-4" />
-                                        <span className="text-sm">
-                                          Video generation failed for Track #{video.output_index + 1}
-                                        </span>
-                                      </div>
-                                    </Card>
-                                  ) : null}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          <OutputLightbox
-                            outputs={generatedOutputs}
-                            selectedIndex={selectedOutputIndex}
-                            contentType={selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type || "image"}
-                            open={showLightbox}
-                            onOpenChange={setShowLightbox}
-                            onNavigate={(direction) => {
-                              if (direction === 'prev' && selectedOutputIndex > 0) {
-                                setSelectedOutputIndex(selectedOutputIndex - 1);
-                              } else if (direction === 'next' && selectedOutputIndex < generatedOutputs.length - 1) {
-                                setSelectedOutputIndex(selectedOutputIndex + 1);
-                              }
-                            }}
-                          />
-
-
-                          {/* Caption & Hashtags Display */}
-                          {captionData && (
-                            <Card className="bg-muted/50 border border-gray-200 shadow-sm animate-fade-in">
-                              <CardContent className="pt-6">
-                                {/* Caption Section */}
-                                <div className="mb-4">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <h3 className="text-sm font-semibold flex items-center gap-2">
-                                      <Sparkles className="h-4 w-4 text-primary" />
-                                      Caption
-                                    </h3>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(captionData.caption);
-                                        toast.success("Caption copied!");
-                                      }}
-                                      className="h-8 text-xs"
-                                    >
-                                      Copy
-                                    </Button>
-                                  </div>
-                                  <div className="text-sm md:text-base bg-background p-4 rounded-md border border-gray-200 min-h-[120px]">
-                                    {captionExpanded ? (
-                                      <>
-                                        <p className="whitespace-pre-wrap">{captionData.caption}</p>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => setCaptionExpanded(false)}
-                                          className="mt-2 h-9 px-4 text-xs text-primary hover:text-primary/80"
-                                        >
-                                          Show less
-                                        </Button>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <p className="line-clamp-4 whitespace-pre-wrap">{captionData.caption}</p>
-                                        {captionData.caption.length > 150 && (
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setCaptionExpanded(true)}
-                                            className="mt-2 h-9 px-4 text-xs text-primary hover:text-primary/80"
-                                          >
-                                            View full caption
-                                          </Button>
-                                        )}
-                                      </>
-                                    )}
-                                  </div>
-                                </div>
-                                
-                                {/* Hashtags Section */}
-                                <div>
-                                  <div className="flex items-center justify-between mb-2">
-                                    <h3 className="text-sm font-semibold">
-                                      Hashtags ({captionData.hashtags.length})
-                                    </h3>
-                                    <div className="flex gap-2">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                          const hashtagText = captionData.hashtags.join(' ');
-                                          navigator.clipboard.writeText(hashtagText);
-                                          toast.success("All hashtags copied!");
-                                        }}
-                                        className="h-8 text-xs"
-                                      >
-                                        Copy All
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={async () => {
-                                          setIsGeneratingCaption(true);
-                                          try {
-                                            const selectedModelData = filteredModels.find(m => m.record_id === selectedModel);
-                                            const { data: captionResult, error: captionError } = await supabase.functions.invoke('generate-caption', {
-                                              body: {
-                                                generation_id: generatedOutputs[0].id,
-                                                prompt: prompt,
-                                                content_type: selectedModelData?.content_type || 'image',
-                                                model_name: selectedModelData?.model_name || 'AI Model'
-                                              }
-                                            });
-                                            
-                                            if (captionError) throw captionError;
-                                            
-                                            setCaptionData({
-                                              caption: captionResult.caption,
-                                              hashtags: captionResult.hashtags,
-                                              generated_at: captionResult.generated_at
-                                            });
-                                            
-                                            toast.success("Caption regenerated!");
-                                          } catch (err) {
-                                            console.error("Caption regeneration failed:", err);
-                                            toast.error("Failed to regenerate caption");
-                                          } finally {
-                                            setIsGeneratingCaption(false);
-                                          }
-                                        }}
-                                        disabled={isGeneratingCaption}
-                                        className="h-8 text-xs"
-                                      >
-                                        {isGeneratingCaption ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : null}
-                                        Regenerate
-                                      </Button>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="bg-background p-3 rounded-md border border-gray-200">
-                                    {hashtagsExpanded ? (
-                                      <>
-                                        <div className="flex flex-wrap gap-2">
-                                          {captionData.hashtags.map((tag, idx) => (
-                                            <Badge
-                                              key={idx}
-                                              variant="secondary"
-                                              className="cursor-pointer hover:bg-primary/20 transition-colors"
-                                              onClick={() => {
-                                                navigator.clipboard.writeText(tag);
-                                                toast.success(`Copied ${tag}`);
-                                              }}
-                                            >
-                                              {tag}
-                                            </Badge>
-                                          ))}
-                                        </div>
-                                        {captionData.hashtags.length > 5 && (
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setHashtagsExpanded(false)}
-                                            className="mt-2 h-7 text-xs text-primary hover:text-primary/80"
-                                          >
-                                            Show less
-                                          </Button>
-                                        )}
-                                      </>
-                                    ) : (
-                                      <>
-                                        <div className="flex flex-wrap gap-2">
-                                          {captionData.hashtags.slice(0, 5).map((tag, idx) => (
-                                            <Badge
-                                              key={idx}
-                                              variant="secondary"
-                                              className="cursor-pointer hover:bg-primary/20 transition-colors"
-                                              onClick={() => {
-                                                navigator.clipboard.writeText(tag);
-                                                toast.success(`Copied ${tag}`);
-                                              }}
-                                            >
-                                              {tag}
-                                            </Badge>
-                                          ))}
-                                        </div>
-                                        {captionData.hashtags.length > 5 && (
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setHashtagsExpanded(true)}
-                                            className="mt-2 h-7 text-xs text-primary hover:text-primary/80"
-                                          >
-                                            Show all {captionData.hashtags.length} hashtags
-                                          </Button>
-                                        )}
-                                      </>
-                                    )}
-                                  </div>
-                                  
-                                  <p className="text-xs text-muted-foreground mt-2">
-                                    Generated {new Date(captionData.generated_at).toLocaleString()}
-                                  </p>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          )}
-
-                          {isGeneratingCaption && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground animate-fade-in">
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              Generating caption and hashtags...
-                            </div>
-                          )}
-
-                          <Button
-                            onClick={() => navigate("/dashboard/history")}
-                            variant="outline"
-                            className="w-full border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all"
-                            size="sm"
-                          >
-                            <History className="h-4 w-4 mr-2" />
-                            View All in History
-                          </Button>
-                        </div>
-                      ) : generatedOutput ? (
-                        <div className="space-y-3 pt-2">
-                          <div className="relative aspect-square bg-background rounded-lg overflow-hidden border">
-                            <GenerationPreview
-                              storagePath={generatedOutput}
-                              contentType={selectedModel && filteredModels.find(m => m.record_id === selectedModel)?.content_type || "image"}
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              onClick={async () => {
-                                try {
-                                  const { data } = await supabase.storage
-                                    .from('generated-content')
-                                    .createSignedUrl(generatedOutput, 60);
-                                  if (data?.signedUrl) {
-                                    const response = await fetch(data.signedUrl);
-                                    const blob = await response.blob();
-                                    const url = window.URL.createObjectURL(blob);
-                                    const a = document.createElement('a');
-                                    a.href = url;
-                                    const extension = generatedOutput.split('.').pop() || 'file';
-                                    a.download = `generation-${Date.now()}.${extension}`;
-                                    document.body.appendChild(a);
-                                    a.click();
-                                    window.URL.revokeObjectURL(url);
-                                    document.body.removeChild(a);
-                                    toast.success('Download started!');
-                                  }
-                                } catch (error) {
-                                  toast.error('Failed to download');
-                                }
-                              }}
-                              className="flex-1"
-                              size="sm"
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              Download
-                            </Button>
-                            <Button
-                              onClick={() => navigate("/dashboard/history")}
-                              className="flex-1"
-                              size="sm"
-                            >
-                              <History className="h-4 w-4 mr-2" />
-                              View in History
-                            </Button>
-                          </div>
-                        </div>
-                      ) : null}
-                    </CardContent>
-                  </Card>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center min-h-[400px] lg:min-h-[calc(100vh-200px)] p-4">
-                  {templateBeforeImage && templateAfterImage ? (
-                    <div className="w-full max-w-2xl space-y-4">
-                      <BeforeAfterSlider
-                        beforeImage={templateBeforeImage}
-                        afterImage={templateAfterImage}
-                        beforeLabel="Before"
-                        afterLabel="After"
-                        className="rounded-lg overflow-hidden shadow-lg"
-                      />
-                      <p className="text-sm text-muted-foreground text-center">
-                        Preview of what you'll create
-                      </p>
-                    </div>
-                  ) : templateAfterImage || templateBeforeImage ? (
-                    <div className="w-full max-w-2xl space-y-4">
-                      <img
-                        src={templateAfterImage || templateBeforeImage!}
-                        alt="Template preview"
-                        className="w-full rounded-lg shadow-lg"
-                      />
-                      <p className="text-sm text-muted-foreground text-center">
-                        Preview of what you'll create
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <ImageIcon className="h-12 w-12 md:h-16 md:w-16 mx-auto mb-4 text-muted-foreground/50" />
-                      <p className="text-sm md:text-base text-muted-foreground">
-                        Your generated content will appear here
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </Card>
-        </div>
-
-
-        {/* Best Practices Section */}
-        <Card className="bg-card border border-gray-200 shadow-sm rounded-xl">
-          <div className="p-4 md:p-6">
-            <h3 className="text-lg md:text-xl font-black mb-4 flex items-center gap-2">
-              <Sparkles className="h-5 w-5" />
-              BEST PRACTICES
-            </h3>
-            <div className="grid md:grid-cols-2 gap-3 md:gap-4 text-sm">
-              <div className="flex gap-3">
-                <span className="font-bold text-black">01</span>
-                <p className="text-foreground">Be specific and descriptive in your prompts for better results</p>
-              </div>
-              <div className="flex gap-3">
-                <span className="font-bold text-black">02</span>
-                <p className="text-foreground">Use the "Enhance" feature to automatically improve your prompts</p>
-              </div>
-              <div className="flex gap-3">
-                <span className="font-bold text-black">03</span>
-                <p className="text-foreground">Upload reference images to guide the AI's creative direction</p>
-              </div>
-              <div className="flex gap-3">
-                <span className="font-bold text-black">04</span>
-                <p className="text-foreground">Experiment with different models to find your perfect style</p>
-              </div>
-            </div>
-          </div>
-        </Card>
+    <div className="min-h-screen bg-background">
+      <SessionWarning />
       
-      {/* Reset Confirmation Dialog */}
-      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Reset Creation?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will clear all your inputs and uploaded images. If you generate again after resetting, 
-              it will consume tokens. Are you sure you want to continue?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleResetConfirm}>Reset</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Error Dialog */}
-      <AlertDialog open={error !== null} onOpenChange={(open) => !open && clearError()}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Generation Failed</AlertDialogTitle>
-            <AlertDialogDescription>
-              {error}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={clearError} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Close
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Onboarding Components */}
-      {progress && !progress.isComplete && !progress.dismissed && (
-        <OnboardingChecklist
-          progress={progress}
-          onComplete={markComplete}
-          onDismiss={dismiss}
-        />
+      {/* Onboarding */}
+      {progress && (
+        <>
+          <OnboardingChecklist 
+            progress={progress}
+            onComplete={markComplete}
+            onDismiss={dismiss}
+          />
+          {progress.checklist.completedFirstGeneration && !progress.dismissed && (
+            <SuccessConfetti trigger={progress.checklist.completedFirstGeneration} />
+          )}
+        </>
       )}
 
-      <SuccessConfetti
-        trigger={showConfetti}
-        onComplete={() => setShowConfetti(false)}
-      />
+      <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
+        {/* Header */}
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-3xl md:text-4xl font-black mb-2">
+            Custom Creation Studio
+          </h1>
+          <p className="text-muted-foreground">
+            Create AI-generated content with advanced model controls
+          </p>
         </div>
+
+        {/* Group Selector */}
+        <CreationGroupSelector 
+          selectedGroup={state.selectedGroup}
+          onGroupChange={setStateSelectedGroup}
+        />
+
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-2 gap-6 mb-20 md:mb-6">
+          {/* Input Panel */}
+          <InputPanel
+            selectedModel={state.selectedModel}
+            filteredModels={filteredModels}
+            selectedGroup={state.selectedGroup}
+            onModelChange={setStateSelectedModel}
+            modelsLoading={modelsLoading}
+            prompt={state.prompt}
+            onPromptChange={setStatePrompt}
+            hasPromptField={hasPromptField}
+            isPromptRequired={isPromptRequired}
+            maxPromptLength={maxPromptLength}
+            onSurpriseMe={onSurpriseMe}
+            generatingSurprise={state.generatingSurprise}
+            enhancePrompt={state.enhancePrompt}
+            onEnhancePromptChange={(enhance) => updateState({ enhancePrompt: enhance })}
+            generateCaption={state.generateCaption}
+            onGenerateCaptionChange={(generate) => updateState({ generateCaption: generate })}
+            uploadedImages={uploadedImages}
+            onFileUpload={handleFileUpload}
+            onRemoveImage={removeImage}
+            imageFieldName={imageFieldInfo.fieldName}
+            isImageRequired={imageFieldInfo.isRequired}
+            maxImages={imageFieldInfo.maxImages}
+            fileInputRef={fileInputRef}
+            cameraLoading={cameraLoading}
+            isNative={isNative}
+            onNativeCameraPick={handleNativeCameraPick}
+            textKey={textKey}
+            textKeySchema={textKey ? modelSchema?.properties?.[textKey] : undefined}
+            textKeyValue={state.modelParameters[textKey || '']}
+            onTextKeyChange={(value) => updateState({ modelParameters: { ...state.modelParameters, [textKey || '']: value } })}
+            voiceKey={voiceKey}
+            voiceKeySchema={voiceKey ? modelSchema?.properties?.[voiceKey] : undefined}
+            voiceKeyValue={state.modelParameters[voiceKey || '']}
+            onVoiceKeyChange={(value) => updateState({ modelParameters: { ...state.modelParameters, [voiceKey || '']: value } })}
+            hasDuration={hasDuration}
+            durationValue={state.modelParameters.duration}
+            durationSchema={hasDuration ? modelSchema?.properties?.duration : undefined}
+            onDurationChange={(value) => updateState({ modelParameters: { ...state.modelParameters, duration: value } })}
+            hasIncrement={hasIncrement}
+            incrementValue={state.modelParameters.increment || state.modelParameters.incrementBySeconds}
+            onIncrementChange={(value) => updateState({ modelParameters: { ...state.modelParameters, increment: value, incrementBySeconds: value } })}
+            modelParameters={state.modelParameters}
+            onModelParametersChange={(params) => updateState({ modelParameters: params })}
+            modelSchema={modelSchema}
+            advancedOpen={state.advancedOpen}
+            onAdvancedOpenChange={(open) => updateState({ advancedOpen: open })}
+            onGenerate={handleGenerate}
+            isGenerating={isGenerating || state.localGenerating}
+            estimatedTokens={estimatedTokens}
+            modelId={state.selectedModel || ''}
+            provider={currentModel?.provider || ''}
+            excludeFields={['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls', 'frameImages', textKey || '', voiceKey || '', 'duration', 'increment', 'incrementBySeconds'].filter(Boolean) as string[]}
+            onReset={resetState}
+            isPolling={isPolling}
+            pollingGenerationId={state.pollingGenerationId}
+            localGenerating={state.localGenerating}
+            advancedOptionsRef={advancedOptionsRef}
+          />
+
+          {/* Output Panel */}
+          <div ref={outputSectionRef}>
+            <OutputPanel
+              generationState={{
+                generatedOutputs: state.generatedOutputs,
+                selectedOutputIndex: state.selectedOutputIndex,
+                showLightbox: state.showLightbox,
+                generationStartTime: state.generationStartTime,
+                generationCompleteTime: state.generationCompleteTime,
+                generatedOutput: state.generatedOutput,
+              }}
+              contentType={contentType}
+              estimatedTimeSeconds={currentModel?.estimated_time_seconds || null}
+              isPolling={isPolling}
+              localGenerating={state.localGenerating}
+              isGenerating={isGenerating}
+              pollingGenerationId={state.pollingGenerationId}
+              onNavigateLightbox={handleNavigateLightbox}
+              onOpenLightbox={(index) => updateState({ selectedOutputIndex: index, showLightbox: true })}
+              onCloseLightbox={() => updateState({ showLightbox: false })}
+              onDownloadAll={handleDownloadAll}
+              onViewHistory={() => navigate('/dashboard/history')}
+              onGenerateVideo={handleGenerateVideo}
+              generatingVideoIndex={generatingVideoIndex}
+              userTokensRemaining={userTokens?.tokens_remaining || 0}
+              captionData={captionData}
+              isGeneratingCaption={isGeneratingCaption}
+              onRegenerateCaption={regenerateCaption}
+              onCopyCaption={copyCaptionToClipboard}
+              onCopyHashtags={copyHashtagsToClipboard}
+              childVideoGenerations={childVideoGenerations}
+              parentGenerationId={state.parentGenerationId}
+              onDownloadSuccess={() => {
+                if (progress && !progress.checklist.downloadedResult) {
+                  updateProgress({ downloadedResult: true });
+                }
+              }}
+              templateBeforeImage={state.templateBeforeImage}
+              templateAfterImage={state.templateAfterImage}
+            />
+          </div>
+        </div>
+
+        {/* Best Practices */}
+        <BestPracticesCard />
+
+        {/* Mobile Sticky Button */}
+        <MobileStickyButton
+          onGenerate={handleGenerate}
+          disabled={isGenerateDisabled}
+          isGenerating={isGenerating || state.localGenerating}
+          estimatedTokens={estimatedTokens}
+        />
       </div>
     </div>
   );

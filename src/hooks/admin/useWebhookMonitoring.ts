@@ -1,5 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useEffect } from 'react';
 
 export interface WebhookStats {
   successRate: number;
@@ -170,35 +172,85 @@ const fetchProviderStats = async (): Promise<ProviderStat[]> => {
 };
 
 export const useWebhookMonitoring = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
   const stats = useQuery({
     queryKey: ['webhook-stats'],
     queryFn: fetchWebhookStats,
-    refetchInterval: 30000,
   });
 
   const recentWebhooks = useQuery({
     queryKey: ['recent-webhooks'],
     queryFn: fetchRecentWebhooks,
-    refetchInterval: 10000,
   });
 
   const storageFailures = useQuery({
     queryKey: ['storage-failures'],
     queryFn: fetchStorageFailures,
-    refetchInterval: 30000,
   });
 
   const stuckGenerations = useQuery({
     queryKey: ['stuck-generations'],
     queryFn: fetchStuckGenerations,
-    refetchInterval: 30000,
   });
 
   const providerStats = useQuery({
     queryKey: ['provider-stats'],
     queryFn: fetchProviderStats,
-    refetchInterval: 60000,
   });
+
+  // Real-time subscription to generations table changes
+  useEffect(() => {
+    console.log('🔴 Setting up real-time webhook monitoring subscription');
+    
+    const channel = supabase
+      .channel('webhook-monitor-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'generations',
+          filter: 'provider_task_id=not.is.null'
+        },
+        (payload) => {
+          console.log('🎯 Real-time webhook event received:', payload);
+          
+          // Invalidate all queries to refresh data
+          queryClient.invalidateQueries({ queryKey: ['webhook-stats'] });
+          queryClient.invalidateQueries({ queryKey: ['recent-webhooks'] });
+          queryClient.invalidateQueries({ queryKey: ['storage-failures'] });
+          queryClient.invalidateQueries({ queryKey: ['stuck-generations'] });
+          queryClient.invalidateQueries({ queryKey: ['provider-stats'] });
+          
+          // Show toast for completed/failed generations
+          if (payload.eventType === 'UPDATE') {
+            const newRecord = payload.new as any;
+            if (newRecord.status === 'completed') {
+              toast({
+                title: "✅ Webhook Completed",
+                description: `Generation ${newRecord.id.slice(0, 8)}...`,
+              });
+            } else if (newRecord.status === 'failed') {
+              toast({
+                title: "❌ Webhook Failed",
+                description: `Generation ${newRecord.id.slice(0, 8)}...`,
+                variant: "destructive",
+              });
+            }
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Realtime subscription status:', status);
+      });
+
+    return () => {
+      console.log('🔴 Cleaning up real-time subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, toast]);
 
   return {
     stats: stats.data,

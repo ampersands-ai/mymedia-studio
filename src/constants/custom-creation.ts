@@ -2,9 +2,11 @@
  * Polling configuration constants
  */
 export const POLLING_CONFIG = {
-  INITIAL_INTERVAL: 5000,       // 5 seconds
-  FAST_INTERVAL: 15000,          // 15 seconds (2-5min)
-  SLOW_INTERVAL: 30000,          // 30 seconds (5min+)
+  IMMEDIATE_CHECK: 1000,         // 1 second
+  INITIAL_INTERVAL: 3000,        // 3 seconds - reduced from 5s
+  FAST_INTERVAL: 5000,           // 5 seconds - aggressive early polling
+  MEDIUM_INTERVAL: 10000,        // 10 seconds
+  SLOW_INTERVAL: 20000,          // 20 seconds
   FAST_THRESHOLD: 2 * 60 * 1000, // 2 minutes
   SLOW_THRESHOLD: 5 * 60 * 1000, // 5 minutes
   MAX_DURATION: 20 * 60 * 1000,  // 20 minutes

@@ -139,7 +139,11 @@ export const useCustomGenerationPolling = (options: UseCustomGenerationPollingOp
     setIsPolling(true);
     
     const startTime = Date.now();
-    let currentInterval: number = POLLING_CONFIG.INITIAL_INTERVAL;
+    
+    // Immediate check at 1 second
+    setTimeout(() => {
+      pollGenerationStatus(generationId);
+    }, POLLING_CONFIG.IMMEDIATE_CHECK);
     
     const pollWithDynamicInterval = () => {
       const elapsed = Date.now() - startTime;
@@ -154,33 +158,30 @@ export const useCustomGenerationPolling = (options: UseCustomGenerationPollingOp
         return;
       }
       
-      // Adjust interval based on elapsed time
-      let newInterval: number = currentInterval;
+      // Dynamic interval based on elapsed time
+      let newInterval: number;
       if (elapsed < POLLING_CONFIG.FAST_THRESHOLD) {
-        newInterval = POLLING_CONFIG.INITIAL_INTERVAL;
+        newInterval = POLLING_CONFIG.FAST_INTERVAL; // 5s for first 2 minutes
       } else if (elapsed < POLLING_CONFIG.SLOW_THRESHOLD) {
-        newInterval = POLLING_CONFIG.FAST_INTERVAL;
+        newInterval = POLLING_CONFIG.MEDIUM_INTERVAL; // 10s for 2-5 minutes
       } else {
-        newInterval = POLLING_CONFIG.SLOW_INTERVAL;
+        newInterval = POLLING_CONFIG.SLOW_INTERVAL; // 20s after 5 minutes
       }
       
       // Restart interval if changed
-      if (newInterval !== currentInterval) {
-        currentInterval = newInterval;
-        if (pollIntervalRef.current) {
-          clearInterval(pollIntervalRef.current);
-          pollIntervalRef.current = setInterval(pollWithDynamicInterval, currentInterval);
-        }
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
       }
+      pollIntervalRef.current = setInterval(() => {
+        pollGenerationStatus(generationId);
+        pollWithDynamicInterval(); // Recalculate interval
+      }, newInterval);
       
       pollGenerationStatus(generationId);
     };
     
-    // Initial immediate poll
-    pollGenerationStatus(generationId);
-    
-    // Set up interval
-    pollIntervalRef.current = setInterval(pollWithDynamicInterval, currentInterval);
+    // Start dynamic polling
+    pollWithDynamicInterval();
   }, [pollGenerationStatus, options]);
 
   /**

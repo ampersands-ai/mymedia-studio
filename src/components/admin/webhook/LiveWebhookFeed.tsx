@@ -52,8 +52,14 @@ export const LiveWebhookFeed = ({ webhooks, loading }: LiveWebhookFeedProps) => 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Live Webhook Activity</CardTitle>
-        <CardDescription>Last 50 webhook calls (auto-refresh: 10s)</CardDescription>
+        <CardTitle className="flex items-center gap-2">
+          Live Webhook Activity
+          <span className="flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+          </span>
+        </CardTitle>
+        <CardDescription>Real-time webhook updates (live subscription)</CardDescription>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[600px] pr-4">

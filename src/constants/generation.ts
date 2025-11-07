@@ -3,10 +3,13 @@
  */
 
 export const POLLING_CONFIG = {
-  INITIAL_DELAY: 5000,           // 5 seconds - first check
-  SHORT_INTERVAL: 10000,         // 10 seconds - for first minute
-  SHORT_INTERVAL_DURATION: 60000, // 1 minute
-  LONG_INTERVAL: 30000,          // 30 seconds - after first minute
+  IMMEDIATE_CHECK: 1000,         // 1 second - instant check
+  INITIAL_DELAY: 3000,           // 3 seconds - reduced from 5s
+  FAST_INTERVAL: 5000,           // 5 seconds - aggressive early polling
+  FAST_DURATION: 2 * 60 * 1000,  // 2 minutes
+  MEDIUM_INTERVAL: 10000,        // 10 seconds
+  MEDIUM_DURATION: 5 * 60 * 1000, // 5 minutes
+  SLOW_INTERVAL: 20000,          // 20 seconds
   MAX_DURATION: 20 * 60 * 1000,  // 20 minutes
 } as const;
 

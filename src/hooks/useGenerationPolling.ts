@@ -109,29 +109,48 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
 
     setIsPolling(true);
     setPollingId(generationId);
-
     const startTime = Date.now();
 
-    // Initial poll at 5 seconds
+    // TIER 1: Immediate check at 1 second
+    const immediateTimeout = setTimeout(() => {
+      pollStatus(generationId);
+    }, POLLING_CONFIG.IMMEDIATE_CHECK);
+    timeoutsRef.current.push(immediateTimeout);
+
+    // TIER 2: Early check at 3 seconds
     const initialTimeout = setTimeout(() => {
       pollStatus(generationId);
     }, POLLING_CONFIG.INITIAL_DELAY);
     timeoutsRef.current.push(initialTimeout);
 
-    // Poll every 10 seconds for the first minute
-    const shortInterval = setInterval(() => {
+    // TIER 3: Fast polling (5s intervals) for first 2 minutes
+    const fastInterval = setInterval(() => {
       const elapsed = Date.now() - startTime;
-      if (elapsed >= POLLING_CONFIG.SHORT_INTERVAL_DURATION) {
-        clearInterval(shortInterval);
+      if (elapsed >= POLLING_CONFIG.FAST_DURATION) {
+        clearInterval(fastInterval);
       } else {
         pollStatus(generationId);
       }
-    }, POLLING_CONFIG.SHORT_INTERVAL);
-    intervalsRef.current.push(shortInterval);
+    }, POLLING_CONFIG.FAST_INTERVAL);
+    intervalsRef.current.push(fastInterval);
 
-    // After first minute, poll every 30 seconds
-    const longIntervalTimeout = setTimeout(() => {
-      const longInterval = setInterval(() => {
+    // TIER 4: Medium polling (10s intervals) from 2-5 minutes
+    const mediumIntervalTimeout = setTimeout(() => {
+      const mediumInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        if (elapsed >= POLLING_CONFIG.MEDIUM_DURATION) {
+          clearInterval(mediumInterval);
+        } else {
+          pollStatus(generationId);
+        }
+      }, POLLING_CONFIG.MEDIUM_INTERVAL);
+      intervalsRef.current.push(mediumInterval);
+    }, POLLING_CONFIG.FAST_DURATION);
+    timeoutsRef.current.push(mediumIntervalTimeout);
+
+    // TIER 5: Slow polling (20s intervals) after 5 minutes
+    const slowIntervalTimeout = setTimeout(() => {
+      const slowInterval = setInterval(() => {
         const elapsed = Date.now() - startTime;
         
         // Max timeout check
@@ -144,10 +163,10 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
         }
 
         pollStatus(generationId);
-      }, POLLING_CONFIG.LONG_INTERVAL);
-      intervalsRef.current.push(longInterval);
-    }, POLLING_CONFIG.SHORT_INTERVAL_DURATION);
-    timeoutsRef.current.push(longIntervalTimeout);
+      }, POLLING_CONFIG.SLOW_INTERVAL);
+      intervalsRef.current.push(slowInterval);
+    }, POLLING_CONFIG.MEDIUM_DURATION);
+    timeoutsRef.current.push(slowIntervalTimeout);
   }, [isPolling, pollStatus, options, clearAllTimers]);
 
   /**

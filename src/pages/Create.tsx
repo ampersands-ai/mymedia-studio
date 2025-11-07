@@ -40,6 +40,11 @@ const Create = () => {
   const [prompt, setPrompt] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [generatedOutput, setGeneratedOutput] = useState<string | null>(null);
+  const [generatedOutputs, setGeneratedOutputs] = useState<Array<{
+    id: string;
+    storage_path: string;
+    output_index: number;
+  }>>([]);
   const [pollingGenerationId, setPollingGenerationId] = useState<string | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const generationStartTimeRef = useRef<number | null>(null);
@@ -161,23 +166,59 @@ const Create = () => {
   // Polling function to check generation status
   const pollGenerationStatus = async (generationId: string) => {
     try {
-      const { data, error } = await supabase
+      // Fetch parent generation
+      const { data: parentData, error } = await supabase
         .from('generations')
-        .select('status, storage_path, type')
+        .select('id, status, storage_path, type')
         .eq('id', generationId)
         .single();
 
       if (error) throw error;
 
-      if (data.status === 'completed' || data.status === 'failed') {
+      if (parentData.status === 'completed' || parentData.status === 'failed') {
         if (pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current);
           pollIntervalRef.current = null;
         }
         setPollingGenerationId(null);
 
-        if (data.status === 'completed') {
-          setGeneratedOutput(data.storage_path);
+        if (parentData.status === 'completed') {
+          // Fetch child generations (batch outputs)
+          const { data: childrenData } = await supabase
+            .from('generations')
+            .select('id, storage_path, output_index, type')
+            .eq('parent_generation_id', generationId)
+            .eq('type', parentData.type)
+            .order('output_index', { ascending: true });
+
+          // Build all outputs (parent + children)
+          const allOutputs = [
+            {
+              id: parentData.id,
+              storage_path: parentData.storage_path,
+              output_index: 0
+            },
+            ...(childrenData || [])
+          ];
+
+          // Filter valid outputs with storage_path
+          const validOutputs = allOutputs.filter(o => !!o.storage_path);
+          
+          // Remove duplicates by storage_path
+          const uniqueOutputs = validOutputs.filter((output, index, self) =>
+            index === self.findIndex(o => o.storage_path === output.storage_path)
+          );
+
+          if (uniqueOutputs.length === 0) {
+            toast.error('Generation completed but outputs are not ready.', {
+              id: 'generation-progress'
+            });
+            return;
+          }
+
+          // Set outputs
+          setGeneratedOutputs(uniqueOutputs);
+          setGeneratedOutput(uniqueOutputs[0].storage_path);
           setGenerationCompleteTime(Date.now());
           toast.success('Generation complete!', { id: 'generation-progress' });
           
@@ -255,6 +296,7 @@ const Create = () => {
       generationStartTimeRef.current = Date.now();
       setGenerationCompleteTime(null);
       setGeneratedOutput(null);
+      setGeneratedOutputs([]);
       
       // Build custom parameters from template configuration
       const customParameters: Record<string, any> = {};

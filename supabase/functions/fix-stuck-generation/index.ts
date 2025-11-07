@@ -51,11 +51,13 @@ serve(async (req) => {
       );
     }
 
-    const { generation_id, result_url, result_urls, action } = await req.json();
+    const { generation_id, generationId, result_url, result_urls, action, forceTerminate } = await req.json();
     
-    if (!generation_id) {
+    const genId = generation_id || generationId;
+    
+    if (!genId) {
       return new Response(
-        JSON.stringify({ error: 'Missing generation_id' }),
+        JSON.stringify({ error: 'Missing generation_id or generationId' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -64,7 +66,7 @@ serve(async (req) => {
     const { data: generation, error: getError } = await supabase
       .from('generations')
       .select('*')
-      .eq('id', generation_id)
+      .eq('id', genId)
       .maybeSingle();
 
     if (getError || !generation) {
@@ -74,20 +76,25 @@ serve(async (req) => {
     // Support both single result_url and multiple result_urls
     const urls = result_urls || (result_url ? [result_url] : []);
 
-    // If action is 'fail', just mark as failed and refund
-    if (action === 'fail' || urls.length === 0) {
-      console.log('Marking generation as failed and refunding tokens:', generation_id);
+    // If action is 'fail' or forceTerminate, just mark as failed and refund
+    if (action === 'fail' || forceTerminate || urls.length === 0) {
+      console.log('Terminating generation and refunding tokens:', genId);
       
+      const errorMessage = forceTerminate 
+        ? 'Generation manually terminated by admin. Tokens have been refunded.'
+        : 'Webhook processing failed. Tokens have been refunded.';
+        
       const { error: updateError } = await supabase
         .from('generations')
         .update({
           status: 'failed',
           provider_response: {
-            error: 'Webhook processing failed. Tokens have been refunded.',
+            error: errorMessage,
+            terminated_by: forceTerminate ? user.id : null,
             fixed_at: new Date().toISOString()
           }
         })
-        .eq('id', generation_id);
+        .eq('id', genId);
 
       if (updateError) {
         throw new Error(`Failed to update generation: ${updateError.message}`);
@@ -101,10 +108,28 @@ serve(async (req) => {
 
       console.log('Tokens refunded:', generation.tokens_used);
 
+      // Log termination to audit
+      if (forceTerminate) {
+        await supabase
+          .from('audit_logs')
+          .insert({
+            user_id: user.id,
+            action: 'generation_terminated',
+            resource_type: 'generation',
+            resource_id: genId,
+            metadata: {
+              user_id: generation.user_id,
+              tokens_refunded: generation.tokens_used,
+              model_id: generation.model_id,
+              type: generation.type
+            }
+          });
+      }
+
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'Generation marked as failed and tokens refunded',
+          message: forceTerminate ? 'Generation terminated successfully and tokens refunded' : 'Generation marked as failed and tokens refunded',
           tokens_refunded: generation.tokens_used
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -243,7 +268,7 @@ serve(async (req) => {
           is_batch_output: true,
           output_index: 0
         })
-        .eq('id', generation_id);
+        .eq('id', genId);
 
       if (updateError) {
         throw new Error(`Failed to update parent generation: ${updateError.message}`);
@@ -292,7 +317,7 @@ serve(async (req) => {
           storage_path: mainStoragePath,
           file_size_bytes: data.length
         })
-        .eq('id', generation_id);
+        .eq('id', genId);
 
       if (updateError) {
         throw new Error(`Failed to update generation: ${updateError.message}`);

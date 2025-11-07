@@ -6,6 +6,7 @@ import { WebhookCharts } from "@/components/admin/webhook/WebhookCharts";
 import { WebhookActionsPanel } from "@/components/admin/webhook/WebhookActionsPanel";
 import { AlertSettingsPanel } from "@/components/admin/webhook/AlertSettingsPanel";
 import { AlertHistoryDashboard } from "@/components/admin/webhook/AlertHistoryDashboard";
+import { ActiveGenerationsList } from "@/components/admin/webhook/ActiveGenerationsList";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Activity, History } from "lucide-react";
@@ -69,6 +70,9 @@ const WebhookMonitor = () => {
         </TabsList>
 
         <TabsContent value="monitoring" className="space-y-6">
+          {/* Active Generations with Terminate Actions */}
+          <ActiveGenerationsList />
+
           {/* Main Content Grid */}
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Live Feed */}

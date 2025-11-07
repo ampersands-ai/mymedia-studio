@@ -1,0 +1,103 @@
+/**
+ * Audio Settings Section Component
+ * Collapsible section for music volume and fade controls
+ */
+
+import { ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+
+interface AudioSettingsSectionProps {
+  musicSettings: any;
+  onUpdate: (settings: any) => void;
+  isRendering: boolean;
+}
+
+/**
+ * Collapsible audio settings with volume, fade in/out controls
+ */
+export const AudioSettingsSection = ({
+  musicSettings,
+  onUpdate,
+  isRendering,
+}: AudioSettingsSectionProps) => {
+  return (
+    <Collapsible className="space-y-3">
+      <CollapsibleTrigger asChild>
+        <Button variant="ghost" size="sm" className="w-full justify-between -ml-4" type="button">
+          <span className="text-sm font-medium">🎵 Audio Settings</span>
+          <ChevronDown className="h-3 w-3" />
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="space-y-4 pl-4">
+        <div className="space-y-2">
+          <Label className="text-xs">Music Volume: {Math.round((musicSettings?.volume || 0.05) * 100)}%</Label>
+          <Slider
+            value={[(musicSettings?.volume || 0.05) * 100]}
+            onValueChange={([value]) => {
+              onUpdate({
+                music_settings: {
+                  ...musicSettings,
+                  volume: value / 100,
+                },
+              });
+            }}
+            min={0}
+            max={100}
+            step={5}
+            className="w-full"
+            disabled={isRendering}
+          />
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label className="text-xs">Fade In: {musicSettings?.fadeIn || 2}s</Label>
+            <Slider
+              value={[musicSettings?.fadeIn || 2]}
+              onValueChange={([value]) => {
+                onUpdate({
+                  music_settings: {
+                    ...musicSettings,
+                    fadeIn: value,
+                  },
+                });
+              }}
+              min={0}
+              max={10}
+              step={1}
+              className="w-full"
+              disabled={isRendering}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label className="text-xs">Fade Out: {musicSettings?.fadeOut || 2}s</Label>
+            <Slider
+              value={[musicSettings?.fadeOut || 2]}
+              onValueChange={([value]) => {
+                onUpdate({
+                  music_settings: {
+                    ...musicSettings,
+                    fadeOut: value,
+                  },
+                });
+              }}
+              min={0}
+              max={10}
+              step={1}
+              className="w-full"
+              disabled={isRendering}
+            />
+          </div>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+};

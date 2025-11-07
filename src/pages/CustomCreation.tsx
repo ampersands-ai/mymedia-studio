@@ -171,13 +171,13 @@ const CustomCreation = () => {
     await downloadMultipleOutputs(
       state.generatedOutputs,
       currentModel?.content_type || 'image',
-      currentModel?.content_type || 'image'
+      () => {
+        // Track onboarding: downloadedResult
+        if (progress && !progress.checklist.downloadedResult) {
+          updateProgress({ downloadedResult: true });
+        }
+      }
     );
-    
-    // Track onboarding: downloadedResult
-    if (progress && !progress.checklist.downloadedResult) {
-      updateProgress({ downloadedResult: true });
-    }
   };
 
   // Lightbox navigation

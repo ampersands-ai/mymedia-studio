@@ -1,6 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { AIModel } from "./useTemplates";
+
+export interface AIModel {
+  record_id: string;
+  id: string;
+  provider: string;
+  model_name: string;
+  content_type: string;
+  base_token_cost: number;
+  cost_multipliers: any;
+  input_schema: any;
+  api_endpoint: string | null;
+  is_active: boolean;
+  groups?: any;
+  payload_structure?: string;
+  max_images?: number | null;
+  estimated_time_seconds?: number | null;
+  logo_url?: string | null;
+}
 
 export const useModels = () => {
   return useQuery({

@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SchemaBuilder } from "./SchemaBuilder";
+import { ImageUploader } from "./template-landing/ImageUploader";
 
 const AVAILABLE_GROUPS = [
   { id: "image_editing", label: "Image Editing" },
@@ -29,6 +30,21 @@ const AVAILABLE_GROUPS = [
   { id: "image_to_video", label: "Image to Video" },
   { id: "prompt_to_audio", label: "Prompt to Audio" },
 ];
+
+/**
+ * LOGO UPLOAD GUIDELINES:
+ * 
+ * 1. File Format: PNG or SVG (transparent background recommended)
+ * 2. Dimensions: Square aspect ratio (64x64, 128x128, or 256x256 px)
+ * 3. File Size: Keep under 100KB for fast loading
+ * 4. Style: Use official brand logos when available
+ * 5. Backup: System falls back to content-type icons if no logo
+ * 
+ * The logo will be displayed:
+ * - In model selection dropdowns (20x20px)
+ * - On Features page cards (48x48px)
+ * - In admin model list
+ */
 
 interface AIModel {
   record_id: string;
@@ -45,6 +61,7 @@ interface AIModel {
   estimated_time_seconds?: number | null;
   payload_structure?: string;
   max_images?: number | null;
+  logo_url?: string | null;
 }
 
 interface ModelFormDialogProps {
@@ -72,6 +89,7 @@ export function ModelFormDialog({
     api_endpoint: "",
     estimated_time_seconds: "",
     max_images: "",
+    logo_url: "",
   });
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -90,6 +108,7 @@ export function ModelFormDialog({
         api_endpoint: model.api_endpoint || "",
         estimated_time_seconds: model.estimated_time_seconds?.toString() || "",
         max_images: model.max_images?.toString() || "",
+        logo_url: model.logo_url || "",
       });
       setSelectedGroups(model.groups || []);
     } else {
@@ -105,10 +124,11 @@ export function ModelFormDialog({
         api_endpoint: "",
         estimated_time_seconds: "",
         max_images: "",
+        logo_url: "",
       });
       setSelectedGroups([]);
     }
-  }, [model, open]);
+  }, [model]);
 
   const handleSchemaSave = async (newSchema: Record<string, any>) => {
     if (!model?.record_id) return;
@@ -169,6 +189,7 @@ export function ModelFormDialog({
           ? parseInt(formData.estimated_time_seconds)
           : null,
         max_images: formData.max_images ? parseInt(formData.max_images) : 0,
+        logo_url: formData.logo_url || null,
       };
 
       if (model && model.record_id) {
@@ -364,6 +385,19 @@ export function ModelFormDialog({
               />
               <p className="text-xs text-muted-foreground">
                 Maximum number of images users can upload (0 = no images needed, leave empty = 0)
+              </p>
+            </div>
+
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="logo_url">Model Logo</Label>
+              <ImageUploader
+                value={formData.logo_url}
+                onChange={(url) => setFormData({ ...formData, logo_url: url })}
+                label="Upload Brand Logo"
+                bucket="generated-content"
+              />
+              <p className="text-xs text-muted-foreground">
+                Upload a square logo (recommended: 64x64px or 128x128px) for this model. Displayed in dropdowns (20x20px) and Features page (48x48px).
               </p>
             </div>
           </div>

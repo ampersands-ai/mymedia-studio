@@ -26,6 +26,7 @@ export type Database = {
           id: string
           input_schema: Json
           is_active: boolean | null
+          logo_url: string | null
           max_images: number | null
           model_name: string
           payload_structure: string
@@ -44,6 +45,7 @@ export type Database = {
           id: string
           input_schema?: Json
           is_active?: boolean | null
+          logo_url?: string | null
           max_images?: number | null
           model_name: string
           payload_structure?: string
@@ -62,6 +64,7 @@ export type Database = {
           id?: string
           input_schema?: Json
           is_active?: boolean | null
+          logo_url?: string | null
           max_images?: number | null
           model_name?: string
           payload_structure?: string

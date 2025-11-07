@@ -1199,15 +1199,22 @@ const CustomCreation = () => {
                     value={selectedModel || undefined}
                     onValueChange={(value) => setSelectedModel(value)}
                   >
-                    <SelectTrigger className="w-full h-auto py-3 px-4 bg-background border border-gray-200 hover:border-gray-300 shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/30 rounded-lg font-bold">
+                     <SelectTrigger className="w-full h-auto py-3 px-4 bg-background border border-gray-200 hover:border-gray-300 shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/30 rounded-lg font-bold">
                       <SelectValue placeholder="Select a model...">
                         {selectedModel && (() => {
                           const model = filteredModels.find(m => String(m.record_id) === selectedModel);
                           if (!model) return null;
                           return (
-                            <div className="flex items-center justify-between w-full">
-                              <span className="font-bold text-sm">{model.model_name}</span>
-                              <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 w-full">
+                              {model.logo_url && (
+                                <img 
+                                  src={model.logo_url} 
+                                  alt={model.model_name}
+                                  className="w-5 h-5 object-contain flex-shrink-0"
+                                />
+                              )}
+                              <span className="font-bold text-sm flex-1 min-w-0 truncate">{model.model_name}</span>
+                              <div className="flex items-center gap-2 flex-shrink-0">
                                 <Badge variant="secondary" className="text-xs">
                                   {model.base_token_cost} tokens
                                 </Badge>
@@ -1240,33 +1247,42 @@ const CustomCreation = () => {
                                 : "hover:bg-muted border-border"
                             )}
                           >
-                            <div className="w-full min-w-0">
-                              <div className="flex items-center justify-between w-full gap-2 md:gap-4">
-                                <span className="font-bold text-xs md:text-sm flex-shrink min-w-0 truncate">{model.model_name}</span>
-                                <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-                                  <Badge variant="secondary" className="text-[10px] md:text-xs whitespace-nowrap">
-                                    {model.base_token_cost} tokens
-                                  </Badge>
-                                  {model.estimated_time_seconds !== null && model.estimated_time_seconds !== undefined && (
-                                    <Badge variant="secondary" className="text-[10px] md:text-xs flex items-center gap-0.5 md:gap-1 whitespace-nowrap">
-                                      <Clock className="h-2.5 md:h-3 w-2.5 md:w-3" />
-                                      ~{formatEstimatedTime(model.estimated_time_seconds)}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                              {otherGroups.length > 0 && (
-                                <div className="mt-1">
-                                  <span className={cn(
-                                    "text-[10px] md:text-xs",
-                                    isSelected ? "text-white/60" : "text-muted-foreground/60"
-                                  )}>
-                                    Also in: {otherGroups.map(g => 
-                                      CREATION_GROUPS.find(cg => cg.id === g)?.label
-                                    ).join(", ")}
-                                  </span>
-                                </div>
+                            <div className="flex items-center gap-2 w-full">
+                              {model.logo_url && (
+                                <img 
+                                  src={model.logo_url} 
+                                  alt={model.model_name}
+                                  className="w-5 h-5 object-contain flex-shrink-0"
+                                />
                               )}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between w-full gap-2 md:gap-4">
+                                  <span className="font-bold text-xs md:text-sm flex-shrink min-w-0 truncate">{model.model_name}</span>
+                                  <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+                                    <Badge variant="secondary" className="text-[10px] md:text-xs whitespace-nowrap">
+                                      {model.base_token_cost} tokens
+                                    </Badge>
+                                    {model.estimated_time_seconds !== null && model.estimated_time_seconds !== undefined && (
+                                      <Badge variant="secondary" className="text-[10px] md:text-xs flex items-center gap-0.5 md:gap-1 whitespace-nowrap">
+                                        <Clock className="h-2.5 md:h-3 w-2.5 md:w-3" />
+                                        ~{formatEstimatedTime(model.estimated_time_seconds)}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                {otherGroups.length > 0 && (
+                                  <div className="mt-1">
+                                    <span className={cn(
+                                      "text-[10px] md:text-xs",
+                                      isSelected ? "text-white/60" : "text-muted-foreground/60"
+                                    )}>
+                                      Also in: {otherGroups.map(g => 
+                                        CREATION_GROUPS.find(cg => cg.id === g)?.label
+                                      ).join(", ")}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </SelectItem>
                         );

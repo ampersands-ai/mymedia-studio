@@ -1146,14 +1146,6 @@ const CustomCreation = () => {
         <div className="relative z-10 container mx-auto px-4 py-4 md:py-8">
           <SessionWarning />
           
-          {/* Header */}
-          <div className="text-center mb-6 md:mb-8">
-            <h1 className="text-2xl md:text-4xl font-black mb-2">CREATION STUDIO</h1>
-            <p className="text-sm md:text-base text-foreground/80 font-medium">
-              Choose your creation type and fine-tune every detail
-            </p>
-          </div>
-
         {/* Group Selection */}
         <div className="mb-6">
           <h2 className="text-base md:text-lg font-bold mb-3">Select Creation Type</h2>

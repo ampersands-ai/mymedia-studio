@@ -5,7 +5,6 @@ import type { CreationGroup } from "@/constants/creation-groups";
 const INITIAL_STATE: CustomCreationState = {
   // Form state
   prompt: "",
-  uploadedImages: [],
   selectedModel: null,
   selectedGroup: "prompt_to_image",
   modelParameters: {},

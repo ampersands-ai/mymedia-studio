@@ -45,15 +45,22 @@ export const getImageFieldInfo = (model: any): {
 
 /**
  * Find primary long-text field key (prompt/script/etc.)
+ * Excludes 'prompt' since PromptInput component already handles it
  */
 export const findPrimaryTextKey = (properties: Record<string, any> | undefined): string | undefined => {
   if (!properties) return undefined;
   
-  const keywords = ["input text", "text", "prompt", "script", "caption", "description"];
+  // Exclude 'prompt' since PromptInput component already handles it
+  const excludedKeys = ["prompt"];
+  
+  const keywords = ["input text", "text", "script", "caption", "description"];
   let bestKey: string | undefined;
   let bestScore = -Infinity;
 
   for (const [key, schema] of Object.entries(properties)) {
+    // Skip excluded keys
+    if (excludedKeys.includes(key.toLowerCase())) continue;
+    
     const title = (schema?.title || "").toLowerCase();
     const desc = (schema?.description || "").toLowerCase();
     const name = key.toLowerCase();

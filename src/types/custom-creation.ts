@@ -24,7 +24,6 @@ export interface CaptionData {
 export interface CustomCreationState {
   // Form state
   prompt: string;
-  uploadedImages: File[];
   selectedModel: string | null;
   selectedGroup: CreationGroup;
   modelParameters: Record<string, any>;

@@ -43,9 +43,25 @@ export const PromptInput: React.FC<PromptInputProps> = ({
         <label className="text-sm font-medium text-foreground">
           Prompt {isRequired && <span className="text-destructive">*</span>}
         </label>
-        <span className={`text-xs ${isOverLimit ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
-          {value.length} / {maxLength}
-        </span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onSurpriseMe}
+            disabled={generatingSurprise || disabled}
+            className="h-7 gap-1.5 text-xs"
+          >
+            {generatingSurprise ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Sparkles className="h-3 w-3" />
+            )}
+            Surprise Me
+          </Button>
+          <span className={`text-xs ${isOverLimit ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
+            {value.length} / {maxLength}
+          </span>
+        </div>
       </div>
 
       <Textarea
@@ -64,48 +80,29 @@ export const PromptInput: React.FC<PromptInputProps> = ({
         </p>
       )}
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap gap-2 items-center">
         <Button
-          variant="outline"
+          variant={enhanceEnabled ? "secondary" : "outline"}
           size="sm"
-          onClick={onSurpriseMe}
-          disabled={generatingSurprise || disabled}
-          className="w-full justify-center gap-2"
+          onClick={() => onEnhance(!enhanceEnabled)}
+          disabled={disabled}
+          className="h-8 text-xs gap-1.5"
         >
-          {generatingSurprise ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Sparkles className="h-4 w-4" />
-          )}
-          Surprise Me
+          <Sparkles className="h-3 w-3" />
+          Enhance Prompt
         </Button>
 
-        <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30">
-          <Label htmlFor="enhance-prompt" className="text-sm font-medium cursor-pointer">
-            Enhance Prompt
-          </Label>
-          <Switch
-            id="enhance-prompt"
-            checked={enhanceEnabled}
-            onCheckedChange={onEnhance}
-            disabled={disabled}
-          />
-        </div>
-
-        <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30">
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="generate-caption" className="text-sm font-medium cursor-pointer">
-              Generate Caption & Hashtags
-            </Label>
-            <span className="text-xs text-muted-foreground">+8 tokens</span>
-          </div>
-          <Checkbox
-            id="generate-caption"
-            checked={generateCaption}
-            onCheckedChange={(checked) => onGenerateCaptionChange(checked as boolean)}
-            disabled={disabled}
-          />
-        </div>
+        <Button
+          variant={generateCaption ? "secondary" : "outline"}
+          size="sm"
+          onClick={() => onGenerateCaptionChange(!generateCaption)}
+          disabled={disabled}
+          className="h-8 text-xs gap-1.5"
+        >
+          <Sparkles className="h-3 w-3" />
+          Generate Caption
+          <span className="text-muted-foreground ml-1">(+8)</span>
+        </Button>
       </div>
     </div>
   );

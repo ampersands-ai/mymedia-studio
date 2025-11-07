@@ -16,6 +16,7 @@ interface UseCustomGenerationOptions {
   state: CustomCreationState;
   updateState: (partial: Partial<CustomCreationState>) => void;
   startPolling: (id: string) => void;
+  uploadedImages: File[];
   uploadImagesToStorage: (userId: string) => Promise<string[]>;
   imageFieldInfo: { fieldName: string | null; isRequired: boolean; isArray: boolean; maxImages: number };
   filteredModels: any[];
@@ -34,6 +35,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     state,
     updateState,
     startPolling,
+    uploadedImages,
     uploadImagesToStorage,
     imageFieldInfo,
     filteredModels,
@@ -87,12 +89,12 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     }
     
     // Legacy: Add cost for uploaded images if multiplier exists
-    if (state.uploadedImages.length > 0 && multipliers.uploaded_image) {
-      tokens += state.uploadedImages.length * (multipliers.uploaded_image as number);
+    if (uploadedImages.length > 0 && multipliers.uploaded_image) {
+      tokens += uploadedImages.length * (multipliers.uploaded_image as number);
     }
     
     return Math.round(tokens * 100) / 100;
-  }, [state.selectedModel, state.modelParameters, state.uploadedImages, filteredModels]);
+  }, [state.selectedModel, state.modelParameters, uploadedImages, filteredModels]);
 
   /**
    * Estimated tokens with caption cost
@@ -125,7 +127,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     const validation = validateGenerationInputs(
       currentModel,
       state.prompt,
-      state.uploadedImages,
+      uploadedImages,
       currentModel.input_schema?.required?.includes('prompt') || false,
       imageFieldInfo.isRequired,
       maxPromptLength
@@ -189,7 +191,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       const customParameters = buildCustomParameters(state.modelParameters, currentModel.input_schema);
 
       // Upload images if required
-      if (imageFieldInfo.fieldName && state.uploadedImages.length > 0) {
+      if (imageFieldInfo.fieldName && uploadedImages.length > 0) {
         const imageUrls = await uploadImagesToStorage(user.id);
         if (imageFieldInfo.isArray) {
           customParameters[imageFieldInfo.fieldName] = imageUrls;

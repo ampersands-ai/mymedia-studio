@@ -146,6 +146,7 @@ const CustomCreation = () => {
     state,
     updateState,
     startPolling,
+    uploadedImages,
     uploadImagesToStorage,
     imageFieldInfo,
     filteredModels,

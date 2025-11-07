@@ -155,12 +155,12 @@ export const InputPanel: React.FC<InputPanelProps> = ({
     prompt.length <= maxPromptLength;
 
   return (
-    <Card className="bg-card border-border shadow-sm rounded-xl order-1">
-      <div className="border-b border-border px-4 md:px-6 py-3 md:py-4 bg-muted/30">
+    <Card className="h-full flex flex-col border-border/40 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
+      <div className="border-b border-border px-4 md:px-6 py-3 md:py-4 bg-muted/30 shrink-0">
         <h2 className="text-base md:text-lg font-bold text-foreground">Input</h2>
       </div>
 
-      <div className="p-4 md:p-8 space-y-6 pb-32 md:pb-8">
+      <div className="flex-1 max-h-[calc(100vh-200px)] overflow-y-auto p-4 md:p-8 space-y-6 pb-8">
         <ModelSelector
           models={filteredModels}
           selectedModel={selectedModel}
@@ -200,7 +200,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
         )}
 
         {/* Primary text field (script, lyrics, etc.) */}
-        {textKey && textKeySchema && (
+        {textKey && textKeySchema && !['prompt', 'input_text', 'text'].includes(textKey.toLowerCase()) && (
           <SchemaInput
             name={textKey}
             schema={textKeySchema}

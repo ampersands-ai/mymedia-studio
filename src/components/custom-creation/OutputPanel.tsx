@@ -79,12 +79,12 @@ export const OutputPanel = forwardRef<HTMLDivElement, OutputPanelProps>(
       generationState.generationStartTime;
 
     return (
-      <Card ref={ref} className="bg-card border-border shadow-sm rounded-xl order-2">
-        <div className="border-b border-border px-4 md:px-6 py-3 md:py-4 bg-muted/30">
+      <Card ref={ref} className="h-full flex flex-col border-border/40 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
+        <div className="border-b border-border px-4 md:px-6 py-3 md:py-4 bg-muted/30 shrink-0">
           <h2 className="text-base md:text-lg font-bold text-foreground">Output</h2>
         </div>
 
-        <div className="p-4 md:p-6">
+        <div className="flex-1 p-4 md:p-6">
           {hasGeneration ? (
             <GenerationConsole
               generationState={generationState}
@@ -109,7 +109,7 @@ export const OutputPanel = forwardRef<HTMLDivElement, OutputPanelProps>(
               onDownloadSuccess={onDownloadSuccess}
             />
           ) : (
-            <div className="flex flex-col items-center justify-center min-h-[400px] lg:min-h-[calc(100vh-200px)] p-4">
+            <div className="flex flex-col items-center justify-center min-h-[400px] p-4">
               {templateBeforeImage && templateAfterImage ? (
                 <div className="w-full max-w-2xl">
                   <BeforeAfterSlider

@@ -7,7 +7,7 @@ import type { GenerationOutput } from "./useGenerationState";
  * Polling options and callbacks
  */
 interface UseGenerationPollingOptions {
-  onComplete: (outputs: GenerationOutput[]) => void;
+  onComplete: (outputs: GenerationOutput[], parentId: string) => void;
   onError?: (error: string) => void;
   onTimeout?: () => void;
 }
@@ -85,8 +85,8 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
             return;
           }
 
-          // Call completion callback
-          options.onComplete(uniqueOutputs);
+          // Call completion callback with parent ID
+          options.onComplete(uniqueOutputs, generationId);
         } else {
           // Failed generation
           options.onError?.('Generation failed');

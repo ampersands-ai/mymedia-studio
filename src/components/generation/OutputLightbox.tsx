@@ -185,6 +185,7 @@ export const OutputLightbox = ({
           {/* Image Preview - Centered, viewport-relative size */}
           <div className="flex items-center justify-center bg-muted/30 rounded-lg p-3 my-2 overflow-hidden flex-shrink min-h-0">
             <OptimizedGenerationPreview
+              key={currentOutput.storage_path}
               storagePath={currentOutput.storage_path}
               contentType={contentType}
               className="max-w-full max-h-[45vh] object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"

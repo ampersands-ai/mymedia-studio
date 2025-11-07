@@ -5,8 +5,10 @@ import { ErrorAnalysisPanel } from "@/components/admin/webhook/ErrorAnalysisPane
 import { WebhookCharts } from "@/components/admin/webhook/WebhookCharts";
 import { WebhookActionsPanel } from "@/components/admin/webhook/WebhookActionsPanel";
 import { AlertSettingsPanel } from "@/components/admin/webhook/AlertSettingsPanel";
+import { AlertHistoryDashboard } from "@/components/admin/webhook/AlertHistoryDashboard";
 import { Badge } from "@/components/ui/badge";
-import { Activity } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Activity, History } from "lucide-react";
 
 const WebhookMonitor = () => {
   const {
@@ -53,27 +55,47 @@ const WebhookMonitor = () => {
         onRefresh={refetchAll}
       />
 
-      {/* Main Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Live Feed */}
-        <LiveWebhookFeed 
-          webhooks={recentWebhooks} 
-          loading={webhooksLoading}
-        />
+      {/* Tabbed Content */}
+      <Tabs defaultValue="monitoring" className="space-y-6">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="monitoring" className="gap-2">
+            <Activity className="h-4 w-4" />
+            Live Monitoring
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-2">
+            <History className="h-4 w-4" />
+            Alert History
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Error Analysis */}
-        <ErrorAnalysisPanel
-          storageFailures={storageFailures}
-          providerStats={providerStats}
-          stuckGenerations={stuckGenerations}
-        />
-      </div>
+        <TabsContent value="monitoring" className="space-y-6">
+          {/* Main Content Grid */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Live Feed */}
+            <LiveWebhookFeed 
+              webhooks={recentWebhooks} 
+              loading={webhooksLoading}
+            />
 
-      {/* Charts */}
-      <WebhookCharts providerStats={providerStats} />
+            {/* Error Analysis */}
+            <ErrorAnalysisPanel
+              storageFailures={storageFailures}
+              providerStats={providerStats}
+              stuckGenerations={stuckGenerations}
+            />
+          </div>
 
-      {/* Alert Settings */}
-      <AlertSettingsPanel />
+          {/* Charts */}
+          <WebhookCharts providerStats={providerStats} />
+
+          {/* Alert Settings */}
+          <AlertSettingsPanel />
+        </TabsContent>
+
+        <TabsContent value="history">
+          <AlertHistoryDashboard />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

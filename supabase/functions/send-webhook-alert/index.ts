@@ -161,7 +161,7 @@ serve(async (req) => {
         }
       }
 
-      // Log the alert
+      // Log the alert to audit logs
       if (payload.type !== 'test') {
         await supabase
           .from('audit_logs')
@@ -182,6 +182,48 @@ serve(async (req) => {
 
       const totalSent = results.email.sent + results.slack.sent + results.discord.sent;
       const totalFailed = results.email.failed + results.slack.failed + results.discord.failed;
+
+      // Determine severity
+      let severity = 'info';
+      if (payload.type === 'failure_rate' && (payload.failureRate || 0) > 50) {
+        severity = 'critical';
+      } else if (payload.type === 'storage_spike' && (payload.storageFailures || 0) > settings.storage_failure_threshold * 2) {
+        severity = 'critical';
+      } else if (payload.type !== 'test') {
+        severity = 'warning';
+      }
+
+      // Determine channels sent and failed
+      const channelsSent = [];
+      const channelsFailed = [];
+      
+      if (results.email.sent > 0) channelsSent.push('email');
+      if (results.email.failed > 0) channelsFailed.push('email');
+      if (results.slack.sent > 0) channelsSent.push('slack');
+      if (results.slack.failed > 0) channelsFailed.push('slack');
+      if (results.discord.sent > 0) channelsSent.push('discord');
+      if (results.discord.failed > 0) channelsFailed.push('discord');
+
+      // Log to alert history
+      await supabase
+        .from('webhook_alert_history')
+        .insert({
+          alert_type: payload.type,
+          severity,
+          trigger_value: payload.type === 'failure_rate' ? (payload.failureRate || 0) : (payload.storageFailures || 0),
+          threshold_value: payload.threshold || 0,
+          message: payload.message,
+          channels_sent: channelsSent,
+          channels_failed: channelsFailed,
+          recipients: hasEmailChannel ? settings.admin_emails : [],
+          metadata: {
+            test_alert: payload.type === 'test',
+            slack_webhook_configured: hasSlackChannel,
+            discord_webhook_configured: hasDiscordChannel,
+            total_sent: totalSent,
+            total_failed: totalFailed,
+          }
+        });
 
       return new Response(
         JSON.stringify({ 

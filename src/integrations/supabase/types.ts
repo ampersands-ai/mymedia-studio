@@ -1553,6 +1553,57 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_alert_history: {
+        Row: {
+          alert_type: string
+          channels_failed: Json
+          channels_sent: Json
+          created_at: string | null
+          id: string
+          is_resolved: boolean | null
+          message: string
+          metadata: Json | null
+          recipients: string[] | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          severity: string
+          threshold_value: number
+          trigger_value: number
+        }
+        Insert: {
+          alert_type: string
+          channels_failed?: Json
+          channels_sent?: Json
+          created_at?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          message: string
+          metadata?: Json | null
+          recipients?: string[] | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          severity: string
+          threshold_value: number
+          trigger_value: number
+        }
+        Update: {
+          alert_type?: string
+          channels_failed?: Json
+          channels_sent?: Json
+          created_at?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          message?: string
+          metadata?: Json | null
+          recipients?: string[] | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          severity?: string
+          threshold_value?: number
+          trigger_value?: number
+        }
+        Relationships: []
+      }
       webhook_events: {
         Row: {
           created_at: string

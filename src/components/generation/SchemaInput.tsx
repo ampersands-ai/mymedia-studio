@@ -122,7 +122,22 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
       [name, schema?.title, schema?.description]
         .filter(Boolean)
         .map((s: any) => String(s).toLowerCase())
-        .some((s: string) => /(prompt|script|input text|text|caption|description)\b/.test(s))
+        .some((s: string) => /(prompt|script|input text|text|caption|description)\b/.test(s) && 
+          !/negative/.test(s))  // Exclude negative prompt from primary
+    )
+  );
+
+  // Detect secondary text fields (like negative_prompt)
+  const isSecondaryTextField = (
+    schema?.type === 'string' &&
+    !schema?.enum &&
+    !isImageUpload &&
+    !isLikelyPrimaryText && (
+      [name, schema?.title, schema?.description]
+        .filter(Boolean)
+        .map((s: any) => String(s).toLowerCase())
+        .some((s: string) => /negative/.test(s)) ||
+      (typeof schema?.maxLength === 'number' && schema.maxLength >= 100 && schema.maxLength < 200)
     )
   );
 
@@ -154,6 +169,42 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
           />
           <div className="flex justify-end">
             <span className={`text-xs ${charCount > maxChars * 0.9 ? 'text-orange-600 font-medium' : 'text-muted-foreground'}`}>
+              {charCount} / {maxChars} characters
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Compact textarea for secondary text fields (negative prompt, etc.)
+  if (isSecondaryTextField) {
+    const charCount = (value || '').length;
+    const maxChars = schema.maxLength || 500;
+    
+    return (
+      <Card className="border border-border shadow-sm">
+        <CardContent className="p-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <Label className="text-sm font-medium">
+              {displayName}
+              {isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+          </div>
+          {schema.description && (
+            <p className="text-xs text-muted-foreground">{schema.description}</p>
+          )}
+          <Textarea
+            value={value ?? schema.default ?? ""}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={schema.description || `Enter ${displayName.toLowerCase()}...`}
+            rows={3}
+            className="min-h-[90px] resize-y text-sm leading-relaxed"
+            maxLength={maxChars}
+          />
+          <div className="flex justify-end">
+            <span className="text-xs text-muted-foreground">
               {charCount} / {maxChars} characters
             </span>
           </div>

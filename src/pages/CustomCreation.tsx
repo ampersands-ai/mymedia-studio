@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { cinematicPortraitPrompts } from "@/data/cinematicPortraitPrompts";
+import { getSurpriseMePrompt } from "@/data/surpriseMePrompts";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
@@ -1103,21 +1103,18 @@ const CustomCreation = () => {
     setGeneratingSurprise(true);
     
     try {
-      // Date-based seed ensures different prompts each day
-      const dayOfYear = Math.floor(
-        (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
-      );
-      
-      // Add random offset for variety within the day
-      const randomOffset = Math.floor(Math.random() * 30);
-      
-      // Calculate index with daily rotation
-      const index = (dayOfYear * 7 + randomOffset) % cinematicPortraitPrompts.length;
-      
-      const selectedPrompt = cinematicPortraitPrompts[index];
+      const selectedPrompt = getSurpriseMePrompt(selectedGroup);
       setPrompt(selectedPrompt);
       
-      toast.success("Cinematic portrait prompt loaded!");
+      const promptTypeLabels = {
+        'image_editing': 'Image editing',
+        'prompt_to_image': 'Image generation',
+        'prompt_to_video': 'Video generation',
+        'image_to_video': 'Image animation',
+        'prompt_to_audio': 'Audio generation'
+      };
+      
+      toast.success(`${promptTypeLabels[selectedGroup]} prompt loaded!`);
     } catch (error) {
       console.error('Surprise me error:', error);
       toast.error("Failed to load prompt. Please try again.");

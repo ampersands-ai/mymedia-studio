@@ -185,7 +185,7 @@ export const OptimizedGenerationPreview = ({
           className={cn(className, "animate-fade-in")}
         />
         {/* Action buttons overlay */}
-        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-2 right-2 flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity duration-200">
           {canShare && (
             <Button
               variant="secondary"
@@ -194,7 +194,7 @@ export const OptimizedGenerationPreview = ({
                 e.stopPropagation();
                 handleShare();
               }}
-              className="h-8 w-8"
+              className="h-8 w-8 backdrop-blur-sm"
             >
               <Share2 className="h-4 w-4" />
             </Button>
@@ -206,7 +206,7 @@ export const OptimizedGenerationPreview = ({
               e.stopPropagation();
               handleDownload();
             }}
-            className="h-8 w-8"
+            className="h-8 w-8 backdrop-blur-sm"
           >
             <Download className="h-4 w-4" />
           </Button>
@@ -281,10 +281,7 @@ export const OptimizedGenerationPreview = ({
           </div>
         )}
         {/* Action buttons overlay */}
-        <div className={cn(
-          "absolute top-2 right-2 flex gap-2 transition-opacity",
-          isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-        )}>
+        <div className="absolute top-2 right-2 flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity duration-200">
           {canShare && (
             <Button
               variant="secondary"
@@ -293,7 +290,7 @@ export const OptimizedGenerationPreview = ({
                 e.stopPropagation();
                 handleShare();
               }}
-              className="h-8 w-8"
+              className="h-8 w-8 backdrop-blur-sm"
             >
               <Share2 className="h-4 w-4" />
             </Button>
@@ -305,7 +302,7 @@ export const OptimizedGenerationPreview = ({
               e.stopPropagation();
               handleDownload();
             }}
-            className="h-8 w-8"
+            className="h-8 w-8 backdrop-blur-sm"
           >
             <Download className="h-4 w-4" />
           </Button>

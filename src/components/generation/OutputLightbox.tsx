@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, ChevronLeft, ChevronRight, Image as ImageIcon, Share2, RefreshCw, Heart } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, Image as ImageIcon, Share2, Heart } from "lucide-react";
 import { OptimizedGenerationPreview } from "./OptimizedGenerationPreview";
 import { ShareModal } from "./ShareModal";
 import { useEffect, useState } from "react";
@@ -139,12 +139,6 @@ export const OutputLightbox = ({
     }
   };
 
-  const handleRegenerate = () => {
-    toast.info('Regenerate feature coming soon!');
-    trackEvent('output_regenerate_clicked', {
-      generation_id: currentOutput.id
-    });
-  };
 
   const handleSave = () => {
     setIsSaved(!isSaved);
@@ -167,7 +161,7 @@ export const OutputLightbox = ({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent 
-          className="max-w-2xl max-h-[90vh] flex flex-col backdrop-blur-sm shadow-2xl animate-slide-up"
+          className="max-w-2xl max-h-[95vh] flex flex-col backdrop-blur-sm shadow-2xl animate-slide-up overflow-hidden"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
@@ -189,11 +183,11 @@ export const OutputLightbox = ({
         </DialogHeader>
 
           {/* Image Preview - Centered, viewport-relative size */}
-          <div className="flex items-center justify-center bg-muted/30 rounded-lg p-4 my-4 overflow-hidden flex-shrink min-h-0">
+          <div className="flex items-center justify-center bg-muted/30 rounded-lg p-3 my-2 overflow-hidden flex-shrink min-h-0">
             <OptimizedGenerationPreview
               storagePath={currentOutput.storage_path}
               contentType={contentType}
-              className="max-w-full max-h-[50vh] object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
+              className="max-w-full max-h-[45vh] object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
             />
           </div>
 
@@ -223,9 +217,9 @@ export const OutputLightbox = ({
             </div>
           )}
 
-          {/* Action Buttons - 2x2 grid on mobile, horizontal on desktop */}
-          <div className="pt-4 border-t space-y-3 flex-shrink-0">
-            <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2">
+          {/* Action Buttons - 3 buttons + icon */}
+          <div className="pt-3 border-t space-y-2 flex-shrink-0">
+            <div className="grid grid-cols-3 sm:flex sm:flex-row gap-2">
               {/* Download - Primary Yellow */}
               <Button
                 onClick={handleDownload}
@@ -245,17 +239,6 @@ export const OutputLightbox = ({
               >
                 <Share2 className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Share</span>
-              </Button>
-              
-              {/* Regenerate - Secondary */}
-              <Button
-                onClick={handleRegenerate}
-                variant="outline"
-                className="h-12 sm:flex-1 border-2"
-                aria-label="Regenerate similar"
-              >
-                <RefreshCw className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Regenerate</span>
               </Button>
               
               {/* Save - Icon only with heart */}

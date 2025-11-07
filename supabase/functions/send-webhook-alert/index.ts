@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "npm:resend@2.0.0";
+import { Resend } from "https://esm.sh/resend@2.0.0";
+import { generateSlackPayload, generateDiscordPayload } from "./_slack-discord.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -50,9 +51,14 @@ serve(async (req) => {
     if (req.method === 'POST') {
       const payload: AlertPayload = await req.json();
 
-      if (!settings?.admin_emails || settings.admin_emails.length === 0) {
+      // Check if at least one notification channel is enabled
+      const hasEmailChannel = settings?.enable_email && settings?.admin_emails?.length > 0;
+      const hasSlackChannel = settings?.enable_slack && settings?.slack_webhook_url;
+      const hasDiscordChannel = settings?.enable_discord && settings?.discord_webhook_url;
+
+      if (!hasEmailChannel && !hasSlackChannel && !hasDiscordChannel) {
         return new Response(
-          JSON.stringify({ error: 'No admin emails configured' }),
+          JSON.stringify({ error: 'No notification channels configured' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -85,23 +91,75 @@ serve(async (req) => {
         ? '🚨 ALERT: High Webhook Failure Rate Detected'
         : '⚠️ ALERT: Storage Failure Spike Detected';
 
-      const htmlContent = generateEmailHTML(payload, settings);
+      const results = {
+        email: { sent: 0, failed: 0 },
+        slack: { sent: 0, failed: 0 },
+        discord: { sent: 0, failed: 0 },
+      };
 
-      // Send emails
-      const emailPromises = settings.admin_emails.map((email: string) =>
-        resend.emails.send({
-          from: 'Webhook Monitor <alerts@resend.dev>',
-          to: [email],
-          subject,
-          html: htmlContent,
-        })
-      );
+      // Send email alerts
+      if (hasEmailChannel) {
+        const htmlContent = generateEmailHTML(payload, settings);
+        const emailPromises = settings.admin_emails.map((email: string) =>
+          resend.emails.send({
+            from: 'Webhook Monitor <alerts@resend.dev>',
+            to: [email],
+            subject,
+            html: htmlContent,
+          })
+        );
 
-      const results = await Promise.allSettled(emailPromises);
-      const successCount = results.filter(r => r.status === 'fulfilled').length;
-      const failedCount = results.filter(r => r.status === 'rejected').length;
+        const emailResults = await Promise.allSettled(emailPromises);
+        results.email.sent = emailResults.filter(r => r.status === 'fulfilled').length;
+        results.email.failed = emailResults.filter(r => r.status === 'rejected').length;
+        console.log(`📧 Email: ${results.email.sent} sent, ${results.email.failed} failed`);
+      }
 
-      console.log(`Sent ${successCount} alerts, ${failedCount} failed`);
+      // Send Slack alert
+      if (hasSlackChannel) {
+        try {
+          const slackPayload = generateSlackPayload(payload, settings);
+          const slackResponse = await fetch(settings.slack_webhook_url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(slackPayload),
+          });
+
+          if (slackResponse.ok) {
+            results.slack.sent = 1;
+            console.log('💬 Slack: Alert sent successfully');
+          } else {
+            results.slack.failed = 1;
+            console.error('Slack alert failed:', await slackResponse.text());
+          }
+        } catch (error) {
+          results.slack.failed = 1;
+          console.error('Slack alert error:', error);
+        }
+      }
+
+      // Send Discord alert
+      if (hasDiscordChannel) {
+        try {
+          const discordPayload = generateDiscordPayload(payload, settings);
+          const discordResponse = await fetch(settings.discord_webhook_url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(discordPayload),
+          });
+
+          if (discordResponse.ok || discordResponse.status === 204) {
+            results.discord.sent = 1;
+            console.log('💬 Discord: Alert sent successfully');
+          } else {
+            results.discord.failed = 1;
+            console.error('Discord alert failed:', await discordResponse.text());
+          }
+        } catch (error) {
+          results.discord.failed = 1;
+          console.error('Discord alert error:', error);
+        }
+      }
 
       // Log the alert
       if (payload.type !== 'test') {
@@ -111,19 +169,26 @@ serve(async (req) => {
             action: `webhook_alert_${payload.type}`,
             metadata: {
               alert_type: payload.type,
-              recipients: settings.admin_emails,
-              success_count: successCount,
-              failed_count: failedCount,
+              channels: {
+                email: hasEmailChannel ? settings.admin_emails : [],
+                slack: hasSlackChannel,
+                discord: hasDiscordChannel,
+              },
+              results,
               ...payload,
             },
           });
       }
 
+      const totalSent = results.email.sent + results.slack.sent + results.discord.sent;
+      const totalFailed = results.email.failed + results.slack.failed + results.discord.failed;
+
       return new Response(
         JSON.stringify({ 
-          success: true, 
-          sent: successCount,
-          failed: failedCount,
+          success: true,
+          total_sent: totalSent,
+          total_failed: totalFailed,
+          breakdown: results,
         }),
         { 
           status: 200, 

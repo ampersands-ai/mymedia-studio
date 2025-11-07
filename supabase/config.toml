@@ -116,3 +116,9 @@ verify_jwt = false  # Called by service role after video completes
 
 [functions.fetch-video-status]
 verify_jwt = true
+
+[functions.monitor-webhook-health]
+verify_jwt = false  # Called by cron job
+
+[functions.send-webhook-alert]
+verify_jwt = true  # Admin-only alert sending

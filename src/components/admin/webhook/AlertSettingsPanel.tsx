@@ -7,8 +7,9 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, Mail, Loader2 } from "lucide-react";
+import { Bell, Mail, Loader2, MessageSquare } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface AlertSettings {
   enabled: boolean;
@@ -17,6 +18,11 @@ interface AlertSettings {
   check_interval_minutes: number;
   admin_emails: string[];
   cooldown_minutes: number;
+  slack_webhook_url?: string;
+  discord_webhook_url?: string;
+  enable_email: boolean;
+  enable_slack: boolean;
+  enable_discord: boolean;
 }
 
 export const AlertSettingsPanel = () => {
@@ -42,6 +48,11 @@ export const AlertSettingsPanel = () => {
         check_interval_minutes: 5,
         admin_emails: [],
         cooldown_minutes: 30,
+        slack_webhook_url: '',
+        discord_webhook_url: '',
+        enable_email: true,
+        enable_slack: false,
+        enable_discord: false,
       };
 
       if (!data || !data.setting_value) return defaultSettings;
@@ -258,72 +269,197 @@ export const AlertSettingsPanel = () => {
 
         <Separator />
 
-        {/* Email Configuration */}
+        {/* Notification Channels */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                Admin Email Addresses
+                <MessageSquare className="h-4 w-4" />
+                Notification Channels
               </h3>
               <p className="text-xs text-muted-foreground mt-1">
-                Emails that will receive alert notifications
+                Configure where alerts should be sent
               </p>
             </div>
             <Button
               size="sm"
               variant="outline"
               onClick={() => testAlertMutation.mutate()}
-              disabled={testAlertMutation.isPending || settings.admin_emails.length === 0}
+              disabled={testAlertMutation.isPending || (!settings.enable_email && !settings.enable_slack && !settings.enable_discord)}
             >
               {testAlertMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Test Alert"
+                "Test Alerts"
               )}
             </Button>
           </div>
 
-          <div className="flex gap-2">
-            <Input
-              placeholder="admin@example.com"
-              value={emailInput}
-              onChange={(e) => setEmailInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddEmail()}
-              disabled={updateMutation.isPending}
-            />
-            <Button
-              onClick={handleAddEmail}
-              disabled={updateMutation.isPending || !emailInput.trim()}
-            >
-              Add
-            </Button>
-          </div>
+          <Tabs defaultValue="email" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="email" className="gap-2">
+                <Mail className="h-4 w-4" />
+                Email
+              </TabsTrigger>
+              <TabsTrigger value="slack" className="gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Slack
+              </TabsTrigger>
+              <TabsTrigger value="discord" className="gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Discord
+              </TabsTrigger>
+            </TabsList>
 
-          {settings.admin_emails.length > 0 ? (
-            <div className="space-y-2">
-              {settings.admin_emails.map((email) => (
-                <div
-                  key={email}
-                  className="flex items-center justify-between p-2 rounded-md border bg-muted/30"
-                >
-                  <span className="text-sm font-mono">{email}</span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleRemoveEmail(email)}
-                    disabled={updateMutation.isPending}
-                  >
-                    Remove
-                  </Button>
+            <TabsContent value="email" className="space-y-4 mt-4">
+              <div className="flex items-center justify-between p-3 rounded-md border bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <Mail className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">Email Notifications</p>
+                    <p className="text-xs text-muted-foreground">Send alerts via email to admin addresses</p>
+                  </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-4 text-sm text-muted-foreground border border-dashed rounded-md">
-              No email addresses configured
-            </div>
-          )}
+                <Switch
+                  checked={settings.enable_email}
+                  onCheckedChange={(checked) => handleUpdateSetting('enable_email', checked)}
+                />
+              </div>
+
+              {settings.enable_email && (
+                <>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="admin@example.com"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddEmail()}
+                      disabled={updateMutation.isPending}
+                    />
+                    <Button
+                      onClick={handleAddEmail}
+                      disabled={updateMutation.isPending || !emailInput.trim()}
+                    >
+                      Add
+                    </Button>
+                  </div>
+
+                  {settings.admin_emails.length > 0 ? (
+                    <div className="space-y-2">
+                      {settings.admin_emails.map((email) => (
+                        <div
+                          key={email}
+                          className="flex items-center justify-between p-2 rounded-md border bg-muted/30"
+                        >
+                          <span className="text-sm font-mono">{email}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleRemoveEmail(email)}
+                            disabled={updateMutation.isPending}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-sm text-muted-foreground border border-dashed rounded-md">
+                      No email addresses configured
+                    </div>
+                  )}
+                </>
+              )}
+            </TabsContent>
+
+            <TabsContent value="slack" className="space-y-4 mt-4">
+              <div className="flex items-center justify-between p-3 rounded-md border bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">Slack Integration</p>
+                    <p className="text-xs text-muted-foreground">Send alerts to Slack channel via webhook</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={settings.enable_slack}
+                  onCheckedChange={(checked) => handleUpdateSetting('enable_slack', checked)}
+                />
+              </div>
+
+              {settings.enable_slack && (
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="slack-webhook">Slack Webhook URL</Label>
+                    <Input
+                      id="slack-webhook"
+                      type="url"
+                      placeholder="https://hooks.slack.com/services/..."
+                      value={settings.slack_webhook_url || ''}
+                      onChange={(e) => handleUpdateSetting('slack_webhook_url', e.target.value)}
+                      disabled={updateMutation.isPending}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Create an incoming webhook in your Slack workspace settings
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-md border bg-blue-500/10 border-blue-500/20">
+                    <p className="text-xs text-muted-foreground">
+                      <strong>How to get your Slack webhook:</strong><br />
+                      1. Go to your Slack workspace settings<br />
+                      2. Navigate to Apps → Incoming Webhooks<br />
+                      3. Create a new webhook and select a channel<br />
+                      4. Copy the webhook URL and paste it here
+                    </p>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="discord" className="space-y-4 mt-4">
+              <div className="flex items-center justify-between p-3 rounded-md border bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">Discord Integration</p>
+                    <p className="text-xs text-muted-foreground">Send alerts to Discord channel via webhook</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={settings.enable_discord}
+                  onCheckedChange={(checked) => handleUpdateSetting('enable_discord', checked)}
+                />
+              </div>
+
+              {settings.enable_discord && (
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="discord-webhook">Discord Webhook URL</Label>
+                    <Input
+                      id="discord-webhook"
+                      type="url"
+                      placeholder="https://discord.com/api/webhooks/..."
+                      value={settings.discord_webhook_url || ''}
+                      onChange={(e) => handleUpdateSetting('discord_webhook_url', e.target.value)}
+                      disabled={updateMutation.isPending}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Create a webhook in your Discord server channel settings
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-md border bg-purple-500/10 border-purple-500/20">
+                    <p className="text-xs text-muted-foreground">
+                      <strong>How to get your Discord webhook:</strong><br />
+                      1. Open your Discord server and go to channel settings<br />
+                      2. Navigate to Integrations → Webhooks<br />
+                      3. Click "New Webhook" and configure it<br />
+                      4. Copy the webhook URL and paste it here
+                    </p>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </CardContent>
     </Card>

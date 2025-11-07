@@ -167,7 +167,7 @@ export const OutputLightbox = ({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent 
-          className="max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-sm shadow-2xl animate-slide-up pb-6"
+          className="max-w-2xl max-h-[90vh] flex flex-col backdrop-blur-sm shadow-2xl animate-slide-up"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
@@ -188,12 +188,12 @@ export const OutputLightbox = ({
           </DialogTitle>
         </DialogHeader>
 
-          {/* Image Preview - Centered, reasonable size */}
-          <div className="flex items-center justify-center bg-muted/30 rounded-lg p-4 my-4 overflow-hidden">
+          {/* Image Preview - Centered, viewport-relative size */}
+          <div className="flex items-center justify-center bg-muted/30 rounded-lg p-4 my-4 overflow-hidden flex-shrink min-h-0">
             <OptimizedGenerationPreview
               storagePath={currentOutput.storage_path}
               contentType={contentType}
-              className="max-w-full max-h-[400px] object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
+              className="max-w-full max-h-[50vh] object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
             />
           </div>
 
@@ -224,7 +224,7 @@ export const OutputLightbox = ({
           )}
 
           {/* Action Buttons - 2x2 grid on mobile, horizontal on desktop */}
-          <div className="pt-4 border-t space-y-3">
+          <div className="pt-4 border-t space-y-3 flex-shrink-0">
             <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2">
               {/* Download - Primary Yellow */}
               <Button
@@ -271,7 +271,7 @@ export const OutputLightbox = ({
           </div>
 
           {/* Keyboard Shortcuts Hint */}
-          <div className="text-center mt-4 pb-2">
+          <div className="text-center mt-4 pb-2 flex-shrink-0">
             <p className="text-xs text-muted-foreground">
               <span className="hidden md:inline">
                 Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">←</kbd> <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">→</kbd> to navigate • 

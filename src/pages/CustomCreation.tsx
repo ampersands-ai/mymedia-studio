@@ -491,8 +491,26 @@ const CustomCreation = () => {
           const validOutputs = allOutputs.filter(o => !!o.storage_path);
           console.log('🔍 Valid outputs (with storage_path):', validOutputs.length, validOutputs);
 
+          // Debug: Show all storage paths
+          console.log('🔍 DEBUG - All outputs with storage paths:', 
+            validOutputs.map(o => ({ 
+              id: o.id, 
+              path: o.storage_path.substring(Math.max(0, o.storage_path.length - 20)), 
+              index: o.output_index 
+            }))
+          );
+
+          // Remove duplicates by storage_path
+          const uniqueOutputs = validOutputs.filter((output, index, self) =>
+            index === self.findIndex(o => o.storage_path === output.storage_path)
+          );
+          
+          if (uniqueOutputs.length !== validOutputs.length) {
+            console.warn(`⚠️ Removed ${validOutputs.length - uniqueOutputs.length} duplicate outputs`);
+          }
+
           // Only proceed if we have at least one valid output
-          if (validOutputs.length === 0) {
+          if (uniqueOutputs.length === 0) {
             console.error('❌ No valid outputs found with storage_path');
             toast.error('Generation completed but outputs are not ready. Please check History.', {
               id: 'generation-progress'
@@ -502,10 +520,10 @@ const CustomCreation = () => {
             return;
           }
 
-          setGeneratedOutputs(validOutputs);
+          setGeneratedOutputs(uniqueOutputs);
           
-          // Set primary output: use first valid output (guaranteed to exist)
-          const primaryOutput = validOutputs[0].storage_path;
+          // Set primary output: use first unique output (guaranteed to exist)
+          const primaryOutput = uniqueOutputs[0].storage_path;
           console.log('🎯 Selected primary output:', primaryOutput);
           setGeneratedOutput(primaryOutput);
           setSelectedOutputIndex(0); // Reset to newest generation
@@ -520,12 +538,12 @@ const CustomCreation = () => {
           
           toast.success('✨ Your creation is ready!', { 
             id: 'generation-progress',
-            description: `${validOutputs.length} output${validOutputs.length > 1 ? 's' : ''} generated successfully`
+            description: `${uniqueOutputs.length} output${uniqueOutputs.length > 1 ? 's' : ''} generated successfully`
           });
 
           // Generate caption if checkbox was checked
-          if (generateCaption && validOutputs.length > 0) {
-            const firstOutput = validOutputs[0];
+          if (generateCaption && uniqueOutputs.length > 0) {
+            const firstOutput = uniqueOutputs[0];
             setIsGeneratingCaption(true);
             
             try {

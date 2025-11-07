@@ -1148,7 +1148,6 @@ const CustomCreation = () => {
           
         {/* Group Selection */}
         <div className="mb-6">
-          <h2 className="text-base md:text-lg font-bold mb-3">Select Creation Type</h2>
           <div className="flex flex-wrap gap-2 justify-center">
             {CREATION_GROUPS.map((group) => (
               <button

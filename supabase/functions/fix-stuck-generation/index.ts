@@ -51,7 +51,7 @@ serve(async (req) => {
       );
     }
 
-    const { generation_id, result_url, action } = await req.json();
+    const { generation_id, result_url, result_urls, action } = await req.json();
     
     if (!generation_id) {
       return new Response(
@@ -71,8 +71,11 @@ serve(async (req) => {
       throw new Error('Generation not found');
     }
 
+    // Support both single result_url and multiple result_urls
+    const urls = result_urls || (result_url ? [result_url] : []);
+
     // If action is 'fail', just mark as failed and refund
-    if (action === 'fail' || !result_url) {
+    if (action === 'fail' || urls.length === 0) {
       console.log('Marking generation as failed and refunding tokens:', generation_id);
       
       const { error: updateError } = await supabase
@@ -108,82 +111,202 @@ serve(async (req) => {
       );
     }
 
-    console.log('Downloading content from:', result_url);
+    console.log('Processing', urls.length, 'output URL(s)');
 
-    // Download the content
-    const contentResponse = await fetch(result_url);
-    if (!contentResponse.ok) {
-      throw new Error(`Failed to download content: ${contentResponse.status}`);
-    }
-
-    const arrayBuffer = await contentResponse.arrayBuffer();
-    const contentData = new Uint8Array(arrayBuffer);
-    
-    console.log('Downloaded. Size:', contentData.length, 'bytes');
-
-    // Determine file extension and content type from URL and generation type
-    const urlExt = result_url.match(/\.([a-z0-9]+)(?:\?|$)/i)?.[1] || '';
-    
-    const typeToMime: Record<string, string> = {
-      'image': 'image/jpeg',
-      'video': 'video/mp4',
-      'audio': 'audio/mpeg',
-      'text': 'text/plain'
+    // Helper functions
+    const determineFileExtension = (url: string, type: string): string => {
+      const urlExt = url.match(/\.([a-z0-9]+)(?:\?|$)/i)?.[1] || '';
+      const typeToExt: Record<string, string> = {
+        'image': urlExt || 'jpg',
+        'video': urlExt || 'mp4',
+        'audio': urlExt || 'mp3',
+        'text': urlExt || 'txt'
+      };
+      return typeToExt[type] || urlExt || 'bin';
     };
-    
-    const typeToExt: Record<string, string> = {
-      'image': urlExt || 'jpg',
-      'video': urlExt || 'mp4',
-      'audio': urlExt || 'mp3',
-      'text': urlExt || 'txt'
+
+    const getMimeType = (type: string): string => {
+      const typeToMime: Record<string, string> = {
+        'image': 'image/jpeg',
+        'video': 'video/mp4',
+        'audio': 'audio/mpeg',
+        'text': 'text/plain'
+      };
+      return typeToMime[type] || 'application/octet-stream';
     };
-    
-    const contentType = typeToMime[generation.type] || 'application/octet-stream';
-    const fileExtension = typeToExt[generation.type] || urlExt || 'bin';
-    
-    console.log('Detected type:', generation.type, 'Extension:', fileExtension, 'MIME:', contentType);
 
-    // Upload to storage
-    const date = new Date();
-    const dateFolder = date.toISOString().split('T')[0];
-    const storagePath = `${generation.user_id}/${dateFolder}/${generation.id}.${fileExtension}`;
-    
-    const { error: uploadError } = await supabase.storage
-      .from('generated-content')
-      .upload(storagePath, contentData, {
-        contentType: contentType,
-        cacheControl: '3600',
-        upsert: false
-      });
+    const uploadToStorage = async (
+      userId: string,
+      generationId: string,
+      data: Uint8Array,
+      ext: string,
+      type: string
+    ): Promise<string> => {
+      const date = new Date();
+      const dateFolder = date.toISOString().split('T')[0];
+      const storagePath = `${userId}/${dateFolder}/${generationId}.${ext}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('generated-content')
+        .upload(storagePath, data, {
+          contentType: getMimeType(type),
+          cacheControl: '3600',
+          upsert: false
+        });
 
-    if (uploadError) {
-      throw new Error(`Storage upload failed: ${uploadError.message}`);
+      if (uploadError) {
+        throw new Error(`Storage upload failed: ${uploadError.message}`);
+      }
+
+      return storagePath;
+    };
+
+    const isMultiOutput = urls.length > 1;
+    let mainStoragePath: string | null = null;
+    let mainFileSize = 0;
+
+    if (isMultiOutput) {
+      console.log('Multi-output generation - creating child records for all URLs');
+      
+      // Create child generations for each URL
+      for (let i = 0; i < urls.length; i++) {
+        try {
+          const url = urls[i];
+          console.log(`[Output ${i + 1}/${urls.length}] Downloading from:`, url);
+
+          const response = await fetch(url);
+          if (!response.ok) {
+            console.error(`[Output ${i + 1}] Download failed:`, response.status);
+            continue;
+          }
+
+          const buffer = await response.arrayBuffer();
+          const data = new Uint8Array(buffer);
+          const ext = determineFileExtension(url, generation.type);
+
+          console.log(`[Output ${i + 1}] Downloaded ${data.length} bytes, extension: ${ext}`);
+
+          // Create unique child ID
+          const childId = crypto.randomUUID();
+
+          // Upload to storage
+          const storagePath = await uploadToStorage(
+            generation.user_id,
+            childId,
+            data,
+            ext,
+            generation.type
+          );
+
+          console.log(`[Output ${i + 1}] Uploaded to:`, storagePath);
+
+          // Create child generation record
+          const { error: insertError } = await supabase
+            .from('generations')
+            .insert({
+              id: childId,
+              user_id: generation.user_id,
+              type: generation.type,
+              prompt: generation.prompt,
+              enhanced_prompt: generation.enhanced_prompt,
+              original_prompt: generation.original_prompt,
+              model_id: generation.model_id,
+              model_record_id: generation.model_record_id,
+              template_id: generation.template_id,
+              settings: generation.settings,
+              tokens_used: 0,
+              status: 'completed',
+              storage_path: storagePath,
+              file_size_bytes: data.length,
+              provider_task_id: generation.provider_task_id,
+              provider_request: generation.provider_request,
+              parent_generation_id: generation.id,
+              output_index: i,
+              is_batch_output: true
+            });
+
+          if (insertError) {
+            console.error(`[Output ${i + 1}] Failed to create child:`, insertError);
+          } else {
+            console.log(`[Output ${i + 1}] Child generation created successfully`);
+          }
+        } catch (error: any) {
+          console.error(`[Output ${i + 1}] Error:`, error.message);
+        }
+      }
+
+      // Update parent to completed (container only, no storage_path)
+      const { error: updateError } = await supabase
+        .from('generations')
+        .update({
+          status: 'completed',
+          is_batch_output: true,
+          output_index: 0
+        })
+        .eq('id', generation_id);
+
+      if (updateError) {
+        throw new Error(`Failed to update parent generation: ${updateError.message}`);
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: `Generation fixed successfully - ${urls.length} outputs created`,
+          total_outputs: urls.length
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } else {
+      // Single output - process as before
+      const url = urls[0];
+      console.log('Single output - downloading from:', url);
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to download content: ${response.status}`);
+      }
+
+      const buffer = await response.arrayBuffer();
+      const data = new Uint8Array(buffer);
+      const ext = determineFileExtension(url, generation.type);
+      
+      console.log('Downloaded. Size:', data.length, 'bytes, Extension:', ext);
+
+      // Upload to storage
+      mainStoragePath = await uploadToStorage(
+        generation.user_id,
+        generation.id,
+        data,
+        ext,
+        generation.type
+      );
+
+      console.log('Uploaded to storage:', mainStoragePath);
+
+      // Update generation to completed
+      const { error: updateError } = await supabase
+        .from('generations')
+        .update({
+          status: 'completed',
+          storage_path: mainStoragePath,
+          file_size_bytes: data.length
+        })
+        .eq('id', generation_id);
+
+      if (updateError) {
+        throw new Error(`Failed to update generation: ${updateError.message}`);
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Generation fixed successfully',
+          storage_path: mainStoragePath 
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-
-    console.log('Uploaded to storage:', storagePath);
-
-    // Update generation to completed
-    const { error: updateError } = await supabase
-      .from('generations')
-      .update({
-        status: 'completed',
-        storage_path: storagePath,
-        file_size_bytes: contentData.length
-      })
-      .eq('id', generation_id);
-
-    if (updateError) {
-      throw new Error(`Failed to update generation: ${updateError.message}`);
-    }
-
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Generation fixed successfully',
-        storage_path: storagePath 
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
 
   } catch (error: any) {
     console.error('Fix generation error:', error);

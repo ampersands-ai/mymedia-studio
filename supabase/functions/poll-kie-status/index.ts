@@ -83,10 +83,9 @@ serve(async (req) => {
     if (taskStatus === 'completed' && resultUrls.length > 0) {
       console.log('Task completed! Found', resultUrls.length, 'results');
       
-      // If we have generation_id, trigger fix-stuck-generation
+      // If we have generation_id, trigger fix-stuck-generation with ALL URLs
       if (generation_id) {
-        const resultUrl = resultUrls[0];
-        console.log('Triggering fix-stuck-generation with URL:', resultUrl);
+        console.log('Triggering fix-stuck-generation with', resultUrls.length, 'URLs');
 
         const fixResponse = await fetch(`${supabaseUrl}/functions/v1/fix-stuck-generation`, {
           method: 'POST',
@@ -96,7 +95,7 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             generation_id: generation_id,
-            result_url: resultUrl
+            result_urls: resultUrls  // Pass ALL URLs, not just the first one
           })
         });
 

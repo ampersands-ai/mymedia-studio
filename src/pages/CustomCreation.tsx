@@ -1154,17 +1154,14 @@ const CustomCreation = () => {
                 key={group.id}
                 onClick={() => setSelectedGroup(group.id)}
                 className={cn(
-                  "p-3 md:p-4 rounded-xl transition-all duration-200 flex flex-col items-center gap-2 min-w-[140px]",
+                  "p-3 md:p-4 rounded-xl transition-all duration-200 flex flex-col items-center gap-2 min-w-[140px] group",
                   selectedGroup === group.id
                     ? "bg-primary-500 border-2 border-primary/30 ring-2 ring-primary/20 shadow-sm text-neutral-900 font-bold"
                     : "bg-neutral-100 border border-gray-200 text-neutral-600 hover:bg-neutral-200 hover:text-secondary-700 hover:border-gray-300 shadow-sm hover:shadow-md"
                 )}
               >
-                <group.Icon className="h-8 w-8 md:h-10 md:w-10" />
-                <div className="flex flex-col items-center text-center">
-                  <span className="font-semibold text-xs md:text-sm">{group.label}</span>
-                  <span className="text-[10px] md:text-xs opacity-70 hidden md:block">{group.description}</span>
-                </div>
+                <group.Icon className="h-8 w-8 md:h-10 md:w-10 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" />
+                <span className="font-semibold text-xs md:text-sm">{group.label}</span>
               </button>
             ))}
           </div>

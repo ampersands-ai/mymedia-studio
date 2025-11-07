@@ -112,31 +112,35 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     onChange(null);
   };
 
-  // Dynamic detection for primary long text field
+  // Build array of field texts for detection
+  const fieldTexts = [name, schema?.title, schema?.description]
+    .filter(Boolean)
+    .map((s: any) => String(s).toLowerCase());
+
+  // Robust negative field detector - checks name pattern AND keywords
+  const isNegativeField = 
+    /(^|[_.-])(negative_prompt|neg_prompt)\b/.test(name.toLowerCase()) ||
+    fieldTexts.some((s: string) => /\b(negative|avoid|unwanted|exclude|without)\b/.test(s));
+
+  // Dynamic detection for primary long text field - explicitly exclude negative fields
   const isLikelyPrimaryText = (
     schema?.type === 'string' &&
     !schema?.enum &&
-    !isImageUpload && (
+    !isImageUpload &&
+    !isNegativeField && ( // Global exclusion of negative fields
       ['textarea','markdown'].includes(schema?.format) ||
       (typeof schema?.maxLength === 'number' ? schema.maxLength >= 200 : false) ||
-      [name, schema?.title, schema?.description]
-        .filter(Boolean)
-        .map((s: any) => String(s).toLowerCase())
-        .some((s: string) => /(prompt|script|input text|text|caption|description)\b/.test(s) && 
-          !/negative/.test(s))  // Exclude negative prompt from primary
+      fieldTexts.some((s: string) => /\b(prompt|script|input text|text|caption|description)\b/.test(s))
     )
   );
 
-  // Detect secondary text fields (like negative_prompt)
+  // Detect secondary text fields - prioritize negative fields first
   const isSecondaryTextField = (
     schema?.type === 'string' &&
     !schema?.enum &&
     !isImageUpload &&
     !isLikelyPrimaryText && (
-      [name, schema?.title, schema?.description]
-        .filter(Boolean)
-        .map((s: any) => String(s).toLowerCase())
-        .some((s: string) => /negative/.test(s)) ||
+      isNegativeField || // Negative fields are always secondary/compact
       (typeof schema?.maxLength === 'number' && schema.maxLength >= 100 && schema.maxLength < 200)
     )
   );
@@ -200,7 +204,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
             onChange={(e) => onChange(e.target.value)}
             placeholder={schema.description || `Enter ${displayName.toLowerCase()}...`}
             rows={3}
-            className="min-h-[90px] resize-y text-sm leading-relaxed"
+            className="min-h-[90px] max-h-[140px] resize-y text-sm leading-relaxed"
             maxLength={maxChars}
           />
           <div className="flex justify-end">

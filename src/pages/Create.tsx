@@ -578,35 +578,68 @@ const Create = () => {
 
                     {generatedOutput && (
                       <div className="space-y-3 pt-2">
-                        <div className="aspect-video relative overflow-hidden bg-background rounded-lg border">
-                          <OptimizedGenerationPreview
-                            key={`generation-${generatedOutput}-${generationCompleteTime}`}
-                            storagePath={`${generatedOutput}${generatedOutput.includes('?') ? '&' : '?'}v=${generationCompleteTime}`}
-                            contentType={selectedTemplate?.ai_models?.content_type || "image"}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            onClick={() => handleDownload(generatedOutput)}
-                            className="flex-1"
-                            size="sm"
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            Download
-                          </Button>
-                          <Button
-                            onClick={handleViewHistory}
-                            className="flex-1"
-                            size="sm"
+                        {/* Display all outputs if multiple (for audio batch generations) */}
+                        {generatedOutputs.length > 1 ? (
+                          <div className="space-y-4">
+                            <p className="text-sm font-medium">{generatedOutputs.length} files generated:</p>
+                            {generatedOutputs.map((output, index) => (
+                              <div key={output.id} className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs text-muted-foreground">File {index + 1}</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDownload(output.storage_path)}
+                                  >
+                                    <Download className="h-3 w-3 mr-1" />
+                                    Download
+                                  </Button>
+                                </div>
+                                <div className="bg-background rounded-lg border">
+                                  <OptimizedGenerationPreview
+                                    key={`generation-${output.storage_path}-${generationCompleteTime}`}
+                                    storagePath={`${output.storage_path}${output.storage_path.includes('?') ? '&' : '?'}v=${generationCompleteTime}`}
+                                    contentType={selectedTemplate?.ai_models?.content_type || "image"}
+                                    className="w-full"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          // Single output display
+                          <>
+                            <div className="aspect-video relative overflow-hidden bg-background rounded-lg border">
+                              <OptimizedGenerationPreview
+                                key={`generation-${generatedOutput}-${generationCompleteTime}`}
+                                storagePath={`${generatedOutput}${generatedOutput.includes('?') ? '&' : '?'}v=${generationCompleteTime}`}
+                                contentType={selectedTemplate?.ai_models?.content_type || "image"}
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                onClick={() => handleDownload(generatedOutput)}
+                                className="flex-1"
+                                size="sm"
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                Download
+                              </Button>
+                              <Button
+                                onClick={handleViewHistory}
+                                className="flex-1"
+                                size="sm"
                           >
                             <HistoryIcon className="h-4 w-4 mr-2" />
                             View in History
                           </Button>
                         </div>
-                      </div>
+                      </>
                     )}
+                  </div>
+                )}
                   </CardContent>
                 </Card>
               )}

@@ -1785,10 +1785,10 @@ const CustomCreation = () => {
                           />
 
                           {/* Display child video generations */}
-                          {childVideoGenerations.length > 0 && (
+                          {childVideoGenerations.filter(v => v.type === 'video').length > 0 && (
                             <div className="space-y-3 mt-4">
                               <h3 className="text-sm font-semibold text-muted-foreground">Generated Videos</h3>
-                              {childVideoGenerations.map((video) => (
+                              {childVideoGenerations.filter(v => v.type === 'video').map((video) => (
                                 <div key={video.id}>
                                   {video.status === 'completed' ? (
                                     <VideoFromAudioPreview

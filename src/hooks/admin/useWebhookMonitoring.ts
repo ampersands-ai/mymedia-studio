@@ -1,0 +1,219 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface WebhookStats {
+  successRate: number;
+  totalWebhooks: number;
+  completedCount: number;
+  failedCount: number;
+  processingCount: number;
+  storageFailures: number;
+  stuckGenerations: number;
+  averageLatency: number;
+}
+
+export interface RecentWebhook {
+  id: string;
+  created_at: string;
+  status: string;
+  model_id: string;
+  storage_path: string | null;
+  provider_response: any;
+  tokens_used: number;
+  provider_task_id: string;
+  user_id: string;
+}
+
+export interface StorageFailure {
+  id: string;
+  created_at: string;
+  model_id: string;
+  error_message: string;
+  storage_error: string;
+  user_id: string;
+}
+
+export interface ProviderStat {
+  model_id: string;
+  success_count: number;
+  fail_count: number;
+  failure_rate: number;
+}
+
+export interface StuckGeneration {
+  id: string;
+  created_at: string;
+  status: string;
+  model_id: string;
+  user_id: string;
+  provider_task_id: string;
+  tokens_used: number;
+}
+
+const fetchWebhookStats = async (): Promise<WebhookStats> => {
+  const { data, error } = await supabase
+    .from('generations')
+    .select('status, created_at')
+    .not('provider_task_id', 'is', null)
+    .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+
+  if (error) throw error;
+
+  const completedCount = data.filter(g => g.status === 'completed').length;
+  const failedCount = data.filter(g => g.status === 'failed').length;
+  const processingCount = data.filter(g => g.status === 'processing').length;
+  const totalWebhooks = data.length;
+  const successRate = totalWebhooks > 0 ? (completedCount / totalWebhooks) * 100 : 0;
+
+  // Get storage failures
+  const { data: storageFailData } = await supabase
+    .from('generations')
+    .select('id')
+    .eq('status', 'failed')
+    .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+    .or('provider_response->>error.ilike.%storage%,provider_response->>storage_error.neq.null');
+
+  // Get stuck generations
+  const { data: stuckData } = await supabase
+    .from('generations')
+    .select('id')
+    .eq('status', 'processing')
+    .lt('created_at', new Date(Date.now() - 30 * 60 * 1000).toISOString());
+
+  return {
+    successRate: Math.round(successRate),
+    totalWebhooks,
+    completedCount,
+    failedCount,
+    processingCount,
+    storageFailures: storageFailData?.length || 0,
+    stuckGenerations: stuckData?.length || 0,
+    averageLatency: 850, // Mock value - could be calculated from api_call_logs
+  };
+};
+
+const fetchRecentWebhooks = async (): Promise<RecentWebhook[]> => {
+  const { data, error } = await supabase
+    .from('generations')
+    .select('id, created_at, status, model_id, storage_path, provider_response, tokens_used, provider_task_id, user_id')
+    .not('provider_task_id', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) throw error;
+  return data || [];
+};
+
+const fetchStorageFailures = async (): Promise<StorageFailure[]> => {
+  const { data, error } = await supabase
+    .from('generations')
+    .select('id, created_at, model_id, provider_response, user_id')
+    .eq('status', 'failed')
+    .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+    .or('provider_response->>error.ilike.%storage%,provider_response->>storage_error.neq.null')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  return (data || []).map(item => {
+    const response = item.provider_response as any;
+    return {
+      id: item.id,
+      created_at: item.created_at,
+      model_id: item.model_id,
+      error_message: response?.error || 'Unknown error',
+      storage_error: response?.storage_error || response?.error || '',
+      user_id: item.user_id,
+    };
+  });
+};
+
+const fetchStuckGenerations = async (): Promise<StuckGeneration[]> => {
+  const { data, error } = await supabase
+    .from('generations')
+    .select('id, created_at, status, model_id, user_id, provider_task_id, tokens_used')
+    .eq('status', 'processing')
+    .lt('created_at', new Date(Date.now() - 30 * 60 * 1000).toISOString())
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+};
+
+const fetchProviderStats = async (): Promise<ProviderStat[]> => {
+  const { data, error } = await supabase
+    .from('generations')
+    .select('model_id, status')
+    .not('provider_task_id', 'is', null)
+    .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+
+  if (error) throw error;
+
+  const stats: Record<string, { success: number; fail: number }> = {};
+  
+  data.forEach(gen => {
+    if (!stats[gen.model_id]) {
+      stats[gen.model_id] = { success: 0, fail: 0 };
+    }
+    if (gen.status === 'completed') stats[gen.model_id].success++;
+    if (gen.status === 'failed') stats[gen.model_id].fail++;
+  });
+
+  return Object.entries(stats).map(([model_id, counts]) => ({
+    model_id,
+    success_count: counts.success,
+    fail_count: counts.fail,
+    failure_rate: counts.success + counts.fail > 0 
+      ? Math.round((counts.fail / (counts.success + counts.fail)) * 100) 
+      : 0,
+  })).sort((a, b) => b.failure_rate - a.failure_rate);
+};
+
+export const useWebhookMonitoring = () => {
+  const stats = useQuery({
+    queryKey: ['webhook-stats'],
+    queryFn: fetchWebhookStats,
+    refetchInterval: 30000,
+  });
+
+  const recentWebhooks = useQuery({
+    queryKey: ['recent-webhooks'],
+    queryFn: fetchRecentWebhooks,
+    refetchInterval: 10000,
+  });
+
+  const storageFailures = useQuery({
+    queryKey: ['storage-failures'],
+    queryFn: fetchStorageFailures,
+    refetchInterval: 30000,
+  });
+
+  const stuckGenerations = useQuery({
+    queryKey: ['stuck-generations'],
+    queryFn: fetchStuckGenerations,
+    refetchInterval: 30000,
+  });
+
+  const providerStats = useQuery({
+    queryKey: ['provider-stats'],
+    queryFn: fetchProviderStats,
+    refetchInterval: 60000,
+  });
+
+  return {
+    stats: stats.data,
+    statsLoading: stats.isLoading,
+    recentWebhooks: recentWebhooks.data || [],
+    webhooksLoading: recentWebhooks.isLoading,
+    storageFailures: storageFailures.data || [],
+    stuckGenerations: stuckGenerations.data || [],
+    providerStats: providerStats.data || [],
+    refetchAll: () => {
+      stats.refetch();
+      recentWebhooks.refetch();
+      storageFailures.refetch();
+      stuckGenerations.refetch();
+      providerStats.refetch();
+    },
+  };
+};

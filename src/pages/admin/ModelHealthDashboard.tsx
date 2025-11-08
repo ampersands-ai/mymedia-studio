@@ -6,6 +6,10 @@ import { ModelHealthHeader } from "@/components/admin/model-health/ModelHealthHe
 import { ModelHealthFilters } from "@/components/admin/model-health/ModelHealthFilters";
 import { ModelTestGrid } from "@/components/admin/model-health/ModelTestGrid";
 import { BulkTestControls } from "@/components/admin/model-health/BulkTestControls";
+import { TestConfigDialog } from "@/components/admin/model-health/TestConfigDialog";
+import { TestHistoryDialog } from "@/components/admin/model-health/TestHistoryDialog";
+import { PerformanceCharts } from "@/components/admin/model-health/PerformanceCharts";
+import { TestHistoryTable } from "@/components/admin/model-health/TestHistoryTable";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ModelHealthSummary } from "@/types/admin/model-health";
 
@@ -21,6 +25,8 @@ export default function ModelHealthDashboard() {
   const [testingModelIds, setTestingModelIds] = useState<Set<string>>(new Set());
   const [isBulkTesting, setIsBulkTesting] = useState(false);
   const [bulkProgress, setBulkProgress] = useState(0);
+  const [configDialogModel, setConfigDialogModel] = useState<ModelHealthSummary | null>(null);
+  const [historyDialogModel, setHistoryDialogModel] = useState<ModelHealthSummary | null>(null);
 
   // Extract unique providers and content types
   const providers = useMemo(() => {
@@ -157,9 +163,29 @@ export default function ModelHealthDashboard() {
       <ModelTestGrid
         models={filteredModels}
         onTest={handleTestModel}
-        onConfigure={(model) => console.log("Configure", model)}
-        onViewHistory={(model) => console.log("View history", model)}
+        onConfigure={setConfigDialogModel}
+        onViewHistory={setHistoryDialogModel}
         testingModelIds={testingModelIds}
+      />
+
+      {filteredModels.length > 0 && (
+        <>
+          <PerformanceCharts models={filteredModels} />
+          <TestHistoryTable />
+        </>
+      )}
+
+      <TestConfigDialog
+        model={configDialogModel}
+        open={!!configDialogModel}
+        onOpenChange={(open) => !open && setConfigDialogModel(null)}
+        onSave={(config) => console.log("Save config:", config)}
+      />
+
+      <TestHistoryDialog
+        model={historyDialogModel}
+        open={!!historyDialogModel}
+        onOpenChange={(open) => !open && setHistoryDialogModel(null)}
       />
     </div>
   );

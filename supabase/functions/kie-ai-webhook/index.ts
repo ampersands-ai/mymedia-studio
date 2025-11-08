@@ -962,6 +962,184 @@ serve(async (req) => {
 
       console.log('✅ Parent generation marked as completed:', generation.id);
 
+      // === WORKFLOW ORCHESTRATION ===
+      // Check if this generation is part of a workflow execution
+      if (generation.workflow_execution_id && generation.workflow_step_number) {
+        console.log('[orchestrator] Generation is part of workflow execution:', generation.workflow_execution_id);
+        console.log('[orchestrator] Completed step:', generation.workflow_step_number);
+
+        try {
+          // Fetch workflow execution and template
+          const { data: workflowExecution, error: execError } = await supabase
+            .from('workflow_executions')
+            .select('*, workflow_templates(*)')
+            .eq('id', generation.workflow_execution_id)
+            .single();
+
+          if (execError || !workflowExecution) {
+            console.error('[orchestrator] Failed to fetch workflow execution:', execError);
+          } else {
+            const currentStepNumber = generation.workflow_step_number;
+            const template = workflowExecution.workflow_templates as any;
+            const steps = template.workflow_steps as any[];
+            const totalSteps = steps.length;
+            const currentStep = steps.find((s: any) => s.step_number === currentStepNumber);
+
+            console.log('[orchestrator] Current step:', currentStepNumber, '/', totalSteps);
+
+            // Determine output storage path (prefer storage_path, fallback to output_url)
+            let stepOutputPath = storagePath || generation.storage_path;
+            if (!stepOutputPath && isMultiOutput) {
+              // For multi-output, use first child's storage_path
+              const { data: firstChild } = await supabase
+                .from('generations')
+                .select('storage_path, output_url')
+                .eq('parent_generation_id', generation.id)
+                .eq('output_index', 0)
+                .maybeSingle();
+              stepOutputPath = firstChild?.storage_path || firstChild?.output_url || null;
+              console.log('[orchestrator] Multi-output: using first child path:', stepOutputPath);
+            }
+
+            // Update step_outputs with current step result
+            const existingOutputs = (workflowExecution.step_outputs as Record<string, any>) || {};
+            const updatedOutputs = {
+              ...existingOutputs,
+              [`step${currentStepNumber}`]: {
+                [currentStep?.output_key || 'output']: stepOutputPath,
+                generation_id: generation.id,
+              },
+            };
+
+            // Update tokens used
+            const currentTokens = (workflowExecution.tokens_used as number) || 0;
+            const newTokens = currentTokens + (generation.tokens_used || 0);
+
+            // Check if there are more steps
+            if (currentStepNumber < totalSteps) {
+              const nextStepNumber = currentStepNumber + 1;
+              const nextStep = steps.find((s: any) => s.step_number === nextStepNumber);
+              
+              console.log('[orchestrator] More steps remaining. Starting step:', nextStepNumber);
+
+              // Update execution with progress
+              await supabase
+                .from('workflow_executions')
+                .update({
+                  step_outputs: updatedOutputs,
+                  tokens_used: newTokens,
+                  current_step: nextStepNumber,
+                })
+                .eq('id', generation.workflow_execution_id);
+
+              // Build context for next step
+              const context = {
+                user: workflowExecution.user_inputs,
+                ...updatedOutputs,
+              };
+
+              // Resolve input mappings for next step
+              const resolvedMappings = resolveInputMappings(
+                nextStep.input_mappings || {},
+                context
+              );
+
+              const allParameters = { ...nextStep.parameters, ...resolvedMappings };
+
+              // Coerce parameters to schema
+              let coercedParameters = allParameters;
+              try {
+                if (nextStep.model_record_id) {
+                  const { data: modelData } = await supabase
+                    .from('ai_models')
+                    .select('input_schema')
+                    .eq('record_id', nextStep.model_record_id)
+                    .single();
+                  if (modelData?.input_schema) {
+                    coercedParameters = coerceParametersToSchema(allParameters, modelData.input_schema);
+                  }
+                }
+              } catch (e) {
+                console.warn('[orchestrator] Schema coercion skipped:', e);
+              }
+
+              // Sanitize parameters
+              const sanitizedParameters = await sanitizeParametersForProviders(
+                coercedParameters,
+                workflowExecution.user_id,
+                supabase
+              );
+
+              // Generate prompt for next step
+              let resolvedPrompt: string;
+              if (sanitizedParameters.prompt) {
+                const promptString = typeof sanitizedParameters.prompt === 'string'
+                  ? sanitizedParameters.prompt
+                  : String(sanitizedParameters.prompt);
+                resolvedPrompt = replaceTemplateVariables(promptString, context);
+              } else {
+                resolvedPrompt = replaceTemplateVariables(nextStep.prompt_template, context);
+              }
+
+              console.log('[orchestrator] Resolved prompt for step', nextStepNumber, ':', resolvedPrompt);
+
+              // Start next step
+              const generateResponse = await supabase.functions.invoke('generate-content', {
+                body: {
+                  model_id: nextStep.model_id,
+                  model_record_id: nextStep.model_record_id,
+                  prompt: resolvedPrompt,
+                  custom_parameters: sanitizedParameters,
+                  workflow_execution_id: generation.workflow_execution_id,
+                  workflow_step_number: nextStepNumber,
+                },
+              });
+
+              if (generateResponse.error) {
+                console.error('[orchestrator] Failed to start next step:', generateResponse.error);
+                await supabase
+                  .from('workflow_executions')
+                  .update({
+                    status: 'failed',
+                    error_message: `Step ${nextStepNumber} failed to start: ${generateResponse.error.message}`,
+                  })
+                  .eq('id', generation.workflow_execution_id);
+              } else {
+                console.log('[orchestrator] Step', nextStepNumber, 'started successfully');
+              }
+            } else {
+              // All steps completed
+              console.log('[orchestrator] All steps completed. Finalizing workflow...');
+
+              // Extract final output
+              const finalOutput = updatedOutputs[`step${totalSteps}`];
+              const finalOutputUrl = finalOutput
+                ? finalOutput[Object.keys(finalOutput).find(k => k !== 'generation_id') || 'output']
+                : null;
+
+              console.log('[orchestrator] Final output URL:', finalOutputUrl);
+
+              // Mark workflow as completed
+              await supabase
+                .from('workflow_executions')
+                .update({
+                  status: 'completed',
+                  step_outputs: updatedOutputs,
+                  tokens_used: newTokens,
+                  final_output_url: finalOutputUrl,
+                  completed_at: new Date().toISOString(),
+                })
+                .eq('id', generation.workflow_execution_id);
+
+              console.log('[orchestrator] Workflow execution completed:', generation.workflow_execution_id);
+            }
+          }
+        } catch (orchestrationError: any) {
+          console.error('[orchestrator] Error in workflow orchestration:', orchestrationError);
+          // Don't fail the entire webhook - the generation is complete
+        }
+      }
+
       // Log audit
       await supabase.from('audit_logs').insert({
         user_id: generation.user_id,
@@ -973,7 +1151,8 @@ serve(async (req) => {
           tokens_used: generation.tokens_used,
           file_size: output_data?.length || null,
           total_outputs: resultUrls.length,
-          webhook_callback: true
+          webhook_callback: true,
+          workflow_execution_id: generation.workflow_execution_id || null,
         }
       });
 
@@ -998,6 +1177,97 @@ serve(async (req) => {
     return createSafeErrorResponse(error, 'kie-ai-webhook', corsHeaders);
   }
 });
+
+// Helper functions for workflow orchestration
+function replaceTemplateVariables(template: string, context: Record<string, any>): string {
+  return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+    const value = getNestedValue(context, path.trim());
+    return value ?? match;
+  });
+}
+
+function getNestedValue(obj: any, path: string): any {
+  return path.split('.').reduce((current, key) => current?.[key], obj);
+}
+
+function resolveInputMappings(mappings: Record<string, string>, context: Record<string, any>): Record<string, any> {
+  const resolved: Record<string, any> = {};
+  for (const [paramKey, rawMapping] of Object.entries(mappings)) {
+    let mapping = rawMapping;
+    if (typeof mapping === 'string') {
+      mapping = mapping.replace(/^user_input\./, 'user.');
+    }
+    let value = getNestedValue(context, mapping as string);
+    if ((value === undefined || value === null) && typeof rawMapping === 'string') {
+      const alternate = rawMapping.startsWith('user.') ? rawMapping.replace(/^user\./, 'user_input.') : rawMapping.replace(/^user_input\./, 'user.');
+      value = getNestedValue(context, alternate);
+    }
+    if (value !== undefined && value !== null) {
+      resolved[paramKey] = value;
+    }
+  }
+  return resolved;
+}
+
+function coerceParametersToSchema(params: Record<string, any>, inputSchema: any): Record<string, any> {
+  if (!inputSchema || typeof inputSchema !== 'object') return params;
+  const props = (inputSchema as any).properties || {};
+  const out: Record<string, any> = { ...params };
+  for (const [key, schema] of Object.entries<any>(props)) {
+    if (!(key in out)) continue;
+    out[key] = coerceValueToSchema(out[key], schema);
+  }
+  return out;
+}
+
+function coerceValueToSchema(value: any, schema: any): any {
+  const declaredType = Array.isArray(schema?.type) ? schema.type[0] : schema?.type;
+  if (!declaredType) return value;
+  switch (declaredType) {
+    case 'array': return Array.isArray(value) ? value : (value === undefined || value === null) ? value : [value];
+    case 'string': return (value === undefined || value === null) ? value : Array.isArray(value) ? String(value[0]) : typeof value === 'string' ? value : String(value);
+    case 'number': case 'integer': {
+      if (value === undefined || value === null) return value;
+      const n = Array.isArray(value) ? parseFloat(value[0]) : parseFloat(value);
+      return Number.isNaN(n) ? value : n;
+    }
+    case 'boolean': {
+      let v = value;
+      if (Array.isArray(v)) v = v[0];
+      if (typeof v === 'boolean') return v;
+      if (typeof v === 'string') {
+        const s = v.toLowerCase();
+        if (s === 'true') return true;
+        if (s === 'false') return false;
+      }
+      return !!v;
+    }
+    default: return value;
+  }
+}
+
+async function sanitizeParametersForProviders(params: Record<string, any>, userId: string, supabaseClient: any): Promise<Record<string, any>> {
+  const mediaKeys = ['image_url', 'image_urls', 'input_image', 'reference_image', 'mask_image', 'image', 'images'];
+  const processed = { ...params };
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === 'string' && value.startsWith('data:image/')) {
+      const matches = value.match(/^data:(.+);base64,(.+)$/);
+      if (matches) {
+        const contentType = matches[1], base64Data = matches[2];
+        const ext = contentType.split('/')[1] || 'jpg';
+        const fileName = `workflow-input-${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+        const filePath = `${userId}/${fileName}`;
+        const binaryString = atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+        await supabaseClient.storage.from('generated-content').upload(filePath, bytes, { contentType, upsert: false });
+        const { data: urlData } = await supabaseClient.storage.from('generated-content').createSignedUrl(filePath, 86400);
+        processed[key] = urlData?.signedUrl || value;
+      }
+    }
+  }
+  return processed;
+}
 
 async function uploadToStorage(
   supabase: SupabaseClient,

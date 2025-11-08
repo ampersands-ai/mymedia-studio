@@ -31,7 +31,7 @@ serve(async (req) => {
 
     const { workflow_template_id, user_inputs } = await req.json();
 
-    console.log('Executing workflow:', workflow_template_id, 'for user:', user.id);
+    console.log('[workflow-executor] Kickoff workflow:', workflow_template_id, 'for user:', user.id);
 
     // Process any image uploads to generate signed URLs
     const processedInputs = await processImageUploads(user_inputs, user.id, supabase);
@@ -67,319 +67,92 @@ serve(async (req) => {
       throw new Error('Failed to create workflow execution');
     }
 
-    console.log('Created execution:', execution.id);
+    console.log('[workflow-executor] Created execution:', execution.id);
 
-    // 3. Execute steps sequentially
-    const stepOutputs: Record<string, any> = {};
-    const generationIds: string[] = [];
-    let totalTokens = 0;
+    // 3. Start ONLY the first step (orchestration will be handled by webhook)
+    const firstStep = steps[0];
+    console.log('[workflow-executor] Starting step 1:', firstStep.step_name);
 
-    for (let i = 0; i < steps.length; i++) {
-      const step = steps[i];
-      console.log(`Executing step ${step.step_number}:`, step.step_name);
-
-      // Check if execution was cancelled
-      const { data: execCheck, error: execCheckError } = await supabase
-        .from('workflow_executions')
-        .select('status')
-        .eq('id', execution.id)
-        .single();
-      
-      if (execCheckError) {
-        console.error('Error checking execution status:', execCheckError);
-      } else if (execCheck?.status === 'cancelled') {
-        console.log('Workflow execution was cancelled by user');
-        await supabase
-          .from('workflow_executions')
-          .update({ 
-            status: 'cancelled',
-            error_message: 'Cancelled by user'
-          })
-          .eq('id', execution.id);
-        
-        return new Response(
-          JSON.stringify({
-            execution_id: execution.id,
-            status: 'cancelled',
-            message: 'Workflow cancelled by user',
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Update current step
-      await supabase
-        .from('workflow_executions')
-        .update({ current_step: step.step_number })
-        .eq('id', execution.id);
-
-      // Build context with all available data
-      const context = {
-        user: processedInputs,
-        ...stepOutputs,
-      };
-
-      // Resolve input mappings to get dynamic parameter values
-      const resolvedMappings = resolveInputMappings(
-        step.input_mappings || {},
-        context
-      );
-
-      // Merge static parameters with resolved mappings
-      const allParameters = { ...step.parameters, ...resolvedMappings };
-
-      // Load model input schema to dynamically coerce parameters (same behavior as Custom Creation)
-      let coercedParameters = allParameters;
-      try {
-        if (step.model_record_id) {
-          const { data: modelData, error: modelLoadError } = await supabase
-            .from('ai_models')
-            .select('input_schema')
-            .eq('record_id', step.model_record_id)
-            .single();
-          if (modelLoadError) {
-            console.warn('Could not load model schema for step', step.step_number, modelLoadError);
-          } else if (modelData?.input_schema) {
-            coercedParameters = coerceParametersToSchema(allParameters, modelData.input_schema);
-          }
-        }
-      } catch (e) {
-        console.warn('Schema coercion skipped due to error:', e);
-      }
-
-      // Sanitize parameters to convert any base64 images to signed URLs
-      const sanitizedParameters = await sanitizeParametersForProviders(coercedParameters, user.id, supabase);
-
-      // Generate prompt - always replace template variables regardless of source
-      let resolvedPrompt: string;
-      if (sanitizedParameters.prompt) {
-        // Prompt comes from parameters - still need to replace variables
-        const promptString = typeof sanitizedParameters.prompt === 'string' 
-          ? sanitizedParameters.prompt 
-          : String(sanitizedParameters.prompt);
-        resolvedPrompt = replaceTemplateVariables(promptString, context);
-      } else {
-        // Prompt comes from prompt_template (legacy)
-        resolvedPrompt = replaceTemplateVariables(step.prompt_template, context);
-      }
-
-      console.log('Resolved prompt:', resolvedPrompt);
-      console.log('Static parameters:', step.parameters);
-      console.log('Resolved mappings:', resolvedMappings);
-      console.log('All parameters (after sanitization):', sanitizedParameters);
-      // Call generate-content for this step (returns immediately with status: 'processing')
-      const generateResponse = await supabase.functions.invoke('generate-content', {
-        body: {
-          model_id: step.model_id,
-          model_record_id: step.model_record_id,
-          prompt: resolvedPrompt,
-          custom_parameters: sanitizedParameters,
-          workflow_execution_id: execution.id,
-          workflow_step_number: step.step_number,
-        },
-      });
-
-      if (generateResponse.error) {
-        throw new Error(`Step ${step.step_number} failed: ${generateResponse.error.message}`);
-      }
-
-      const stepResult = generateResponse.data;
-      const generationId = stepResult.id || stepResult.generation_id;
-
-      if (!generationId) {
-        throw new Error(`No generation ID returned for step ${step.step_number}`);
-      }
-
-      console.log(`Waiting for generation ${generationId} to complete...`);
-
-      // USE REALTIME SUBSCRIPTION for instant completion detection
-      const generation: any = await new Promise((resolve, reject) => {
-        const startTime = Date.now();
-        const MAX_DURATION = 20 * 60 * 1000; // 20 minutes timeout
-        let channel: any = null;
-        let timeoutId: any = null;
-        let cancelCheckInterval: any = null;
-
-        const cleanup = () => {
-          if (channel) {
-            supabase.removeChannel(channel);
-          }
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-          }
-          if (cancelCheckInterval) {
-            clearInterval(cancelCheckInterval);
-          }
-        };
-
-        // Set up timeout
-        timeoutId = setTimeout(() => {
-          cleanup();
-          reject(new Error(`Generation timed out for step ${step.step_number} after 20 minutes`));
-        }, MAX_DURATION);
-
-        // Check for cancellation every 2 seconds
-        cancelCheckInterval = setInterval(async () => {
-          const { data: execCheck } = await supabase
-            .from('workflow_executions')
-            .select('status')
-            .eq('id', execution.id)
-            .single();
-          
-          if (execCheck?.status === 'cancelled') {
-            cleanup();
-            console.log('Workflow execution cancelled during step wait');
-            await supabase
-              .from('workflow_executions')
-              .update({ status: 'cancelled', error_message: 'Cancelled by user' })
-              .eq('id', execution.id);
-            reject(new Error('WORKFLOW_CANCELLED'));
-          }
-        }, 2000);
-
-        // Set up realtime subscription
-        channel = supabase
-          .channel(`generation-${generationId}`)
-          .on(
-            'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'generations',
-              filter: `id=eq.${generationId}`
-            },
-            async (payload) => {
-              const updatedGen = payload.new;
-              const elapsed = Date.now() - startTime;
-              console.log(`Generation status update: ${updatedGen.status} (${Math.round(elapsed / 1000)}s elapsed)`);
-
-              if (updatedGen.status === 'completed') {
-                cleanup();
-                // Fetch full generation data with all fields
-                const { data: fullGen, error: fetchError } = await supabase
-                  .from('generations')
-                  .select('id, status, storage_path, output_url, tokens_used, provider_response')
-                  .eq('id', generationId)
-                  .single();
-                
-                if (fetchError) {
-                  reject(new Error(`Failed to fetch completed generation: ${fetchError.message}`));
-                } else {
-                  resolve(fullGen);
-                }
-              } else if (updatedGen.status === 'failed') {
-                cleanup();
-                const providerResponse = updatedGen.provider_response as any;
-                const errorMessage = providerResponse?.error || 
-                                    providerResponse?.full_response?.data?.failMsg ||
-                                    'Generation failed';
-                reject(new Error(`Step ${step.step_number} failed: ${errorMessage}`));
-              }
-            }
-          )
-          .subscribe((status) => {
-            if (status === 'SUBSCRIBED') {
-              console.log(`Subscribed to generation ${generationId} updates via Realtime`);
-              
-              // Immediately check current status in case it already completed
-              supabase
-                .from('generations')
-                .select('id, status, storage_path, output_url, tokens_used, provider_response')
-                .eq('id', generationId)
-                .single()
-                .then(({ data: genData, error: genError }) => {
-                  if (genError) {
-                    console.error('Error checking initial generation status:', genError);
-                    return;
-                  }
-                  
-                  if (genData.status === 'completed') {
-                    cleanup();
-                    resolve(genData);
-                  } else if (genData.status === 'failed') {
-                    cleanup();
-                    const providerResponse = genData.provider_response as any;
-                    const errorMessage = providerResponse?.error || 
-                                        providerResponse?.full_response?.data?.failMsg ||
-                                        'Generation failed';
-                    reject(new Error(`Step ${step.step_number} failed: ${errorMessage}`));
-                  }
-                });
-            }
-          });
-      }).catch(async (error) => {
-        // Handle cancellation gracefully
-        if (error.message === 'WORKFLOW_CANCELLED') {
-          return new Response(
-            JSON.stringify({ execution_id: execution.id, status: 'cancelled', message: 'Workflow cancelled by user' }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        throw error;
-      });
-
-      console.log('Generation completed:', generation);
-
-      // Determine output to store (handle single or multi-output)
-      let outputStoragePath = generation.storage_path as string | null;
-      if (!outputStoragePath) {
-        // Try to fetch first child output for multi-output tasks
-        const { data: children } = await supabase
-          .from('generations')
-          .select('id, storage_path, output_url, output_index')
-          .eq('parent_generation_id', generation.id)
-          .order('output_index', { ascending: true });
-        if (children && children.length > 0) {
-          outputStoragePath = children[0]?.storage_path || null;
-          console.log('Using first child output for step output:', {
-            parent_id: generation.id,
-            child_id: children[0]?.id,
-            storage_path: outputStoragePath
-          });
-        }
-      }
-
-      // Store step output using storage_path when available, fallback to output_url
-      stepOutputs[`step${step.step_number}`] = {
-        [step.output_key]: outputStoragePath || generation.output_url,
-        generation_id: generation.id,
-      };
-
-      generationIds.push(generation.id);
-      totalTokens += generation.tokens_used || 0;
-
-      // Update execution with step outputs
-      await supabase
-        .from('workflow_executions')
-        .update({
-          step_outputs: stepOutputs,
-          generation_ids: generationIds,
-          tokens_used: totalTokens,
-        })
-        .eq('id', execution.id);
-    }
-
-    // 4. Mark workflow as completed
-    const finalOutput = stepOutputs[`step${totalSteps}`];
-    const finalOutputUrl = extractFinalOutput(finalOutput);
-
+    // Update current step
     await supabase
       .from('workflow_executions')
-      .update({
-        status: 'completed',
-        final_output_url: finalOutputUrl,
-        completed_at: new Date().toISOString(),
-      })
+      .update({ current_step: firstStep.step_number })
       .eq('id', execution.id);
 
-    console.log('Workflow completed:', execution.id);
+    // Build context for step 1
+    const context = {
+      user: processedInputs,
+    };
 
+    // Resolve input mappings
+    const resolvedMappings = resolveInputMappings(
+      firstStep.input_mappings || {},
+      context
+    );
+
+    // Merge static parameters with resolved mappings
+    const allParameters = { ...firstStep.parameters, ...resolvedMappings };
+
+    // Load model input schema to coerce parameters
+    let coercedParameters = allParameters;
+    try {
+      if (firstStep.model_record_id) {
+        const { data: modelData, error: modelLoadError } = await supabase
+          .from('ai_models')
+          .select('input_schema')
+          .eq('record_id', firstStep.model_record_id)
+          .single();
+        if (modelLoadError) {
+          console.warn('[workflow-executor] Could not load model schema:', modelLoadError);
+        } else if (modelData?.input_schema) {
+          coercedParameters = coerceParametersToSchema(allParameters, modelData.input_schema);
+        }
+      }
+    } catch (e) {
+      console.warn('[workflow-executor] Schema coercion skipped:', e);
+    }
+
+    // Sanitize parameters to convert base64 images
+    const sanitizedParameters = await sanitizeParametersForProviders(coercedParameters, user.id, supabase);
+
+    // Generate prompt
+    let resolvedPrompt: string;
+    if (sanitizedParameters.prompt) {
+      const promptString = typeof sanitizedParameters.prompt === 'string' 
+        ? sanitizedParameters.prompt 
+        : String(sanitizedParameters.prompt);
+      resolvedPrompt = replaceTemplateVariables(promptString, context);
+    } else {
+      resolvedPrompt = replaceTemplateVariables(firstStep.prompt_template, context);
+    }
+
+    console.log('[workflow-executor] Resolved prompt for step 1:', resolvedPrompt);
+    console.log('[workflow-executor] Parameters:', sanitizedParameters);
+
+    // Call generate-content for step 1
+    const generateResponse = await supabase.functions.invoke('generate-content', {
+      body: {
+        model_id: firstStep.model_id,
+        model_record_id: firstStep.model_record_id,
+        prompt: resolvedPrompt,
+        custom_parameters: sanitizedParameters,
+        workflow_execution_id: execution.id,
+        workflow_step_number: firstStep.step_number,
+      },
+    });
+
+    if (generateResponse.error) {
+      console.error('[workflow-executor] Step 1 failed:', generateResponse.error);
+      throw new Error(`Step 1 failed: ${generateResponse.error.message}`);
+    }
+
+    console.log('[workflow-executor] Step 1 initiated, returning immediately');
+
+    // Return immediately - webhook will handle orchestration
     return new Response(
       JSON.stringify({
         execution_id: execution.id,
-        status: 'completed',
-        final_output_url: finalOutputUrl,
-        tokens_used: totalTokens,
+        status: 'processing',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -401,10 +174,8 @@ async function sanitizeParametersForProviders(
   let convertedCount = 0;
   
   for (const [key, value] of Object.entries(params)) {
-    // Check if this is a known media key
     const isMediaKey = mediaKeys.includes(key.toLowerCase());
     
-    // Handle single image (string)
     if (typeof value === 'string' && value.startsWith('data:image/')) {
       try {
         const signedUrl = await uploadBase64Image(value, userId, supabaseClient);
@@ -415,7 +186,6 @@ async function sanitizeParametersForProviders(
         throw error;
       }
     }
-    // Handle array of images
     else if (Array.isArray(value) && isMediaKey) {
       const processedArray = [];
       for (const item of value) {
@@ -451,7 +221,6 @@ async function uploadBase64Image(
   userId: string,
   supabaseClient: any
 ): Promise<string> {
-  // Extract base64 data and content type
   const matches = dataUrl.match(/^data:(.+);base64,(.+)$/);
   if (!matches) {
     throw new Error('Invalid data URL format');
@@ -460,19 +229,16 @@ async function uploadBase64Image(
   const contentType = matches[1];
   const base64Data = matches[2];
   
-  // Determine file extension
   const extension = contentType.split('/')[1] || 'jpg';
   const fileName = `workflow-input-${Date.now()}-${Math.random().toString(36).substring(7)}.${extension}`;
   const filePath = `${userId}/${fileName}`;
   
-  // Convert base64 to Uint8Array
   const binaryString = atob(base64Data);
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
     bytes[i] = binaryString.charCodeAt(i);
   }
   
-  // Upload to Supabase storage
   const { error: uploadError } = await supabaseClient.storage
     .from('generated-content')
     .upload(filePath, bytes, {
@@ -484,7 +250,6 @@ async function uploadBase64Image(
     throw new Error(`Failed to upload image: ${uploadError.message}`);
   }
   
-  // Generate signed URL (valid for 24 hours)
   const { data: urlData, error: urlError } = await supabaseClient.storage
     .from('generated-content')
     .createSignedUrl(filePath, 86400);
@@ -505,12 +270,10 @@ async function processImageUploads(
   const processed = { ...inputs };
   
   for (const [key, value] of Object.entries(inputs)) {
-    // Check if value is a data URL (base64 image)
     if (typeof value === 'string' && value.startsWith('data:image/')) {
       try {
         console.log(`Processing image upload for field: ${key}`);
         
-        // Extract base64 data and content type
         const matches = value.match(/^data:(.+);base64,(.+)$/);
         if (!matches) {
           console.warn(`Invalid data URL format for ${key}`);
@@ -520,19 +283,16 @@ async function processImageUploads(
         const contentType = matches[1];
         const base64Data = matches[2];
         
-        // Determine file extension
         const extension = contentType.split('/')[1] || 'jpg';
         const fileName = `workflow-input-${Date.now()}-${Math.random().toString(36).substring(7)}.${extension}`;
         const filePath = `${userId}/${fileName}`;
         
-        // Convert base64 to Uint8Array
         const binaryString = atob(base64Data);
         const bytes = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
           bytes[i] = binaryString.charCodeAt(i);
         }
         
-        // Upload to Supabase storage
         const { data: uploadData, error: uploadError } = await supabaseClient.storage
           .from('generated-content')
           .upload(filePath, bytes, {
@@ -547,7 +307,6 @@ async function processImageUploads(
         
         console.log(`Image uploaded successfully: ${filePath}`);
         
-        // Generate signed URL (valid for 24 hours)
         const { data: urlData, error: urlError } = await supabaseClient.storage
           .from('generated-content')
           .createSignedUrl(filePath, 86400);
@@ -559,7 +318,6 @@ async function processImageUploads(
         
         console.log(`Signed URL generated for ${key}`);
         
-        // Replace data URL with signed URL
         processed[key] = urlData.signedUrl;
         
       } catch (error) {
@@ -567,7 +325,6 @@ async function processImageUploads(
         throw error;
       }
     }
-    // Handle array of images
     else if (Array.isArray(value)) {
       const processedArray = [];
       for (const item of value) {
@@ -602,7 +359,6 @@ function getNestedValue(obj: any, path: string): any {
 }
 
 // Helper function to resolve input mappings
-// Accepts both "user_input.<field>" and "user.<field>" prefixes for backward compatibility
 function resolveInputMappings(
   mappings: Record<string, string>,
   context: Record<string, any>
@@ -611,14 +367,11 @@ function resolveInputMappings(
   for (const [paramKey, rawMapping] of Object.entries(mappings)) {
     let mapping = rawMapping;
     if (typeof mapping === 'string') {
-      // Normalize user_input.* to user.* (context exposes user inputs under "user")
       mapping = mapping.replace(/^user_input\./, 'user.');
     }
 
-    // Try primary mapping
     let value = getNestedValue(context, mapping as string);
 
-    // If not found, try alternate prefix for resilience
     if ((value === undefined || value === null) && typeof rawMapping === 'string') {
       const alternate = rawMapping.startsWith('user.')
         ? rawMapping.replace(/^user\./, 'user_input.')
@@ -633,19 +386,7 @@ function resolveInputMappings(
   return resolved;
 }
 
-// Helper function to extract final output
-function extractFinalOutput(finalStepOutput: any): string | null {
-  if (!finalStepOutput) return null;
-  
-  // Get the first output key value
-  const outputKeys = Object.keys(finalStepOutput).filter(k => k !== 'generation_id');
-  if (outputKeys.length === 0) return null;
-  
-  return finalStepOutput[outputKeys[0]];
-}
-
 // Dynamically coerce parameters to the model's input schema
-// Mirrors Custom Creation behavior so payload matches model expectations
 function coerceParametersToSchema(
   params: Record<string, any>,
   inputSchema: any

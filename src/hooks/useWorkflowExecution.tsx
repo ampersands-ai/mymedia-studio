@@ -29,7 +29,7 @@ export const useWorkflowExecution = () => {
     setProgress(null);
 
     try {
-      // Start the workflow
+      // Start the workflow (kickoff only)
       const { data, error } = await supabase.functions.invoke('workflow-executor', {
         body: params,
       });
@@ -42,36 +42,131 @@ export const useWorkflowExecution = () => {
         throw new Error('No execution ID returned');
       }
 
-      // Poll for completion
-      let attempts = 0;
-      const maxAttempts = 60; // 60 attempts * 2 seconds = 2 minutes max
-      
-      while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
-        
-        const status = await pollExecutionStatus(executionId);
-        
-        if (status?.status === 'completed' && status.final_output_url) {
-          return {
-            execution_id: executionId,
-            status: 'completed',
-            final_output_url: status.final_output_url,
-            tokens_used: status.tokens_used || 0
-          };
-        }
-        
-        if (status?.status === 'failed') {
-          throw new Error('Workflow execution failed');
-        }
+      console.log('[useWorkflowExecution] Workflow started:', executionId);
 
-        if (status?.status === 'cancelled') {
-          throw new Error('Workflow execution cancelled');
-        }
-        
-        attempts++;
-      }
-      
-      throw new Error('Workflow execution timed out');
+      // Subscribe to Realtime updates on workflow_executions
+      return new Promise((resolve, reject) => {
+        const channel = supabase
+          .channel(`workflow-execution-${executionId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'workflow_executions',
+              filter: `id=eq.${executionId}`,
+            },
+            (payload) => {
+              const execution = payload.new as any;
+              console.log('[Realtime] Workflow execution updated:', {
+                id: executionId,
+                status: execution.status,
+                current_step: execution.current_step,
+                total_steps: execution.total_steps,
+              });
+
+              // Update progress
+              if (execution.current_step && execution.total_steps) {
+                setProgress({
+                  currentStep: execution.current_step,
+                  totalSteps: execution.total_steps,
+                });
+              }
+
+              // Check for completion
+              if (execution.status === 'completed' && execution.final_output_url) {
+                console.log('[Realtime] Workflow completed:', execution.final_output_url);
+                supabase.removeChannel(channel);
+                setIsExecuting(false);
+                resolve({
+                  execution_id: executionId,
+                  status: 'completed',
+                  final_output_url: execution.final_output_url,
+                  tokens_used: execution.tokens_used || 0,
+                });
+              }
+
+              // Check for failure
+              if (execution.status === 'failed') {
+                console.error('[Realtime] Workflow failed:', execution.error_message);
+                supabase.removeChannel(channel);
+                setIsExecuting(false);
+                reject(new Error(execution.error_message || 'Workflow execution failed'));
+              }
+
+              // Check for cancellation
+              if (execution.status === 'cancelled') {
+                console.log('[Realtime] Workflow cancelled');
+                supabase.removeChannel(channel);
+                setIsExecuting(false);
+                reject(new Error('Workflow execution cancelled'));
+              }
+            }
+          )
+          .subscribe(async (status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('[Realtime] Subscribed to workflow execution:', executionId);
+              
+              // Check initial status immediately in case it already completed
+              const { data: currentExecution } = await supabase
+                .from('workflow_executions')
+                .select('status, final_output_url, tokens_used, current_step, total_steps, error_message')
+                .eq('id', executionId)
+                .single();
+
+              if (currentExecution) {
+                if (currentExecution.current_step && currentExecution.total_steps) {
+                  setProgress({
+                    currentStep: currentExecution.current_step,
+                    totalSteps: currentExecution.total_steps,
+                  });
+                }
+
+                if (currentExecution.status === 'completed' && currentExecution.final_output_url) {
+                  console.log('[Realtime] Initial status: completed');
+                  supabase.removeChannel(channel);
+                  setIsExecuting(false);
+                  resolve({
+                    execution_id: executionId,
+                    status: 'completed',
+                    final_output_url: currentExecution.final_output_url,
+                    tokens_used: currentExecution.tokens_used || 0,
+                  });
+                } else if (currentExecution.status === 'failed') {
+                  console.error('[Realtime] Initial status: failed');
+                  supabase.removeChannel(channel);
+                  setIsExecuting(false);
+                  reject(new Error(currentExecution.error_message || 'Workflow execution failed'));
+                } else if (currentExecution.status === 'cancelled') {
+                  console.log('[Realtime] Initial status: cancelled');
+                  supabase.removeChannel(channel);
+                  setIsExecuting(false);
+                  reject(new Error('Workflow execution cancelled'));
+                }
+              }
+            }
+          });
+
+        // Safety timeout (20 minutes)
+        const timeout = setTimeout(() => {
+          console.warn('[Realtime] Workflow execution timed out after 20 minutes');
+          supabase.removeChannel(channel);
+          setIsExecuting(false);
+          reject(new Error('Workflow execution timed out after 20 minutes. Check your generations history.'));
+        }, 20 * 60 * 1000);
+
+        // Store cleanup function
+        const originalResolve = resolve;
+        const originalReject = reject;
+        resolve = (value: any) => {
+          clearTimeout(timeout);
+          originalResolve(value);
+        };
+        reject = (error: any) => {
+          clearTimeout(timeout);
+          originalReject(error);
+        };
+      });
       
     } catch (error: any) {
       console.error('Workflow execution error:', error);
@@ -80,46 +175,20 @@ export const useWorkflowExecution = () => {
       if (error.message?.includes('Missing required parameter')) {
         errorMessage = `Configuration error: ${error.message}`;
       } else if (error.message?.includes('timed out')) {
-        errorMessage = 'Workflow is taking longer than expected. Check the backend for status.';
+        errorMessage = error.message;
       } else if (error.message) {
         errorMessage = error.message;
       }
       
       toast.error(errorMessage, { duration: 5000 });
-      return null;
-    } finally {
       setIsExecuting(false);
       setProgress(null);
-    }
-  };
-
-  const pollExecutionStatus = async (executionId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('workflow_executions')
-        .select('status, current_step, total_steps, final_output_url, tokens_used')
-        .eq('id', executionId)
-        .single();
-
-      if (error) throw error;
-
-      if (data.current_step && data.total_steps) {
-        setProgress({
-          currentStep: data.current_step,
-          totalSteps: data.total_steps,
-        });
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Polling error:', error);
       return null;
     }
   };
 
   return {
     executeWorkflow,
-    pollExecutionStatus,
     isExecuting,
     progress,
   };

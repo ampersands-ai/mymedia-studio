@@ -27,26 +27,29 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
     );
   }
 
-  // Use content-type-specific hooks from new architecture
+  // Safety net: If storagePath is already a full HTTP URL, use it directly
+  const isFullUrl = storagePath.startsWith('http://') || storagePath.startsWith('https://');
+  
+  // Use content-type-specific hooks from new architecture (skip if already a full URL)
   const { url: imageUrl, isLoading: imageLoading, error: imageError } = useImageUrl(
-    contentType === 'image' ? storagePath : null,
+    contentType === 'image' && !isFullUrl ? storagePath : null,
     { strategy: 'public-cdn', bucket: 'generated-content' }
   );
   
   const { url: videoUrl, isLoading: videoLoading, error: videoError } = useVideoUrl(
-    contentType === 'video' ? storagePath : null,
+    contentType === 'video' && !isFullUrl ? storagePath : null,
     { strategy: 'public-direct', bucket: 'generated-content' }
   );
   
   const { url: audioUrl, isLoading: audioLoading, error: audioError } = useAudioUrl(
-    contentType === 'audio' ? storagePath : null,
+    contentType === 'audio' && !isFullUrl ? storagePath : null,
     { strategy: 'public-direct', bucket: 'generated-content' }
   );
   
-  // Combine states for backward compatibility
-  const signedUrl = contentType === 'image' ? imageUrl : contentType === 'video' ? videoUrl : audioUrl;
-  const isLoading = imageLoading || videoLoading || audioLoading;
-  const error = imageError || videoError || audioError;
+  // Combine states for backward compatibility, with fallback to storagePath if it's a full URL
+  const signedUrl = isFullUrl ? storagePath : (contentType === 'image' ? imageUrl : contentType === 'video' ? videoUrl : audioUrl);
+  const isLoading = !isFullUrl && (imageLoading || videoLoading || audioLoading);
+  const error = !isFullUrl && (imageError || videoError || audioError);
   
   const { shareFile, canShare } = useNativeShare();
   const { downloadFile, isNative } = useNativeDownload();

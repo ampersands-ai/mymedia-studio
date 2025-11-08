@@ -39,6 +39,9 @@ verify_jwt = false  # External webhook - validates signature
 [functions.fix-stuck-generation]
 verify_jwt = true  # SECURITY FIX: Admin-only function
 
+[functions.retry-pending-midjourney]
+verify_jwt = true  # Admin-only batch processing
+
 [functions.security-monitor]
 verify_jwt = true  # SECURITY FIX: Admin-only monitoring
 

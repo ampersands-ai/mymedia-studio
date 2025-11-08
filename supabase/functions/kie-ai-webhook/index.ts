@@ -87,7 +87,7 @@ serve(async (req) => {
     while (retryCount <= maxRetries) {
       const { data, error } = await supabase
         .from('generations')
-        .select('*, ai_models(model_name, estimated_time_seconds)')
+        .select('*, ai_models(id, model_name, estimated_time_seconds)')
         .eq('provider_task_id', taskId)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -301,9 +301,17 @@ serve(async (req) => {
     console.log('✅ Layer 4 passed: Idempotency check completed');
     console.log('🔒 All security layers passed - processing webhook for generation:', generation.id);
 
+    // Helper: Detect if model is Midjourney variant
+    const isMidjourneyModel = (modelId: string | undefined): boolean => {
+      if (!modelId) return false;
+      // Match any Midjourney model variant (current: mj_txt2img, future: mj_img2img, mj_upscale, etc.)
+      return modelId.startsWith('mj_') || modelId.includes('midjourney');
+    };
+
     // Helper: Normalize result URLs from various formats and map to correct type-specific fields
-    const normalizeResultUrls = (payload: any, resultJson: string | null, generationType: string): string[] => {
+    const normalizeResultUrls = (payload: any, resultJson: string | null, generationType: string, modelId?: string): string[] => {
       const urls: string[] = [];
+      const isMidjourney = isMidjourneyModel(modelId);
       
       // Try resultJson first (old format)
       if (resultJson) {
@@ -318,6 +326,14 @@ serve(async (req) => {
           }
         } catch (e) {
           console.error('Failed to parse resultJson:', e);
+        }
+      }
+      
+      // MIDJOURNEY SPECIFIC: Check for direct data.resultUrls format
+      if (urls.length === 0 && isMidjourney && payload.data?.resultUrls) {
+        if (Array.isArray(payload.data.resultUrls)) {
+          urls.push(...payload.data.resultUrls);
+          console.log('🎨 [MIDJOURNEY] Normalized URLs from data.resultUrls:', urls.length);
         }
       }
       
@@ -337,7 +353,7 @@ serve(async (req) => {
         return []; // Return empty to signal we should use items format
       }
       
-      console.log(`✅ Normalized ${urls.length} URL(s) for type: ${generationType}`);
+      console.log(`✅ Normalized ${urls.length} URL(s) for type: ${generationType} (model: ${modelId || 'unknown'})`);
       return urls;
     };
 
@@ -345,7 +361,7 @@ serve(async (req) => {
     let items: any[] = [];
     try {
       // First try to normalize URLs
-      const normalizedUrls = normalizeResultUrls(payload, resultJson, generation.type);
+      const normalizedUrls = normalizeResultUrls(payload, resultJson, generation.type, generation.ai_models?.id);
       
       if (normalizedUrls.length > 0) {
         // Map normalized URLs to correct type-specific fields
@@ -572,7 +588,11 @@ serve(async (req) => {
     console.log(`🎯 Proceeding to success processing for ${generation.type}`);
 
     // Handle success (support multiple formats including Kie.ai items-based format)
-    if (isSuccess && (resultJson || payload.data?.info || video_url || (Array.isArray(items) && items.length > 0))) {
+    const hasMidjourneyResults = isMidjourneyModel(generation.ai_models?.id) && 
+                                  payload.data?.resultUrls && 
+                                  Array.isArray(payload.data.resultUrls);
+    
+    if (isSuccess && (resultJson || payload.data?.info || hasMidjourneyResults || video_url || (Array.isArray(items) && items.length > 0))) {
       console.log('🎯 Processing successful generation - callbackType:', callbackType);
       console.log('📊 Items array length:', items.length);
       
@@ -583,6 +603,10 @@ serve(async (req) => {
         // Direct video_url field
         resultUrls = [video_url];
         console.log('📹 Using direct video_url:', video_url);
+      } else if (isMidjourneyModel(generation.ai_models?.id) && payload.data?.resultUrls) {
+        // MIDJOURNEY: Direct data.resultUrls format
+        resultUrls = Array.isArray(payload.data.resultUrls) ? payload.data.resultUrls : [];
+        console.log('🎨 [MIDJOURNEY] Using data.resultUrls format, URLs found:', resultUrls.length);
       } else if (resultJson) {
         // Old format: parse resultJson
         const result = JSON.parse(resultJson);

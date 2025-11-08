@@ -375,6 +375,13 @@ export type Database = {
             referencedRelation: "ai_models"
             referencedColumns: ["record_id"]
           },
+          {
+            foreignKeyName: "community_creations_model_record_id_fkey"
+            columns: ["model_record_id"]
+            isOneToOne: false
+            referencedRelation: "model_health_summary"
+            referencedColumns: ["record_id"]
+          },
         ]
       }
       content_templates: {
@@ -441,6 +448,13 @@ export type Database = {
             columns: ["model_record_id"]
             isOneToOne: false
             referencedRelation: "ai_models"
+            referencedColumns: ["record_id"]
+          },
+          {
+            foreignKeyName: "fk_content_templates_model_record"
+            columns: ["model_record_id"]
+            isOneToOne: false
+            referencedRelation: "model_health_summary"
             referencedColumns: ["record_id"]
           },
         ]
@@ -548,6 +562,13 @@ export type Database = {
             referencedColumns: ["record_id"]
           },
           {
+            foreignKeyName: "fk_generations_model_record"
+            columns: ["model_record_id"]
+            isOneToOne: false
+            referencedRelation: "model_health_summary"
+            referencedColumns: ["record_id"]
+          },
+          {
             foreignKeyName: "generations_parent_generation_id_fkey"
             columns: ["parent_generation_id"]
             isOneToOne: false
@@ -635,6 +656,204 @@ export type Database = {
             columns: ["generation_id"]
             isOneToOne: true
             referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      model_test_configs: {
+        Row: {
+          created_at: string | null
+          custom_parameters: Json | null
+          deduct_credits: boolean | null
+          expected_format: string | null
+          id: string
+          max_latency_threshold: number | null
+          max_retries: number | null
+          model_record_id: string
+          num_outputs: number | null
+          prompt_template: string
+          retry_on_failure: boolean | null
+          save_outputs: boolean | null
+          test_user_id: string | null
+          timeout_seconds: number | null
+          updated_at: string | null
+          validate_file_accessible: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          custom_parameters?: Json | null
+          deduct_credits?: boolean | null
+          expected_format?: string | null
+          id?: string
+          max_latency_threshold?: number | null
+          max_retries?: number | null
+          model_record_id: string
+          num_outputs?: number | null
+          prompt_template?: string
+          retry_on_failure?: boolean | null
+          save_outputs?: boolean | null
+          test_user_id?: string | null
+          timeout_seconds?: number | null
+          updated_at?: string | null
+          validate_file_accessible?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          custom_parameters?: Json | null
+          deduct_credits?: boolean | null
+          expected_format?: string | null
+          id?: string
+          max_latency_threshold?: number | null
+          max_retries?: number | null
+          model_record_id?: string
+          num_outputs?: number | null
+          prompt_template?: string
+          retry_on_failure?: boolean | null
+          save_outputs?: boolean | null
+          test_user_id?: string | null
+          timeout_seconds?: number | null
+          updated_at?: string | null
+          validate_file_accessible?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_test_configs_model_record_id_fkey"
+            columns: ["model_record_id"]
+            isOneToOne: true
+            referencedRelation: "ai_models"
+            referencedColumns: ["record_id"]
+          },
+          {
+            foreignKeyName: "model_test_configs_model_record_id_fkey"
+            columns: ["model_record_id"]
+            isOneToOne: true
+            referencedRelation: "model_health_summary"
+            referencedColumns: ["record_id"]
+          },
+          {
+            foreignKeyName: "model_test_configs_test_user_id_fkey"
+            columns: ["test_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      model_test_results: {
+        Row: {
+          created_at: string | null
+          credit_check_ms: number | null
+          credit_deduct_ms: number | null
+          credits_available_before: number | null
+          credits_deducted: boolean | null
+          credits_refunded: boolean | null
+          credits_required: number | null
+          error_code: string | null
+          error_message: string | null
+          error_stack: string | null
+          flow_steps: Json[] | null
+          generation_id: string | null
+          generation_submit_ms: number | null
+          id: string
+          model_record_id: string
+          output_receive_ms: number | null
+          output_url: string | null
+          polling_duration_ms: number | null
+          status: string
+          storage_save_ms: number | null
+          test_completed_at: string | null
+          test_parameters: Json | null
+          test_prompt: string
+          test_started_at: string
+          test_user_id: string | null
+          total_latency_ms: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credit_check_ms?: number | null
+          credit_deduct_ms?: number | null
+          credits_available_before?: number | null
+          credits_deducted?: boolean | null
+          credits_refunded?: boolean | null
+          credits_required?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          error_stack?: string | null
+          flow_steps?: Json[] | null
+          generation_id?: string | null
+          generation_submit_ms?: number | null
+          id?: string
+          model_record_id: string
+          output_receive_ms?: number | null
+          output_url?: string | null
+          polling_duration_ms?: number | null
+          status: string
+          storage_save_ms?: number | null
+          test_completed_at?: string | null
+          test_parameters?: Json | null
+          test_prompt: string
+          test_started_at?: string
+          test_user_id?: string | null
+          total_latency_ms?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credit_check_ms?: number | null
+          credit_deduct_ms?: number | null
+          credits_available_before?: number | null
+          credits_deducted?: boolean | null
+          credits_refunded?: boolean | null
+          credits_required?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          error_stack?: string | null
+          flow_steps?: Json[] | null
+          generation_id?: string | null
+          generation_submit_ms?: number | null
+          id?: string
+          model_record_id?: string
+          output_receive_ms?: number | null
+          output_url?: string | null
+          polling_duration_ms?: number | null
+          status?: string
+          storage_save_ms?: number | null
+          test_completed_at?: string | null
+          test_parameters?: Json | null
+          test_prompt?: string
+          test_started_at?: string
+          test_user_id?: string | null
+          total_latency_ms?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_test_results_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "model_test_results_model_record_id_fkey"
+            columns: ["model_record_id"]
+            isOneToOne: false
+            referencedRelation: "ai_models"
+            referencedColumns: ["record_id"]
+          },
+          {
+            foreignKeyName: "model_test_results_model_record_id_fkey"
+            columns: ["model_record_id"]
+            isOneToOne: false
+            referencedRelation: "model_health_summary"
+            referencedColumns: ["record_id"]
+          },
+          {
+            foreignKeyName: "model_test_results_test_user_id_fkey"
+            columns: ["test_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1801,7 +2020,36 @@ export type Database = {
             referencedRelation: "ai_models"
             referencedColumns: ["record_id"]
           },
+          {
+            foreignKeyName: "community_creations_model_record_id_fkey"
+            columns: ["model_record_id"]
+            isOneToOne: false
+            referencedRelation: "model_health_summary"
+            referencedColumns: ["record_id"]
+          },
         ]
+      }
+      model_health_summary: {
+        Row: {
+          avg_latency_ms: number | null
+          content_type: string | null
+          deduct_credits: boolean | null
+          failed_tests_24h: number | null
+          is_active: boolean | null
+          last_test_at: string | null
+          max_latency_ms: number | null
+          min_latency_ms: number | null
+          model_id: string | null
+          model_name: string | null
+          provider: string | null
+          recent_error_codes: string[] | null
+          record_id: string | null
+          success_rate_percent_24h: number | null
+          successful_tests_24h: number | null
+          timeout_seconds: number | null
+          total_tests_24h: number | null
+        }
+        Relationships: []
       }
       template_landing_pages_public: {
         Row: {

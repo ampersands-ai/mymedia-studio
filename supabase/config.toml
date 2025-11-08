@@ -125,3 +125,9 @@ verify_jwt = false  # Called by cron job
 
 [functions.send-webhook-alert]
 verify_jwt = true  # Admin-only alert sending
+
+[functions.test-model]
+verify_jwt = true  # Admin-only model testing
+
+[functions.batch-test-models]
+verify_jwt = true  # Admin-only batch model testing

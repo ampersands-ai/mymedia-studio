@@ -192,71 +192,131 @@ serve(async (req) => {
 
       console.log(`Waiting for generation ${generationId} to complete...`);
 
-      // POLL THE DATABASE (exactly like Custom Creation does)
-      let generation: any = null;
-      const startTime = Date.now();
-      const MAX_POLLING_DURATION = 20 * 60 * 1000; // 20 minutes (same as Custom Creation)
+      // USE REALTIME SUBSCRIPTION for instant completion detection
+      const generation: any = await new Promise((resolve, reject) => {
+        const startTime = Date.now();
+        const MAX_DURATION = 20 * 60 * 1000; // 20 minutes timeout
+        let channel: any = null;
+        let timeoutId: any = null;
+        let cancelCheckInterval: any = null;
 
-      while (!generation) {
-        const elapsed = Date.now() - startTime;
-        
-        // Timeout check
-        if (elapsed >= MAX_POLLING_DURATION) {
-          throw new Error(`Generation timed out for step ${step.step_number} after 20 minutes`);
-        }
-        
-        // Wait before polling (5 seconds, same as Custom Creation starts with)
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        
-        // Check if execution was cancelled while waiting
-        const { data: execCheck2 } = await supabase
-          .from('workflow_executions')
-          .select('status')
-          .eq('id', execution.id)
-          .single();
-        if (execCheck2?.status === 'cancelled') {
-          console.log('Workflow execution cancelled during step wait');
-          await supabase
+        const cleanup = () => {
+          if (channel) {
+            supabase.removeChannel(channel);
+          }
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+          if (cancelCheckInterval) {
+            clearInterval(cancelCheckInterval);
+          }
+        };
+
+        // Set up timeout
+        timeoutId = setTimeout(() => {
+          cleanup();
+          reject(new Error(`Generation timed out for step ${step.step_number} after 20 minutes`));
+        }, MAX_DURATION);
+
+        // Check for cancellation every 2 seconds
+        cancelCheckInterval = setInterval(async () => {
+          const { data: execCheck } = await supabase
             .from('workflow_executions')
-            .update({ status: 'cancelled', error_message: 'Cancelled by user' })
-            .eq('id', execution.id);
+            .select('status')
+            .eq('id', execution.id)
+            .single();
+          
+          if (execCheck?.status === 'cancelled') {
+            cleanup();
+            console.log('Workflow execution cancelled during step wait');
+            await supabase
+              .from('workflow_executions')
+              .update({ status: 'cancelled', error_message: 'Cancelled by user' })
+              .eq('id', execution.id);
+            reject(new Error('WORKFLOW_CANCELLED'));
+          }
+        }, 2000);
+
+        // Set up realtime subscription
+        channel = supabase
+          .channel(`generation-${generationId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'generations',
+              filter: `id=eq.${generationId}`
+            },
+            async (payload) => {
+              const updatedGen = payload.new;
+              const elapsed = Date.now() - startTime;
+              console.log(`Generation status update: ${updatedGen.status} (${Math.round(elapsed / 1000)}s elapsed)`);
+
+              if (updatedGen.status === 'completed') {
+                cleanup();
+                // Fetch full generation data with all fields
+                const { data: fullGen, error: fetchError } = await supabase
+                  .from('generations')
+                  .select('id, status, storage_path, output_url, tokens_used, provider_response')
+                  .eq('id', generationId)
+                  .single();
+                
+                if (fetchError) {
+                  reject(new Error(`Failed to fetch completed generation: ${fetchError.message}`));
+                } else {
+                  resolve(fullGen);
+                }
+              } else if (updatedGen.status === 'failed') {
+                cleanup();
+                const providerResponse = updatedGen.provider_response as any;
+                const errorMessage = providerResponse?.error || 
+                                    providerResponse?.full_response?.data?.failMsg ||
+                                    'Generation failed';
+                reject(new Error(`Step ${step.step_number} failed: ${errorMessage}`));
+              }
+            }
+          )
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log(`Subscribed to generation ${generationId} updates via Realtime`);
+              
+              // Immediately check current status in case it already completed
+              supabase
+                .from('generations')
+                .select('id, status, storage_path, output_url, tokens_used, provider_response')
+                .eq('id', generationId)
+                .single()
+                .then(({ data: genData, error: genError }) => {
+                  if (genError) {
+                    console.error('Error checking initial generation status:', genError);
+                    return;
+                  }
+                  
+                  if (genData.status === 'completed') {
+                    cleanup();
+                    resolve(genData);
+                  } else if (genData.status === 'failed') {
+                    cleanup();
+                    const providerResponse = genData.provider_response as any;
+                    const errorMessage = providerResponse?.error || 
+                                        providerResponse?.full_response?.data?.failMsg ||
+                                        'Generation failed';
+                    reject(new Error(`Step ${step.step_number} failed: ${errorMessage}`));
+                  }
+                });
+            }
+          });
+      }).catch(async (error) => {
+        // Handle cancellation gracefully
+        if (error.message === 'WORKFLOW_CANCELLED') {
           return new Response(
             JSON.stringify({ execution_id: execution.id, status: 'cancelled', message: 'Workflow cancelled by user' }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-        
-        // Fetch generation status from database
-        const { data: genData, error: genError } = await supabase
-          .from('generations')
-          .select('id, status, storage_path, output_url, tokens_used, provider_response')
-          .eq('id', generationId)
-          .single();
-        
-        if (genError) {
-          console.error('Error polling generation:', genError);
-          continue; // Keep trying
-        }
-        
-        console.log(`Generation status: ${genData.status} (${Math.round(elapsed / 1000)}s elapsed)`);
-        
-        // Check for completion (exactly like Custom Creation)
-        if (genData.status === 'completed') {
-          generation = genData;
-          break;
-        }
-        
-        // Check for failure (exactly like Custom Creation)
-        if (genData.status === 'failed') {
-          const providerResponse = genData.provider_response as any;
-          const errorMessage = providerResponse?.error || 
-                              providerResponse?.full_response?.data?.failMsg ||
-                              'Generation failed';
-          throw new Error(`Step ${step.step_number} failed: ${errorMessage}`);
-        }
-        
-        // Otherwise, keep polling (status is still 'processing' or 'pending')
-      }
+        throw error;
+      });
 
       console.log('Generation completed:', generation);
 

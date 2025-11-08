@@ -46,11 +46,15 @@ export async function callKieAI(
   }
   
   if (useFlatStructure) {
-    // Flat structure for veo3, sora-2-*, etc.
+    // Flat structure for veo3, sora-2-*, mj_txt2img, etc.
     console.log('Using FLAT payload structure');
     const modelDefaults = FLAT_MODEL_DEFAULTS[request.model] || {};
+    
+    // Determine the correct field name: 'taskType' for Midjourney, 'model' for others
+    const modelFieldName = request.model === 'mj_txt2img' ? 'taskType' : 'model';
+    
     payload = {
-      model: request.model,
+      [modelFieldName]: request.model,
       callBackUrl: callbackUrl,
       ...modelDefaults, // Inject defaults first
       ...request.parameters // User params can override if needed

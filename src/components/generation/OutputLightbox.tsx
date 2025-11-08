@@ -161,7 +161,7 @@ export const OutputLightbox = ({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent 
-          className="max-w-2xl max-h-[95vh] flex flex-col backdrop-blur-sm shadow-2xl animate-slide-up overflow-hidden"
+          className="max-w-5xl max-h-[95vh] flex flex-col backdrop-blur-sm shadow-2xl animate-slide-up overflow-hidden"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
@@ -183,12 +183,12 @@ export const OutputLightbox = ({
         </DialogHeader>
 
           {/* Image Preview - Centered, viewport-relative size */}
-          <div className="flex items-center justify-center bg-muted/30 rounded-lg p-3 my-2 overflow-hidden flex-shrink min-h-0">
+          <div className="flex items-center justify-center bg-muted/30 rounded-lg p-3 my-2 overflow-hidden flex-shrink min-h-0 h-[75vh]">
             <OptimizedGenerationPreview
               key={currentOutput.storage_path}
               storagePath={currentOutput.storage_path}
               contentType={contentType}
-              className="max-w-full max-h-[45vh] object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
+              className="max-w-full max-h-[75vh] w-auto h-auto object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
             />
           </div>
 

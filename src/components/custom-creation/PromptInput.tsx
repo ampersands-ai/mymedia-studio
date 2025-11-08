@@ -4,6 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Sparkles, Loader2 } from "lucide-react";
+import { CAPTION_GENERATION_COST } from "@/constants/custom-creation";
 
 interface PromptInputProps {
   value: string;
@@ -101,7 +102,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
         >
           <Sparkles className="h-3 w-3" />
           Generate Caption
-          <span className="text-muted-foreground ml-1">(+8)</span>
+          <span className="text-muted-foreground ml-1">(+{CAPTION_GENERATION_COST})</span>
         </Button>
       </div>
     </div>

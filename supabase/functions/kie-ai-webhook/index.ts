@@ -145,6 +145,17 @@ serve(async (req) => {
     console.log('✅ Layer 2 passed: Verify token validated');
 
     // Additional security: Only accept webhooks for pending/processing generations
+    if (generation.status === 'cancelled') {
+      console.log('⏹️ Generation was cancelled by user - ignoring webhook', {
+        generation_id: generation.id,
+        task_id: taskId
+      });
+      return new Response(
+        JSON.stringify({ success: true, message: 'Generation was cancelled by user' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     if (generation.status !== 'pending' && generation.status !== 'processing') {
       console.error('Security: Rejected webhook for already processed task:', taskId, 'Status:', generation.status);
       return new Response(

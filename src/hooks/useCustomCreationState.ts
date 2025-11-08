@@ -89,13 +89,11 @@ export const useCustomCreationState = () => {
       generatedOutputs: [],
       selectedOutputIndex: 0,
       pollingGenerationId: null,
-      parentGenerationId: null,
-      localGenerating: false,
       generationStartTime: null,
       generationCompleteTime: null,
+      localGenerating: false,
       captionData: null,
-      isGeneratingCaption: false,
-      generatingVideoIndex: null,
+      showLightbox: false,
     }));
   }, []);
 

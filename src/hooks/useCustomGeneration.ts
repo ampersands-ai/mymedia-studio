@@ -273,9 +273,34 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     }
   }, [state.selectedGroup, updateState]);
 
+  /**
+   * Cancel ongoing generation
+   */
+  const handleCancelGeneration = useCallback(async (generationId: string | null) => {
+    if (!generationId) return;
+    
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { error } = await supabase
+        .from('generations')
+        .update({ status: 'cancelled' })
+        .eq('id', generationId)
+        .eq('status', 'pending'); // Only cancel if still pending
+      
+      if (error) {
+        console.error('Failed to cancel generation:', error);
+      } else {
+        console.log('Generation cancelled:', generationId);
+      }
+    } catch (error) {
+      console.error('Error cancelling generation:', error);
+    }
+  }, []);
+
   return {
     handleGenerate,
     handleSurpriseMe,
+    handleCancelGeneration,
     calculateTokens,
     estimatedTokens,
     isGenerating,

@@ -140,6 +140,7 @@ const CustomCreation = () => {
   const {
     handleGenerate,
     handleSurpriseMe,
+    handleCancelGeneration,
     estimatedTokens,
     isGenerating,
   } = useCustomGeneration({
@@ -354,7 +355,11 @@ const CustomCreation = () => {
             modelId={state.selectedModel || ''}
             provider={currentModel?.provider || ''}
             excludeFields={['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls', 'frameImages', textKey || '', voiceKey || '', 'duration', 'increment', 'incrementBySeconds'].filter(Boolean) as string[]}
-            onReset={resetState}
+            onReset={() => {
+              handleCancelGeneration(state.pollingGenerationId);
+              stopPolling();
+              resetState();
+            }}
             isPolling={isPolling}
             pollingGenerationId={state.pollingGenerationId}
             localGenerating={state.localGenerating}

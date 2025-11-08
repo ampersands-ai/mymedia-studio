@@ -22,9 +22,10 @@ interface WorkflowInputPanelProps {
   onExecute: (inputs: Record<string, any>) => void;
   onBack: () => void;
   isExecuting: boolean;
+  onReset?: () => void;
 }
 
-export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting }: WorkflowInputPanelProps) => {
+export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, onReset }: WorkflowInputPanelProps) => {
   const { user } = useAuth();
   const { pickImage, pickMultipleImages, isLoading: cameraLoading } = useNativeCamera();
   const { data: userTokens } = useUserTokens();
@@ -297,15 +298,34 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting }:
       <div className="border-b border-border px-6 py-4 bg-muted/30">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">{workflow.name}</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            disabled={isExecuting}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onBack}
+              disabled={isExecuting}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Clear local inputs and uploads
+                setInputs({});
+                setUploadedFiles({});
+                Object.values(fileInputRefs.current).forEach((ref) => {
+                  if (ref) ref.value = '';
+                });
+                onReset?.();
+                toast.success('Inputs reset');
+              }}
+              disabled={isExecuting}
+            >
+              Reset
+            </Button>
+          </div>
         </div>
         {workflow.description && (
           <p className="text-sm text-muted-foreground mt-2">{workflow.description}</p>

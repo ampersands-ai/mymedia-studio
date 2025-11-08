@@ -208,6 +208,24 @@ serve(async (req) => {
         // Wait before polling (5 seconds, same as Custom Creation starts with)
         await new Promise(resolve => setTimeout(resolve, 5000));
         
+        // Check if execution was cancelled while waiting
+        const { data: execCheck2 } = await supabase
+          .from('workflow_executions')
+          .select('status')
+          .eq('id', execution.id)
+          .single();
+        if (execCheck2?.status === 'cancelled') {
+          console.log('Workflow execution cancelled during step wait');
+          await supabase
+            .from('workflow_executions')
+            .update({ status: 'cancelled', error_message: 'Cancelled by user' })
+            .eq('id', execution.id);
+          return new Response(
+            JSON.stringify({ execution_id: execution.id, status: 'cancelled', message: 'Workflow cancelled by user' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
         // Fetch generation status from database
         const { data: genData, error: genError } = await supabase
           .from('generations')

@@ -63,6 +63,10 @@ export const useWorkflowExecution = () => {
         if (status?.status === 'failed') {
           throw new Error('Workflow execution failed');
         }
+
+        if (status?.status === 'cancelled') {
+          throw new Error('Workflow execution cancelled');
+        }
         
         attempts++;
       }

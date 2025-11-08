@@ -198,6 +198,14 @@ const CreateWorkflow = () => {
                     onExecute={handleExecute}
                     onBack={() => navigate("/dashboard/templates")}
                     isExecuting={isExecuting}
+                    onReset={async () => {
+                      // Cancel execution if running and clear result/progress
+                      if (executionId) {
+                        await handleCancelExecution();
+                      }
+                      setResult(null);
+                      setGenerationCompleteTime(null);
+                    }}
                   />
                 </div>
               </Card>

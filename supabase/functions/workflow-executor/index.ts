@@ -260,9 +260,28 @@ serve(async (req) => {
 
       console.log('Generation completed:', generation);
 
-      // Store step output with storage_path (same as Custom Creation uses)
+      // Determine output to store (handle single or multi-output)
+      let outputStoragePath = generation.storage_path as string | null;
+      if (!outputStoragePath) {
+        // Try to fetch first child output for multi-output tasks
+        const { data: children } = await supabase
+          .from('generations')
+          .select('id, storage_path, output_url, output_index')
+          .eq('parent_generation_id', generation.id)
+          .order('output_index', { ascending: true });
+        if (children && children.length > 0) {
+          outputStoragePath = children[0]?.storage_path || null;
+          console.log('Using first child output for step output:', {
+            parent_id: generation.id,
+            child_id: children[0]?.id,
+            storage_path: outputStoragePath
+          });
+        }
+      }
+
+      // Store step output using storage_path when available, fallback to output_url
       stepOutputs[`step${step.step_number}`] = {
-        [step.output_key]: generation.storage_path,
+        [step.output_key]: outputStoragePath || generation.output_url,
         generation_id: generation.id,
       };
 

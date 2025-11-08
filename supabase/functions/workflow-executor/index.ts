@@ -78,6 +78,35 @@ serve(async (req) => {
       const step = steps[i];
       console.log(`Executing step ${step.step_number}:`, step.step_name);
 
+      // Check if execution was cancelled
+      const { data: execCheck, error: execCheckError } = await supabase
+        .from('workflow_executions')
+        .select('status')
+        .eq('id', execution.id)
+        .single();
+      
+      if (execCheckError) {
+        console.error('Error checking execution status:', execCheckError);
+      } else if (execCheck?.status === 'cancelled') {
+        console.log('Workflow execution was cancelled by user');
+        await supabase
+          .from('workflow_executions')
+          .update({ 
+            status: 'cancelled',
+            error_message: 'Cancelled by user'
+          })
+          .eq('id', execution.id);
+        
+        return new Response(
+          JSON.stringify({
+            execution_id: execution.id,
+            status: 'cancelled',
+            message: 'Workflow cancelled by user',
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       // Update current step
       await supabase
         .from('workflow_executions')

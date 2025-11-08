@@ -274,10 +274,16 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
   }, [state.selectedGroup, updateState]);
 
   /**
-   * Cancel ongoing generation
+   * Cancel ongoing generation - works for pending or processing
    */
   const handleCancelGeneration = useCallback(async (generationId: string | null) => {
     if (!generationId) return;
+    
+    // Optimistic UI update
+    updateState({ 
+      pollingGenerationId: null, 
+      localGenerating: false 
+    });
     
     try {
       const { supabase } = await import('@/integrations/supabase/client');
@@ -285,7 +291,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
         .from('generations')
         .update({ status: 'cancelled' })
         .eq('id', generationId)
-        .eq('status', 'pending'); // Only cancel if still pending
+        .in('status', ['pending', 'processing']); // Cancel if pending or processing
       
       if (error) {
         console.error('Failed to cancel generation:', error);
@@ -295,7 +301,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     } catch (error) {
       console.error('Error cancelling generation:', error);
     }
-  }, []);
+  }, [updateState]);
 
   return {
     handleGenerate,

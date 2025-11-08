@@ -48,6 +48,15 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
 
       if (error) throw error;
 
+      // Treat 'cancelled' as terminal state
+      if (parentData.status === 'cancelled') {
+        clearAllTimers();
+        setIsPolling(false);
+        setPollingId(null);
+        options.onError?.('Generation cancelled');
+        return;
+      }
+
       if (parentData.status === 'completed' || parentData.status === 'failed') {
         clearAllTimers();
         setIsPolling(false);

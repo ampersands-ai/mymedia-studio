@@ -358,6 +358,10 @@ const CustomCreation = () => {
             onReset={() => {
               handleCancelGeneration(state.pollingGenerationId);
               stopPolling();
+              setUploadedImages([]);
+              if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+              }
               resetState();
             }}
             isPolling={isPolling}

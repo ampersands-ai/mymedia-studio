@@ -24,6 +24,8 @@ const CreateWorkflow = () => {
   const { executeWorkflow, isExecuting, progress } = useWorkflowExecution();
   const { downloadFile } = useNativeDownload();
   
+  const [executionId, setExecutionId] = useState<string | null>(null);
+  
   const [result, setResult] = useState<{ url: string; tokens: number } | null>(null);
   const [generationCompleteTime, setGenerationCompleteTime] = useState<number | null>(null);
   const generationStartTimeRef = useRef<number | null>(null);
@@ -81,12 +83,17 @@ const CreateWorkflow = () => {
 
     setResult(null);
     setGenerationCompleteTime(null);
+    setExecutionId(null);
     generationStartTimeRef.current = Date.now();
     
     const result = await executeWorkflow({
       workflow_template_id: workflow.id,
       user_inputs: formattedInputs,
     });
+
+    if (result?.execution_id) {
+      setExecutionId(result.execution_id);
+    }
 
     if (result?.final_output_url) {
       setGenerationCompleteTime(Date.now());
@@ -95,6 +102,32 @@ const CreateWorkflow = () => {
     } else {
       generationStartTimeRef.current = null;
       toast.error('Workflow failed');
+    }
+  };
+
+  const handleCancelExecution = async () => {
+    if (!executionId) return;
+    
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { error } = await supabase
+        .from('workflow_executions')
+        .update({ status: 'cancelled' })
+        .eq('id', executionId)
+        .in('status', ['pending', 'processing']);
+      
+      if (error) {
+        console.error('Failed to cancel workflow:', error);
+        toast.error('Failed to cancel workflow');
+      } else {
+        console.log('Workflow cancelled:', executionId);
+        toast.success('Workflow cancelled');
+        generationStartTimeRef.current = null;
+        setExecutionId(null);
+      }
+    } catch (error) {
+      console.error('Error cancelling workflow:', error);
+      toast.error('Error cancelling workflow');
     }
   };
 
@@ -261,6 +294,15 @@ const CreateWorkflow = () => {
                               completedAt={generationCompleteTime || undefined}
                               estimatedTimeSeconds={workflow?.estimated_time_seconds}
                             />
+                          )}
+
+                          {executionId && !result && (
+                            <button
+                              onClick={handleCancelExecution}
+                              className="w-full px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors font-medium"
+                            >
+                              Cancel Workflow
+                            </button>
                           )}
                         </CardContent>
                       </Card>

@@ -19,6 +19,7 @@ const APPROVED_STORYBOARD_IMAGE_MODEL_IDS = [
   'runware:97@3',  // HiDream Fast
   'runware:97@2',  // HiDream Dev
   'google/nano-banana', // Google Nano Banana
+  'bytedance/seedream-v4-text-to-image', // ByteDance SeeDream V4
 ] as const;
 
 // Approved video models for animation (image-to-video)

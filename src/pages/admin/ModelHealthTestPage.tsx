@@ -334,7 +334,7 @@ export default function ModelHealthTestPage() {
       <div className="grid lg:grid-cols-2 gap-6">
         <InputPanel
           selectedModel={state.selectedModel}
-          filteredModels={[]}
+          filteredModels={model ? [model] : []}
           selectedGroup="prompt_to_image"
           onModelChange={setStateSelectedModel}
           modelsLoading={false}

@@ -63,6 +63,7 @@ const WebhookMonitor = lazy(() => import("./pages/admin/WebhookMonitor"));
 const ModelHealthDashboard = lazy(() => import("./pages/admin/ModelHealthDashboard"));
 const ModelHealthTestPage = lazy(() => import("./pages/admin/ModelHealthTestPage"));
 const ModelAlerts = lazy(() => import("./pages/admin/ModelAlerts"));
+const TestModelGroupPage = lazy(() => import("./pages/admin/TestModelGroupPage"));
 const SharedContent = lazy(() => import("./pages/SharedContent"));
 
 const AppContent = () => {
@@ -145,6 +146,7 @@ const AppContent = () => {
               <Route path="model-health" element={<ModelHealthDashboard />} />
               <Route path="model-health/test/:recordId" element={<ModelHealthTestPage />} />
               <Route path="model-alerts" element={<ModelAlerts />} />
+              <Route path="test-model-group" element={<TestModelGroupPage />} />
               <Route path="video-jobs" element={<VideoJobs />} />
               <Route path="template-landing" element={<TemplateLandingManager />} />
               <Route path="template-landing/:id" element={<TemplateLandingEditor />} />

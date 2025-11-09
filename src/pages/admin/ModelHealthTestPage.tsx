@@ -72,16 +72,24 @@ export default function ModelHealthTestPage() {
             if (fieldName === primaryTextKey || fieldName.includes('prompt') || fieldName.includes('text')) {
               // Check model groups to determine which prompt to use
               const modelGroupsRaw = (fullModel?.groups ?? model?.groups);
+              console.log('🔍 DEBUG - Model groups raw:', modelGroupsRaw, 'Type:', typeof modelGroupsRaw);
+              
               const groupStr = Array.isArray(modelGroupsRaw)
                 ? modelGroupsRaw.join(",")
                 : typeof modelGroupsRaw === "string"
                   ? modelGroupsRaw
                   : JSON.stringify(modelGroupsRaw ?? "");
               
+              console.log('🔍 DEBUG - Group string:', groupStr);
+              console.log('🔍 DEBUG - Contains image_editing?', groupStr.includes('image_editing'));
+              console.log('🔍 DEBUG - Contains image_to_video?', groupStr.includes('image_to_video'));
+              
               if (groupStr.includes('image_to_video') || groupStr.includes('image_editing')) {
                 // Use specific prompt for image-to-video and image editing
+                console.log('✅ Using image editing prompt');
                 defaults[fieldName] = "Change the attire of this person to black-colored";
               } else {
+                console.log('✅ Using Surprise Me prompts');
                 // Use "Surprise Me" prompts for text-to-video and text-to-image
                 if (model?.content_type === 'image') {
                   defaults[fieldName] = getSurpriseMePrompt('prompt_to_image');

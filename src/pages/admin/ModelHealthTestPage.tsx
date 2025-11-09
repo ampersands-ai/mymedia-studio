@@ -231,7 +231,9 @@ export default function ModelHealthTestPage() {
                     provider={fullModel.provider}
                   />
                 )}
-
+              </div>
+              
+              <div className="space-y-4">
                 <div className="p-4 rounded-lg border bg-muted/50">
                   <h3 className="font-semibold mb-3 flex items-center gap-2">
                     <Clock className="w-4 h-4" />
@@ -259,9 +261,7 @@ export default function ModelHealthTestPage() {
                     These steps will execute when you run the test
                   </p>
                 </div>
-              </div>
-              
-              <div className="space-y-4">
+
                 <div className="p-4 rounded-lg border bg-muted/50">
                   <h3 className="font-semibold mb-3">Model Details</h3>
                   <dl className="space-y-2 text-sm">

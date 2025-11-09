@@ -41,6 +41,7 @@ export default function ModelHealthDashboard() {
       if (error) throw error;
       return data as ModelHealthSummary[];
     },
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
   // Calculate metrics from health data
@@ -191,7 +192,22 @@ export default function ModelHealthDashboard() {
     if (!model.last_test_at) {
       return <Badge variant="secondary">Never Tested</Badge>;
     }
+    
+    // Check if last test was recent (within 5 minutes) and successful
+    const lastTestTime = new Date(model.last_test_at).getTime();
+    const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+    const isRecentTest = lastTestTime > fiveMinutesAgo;
+    
     const successRate = model.success_rate_percent_24h || 0;
+    
+    // If recently tested successfully, show as Healthy regardless of 24h rate
+    if (isRecentTest && model.successful_tests_24h > 0 && model.total_tests_24h > 0) {
+      const recentTestSuccessful = (model.successful_tests_24h / model.total_tests_24h) > 0;
+      if (recentTestSuccessful) {
+        return <Badge className="bg-green-500 hover:bg-green-600">Healthy ✓</Badge>;
+      }
+    }
+    
     if (successRate >= 95) {
       return <Badge className="bg-green-500 hover:bg-green-600">Healthy</Badge>;
     }

@@ -13,7 +13,7 @@ import { ArrowLeft, Loader2, CheckCircle2, XCircle, Clock, AlertCircle, Download
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function ModelTestPage() {
+export default function ModelHealthTestPage() {
   const { recordId } = useParams<{ recordId: string }>();
   const navigate = useNavigate();
   const { data: models, isLoading: modelsLoading } = useModelHealth();
@@ -24,14 +24,12 @@ export default function ModelTestPage() {
 
   const model = models?.find(m => m.record_id === recordId);
 
-  // Enable notifications when test is running
   useFlowStepNotifications(
     testResult?.flow_steps || [],
     model?.model_name || 'Model',
     !!testResult
   );
 
-  // Auto-start test when page loads
   useEffect(() => {
     if (!recordId || !model || testResultId || isStarting) return;
 
@@ -117,9 +115,9 @@ export default function ModelTestPage() {
       <div className="container mx-auto p-6">
         <div className="text-center py-12">
           <h2 className="text-2xl font-bold">Model not found</h2>
-          <Button onClick={() => navigate('/admin/models')} className="mt-4">
+          <Button onClick={() => navigate('/admin/model-health')} className="mt-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Models
+            Back to Model Health
           </Button>
         </div>
       </div>
@@ -130,7 +128,7 @@ export default function ModelTestPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/admin/models')}>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/admin/model-health')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
@@ -156,7 +154,6 @@ export default function ModelTestPage() {
         </div>
       ) : testResult ? (
         <div className="space-y-6">
-          {/* Status Header */}
           <div className="flex items-center justify-between p-6 rounded-lg border bg-card">
             <div className="flex items-center gap-4">
               {getStatusIcon(testResult.status)}
@@ -193,7 +190,6 @@ export default function ModelTestPage() {
             )}
           </div>
 
-          {/* Progress Bar */}
           {testResult.status === 'running' && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
@@ -204,7 +200,6 @@ export default function ModelTestPage() {
             </div>
           )}
 
-          {/* Error Message */}
           {testResult.error_message && (
             <div className="p-4 rounded-lg border border-destructive/50 bg-destructive/10">
               <div className="flex items-start gap-3">
@@ -224,7 +219,6 @@ export default function ModelTestPage() {
             </div>
           )}
 
-          {/* Flow Timeline */}
           <div className="space-y-3">
             <h2 className="text-xl font-semibold">Execution Flow</h2>
             <div className="rounded-lg border bg-card/50 p-6">
@@ -235,7 +229,6 @@ export default function ModelTestPage() {
             </div>
           </div>
 
-          {/* Output Preview */}
           {testResult.output_url && (
             <div className="space-y-3">
               <h2 className="text-xl font-semibold">Generated Output</h2>
@@ -246,7 +239,6 @@ export default function ModelTestPage() {
             </div>
           )}
 
-          {/* Technical Details */}
           <div className="space-y-3">
             <h2 className="text-xl font-semibold">Technical Details</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 rounded-lg border bg-card">

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useModelHealth } from "@/hooks/admin/model-health/useModelHealth";
 import { useHealthMetrics } from "@/hooks/admin/model-health/useHealthMetrics";
 import { useModelTesting } from "@/hooks/admin/model-health/useModelTesting";
@@ -13,29 +14,38 @@ import { TestHistoryTable } from "@/components/admin/model-health/TestHistoryTab
 import { ScheduleDialog } from "@/components/admin/model-health/ScheduleDialog";
 import { ModelAlertSettings } from "@/components/admin/model-health/ModelAlertSettings";
 import { SchedulesList } from "@/components/admin/model-health/SchedulesList";
-import { FlowTrackingDialog } from "@/components/admin/model-health/FlowTrackingDialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown, PlayCircle } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import type { ModelHealthSummary } from "@/types/admin/model-health";
 
+type ViewMode = 'grid' | 'list';
+type SortField = 'model_name' | 'provider' | 'content_type' | 'success_rate_percent_24h' | 'avg_latency_ms' | 'total_tests_24h' | 'last_test_at';
+type SortDirection = 'asc' | 'desc';
+
 export default function ModelHealthDashboard() {
+  const navigate = useNavigate();
   const { data: healthData, isLoading } = useModelHealth();
   const metrics = useHealthMetrics(healthData);
-  const { testModel, batchTest } = useModelTesting();
+  const { batchTest } = useModelTesting();
 
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [sortField, setSortField] = useState<SortField>('model_name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [selectedProvider, setSelectedProvider] = useState("all");
   const [selectedContentType, setSelectedContentType] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [testingModelIds, setTestingModelIds] = useState<Set<string>>(new Set());
+  const [testingModelIds] = useState<Set<string>>(new Set());
   const [isBulkTesting, setIsBulkTesting] = useState(false);
   const [bulkProgress, setBulkProgress] = useState(0);
   const [configDialogModel, setConfigDialogModel] = useState<ModelHealthSummary | null>(null);
   const [historyDialogModel, setHistoryDialogModel] = useState<ModelHealthSummary | null>(null);
   const [scheduleDialogModel, setScheduleDialogModel] = useState<ModelHealthSummary | null>(null);
-  const [flowTrackingModel, setFlowTrackingModel] = useState<ModelHealthSummary | null>(null);
-  const [activeTestResultId, setActiveTestResultId] = useState<string | null>(null);
 
-  // Extract unique providers and content types
   const providers = useMemo(() => {
     if (!healthData) return [];
     return Array.from(new Set(healthData.map(m => m.provider))).sort();
@@ -46,22 +56,22 @@ export default function ModelHealthDashboard() {
     return Array.from(new Set(healthData.map(m => m.content_type))).sort();
   }, [healthData]);
 
-  // Filter models
-  const filteredModels = useMemo(() => {
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const filteredAndSortedModels = useMemo(() => {
     if (!healthData) return [];
 
-    return healthData.filter((model) => {
-      // Provider filter
-      if (selectedProvider !== "all" && model.provider !== selectedProvider) {
-        return false;
-      }
-
-      // Content type filter
-      if (selectedContentType !== "all" && model.content_type !== selectedContentType) {
-        return false;
-      }
-
-      // Status filter
+    let filtered = healthData.filter((model) => {
+      if (selectedProvider !== "all" && model.provider !== selectedProvider) return false;
+      if (selectedContentType !== "all" && model.content_type !== selectedContentType) return false;
+      
       if (selectedStatus !== "all") {
         const successRate = model.success_rate_percent_24h || 0;
         if (selectedStatus === "success" && successRate < 95) return false;
@@ -70,41 +80,39 @@ export default function ModelHealthDashboard() {
         if (selectedStatus === "never-tested" && model.last_test_at) return false;
       }
 
-      // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         return (
           model.model_name.toLowerCase().includes(query) ||
           model.provider.toLowerCase().includes(query) ||
-          model.content_type.toLowerCase().includes(query)
+          model.content_type.toLowerCase().includes(query) ||
+          model.model_id.toLowerCase().includes(query)
         );
       }
 
       return true;
     });
-  }, [healthData, selectedProvider, selectedContentType, selectedStatus, searchQuery]);
 
-  const handleTestModel = async (modelRecordId: string) => {
-    const model = healthData?.find(m => m.record_id === modelRecordId);
-    if (!model) return;
+    return filtered.sort((a, b) => {
+      let aVal: any = a[sortField];
+      let bVal: any = b[sortField];
 
-    setTestingModelIds(prev => new Set(prev).add(modelRecordId));
-    
-    try {
-      const result = await testModel.mutateAsync({ modelRecordId });
-      
-      // Show flow tracking dialog with the test result ID
-      if (result?.testResultId) {
-        setFlowTrackingModel(model);
-        setActiveTestResultId(result.testResultId);
+      if (aVal === null || aVal === undefined) aVal = sortDirection === 'asc' ? Infinity : -Infinity;
+      if (bVal === null || bVal === undefined) bVal = sortDirection === 'asc' ? Infinity : -Infinity;
+
+      if (sortField === 'last_test_at') {
+        aVal = aVal ? new Date(aVal).getTime() : 0;
+        bVal = bVal ? new Date(bVal).getTime() : 0;
       }
-    } finally {
-      setTestingModelIds(prev => {
-        const next = new Set(prev);
-        next.delete(modelRecordId);
-        return next;
-      });
-    }
+
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [healthData, selectedProvider, selectedContentType, selectedStatus, searchQuery, sortField, sortDirection]);
+
+  const handleTestModel = (modelRecordId: string) => {
+    navigate(`/admin/model-health/test/${modelRecordId}`);
   };
 
   const handleBulkTest = async (modelRecordIds: string[]) => {
@@ -120,8 +128,31 @@ export default function ModelHealthDashboard() {
   };
 
   const handleTestAll = () => {
-    const activeModels = filteredModels.filter(m => m.is_active);
+    const activeModels = filteredAndSortedModels.filter(m => m.is_active);
     handleBulkTest(activeModels.map(m => m.record_id));
+  };
+
+  const getStatusBadge = (model: ModelHealthSummary) => {
+    if (!model.last_test_at) {
+      return <Badge variant="secondary">Never Tested</Badge>;
+    }
+    const successRate = model.success_rate_percent_24h || 0;
+    if (successRate >= 95) {
+      return <Badge className="bg-green-500 hover:bg-green-600">Healthy</Badge>;
+    }
+    if (successRate >= 80) {
+      return <Badge className="bg-yellow-500 hover:bg-yellow-600">Warning</Badge>;
+    }
+    return <Badge variant="destructive">Critical</Badge>;
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+    }
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="ml-2 h-4 w-4" />
+      : <ArrowDown className="ml-2 h-4 w-4" />;
   };
 
   if (isLoading) {
@@ -149,12 +180,30 @@ export default function ModelHealthDashboard() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Model Health Dashboard</h1>
+        <div className="flex gap-2">
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('list')}
+          >
+            <List className="h-4 w-4 mr-2" />
+            List
+          </Button>
+          <Button
+            variant={viewMode === 'grid' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('grid')}
+          >
+            <LayoutGrid className="h-4 w-4 mr-2" />
+            Grid
+          </Button>
+        </div>
       </div>
 
       <ModelHealthHeader metrics={metrics} />
 
       <BulkTestControls
-        totalModels={filteredModels.filter(m => m.is_active).length}
+        totalModels={filteredAndSortedModels.filter(m => m.is_active).length}
         selectedCount={0}
         isRunning={isBulkTesting}
         progress={bulkProgress}
@@ -176,18 +225,152 @@ export default function ModelHealthDashboard() {
         onSearchChange={setSearchQuery}
       />
 
-      <ModelTestGrid
-        models={filteredModels}
-        onTest={handleTestModel}
-        onConfigure={setConfigDialogModel}
-        onViewHistory={setHistoryDialogModel}
-        onSchedule={setScheduleDialogModel}
-        testingModelIds={testingModelIds}
-      />
+      {viewMode === 'grid' ? (
+        <ModelTestGrid
+          models={filteredAndSortedModels}
+          onTest={handleTestModel}
+          onConfigure={setConfigDialogModel}
+          onViewHistory={setHistoryDialogModel}
+          onSchedule={setScheduleDialogModel}
+          testingModelIds={testingModelIds}
+        />
+      ) : (
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => handleSort('model_name')}
+                    className="hover:bg-transparent"
+                  >
+                    Model Name
+                    <SortIcon field="model_name" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => handleSort('provider')}
+                    className="hover:bg-transparent"
+                  >
+                    Provider
+                    <SortIcon field="provider" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => handleSort('content_type')}
+                    className="hover:bg-transparent"
+                  >
+                    Type
+                    <SortIcon field="content_type" />
+                  </Button>
+                </TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => handleSort('success_rate_percent_24h')}
+                    className="hover:bg-transparent"
+                  >
+                    Success Rate
+                    <SortIcon field="success_rate_percent_24h" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => handleSort('avg_latency_ms')}
+                    className="hover:bg-transparent"
+                  >
+                    Avg Latency
+                    <SortIcon field="avg_latency_ms" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => handleSort('total_tests_24h')}
+                    className="hover:bg-transparent"
+                  >
+                    Tests (24h)
+                    <SortIcon field="total_tests_24h" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => handleSort('last_test_at')}
+                    className="hover:bg-transparent"
+                  >
+                    Last Test
+                    <SortIcon field="last_test_at" />
+                  </Button>
+                </TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredAndSortedModels.map((model) => (
+                <TableRow key={model.record_id} className="cursor-pointer hover:bg-muted/50">
+                  <TableCell className="font-medium">{model.model_name}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{model.provider}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{model.content_type}</Badge>
+                  </TableCell>
+                  <TableCell>{getStatusBadge(model)}</TableCell>
+                  <TableCell>
+                    {model.success_rate_percent_24h !== null 
+                      ? `${model.success_rate_percent_24h.toFixed(1)}%` 
+                      : '—'}
+                  </TableCell>
+                  <TableCell>
+                    {model.avg_latency_ms !== null 
+                      ? `${(model.avg_latency_ms / 1000).toFixed(2)}s` 
+                      : '—'}
+                  </TableCell>
+                  <TableCell>
+                    {model.total_tests_24h > 0 
+                      ? `${model.successful_tests_24h}/${model.total_tests_24h}` 
+                      : '—'}
+                  </TableCell>
+                  <TableCell>
+                    {model.last_test_at 
+                      ? formatDistanceToNow(new Date(model.last_test_at), { addSuffix: true })
+                      : 'Never'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      size="sm"
+                      onClick={() => handleTestModel(model.record_id)}
+                      disabled={!model.is_active}
+                    >
+                      <PlayCircle className="h-4 w-4 mr-1" />
+                      Test
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filteredAndSortedModels.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
+                    No models found matching your filters.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
-      {filteredModels.length > 0 && (
+      {filteredAndSortedModels.length > 0 && (
         <>
-          <PerformanceCharts models={filteredModels} />
+          <PerformanceCharts models={filteredAndSortedModels} />
           <TestHistoryTable />
           
           <div className="grid gap-6 md:grid-cols-2">
@@ -214,18 +397,6 @@ export default function ModelHealthDashboard() {
         model={scheduleDialogModel}
         open={!!scheduleDialogModel}
         onOpenChange={(open) => !open && setScheduleDialogModel(null)}
-      />
-
-      <FlowTrackingDialog
-        model={flowTrackingModel}
-        testResultId={activeTestResultId}
-        open={!!flowTrackingModel}
-        onOpenChange={(open) => {
-          if (!open) {
-            setFlowTrackingModel(null);
-            setActiveTestResultId(null);
-          }
-        }}
       />
     </div>
   );

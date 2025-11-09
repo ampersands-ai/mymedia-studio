@@ -61,9 +61,8 @@ const MigrateStoryboards = lazy(() => import("./pages/admin/MigrateStoryboards")
 const CinematicPromptsManager = lazy(() => import("./pages/admin/CinematicPromptsManager"));
 const WebhookMonitor = lazy(() => import("./pages/admin/WebhookMonitor"));
 const ModelHealthDashboard = lazy(() => import("./pages/admin/ModelHealthDashboard"));
+const ModelHealthTestPage = lazy(() => import("./pages/admin/ModelHealthTestPage"));
 const ModelAlerts = lazy(() => import("./pages/admin/ModelAlerts"));
-const ModelsListPage = lazy(() => import("./pages/admin/ModelsListPage"));
-const ModelTestPage = lazy(() => import("./pages/admin/ModelTestPage"));
 const SharedContent = lazy(() => import("./pages/SharedContent"));
 
 const AppContent = () => {
@@ -135,9 +134,7 @@ const AppContent = () => {
             </Route>
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="models" element={<ModelsListPage />} />
-              <Route path="models/:recordId/test" element={<ModelTestPage />} />
-              <Route path="ai-models" element={<AIModelsManager />} />
+              <Route path="models" element={<AIModelsManager />} />
               <Route path="templates" element={<TemplatesManager />} />
               <Route path="users" element={<UsersManager />} />
               <Route path="generations" element={<AllGenerations />} />
@@ -146,6 +143,7 @@ const AppContent = () => {
               <Route path="threshold-breach" element={<ThresholdBreach />} />
               <Route path="webhook-monitor" element={<WebhookMonitor />} />
               <Route path="model-health" element={<ModelHealthDashboard />} />
+              <Route path="model-health/test/:recordId" element={<ModelHealthTestPage />} />
               <Route path="model-alerts" element={<ModelAlerts />} />
               <Route path="video-jobs" element={<VideoJobs />} />
               <Route path="template-landing" element={<TemplateLandingManager />} />

@@ -78,6 +78,11 @@ export default function ModelHealthTestPage() {
     }
   };
 
+  const handleResetTest = () => {
+    setTestResultId(null);
+    setIsStarting(false);
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'success':
@@ -170,12 +175,20 @@ export default function ModelHealthTestPage() {
             </div>
           </div>
         </div>
-        {testResult && (
-          <Button variant="outline" onClick={downloadReport}>
-            <Download className="w-4 h-4 mr-2" />
-            Download Report
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {testResult && (
+            <>
+              <Button variant="outline" onClick={handleResetTest}>
+                <PlayCircle className="w-4 h-4 mr-2" />
+                Run New Test
+              </Button>
+              <Button variant="outline" onClick={downloadReport}>
+                <Download className="w-4 h-4 mr-2" />
+                Download Report
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {!testResultId ? (
@@ -380,10 +393,16 @@ export default function ModelHealthTestPage() {
 
           {testResult.error_message && (
             <div className="space-y-3">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <XCircle className="w-5 h-5 text-destructive" />
-                Test Failed
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <XCircle className="w-5 h-5 text-destructive" />
+                  Test Failed
+                </h2>
+                <Button onClick={handleResetTest} variant="outline">
+                  <PlayCircle className="w-4 h-4 mr-2" />
+                  Try Again
+                </Button>
+              </div>
               <div className="p-4 rounded-lg border border-destructive/50 bg-destructive/10">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
@@ -410,6 +429,24 @@ export default function ModelHealthTestPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {testResult.status === 'success' && (
+            <div className="flex items-center justify-between p-4 rounded-lg border bg-green-500/10 border-green-500/20">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="w-6 h-6 text-green-500" />
+                <div>
+                  <div className="font-semibold text-green-500">Test Completed Successfully</div>
+                  <div className="text-sm text-muted-foreground">
+                    All steps executed without errors
+                  </div>
+                </div>
+              </div>
+              <Button onClick={handleResetTest} variant="outline" size="sm">
+                <PlayCircle className="w-4 h-4 mr-2" />
+                Run Again
+              </Button>
             </div>
           )}
 

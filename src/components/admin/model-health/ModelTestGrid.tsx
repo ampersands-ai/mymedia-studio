@@ -6,6 +6,7 @@ interface ModelTestGridProps {
   onTest: (modelRecordId: string) => void;
   onConfigure: (model: ModelHealthSummary) => void;
   onViewHistory: (model: ModelHealthSummary) => void;
+  onSchedule?: (model: ModelHealthSummary) => void;
   testingModelIds?: Set<string>;
 }
 
@@ -14,6 +15,7 @@ export const ModelTestGrid = ({
   onTest,
   onConfigure,
   onViewHistory,
+  onSchedule,
   testingModelIds = new Set(),
 }: ModelTestGridProps) => {
   if (models.length === 0) {
@@ -33,6 +35,7 @@ export const ModelTestGrid = ({
           onTest={() => onTest(model.record_id)}
           onConfigure={() => onConfigure(model)}
           onViewHistory={() => onViewHistory(model)}
+          onSchedule={onSchedule ? () => onSchedule(model) : undefined}
           isLoading={testingModelIds.has(model.record_id)}
         />
       ))}

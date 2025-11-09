@@ -858,6 +858,48 @@ export type Database = {
           },
         ]
       }
+      model_test_schedules: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          cron_expression: string
+          id: string
+          is_active: boolean | null
+          last_run_at: string | null
+          model_record_id: string
+          next_run_at: string | null
+          schedule_name: string
+          test_config: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          cron_expression: string
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          model_record_id: string
+          next_run_at?: string | null
+          schedule_name: string
+          test_config?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          cron_expression?: string
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          model_record_id?: string
+          next_run_at?: string | null
+          schedule_name?: string
+          test_config?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           country: string | null

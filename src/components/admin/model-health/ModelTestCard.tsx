@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PlayCircle, Settings, History } from "lucide-react";
+import { PlayCircle, Settings, History, Clock } from "lucide-react";
 import type { ModelHealthSummary } from "@/types/admin/model-health";
 import { formatDistanceToNow } from "date-fns";
 
@@ -10,6 +10,7 @@ interface ModelTestCardProps {
   onTest: () => void;
   onConfigure: () => void;
   onViewHistory: () => void;
+  onSchedule?: () => void;
   isLoading?: boolean;
 }
 
@@ -18,6 +19,7 @@ export const ModelTestCard = ({
   onTest,
   onConfigure,
   onViewHistory,
+  onSchedule,
   isLoading = false,
 }: ModelTestCardProps) => {
   const getStatusColor = () => {
@@ -113,6 +115,12 @@ export const ModelTestCard = ({
           <Button size="sm" variant="outline" onClick={onViewHistory}>
             <History className="h-4 w-4" />
           </Button>
+
+          {onSchedule && (
+            <Button size="sm" variant="outline" onClick={onSchedule}>
+              <Clock className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

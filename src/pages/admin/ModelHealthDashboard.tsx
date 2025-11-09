@@ -10,6 +10,9 @@ import { TestConfigDialog } from "@/components/admin/model-health/TestConfigDial
 import { TestHistoryDialog } from "@/components/admin/model-health/TestHistoryDialog";
 import { PerformanceCharts } from "@/components/admin/model-health/PerformanceCharts";
 import { TestHistoryTable } from "@/components/admin/model-health/TestHistoryTable";
+import { ScheduleDialog } from "@/components/admin/model-health/ScheduleDialog";
+import { ModelAlertSettings } from "@/components/admin/model-health/ModelAlertSettings";
+import { SchedulesList } from "@/components/admin/model-health/SchedulesList";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ModelHealthSummary } from "@/types/admin/model-health";
 
@@ -27,6 +30,7 @@ export default function ModelHealthDashboard() {
   const [bulkProgress, setBulkProgress] = useState(0);
   const [configDialogModel, setConfigDialogModel] = useState<ModelHealthSummary | null>(null);
   const [historyDialogModel, setHistoryDialogModel] = useState<ModelHealthSummary | null>(null);
+  const [scheduleDialogModel, setScheduleDialogModel] = useState<ModelHealthSummary | null>(null);
 
   // Extract unique providers and content types
   const providers = useMemo(() => {
@@ -165,6 +169,7 @@ export default function ModelHealthDashboard() {
         onTest={handleTestModel}
         onConfigure={setConfigDialogModel}
         onViewHistory={setHistoryDialogModel}
+        onSchedule={setScheduleDialogModel}
         testingModelIds={testingModelIds}
       />
 
@@ -172,6 +177,11 @@ export default function ModelHealthDashboard() {
         <>
           <PerformanceCharts models={filteredModels} />
           <TestHistoryTable />
+          
+          <div className="grid gap-6 md:grid-cols-2">
+            <ModelAlertSettings />
+            <SchedulesList />
+          </div>
         </>
       )}
 
@@ -186,6 +196,12 @@ export default function ModelHealthDashboard() {
         model={historyDialogModel}
         open={!!historyDialogModel}
         onOpenChange={(open) => !open && setHistoryDialogModel(null)}
+      />
+
+      <ScheduleDialog
+        model={scheduleDialogModel}
+        open={!!scheduleDialogModel}
+        onOpenChange={(open) => !open && setScheduleDialogModel(null)}
       />
     </div>
   );

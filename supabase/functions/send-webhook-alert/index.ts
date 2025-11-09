@@ -13,12 +13,14 @@ const corsHeaders = {
 };
 
 interface AlertPayload {
-  type: 'failure_rate' | 'storage_spike' | 'test';
+  type: 'failure_rate' | 'storage_spike' | 'test' | 'model_failure';
+  severity?: 'warning' | 'critical';
   message: string;
   failureRate?: number;
   storageFailures?: number;
   threshold?: number;
   details?: any;
+  metadata?: any;
 }
 
 serve(async (req) => {

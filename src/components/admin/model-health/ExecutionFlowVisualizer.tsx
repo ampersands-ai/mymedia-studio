@@ -168,7 +168,7 @@ export const ExecutionFlowVisualizer = ({ currentStage, error, stageData = {} }:
 
     return (
       <div className="mt-2 p-3 bg-muted/50 rounded-md space-y-2">
-        <pre className="text-xs overflow-auto max-h-40 whitespace-pre-wrap break-words">
+        <pre className="text-xs overflow-auto max-h-96 whitespace-pre-wrap break-words font-mono">
           {JSON.stringify(data, null, 2)}
         </pre>
       </div>

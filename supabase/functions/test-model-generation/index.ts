@@ -216,12 +216,13 @@ serve(async (req) => {
       // Check generation status via Supabase
       const { data: generation } = await supabase
         .from('generations')
-        .select('*')
+        .select('id, status, storage_path, output_url, provider_response, provider_task_id, file_size_bytes')
         .eq('provider_task_id', taskId)
         .single();
 
       if (generation && generation.status === 'completed') {
         finalResult = generation;
+        console.log('✅ Generation completed, provider_response keys:', Object.keys(generation.provider_response || {}));
         break;
       }
       
@@ -252,6 +253,8 @@ serve(async (req) => {
 
     // Step 8: Final API Response Received
     console.log('Step 8: Final response received...');
+    console.log('📦 Provider response data:', JSON.stringify(finalResult.provider_response, null, 2));
+    
     steps.push({
       step: 'final_api_response',
       timestamp: Date.now(),
@@ -261,6 +264,7 @@ serve(async (req) => {
         output_url: finalResult.output_url,
         storage_path: finalResult.storage_path,
         provider_metadata: finalResult.provider_response || {},
+        kie_webhook_payload: finalResult.provider_response || {},
         total_generation_time_ms: Date.now() - requestSentTime,
       }
     });

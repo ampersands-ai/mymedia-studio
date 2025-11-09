@@ -40,6 +40,7 @@ export default function ModelHealthTestPage() {
   const [currentStage, setCurrentStage] = useState<string>('input_validation');
   const [outputUrl, setOutputUrl] = useState<string | null>(null);
   const [stageData, setStageData] = useState<any>({});
+  const [hasStartedTest, setHasStartedTest] = useState(false);
 
   const outputSectionRef = useRef<HTMLDivElement>(null);
   
@@ -196,6 +197,7 @@ export default function ModelHealthTestPage() {
     setOutputUrl(null);
     setCurrentStage('input_validation');
     setStageData({});
+    setHasStartedTest(true);
     
     // Step 1: Capture input validation data
     const inputData = {
@@ -337,6 +339,7 @@ export default function ModelHealthTestPage() {
     setOutputUrl(null);
     setCurrentStage('input_validation');
     setStageData({});
+    setHasStartedTest(false);
     setUploadedImages([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -596,7 +599,7 @@ export default function ModelHealthTestPage() {
       </div>
 
       {/* Execution Flow Visualizer (shown during and after test) */}
-      {(testStatus === 'running' || testStatus === 'completed' || testStatus === 'error') && (
+      {hasStartedTest && (
         <ExecutionFlowVisualizer
           currentStage={currentStage}
           error={testError}

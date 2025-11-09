@@ -71,9 +71,14 @@ export default function ModelHealthTestPage() {
             const primaryTextKey = findPrimaryTextKey(properties);
             if (fieldName === primaryTextKey || fieldName.includes('prompt') || fieldName.includes('text')) {
               // Check model groups to determine which prompt to use
-              const modelGroups = fullModel?.groups || model?.groups;
+              const modelGroupsRaw = (fullModel?.groups ?? model?.groups);
+              const groupStr = Array.isArray(modelGroupsRaw)
+                ? modelGroupsRaw.join(",")
+                : typeof modelGroupsRaw === "string"
+                  ? modelGroupsRaw
+                  : JSON.stringify(modelGroupsRaw ?? "");
               
-              if (modelGroups === 'image_to_video' || modelGroups === 'image_editing') {
+              if (groupStr.includes('image_to_video') || groupStr.includes('image_editing')) {
                 // Use specific prompt for image-to-video and image editing
                 defaults[fieldName] = "Change the attire of this person to black-colored";
               } else {

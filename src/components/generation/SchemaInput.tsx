@@ -231,11 +231,12 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
           <p className="text-xs text-muted-foreground mb-2">{schema.description}</p>
         )}
         <div className="space-y-2">
-          {(imagePreview || imageUrl) ? (
+          {((imagePreview && (imagePreview.startsWith('http') || imagePreview.startsWith('data:image/'))) ||
+            (typeof imageUrl === 'string' && (imageUrl.startsWith('http') || imageUrl.startsWith('data:image/')))) ? (
             <div className="space-y-2">
               <div className="relative inline-block">
                 <img 
-                  src={imagePreview || imageUrl} 
+                  src={imagePreview || imageUrl as string} 
                   alt="Preview" 
                   className="max-w-full h-auto max-h-48 rounded-lg border"
                 />
@@ -301,11 +302,12 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
           {isRequired && <span className="text-destructive ml-1">*</span>}
         </Label>
         <div className="space-y-2">
-          {(imagePreview || value) ? (
+          {((imagePreview && (imagePreview.startsWith('http') || imagePreview.startsWith('data:image/'))) ||
+            (typeof value === 'string' && (value.startsWith('http') || value.startsWith('data:image/')))) ? (
             <div className="space-y-2">
               <div className="relative inline-block">
                 <img 
-                  src={imagePreview || value} 
+                  src={imagePreview || value as string} 
                   alt="Preview" 
                   className="max-w-full h-auto max-h-48 rounded-lg border"
                 />

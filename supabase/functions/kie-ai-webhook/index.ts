@@ -107,8 +107,9 @@ serve(async (req) => {
 
     // Parse items from payload
     let items: any[] = [];
+    let normalizedUrls: string[] = [];
     try {
-      const normalizedUrls = normalizeResultUrls(payload, resultJson, generation.type, generation.ai_models?.id);
+      normalizedUrls = normalizeResultUrls(payload, resultJson, generation.type, generation.ai_models?.id);
       
       if (normalizedUrls.length > 0) {
         items = mapUrlsToItems(normalizedUrls, generation.type);
@@ -222,27 +223,34 @@ serve(async (req) => {
     if (isSuccess && (resultJson || payload.data?.info || hasMjResults || video_url || (Array.isArray(items) && items.length > 0))) {
       console.log('🎯 Processing successful generation');
       
-      // Extract result URLs
-      let resultUrls: string[] = [];
+      // Extract result URLs - reuse normalized URLs if available
+      let resultUrls: string[] = normalizedUrls.length > 0 ? normalizedUrls : [];
       
-      if (video_url) {
-        resultUrls = [video_url];
-      } else if (isMidjourneyModel(generation.ai_models?.id) && payload.data?.resultUrls) {
-        resultUrls = extractMidjourneyUrls(payload);
-        console.log('🎨 [MIDJOURNEY] URLs found:', resultUrls.length);
-      } else if (resultJson) {
-        const result = JSON.parse(resultJson);
-        resultUrls = result.resultUrls || [result.resultUrl].filter(Boolean);
-      } else if (payload.data?.info) {
-        resultUrls = payload.data.info.resultUrls || payload.data.info.result_urls || [];
-      } else if (Array.isArray(items) && items.length > 0) {
-        if (generation.type === 'audio') {
-          resultUrls = items.map((item: any) => item?.audio_url || item?.source_audio_url || item?.stream_audio_url).filter(Boolean);
-        } else if (generation.type === 'image') {
-          resultUrls = items.map((item: any) => item?.image_url || item?.source_image_url).filter(Boolean);
-        } else {
-          resultUrls = items.map((item: any) => item?.video_url || item?.source_video_url || item?.url).filter(Boolean);
+      // Only run old extraction if normalizedUrls is empty (fallback for legacy formats)
+      if (resultUrls.length === 0) {
+        console.log('⚠️ normalizedUrls empty, using fallback extraction');
+        
+        if (video_url) {
+          resultUrls = [video_url];
+        } else if (isMidjourneyModel(generation.ai_models?.id) && payload.data?.resultUrls) {
+          resultUrls = extractMidjourneyUrls(payload);
+          console.log('🎨 [MIDJOURNEY] URLs found:', resultUrls.length);
+        } else if (resultJson) {
+          const result = JSON.parse(resultJson);
+          resultUrls = result.resultUrls || [result.resultUrl].filter(Boolean);
+        } else if (payload.data?.info) {
+          resultUrls = payload.data.info.resultUrls || payload.data.info.result_urls || [];
+        } else if (Array.isArray(items) && items.length > 0) {
+          if (generation.type === 'audio') {
+            resultUrls = items.map((item: any) => item?.audio_url || item?.source_audio_url || item?.stream_audio_url).filter(Boolean);
+          } else if (generation.type === 'image') {
+            resultUrls = items.map((item: any) => item?.image_url || item?.source_image_url).filter(Boolean);
+          } else {
+            resultUrls = items.map((item: any) => item?.video_url || item?.source_video_url || item?.url).filter(Boolean);
+          }
         }
+      } else {
+        console.log(`✅ Reusing ${resultUrls.length} normalized URL(s) - no re-extraction needed`);
       }
 
       if (resultUrls.length === 0) {

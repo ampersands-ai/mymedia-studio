@@ -40,10 +40,20 @@ export function normalizeResultUrls(
   // Try new data.info format (snake_case and camelCase)
   if (urls.length === 0 && payload.data?.info) {
     const info = payload.data.info;
+    
+    // Try plural formats first
     const infoUrls = info.result_urls ?? info.resultUrls;
     if (Array.isArray(infoUrls) && infoUrls.length > 0) {
       urls.push(...infoUrls);
-      console.log('ℹ️ Normalized URLs from data.info:', urls.length);
+      console.log('ℹ️ Normalized URLs from data.info (plural):', urls.length);
+    } 
+    // Try singular formats (FLUX Kontext, etc.)
+    else {
+      const singleUrl = info.resultImageUrl ?? info.result_image_url ?? info.resultUrl ?? info.result_url;
+      if (singleUrl) {
+        urls.push(singleUrl);
+        console.log('ℹ️ Normalized single URL from data.info');
+      }
     }
   }
   

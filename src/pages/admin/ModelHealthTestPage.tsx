@@ -330,7 +330,7 @@ export default function ModelHealthTestPage() {
 
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-4">
-                {fullModel?.input_schema && (
+                {fullModel?.input_schema ? (
                   <ModelParameterForm
                     modelSchema={fullModel.input_schema}
                     onChange={setParameters}
@@ -338,6 +338,26 @@ export default function ModelHealthTestPage() {
                     modelId={fullModel.id}
                     provider={fullModel.provider}
                   />
+                ) : modelsLoading ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-20 w-full" />
+                    <Skeleton className="h-20 w-full" />
+                    <Skeleton className="h-20 w-full" />
+                  </div>
+                ) : (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      No input schema found for this model. The model may not be properly configured.
+                      <div className="mt-2 text-xs">
+                        <strong>Debug Info:</strong>
+                        <div>Model ID: {fullModel?.id || 'N/A'}</div>
+                        <div>Record ID: {recordId}</div>
+                        <div>Has fullModel: {fullModel ? 'Yes' : 'No'}</div>
+                        <div>Has input_schema: {fullModel?.input_schema ? 'Yes' : 'No'}</div>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
                 )}
               </div>
               

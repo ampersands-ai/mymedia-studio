@@ -123,12 +123,6 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
         </>
       )}
 
-      {isRequired && images.length === 0 && (
-        <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded border border-border">
-          This model requires at least one image to generate content.
-        </p>
-      )}
-
       <p className="text-xs text-muted-foreground">
         Supported formats: JPEG, PNG, WebP (max 10MB per image)
       </p>

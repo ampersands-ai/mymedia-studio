@@ -1,3 +1,10 @@
+export interface FlowStepHoverData {
+  title: string;
+  details: Record<string, any>;
+  preview_url?: string;
+  actions?: Array<{ label: string; action: string }>;
+}
+
 export interface FlowStep {
   step_name: string;
   step_number: number;
@@ -7,6 +14,10 @@ export interface FlowStep {
   status: 'pending' | 'running' | 'completed' | 'failed';
   data: Record<string, any>;
   error: string | null;
+  substatus?: 'preparing' | 'executing' | 'completed' | 'failed';
+  hover_data?: FlowStepHoverData;
+  progress_percent?: number;
+  retryable?: boolean;
 }
 
 export interface ModelTestResult {
@@ -37,6 +48,12 @@ export interface ModelTestResult {
   credits_refunded: boolean;
   created_at: string;
   updated_at: string;
+  api_request_payload?: Record<string, any>;
+  api_first_response?: Record<string, any>;
+  api_final_response?: Record<string, any>;
+  storage_metadata?: Record<string, any>;
+  media_preview_url?: string;
+  step_metadata?: Record<string, any>;
 }
 
 export interface ModelTestConfig {

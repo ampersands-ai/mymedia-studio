@@ -15,6 +15,14 @@ interface FlowStep {
   status: 'pending' | 'running' | 'completed' | 'failed';
   data: Record<string, any>;
   error: string | null;
+  substatus?: 'preparing' | 'executing' | 'completed' | 'failed';
+  hover_data?: {
+    title: string;
+    details: Record<string, any>;
+    preview_url?: string;
+  };
+  progress_percent?: number;
+  retryable?: boolean;
 }
 
 serve(async (req) => {
@@ -65,9 +73,19 @@ serve(async (req) => {
     const testStartTime = new Date().toISOString();
     const flowSteps: FlowStep[] = [];
     let testResultId: string | null = null;
+    let apiRequestPayload: any = null;
+    let apiFirstResponse: any = null;
+    let apiFinalResponse: any = null;
+    let storageMetadata: any = null;
 
-    // Helper to add flow step
-    const addStep = (stepName: string, stepNumber: number, data: any = {}, error: string | null = null) => {
+    // Helper to add flow step with enhanced tracking
+    const addStep = (
+      stepName: string, 
+      stepNumber: number, 
+      data: any = {}, 
+      error: string | null = null,
+      hoverData?: { title: string; details: Record<string, any>; preview_url?: string }
+    ) => {
       const now = new Date().toISOString();
       const lastStep = flowSteps[flowSteps.length - 1];
       const startedAt = lastStep?.completed_at || testStartTime;
@@ -81,6 +99,8 @@ serve(async (req) => {
         status: error ? 'failed' : 'completed',
         data,
         error,
+        hover_data: hoverData,
+        substatus: error ? 'failed' : 'completed',
       };
       
       flowSteps.push(step);
@@ -106,11 +126,21 @@ serve(async (req) => {
       if (createError) throw createError;
       testResultId = testResult.id;
 
-      // Step 1: Input Validation
+      // Step 1: User Input Validation
       const step1Start = Date.now();
-      addStep('Input Validation', 1, {
+      addStep('User Input Validation', 1, {
         prompt: config.prompt_template,
         parameters: config.custom_parameters,
+        model_id: model.id,
+      }, null, {
+        title: 'Input Validation Details',
+        details: {
+          prompt: config.prompt_template,
+          custom_parameters: JSON.stringify(config.custom_parameters, null, 2),
+          model_name: model.model_name,
+          provider: model.provider,
+          content_type: model.content_type,
+        },
       });
       const step1Duration = Date.now() - step1Start;
 
@@ -160,6 +190,16 @@ serve(async (req) => {
         credits_required: model.base_token_cost,
         credits_available: creditsAvailable,
         will_deduct: config.deduct_credits,
+        test_user_id: testUserId,
+      }, null, {
+        title: 'Credit Check Details',
+        details: {
+          credits_required: model.base_token_cost,
+          credits_available: creditsAvailable,
+          deduction_mode: config.deduct_credits ? 'Live' : 'Test',
+          user_id: testUserId || 'N/A',
+          balance_after: creditsAvailable - (config.deduct_credits ? model.base_token_cost : 0),
+        },
       });
       const step2Duration = Date.now() - step2Start;
 
@@ -180,13 +220,20 @@ serve(async (req) => {
         creditsDeducted = true;
       }
 
-      addStep('Credit Deduction', 3, {
+      addStep(creditsDeducted ? 'Credits Deducted' : 'Credit Deduction Skipped', 3, {
         deducted: creditsDeducted,
         amount: config.deduct_credits ? model.base_token_cost : 0,
+      }, null, {
+        title: creditsDeducted ? 'Credits Deducted' : 'Test Mode - No Deduction',
+        details: {
+          amount_deducted: creditsDeducted ? model.base_token_cost : 0,
+          mode: config.deduct_credits ? 'Live' : 'Test',
+          transaction_type: 'Model Health Test',
+        },
       });
       const step3Duration = Date.now() - step3Start;
 
-      // Step 4: Call generation function (sync for Runware, async for others)
+      // Step 4: API Request Preparation
       const step4Start = Date.now();
       let outputUrl: string | null = null;
       let generationStatus = 'pending';
@@ -195,8 +242,37 @@ serve(async (req) => {
       // Use service role key for authentication in test mode
       const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
+      // Prepare API request payload
+      apiRequestPayload = {
+        model_record_id: model.record_id,
+        prompt: config.prompt_template,
+        custom_parameters: config.custom_parameters || {},
+        user_id: testUserId,
+      };
+
+      addStep('API Request Prepared', 4, {
+        endpoint: model.provider === 'runware' ? 'generate-content-sync' : 'generate-content',
+        method: 'POST',
+      }, null, {
+        title: 'API Request Details',
+        details: {
+          endpoint: `${model.provider === 'runware' ? 'generate-content-sync' : 'generate-content'}`,
+          payload: JSON.stringify(apiRequestPayload, null, 2),
+          provider: model.provider,
+          model_id: model.id,
+        },
+      });
+
+      // Step 5: Send API Request
+      const step5Start = Date.now();
+      
       if (model.provider === 'runware') {
         // Sync generation via generate-content-sync
+        addStep('API Request Sent', 5, {
+          provider: 'runware',
+          sync: true,
+        });
+        
         const syncResponse = await fetch(
           `${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-content-sync`,
           {
@@ -205,12 +281,7 @@ serve(async (req) => {
               'Authorization': `Bearer ${serviceRoleKey}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              model_record_id: model.record_id,
-              prompt: config.prompt_template,
-              custom_parameters: config.custom_parameters || {},
-              user_id: testUserId,
-            }),
+            body: JSON.stringify(apiRequestPayload),
           }
         );
 
@@ -224,6 +295,8 @@ serve(async (req) => {
           }
           
           console.error('Sync generation failed:', syncResponse.status, errorText);
+          apiFirstResponse = parsedError;
+          apiFinalResponse = parsedError;
           
           // Provide friendly message for duplicate model IDs
           let errorMessage = `Generation failed: HTTP ${syncResponse.status}`;
@@ -233,24 +306,67 @@ serve(async (req) => {
             errorMessage += ` - ${parsedError.error.substring(0, 200)}`;
           }
           
-          addStep('Generation Execution', 4, { 
+          addStep('API Response Received', 6, { 
             error_status: syncResponse.status,
             error_body: parsedError 
-          }, errorMessage);
+          }, errorMessage, {
+            title: 'API Error Response',
+            details: {
+              status_code: syncResponse.status,
+              error_message: parsedError.error || 'Unknown error',
+              full_response: JSON.stringify(parsedError, null, 2),
+            },
+          });
           generationStatus = 'failed';
         } else {
           const syncResult = await syncResponse.json();
           generationId = syncResult.id;
           outputUrl = syncResult.output_url;
           generationStatus = 'completed';
-          addStep('Generation Execution', 4, {
+          apiFirstResponse = syncResult;
+          apiFinalResponse = syncResult;
+          
+          addStep('Final Response Received', 6, {
             generation_id: generationId,
             output_url: outputUrl,
-            provider_response: syncResult,
+            status: 'completed',
+          }, null, {
+            title: 'Generation Complete',
+            details: {
+              generation_id: generationId,
+              output_url: outputUrl,
+              provider_task_id: syncResult.provider_task_id || 'N/A',
+              response: JSON.stringify(syncResult, null, 2),
+            },
+            preview_url: outputUrl || undefined,
+          });
+
+          // Step 7: Media Storage (implicit for sync)
+          storageMetadata = {
+            bucket: 'generated-content',
+            output_url: outputUrl,
+            generation_id: generationId,
+          };
+          
+          addStep('Media Stored on Supabase', 7, {
+            url: outputUrl,
+            accessible: true,
+          }, null, {
+            title: 'Storage Details',
+            details: {
+              bucket: 'generated-content',
+              public_url: outputUrl,
+              generation_id: generationId,
+            },
           });
         }
       } else {
         // Async generation via generate-content
+        addStep('API Request Sent', 5, {
+          provider: model.provider,
+          sync: false,
+        });
+        
         const asyncResponse = await fetch(
           `${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-content`,
           {
@@ -259,12 +375,7 @@ serve(async (req) => {
               'Authorization': `Bearer ${serviceRoleKey}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              model_record_id: model.record_id,
-              prompt: config.prompt_template,
-              custom_parameters: config.custom_parameters || {},
-              user_id: testUserId,
-            }),
+            body: JSON.stringify(apiRequestPayload),
           }
         );
 
@@ -278,6 +389,8 @@ serve(async (req) => {
           }
           
           console.error('Async generation failed:', asyncResponse.status, errorText);
+          apiFirstResponse = parsedError;
+          apiFinalResponse = parsedError;
           
           // Provide friendly message for duplicate model IDs
           let errorMessage = `Generation failed: HTTP ${asyncResponse.status}`;
@@ -287,85 +400,200 @@ serve(async (req) => {
             errorMessage += ` - ${parsedError.error.substring(0, 200)}`;
           }
           
-          addStep('Generation Execution', 4, { 
+          addStep('First Response Received', 6, { 
             error_status: asyncResponse.status,
             error_body: parsedError 
-          }, errorMessage);
+          }, errorMessage, {
+            title: 'API Error Response',
+            details: {
+              status_code: asyncResponse.status,
+              error_message: parsedError.error || 'Unknown error',
+              full_response: JSON.stringify(parsedError, null, 2),
+            },
+          });
           generationStatus = 'failed';
         } else {
           // Get generation_id from response
           const asyncResult = await asyncResponse.json();
           generationId = asyncResult.id;
+          apiFirstResponse = asyncResult;
           
-          addStep('Generation Submission', 4, {
+          addStep('First Response Received', 6, {
             generation_id: generationId,
             provider: model.provider,
+            provider_task_id: asyncResult.provider_task_id || 'Pending',
+          }, null, {
+            title: 'Generation Submitted',
+            details: {
+              generation_id: generationId,
+              provider: model.provider,
+              provider_task_id: asyncResult.provider_task_id || 'Pending',
+              status: 'Queued',
+            },
           });
           
-          // Poll for completion
+          // Step 7: Poll for completion
           const pollStart = Date.now();
           const timeoutMs = (config.timeout_seconds || 120) * 1000;
+          let pollCount = 0;
+          
+          addStep('Polling for Completion', 7, {
+            timeout_seconds: config.timeout_seconds,
+          }, null, {
+            title: 'Waiting for Provider',
+            details: {
+              provider: model.provider,
+              max_wait_time: `${config.timeout_seconds}s`,
+              poll_interval: '2s',
+            },
+          });
           
           while (Date.now() - pollStart < timeoutMs) {
             await new Promise(resolve => setTimeout(resolve, 2000));
+            pollCount++;
             
             const { data: updatedGen } = await supabaseClient
               .from('generations')
-              .select('status, output_url')
+              .select('status, output_url, provider_response')
               .eq('id', generationId)
               .single();
 
             if (updatedGen?.status === 'completed') {
               outputUrl = updatedGen.output_url;
               generationStatus = 'completed';
-              addStep('Generation Execution', 5, {
+              apiFinalResponse = updatedGen.provider_response || updatedGen;
+              
+              addStep('Final Response Received', 8, {
                 output_url: outputUrl,
                 polling_duration_ms: Date.now() - pollStart,
+                poll_count: pollCount,
+              }, null, {
+                title: 'Generation Complete',
+                details: {
+                  output_url: outputUrl,
+                  total_wait_time: `${((Date.now() - pollStart) / 1000).toFixed(2)}s`,
+                  poll_attempts: pollCount,
+                  final_status: 'completed',
+                },
+                preview_url: outputUrl || undefined,
+              });
+
+              // Step 9: Media Storage
+              storageMetadata = {
+                bucket: 'generated-content',
+                output_url: outputUrl,
+                generation_id: generationId,
+              };
+              
+              addStep('Media Stored on Supabase', 9, {
+                url: outputUrl,
+                accessible: true,
+              }, null, {
+                title: 'Storage Details',
+                details: {
+                  bucket: 'generated-content',
+                  public_url: outputUrl,
+                  generation_id: generationId,
+                },
               });
               break;
             } else if (updatedGen?.status === 'failed') {
               generationStatus = 'failed';
-              addStep('Generation Execution', 5, {}, 'Generation failed');
+              apiFinalResponse = updatedGen.provider_response || updatedGen;
+              addStep('Final Response Received', 8, {
+                polling_duration_ms: Date.now() - pollStart,
+              }, 'Generation failed', {
+                title: 'Generation Failed',
+                details: {
+                  status: 'failed',
+                  wait_time: `${((Date.now() - pollStart) / 1000).toFixed(2)}s`,
+                  poll_attempts: pollCount,
+                },
+              });
               break;
             }
           }
 
           if (generationStatus === 'pending') {
             generationStatus = 'timeout';
-            addStep('Generation Execution', 5, {}, `Timeout after ${config.timeout_seconds}s`);
+            addStep('Final Response Received', 8, {
+              polling_duration_ms: Date.now() - pollStart,
+            }, `Timeout after ${config.timeout_seconds}s`, {
+              title: 'Timeout',
+              details: {
+                max_wait_time: `${config.timeout_seconds}s`,
+                poll_attempts: pollCount,
+                last_status: 'pending',
+              },
+            });
           }
         }
       }
 
       const step4Duration = Date.now() - step4Start;
 
-      // Step 6: Output Validation
-      const step6Start = Date.now();
+      // Step 10: Media Validation & Delivery
+      const step10Start = Date.now();
+      const nextStepNum = flowSteps.length + 1;
+      
       if (outputUrl && config.validate_file_accessible) {
         try {
           const response = await fetch(outputUrl, { method: 'HEAD' });
+          const contentType = response.headers.get('content-type');
+          const contentLength = response.headers.get('content-length');
+          
           if (!response.ok) {
-            addStep('Output Validation', 6, {}, `File not accessible: ${response.status}`);
+            addStep('Media Validation', nextStepNum, {}, `File not accessible: ${response.status}`, {
+              title: 'Validation Failed',
+              details: {
+                url: outputUrl,
+                status_code: response.status,
+                accessible: false,
+              },
+            });
           } else {
-            addStep('Output Validation', 6, {
+            addStep('Media Delivered to User', nextStepNum, {
               url: outputUrl,
               accessible: true,
-              content_type: response.headers.get('content-type'),
+              content_type: contentType,
+              size_bytes: contentLength,
+            }, null, {
+              title: 'Media Ready',
+              details: {
+                public_url: outputUrl,
+                content_type: contentType || 'N/A',
+                file_size: contentLength ? `${(parseInt(contentLength) / 1024).toFixed(2)} KB` : 'N/A',
+                accessible: true,
+                validated: true,
+              },
+              preview_url: outputUrl,
             });
           }
         } catch (e) {
           const errorMsg = e instanceof Error ? e.message : 'Unknown error';
-          addStep('Output Validation', 6, {}, `Validation error: ${errorMsg}`);
+          addStep('Media Validation', nextStepNum, {}, `Validation error: ${errorMsg}`, {
+            title: 'Validation Error',
+            details: {
+              error: errorMsg,
+              url: outputUrl,
+            },
+          });
         }
+      } else if (!outputUrl) {
+        addStep('Media Validation Skipped', nextStepNum, { 
+          reason: 'No output URL available' 
+        });
       } else {
-        addStep('Output Validation', 6, { skipped: !outputUrl || !config.validate_file_accessible });
+        addStep('Media Validation Skipped', nextStepNum, { 
+          reason: 'Validation disabled in config' 
+        });
       }
-      const step6Duration = Date.now() - step6Start;
+      const step10Duration = Date.now() - step10Start;
 
       // Calculate total latency
       const totalLatency = Date.now() - new Date(testStartTime).getTime();
 
-      // Update test result
+      // Update test result with enhanced tracking data
       await supabaseClient
         .from('model_test_results')
         .update({
@@ -373,16 +601,21 @@ serve(async (req) => {
           status: generationStatus === 'completed' ? 'success' : generationStatus === 'timeout' ? 'timeout' : 'failed',
           generation_id: generationId,
           output_url: outputUrl,
+          media_preview_url: outputUrl, // Use output URL as preview for now
           flow_steps: flowSteps,
           total_latency_ms: totalLatency,
           credit_check_ms: step2Duration,
           credit_deduct_ms: step3Duration,
           generation_submit_ms: step4Duration,
           polling_duration_ms: step4Duration,
-          output_receive_ms: step6Duration,
+          output_receive_ms: step10Duration,
           credits_available_before: creditsAvailable,
           credits_deducted: creditsDeducted,
           credits_refunded: false,
+          api_request_payload: apiRequestPayload,
+          api_first_response: apiFirstResponse,
+          api_final_response: apiFinalResponse,
+          storage_metadata: storageMetadata,
         })
         .eq('id', testResultId);
 
@@ -400,7 +633,7 @@ serve(async (req) => {
             credit_deduct: step3Duration,
             generation_submit: step4Duration,
             polling: step4Duration,
-            output_receive: step6Duration,
+            output_receive: step10Duration,
           },
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -824,6 +824,9 @@ export type Database = {
       }
       model_test_results: {
         Row: {
+          api_final_response: Json | null
+          api_first_response: Json | null
+          api_request_payload: Json | null
           created_at: string | null
           credit_check_ms: number | null
           credit_deduct_ms: number | null
@@ -838,11 +841,14 @@ export type Database = {
           generation_id: string | null
           generation_submit_ms: number | null
           id: string
+          media_preview_url: string | null
           model_record_id: string
           output_receive_ms: number | null
           output_url: string | null
           polling_duration_ms: number | null
           status: string
+          step_metadata: Json | null
+          storage_metadata: Json | null
           storage_save_ms: number | null
           test_completed_at: string | null
           test_parameters: Json | null
@@ -853,6 +859,9 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          api_final_response?: Json | null
+          api_first_response?: Json | null
+          api_request_payload?: Json | null
           created_at?: string | null
           credit_check_ms?: number | null
           credit_deduct_ms?: number | null
@@ -867,11 +876,14 @@ export type Database = {
           generation_id?: string | null
           generation_submit_ms?: number | null
           id?: string
+          media_preview_url?: string | null
           model_record_id: string
           output_receive_ms?: number | null
           output_url?: string | null
           polling_duration_ms?: number | null
           status: string
+          step_metadata?: Json | null
+          storage_metadata?: Json | null
           storage_save_ms?: number | null
           test_completed_at?: string | null
           test_parameters?: Json | null
@@ -882,6 +894,9 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          api_final_response?: Json | null
+          api_first_response?: Json | null
+          api_request_payload?: Json | null
           created_at?: string | null
           credit_check_ms?: number | null
           credit_deduct_ms?: number | null
@@ -896,11 +911,14 @@ export type Database = {
           generation_id?: string | null
           generation_submit_ms?: number | null
           id?: string
+          media_preview_url?: string | null
           model_record_id?: string
           output_receive_ms?: number | null
           output_url?: string | null
           polling_duration_ms?: number | null
           status?: string
+          step_metadata?: Json | null
+          storage_metadata?: Json | null
           storage_save_ms?: number | null
           test_completed_at?: string | null
           test_parameters?: Json | null

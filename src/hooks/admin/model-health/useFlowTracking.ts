@@ -28,9 +28,21 @@ export const useFlowTracking = (testResultId: string | null) => {
     },
     enabled: !!testResultId,
     refetchInterval: (query) => {
-      // Poll every 2 seconds while test is running
       const data = query.state.data;
-      return data?.status === 'running' ? 2000 : false;
+      if (!data) return false;
+      
+      // Poll aggressively while running
+      if (data.status === 'running') return 1000;
+      
+      // Poll slower for long waits
+      if (data.flow_steps?.some((s: any) => 
+        s.step_name.toLowerCase().includes('polling') && s.status === 'running'
+      )) {
+        return 2000;
+      }
+      
+      // Stop polling when complete
+      return false;
     },
   });
 };

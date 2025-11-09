@@ -5,7 +5,8 @@ import { useModelByRecordId } from "@/hooks/useModels";
 import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { useGeneration } from "@/hooks/useGeneration";
-import { useAuth } from "@/hooks/useAuth";
+import { useCustomGenerationPolling } from "@/hooks/useCustomGenerationPolling";
+import { useAuth } from "@/contexts/AuthContext";
 import { getSurpriseMePrompt } from "@/data/surpriseMePrompts";
 import { buildCustomParameters } from "@/lib/custom-creation-utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ModelParameterForm } from "@/components/generation/ModelParameterForm";
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, Clock, AlertCircle, Download } from "lucide-react";
+import type { GenerationOutput } from "@/types/custom-creation";
 
 export default function ModelHealthTestPage() {
   const { recordId } = useParams<{ recordId: string }>();
@@ -37,6 +39,72 @@ export default function ModelHealthTestPage() {
   const model = models?.find((m) => m.record_id === recordId);
   const imageUploadHooks = useImageUpload(fullModel);
   const { generate, isGenerating } = useGeneration();
+
+  // Setup generation polling
+  const { startPolling, stopPolling } = useCustomGenerationPolling({
+    onComplete: async (outputs: GenerationOutput[], parentId: string) => {
+      if (outputs.length > 0 && outputs[0].storage_path) {
+        // Get signed URL for the first output
+        const { data: urlData } = await supabase.storage
+          .from('generated-content')
+          .createSignedUrl(outputs[0].storage_path, 3600);
+        
+        if (urlData?.signedUrl) {
+          setOutputUrl(urlData.signedUrl);
+          setTestStatus('completed');
+          
+          // Update test result
+          if (testResultId) {
+            await supabase
+              .from('model_test_results')
+              .update({
+                status: 'success',
+                generation_id: parentId,
+                output_url: urlData.signedUrl,
+                completed_at: new Date().toISOString(),
+              })
+              .eq('id', testResultId);
+          }
+          
+          toast.success('Test completed successfully!');
+        }
+      }
+    },
+    onError: async (error: string) => {
+      setTestStatus('error');
+      setTestError(error);
+      
+      if (testResultId) {
+        await supabase
+          .from('model_test_results')
+          .update({
+            status: 'error',
+            error_message: error,
+            completed_at: new Date().toISOString(),
+          })
+          .eq('id', testResultId);
+      }
+      
+      toast.error('Test failed');
+    },
+    onTimeout: async () => {
+      setTestStatus('error');
+      setTestError('Test timeout');
+      
+      if (testResultId) {
+        await supabase
+          .from('model_test_results')
+          .update({
+            status: 'error',
+            error_message: 'Test timeout',
+            completed_at: new Date().toISOString(),
+          })
+          .eq('id', testResultId);
+      }
+      
+      toast.error('Test timeout');
+    }
+  });
 
   // Generate default parameters on mount
   useEffect(() => {
@@ -121,19 +189,7 @@ export default function ModelHealthTestPage() {
     setOutputUrl(null);
 
     try {
-      // Create test result record
-      const { data: testRecord, error: testRecordError } = await supabase
-        .from('model_test_results')
-        .insert({
-          model_record_id: recordId,
-          status: 'running',
-          test_config: { parameters },
-        })
-        .select()
-        .single();
-
-      if (testRecordError) throw testRecordError;
-      setTestResultId(testRecord.id);
+      // Note: Test result tracking is simplified - using generation_id for tracking
 
       // Upload images if needed
       let uploadedUrls: string[] = [];
@@ -150,76 +206,23 @@ export default function ModelHealthTestPage() {
 
       // Use the exact same generate function as Custom Creation
       const result = await generate({
-        templateId: fullModel.id,
-        modelId: fullModel.id,
+        template_id: fullModel.id,
+        model_id: fullModel.id,
         prompt,
-        imageUrls: uploadedUrls,
-        customParameters: customParams,
+        custom_parameters: {
+          ...customParams,
+          ...(uploadedUrls.length > 0 && { imageUrls: uploadedUrls })
+        }
       });
 
-      if (!result) {
+      if (!result || !result.id) {
         throw new Error('Generation failed');
       }
 
-      setGenerationId(result.generation_id);
+      setGenerationId(result.id);
 
-      // Poll for completion
-      const pollInterval = setInterval(async () => {
-        const { data: gen, error: genError } = await supabase
-          .from('content_generations')
-          .select('*')
-          .eq('id', result.generation_id)
-          .single();
-
-        if (genError) {
-          clearInterval(pollInterval);
-          throw genError;
-        }
-
-        if (gen.status === 'completed') {
-          clearInterval(pollInterval);
-          setTestStatus('completed');
-          setOutputUrl(gen.output_url);
-          
-          // Update test result
-          await supabase
-            .from('model_test_results')
-            .update({
-              status: 'success',
-              generation_id: gen.id,
-              output_url: gen.output_url,
-              completed_at: new Date().toISOString(),
-            })
-            .eq('id', testRecord.id);
-
-          toast.success('Test completed successfully!');
-        } else if (gen.status === 'failed' || gen.status === 'error') {
-          clearInterval(pollInterval);
-          setTestStatus('error');
-          setTestError(gen.error_message || 'Generation failed');
-          
-          await supabase
-            .from('model_test_results')
-            .update({
-              status: 'error',
-              error_message: gen.error_message,
-              completed_at: new Date().toISOString(),
-            })
-            .eq('id', testRecord.id);
-
-          toast.error('Test failed');
-        }
-      }, 2000);
-
-      // Timeout after 5 minutes
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        if (testStatus === 'running') {
-          setTestStatus('error');
-          setTestError('Test timeout');
-          toast.error('Test timeout');
-        }
-      }, 300000);
+      // Start polling for completion using the same hook as Custom Creation
+      startPolling(result.id);
 
     } catch (error: any) {
       console.error('Test error:', error);
@@ -241,6 +244,7 @@ export default function ModelHealthTestPage() {
   };
 
   const handleResetTest = () => {
+    stopPolling();
     setTestResultId(null);
     setGenerationId(null);
     setTestStatus('idle');
@@ -262,7 +266,7 @@ export default function ModelHealthTestPage() {
     }
   };
 
-  const getStatusVariant = () => {
+  const getStatusVariant = (): "default" | "destructive" | "outline" | "secondary" => {
     switch (testStatus) {
       case 'running':
         return 'secondary';
@@ -336,12 +340,15 @@ export default function ModelHealthTestPage() {
               <CardDescription>Configure test parameters for this model</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <ModelParameterForm
-                model={fullModel}
-                parameters={parameters}
-                setParameters={setParameters}
-                imageUploadHooks={imageUploadHooks}
-              />
+              {fullModel.input_schema && (
+                <ModelParameterForm
+                  modelSchema={fullModel.input_schema}
+                  onChange={setParameters}
+                  currentValues={parameters}
+                  modelId={fullModel.id}
+                  provider={fullModel.provider}
+                />
+              )}
               
               {validationErrors.length > 0 && (
                 <Alert variant="destructive">
@@ -358,7 +365,7 @@ export default function ModelHealthTestPage() {
 
               <Button 
                 onClick={handleStartTest} 
-                disabled={isGenerating || testStatus === 'running'}
+                disabled={isGenerating}
                 className="w-full"
               >
                 {isGenerating ? (

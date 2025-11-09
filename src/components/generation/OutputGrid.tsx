@@ -39,16 +39,13 @@ export const OutputGrid = ({
     return (
       <div className="space-y-3">
         <div 
-          className={isAudio 
-            ? "relative bg-background rounded-lg overflow-hidden border cursor-pointer hover:border-primary transition-colors"
-            : "relative aspect-square bg-background rounded-lg overflow-hidden border cursor-pointer hover:border-primary transition-colors"
-          }
+          className="relative bg-background rounded-lg overflow-hidden border cursor-pointer hover:border-primary transition-colors"
           onClick={() => onSelectOutput(0)}
         >
           <OptimizedGenerationPreview
             storagePath={outputs[0].storage_path}
             contentType={contentType}
-            className={isAudio ? "w-full" : "w-full h-full object-contain"}
+            className="w-full"
           />
         </div>
         

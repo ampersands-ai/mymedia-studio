@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useModelHealth } from "@/hooks/admin/model-health/useModelHealth";
 import { useModelTesting } from "@/hooks/admin/model-health/useModelTesting";
@@ -9,9 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { TestFlowTimeline } from "@/components/admin/model-health/TestFlowTimeline";
 import { MediaPreview } from "@/components/admin/model-health/MediaPreview";
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, Clock, AlertCircle, Download } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, Clock, AlertCircle, Download, PlayCircle } from "lucide-react";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 export default function ModelHealthTestPage() {
   const { recordId } = useParams<{ recordId: string }>();
@@ -21,6 +25,10 @@ export default function ModelHealthTestPage() {
   const [testResultId, setTestResultId] = useState<string | null>(null);
   const { data: testResult, isLoading: testLoading } = useFlowTracking(testResultId);
   const [isStarting, setIsStarting] = useState(false);
+  const [testConfig, setTestConfig] = useState({
+    prompt: "",
+    customParams: ""
+  });
 
   const model = models?.find(m => m.record_id === recordId);
 
@@ -30,25 +38,21 @@ export default function ModelHealthTestPage() {
     !!testResult
   );
 
-  useEffect(() => {
-    if (!recordId || !model || testResultId || isStarting) return;
-
-    const startTest = async () => {
-      setIsStarting(true);
-      try {
-        const result = await testModel.mutateAsync({ modelRecordId: recordId });
-        if (result?.testResultId) {
-          setTestResultId(result.testResultId);
-        }
-      } catch (error) {
-        console.error("Failed to start test:", error);
-      } finally {
-        setIsStarting(false);
+  const handleStartTest = async () => {
+    if (!recordId) return;
+    
+    setIsStarting(true);
+    try {
+      const result = await testModel.mutateAsync({ modelRecordId: recordId });
+      if (result?.testResultId) {
+        setTestResultId(result.testResultId);
       }
-    };
-
-    startTest();
-  }, [recordId, model, testResultId, isStarting]);
+    } catch (error) {
+      console.error("Failed to start test:", error);
+    } finally {
+      setIsStarting(false);
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -132,10 +136,13 @@ export default function ModelHealthTestPage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Testing: {model.model_name}</h1>
+            <h1 className="text-3xl font-bold">Test: {model.model_name}</h1>
             <div className="flex gap-2 mt-1">
               <Badge variant="outline">{model.provider}</Badge>
               <Badge variant="outline">{model.content_type}</Badge>
+              <Badge variant={model.is_active ? "default" : "secondary"}>
+                {model.is_active ? "Active" : "Inactive"}
+              </Badge>
             </div>
           </div>
         </div>
@@ -147,7 +154,113 @@ export default function ModelHealthTestPage() {
         )}
       </div>
 
-      {(isStarting || testLoading) && !testResult ? (
+      {!testResultId ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Configure Test</CardTitle>
+            <CardDescription>
+              Customize the test parameters before running the test on {model.model_name}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="prompt">Test Prompt (Optional)</Label>
+                  <Textarea
+                    id="prompt"
+                    placeholder="Enter a custom prompt to test with..."
+                    value={testConfig.prompt}
+                    onChange={(e) => setTestConfig({ ...testConfig, prompt: e.target.value })}
+                    rows={6}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="customParams">Custom Parameters (Optional JSON)</Label>
+                  <Textarea
+                    id="customParams"
+                    placeholder='{"temperature": 0.7, "max_tokens": 1000}'
+                    value={testConfig.customParams}
+                    onChange={(e) => setTestConfig({ ...testConfig, customParams: e.target.value })}
+                    rows={4}
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="p-4 rounded-lg border bg-muted/50">
+                  <h3 className="font-semibold mb-3">Model Details</h3>
+                  <dl className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">Provider:</dt>
+                      <dd className="font-medium">{model.provider}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">Content Type:</dt>
+                      <dd className="font-medium">{model.content_type}</dd>
+                    </div>
+                    {model.groups && (
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Group:</dt>
+                        <dd className="font-medium">{model.groups}</dd>
+                      </div>
+                    )}
+                    {model.timeout_seconds && (
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Timeout:</dt>
+                        <dd className="font-medium">{model.timeout_seconds}s</dd>
+                      </div>
+                    )}
+                  </dl>
+                </div>
+
+                {model.last_test_at && (
+                  <div className="p-4 rounded-lg border bg-muted/50">
+                    <h3 className="font-semibold mb-3">Last Test Results</h3>
+                    <dl className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Success Rate:</dt>
+                        <dd className="font-medium">{model.success_rate_percent_24h?.toFixed(1)}%</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Avg Latency:</dt>
+                        <dd className="font-medium">{model.avg_latency_ms ? (model.avg_latency_ms / 1000).toFixed(2) + 's' : '—'}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Tests (24h):</dt>
+                        <dd className="font-medium">{model.successful_tests_24h}/{model.total_tests_24h}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => navigate('/admin/model-health')}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleStartTest} 
+                disabled={isStarting || !model.is_active}
+                size="lg"
+              >
+                {isStarting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Starting Test...
+                  </>
+                ) : (
+                  <>
+                    <PlayCircle className="w-4 h-4 mr-2" />
+                    Run Test
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (isStarting || testLoading) && !testResult ? (
         <div className="flex flex-col items-center justify-center py-24 space-y-4">
           <Loader2 className="w-12 h-12 animate-spin text-primary" />
           <p className="text-muted-foreground">Starting test...</p>

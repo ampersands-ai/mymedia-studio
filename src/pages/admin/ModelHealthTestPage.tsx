@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useModelHealth } from "@/hooks/admin/model-health/useModelHealth";
 import { useModelTesting } from "@/hooks/admin/model-health/useModelTesting";
@@ -25,12 +25,36 @@ export default function ModelHealthTestPage() {
   const [testResultId, setTestResultId] = useState<string | null>(null);
   const { data: testResult, isLoading: testLoading } = useFlowTracking(testResultId);
   const [isStarting, setIsStarting] = useState(false);
+
+  const model = models?.find(m => m.record_id === recordId);
+
+  const getDefaultPrompt = () => {
+    if (!model) return "";
+    switch (model.content_type) {
+      case "image":
+        return "Generate a beautiful sunset over mountains with vibrant colors";
+      case "video":
+        return "Create a smooth 5-second video of ocean waves";
+      case "audio":
+        return "Generate a calm ambient background music track";
+      case "text":
+        return "Write a creative short story about space exploration";
+      default:
+        return "Test prompt for " + model.content_type;
+    }
+  };
+
   const [testConfig, setTestConfig] = useState({
     prompt: "",
     customParams: ""
   });
 
-  const model = models?.find(m => m.record_id === recordId);
+  // Set default prompt when model loads
+  useEffect(() => {
+    if (model && !testConfig.prompt) {
+      setTestConfig(prev => ({ ...prev, prompt: getDefaultPrompt() }));
+    }
+  }, [model]);
 
   useFlowStepNotifications(
     testResult?.flow_steps || [],
@@ -166,14 +190,27 @@ export default function ModelHealthTestPage() {
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="prompt">Test Prompt (Optional)</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="prompt">Test Prompt</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setTestConfig({ ...testConfig, prompt: getDefaultPrompt() })}
+                    >
+                      Reset to Default
+                    </Button>
+                  </div>
                   <Textarea
                     id="prompt"
-                    placeholder="Enter a custom prompt to test with..."
+                    placeholder="Enter a test prompt..."
                     value={testConfig.prompt}
                     onChange={(e) => setTestConfig({ ...testConfig, prompt: e.target.value })}
                     rows={6}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Pre-filled with a default prompt for {model.content_type} models
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="customParams">Custom Parameters (Optional JSON)</Label>
@@ -314,33 +351,51 @@ export default function ModelHealthTestPage() {
           )}
 
           {testResult.error_message && (
-            <div className="p-4 rounded-lg border border-destructive/50 bg-destructive/10">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <div className="font-semibold text-destructive">Error</div>
-                  <div className="text-sm text-destructive/90 mt-1">
-                    {testResult.error_message}
-                  </div>
-                  {testResult.error_code && (
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Code: {testResult.error_code}
+            <div className="space-y-3">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <XCircle className="w-5 h-5 text-destructive" />
+                Test Failed
+              </h2>
+              <div className="p-4 rounded-lg border border-destructive/50 bg-destructive/10">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <div className="font-semibold text-destructive">Error Details</div>
+                    <div className="text-sm text-destructive/90 mt-1 font-mono">
+                      {testResult.error_message}
                     </div>
-                  )}
+                    {testResult.error_code && (
+                      <div className="text-xs text-muted-foreground mt-2">
+                        Error Code: {testResult.error_code}
+                      </div>
+                    )}
+                    {testResult.error_stack && (
+                      <details className="mt-3">
+                        <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
+                          View Stack Trace
+                        </summary>
+                        <pre className="text-xs mt-2 p-2 bg-background/50 rounded overflow-x-auto">
+                          {testResult.error_stack}
+                        </pre>
+                      </details>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="space-y-3">
-            <h2 className="text-xl font-semibold">Execution Flow</h2>
-            <div className="rounded-lg border bg-card/50 p-6">
-              <TestFlowTimeline 
-                flowSteps={testResult.flow_steps} 
-                status={testResult.status}
-              />
+          {testResult.flow_steps && testResult.flow_steps.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xl font-semibold">Execution Flow</h2>
+              <div className="rounded-lg border bg-card/50 p-6">
+                <TestFlowTimeline 
+                  flowSteps={testResult.flow_steps} 
+                  status={testResult.status}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {testResult.output_url && (
             <div className="space-y-3">

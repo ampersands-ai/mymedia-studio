@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useModelHealth } from "@/hooks/admin/model-health/useModelHealth";
-import { useHealthMetrics } from "@/hooks/admin/model-health/useHealthMetrics";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ModelHealthHeader } from "@/components/admin/model-health/ModelHealthHeader";
 import { ModelHealthFilters } from "@/components/admin/model-health/ModelHealthFilters";
@@ -28,8 +28,63 @@ type SortDirection = 'asc' | 'desc';
 
 export default function ModelHealthDashboard() {
   const navigate = useNavigate();
-  const { data: healthData, isLoading } = useModelHealth();
-  const metrics = useHealthMetrics(healthData);
+  
+  // Fetch health data from model_health_summary view
+  const { data: healthData, isLoading } = useQuery({
+    queryKey: ["model-health-summary"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("model_health_summary")
+        .select("*")
+        .order("model_name", { ascending: true });
+      
+      if (error) throw error;
+      return data as ModelHealthSummary[];
+    },
+  });
+
+  // Calculate metrics from health data
+  const metrics = useMemo(() => {
+    if (!healthData || healthData.length === 0) {
+      return {
+        totalModels: 0,
+        activeModels: 0,
+        testedLast24h: 0,
+        successRate: 0,
+        avgLatency: 0,
+        failedModels: 0,
+      };
+    }
+
+    const totalModels = healthData.length;
+    const activeModels = healthData.filter(m => m.is_active).length;
+    const testedLast24h = healthData.filter(m => m.last_test_at && 
+      new Date(m.last_test_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)
+    ).length;
+
+    const testedModels = healthData.filter(m => m.total_tests_24h > 0);
+    const successRate = testedModels.length > 0
+      ? testedModels.reduce((sum, m) => sum + (m.success_rate_percent_24h || 0), 0) / testedModels.length
+      : 0;
+
+    const modelsWithLatency = healthData.filter(m => m.avg_latency_ms !== null);
+    const avgLatency = modelsWithLatency.length > 0
+      ? modelsWithLatency.reduce((sum, m) => sum + (m.avg_latency_ms || 0), 0) / modelsWithLatency.length / 1000
+      : 0;
+
+    const failedModels = healthData.filter(m => 
+      m.success_rate_percent_24h !== null && m.success_rate_percent_24h < 80
+    ).length;
+
+    return {
+      totalModels,
+      activeModels,
+      testedLast24h,
+      successRate: Math.round(successRate * 10) / 10,
+      avgLatency: Math.round(avgLatency * 10) / 10,
+      failedModels,
+    };
+  }, [healthData]);
 
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [sortField, setSortField] = useState<SortField>('model_name');

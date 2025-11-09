@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useModelHealth } from "@/hooks/admin/model-health/useModelHealth";
-import { useModelByRecordId } from "@/hooks/useModels";
+import { useModels, useModelByRecordId } from "@/hooks/useModels";
 import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { useGeneration } from "@/hooks/useGeneration";
@@ -24,7 +23,7 @@ export default function ModelHealthTestPage() {
   const { recordId } = useParams<{ recordId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: models, isLoading: modelsLoading } = useModelHealth();
+  const { data: models, isLoading: modelsLoading } = useModels();
   const { data: fullModel, isLoading: fullModelLoading } = useModelByRecordId(recordId);
   const { findPrimaryTextKey } = useSchemaHelpers();
   

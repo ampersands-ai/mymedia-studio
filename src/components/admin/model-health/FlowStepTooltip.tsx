@@ -26,7 +26,7 @@ export const FlowStepTooltip = ({ step, children }: FlowStepTooltipProps) => {
   };
 
   return (
-    <TooltipProvider delayDuration={200}>
+    <TooltipProvider delayDuration={300}>
       <Tooltip>
         <TooltipTrigger asChild>
           {children}
@@ -34,31 +34,31 @@ export const FlowStepTooltip = ({ step, children }: FlowStepTooltipProps) => {
         <TooltipContent 
           side="right" 
           align="start"
-          className="max-w-md p-4 bg-popover border-border"
+          className="max-w-lg p-0 bg-popover border-border shadow-lg"
         >
-          <ScrollArea className="max-h-96">
-            <div className="space-y-3">
+          <ScrollArea className="max-h-[400px]">
+            <div className="p-4 space-y-3">
               {step.hover_data && (
                 <>
-                  <div className="font-semibold text-sm text-foreground">
+                  <div className="font-semibold text-foreground pb-2 border-b">
                     {step.hover_data.title}
                   </div>
                   {step.hover_data.preview_url && (
-                    <div className="rounded overflow-hidden border border-border">
+                    <div className="rounded-md overflow-hidden border bg-muted/30">
                       <img 
                         src={step.hover_data.preview_url} 
                         alt="Preview"
-                        className="w-full h-auto max-h-32 object-cover"
+                        className="w-full h-auto max-h-40 object-contain"
                       />
                     </div>
                   )}
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     {Object.entries(step.hover_data.details).map(([key, value]) => (
-                      <div key={key} className="text-xs">
-                        <span className="text-muted-foreground font-medium">
-                          {key.replace(/_/g, ' ')}:
-                        </span>
-                        <div className="mt-0.5 font-mono text-foreground/90 whitespace-pre-wrap break-all">
+                      <div key={key} className="text-xs space-y-1">
+                        <div className="text-muted-foreground font-semibold uppercase tracking-wide text-[10px]">
+                          {key.replace(/_/g, ' ')}
+                        </div>
+                        <div className="font-mono text-[11px] text-foreground bg-muted/50 rounded px-2 py-1.5 whitespace-pre-wrap break-all">
                           {renderValue(value)}
                         </div>
                       </div>
@@ -68,13 +68,13 @@ export const FlowStepTooltip = ({ step, children }: FlowStepTooltipProps) => {
               )}
               
               {!step.hover_data && step.data && (
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {Object.entries(step.data).map(([key, value]) => (
-                    <div key={key} className="text-xs">
-                      <span className="text-muted-foreground font-medium">
-                        {key.replace(/_/g, ' ')}:
-                      </span>
-                      <div className="mt-0.5 font-mono text-foreground/90 whitespace-pre-wrap break-all">
+                    <div key={key} className="text-xs space-y-1">
+                      <div className="text-muted-foreground font-semibold uppercase tracking-wide text-[10px]">
+                        {key.replace(/_/g, ' ')}
+                      </div>
+                      <div className="font-mono text-[11px] text-foreground bg-muted/50 rounded px-2 py-1.5 whitespace-pre-wrap break-all">
                         {renderValue(value)}
                       </div>
                     </div>

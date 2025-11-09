@@ -171,9 +171,9 @@ export const FlowTrackingDialog = ({ model, testResultId, open, onOpenChange }: 
             )}
 
             {/* Flow Timeline */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <h3 className="text-sm font-semibold text-foreground">Execution Flow</h3>
-              <div className="rounded-lg border bg-card p-4">
+              <div className="rounded-lg border bg-card/50 p-3">
                 <TestFlowTimeline 
                   flowSteps={testResult.flow_steps} 
                   status={testResult.status}

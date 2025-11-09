@@ -36,43 +36,33 @@ export const TestFlowTimeline = ({ flowSteps, status }: TestFlowTimelineProps) =
   };
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       {flowSteps.map((step, index) => (
         <FlowStepTooltip key={step.step_number} step={step}>
-          <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent/30 transition-colors cursor-pointer group">
             <div className="relative flex-shrink-0">
               {getStepIcon(step)}
               {index < flowSteps.length - 1 && (
                 <div 
                   className={cn(
-                    "absolute left-1/2 top-6 w-0.5 h-6 -translate-x-1/2",
-                    step.status === 'completed' ? 'bg-green-500/30' : 'bg-border'
+                    "absolute left-1/2 top-5 w-0.5 h-4 -translate-x-1/2",
+                    step.status === 'completed' ? 'bg-green-500/20' : 'bg-border/50'
                   )}
                 />
               )}
             </div>
             
-            <div className="flex-1 min-w-0">
-              <div className={cn("text-sm", getStepColor(step))}>
+            <div className="flex-1 min-w-0 flex items-center justify-between gap-3">
+              <span className={cn("text-sm font-medium", getStepColor(step))}>
                 {step.step_name}
-                {step.status === 'running' && step.progress_percent && (
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    ({step.progress_percent}%)
-                  </span>
-                )}
-              </div>
-              {step.error && (
-                <div className="text-xs text-destructive mt-0.5 truncate">
-                  {step.error}
-                </div>
-              )}
-            </div>
-
-            <div className={cn(
-              "text-xs font-mono flex-shrink-0",
-              step.status === 'completed' ? 'text-muted-foreground' : 'text-muted-foreground/50'
-            )}>
-              {formatDuration(step.duration_ms)}
+              </span>
+              
+              <span className={cn(
+                "text-xs font-mono tabular-nums flex-shrink-0",
+                step.status === 'completed' ? 'text-muted-foreground' : 'text-muted-foreground/40'
+              )}>
+                {formatDuration(step.duration_ms)}
+              </span>
             </div>
           </div>
         </FlowStepTooltip>

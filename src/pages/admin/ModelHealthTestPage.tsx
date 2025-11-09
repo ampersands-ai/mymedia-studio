@@ -51,8 +51,8 @@ export default function ModelHealthTestPage() {
     setSelectedModel: setStateSelectedModel,
   } = useCustomCreationState();
 
-  // Get current model
-  const model = allModels?.find((m) => m.record_id === recordId);
+  // Use fullModel directly (works for both active and inactive models)
+  const model = fullModel;
   const currentModel = fullModel;
 
   // Schema helpers
@@ -276,7 +276,7 @@ export default function ModelHealthTestPage() {
     );
   }
 
-  if (!model || !fullModel) {
+  if (!fullModel) {
     return (
       <div className="container mx-auto p-6 space-y-6">
         <Button variant="ghost" onClick={() => navigate('/admin/model-health')}>

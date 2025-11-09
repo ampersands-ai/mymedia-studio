@@ -13,6 +13,7 @@ import { TestHistoryTable } from "@/components/admin/model-health/TestHistoryTab
 import { ScheduleDialog } from "@/components/admin/model-health/ScheduleDialog";
 import { ModelAlertSettings } from "@/components/admin/model-health/ModelAlertSettings";
 import { SchedulesList } from "@/components/admin/model-health/SchedulesList";
+import { FlowTrackingDialog } from "@/components/admin/model-health/FlowTrackingDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ModelHealthSummary } from "@/types/admin/model-health";
 
@@ -31,6 +32,8 @@ export default function ModelHealthDashboard() {
   const [configDialogModel, setConfigDialogModel] = useState<ModelHealthSummary | null>(null);
   const [historyDialogModel, setHistoryDialogModel] = useState<ModelHealthSummary | null>(null);
   const [scheduleDialogModel, setScheduleDialogModel] = useState<ModelHealthSummary | null>(null);
+  const [flowTrackingModel, setFlowTrackingModel] = useState<ModelHealthSummary | null>(null);
+  const [activeTestResultId, setActiveTestResultId] = useState<string | null>(null);
 
   // Extract unique providers and content types
   const providers = useMemo(() => {
@@ -82,10 +85,19 @@ export default function ModelHealthDashboard() {
   }, [healthData, selectedProvider, selectedContentType, selectedStatus, searchQuery]);
 
   const handleTestModel = async (modelRecordId: string) => {
+    const model = healthData?.find(m => m.record_id === modelRecordId);
+    if (!model) return;
+
     setTestingModelIds(prev => new Set(prev).add(modelRecordId));
     
     try {
-      await testModel.mutateAsync({ modelRecordId });
+      const result = await testModel.mutateAsync({ modelRecordId });
+      
+      // Show flow tracking dialog with the test result ID
+      if (result?.testResultId) {
+        setFlowTrackingModel(model);
+        setActiveTestResultId(result.testResultId);
+      }
     } finally {
       setTestingModelIds(prev => {
         const next = new Set(prev);
@@ -202,6 +214,18 @@ export default function ModelHealthDashboard() {
         model={scheduleDialogModel}
         open={!!scheduleDialogModel}
         onOpenChange={(open) => !open && setScheduleDialogModel(null)}
+      />
+
+      <FlowTrackingDialog
+        model={flowTrackingModel}
+        testResultId={activeTestResultId}
+        open={!!flowTrackingModel}
+        onOpenChange={(open) => {
+          if (!open) {
+            setFlowTrackingModel(null);
+            setActiveTestResultId(null);
+          }
+        }}
       />
     </div>
   );

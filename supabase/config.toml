@@ -131,3 +131,6 @@ verify_jwt = true  # Admin-only model testing
 
 [functions.batch-test-models]
 verify_jwt = true  # Admin-only batch model testing
+
+[functions.send-test-email]
+verify_jwt = false  # Public test email function

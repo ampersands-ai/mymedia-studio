@@ -5,6 +5,7 @@ import { toast } from "sonner";
 interface TestModelParams {
   modelRecordId: string;
   testConfig?: any;
+  parameters?: Record<string, any>;
 }
 
 interface BatchTestParams {
@@ -20,9 +21,9 @@ export const useModelTesting = (options: UseModelTestingOptions = {}) => {
   const queryClient = useQueryClient();
 
   const testModel = useMutation({
-    mutationFn: async ({ modelRecordId, testConfig }: TestModelParams) => {
+    mutationFn: async ({ modelRecordId, testConfig, parameters }: TestModelParams) => {
       const { data, error } = await supabase.functions.invoke("test-model", {
-        body: { modelRecordId, testConfig },
+        body: { modelRecordId, testConfig, parameters },
       });
 
       if (error) throw error;

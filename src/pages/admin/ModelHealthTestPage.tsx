@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useModelHealth } from "@/hooks/admin/model-health/useModelHealth";
 import { useModelTesting } from "@/hooks/admin/model-health/useModelTesting";
 import { useFlowTracking } from "@/hooks/admin/model-health/useFlowTracking";
+import { useModels } from "@/hooks/useModels";
 // import { useFlowStepNotifications } from "@/hooks/admin/model-health/useFlowStepNotifications";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,48 +14,23 @@ import { ArrowLeft, Loader2, CheckCircle2, XCircle, Clock, AlertCircle, Download
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ModelParameterForm } from "@/components/generation/ModelParameterForm";
 
 export default function ModelHealthTestPage() {
   const { recordId } = useParams<{ recordId: string }>();
   const navigate = useNavigate();
   const { data: models, isLoading: modelsLoading } = useModelHealth();
+  const { data: allModels } = useModels();
   const { testModel } = useModelTesting({ enableToasts: false });
   const [testResultId, setTestResultId] = useState<string | null>(null);
   const { data: testResult, isLoading: testLoading } = useFlowTracking(testResultId);
   const [isStarting, setIsStarting] = useState(false);
+  const [parameters, setParameters] = useState<Record<string, any>>({});
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   const model = models?.find(m => m.record_id === recordId);
-
-  const getDefaultPrompt = () => {
-    if (!model) return "";
-    switch (model.content_type) {
-      case "image":
-        return "Generate a beautiful sunset over mountains with vibrant colors";
-      case "video":
-        return "Create a smooth 5-second video of ocean waves";
-      case "audio":
-        return "Generate a calm ambient background music track";
-      case "text":
-        return "Write a creative short story about space exploration";
-      default:
-        return "Test prompt for " + model.content_type;
-    }
-  };
-
-  const [testConfig, setTestConfig] = useState({
-    prompt: "",
-    customParams: ""
-  });
-
-  // Set default prompt when model loads
-  useEffect(() => {
-    if (model && !testConfig.prompt) {
-      setTestConfig(prev => ({ ...prev, prompt: getDefaultPrompt() }));
-    }
-  }, [model]);
+  const fullModel = allModels?.find(m => m.record_id === recordId);
 
   // Removed toast notifications for test page
   // useFlowStepNotifications(
@@ -63,12 +39,37 @@ export default function ModelHealthTestPage() {
   //   !!testResult
   // );
 
+  const validateRequiredFields = (): { isValid: boolean; missingFields: string[] } => {
+    if (!fullModel?.input_schema?.required) {
+      return { isValid: true, missingFields: [] };
+    }
+    
+    const required = fullModel.input_schema.required;
+    const missing = required.filter(field => {
+      const value = parameters[field];
+      return value === undefined || value === null || value === '';
+    });
+    
+    return { isValid: missing.length === 0, missingFields: missing };
+  };
+
   const handleStartTest = async () => {
     if (!recordId) return;
     
+    // Validate required fields first
+    const validation = validateRequiredFields();
+    if (!validation.isValid) {
+      setValidationErrors(validation.missingFields);
+      return;
+    }
+    
+    setValidationErrors([]);
     setIsStarting(true);
     try {
-      const result = await testModel.mutateAsync({ modelRecordId: recordId });
+      const result = await testModel.mutateAsync({ 
+        modelRecordId: recordId,
+        parameters: parameters
+      });
       if (result?.testResultId) {
         setTestResultId(result.testResultId);
       }
@@ -82,6 +83,8 @@ export default function ModelHealthTestPage() {
   const handleResetTest = () => {
     setTestResultId(null);
     setIsStarting(false);
+    setParameters({});
+    setValidationErrors([]);
   };
 
   const getStatusIcon = (status: string) => {
@@ -197,45 +200,37 @@ export default function ModelHealthTestPage() {
           <CardHeader>
             <CardTitle>Configure Test</CardTitle>
             <CardDescription>
-              Customize the test parameters before running the test on {model.model_name}
+              <span className="text-destructive">*</span> = required field
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {validationErrors.length > 0 && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <div className="font-semibold">Missing required fields:</div>
+                  <ul className="list-disc list-inside mt-1">
+                    {validationErrors.map(field => {
+                      const schema = fullModel?.input_schema?.properties?.[field];
+                      const displayName = schema?.title || field;
+                      return <li key={field}>{displayName}</li>;
+                    })}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="prompt">Test Prompt</Label>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setTestConfig({ ...testConfig, prompt: getDefaultPrompt() })}
-                    >
-                      Reset to Default
-                    </Button>
-                  </div>
-                  <Textarea
-                    id="prompt"
-                    placeholder="Enter a test prompt..."
-                    value={testConfig.prompt}
-                    onChange={(e) => setTestConfig({ ...testConfig, prompt: e.target.value })}
-                    rows={6}
+                {fullModel?.input_schema && (
+                  <ModelParameterForm
+                    modelSchema={fullModel.input_schema}
+                    onChange={setParameters}
+                    currentValues={parameters}
+                    modelId={fullModel.id}
+                    provider={fullModel.provider}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Pre-filled with a default prompt for {model.content_type} models
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="customParams">Custom Parameters (Optional JSON)</Label>
-                  <Textarea
-                    id="customParams"
-                    placeholder='{"temperature": 0.7, "max_tokens": 1000}'
-                    value={testConfig.customParams}
-                    onChange={(e) => setTestConfig({ ...testConfig, customParams: e.target.value })}
-                    rows={4}
-                  />
-                </div>
+                )}
 
                 <div className="p-4 rounded-lg border bg-muted/50">
                   <h3 className="font-semibold mb-3 flex items-center gap-2">

@@ -11,7 +11,12 @@ interface BatchTestParams {
   modelRecordIds: string[];
 }
 
-export const useModelTesting = () => {
+interface UseModelTestingOptions {
+  enableToasts?: boolean;
+}
+
+export const useModelTesting = (options: UseModelTestingOptions = {}) => {
+  const { enableToasts = true } = options;
   const queryClient = useQueryClient();
 
   const testModel = useMutation({
@@ -27,20 +32,24 @@ export const useModelTesting = () => {
       queryClient.invalidateQueries({ queryKey: ["model-health-summary"] });
       queryClient.invalidateQueries({ queryKey: ["model-test-history"] });
       
-      if (data.success) {
-        toast.success("Test completed successfully", {
-          description: `Latency: ${(data.timing.total / 1000).toFixed(1)}s`,
-        });
-      } else {
-        toast.error("Test failed", {
-          description: data.error || "Unknown error",
-        });
+      if (enableToasts) {
+        if (data.success) {
+          toast.success("Test completed successfully", {
+            description: `Latency: ${(data.timing.total / 1000).toFixed(1)}s`,
+          });
+        } else {
+          toast.error("Test failed", {
+            description: data.error || "Unknown error",
+          });
+        }
       }
     },
     onError: (error: Error) => {
-      toast.error("Test execution failed", {
-        description: error.message,
-      });
+      if (enableToasts) {
+        toast.error("Test execution failed", {
+          description: error.message,
+        });
+      }
     },
   });
 
@@ -57,14 +66,18 @@ export const useModelTesting = () => {
       queryClient.invalidateQueries({ queryKey: ["model-health-summary"] });
       queryClient.invalidateQueries({ queryKey: ["model-test-history"] });
       
-      toast.success("Batch test completed", {
-        description: `${data.successful} successful, ${data.failed} failed`,
-      });
+      if (enableToasts) {
+        toast.success("Batch test completed", {
+          description: `${data.successful} successful, ${data.failed} failed`,
+        });
+      }
     },
     onError: (error: Error) => {
-      toast.error("Batch test failed", {
-        description: error.message,
-      });
+      if (enableToasts) {
+        toast.error("Batch test failed", {
+          description: error.message,
+        });
+      }
     },
   });
 

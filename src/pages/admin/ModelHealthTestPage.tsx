@@ -21,7 +21,7 @@ export default function ModelHealthTestPage() {
   const { recordId } = useParams<{ recordId: string }>();
   const navigate = useNavigate();
   const { data: models, isLoading: modelsLoading } = useModelHealth();
-  const { testModel } = useModelTesting();
+  const { testModel } = useModelTesting({ enableToasts: false });
   const [testResultId, setTestResultId] = useState<string | null>(null);
   const { data: testResult, isLoading: testLoading } = useFlowTracking(testResultId);
   const [isStarting, setIsStarting] = useState(false);

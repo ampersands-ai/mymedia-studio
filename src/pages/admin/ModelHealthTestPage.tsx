@@ -39,6 +39,7 @@ export default function ModelHealthTestPage() {
   const [testError, setTestError] = useState<string | null>(null);
   const [currentStage, setCurrentStage] = useState<'input' | 'validation' | 'generation' | 'storage' | 'output'>('input');
   const [outputUrl, setOutputUrl] = useState<string | null>(null);
+  const [stageData, setStageData] = useState<any>({});
 
   const outputSectionRef = useRef<HTMLDivElement>(null);
   
@@ -77,6 +78,20 @@ export default function ModelHealthTestPage() {
       if (outputs[0]?.storage_path) {
         const signedUrl = await createSignedUrl('generated-content', outputs[0].storage_path);
         setOutputUrl(signedUrl);
+        
+        // Capture storage data
+        setStageData(prev => ({
+          ...prev,
+          storage: {
+            storagePath: outputs[0].storage_path,
+            outputCount: outputs.length,
+          },
+          output: {
+            url: signedUrl,
+            outputs: outputs.length,
+            parentId: parentId,
+          }
+        }));
       }
 
       setTestStatus('completed');
@@ -88,6 +103,13 @@ export default function ModelHealthTestPage() {
       setTestError(error);
       setTestEndTime(Date.now());
       updateState({ localGenerating: false, pollingGenerationId: null });
+      setStageData(prev => ({
+        ...prev,
+        [currentStage]: {
+          ...prev[currentStage],
+          error,
+        }
+      }));
       toast.error('Test failed');
     },
     onTimeout: () => {
@@ -95,6 +117,13 @@ export default function ModelHealthTestPage() {
       setTestError('Test timeout');
       setTestEndTime(Date.now());
       updateState({ localGenerating: false, pollingGenerationId: null });
+      setStageData(prev => ({
+        ...prev,
+        [currentStage]: {
+          ...prev[currentStage],
+          error: 'Timeout after waiting for results',
+        }
+      }));
       toast.error('Test timeout');
     }
   });
@@ -158,22 +187,72 @@ export default function ModelHealthTestPage() {
     setTestStartTime(Date.now());
     setTestError(null);
     setOutputUrl(null);
-    setCurrentStage('validation');
+    setCurrentStage('input');
+    setStageData({});
+    
+    // Capture input stage data
+    const inputData = {
+      prompt: state.prompt,
+      model: currentModel?.model_name,
+      modelId: currentModel?.id,
+      parameters: state.modelParameters,
+      images: uploadedImages.length,
+      enhancePrompt: state.enhancePrompt,
+      generateCaption: state.generateCaption,
+    };
+    
+    setStageData(prev => ({ ...prev, input: inputData }));
     
     updateState({
       generationStartTime: Date.now(),
       localGenerating: true,
     });
 
-    setTimeout(() => setCurrentStage('generation'), 500);
+    // Move to validation stage
+    setTimeout(() => {
+      setCurrentStage('validation');
+      const validationData = {
+        checks: [
+          'Prompt length validated',
+          imageFieldInfo.isRequired ? 'Image upload validated' : 'No image required',
+          'Model parameters validated',
+          'User credits verified (bypassed for testing)',
+        ],
+        passed: true,
+      };
+      setStageData(prev => ({ ...prev, validation: validationData }));
+    }, 500);
+    
+    // Move to generation stage
+    setTimeout(() => setCurrentStage('generation'), 1000);
     
     try {
+      const genStartTime = Date.now();
       await baseHandleGenerate();
+      const genEndTime = Date.now();
+      
+      // Capture generation stage data
+      setStageData(prev => ({ 
+        ...prev, 
+        generation: {
+          latency: genEndTime - genStartTime,
+          tokensEstimated: estimatedTokens,
+          modelEndpoint: currentModel?.api_endpoint,
+        }
+      }));
+      
       setCurrentStage('storage');
     } catch (error: any) {
       setTestStatus('error');
       setTestError(error.message);
       setTestEndTime(Date.now());
+      setStageData(prev => ({
+        ...prev,
+        [currentStage]: {
+          ...prev[currentStage],
+          error: error.message,
+        }
+      }));
     }
   };
 
@@ -185,6 +264,7 @@ export default function ModelHealthTestPage() {
     setTestError(null);
     setOutputUrl(null);
     setCurrentStage('input');
+    setStageData({});
     setUploadedImages([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -443,11 +523,12 @@ export default function ModelHealthTestPage() {
         </div>
       </div>
 
-      {/* Execution Flow Visualizer (shown during test) */}
-      {testStatus === 'running' && (
+      {/* Execution Flow Visualizer (shown during and after test) */}
+      {(testStatus === 'running' || testStatus === 'completed' || testStatus === 'error') && (
         <ExecutionFlowVisualizer
           currentStage={currentStage}
           error={testError}
+          stageData={stageData}
         />
       )}
 

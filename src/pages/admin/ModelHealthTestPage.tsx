@@ -98,15 +98,23 @@ export default function ModelHealthTestPage() {
             // Check if it's a text/prompt field
             const primaryTextKey = findPrimaryTextKey(properties);
             if (fieldName === primaryTextKey || fieldName.includes('prompt') || fieldName.includes('text')) {
-              // Use "Surprise Me" prompt based on content type
-              if (model?.content_type === 'image') {
-                defaults[fieldName] = getSurpriseMePrompt('prompt_to_image');
-              } else if (model?.content_type === 'video') {
-                defaults[fieldName] = getSurpriseMePrompt('prompt_to_video');
-              } else if (model?.content_type === 'audio') {
-                defaults[fieldName] = getSurpriseMePrompt('prompt_to_audio');
+              // Check model groups to determine which prompt to use
+              const modelGroups = fullModel?.groups || model?.groups;
+              
+              if (modelGroups === 'image_to_video' || modelGroups === 'image_editing') {
+                // Use specific prompt for image-to-video and image editing
+                defaults[fieldName] = "Change the attire of this person to black-colored";
               } else {
-                defaults[fieldName] = `Test ${model?.content_type || 'content'}: Generate a beautiful sunset over mountains with vibrant colors`;
+                // Use "Surprise Me" prompts for text-to-video and text-to-image
+                if (model?.content_type === 'image') {
+                  defaults[fieldName] = getSurpriseMePrompt('prompt_to_image');
+                } else if (model?.content_type === 'video') {
+                  defaults[fieldName] = getSurpriseMePrompt('prompt_to_video');
+                } else if (model?.content_type === 'audio') {
+                  defaults[fieldName] = getSurpriseMePrompt('prompt_to_audio');
+                } else {
+                  defaults[fieldName] = `Test ${model?.content_type || 'content'}: Generate a beautiful sunset over mountains with vibrant colors`;
+                }
               }
             } else {
               defaults[fieldName] = `Test ${fieldName}`;

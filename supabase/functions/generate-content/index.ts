@@ -41,17 +41,27 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Authenticate user
+    // Authenticate user (allow service role for testing)
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Missing authorization header');
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
-    if (authError || !user) {
-      throw new Error('Unauthorized');
+    // Check if using service role key (for test-model edge function)
+    const isServiceRole = token === supabaseKey;
+    
+    let user: any;
+    if (isServiceRole) {
+      console.log('Service role authentication detected - test mode');
+      user = null; // Will be set from request body
+    } else {
+      const { data: userData, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !userData.user) {
+        throw new Error('Unauthorized: Invalid user token');
+      }
+      user = userData.user;
     }
 
     const { 
@@ -64,7 +74,17 @@ serve(async (req) => {
       enhancement_provider = 'lovable_ai',
       workflow_execution_id,
       workflow_step_number,
+      user_id, // For service role calls (test mode)
     } = await req.json();
+    
+    // If service role, require user_id in body
+    if (isServiceRole) {
+      if (!user_id) {
+        throw new Error('user_id required when using service role authentication');
+      }
+      user = { id: user_id };
+      console.log('Test mode - using user_id from request:', user_id);
+    }
 
     console.log('Generation request:', { user_id: user.id, template_id, model_id, model_record_id, enhance_prompt });
 

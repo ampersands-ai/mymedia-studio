@@ -218,24 +218,39 @@ serve(async (req) => {
       const step5Start = Date.now();
       let outputUrl: string | null = null;
       let generationStatus = 'pending';
+      
+      // Use service role key for authentication in test mode
+      const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
       if (model.provider === 'runware') {
         // Sync generation via generate-content-sync
-        const { data: syncResult, error: syncError } = await supabaseClient.functions.invoke(
-          'generate-content-sync',
+        const syncResponse = await fetch(
+          `${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-content-sync`,
           {
-            body: {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${serviceRoleKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
               model_id: model.id,
               prompt: config.prompt_template,
               custom_parameters: config.custom_parameters || {},
-            },
+              user_id: testUserId,
+            }),
           }
         );
 
-        if (syncError || !syncResult) {
-          addStep('Generation Execution', 5, {}, `Generation failed: ${syncError?.message || 'Unknown error'}`);
+        if (!syncResponse.ok) {
+          const errorText = await syncResponse.text();
+          console.error('Sync generation failed:', syncResponse.status, errorText);
+          addStep('Generation Execution', 5, { 
+            error_status: syncResponse.status,
+            error_body: errorText 
+          }, `Generation failed: HTTP ${syncResponse.status} - ${errorText.substring(0, 200)}`);
           generationStatus = 'failed';
         } else {
+          const syncResult = await syncResponse.json();
           outputUrl = syncResult.output_url;
           generationStatus = 'completed';
           addStep('Generation Execution', 5, {
@@ -245,20 +260,30 @@ serve(async (req) => {
         }
       } else {
         // Async generation via generate-content
-        const { error: asyncError } = await supabaseClient.functions.invoke(
-          'generate-content',
+        const asyncResponse = await fetch(
+          `${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-content`,
           {
-            body: {
-              generation_id: generation.id,
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${serviceRoleKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
               model_id: model.id,
               prompt: config.prompt_template,
               custom_parameters: config.custom_parameters || {},
-            },
+              user_id: testUserId,
+            }),
           }
         );
 
-        if (asyncError) {
-          addStep('Generation Execution', 5, {}, `Generation failed: ${asyncError.message}`);
+        if (!asyncResponse.ok) {
+          const errorText = await asyncResponse.text();
+          console.error('Async generation failed:', asyncResponse.status, errorText);
+          addStep('Generation Execution', 5, { 
+            error_status: asyncResponse.status,
+            error_body: errorText 
+          }, `Generation failed: HTTP ${asyncResponse.status} - ${errorText.substring(0, 200)}`);
           generationStatus = 'failed';
         } else {
           // Poll for completion

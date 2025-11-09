@@ -23,7 +23,7 @@ import { formatDistanceToNow } from "date-fns";
 import type { ModelHealthSummary } from "@/types/admin/model-health";
 
 type ViewMode = 'grid' | 'list';
-type SortField = 'model_name' | 'provider' | 'content_type' | 'success_rate_percent_24h' | 'avg_latency_ms' | 'total_tests_24h' | 'last_test_at';
+type SortField = 'model_name' | 'provider' | 'groups' | 'success_rate_percent_24h' | 'avg_latency_ms' | 'total_tests_24h' | 'last_test_at';
 type SortDirection = 'asc' | 'desc';
 
 export default function ModelHealthDashboard() {
@@ -262,11 +262,11 @@ export default function ModelHealthDashboard() {
                 <TableHead>
                   <Button 
                     variant="ghost" 
-                    onClick={() => handleSort('content_type')}
+                    onClick={() => handleSort('groups')}
                     className="hover:bg-transparent"
                   >
-                    Type
-                    <SortIcon field="content_type" />
+                    Group
+                    <SortIcon field="groups" />
                   </Button>
                 </TableHead>
                 <TableHead>Status</TableHead>
@@ -321,7 +321,7 @@ export default function ModelHealthDashboard() {
                     <Badge variant="outline">{model.provider}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{model.content_type}</Badge>
+                    <Badge variant="outline">{model.groups || '—'}</Badge>
                   </TableCell>
                   <TableCell>{getStatusBadge(model)}</TableCell>
                   <TableCell>

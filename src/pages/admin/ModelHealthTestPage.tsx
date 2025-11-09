@@ -80,23 +80,41 @@ export default function ModelHealthTestPage() {
         const signedUrl = await createSignedUrl('generated-content', outputs[0].storage_path);
         setOutputUrl(signedUrl);
         
-        // Capture final stages
+        // Capture final stages with completion markers
+        setCurrentStage('media_storage');
         setStageData(prev => ({
           ...prev,
           media_storage: {
             storage_bucket: 'generated-content',
             file_path: outputs[0].storage_path,
             output_count: outputs.length,
+            completed: true,
           },
+        }));
+        
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        setCurrentStage('media_validation');
+        setStageData(prev => ({
+          ...prev,
           media_validation: {
             accessibility_check: true,
             validation_success: true,
+            completed: true,
           },
+        }));
+        
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        setCurrentStage('media_delivered');
+        setStageData(prev => ({
+          ...prev,
           media_delivered: {
             final_url: signedUrl,
             delivery_time_ms: Date.now() - (testStartTime || 0),
             validation_success: true,
             generation_id: parentId,
+            completed: true,
           }
         }));
       }

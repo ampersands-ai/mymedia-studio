@@ -116,10 +116,37 @@ serve(async (req) => {
 
       // Step 2: Credit Check
       const step2Start = Date.now();
-      const testUserId = config.test_user_id || Deno.env.get('TEST_USER_ID');
+      let testUserId = config.test_user_id || Deno.env.get('TEST_USER_ID');
+      
+      // If no test user configured, find an admin user
+      if (!testUserId) {
+        const { data: adminUser } = await supabaseClient
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'admin')
+          .limit(1)
+          .single();
+        
+        testUserId = adminUser?.user_id;
+      }
+      
+      // If still no user, find any user with subscription
+      if (!testUserId) {
+        const { data: anyUser } = await supabaseClient
+          .from('user_subscriptions')
+          .select('user_id')
+          .limit(1)
+          .single();
+        
+        testUserId = anyUser?.user_id;
+      }
+      
+      if (!testUserId) {
+        throw new Error('No valid user found for test execution');
+      }
       
       let creditsAvailable = 999999; // Default for test mode
-      if (config.deduct_credits && testUserId) {
+      if (config.deduct_credits) {
         const { data: subscription } = await supabaseClient
           .from('user_subscriptions')
           .select('tokens_remaining')
@@ -164,7 +191,7 @@ serve(async (req) => {
       const { data: generation, error: genError } = await supabaseClient
         .from('generations')
         .insert({
-          user_id: testUserId || Deno.env.get('ADMIN_USER_ID'),
+          user_id: testUserId,
           model_id: model.id,
           model_record_id: model.record_id,
           type: model.content_type,

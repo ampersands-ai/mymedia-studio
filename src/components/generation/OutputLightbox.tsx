@@ -1,9 +1,10 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, ChevronLeft, ChevronRight, Image as ImageIcon, Share2, Heart } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, Image as ImageIcon, Share2, Heart, Scissors } from "lucide-react";
 import { OptimizedGenerationPreview } from "./OptimizedGenerationPreview";
 import { ShareModal } from "./ShareModal";
+import { ImageCropModal } from "./ImageCropModal";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useNativeShare } from "@/hooks/useNativeShare";
@@ -36,9 +37,11 @@ export const OutputLightbox = ({
   const currentOutput = outputs[selectedIndex];
   const { shareFile, canShare } = useNativeShare();
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showCropModal, setShowCropModal] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isSaved, setIsSaved] = useState(false);
+  const [croppedImageData, setCroppedImageData] = useState<{blob: Blob, url: string} | null>(null);
 
   // Track modal open
   useEffect(() => {
@@ -95,26 +98,41 @@ export const OutputLightbox = ({
 
   const handleDownload = async () => {
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const publicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
+      let blob: Blob;
+      let filename: string;
       
-      const response = await fetch(publicUrl);
-      const blob = await response.blob();
+      // Use cropped image if available
+      if (croppedImageData) {
+        blob = croppedImageData.blob;
+        filename = `artifio-cropped-${currentOutput.output_index + 1}-${Date.now()}.png`;
+        trackEvent('cropped_image_downloaded', {
+          generation_id: currentOutput.id
+        });
+      } else {
+        // Original download logic
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const publicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
+        const response = await fetch(publicUrl);
+        blob = await response.blob();
+        const extension = currentOutput.storage_path.split('.').pop() || 'file';
+        filename = `artifio-${currentOutput.output_index + 1}-${Date.now()}.${extension}`;
+        trackEvent('output_downloaded', {
+          generation_id: currentOutput.id,
+          content_type: contentType,
+          output_index: selectedIndex
+        });
+      }
+      
+      // Download blob
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const extension = currentOutput.storage_path.split('.').pop() || 'file';
-      a.download = `artifio-${currentOutput.output_index + 1}-${Date.now()}.${extension}`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast.success('Download started!');
-      trackEvent('output_downloaded', {
-        generation_id: currentOutput.id,
-        content_type: contentType,
-        output_index: selectedIndex
-      });
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download');
@@ -154,10 +172,32 @@ export const OutputLightbox = ({
 
   const handleNavigate = (direction: 'prev' | 'next') => {
     onNavigate(direction);
+    // Reset cropped image when navigating
+    setCroppedImageData(null);
     trackEvent('output_navigation', {
       generation_id: currentOutput.id,
       direction
     });
+  };
+
+  const handleCrop = () => {
+    if (contentType === "image") {
+      setShowCropModal(true);
+      trackEvent('crop_initiated', { generation_id: currentOutput.id });
+    }
+  };
+
+  const handleCropComplete = (blob: Blob, url: string) => {
+    setCroppedImageData({ blob, url });
+    trackEvent('crop_completed', { generation_id: currentOutput.id });
+  };
+
+  const getImageUrl = () => {
+    if (croppedImageData) {
+      return croppedImageData.url;
+    }
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    return `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
   };
 
   return (
@@ -186,13 +226,26 @@ export const OutputLightbox = ({
         </DialogHeader>
 
           {/* Image Preview - Centered, viewport-relative size */}
-          <div className="flex items-center justify-center bg-muted/30 rounded-lg p-3 my-2 overflow-hidden flex-shrink min-h-0 h-[75vh]">
-            <OptimizedGenerationPreview
-              key={currentOutput.storage_path}
-              storagePath={currentOutput.storage_path}
-              contentType={contentType}
-              className="max-w-full max-h-[75vh] w-auto h-auto object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
-            />
+          <div className="flex items-center justify-center bg-muted/30 rounded-lg p-3 my-2 overflow-hidden flex-shrink min-h-0 h-[75vh] relative">
+            {croppedImageData ? (
+              <img 
+                src={croppedImageData.url} 
+                alt="Cropped preview"
+                className="max-w-full max-h-[75vh] w-auto h-auto object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
+              />
+            ) : (
+              <OptimizedGenerationPreview
+                key={currentOutput.storage_path}
+                storagePath={currentOutput.storage_path}
+                contentType={contentType}
+                className="max-w-full max-h-[75vh] w-auto h-auto object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
+              />
+            )}
+            {croppedImageData && (
+              <Badge className="absolute top-5 right-5 bg-primary/90">
+                Cropped
+              </Badge>
+            )}
           </div>
 
           {/* Navigation Controls (only if multiple outputs) */}
@@ -221,18 +274,31 @@ export const OutputLightbox = ({
             </div>
           )}
 
-          {/* Action Buttons - 3 buttons + icon */}
+          {/* Action Buttons - 4 buttons + icon */}
           <div className="pt-3 border-t space-y-2 flex-shrink-0">
-            <div className="grid grid-cols-3 sm:flex sm:flex-row gap-2">
+            <div className="grid grid-cols-4 sm:flex sm:flex-row gap-2">
               {/* Download - Primary Yellow */}
               <Button
                 onClick={handleDownload}
                 className="h-12 sm:flex-1 bg-yellow-400 hover:bg-yellow-500 text-black font-bold"
-                aria-label="Download image"
+                aria-label={croppedImageData ? "Download cropped image" : "Download image"}
               >
                 <Download className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Download</span>
+                <span className="hidden sm:inline">{croppedImageData ? "Download Cropped" : "Download"}</span>
               </Button>
+              
+              {/* Crop - Only for images */}
+              {contentType === "image" && (
+                <Button
+                  onClick={handleCrop}
+                  variant="outline"
+                  className="h-12 sm:flex-1 border-2"
+                  aria-label={croppedImageData ? "Re-crop image" : "Crop image"}
+                >
+                  <Scissors className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">{croppedImageData ? "Re-crop" : "Crop"}</span>
+                </Button>
+              )}
               
               {/* Share - Secondary */}
               <Button
@@ -277,6 +343,16 @@ export const OutputLightbox = ({
         imageUrl={currentOutput?.storage_path || ''}
         onDownload={handleDownload}
       />
+
+      {/* Crop Modal */}
+      {contentType === "image" && (
+        <ImageCropModal
+          open={showCropModal}
+          onOpenChange={setShowCropModal}
+          imageUrl={getImageUrl()}
+          onCropComplete={handleCropComplete}
+        />
+      )}
     </>
   );
 };

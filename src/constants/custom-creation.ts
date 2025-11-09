@@ -24,4 +24,4 @@ export const IMAGE_UPLOAD_CONFIG = {
 /**
  * Caption generation token cost
  */
-export const CAPTION_GENERATION_COST = 1;
+export const CAPTION_GENERATION_COST = 0.1;

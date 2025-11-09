@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, Bell, BellOff, Plus, Trash2, TrendingUp } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -286,7 +287,7 @@ export default function ModelAlerts() {
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
                       {alert.failed_count} / {alert.total_count} requests failed •{" "}
-                      {new Date(alert.created_at).toLocaleString()}
+                      {formatDistanceToNow(new Date(alert.created_at), { addSuffix: true })}
                     </p>
                   </div>
                   <div className="text-right">

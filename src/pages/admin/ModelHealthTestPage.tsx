@@ -226,7 +226,9 @@ export default function ModelHealthTestPage() {
       const contentType = currentModel.content_type;
       let defaultPrompt = '';
       
-      if (contentType === 'image') {
+      if (contentType === 'image_editing' || contentType === 'image_to_video') {
+        defaultPrompt = "Change the attire of the person to black color";
+      } else if (contentType === 'image') {
         defaultPrompt = getSurpriseMePrompt('prompt_to_image');
       } else if (contentType === 'video') {
         defaultPrompt = getSurpriseMePrompt('prompt_to_video');

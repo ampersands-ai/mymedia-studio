@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { VoiceSelector } from "./VoiceSelector";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface SchemaInputProps {
   name: string;
@@ -27,13 +27,6 @@ interface SchemaInputProps {
 
 export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema, rows, modelId, provider }: SchemaInputProps) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  
-  // Initialize image preview from value prop (for auto-generated images)
-  useEffect(() => {
-    if (value && typeof value === 'string' && (value.startsWith('http') || value.startsWith('data:image'))) {
-      setImagePreview(value);
-    }
-  }, [value]);
   
   // Check if showToUser flag should hide this field (only for runware provider)
   if (provider === 'runware' && schema.showToUser === false) {

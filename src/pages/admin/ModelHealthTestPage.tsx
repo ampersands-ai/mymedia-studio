@@ -18,7 +18,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ModelParameterForm } from "@/components/generation/ModelParameterForm";
-import { supabase } from "@/integrations/supabase/client";
 
 export default function ModelHealthTestPage() {
   const { recordId } = useParams<{ recordId: string }>();
@@ -32,14 +31,14 @@ export default function ModelHealthTestPage() {
   const [parameters, setParameters] = useState<Record<string, any>>({});
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isGeneratingDefaults, setIsGeneratingDefaults] = useState(false);
-  const { getImageFieldInfo, findPrimaryTextKey } = useSchemaHelpers();
+  const { findPrimaryTextKey } = useSchemaHelpers();
 
   const model = models?.find(m => m.record_id === recordId);
 
   // Auto-generate defaults for all required fields
   useEffect(() => {
     const generateDefaults = async () => {
-      if (!fullModel?.input_schema || isGeneratingDefaults) return;
+      if (!fullModel?.input_schema) return;
       
       const schema = fullModel.input_schema;
       const required = schema.required || [];
@@ -54,11 +53,6 @@ export default function ModelHealthTestPage() {
         const fieldSchema = properties[fieldName];
         if (!fieldSchema) continue;
         
-        // Skip if already has a value
-        if (parameters[fieldName] !== undefined && parameters[fieldName] !== null && parameters[fieldName] !== '') {
-          continue;
-        }
-        
         // Use schema default if available
         if (fieldSchema.default !== undefined) {
           defaults[fieldName] = fieldSchema.default;
@@ -69,29 +63,7 @@ export default function ModelHealthTestPage() {
         const fieldType = fieldSchema.type;
         
         if (fieldType === 'string') {
-          // Check if it's an image field
-          const imageInfo = getImageFieldInfo(fullModel);
-          if (imageInfo.fieldName === fieldName && imageInfo.isRequired) {
-            // Generate a test image
-            try {
-              const prompt = `A simple test image for ${model?.content_type || 'model'} testing`;
-              const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-test-image`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-                },
-                body: JSON.stringify({ prompt }),
-              });
-              
-              if (response.ok) {
-                const data = await response.json();
-                defaults[fieldName] = imageInfo.isArray ? [data.imageUrl] : data.imageUrl;
-              }
-            } catch (error) {
-              console.error('Failed to generate test image:', error);
-            }
-          } else if (fieldSchema.enum) {
+          if (fieldSchema.enum) {
             // Use first enum value
             defaults[fieldName] = fieldSchema.enum[0];
           } else {
@@ -136,14 +108,16 @@ export default function ModelHealthTestPage() {
       }
       
       if (Object.keys(defaults).length > 0) {
-        setParameters(prev => ({ ...prev, ...defaults }));
+        setParameters(defaults);
       }
       
       setIsGeneratingDefaults(false);
     };
     
+    // Clear parameters and regenerate when model changes
+    setParameters({});
     generateDefaults();
-  }, [fullModel, model]);
+  }, [fullModel?.record_id, model?.groups]);
 
   const validateRequiredFields = (): { isValid: boolean; missingFields: string[] } => {
     if (!fullModel?.input_schema?.required) {
@@ -330,7 +304,7 @@ export default function ModelHealthTestPage() {
               <Alert>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <AlertDescription>
-                  Generating default values for required fields (including test images)...
+                  Generating default values for required fields...
                 </AlertDescription>
               </Alert>
             )}

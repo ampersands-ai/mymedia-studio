@@ -3,11 +3,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Download, CheckCircle2, XCircle } from "lucide-react";
 import type { GenerationOutput } from "@/types/custom-creation";
+import { OutputGrid } from "@/components/generation/OutputGrid";
 
 interface TestResultsCardProps {
   status: 'running' | 'completed' | 'error';
   error: string | null;
-  outputUrl: string | null;
+  outputs: GenerationOutput[];
   contentType: string;
   onRunNewTest: () => void;
   onDownloadReport: () => void;
@@ -17,7 +18,7 @@ interface TestResultsCardProps {
 export const TestResultsCard = ({ 
   status, 
   error, 
-  outputUrl, 
+  outputs, 
   contentType,
   onRunNewTest,
   onDownloadReport,
@@ -54,18 +55,14 @@ export const TestResultsCard = ({
           </Alert>
         )}
 
-        {outputUrl && (
+        {outputs.length > 0 && (
           <div className="space-y-2">
-            <p className="text-sm font-medium">Generated Output:</p>
-            {contentType === 'image' && (
-              <img src={outputUrl} alt="Generated" className="rounded-lg max-w-full border border-border" />
-            )}
-            {contentType === 'video' && (
-              <video src={outputUrl} controls className="rounded-lg max-w-full border border-border" />
-            )}
-            {contentType === 'audio' && (
-              <audio src={outputUrl} controls className="w-full" />
-            )}
+            <p className="text-sm font-medium">Generated Outputs:</p>
+            <OutputGrid
+              outputs={outputs}
+              contentType={contentType}
+              onSelectOutput={() => {}}
+            />
           </div>
         )}
 

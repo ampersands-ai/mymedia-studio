@@ -612,7 +612,7 @@ export default function ModelHealthTestPage() {
         <TestResultsCard
           status={testStatus}
           error={testError}
-          outputUrl={outputUrl}
+          outputs={state.generatedOutputs}
           contentType={contentType}
           onRunNewTest={handleResetTest}
           onDownloadReport={handleDownloadReport}

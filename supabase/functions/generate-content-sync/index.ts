@@ -85,23 +85,54 @@ serve(async (req) => {
     console.log('[sync] Generation request:', { user_id: user.id, model_record_id, model_id });
 
     // Load model configuration
-    const query = supabase
-      .from('ai_models')
-      .select('*')
-      .eq('is_active', true);
+    let model: any;
     
     if (model_record_id) {
-      query.eq('record_id', model_record_id);
+      // Use record_id - guaranteed unique
+      const { data: modelData, error: modelError } = await supabase
+        .from('ai_models')
+        .select('*')
+        .eq('record_id', model_record_id)
+        .eq('is_active', true)
+        .single();
+
+      if (modelError || !modelData) {
+        throw new Error('Model not found or inactive');
+      }
+
+      model = modelData;
     } else if (model_id) {
-      query.eq('id', model_id);
+      // Legacy model_id path - check for duplicates
+      const { data: models, error: modelError, count } = await supabase
+        .from('ai_models')
+        .select('*', { count: 'exact' })
+        .eq('id', model_id)
+        .eq('is_active', true);
+
+      if (modelError) {
+        throw new Error(`Model lookup failed: ${modelError.message}`);
+      }
+
+      if (!models || models.length === 0) {
+        throw new Error('Model not found or inactive');
+      }
+
+      if (count && count > 1) {
+        console.warn(`⚠️ [sync] Duplicate model_id detected: "${model_id}" has ${count} active records. Using most recently updated.`);
+        return new Response(
+          JSON.stringify({ 
+            error: `Duplicate model id found. Multiple active models share id "${model_id}". Please use model_record_id instead.`,
+            code: 'DUPLICATE_MODEL_ID',
+            duplicated_id: model_id,
+            duplicate_count: count
+          }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      model = models[0];
     } else {
       throw new Error('Must provide model_id or model_record_id');
-    }
-    
-    const { data: model, error: modelError } = await query.single();
-
-    if (modelError || !model) {
-      throw new Error('Model not found or inactive');
     }
 
     // Verify this is a runware model

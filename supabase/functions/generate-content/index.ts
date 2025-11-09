@@ -118,25 +118,54 @@ serve(async (req) => {
       enhancementInstruction = templateData.enhancement_instruction;
     } else {
       // Custom mode - support both legacy model_id and new model_record_id
-      const query = supabase
-        .from('ai_models')
-        .select('*')
-        .eq('is_active', true);
-      
-      // Prefer model_record_id if provided, fallback to model_id
       if (model_record_id) {
-        query.eq('record_id', model_record_id);
+        // Use record_id - guaranteed unique
+        const { data: modelData, error: modelError } = await supabase
+          .from('ai_models')
+          .select('*')
+          .eq('record_id', model_record_id)
+          .eq('is_active', true)
+          .single();
+
+        if (modelError || !modelData) {
+          throw new Error('Model not found or inactive');
+        }
+
+        model = modelData;
+      } else if (model_id) {
+        // Legacy model_id path - check for duplicates
+        const { data: models, error: modelError, count } = await supabase
+          .from('ai_models')
+          .select('*', { count: 'exact' })
+          .eq('id', model_id)
+          .eq('is_active', true);
+
+        if (modelError) {
+          throw new Error(`Model lookup failed: ${modelError.message}`);
+        }
+
+        if (!models || models.length === 0) {
+          throw new Error('Model not found or inactive');
+        }
+
+        if (count && count > 1) {
+          console.warn(`⚠️ Duplicate model_id detected: "${model_id}" has ${count} active records. Using most recently updated.`);
+          return new Response(
+            JSON.stringify({ 
+              error: `Duplicate model id found. Multiple active models share id "${model_id}". Please use model_record_id instead.`,
+              code: 'DUPLICATE_MODEL_ID',
+              duplicated_id: model_id,
+              duplicate_count: count
+            }),
+            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        model = models[0];
       } else {
-        query.eq('id', model_id);
-      }
-      
-      const { data: modelData, error: modelError } = await query.single();
-
-      if (modelError || !modelData) {
-        throw new Error('Model not found or inactive');
+        throw new Error('Must provide either model_id or model_record_id');
       }
 
-      model = modelData;
       parameters = custom_parameters;
     }
 

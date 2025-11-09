@@ -233,7 +233,7 @@ serve(async (req) => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              model_id: model.id,
+              model_record_id: model.record_id,
               prompt: config.prompt_template,
               custom_parameters: config.custom_parameters || {},
               user_id: testUserId,
@@ -243,11 +243,27 @@ serve(async (req) => {
 
         if (!syncResponse.ok) {
           const errorText = await syncResponse.text();
+          let parsedError: any;
+          try {
+            parsedError = JSON.parse(errorText);
+          } catch {
+            parsedError = { error: errorText };
+          }
+          
           console.error('Sync generation failed:', syncResponse.status, errorText);
+          
+          // Provide friendly message for duplicate model IDs
+          let errorMessage = `Generation failed: HTTP ${syncResponse.status}`;
+          if (parsedError.error?.includes('Duplicate model') || parsedError.error?.includes('multiple rows')) {
+            errorMessage = `Multiple active models share id "${model.id}". Test now uses model_record_id — please ensure ai_models table has unique id values.`;
+          } else if (parsedError.error) {
+            errorMessage += ` - ${parsedError.error.substring(0, 200)}`;
+          }
+          
           addStep('Generation Execution', 5, { 
             error_status: syncResponse.status,
-            error_body: errorText 
-          }, `Generation failed: HTTP ${syncResponse.status} - ${errorText.substring(0, 200)}`);
+            error_body: parsedError 
+          }, errorMessage);
           generationStatus = 'failed';
         } else {
           const syncResult = await syncResponse.json();
@@ -269,7 +285,7 @@ serve(async (req) => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              model_id: model.id,
+              model_record_id: model.record_id,
               prompt: config.prompt_template,
               custom_parameters: config.custom_parameters || {},
               user_id: testUserId,
@@ -279,11 +295,27 @@ serve(async (req) => {
 
         if (!asyncResponse.ok) {
           const errorText = await asyncResponse.text();
+          let parsedError: any;
+          try {
+            parsedError = JSON.parse(errorText);
+          } catch {
+            parsedError = { error: errorText };
+          }
+          
           console.error('Async generation failed:', asyncResponse.status, errorText);
+          
+          // Provide friendly message for duplicate model IDs
+          let errorMessage = `Generation failed: HTTP ${asyncResponse.status}`;
+          if (parsedError.error?.includes('Duplicate model') || parsedError.error?.includes('multiple rows')) {
+            errorMessage = `Multiple active models share id "${model.id}". Test now uses model_record_id — please ensure ai_models table has unique id values.`;
+          } else if (parsedError.error) {
+            errorMessage += ` - ${parsedError.error.substring(0, 200)}`;
+          }
+          
           addStep('Generation Execution', 5, { 
             error_status: asyncResponse.status,
-            error_body: errorText 
-          }, `Generation failed: HTTP ${asyncResponse.status} - ${errorText.substring(0, 200)}`);
+            error_body: parsedError 
+          }, errorMessage);
           generationStatus = 'failed';
         } else {
           // Poll for completion

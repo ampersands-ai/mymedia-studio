@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useModelHealth } from "@/hooks/admin/model-health/useModelHealth";
 import { useHealthMetrics } from "@/hooks/admin/model-health/useHealthMetrics";
-import { useModelTesting } from "@/hooks/admin/model-health/useModelTesting";
+import { toast } from "sonner";
 import { ModelHealthHeader } from "@/components/admin/model-health/ModelHealthHeader";
 import { ModelHealthFilters } from "@/components/admin/model-health/ModelHealthFilters";
 import { ModelTestGrid } from "@/components/admin/model-health/ModelTestGrid";
@@ -30,7 +30,6 @@ export default function ModelHealthDashboard() {
   const navigate = useNavigate();
   const { data: healthData, isLoading } = useModelHealth();
   const metrics = useHealthMetrics(healthData);
-  const { batchTest } = useModelTesting();
 
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [sortField, setSortField] = useState<SortField>('model_name');
@@ -120,7 +119,8 @@ export default function ModelHealthDashboard() {
     setBulkProgress(0);
 
     try {
-      await batchTest.mutateAsync({ modelRecordIds });
+      // Batch testing functionality removed - use individual test page instead
+      toast.error("Batch testing is currently unavailable. Please test models individually.");
     } finally {
       setIsBulkTesting(false);
       setBulkProgress(0);

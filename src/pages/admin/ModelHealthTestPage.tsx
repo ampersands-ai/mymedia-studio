@@ -1,638 +1,475 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useModelHealth } from "@/hooks/admin/model-health/useModelHealth";
-import { useModelTesting } from "@/hooks/admin/model-health/useModelTesting";
-import { useFlowTracking } from "@/hooks/admin/model-health/useFlowTracking";
 import { useModelByRecordId } from "@/hooks/useModels";
 import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import { useGeneration } from "@/hooks/useGeneration";
+import { useAuth } from "@/hooks/useAuth";
 import { getSurpriseMePrompt } from "@/data/surpriseMePrompts";
-// import { useFlowStepNotifications } from "@/hooks/admin/model-health/useFlowStepNotifications";
+import { buildCustomParameters } from "@/lib/custom-creation-utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { TestFlowTimeline } from "@/components/admin/model-health/TestFlowTimeline";
-import { MediaPreview } from "@/components/admin/model-health/MediaPreview";
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, Clock, AlertCircle, Download, PlayCircle, Circle } from "lucide-react";
-import { format } from "date-fns";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ModelParameterForm } from "@/components/generation/ModelParameterForm";
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, Clock, AlertCircle, Download } from "lucide-react";
 
 export default function ModelHealthTestPage() {
   const { recordId } = useParams<{ recordId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: models, isLoading: modelsLoading } = useModelHealth();
   const { data: fullModel, isLoading: fullModelLoading } = useModelByRecordId(recordId);
-  const { testModel } = useModelTesting({ enableToasts: false });
+  const { findPrimaryTextKey } = useSchemaHelpers();
+  
   const [testResultId, setTestResultId] = useState<string | null>(null);
-  const { data: testResult, isLoading: testLoading } = useFlowTracking(testResultId);
-  const [isStarting, setIsStarting] = useState(false);
+  const [generationId, setGenerationId] = useState<string | null>(null);
   const [parameters, setParameters] = useState<Record<string, any>>({});
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [isGeneratingDefaults, setIsGeneratingDefaults] = useState(false);
-  const { findPrimaryTextKey } = useSchemaHelpers();
+  const [testStatus, setTestStatus] = useState<'idle' | 'running' | 'completed' | 'error'>('idle');
+  const [testError, setTestError] = useState<string | null>(null);
+  const [outputUrl, setOutputUrl] = useState<string | null>(null);
+  
+  const model = models?.find((m) => m.record_id === recordId);
+  const imageUploadHooks = useImageUpload(fullModel);
+  const { generate, isGenerating } = useGeneration();
 
-  const model = models?.find(m => m.record_id === recordId);
-
-  // Auto-generate defaults for all required fields
+  // Generate default parameters on mount
   useEffect(() => {
-    const generateDefaults = async () => {
-      if (!fullModel?.input_schema) return;
-      
-      const schema = fullModel.input_schema;
-      const required = schema.required || [];
-      const properties = schema.properties || {};
-      
-      if (required.length === 0) return;
-      
-      setIsGeneratingDefaults(true);
-      const defaults: Record<string, any> = {};
-      
-      for (const fieldName of required) {
-        const fieldSchema = properties[fieldName];
-        if (!fieldSchema) continue;
-        
-        // Use schema default if available
-        if (fieldSchema.default !== undefined) {
-          defaults[fieldName] = fieldSchema.default;
-          continue;
-        }
-        
-        // Generate defaults based on type
-        const fieldType = fieldSchema.type;
-        
-        if (fieldType === 'string') {
-          if (fieldSchema.enum) {
-            // Use first enum value
-            defaults[fieldName] = fieldSchema.enum[0];
-          } else {
-            // Check if it's a text/prompt field
-            const primaryTextKey = findPrimaryTextKey(properties);
-            if (fieldName === primaryTextKey || fieldName.includes('prompt') || fieldName.includes('text')) {
-              // Check model groups to determine which prompt to use
-              const modelGroupsRaw = (fullModel?.groups ?? model?.groups);
-              console.log('🔍 DEBUG - Model groups raw:', modelGroupsRaw, 'Type:', typeof modelGroupsRaw);
-              
-              const groupStr = Array.isArray(modelGroupsRaw)
-                ? modelGroupsRaw.join(",")
-                : typeof modelGroupsRaw === "string"
-                  ? modelGroupsRaw
-                  : JSON.stringify(modelGroupsRaw ?? "");
-              
-              console.log('🔍 DEBUG - Group string:', groupStr);
-              console.log('🔍 DEBUG - Contains image_editing?', groupStr.includes('image_editing'));
-              console.log('🔍 DEBUG - Contains image_to_video?', groupStr.includes('image_to_video'));
-              
-              if (groupStr.includes('image_to_video') || groupStr.includes('image_editing')) {
-                // Use specific prompt for image-to-video and image editing
-                console.log('✅ Using image editing prompt');
-                defaults[fieldName] = "Change the attire of this person to black-colored";
-              } else {
-                console.log('✅ Using Surprise Me prompts');
-                // Use "Surprise Me" prompts for text-to-video and text-to-image
-                if (model?.content_type === 'image') {
-                  defaults[fieldName] = getSurpriseMePrompt('prompt_to_image');
-                } else if (model?.content_type === 'video') {
-                  defaults[fieldName] = getSurpriseMePrompt('prompt_to_video');
-                } else if (model?.content_type === 'audio') {
-                  defaults[fieldName] = getSurpriseMePrompt('prompt_to_audio');
-                } else {
-                  defaults[fieldName] = `Test ${model?.content_type || 'content'}: Generate a beautiful sunset over mountains with vibrant colors`;
-                }
-              }
-            } else {
-              defaults[fieldName] = `Test ${fieldName}`;
-            }
-          }
-        } else if (fieldType === 'number' || fieldType === 'integer') {
-          if (fieldSchema.enum) {
-            defaults[fieldName] = fieldSchema.enum[0];
-          } else if (fieldSchema.minimum !== undefined) {
-            defaults[fieldName] = fieldSchema.minimum;
-          } else {
-            defaults[fieldName] = 1;
-          }
-        } else if (fieldType === 'boolean') {
-          defaults[fieldName] = false;
-        } else if (fieldType === 'array') {
-          defaults[fieldName] = [];
-        }
-      }
-      
-      if (Object.keys(defaults).length > 0) {
-        setParameters(defaults);
-      }
-      
-      setIsGeneratingDefaults(false);
-    };
-    
-    // Clear parameters and regenerate when model changes
-    setParameters({});
-    generateDefaults();
-  }, [fullModel?.record_id, model?.groups]);
+    if (!fullModel?.input_schema) return;
 
-  const validateRequiredFields = (): { isValid: boolean; missingFields: string[] } => {
-    if (!fullModel?.input_schema?.required) {
-      return { isValid: true, missingFields: [] };
-    }
-    
-    const required = fullModel.input_schema.required;
-    const missing = required.filter(field => {
-      const value = parameters[field];
-      return value === undefined || value === null || value === '';
+    const schema = fullModel.input_schema;
+    const properties = schema.properties || {};
+    const defaults: Record<string, any> = {};
+
+    Object.entries(properties).forEach(([fieldName, fieldSchema]: [string, any]) => {
+      const fieldType = fieldSchema.type;
+      const primaryTextKey = findPrimaryTextKey(properties);
+
+      if (fieldName === primaryTextKey || fieldName.includes('prompt') || fieldName.includes('text')) {
+        const modelGroupsRaw = fullModel?.groups ?? model?.groups;
+        const groupStr = Array.isArray(modelGroupsRaw)
+          ? modelGroupsRaw.join(",")
+          : typeof modelGroupsRaw === "string"
+            ? modelGroupsRaw
+            : JSON.stringify(modelGroupsRaw ?? "");
+        
+        if (groupStr.includes('image_to_video') || groupStr.includes('image_editing')) {
+          defaults[fieldName] = "Change the attire of this person to black-colored";
+        } else {
+          if (fullModel?.content_type === 'image') {
+            defaults[fieldName] = getSurpriseMePrompt('prompt_to_image');
+          } else if (fullModel?.content_type === 'video') {
+            defaults[fieldName] = getSurpriseMePrompt('prompt_to_video');
+          } else if (fullModel?.content_type === 'audio') {
+            defaults[fieldName] = getSurpriseMePrompt('prompt_to_audio');
+          } else {
+            defaults[fieldName] = "Test prompt for model validation";
+          }
+        }
+      } else if (fieldType === 'string' && fieldSchema.enum) {
+        defaults[fieldName] = fieldSchema.enum[0];
+      } else if (fieldType === 'boolean') {
+        defaults[fieldName] = fieldSchema.default ?? false;
+      } else if (fieldType === 'number' || fieldType === 'integer') {
+        defaults[fieldName] = fieldSchema.default ?? (fieldSchema.minimum || 0);
+      } else if (fieldType === 'string') {
+        defaults[fieldName] = fieldSchema.default || "";
+      }
     });
+
+    setParameters(defaults);
+  }, [fullModel, model, findPrimaryTextKey]);
+
+  // Validate required fields
+  const validateRequiredFields = (): boolean => {
+    if (!fullModel?.input_schema) return true;
     
-    return { isValid: missing.length === 0, missingFields: missing };
+    const schema = fullModel.input_schema;
+    const required = schema.required || [];
+    const errors: string[] = [];
+
+    required.forEach((field: string) => {
+      const value = parameters[field];
+      if (value === undefined || value === null || value === '') {
+        errors.push(`${field} is required`);
+      }
+    });
+
+    setValidationErrors(errors);
+    return errors.length === 0;
   };
 
+  // Handle test execution
   const handleStartTest = async () => {
-    if (!recordId) return;
-    
-    // Validate required fields first
-    const validation = validateRequiredFields();
-    if (!validation.isValid) {
-      setValidationErrors(validation.missingFields);
+    if (!fullModel || !user) {
+      toast.error("Model or user not found");
       return;
     }
-    
-    setValidationErrors([]);
-    setIsStarting(true);
+
+    if (!validateRequiredFields()) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setTestStatus('running');
+    setTestError(null);
+    setOutputUrl(null);
+
     try {
-      const result = await testModel.mutateAsync({ 
-        modelRecordId: recordId,
-        parameters: parameters
-      });
-      if (result?.testResultId) {
-        setTestResultId(result.testResultId);
+      // Create test result record
+      const { data: testRecord, error: testRecordError } = await supabase
+        .from('model_test_results')
+        .insert({
+          model_record_id: recordId,
+          status: 'running',
+          test_config: { parameters },
+        })
+        .select()
+        .single();
+
+      if (testRecordError) throw testRecordError;
+      setTestResultId(testRecord.id);
+
+      // Upload images if needed
+      let uploadedUrls: string[] = [];
+      if (imageUploadHooks.uploadedImages.length > 0) {
+        uploadedUrls = await imageUploadHooks.uploadImagesToStorage(user.id);
       }
-    } catch (error) {
-      console.error("Failed to start test:", error);
-    } finally {
-      setIsStarting(false);
+
+      // Build custom parameters using the same logic as Custom Creation
+      const customParams = buildCustomParameters(parameters, fullModel.input_schema);
+
+      // Prepare generation params
+      const primaryTextKey = findPrimaryTextKey(fullModel.input_schema?.properties);
+      const prompt = parameters[primaryTextKey || 'prompt'] || '';
+
+      // Use the exact same generate function as Custom Creation
+      const result = await generate({
+        templateId: fullModel.id,
+        modelId: fullModel.id,
+        prompt,
+        imageUrls: uploadedUrls,
+        customParameters: customParams,
+      });
+
+      if (!result) {
+        throw new Error('Generation failed');
+      }
+
+      setGenerationId(result.generation_id);
+
+      // Poll for completion
+      const pollInterval = setInterval(async () => {
+        const { data: gen, error: genError } = await supabase
+          .from('content_generations')
+          .select('*')
+          .eq('id', result.generation_id)
+          .single();
+
+        if (genError) {
+          clearInterval(pollInterval);
+          throw genError;
+        }
+
+        if (gen.status === 'completed') {
+          clearInterval(pollInterval);
+          setTestStatus('completed');
+          setOutputUrl(gen.output_url);
+          
+          // Update test result
+          await supabase
+            .from('model_test_results')
+            .update({
+              status: 'success',
+              generation_id: gen.id,
+              output_url: gen.output_url,
+              completed_at: new Date().toISOString(),
+            })
+            .eq('id', testRecord.id);
+
+          toast.success('Test completed successfully!');
+        } else if (gen.status === 'failed' || gen.status === 'error') {
+          clearInterval(pollInterval);
+          setTestStatus('error');
+          setTestError(gen.error_message || 'Generation failed');
+          
+          await supabase
+            .from('model_test_results')
+            .update({
+              status: 'error',
+              error_message: gen.error_message,
+              completed_at: new Date().toISOString(),
+            })
+            .eq('id', testRecord.id);
+
+          toast.error('Test failed');
+        }
+      }, 2000);
+
+      // Timeout after 5 minutes
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        if (testStatus === 'running') {
+          setTestStatus('error');
+          setTestError('Test timeout');
+          toast.error('Test timeout');
+        }
+      }, 300000);
+
+    } catch (error: any) {
+      console.error('Test error:', error);
+      setTestStatus('error');
+      setTestError(error.message);
+      toast.error(`Test failed: ${error.message}`);
+      
+      if (testResultId) {
+        await supabase
+          .from('model_test_results')
+          .update({
+            status: 'error',
+            error_message: error.message,
+            completed_at: new Date().toISOString(),
+          })
+          .eq('id', testResultId);
+      }
     }
   };
 
   const handleResetTest = () => {
     setTestResultId(null);
-    setIsStarting(false);
-    setParameters({});
+    setGenerationId(null);
+    setTestStatus('idle');
+    setTestError(null);
+    setOutputUrl(null);
     setValidationErrors([]);
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'success':
-      case 'completed':
-        return <CheckCircle2 className="w-6 h-6 text-green-500" />;
+  const getStatusIcon = () => {
+    switch (testStatus) {
       case 'running':
-        return <Loader2 className="w-6 h-6 animate-spin text-primary" />;
-      case 'failed':
+        return <Loader2 className="h-5 w-5 animate-spin" />;
+      case 'completed':
+        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
       case 'error':
-      case 'timeout':
-        return <XCircle className="w-6 h-6 text-destructive" />;
+        return <XCircle className="h-5 w-5 text-red-500" />;
       default:
-        return <Clock className="w-6 h-6 text-muted-foreground" />;
+        return <Clock className="h-5 w-5" />;
     }
   };
 
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'success':
-        return 'default';
+  const getStatusVariant = () => {
+    switch (testStatus) {
       case 'running':
         return 'secondary';
-      case 'failed':
+      case 'completed':
+        return 'default';
       case 'error':
-      case 'timeout':
         return 'destructive';
       default:
         return 'outline';
     }
   };
 
-  const calculateProgress = () => {
-    if (!testResult?.flow_steps) return 0;
-    const completed = testResult.flow_steps.filter(s => s.status === 'completed').length;
-    return (completed / testResult.flow_steps.length) * 100;
-  };
-
-  const downloadReport = () => {
-    if (!testResult) return;
-    const report = JSON.stringify(testResult, null, 2);
-    const blob = new Blob([report], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `test-report-${testResult.id}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
   if (modelsLoading || fullModelLoading) {
     return (
       <div className="container mx-auto p-6 space-y-6">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-96 w-full" />
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" onClick={() => navigate('/admin/model-health')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+        </div>
+        <div className="text-center py-12">Loading...</div>
       </div>
     );
   }
 
-  if (!model) {
+  if (!model || !fullModel) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-bold">Model not found</h2>
-          <Button onClick={() => navigate('/admin/model-health')} className="mt-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Model Health
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" onClick={() => navigate('/admin/model-health')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
           </Button>
         </div>
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>Model not found</AlertDescription>
+        </Alert>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/admin/model-health')}>
-            <ArrowLeft className="h-5 w-5" />
+          <Button variant="ghost" onClick={() => navigate('/admin/model-health')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Test: {model.model_name}</h1>
-            <div className="flex gap-2 mt-1">
-              <Badge variant="outline">{model.provider}</Badge>
-              <Badge variant="outline">{model.content_type}</Badge>
-              <Badge variant={model.is_active ? "default" : "secondary"}>
-                {model.is_active ? "Active" : "Inactive"}
-              </Badge>
-            </div>
+            <h1 className="text-3xl font-bold">{model.model_name}</h1>
+            <p className="text-muted-foreground">{model.provider} • {model.content_type}</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          {testResult && (
-            <>
-              <Button variant="outline" onClick={handleResetTest}>
-                <PlayCircle className="w-4 h-4 mr-2" />
-                Run New Test
-              </Button>
-              <Button variant="outline" onClick={downloadReport}>
-                <Download className="w-4 h-4 mr-2" />
-                Download Report
-              </Button>
-            </>
-          )}
-        </div>
+        <Badge variant={getStatusVariant()} className="flex items-center gap-2">
+          {getStatusIcon()}
+          {testStatus === 'idle' ? 'Ready' : testStatus}
+        </Badge>
       </div>
 
-      {!testResultId ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Configure Test</CardTitle>
-            <CardDescription>
-              <span className="text-destructive">*</span> = required field
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {validationErrors.length > 0 && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <div className="font-semibold">Missing required fields:</div>
-                  <ul className="list-disc list-inside mt-1">
-                    {validationErrors.map(field => {
-                      const schema = fullModel?.input_schema?.properties?.[field];
-                      const displayName = schema?.title || field;
-                      return <li key={field}>{displayName}</li>;
-                    })}
-                  </ul>
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {isGeneratingDefaults && (
-              <Alert>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <AlertDescription>
-                  Generating default values for required fields...
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-4">
-                {fullModel?.input_schema ? (
-                  <ModelParameterForm
-                    modelSchema={fullModel.input_schema}
-                    onChange={setParameters}
-                    currentValues={parameters}
-                    modelId={fullModel.id}
-                    provider={fullModel.provider}
-                  />
-                ) : modelsLoading || fullModelLoading ? (
-                  <div className="space-y-4">
-                    <Skeleton className="h-20 w-full" />
-                    <Skeleton className="h-20 w-full" />
-                    <Skeleton className="h-20 w-full" />
-                  </div>
-                ) : (
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      No input schema found for this model. The model may not be properly configured.
-                      <div className="mt-2 text-xs">
-                        <strong>Debug Info:</strong>
-                        <div>Model ID: {fullModel?.id || 'N/A'}</div>
-                        <div>Record ID: {recordId}</div>
-                        <div>Has fullModel: {fullModel ? 'Yes' : 'No'}</div>
-                        <div>Has input_schema: {fullModel?.input_schema ? 'Yes' : 'No'}</div>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
+      {/* Test Configuration or Results */}
+      {testStatus === 'idle' ? (
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Configuration Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Test Configuration</CardTitle>
+              <CardDescription>Configure test parameters for this model</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ModelParameterForm
+                model={fullModel}
+                parameters={parameters}
+                setParameters={setParameters}
+                imageUploadHooks={imageUploadHooks}
+              />
               
-              <div className="space-y-4">
-                <div className="p-4 rounded-lg border bg-muted/50">
-                  <h3 className="font-semibold mb-3 flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    Test Execution Flow Preview
-                  </h3>
-                  <div className="space-y-1 text-sm text-muted-foreground">
-                    {[
-                      '1. User Input Validation',
-                      '2. Credit Check',
-                      '3. Credit Deduction',
-                      '4. API Request Prepared',
-                      '5. API Request Sent',
-                      '6. First Response Received',
-                      '7. Polling for Completion',
-                      '8. Final Response Received',
-                      '9. Media Stored on Backend'
-                    ].map((step, i) => (
-                      <div key={i} className="flex items-center gap-2 py-1">
-                        <Circle className="w-3 h-3 flex-shrink-0 opacity-40" />
-                        <span>{step}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-3 italic">
-                    These steps will execute when you run the test
-                  </p>
-                </div>
+              {validationErrors.length > 0 && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <ul className="list-disc list-inside">
+                      {validationErrors.map((error, i) => (
+                        <li key={i}>{error}</li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
 
-                <div className="p-4 rounded-lg border bg-muted/50">
-                  <h3 className="font-semibold mb-3">Model Details</h3>
-                  <dl className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <dt className="text-muted-foreground">Provider:</dt>
-                      <dd className="font-medium">{model.provider}</dd>
-                    </div>
-                    <div className="flex justify-between">
-                      <dt className="text-muted-foreground">Content Type:</dt>
-                      <dd className="font-medium">{model.content_type}</dd>
-                    </div>
-                    {model.groups && (
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Group:</dt>
-                        <dd className="font-medium">{model.groups}</dd>
-                      </div>
-                    )}
-                    {model.timeout_seconds && (
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Timeout:</dt>
-                        <dd className="font-medium">{model.timeout_seconds}s</dd>
-                      </div>
-                    )}
-                  </dl>
-                </div>
-
-                {model.last_test_at && (
-                  <div className="p-4 rounded-lg border bg-muted/50">
-                    <h3 className="font-semibold mb-3">Last Test Results</h3>
-                    <dl className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Success Rate:</dt>
-                        <dd className="font-medium">{model.success_rate_percent_24h?.toFixed(1)}%</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Avg Latency:</dt>
-                        <dd className="font-medium">{model.avg_latency_ms ? (model.avg_latency_ms / 1000).toFixed(2) + 's' : '—'}</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Tests (24h):</dt>
-                        <dd className="font-medium">{model.successful_tests_24h}/{model.total_tests_24h}</dd>
-                      </div>
-                    </dl>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => navigate('/admin/model-health')}>
-                Cancel
-              </Button>
               <Button 
                 onClick={handleStartTest} 
-                disabled={isStarting || !model.is_active}
-                size="lg"
+                disabled={isGenerating || testStatus === 'running'}
+                className="w-full"
               >
-                {isStarting ? (
+                {isGenerating ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Starting Test...
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Running Test...
                   </>
                 ) : (
-                  <>
-                    <PlayCircle className="w-4 h-4 mr-2" />
-                    Run Test
-                  </>
+                  'Run Test'
                 )}
               </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (isStarting || testLoading) && !testResult ? (
-        <div className="flex flex-col items-center justify-center py-24 space-y-4">
-          <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          <p className="text-muted-foreground">Starting test...</p>
-        </div>
-      ) : testResult ? (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between p-6 rounded-lg border bg-card">
-            <div className="flex items-center gap-4">
-              {getStatusIcon(testResult.status)}
+            </CardContent>
+          </Card>
+
+          {/* Model Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Model Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xl font-semibold">
-                    {testResult.status === 'success' ? 'Test Completed' : 
-                     testResult.status === 'running' ? 'Test Running' : 
-                     'Test Failed'}
-                  </span>
-                  <Badge variant={getStatusVariant(testResult.status)}>
-                    {testResult.status}
-                  </Badge>
-                </div>
-                <div className="text-sm text-muted-foreground mt-1">
-                  Started {format(new Date(testResult.test_started_at), 'MMM d, yyyy HH:mm:ss')}
-                  {testResult.test_completed_at && (
-                    <> • Completed in {testResult.total_latency_ms}ms</>
-                  )}
-                </div>
+                <p className="text-sm font-medium">Provider</p>
+                <p className="text-sm text-muted-foreground">{model.provider}</p>
               </div>
-            </div>
-            
-            {testResult.credits_required && (
-              <div className="text-right">
-                <div className="text-lg font-medium">
-                  {testResult.credits_required} credits
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {testResult.credits_deducted && 'Deducted'}
-                  {testResult.credits_refunded && ' (Refunded)'}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {testResult.status === 'running' && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Progress</span>
-                <span className="font-medium">{Math.round(calculateProgress())}%</span>
-              </div>
-              <Progress value={calculateProgress()} className="h-3" />
-            </div>
-          )}
-
-          {testResult.error_message && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <XCircle className="w-5 h-5 text-destructive" />
-                  Test Failed
-                </h2>
-                <Button onClick={handleResetTest} variant="outline">
-                  <PlayCircle className="w-4 h-4 mr-2" />
-                  Try Again
-                </Button>
-              </div>
-              <div className="p-4 rounded-lg border border-destructive/50 bg-destructive/10">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <div className="font-semibold text-destructive">Error Details</div>
-                    <div className="text-sm text-destructive/90 mt-1 font-mono">
-                      {testResult.error_message}
-                    </div>
-                    {testResult.error_code && (
-                      <div className="text-xs text-muted-foreground mt-2">
-                        Error Code: {testResult.error_code}
-                      </div>
-                    )}
-                    {testResult.error_stack && (
-                      <details className="mt-3">
-                        <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
-                          View Stack Trace
-                        </summary>
-                        <pre className="text-xs mt-2 p-2 bg-background/50 rounded overflow-x-auto">
-                          {testResult.error_stack}
-                        </pre>
-                      </details>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {testResult.status === 'success' && (
-            <div className="flex items-center justify-between p-4 rounded-lg border bg-green-500/10 border-green-500/20">
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="w-6 h-6 text-green-500" />
-                <div>
-                  <div className="font-semibold text-green-500">Test Completed Successfully</div>
-                  <div className="text-sm text-muted-foreground">
-                    All steps executed without errors
-                  </div>
-                </div>
-              </div>
-              <Button onClick={handleResetTest} variant="outline" size="sm">
-                <PlayCircle className="w-4 h-4 mr-2" />
-                Run Again
-              </Button>
-            </div>
-          )}
-
-          {testResult.flow_steps && testResult.flow_steps.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-xl font-semibold">Execution Flow</h2>
-              <div className="rounded-lg border bg-card/50 p-6">
-                <TestFlowTimeline 
-                  flowSteps={testResult.flow_steps} 
-                  status={testResult.status}
-                />
-              </div>
-            </div>
-          )}
-
-          {testResult.output_url && (
-            <div className="space-y-3">
-              <h2 className="text-xl font-semibold">Generated Output</h2>
-              <MediaPreview 
-                url={testResult.output_url}
-                previewUrl={testResult.media_preview_url}
-              />
-            </div>
-          )}
-
-          <div className="space-y-3">
-            <h2 className="text-xl font-semibold">Technical Details</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 rounded-lg border bg-card">
               <div>
-                <div className="text-sm text-muted-foreground">Test ID</div>
-                <div className="font-mono text-xs mt-1 break-all">{testResult.id}</div>
+                <p className="text-sm font-medium">Content Type</p>
+                <p className="text-sm text-muted-foreground">{model.content_type}</p>
               </div>
-              {testResult.generation_id && (
-                <div>
-                  <div className="text-sm text-muted-foreground">Generation ID</div>
-                  <div className="font-mono text-xs mt-1 break-all">{testResult.generation_id}</div>
-                </div>
-              )}
-              {testResult.credit_check_ms && (
-                <div>
-                  <div className="text-sm text-muted-foreground">Credit Check</div>
-                  <div className="font-mono text-sm mt-1">{testResult.credit_check_ms}ms</div>
-                </div>
-              )}
-              {testResult.generation_submit_ms && (
-                <div>
-                  <div className="text-sm text-muted-foreground">Submit Time</div>
-                  <div className="font-mono text-sm mt-1">{testResult.generation_submit_ms}ms</div>
-                </div>
-              )}
-              {testResult.polling_duration_ms && (
-                <div>
-                  <div className="text-sm text-muted-foreground">Polling Duration</div>
-                  <div className="font-mono text-sm mt-1">{testResult.polling_duration_ms}ms</div>
-                </div>
-              )}
-              {testResult.storage_save_ms && (
-                <div>
-                  <div className="text-sm text-muted-foreground">Storage Save</div>
-                  <div className="font-mono text-sm mt-1">{testResult.storage_save_ms}ms</div>
-                </div>
-              )}
-            </div>
-          </div>
+              <div>
+                <p className="text-sm font-medium">Groups</p>
+                <p className="text-sm text-muted-foreground">
+                  {Array.isArray(model.groups) ? model.groups.join(', ') : model.groups}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       ) : (
-        <div className="text-center py-12 text-muted-foreground">
-          Failed to start test. Please try again.
+        <div className="space-y-6">
+          {/* Test Results */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {getStatusIcon()}
+                Test Results
+              </CardTitle>
+              <CardDescription>
+                {testStatus === 'running' && 'Test is currently running...'}
+                {testStatus === 'completed' && 'Test completed successfully'}
+                {testStatus === 'error' && 'Test failed'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {testStatus === 'running' && (
+                <div className="space-y-2">
+                  <Progress value={undefined} className="w-full" />
+                  <p className="text-sm text-muted-foreground">Processing generation...</p>
+                </div>
+              )}
+
+              {testError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{testError}</AlertDescription>
+                </Alert>
+              )}
+
+              {outputUrl && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Generated Output:</p>
+                  {fullModel?.content_type === 'image' && (
+                    <img src={outputUrl} alt="Generated" className="rounded-lg max-w-full" />
+                  )}
+                  {fullModel?.content_type === 'video' && (
+                    <video src={outputUrl} controls className="rounded-lg max-w-full" />
+                  )}
+                  {fullModel?.content_type === 'audio' && (
+                    <audio src={outputUrl} controls className="w-full" />
+                  )}
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <Button onClick={handleResetTest} variant="outline">
+                  Run New Test
+                </Button>
+                {testResultId && (
+                  <Button variant="outline" onClick={() => {
+                    const report = {
+                      testResultId,
+                      generationId,
+                      status: testStatus,
+                      error: testError,
+                      outputUrl,
+                      model: model.model_name,
+                      timestamp: new Date().toISOString(),
+                    };
+                    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `test-report-${testResultId}.json`;
+                    a.click();
+                  }}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Report
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

@@ -224,9 +224,11 @@ export default function ModelHealthTestPage() {
   useEffect(() => {
     if (currentModel && !state.prompt) {
       const contentType = currentModel.content_type;
+      const modelId = currentModel.id?.toLowerCase() || '';
       let defaultPrompt = '';
       
-      if (contentType === 'image_editing' || contentType === 'image_to_video') {
+      // Check if it's an image editing or image-to-video model
+      if (modelId.includes('edit') || modelId.includes('image-to-video')) {
         defaultPrompt = "Change the attire of the person to black color";
       } else if (contentType === 'image') {
         defaultPrompt = getSurpriseMePrompt('prompt_to_image');

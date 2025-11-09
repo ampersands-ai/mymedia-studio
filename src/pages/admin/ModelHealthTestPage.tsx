@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useModelHealth } from "@/hooks/admin/model-health/useModelHealth";
 import { useModelTesting } from "@/hooks/admin/model-health/useModelTesting";
 import { useFlowTracking } from "@/hooks/admin/model-health/useFlowTracking";
-import { useFlowStepNotifications } from "@/hooks/admin/model-health/useFlowStepNotifications";
+// import { useFlowStepNotifications } from "@/hooks/admin/model-health/useFlowStepNotifications";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -56,11 +56,12 @@ export default function ModelHealthTestPage() {
     }
   }, [model]);
 
-  useFlowStepNotifications(
-    testResult?.flow_steps || [],
-    model?.model_name || 'Model',
-    !!testResult
-  );
+  // Removed toast notifications for test page
+  // useFlowStepNotifications(
+  //   testResult?.flow_steps || [],
+  //   model?.model_name || 'Model',
+  //   !!testResult
+  // );
 
   const handleStartTest = async () => {
     if (!recordId) return;

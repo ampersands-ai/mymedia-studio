@@ -5,6 +5,7 @@ import { Database, FileText, Zap, TrendingUp, Users } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { ModelHealthWidget } from "@/components/admin/model-health/ModelHealthWidget";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -247,6 +248,11 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Model Health Widget */}
+      <div className="grid grid-cols-1 gap-6">
+        <ModelHealthWidget />
       </div>
     </div>
   );

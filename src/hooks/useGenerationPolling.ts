@@ -39,10 +39,19 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
    */
   const pollStatus = useCallback(async (generationId: string) => {
     try {
-      // Fetch parent generation
+      // Fetch parent generation with model info
       const { data: parentData, error } = await supabase
         .from('generations')
-        .select('id, status, storage_path, type')
+        .select(`
+          id, 
+          status, 
+          storage_path, 
+          type,
+          provider_task_id,
+          model_id,
+          model_record_id,
+          ai_models!inner(provider)
+        `)
         .eq('id', generationId)
         .single();
 
@@ -63,22 +72,44 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
         setPollingId(null);
 
         if (parentData.status === 'completed') {
-          // Fetch child generations (batch outputs)
+          // Fetch child generations (batch outputs) with model info
           const { data: childrenData } = await supabase
             .from('generations')
-            .select('id, storage_path, output_index, type')
+            .select(`
+              id, 
+              storage_path, 
+              output_index, 
+              type,
+              provider_task_id,
+              model_id,
+              model_record_id,
+              ai_models!inner(provider)
+            `)
             .eq('parent_generation_id', generationId)
             .eq('type', parentData.type)
             .order('output_index', { ascending: true });
+
+          // Extract provider from nested model data
+          const parentProvider = (parentData.ai_models as any)?.provider || null;
 
           // Build all outputs (parent + children)
           const allOutputs: GenerationOutput[] = [
             {
               id: parentData.id,
               storage_path: parentData.storage_path,
-              output_index: 0
+              output_index: 0,
+              provider_task_id: parentData.provider_task_id,
+              model_id: parentData.model_id,
+              provider: parentProvider
             },
-            ...(childrenData || [])
+            ...(childrenData || []).map((child: any) => ({
+              id: child.id,
+              storage_path: child.storage_path,
+              output_index: child.output_index,
+              provider_task_id: child.provider_task_id,
+              model_id: child.model_id,
+              provider: child.ai_models?.provider || null
+            }))
           ];
 
           // Filter valid outputs with storage_path

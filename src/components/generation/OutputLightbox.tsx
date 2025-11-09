@@ -14,6 +14,9 @@ interface OutputLightboxProps {
     id: string;
     storage_path: string;
     output_index: number;
+    provider_task_id?: string | null;
+    model_id?: string | null;
+    provider?: string | null;
   }>;
   selectedIndex: number;
   contentType: string;

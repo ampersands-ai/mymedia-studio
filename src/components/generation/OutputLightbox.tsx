@@ -1,16 +1,23 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, ChevronLeft, ChevronRight, Image as ImageIcon, Share2, Heart, Scissors, Wand2, Type, RotateCcw } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, Image as ImageIcon, Share2, Heart, Scissors, Wand2, Type, RotateCcw, Sparkles, Clock, Layout } from "lucide-react";
 import { OptimizedGenerationPreview } from "./OptimizedGenerationPreview";
 import { ShareModal } from "./ShareModal";
 import { ImageCropModal } from "./ImageCropModal";
 import { ImageFilterModal } from "./ImageFilterModal";
 import { TextOverlayModal } from "./TextOverlayModal";
-import { useEffect, useState } from "react";
+import { ImageEffectsModal } from "./ImageEffectsModal";
+import { ImageHistoryPanel } from "./ImageHistoryPanel";
+import { SocialMediaTemplates } from "./SocialMediaTemplates";
+import { useImageEditHistory } from "@/hooks/useImageEditHistory";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { useNativeShare } from "@/hooks/useNativeShare";
 import { trackEvent } from "@/lib/posthog";
+import { applyTextOverlay } from "@/utils/text-overlay";
+import { getCroppedImg } from "@/utils/crop-canvas";
+import type { SocialMediaTemplate } from "@/utils/social-media-templates";
 
 interface OutputLightboxProps {
   outputs: Array<{
@@ -38,25 +45,59 @@ export const OutputLightbox = ({
 }: OutputLightboxProps) => {
   const currentOutput = outputs[selectedIndex];
   const { shareFile, canShare } = useNativeShare();
+  const {
+    history,
+    currentIndex,
+    addToHistory,
+    goToHistoryEntry,
+    undo,
+    redo,
+    clearHistory,
+    getCurrentEntry,
+    canUndo,
+    canRedo,
+  } = useImageEditHistory();
+
   const [showShareModal, setShowShareModal] = useState(false);
   const [showCropModal, setShowCropModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showTextOverlayModal, setShowTextOverlayModal] = useState(false);
+  const [showEffectsModal, setShowEffectsModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isSaved, setIsSaved] = useState(false);
-  const [croppedImageData, setCroppedImageData] = useState<{blob: Blob, url: string} | null>(null);
-  const [filteredImageData, setFilteredImageData] = useState<{blob: Blob, url: string} | null>(null);
-  const [overlayImageData, setOverlayImageData] = useState<{blob: Blob, url: string} | null>(null);
 
-  // Track modal open
+  // Initialize history with original image when modal opens
   useEffect(() => {
-    if (open && currentOutput) {
+    if (open && currentOutput && history.length === 0) {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const originalUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
+      
+      // Fetch and add original to history
+      fetch(originalUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          addToHistory({
+            blob,
+            url,
+            editType: 'original',
+            description: 'Original image',
+          });
+        });
+
       trackEvent('output_lightbox_opened', {
         generation_id: currentOutput.id,
         content_type: contentType,
         output_index: selectedIndex
       });
+    }
+
+    // Cleanup history when modal closes
+    if (!open && history.length > 0) {
+      clearHistory();
     }
   }, [open, currentOutput, contentType, selectedIndex]);
 
@@ -82,7 +123,7 @@ export const OutputLightbox = ({
     }
   };
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts (including undo/redo)
   useEffect(() => {
     if (!open) return;
 
@@ -95,62 +136,50 @@ export const OutputLightbox = ({
         handleNavigate('next');
       } else if (e.key === 'd' || e.key === 'D') {
         handleDownload();
+      } else if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'z' && !e.shiftKey && canUndo) {
+          e.preventDefault();
+          handleUndo();
+        } else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
+          if (canRedo) {
+            e.preventDefault();
+            handleRedo();
+          }
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, selectedIndex, outputs.length]);
+  }, [open, selectedIndex, outputs.length, canUndo, canRedo]);
 
   const handleDownload = async () => {
     try {
-      let blob: Blob;
-      let filename: string;
-      const stages: string[] = [];
+      const currentEntry = getCurrentEntry();
       
-      // Use the latest edited image (priority: overlay > filter > crop > original)
-      if (overlayImageData) {
-        blob = overlayImageData.blob;
-        stages.push('text');
-      } else if (filteredImageData) {
-        blob = filteredImageData.blob;
-        stages.push('filtered');
-      } else if (croppedImageData) {
-        blob = croppedImageData.blob;
-        stages.push('cropped');
-      } else {
-        // Original download logic
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const publicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
-        const response = await fetch(publicUrl);
-        blob = await response.blob();
-        const extension = currentOutput.storage_path.split('.').pop() || 'file';
-        filename = `artifio-${currentOutput.output_index + 1}-${Date.now()}.${extension}`;
-        trackEvent('output_downloaded', {
-          generation_id: currentOutput.id,
-          content_type: contentType,
-          output_index: selectedIndex
-        });
+      if (!currentEntry) {
+        toast.error('No image to download');
+        return;
       }
 
-      if (stages.length > 0) {
-        filename = `artifio-${stages.join('-')}-${currentOutput.output_index + 1}-${Date.now()}.png`;
-        trackEvent('edited_image_downloaded', {
-          generation_id: currentOutput.id,
-          edits: stages
-        });
-      }
+      const filename = `artifio-edited-${currentOutput.output_index + 1}-${Date.now()}.png`;
       
       // Download blob
-      const url = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(currentEntry.blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = filename!;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast.success('Download started!');
+      
+      trackEvent('edited_image_downloaded', {
+        generation_id: currentOutput.id,
+        edit_type: currentEntry.editType,
+        edit_count: currentIndex + 1
+      });
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download');
@@ -190,10 +219,7 @@ export const OutputLightbox = ({
 
   const handleNavigate = (direction: 'prev' | 'next') => {
     onNavigate(direction);
-    // Reset all edits when navigating
-    setCroppedImageData(null);
-    setFilteredImageData(null);
-    setOverlayImageData(null);
+    clearHistory();
     trackEvent('output_navigation', {
       generation_id: currentOutput.id,
       direction
@@ -207,13 +233,15 @@ export const OutputLightbox = ({
     }
   };
 
-  const handleCropComplete = (blob: Blob, url: string) => {
-    setCroppedImageData({ blob, url });
-    // Reset downstream edits
-    setFilteredImageData(null);
-    setOverlayImageData(null);
+  const handleCropComplete = useCallback((blob: Blob, url: string) => {
+    addToHistory({
+      blob,
+      url,
+      editType: 'cropped',
+      description: 'Image cropped',
+    });
     trackEvent('crop_completed', { generation_id: currentOutput.id });
-  };
+  }, [addToHistory, currentOutput]);
 
   const handleFilter = () => {
     if (contentType === "image") {
@@ -222,12 +250,15 @@ export const OutputLightbox = ({
     }
   };
 
-  const handleFilterComplete = (blob: Blob, url: string) => {
-    setFilteredImageData({ blob, url });
-    // Reset downstream edits
-    setOverlayImageData(null);
+  const handleFilterComplete = useCallback((blob: Blob, url: string) => {
+    addToHistory({
+      blob,
+      url,
+      editType: 'filtered',
+      description: 'Filters applied',
+    });
     trackEvent('filter_completed', { generation_id: currentOutput.id });
-  };
+  }, [addToHistory, currentOutput]);
 
   const handleTextOverlay = () => {
     if (contentType === "image") {
@@ -236,28 +267,122 @@ export const OutputLightbox = ({
     }
   };
 
-  const handleTextOverlayComplete = (blob: Blob, url: string) => {
-    setOverlayImageData({ blob, url });
+  const handleTextOverlayComplete = useCallback((blob: Blob, url: string) => {
+    addToHistory({
+      blob,
+      url,
+      editType: 'text-overlay',
+      description: 'Text overlay added',
+    });
     trackEvent('text_overlay_completed', { generation_id: currentOutput.id });
+  }, [addToHistory, currentOutput]);
+
+  const handleEffects = () => {
+    if (contentType === "image") {
+      setShowEffectsModal(true);
+      trackEvent('effects_initiated', { generation_id: currentOutput.id });
+    }
   };
 
-  const handleResetAllEdits = () => {
-    setCroppedImageData(null);
-    setFilteredImageData(null);
-    setOverlayImageData(null);
-    toast.success('All edits reset');
-    trackEvent('all_edits_reset', { generation_id: currentOutput.id });
-  };
+  const handleEffectsComplete = useCallback((blob: Blob, url: string) => {
+    addToHistory({
+      blob,
+      url,
+      editType: 'effects',
+      description: 'Effects applied',
+    });
+    trackEvent('effects_completed', { generation_id: currentOutput.id });
+  }, [addToHistory, currentOutput]);
+
+  const handleTemplateSelect = useCallback(async (template: SocialMediaTemplate) => {
+    try {
+      const currentEntry = getCurrentEntry();
+      if (!currentEntry) return;
+
+      // First crop to template aspect ratio
+      const img = new Image();
+      img.src = currentEntry.url;
+      await new Promise((resolve) => { img.onload = resolve; });
+
+      const cropArea = {
+        x: 0,
+        y: 0,
+        width: img.width,
+        height: img.width / template.aspectRatio,
+      };
+
+      if (cropArea.height > img.height) {
+        cropArea.height = img.height;
+        cropArea.width = img.height * template.aspectRatio;
+      }
+
+      const { blob: croppedBlob, url: croppedUrl } = await getCroppedImg(
+        currentEntry.url,
+        cropArea
+      );
+
+      // Then apply text overlays
+      const textLayers = template.textLayers.map((layer, index) => ({
+        ...layer,
+        id: `template-text-${index}`,
+      }));
+
+      const { blob, url } = await applyTextOverlay(croppedUrl, textLayers);
+
+      addToHistory({
+        blob,
+        url,
+        editType: 'template',
+        description: `${template.name} template applied`,
+      });
+
+      toast.success(`${template.name} template applied!`);
+      setShowTemplateModal(false);
+      trackEvent('template_applied', {
+        generation_id: currentOutput.id,
+        template: template.id
+      });
+    } catch (error) {
+      console.error('Error applying template:', error);
+      toast.error('Failed to apply template');
+    }
+  }, [getCurrentEntry, addToHistory, currentOutput]);
+
+  const handleUndo = useCallback(() => {
+    const entry = undo();
+    if (entry) {
+      toast.success('Undone');
+      trackEvent('edit_undone', { generation_id: currentOutput.id });
+    }
+  }, [undo, currentOutput]);
+
+  const handleRedo = useCallback(() => {
+    const entry = redo();
+    if (entry) {
+      toast.success('Redone');
+      trackEvent('edit_redone', { generation_id: currentOutput.id });
+    }
+  }, [redo, currentOutput]);
+
+  const handleGoToHistoryEntry = useCallback((index: number) => {
+    const entry = goToHistoryEntry(index);
+    if (entry) {
+      toast.success(`Restored to: ${entry.description}`);
+      trackEvent('history_entry_restored', {
+        generation_id: currentOutput.id,
+        index
+      });
+    }
+  }, [goToHistoryEntry, currentOutput]);
 
   const getCurrentImageUrl = () => {
-    if (overlayImageData) return overlayImageData.url;
-    if (filteredImageData) return filteredImageData.url;
-    if (croppedImageData) return croppedImageData.url;
+    const entry = getCurrentEntry();
+    if (entry) return entry.url;
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     return `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
   };
 
-  const hasAnyEdits = croppedImageData || filteredImageData || overlayImageData;
+  const hasAnyEdits = currentIndex > 0;
 
   return (
     <>
@@ -301,17 +426,13 @@ export const OutputLightbox = ({
               />
             )}
             {/* Edit badges */}
-            <div className="absolute top-5 right-5 flex gap-2">
-              {croppedImageData && (
-                <Badge className="bg-primary/90">Cropped</Badge>
-              )}
-              {filteredImageData && (
-                <Badge className="bg-primary/90">Filtered</Badge>
-              )}
-              {overlayImageData && (
-                <Badge className="bg-primary/90">Text Added</Badge>
-              )}
-            </div>
+            {hasAnyEdits && (
+              <div className="absolute top-5 right-5">
+                <Badge className="bg-primary/90">
+                  Edited ({currentIndex + 1} step{currentIndex !== 0 ? 's' : ''})
+                </Badge>
+              </div>
+            )}
           </div>
 
           {/* Navigation Controls (only if multiple outputs) */}
@@ -342,17 +463,42 @@ export const OutputLightbox = ({
 
           {/* Action Buttons */}
           <div className="pt-3 border-t space-y-2 flex-shrink-0">
-            {/* Reset Button - Show when any edits exist */}
-            {hasAnyEdits && (
-              <Button
-                onClick={handleResetAllEdits}
-                variant="ghost"
-                size="sm"
-                className="w-full"
-              >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Reset All Edits
-              </Button>
+            {/* History and Template Controls Row */}
+            {contentType === "image" && (
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setShowHistoryPanel(!showHistoryPanel)}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                >
+                  <Clock className="h-4 w-4 mr-2" />
+                  History ({history.length})
+                </Button>
+                <Button
+                  onClick={() => setShowTemplateModal(true)}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                >
+                  <Layout className="h-4 w-4 mr-2" />
+                  Templates
+                </Button>
+              </div>
+            )}
+
+            {/* History Panel */}
+            {showHistoryPanel && (
+              <ImageHistoryPanel
+                history={history}
+                currentIndex={currentIndex}
+                onGoToEntry={handleGoToHistoryEntry}
+                onUndo={handleUndo}
+                onRedo={handleRedo}
+                canUndo={canUndo}
+                canRedo={canRedo}
+                onClose={() => setShowHistoryPanel(false)}
+              />
             )}
 
             <div className="grid grid-cols-3 sm:flex sm:flex-row gap-2">
@@ -378,9 +524,7 @@ export const OutputLightbox = ({
                     aria-label="Crop image"
                   >
                     <Scissors className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">
-                      {croppedImageData ? "Re-crop" : "Crop"}
-                    </span>
+                    <span className="hidden sm:inline">Crop</span>
                   </Button>
 
                   <Button
@@ -394,13 +538,23 @@ export const OutputLightbox = ({
                   </Button>
 
                   <Button
+                    onClick={handleEffects}
+                    variant="outline"
+                    className="h-12 sm:flex-1 border-2"
+                    aria-label="Apply effects"
+                  >
+                    <Sparkles className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Effects</span>
+                  </Button>
+
+                  <Button
                     onClick={handleTextOverlay}
                     variant="outline"
                     className="h-12 sm:flex-1 border-2"
                     aria-label="Add text"
                   >
                     <Type className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Add Text</span>
+                    <span className="hidden sm:inline">Text</span>
                   </Button>
                 </>
               )}
@@ -432,7 +586,9 @@ export const OutputLightbox = ({
           <div className="text-center mt-4 pb-2 flex-shrink-0">
             <p className="text-xs text-muted-foreground">
               <span className="hidden md:inline">
-                Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">←</kbd> <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">→</kbd> to navigate • 
+                <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl+Z</kbd> Undo • 
+                <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl+Shift+Z</kbd> Redo • 
+                <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">←</kbd> <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">→</kbd> Navigate • 
               </span>
               <span className="md:hidden">Swipe down to close • </span>
               <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">ESC</kbd> to close
@@ -466,12 +622,29 @@ export const OutputLightbox = ({
             onFilterComplete={handleFilterComplete}
           />
 
+          <ImageEffectsModal
+            open={showEffectsModal}
+            onOpenChange={setShowEffectsModal}
+            imageUrl={getCurrentImageUrl()}
+            onEffectsComplete={handleEffectsComplete}
+          />
+
           <TextOverlayModal
             open={showTextOverlayModal}
             onOpenChange={setShowTextOverlayModal}
             imageUrl={getCurrentImageUrl()}
             onOverlayComplete={handleTextOverlayComplete}
           />
+
+          {/* Social Media Template Modal */}
+          <Dialog open={showTemplateModal} onOpenChange={setShowTemplateModal}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Social Media Templates</DialogTitle>
+              </DialogHeader>
+              <SocialMediaTemplates onSelectTemplate={handleTemplateSelect} />
+            </DialogContent>
+          </Dialog>
         </>
       )}
     </>

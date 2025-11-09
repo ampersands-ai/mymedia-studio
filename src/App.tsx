@@ -61,6 +61,7 @@ const MigrateStoryboards = lazy(() => import("./pages/admin/MigrateStoryboards")
 const CinematicPromptsManager = lazy(() => import("./pages/admin/CinematicPromptsManager"));
 const WebhookMonitor = lazy(() => import("./pages/admin/WebhookMonitor"));
 const ModelHealthDashboard = lazy(() => import("./pages/admin/ModelHealthDashboard"));
+const ModelAlerts = lazy(() => import("./pages/admin/ModelAlerts"));
 const SharedContent = lazy(() => import("./pages/SharedContent"));
 
 const AppContent = () => {
@@ -141,6 +142,7 @@ const AppContent = () => {
               <Route path="threshold-breach" element={<ThresholdBreach />} />
               <Route path="webhook-monitor" element={<WebhookMonitor />} />
               <Route path="model-health" element={<ModelHealthDashboard />} />
+              <Route path="model-alerts" element={<ModelAlerts />} />
               <Route path="video-jobs" element={<VideoJobs />} />
               <Route path="template-landing" element={<TemplateLandingManager />} />
               <Route path="template-landing/:id" element={<TemplateLandingEditor />} />

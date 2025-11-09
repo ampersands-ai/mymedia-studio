@@ -33,9 +33,10 @@ serve(async (req) => {
                 max-width: 600px;
                 margin: 0 auto;
                 padding: 20px;
+                background-color: #f9fafb;
               }
               .header {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: linear-gradient(135deg, #FDB022 0%, #FB923C 100%);
                 color: white;
                 padding: 30px;
                 border-radius: 8px 8px 0 0;
@@ -51,7 +52,7 @@ serve(async (req) => {
               .badge {
                 display: inline-block;
                 padding: 8px 16px;
-                background: #10b981;
+                background: linear-gradient(135deg, #FDB022 0%, #FB923C 100%);
                 color: white;
                 border-radius: 20px;
                 font-size: 14px;

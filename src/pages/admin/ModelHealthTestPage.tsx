@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { TestFlowTimeline } from "@/components/admin/model-health/TestFlowTimeline";
 import { MediaPreview } from "@/components/admin/model-health/MediaPreview";
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, Clock, AlertCircle, Download, PlayCircle } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, Clock, AlertCircle, Download, PlayCircle, Circle } from "lucide-react";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -221,6 +221,34 @@ export default function ModelHealthTestPage() {
                     onChange={(e) => setTestConfig({ ...testConfig, customParams: e.target.value })}
                     rows={4}
                   />
+                </div>
+
+                <div className="p-4 rounded-lg border bg-muted/50">
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Test Execution Flow Preview
+                  </h3>
+                  <div className="space-y-1 text-sm text-muted-foreground">
+                    {[
+                      '1. User Input Validation',
+                      '2. Credit Check',
+                      '3. Credit Deduction',
+                      '4. API Request Prepared',
+                      '5. API Request Sent',
+                      '6. First Response Received',
+                      '7. Polling for Completion',
+                      '8. Final Response Received',
+                      '9. Media Stored on Backend'
+                    ].map((step, i) => (
+                      <div key={i} className="flex items-center gap-2 py-1">
+                        <Circle className="w-3 h-3 flex-shrink-0 opacity-40" />
+                        <span>{step}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3 italic">
+                    These steps will execute when you run the test
+                  </p>
                 </div>
               </div>
               

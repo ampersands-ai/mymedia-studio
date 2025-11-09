@@ -114,17 +114,18 @@ export const ExecutionFlowVisualizer = ({ currentStage, error, stageData = {} }:
     { id: 'media_delivered', label: 'Media Delivered', status: 'pending' },
   ];
 
-  // Update stage statuses based on current stage and data
-  let foundCurrent = false;
-  stages.forEach(stage => {
-    if (stageData[stage.id as keyof StageData]) {
-      stage.status = 'completed';
-    }
+  // Update stage statuses based on current stage and temporal ordering
+  const currentStageIndex = stages.findIndex(s => s.id === currentStage);
+  
+  stages.forEach((stage, index) => {
     if (stage.id === currentStage) {
+      // Current stage is always active
       stage.status = 'active';
-      foundCurrent = true;
-    }
-    if (!foundCurrent && !stageData[stage.id as keyof StageData]) {
+    } else if (index < currentStageIndex) {
+      // Stages before current should be completed (if they have data)
+      stage.status = stageData[stage.id as keyof StageData] ? 'completed' : 'pending';
+    } else {
+      // Stages after current should be pending (even if they have data)
       stage.status = 'pending';
     }
   });

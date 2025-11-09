@@ -17,7 +17,7 @@ serve(async (req) => {
     console.log("📧 Sending test email...");
 
     const emailResponse = await resend.emails.send({
-      from: "Model Health Monitor <onboarding@resend.dev>",
+      from: "Model Health Monitor <hello@artifio.ai>",
       to: ["ampersands.ai@gmail.com"],
       subject: "🧪 Test Email - Model Health Dashboard",
       html: `

@@ -65,6 +65,7 @@ export default function ModelAlerts() {
       if (error) throw error;
       return data as AlertConfig[];
     },
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   // Fetch alert history
@@ -80,6 +81,7 @@ export default function ModelAlerts() {
       if (error) throw error;
       return data as AlertHistory[];
     },
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   // Fetch available models

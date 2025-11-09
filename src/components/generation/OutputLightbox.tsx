@@ -1,10 +1,12 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, ChevronLeft, ChevronRight, Image as ImageIcon, Share2, Heart, Scissors } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, Image as ImageIcon, Share2, Heart, Scissors, Wand2, Type, RotateCcw } from "lucide-react";
 import { OptimizedGenerationPreview } from "./OptimizedGenerationPreview";
 import { ShareModal } from "./ShareModal";
 import { ImageCropModal } from "./ImageCropModal";
+import { ImageFilterModal } from "./ImageFilterModal";
+import { TextOverlayModal } from "./TextOverlayModal";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useNativeShare } from "@/hooks/useNativeShare";
@@ -38,10 +40,14 @@ export const OutputLightbox = ({
   const { shareFile, canShare } = useNativeShare();
   const [showShareModal, setShowShareModal] = useState(false);
   const [showCropModal, setShowCropModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showTextOverlayModal, setShowTextOverlayModal] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [croppedImageData, setCroppedImageData] = useState<{blob: Blob, url: string} | null>(null);
+  const [filteredImageData, setFilteredImageData] = useState<{blob: Blob, url: string} | null>(null);
+  const [overlayImageData, setOverlayImageData] = useState<{blob: Blob, url: string} | null>(null);
 
   // Track modal open
   useEffect(() => {
@@ -100,14 +106,18 @@ export const OutputLightbox = ({
     try {
       let blob: Blob;
       let filename: string;
+      const stages: string[] = [];
       
-      // Use cropped image if available
-      if (croppedImageData) {
+      // Use the latest edited image (priority: overlay > filter > crop > original)
+      if (overlayImageData) {
+        blob = overlayImageData.blob;
+        stages.push('text');
+      } else if (filteredImageData) {
+        blob = filteredImageData.blob;
+        stages.push('filtered');
+      } else if (croppedImageData) {
         blob = croppedImageData.blob;
-        filename = `artifio-cropped-${currentOutput.output_index + 1}-${Date.now()}.png`;
-        trackEvent('cropped_image_downloaded', {
-          generation_id: currentOutput.id
-        });
+        stages.push('cropped');
       } else {
         // Original download logic
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -122,12 +132,20 @@ export const OutputLightbox = ({
           output_index: selectedIndex
         });
       }
+
+      if (stages.length > 0) {
+        filename = `artifio-${stages.join('-')}-${currentOutput.output_index + 1}-${Date.now()}.png`;
+        trackEvent('edited_image_downloaded', {
+          generation_id: currentOutput.id,
+          edits: stages
+        });
+      }
       
       // Download blob
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = filename;
+      a.download = filename!;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -172,8 +190,10 @@ export const OutputLightbox = ({
 
   const handleNavigate = (direction: 'prev' | 'next') => {
     onNavigate(direction);
-    // Reset cropped image when navigating
+    // Reset all edits when navigating
     setCroppedImageData(null);
+    setFilteredImageData(null);
+    setOverlayImageData(null);
     trackEvent('output_navigation', {
       generation_id: currentOutput.id,
       direction
@@ -189,16 +209,55 @@ export const OutputLightbox = ({
 
   const handleCropComplete = (blob: Blob, url: string) => {
     setCroppedImageData({ blob, url });
+    // Reset downstream edits
+    setFilteredImageData(null);
+    setOverlayImageData(null);
     trackEvent('crop_completed', { generation_id: currentOutput.id });
   };
 
-  const getImageUrl = () => {
-    if (croppedImageData) {
-      return croppedImageData.url;
+  const handleFilter = () => {
+    if (contentType === "image") {
+      setShowFilterModal(true);
+      trackEvent('filter_initiated', { generation_id: currentOutput.id });
     }
+  };
+
+  const handleFilterComplete = (blob: Blob, url: string) => {
+    setFilteredImageData({ blob, url });
+    // Reset downstream edits
+    setOverlayImageData(null);
+    trackEvent('filter_completed', { generation_id: currentOutput.id });
+  };
+
+  const handleTextOverlay = () => {
+    if (contentType === "image") {
+      setShowTextOverlayModal(true);
+      trackEvent('text_overlay_initiated', { generation_id: currentOutput.id });
+    }
+  };
+
+  const handleTextOverlayComplete = (blob: Blob, url: string) => {
+    setOverlayImageData({ blob, url });
+    trackEvent('text_overlay_completed', { generation_id: currentOutput.id });
+  };
+
+  const handleResetAllEdits = () => {
+    setCroppedImageData(null);
+    setFilteredImageData(null);
+    setOverlayImageData(null);
+    toast.success('All edits reset');
+    trackEvent('all_edits_reset', { generation_id: currentOutput.id });
+  };
+
+  const getCurrentImageUrl = () => {
+    if (overlayImageData) return overlayImageData.url;
+    if (filteredImageData) return filteredImageData.url;
+    if (croppedImageData) return croppedImageData.url;
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     return `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
   };
+
+  const hasAnyEdits = croppedImageData || filteredImageData || overlayImageData;
 
   return (
     <>
@@ -227,10 +286,10 @@ export const OutputLightbox = ({
 
           {/* Image Preview - Centered, viewport-relative size */}
           <div className="flex items-center justify-center bg-muted/30 rounded-lg p-3 my-2 overflow-hidden flex-shrink min-h-0 h-[75vh] relative">
-            {croppedImageData ? (
+            {hasAnyEdits ? (
               <img 
-                src={croppedImageData.url} 
-                alt="Cropped preview"
+                src={getCurrentImageUrl()} 
+                alt="Edited preview"
                 className="max-w-full max-h-[75vh] w-auto h-auto object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
               />
             ) : (
@@ -241,11 +300,18 @@ export const OutputLightbox = ({
                 className="max-w-full max-h-[75vh] w-auto h-auto object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
               />
             )}
-            {croppedImageData && (
-              <Badge className="absolute top-5 right-5 bg-primary/90">
-                Cropped
-              </Badge>
-            )}
+            {/* Edit badges */}
+            <div className="absolute top-5 right-5 flex gap-2">
+              {croppedImageData && (
+                <Badge className="bg-primary/90">Cropped</Badge>
+              )}
+              {filteredImageData && (
+                <Badge className="bg-primary/90">Filtered</Badge>
+              )}
+              {overlayImageData && (
+                <Badge className="bg-primary/90">Text Added</Badge>
+              )}
+            </div>
           </div>
 
           {/* Navigation Controls (only if multiple outputs) */}
@@ -274,30 +340,69 @@ export const OutputLightbox = ({
             </div>
           )}
 
-          {/* Action Buttons - 4 buttons + icon */}
+          {/* Action Buttons */}
           <div className="pt-3 border-t space-y-2 flex-shrink-0">
-            <div className="grid grid-cols-4 sm:flex sm:flex-row gap-2">
+            {/* Reset Button - Show when any edits exist */}
+            {hasAnyEdits && (
+              <Button
+                onClick={handleResetAllEdits}
+                variant="ghost"
+                size="sm"
+                className="w-full"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Reset All Edits
+              </Button>
+            )}
+
+            <div className="grid grid-cols-3 sm:flex sm:flex-row gap-2">
               {/* Download - Primary Yellow */}
               <Button
                 onClick={handleDownload}
-                className="h-12 sm:flex-1 bg-yellow-400 hover:bg-yellow-500 text-black font-bold"
-                aria-label={croppedImageData ? "Download cropped image" : "Download image"}
+                className="h-12 sm:flex-1 bg-yellow-400 hover:bg-yellow-500 text-black font-bold col-span-3 sm:col-span-1"
+                aria-label="Download image"
               >
                 <Download className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">{croppedImageData ? "Download Cropped" : "Download"}</span>
+                <span className="hidden sm:inline">
+                  {hasAnyEdits ? "Download Edited" : "Download"}
+                </span>
               </Button>
               
-              {/* Crop - Only for images */}
+              {/* Image Edit Buttons - Only for images */}
               {contentType === "image" && (
-                <Button
-                  onClick={handleCrop}
-                  variant="outline"
-                  className="h-12 sm:flex-1 border-2"
-                  aria-label={croppedImageData ? "Re-crop image" : "Crop image"}
-                >
-                  <Scissors className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">{croppedImageData ? "Re-crop" : "Crop"}</span>
-                </Button>
+                <>
+                  <Button
+                    onClick={handleCrop}
+                    variant="outline"
+                    className="h-12 sm:flex-1 border-2"
+                    aria-label="Crop image"
+                  >
+                    <Scissors className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">
+                      {croppedImageData ? "Re-crop" : "Crop"}
+                    </span>
+                  </Button>
+
+                  <Button
+                    onClick={handleFilter}
+                    variant="outline"
+                    className="h-12 sm:flex-1 border-2"
+                    aria-label="Apply filters"
+                  >
+                    <Wand2 className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Filters</span>
+                  </Button>
+
+                  <Button
+                    onClick={handleTextOverlay}
+                    variant="outline"
+                    className="h-12 sm:flex-1 border-2"
+                    aria-label="Add text"
+                  >
+                    <Type className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Add Text</span>
+                  </Button>
+                </>
               )}
               
               {/* Share - Secondary */}
@@ -344,14 +449,30 @@ export const OutputLightbox = ({
         onDownload={handleDownload}
       />
 
-      {/* Crop Modal */}
+      {/* Edit Modals - Only for images */}
       {contentType === "image" && (
-        <ImageCropModal
-          open={showCropModal}
-          onOpenChange={setShowCropModal}
-          imageUrl={getImageUrl()}
-          onCropComplete={handleCropComplete}
-        />
+        <>
+          <ImageCropModal
+            open={showCropModal}
+            onOpenChange={setShowCropModal}
+            imageUrl={getCurrentImageUrl()}
+            onCropComplete={handleCropComplete}
+          />
+          
+          <ImageFilterModal
+            open={showFilterModal}
+            onOpenChange={setShowFilterModal}
+            imageUrl={getCurrentImageUrl()}
+            onFilterComplete={handleFilterComplete}
+          />
+
+          <TextOverlayModal
+            open={showTextOverlayModal}
+            onOpenChange={setShowTextOverlayModal}
+            imageUrl={getCurrentImageUrl()}
+            onOverlayComplete={handleTextOverlayComplete}
+          />
+        </>
       )}
     </>
   );

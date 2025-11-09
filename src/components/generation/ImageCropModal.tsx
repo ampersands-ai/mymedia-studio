@@ -23,7 +23,7 @@ export const ImageCropModal = ({
 }: ImageCropModalProps) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [rotation] = useState(0);
+  const [rotation, setRotation] = useState(0);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [aspectRatio, setAspectRatio] = useState<number | null>(1);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -64,7 +64,16 @@ export const ImageCropModal = ({
     // Reset to defaults
     setCrop({ x: 0, y: 0 });
     setZoom(1);
+    setRotation(0);
     setAspectRatio(1);
+  };
+
+  const handleRotate = (degrees: number) => {
+    setRotation((prev) => (prev + degrees) % 360);
+  };
+
+  const handleResetRotation = () => {
+    setRotation(0);
   };
 
   // Keyboard shortcuts
@@ -151,6 +160,55 @@ export const ImageCropModal = ({
               step={0.1}
               className="w-full"
             />
+          </div>
+
+          {/* Rotation Controls */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              Rotate
+            </label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleRotate(90)}
+                disabled={isProcessing}
+                className="flex-1"
+              >
+                90°
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleRotate(180)}
+                disabled={isProcessing}
+                className="flex-1"
+              >
+                180°
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleRotate(270)}
+                disabled={isProcessing}
+                className="flex-1"
+              >
+                270°
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleResetRotation}
+                disabled={isProcessing || rotation === 0}
+                className="flex-1"
+              >
+                ↺ Reset
+              </Button>
+            </div>
           </div>
 
           {/* Aspect Ratio Selector */}

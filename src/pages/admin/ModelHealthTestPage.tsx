@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useModelHealth } from "@/hooks/admin/model-health/useModelHealth";
 import { useModelTesting } from "@/hooks/admin/model-health/useModelTesting";
 import { useFlowTracking } from "@/hooks/admin/model-health/useFlowTracking";
-import { useModels } from "@/hooks/useModels";
+import { useModelByRecordId } from "@/hooks/useModels";
 import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
 import { getSurpriseMePrompt } from "@/data/surpriseMePrompts";
 // import { useFlowStepNotifications } from "@/hooks/admin/model-health/useFlowStepNotifications";
@@ -24,7 +24,7 @@ export default function ModelHealthTestPage() {
   const { recordId } = useParams<{ recordId: string }>();
   const navigate = useNavigate();
   const { data: models, isLoading: modelsLoading } = useModelHealth();
-  const { data: allModels } = useModels();
+  const { data: fullModel, isLoading: fullModelLoading } = useModelByRecordId(recordId);
   const { testModel } = useModelTesting({ enableToasts: false });
   const [testResultId, setTestResultId] = useState<string | null>(null);
   const { data: testResult, isLoading: testLoading } = useFlowTracking(testResultId);
@@ -35,7 +35,6 @@ export default function ModelHealthTestPage() {
   const { getImageFieldInfo, findPrimaryTextKey } = useSchemaHelpers();
 
   const model = models?.find(m => m.record_id === recordId);
-  const fullModel = allModels?.find(m => m.record_id === recordId);
 
   // Auto-generate defaults for all required fields
   useEffect(() => {
@@ -237,7 +236,7 @@ export default function ModelHealthTestPage() {
     URL.revokeObjectURL(url);
   };
 
-  if (modelsLoading) {
+  if (modelsLoading || fullModelLoading) {
     return (
       <div className="container mx-auto p-6 space-y-6">
         <Skeleton className="h-10 w-64" />
@@ -338,7 +337,7 @@ export default function ModelHealthTestPage() {
                     modelId={fullModel.id}
                     provider={fullModel.provider}
                   />
-                ) : modelsLoading ? (
+                ) : modelsLoading || fullModelLoading ? (
                   <div className="space-y-4">
                     <Skeleton className="h-20 w-full" />
                     <Skeleton className="h-20 w-full" />

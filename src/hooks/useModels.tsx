@@ -51,3 +51,25 @@ export const useModelsByContentType = () => {
 
   return { modelsByContentType, models, ...rest };
 };
+
+// Hook for fetching a single model by record_id (including inactive models for testing)
+export const useModelByRecordId = (recordId: string | undefined) => {
+  return useQuery({
+    queryKey: ["ai-model", recordId],
+    queryFn: async () => {
+      if (!recordId) return null;
+      
+      const { data, error } = await supabase
+        .from("ai_models")
+        .select("*")
+        .eq("record_id", recordId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data as AIModel | null;
+    },
+    enabled: !!recordId,
+    staleTime: 30 * 1000,
+    gcTime: 60 * 1000,
+  });
+};

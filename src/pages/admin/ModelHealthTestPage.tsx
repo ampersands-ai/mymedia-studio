@@ -5,6 +5,7 @@ import { useModelTesting } from "@/hooks/admin/model-health/useModelTesting";
 import { useFlowTracking } from "@/hooks/admin/model-health/useFlowTracking";
 import { useModels } from "@/hooks/useModels";
 import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
+import { getSurpriseMePrompt } from "@/data/surpriseMePrompts";
 // import { useFlowStepNotifications } from "@/hooks/admin/model-health/useFlowStepNotifications";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -98,7 +99,16 @@ export default function ModelHealthTestPage() {
             // Check if it's a text/prompt field
             const primaryTextKey = findPrimaryTextKey(properties);
             if (fieldName === primaryTextKey || fieldName.includes('prompt') || fieldName.includes('text')) {
-              defaults[fieldName] = `Test ${model?.content_type || 'content'}: Generate a beautiful sunset over mountains with vibrant colors`;
+              // Use "Surprise Me" prompt based on content type
+              if (model?.content_type === 'image') {
+                defaults[fieldName] = getSurpriseMePrompt('prompt_to_image');
+              } else if (model?.content_type === 'video') {
+                defaults[fieldName] = getSurpriseMePrompt('prompt_to_video');
+              } else if (model?.content_type === 'audio') {
+                defaults[fieldName] = getSurpriseMePrompt('prompt_to_audio');
+              } else {
+                defaults[fieldName] = `Test ${model?.content_type || 'content'}: Generate a beautiful sunset over mountains with vibrant colors`;
+              }
             } else {
               defaults[fieldName] = `Test ${fieldName}`;
             }

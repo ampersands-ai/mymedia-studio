@@ -11,53 +11,129 @@ type FlowStage = {
 };
 
 export interface StageData {
-  input?: {
+  input_validation?: {
     prompt?: string;
-    model?: string;
-    parameters?: Record<string, any>;
-    images?: number;
+    prompt_length?: number;
+    custom_parameters?: Record<string, any>;
+    model_record_id?: string;
+    has_images?: boolean;
+    image_count?: number;
   };
-  validation?: {
-    checks?: string[];
-    passed?: boolean;
+  credit_check?: {
+    credits_required?: number;
+    credits_available?: number;
+    will_deduct?: boolean;
+    user_id?: string;
+    sufficient_balance?: boolean;
   };
-  generation?: {
-    requestPayload?: any;
-    responseData?: any;
-    latency?: number;
+  credit_deduction?: {
+    deducted?: boolean;
+    amount?: number;
+    new_balance?: number;
+    test_mode?: boolean;
+    note?: string;
   };
-  storage?: {
-    storagePath?: string;
-    fileSize?: number;
-    uploadTime?: number;
+  api_request_prepared?: {
+    payload?: any;
+    endpoint?: string;
+    provider?: string;
+    content_type?: string;
   };
-  output?: {
-    url?: string;
-    metadata?: Record<string, any>;
+  api_request_sent?: {
+    timestamp?: number;
+    provider_endpoint?: string;
+    http_method?: string;
+    auth_type?: string;
+  };
+  first_api_response?: {
+    status_code?: number;
+    provider_task_id?: string;
+    estimated_time?: number;
+    latency_ms?: number;
+    initial_status?: string;
+  };
+  generation_polling?: {
+    poll_count?: number;
+    time_elapsed_ms?: number;
+    current_status?: string;
+    polling_intervals_ms?: number;
+  };
+  final_api_response?: {
+    completion_status?: string;
+    output_url?: string;
+    storage_path?: string;
+    provider_metadata?: any;
+    total_generation_time_ms?: number;
+  };
+  media_storage?: {
+    storage_bucket?: string;
+    file_path?: string;
+    file_size_bytes?: number;
+    mime_type?: string;
+  };
+  media_validation?: {
+    accessibility_check?: boolean;
+    status_code?: number;
+    content_type?: string;
+    content_length?: string;
+    validation_time_ms?: number;
+  };
+  media_delivered?: {
+    final_url?: string;
+    delivery_time_ms?: number;
+    validation_success?: boolean;
+    generation_id?: string;
+  };
+  credit_refund?: {
+    refund_amount?: number;
+    reason?: string;
+    timestamp?: number;
   };
 }
 
 interface ExecutionFlowVisualizerProps {
-  currentStage: 'input' | 'validation' | 'generation' | 'storage' | 'output';
+  currentStage: string;
   error: string | null;
   stageData?: StageData;
 }
 
 export const ExecutionFlowVisualizer = ({ currentStage, error, stageData = {} }: ExecutionFlowVisualizerProps) => {
   const [expandedStages, setExpandedStages] = useState<Set<string>>(new Set());
+
   const stages: FlowStage[] = [
-    { id: 'input', label: 'Input', status: 'completed' },
-    { id: 'validation', label: 'Validation', status: 'completed' },
-    { id: 'generation', label: 'Generation', status: currentStage === 'generation' ? 'active' : currentStage === 'storage' || currentStage === 'output' ? 'completed' : 'pending' },
-    { id: 'storage', label: 'Storage', status: currentStage === 'storage' ? 'active' : currentStage === 'output' ? 'completed' : 'pending' },
-    { id: 'output', label: 'Output', status: currentStage === 'output' ? 'completed' : 'pending' },
+    { id: 'input_validation', label: 'Input Validation', status: 'pending' },
+    { id: 'credit_check', label: 'Credit Check', status: 'pending' },
+    { id: 'credit_deduction', label: 'Credit Deduction', status: 'pending' },
+    { id: 'api_request_prepared', label: 'API Request Prepared', status: 'pending' },
+    { id: 'api_request_sent', label: 'API Request Sent', status: 'pending' },
+    { id: 'first_api_response', label: 'First API Response', status: 'pending' },
+    { id: 'generation_polling', label: 'Generation Polling', status: 'pending' },
+    { id: 'final_api_response', label: 'Final API Response', status: 'pending' },
+    { id: 'media_storage', label: 'Media Storage', status: 'pending' },
+    { id: 'media_validation', label: 'Media Validation', status: 'pending' },
+    { id: 'media_delivered', label: 'Media Delivered', status: 'pending' },
   ];
+
+  // Update stage statuses based on current stage and data
+  let foundCurrent = false;
+  stages.forEach(stage => {
+    if (stageData[stage.id as keyof StageData]) {
+      stage.status = 'completed';
+    }
+    if (stage.id === currentStage) {
+      stage.status = 'active';
+      foundCurrent = true;
+    }
+    if (!foundCurrent && !stageData[stage.id as keyof StageData]) {
+      stage.status = 'pending';
+    }
+  });
 
   // Mark error stage if there's an error
   if (error) {
-    const errorIndex = stages.findIndex(s => s.id === currentStage);
-    if (errorIndex !== -1) {
-      stages[errorIndex].status = 'error';
+    const errorStage = stages.find(s => s.id === currentStage);
+    if (errorStage) {
+      errorStage.status = 'error';
     }
   }
 
@@ -92,7 +168,7 @@ export const ExecutionFlowVisualizer = ({ currentStage, error, stageData = {} }:
 
     return (
       <div className="mt-2 p-3 bg-muted/50 rounded-md space-y-2">
-        <pre className="text-xs overflow-auto max-h-40">
+        <pre className="text-xs overflow-auto max-h-40 whitespace-pre-wrap break-words">
           {JSON.stringify(data, null, 2)}
         </pre>
       </div>
@@ -102,7 +178,10 @@ export const ExecutionFlowVisualizer = ({ currentStage, error, stageData = {} }:
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Execution Flow</CardTitle>
+        <CardTitle>Detailed Execution Flow</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Click on completed stages to view detailed data
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         {stages.map((stage, index) => {

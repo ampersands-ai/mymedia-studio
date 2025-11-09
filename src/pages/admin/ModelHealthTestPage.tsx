@@ -145,7 +145,7 @@ export default function ModelHealthTestPage() {
     uploadedImages,
     uploadImagesToStorage,
     imageFieldInfo,
-    filteredModels: [],
+    filteredModels: model ? [model] : [],
     onboardingProgress: null,
     updateProgress: () => {},
     setFirstGeneration: () => {},

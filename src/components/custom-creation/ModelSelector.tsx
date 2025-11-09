@@ -43,11 +43,13 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             {currentModel && (
               <div className="flex items-center gap-3 w-full">
                 {currentModel.logo_url && (
-                  <img
-                    src={currentModel.logo_url}
-                    alt={currentModel.model_name}
-                    className="h-6 w-6 rounded object-contain flex-shrink-0"
-                  />
+                  <div className="h-8 w-8 rounded-md bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <img
+                      src={currentModel.logo_url}
+                      alt={currentModel.model_name}
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
                 )}
                 <div className="flex-1 text-left min-w-0">
                   <div className="font-semibold text-foreground truncate">
@@ -84,11 +86,13 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
               >
                 <div className="flex items-center gap-3 w-full py-1">
                   {model.logo_url && (
-                    <img
-                      src={model.logo_url}
-                      alt={model.model_name}
-                      className="h-6 w-6 rounded object-contain flex-shrink-0"
-                    />
+                    <div className="h-8 w-8 rounded-md bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <img
+                        src={model.logo_url}
+                        alt={model.model_name}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-foreground truncate">

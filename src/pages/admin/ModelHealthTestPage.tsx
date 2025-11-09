@@ -523,7 +523,6 @@ export default function ModelHealthTestPage() {
           onSurpriseMe={() => {
             const surprise = getSurpriseMePrompt('prompt_to_image');
             setStatePrompt(surprise);
-            toast.success('Surprise prompt generated!');
           }}
           generatingSurprise={false}
           enhancePrompt={state.enhancePrompt}

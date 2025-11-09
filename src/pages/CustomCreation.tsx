@@ -162,7 +162,6 @@ const CustomCreation = () => {
     updateState({ generatingSurprise: true });
     const surprisePrompt = getSurpriseMePrompt(state.selectedGroup);
     setStatePrompt(surprisePrompt);
-    toast.success("Surprise prompt generated!");
     updateState({ generatingSurprise: false });
   };
 

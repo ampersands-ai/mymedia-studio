@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Download, ChevronLeft, ChevronRight, Image as ImageIcon, Share2, Heart, Scissors, Wand2, Type, RotateCcw, Sparkles, Clock, Layout } from "lucide-react";
 import { OptimizedGenerationPreview } from "./OptimizedGenerationPreview";
 import { ShareModal } from "./ShareModal";
@@ -388,15 +389,16 @@ export const OutputLightbox = ({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent 
-          className="max-w-5xl max-h-[95vh] flex flex-col backdrop-blur-sm shadow-2xl animate-slide-up overflow-hidden"
+          className="max-w-[95vw] sm:max-w-3xl lg:max-w-5xl max-h-[95vh] p-4 sm:p-6 lg:p-8 flex flex-col backdrop-blur-sm shadow-2xl animate-slide-up"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          {/* Pull to close indicator - Mobile only */}
-          <div className="flex justify-center py-2 md:hidden">
-            <div className="w-12 h-1 bg-muted-foreground/30 rounded-full" />
-          </div>
+          <ScrollArea className="max-h-[90vh]">
+            {/* Pull to close indicator - Mobile only */}
+            <div className="flex justify-center py-2 md:hidden">
+              <div className="w-12 h-1 bg-muted-foreground/30 rounded-full" />
+            </div>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <ImageIcon className="h-4 w-4" />
@@ -410,19 +412,19 @@ export const OutputLightbox = ({
         </DialogHeader>
 
           {/* Image Preview - Centered, viewport-relative size */}
-          <div className="flex items-center justify-center bg-muted/30 rounded-lg p-3 my-2 overflow-hidden flex-shrink min-h-0 h-[75vh] relative">
+          <div className="flex items-center justify-center bg-muted/30 rounded-lg p-4 lg:p-6 my-3 overflow-hidden flex-shrink min-h-0 h-[50vh] sm:h-[60vh] lg:h-[65vh] max-h-[600px] relative">
             {hasAnyEdits ? (
               <img 
                 src={getCurrentImageUrl()} 
                 alt="Edited preview"
-                className="max-w-full max-h-[75vh] w-auto h-auto object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
+                className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
               />
             ) : (
               <OptimizedGenerationPreview
                 key={currentOutput.storage_path}
                 storagePath={currentOutput.storage_path}
                 contentType={contentType}
-                className="max-w-full max-h-[75vh] w-auto h-auto object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
+                className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
               />
             )}
             {/* Edit badges */}
@@ -437,52 +439,52 @@ export const OutputLightbox = ({
 
           {/* Navigation Controls (only if multiple outputs) */}
           {outputs.length > 1 && (
-            <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="flex items-center justify-center gap-3 mb-4">
               <Button
                 variant="outline"
-                size="sm"
+                size="default"
+                className="h-12"
                 onClick={() => handleNavigate('prev')}
                 disabled={selectedIndex === 0}
                 aria-label="Previous image"
               >
-                <ChevronLeft className="h-4 w-4 mr-1" />
+                <ChevronLeft className="h-4 w-4 mr-2" />
                 Previous
               </Button>
               <Button
                 variant="outline"
-                size="sm"
+                size="default"
+                className="h-12"
                 onClick={() => handleNavigate('next')}
                 disabled={selectedIndex === outputs.length - 1}
                 aria-label="Next image"
               >
                 Next
-                <ChevronRight className="h-4 w-4 ml-1" />
+                <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
           )}
 
           {/* Action Buttons */}
-          <div className="pt-3 border-t space-y-2 flex-shrink-0">
+          <div className="pt-4 lg:pt-6 border-t space-y-3 lg:space-y-4 flex-shrink-0">
             {/* History and Template Controls Row */}
             {contentType === "image" && (
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-3 lg:gap-4">
                 <Button
                   onClick={() => setShowHistoryPanel(!showHistoryPanel)}
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
+                  variant="secondary"
+                  className="h-12 lg:h-14"
                 >
-                  <Clock className="h-4 w-4 mr-2" />
-                  History ({history.length})
+                  <Clock className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
+                  <span className="text-sm lg:text-base">History ({history.length})</span>
                 </Button>
                 <Button
                   onClick={() => setShowTemplateModal(true)}
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
+                  variant="secondary"
+                  className="h-12 lg:h-14"
                 >
-                  <Layout className="h-4 w-4 mr-2" />
-                  Templates
+                  <Layout className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
+                  <span className="text-sm lg:text-base">Templates</span>
                 </Button>
               </div>
             )}
@@ -501,99 +503,99 @@ export const OutputLightbox = ({
               />
             )}
 
-            <div className="grid grid-cols-3 sm:flex sm:flex-row gap-2">
-              {/* Download - Primary Yellow */}
+            <div className="space-y-3 lg:space-y-4">
+              {/* Download - Full Width Primary CTA */}
               <Button
                 onClick={handleDownload}
-                className="h-12 sm:flex-1 bg-yellow-400 hover:bg-yellow-500 text-black font-bold col-span-3 sm:col-span-1"
+                className="w-full h-14 lg:h-16 bg-yellow-400 hover:bg-yellow-500 text-black font-bold text-base lg:text-lg shadow-lg hover:shadow-xl transition-all"
                 aria-label="Download image"
               >
-                <Download className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">
-                  {hasAnyEdits ? "Download Edited" : "Download"}
-                </span>
+                <Download className="h-5 w-5 lg:h-6 lg:w-6 mr-2" />
+                {hasAnyEdits ? "Download Edited" : "Download"}
               </Button>
               
-              {/* Image Edit Buttons - Only for images */}
+              {/* Image Edit Tools - Only for images */}
               {contentType === "image" && (
-                <>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4">
                   <Button
                     onClick={handleCrop}
                     variant="outline"
-                    className="h-12 sm:flex-1 border-2"
+                    className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all"
                     aria-label="Crop image"
                   >
-                    <Scissors className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Crop</span>
+                    <Scissors className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
+                    <span className="text-sm lg:text-base">Crop</span>
                   </Button>
 
                   <Button
                     onClick={handleFilter}
                     variant="outline"
-                    className="h-12 sm:flex-1 border-2"
+                    className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all"
                     aria-label="Apply filters"
                   >
-                    <Wand2 className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Filters</span>
+                    <Wand2 className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
+                    <span className="text-sm lg:text-base">Filters</span>
                   </Button>
 
                   <Button
                     onClick={handleEffects}
                     variant="outline"
-                    className="h-12 sm:flex-1 border-2"
+                    className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all"
                     aria-label="Apply effects"
                   >
-                    <Sparkles className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Effects</span>
+                    <Sparkles className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
+                    <span className="text-sm lg:text-base">Effects</span>
                   </Button>
 
                   <Button
                     onClick={handleTextOverlay}
                     variant="outline"
-                    className="h-12 sm:flex-1 border-2"
+                    className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all"
                     aria-label="Add text"
                   >
-                    <Type className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Text</span>
+                    <Type className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
+                    <span className="text-sm lg:text-base">Text</span>
                   </Button>
-                </>
+                </div>
               )}
               
-              {/* Share - Secondary */}
-              <Button
-                onClick={handleShare}
-                variant="outline"
-                className="h-12 sm:flex-1 border-2"
-                aria-label="Share image"
-              >
-                <Share2 className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Share</span>
-              </Button>
-              
-              {/* Save - Icon only with heart */}
-              <Button
-                onClick={handleSave}
-                variant="outline"
-                className="h-12 sm:w-12 border-2"
-                aria-label={isSaved ? "Remove from favorites" : "Save to favorites"}
-              >
-                <Heart className={`h-4 w-4 ${isSaved ? 'fill-current text-red-500' : ''}`} />
-              </Button>
+              {/* Action Row - Share and Save */}
+              <div className="flex gap-3 lg:gap-4">
+                <Button
+                  onClick={handleShare}
+                  variant="ghost"
+                  className="flex-1 h-12 lg:h-14 hover:bg-secondary-50 dark:hover:bg-secondary-900/20"
+                  aria-label="Share image"
+                >
+                  <Share2 className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
+                  <span className="text-sm lg:text-base">Share</span>
+                </Button>
+                
+                <Button
+                  onClick={handleSave}
+                  variant="ghost"
+                  className="w-14 lg:w-16 h-12 lg:h-14 hover:bg-secondary-50 dark:hover:bg-secondary-900/20"
+                  aria-label={isSaved ? "Remove from favorites" : "Save to favorites"}
+                >
+                  <Heart className={`h-5 w-5 lg:h-6 lg:w-6 ${isSaved ? 'fill-current text-red-500' : ''}`} />
+                </Button>
+              </div>
             </div>
           </div>
 
           {/* Keyboard Shortcuts Hint */}
           <div className="text-center mt-4 pb-2 flex-shrink-0">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs lg:text-sm text-muted-foreground">
               <span className="hidden md:inline">
-                <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl+Z</kbd> Undo • 
-                <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl+Shift+Z</kbd> Redo • 
-                <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">←</kbd> <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">→</kbd> Navigate • 
+                <kbd className="px-2 py-1 bg-muted rounded text-xs lg:text-sm">Ctrl+Z</kbd> Undo • 
+                <kbd className="px-2 py-1 bg-muted rounded text-xs lg:text-sm">Ctrl+Shift+Z</kbd> Redo • 
+                <kbd className="px-2 py-1 bg-muted rounded text-xs lg:text-sm">←</kbd> <kbd className="px-2 py-1 bg-muted rounded text-xs lg:text-sm">→</kbd> Navigate • 
               </span>
               <span className="md:hidden">Swipe down to close • </span>
-              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">ESC</kbd> to close
+              <kbd className="px-2 py-1 bg-muted rounded text-xs lg:text-sm">ESC</kbd> to close
             </p>
           </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
 

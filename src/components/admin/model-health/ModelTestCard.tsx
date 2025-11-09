@@ -38,7 +38,10 @@ export const ModelTestCard = ({
   };
 
   return (
-    <Card className="relative">
+    <Card 
+      className="relative cursor-pointer hover:shadow-lg transition-shadow"
+      onClick={() => !isLoading && model.is_active && onTest()}
+    >
       <div className={`absolute top-0 left-0 w-full h-1 rounded-t-lg ${getStatusColor()}`} />
       
       <CardHeader className="pb-3">
@@ -103,7 +106,10 @@ export const ModelTestCard = ({
         <div className="flex gap-2">
           <Button
             size="sm"
-            onClick={onTest}
+            onClick={(e) => {
+              e.stopPropagation();
+              onTest();
+            }}
             disabled={isLoading || !model.is_active}
             className="flex-1"
           >
@@ -111,16 +117,37 @@ export const ModelTestCard = ({
             Test
           </Button>
           
-          <Button size="sm" variant="outline" onClick={onConfigure}>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onConfigure();
+            }}
+          >
             <Settings className="h-4 w-4" />
           </Button>
           
-          <Button size="sm" variant="outline" onClick={onViewHistory}>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewHistory();
+            }}
+          >
             <History className="h-4 w-4" />
           </Button>
 
           {onSchedule && (
-            <Button size="sm" variant="outline" onClick={onSchedule}>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onSchedule();
+              }}
+            >
               <Clock className="h-4 w-4" />
             </Button>
           )}

@@ -315,7 +315,11 @@ export default function ModelHealthDashboard() {
             </TableHeader>
             <TableBody>
               {filteredAndSortedModels.map((model) => (
-                <TableRow key={model.record_id} className="cursor-pointer hover:bg-muted/50">
+                <TableRow 
+                  key={model.record_id} 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => model.is_active && handleTestModel(model.record_id)}
+                >
                   <TableCell className="font-medium">{model.model_name}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{model.provider}</Badge>
@@ -347,7 +351,10 @@ export default function ModelHealthDashboard() {
                   <TableCell className="text-right">
                     <Button
                       size="sm"
-                      onClick={() => handleTestModel(model.record_id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTestModel(model.record_id);
+                      }}
                       disabled={!model.is_active}
                     >
                       <PlayCircle className="h-4 w-4 mr-1" />

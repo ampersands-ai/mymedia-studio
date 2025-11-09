@@ -79,13 +79,13 @@ export const OptimizedGenerationImage = ({
   }
 
   return (
-    <div ref={ref} className={`relative w-full h-full ${className}`} onClick={onClick}>
+    <div ref={ref} className={`relative w-full ${className}`} onClick={onClick}>
       {/* Blur placeholder */}
       {isLoading && (
         <img
           src={blurUrl}
           alt=""
-          className="absolute inset-0 w-full h-full object-cover blur-xl scale-110"
+          className="absolute inset-0 w-full h-full object-contain blur-xl scale-110"
           aria-hidden="true"
         />
       )}
@@ -96,7 +96,7 @@ export const OptimizedGenerationImage = ({
           key="fallback"
           src={fallbackUrl}
           alt={alt}
-          className={`w-full h-full object-cover ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+          className={`w-full object-contain ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
           loading={priority ? "eager" : "lazy"}
           onLoad={() => setIsLoading(false)}
           onError={async () => {
@@ -123,7 +123,7 @@ export const OptimizedGenerationImage = ({
             key="optimized"
             src={jpegUrl}
             alt={alt}
-            className={`w-full h-full object-cover ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+            className={`w-full object-contain ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
             loading={priority ? "eager" : "lazy"}
             onLoad={() => setIsLoading(false)}
             onError={async () => {

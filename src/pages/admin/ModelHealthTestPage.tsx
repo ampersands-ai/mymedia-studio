@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useModelHealth } from "@/hooks/admin/model-health/useModelHealth";
 import { useModelTesting } from "@/hooks/admin/model-health/useModelTesting";
 import { useFlowTracking } from "@/hooks/admin/model-health/useFlowTracking";
 import { useModels } from "@/hooks/useModels";
+import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
 // import { useFlowStepNotifications } from "@/hooks/admin/model-health/useFlowStepNotifications";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ModelParameterForm } from "@/components/generation/ModelParameterForm";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function ModelHealthTestPage() {
   const { recordId } = useParams<{ recordId: string }>();
@@ -28,16 +30,103 @@ export default function ModelHealthTestPage() {
   const [isStarting, setIsStarting] = useState(false);
   const [parameters, setParameters] = useState<Record<string, any>>({});
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [isGeneratingDefaults, setIsGeneratingDefaults] = useState(false);
+  const { getImageFieldInfo, findPrimaryTextKey } = useSchemaHelpers();
 
   const model = models?.find(m => m.record_id === recordId);
   const fullModel = allModels?.find(m => m.record_id === recordId);
 
-  // Removed toast notifications for test page
-  // useFlowStepNotifications(
-  //   testResult?.flow_steps || [],
-  //   model?.model_name || 'Model',
-  //   !!testResult
-  // );
+  // Auto-generate defaults for all required fields
+  useEffect(() => {
+    const generateDefaults = async () => {
+      if (!fullModel?.input_schema || isGeneratingDefaults) return;
+      
+      const schema = fullModel.input_schema;
+      const required = schema.required || [];
+      const properties = schema.properties || {};
+      
+      if (required.length === 0) return;
+      
+      setIsGeneratingDefaults(true);
+      const defaults: Record<string, any> = {};
+      
+      for (const fieldName of required) {
+        const fieldSchema = properties[fieldName];
+        if (!fieldSchema) continue;
+        
+        // Skip if already has a value
+        if (parameters[fieldName] !== undefined && parameters[fieldName] !== null && parameters[fieldName] !== '') {
+          continue;
+        }
+        
+        // Use schema default if available
+        if (fieldSchema.default !== undefined) {
+          defaults[fieldName] = fieldSchema.default;
+          continue;
+        }
+        
+        // Generate defaults based on type
+        const fieldType = fieldSchema.type;
+        
+        if (fieldType === 'string') {
+          // Check if it's an image field
+          const imageInfo = getImageFieldInfo(fullModel);
+          if (imageInfo.fieldName === fieldName && imageInfo.isRequired) {
+            // Generate a test image
+            try {
+              const prompt = `A simple test image for ${model?.content_type || 'model'} testing`;
+              const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-test-image`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+                },
+                body: JSON.stringify({ prompt }),
+              });
+              
+              if (response.ok) {
+                const data = await response.json();
+                defaults[fieldName] = imageInfo.isArray ? [data.imageUrl] : data.imageUrl;
+              }
+            } catch (error) {
+              console.error('Failed to generate test image:', error);
+            }
+          } else if (fieldSchema.enum) {
+            // Use first enum value
+            defaults[fieldName] = fieldSchema.enum[0];
+          } else {
+            // Check if it's a text/prompt field
+            const primaryTextKey = findPrimaryTextKey(properties);
+            if (fieldName === primaryTextKey || fieldName.includes('prompt') || fieldName.includes('text')) {
+              defaults[fieldName] = `Test ${model?.content_type || 'content'}: Generate a beautiful sunset over mountains with vibrant colors`;
+            } else {
+              defaults[fieldName] = `Test ${fieldName}`;
+            }
+          }
+        } else if (fieldType === 'number' || fieldType === 'integer') {
+          if (fieldSchema.enum) {
+            defaults[fieldName] = fieldSchema.enum[0];
+          } else if (fieldSchema.minimum !== undefined) {
+            defaults[fieldName] = fieldSchema.minimum;
+          } else {
+            defaults[fieldName] = 1;
+          }
+        } else if (fieldType === 'boolean') {
+          defaults[fieldName] = false;
+        } else if (fieldType === 'array') {
+          defaults[fieldName] = [];
+        }
+      }
+      
+      if (Object.keys(defaults).length > 0) {
+        setParameters(prev => ({ ...prev, ...defaults }));
+      }
+      
+      setIsGeneratingDefaults(false);
+    };
+    
+    generateDefaults();
+  }, [fullModel, model]);
 
   const validateRequiredFields = (): { isValid: boolean; missingFields: string[] } => {
     if (!fullModel?.input_schema?.required) {
@@ -216,6 +305,15 @@ export default function ModelHealthTestPage() {
                       return <li key={field}>{displayName}</li>;
                     })}
                   </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {isGeneratingDefaults && (
+              <Alert>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <AlertDescription>
+                  Generating default values for required fields (including test images)...
                 </AlertDescription>
               </Alert>
             )}

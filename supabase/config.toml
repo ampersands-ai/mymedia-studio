@@ -140,3 +140,6 @@ verify_jwt = false  # Public cron job for monitoring
 
 [functions.send-model-alert]
 verify_jwt = false  # Internal function called by check-model-health
+
+[functions.generate-test-image]
+verify_jwt = true  # Admin-only test image generation

@@ -65,6 +65,7 @@ export interface ModelHealthSummary {
   provider: string;
   content_type: string;
   is_active: boolean;
+  groups: string[] | null;
   total_tests_24h: number;
   successful_tests_24h: number;
   failed_tests_24h: number;

@@ -2160,6 +2160,7 @@ export type Database = {
           content_type: string | null
           deduct_credits: boolean | null
           failed_tests_24h: number | null
+          groups: Json | null
           is_active: boolean | null
           last_test_at: string | null
           max_latency_ms: number | null

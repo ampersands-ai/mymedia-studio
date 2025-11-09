@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PlayCircle, Settings, History, Clock } from "lucide-react";
 import type { ModelHealthSummary } from "@/types/admin/model-health";
+import { CREATION_GROUPS } from "@/constants/creation-groups";
 import { formatDistanceToNow } from "date-fns";
 
 interface ModelTestCardProps {
@@ -48,9 +49,11 @@ export const ModelTestCard = ({
               <Badge variant="outline" className="text-xs">
                 {model.provider}
               </Badge>
-              <Badge variant="outline" className="text-xs">
-                {model.content_type}
-              </Badge>
+          <Badge variant="outline" className="text-xs">
+            {model.groups?.[0] 
+              ? CREATION_GROUPS.find(g => g.id === model.groups[0])?.label || model.content_type
+              : model.content_type}
+          </Badge>
             </div>
           </div>
           <Badge variant={model.is_active ? "default" : "secondary"} className="text-xs">

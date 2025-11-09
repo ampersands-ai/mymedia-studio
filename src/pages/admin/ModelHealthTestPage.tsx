@@ -1,293 +1,275 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useModels, useModelByRecordId } from "@/hooks/useModels";
-import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
-import { useImageUpload } from "@/hooks/useImageUpload";
-import { useGeneration } from "@/hooks/useGeneration";
-import { useCustomGenerationPolling } from "@/hooks/useCustomGenerationPolling";
 import { useAuth } from "@/contexts/AuthContext";
-import { getSurpriseMePrompt } from "@/data/surpriseMePrompts";
-import { buildCustomParameters } from "@/lib/custom-creation-utils";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useCustomCreationState } from "@/hooks/useCustomCreationState";
+import { useCustomGeneration } from "@/hooks/useCustomGeneration";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import { useGenerationPolling } from "@/hooks/useGenerationPolling";
+import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
+import { useCaptionGeneration } from "@/hooks/useCaptionGeneration";
+import { useVideoGeneration } from "@/hooks/useVideoGeneration";
+import { InputPanel } from "@/components/custom-creation/InputPanel";
+import { OutputPanel } from "@/components/custom-creation/OutputPanel";
+import { TestStatusHeader } from "@/components/admin/model-health/TestStatusHeader";
+import { TestResultsCard } from "@/components/admin/model-health/TestResultsCard";
+import { ExecutionFlowVisualizer } from "@/components/admin/model-health/ExecutionFlowVisualizer";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ModelParameterForm } from "@/components/generation/ModelParameterForm";
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, Clock, AlertCircle, Download } from "lucide-react";
-import type { GenerationOutput } from "@/types/custom-creation";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { createSignedUrl } from "@/lib/storage-utils";
+import { downloadMultipleOutputs } from "@/lib/download-utils";
+import { getSurpriseMePrompt } from "@/data/surpriseMePrompts";
+import { toast } from "sonner";
 
 export default function ModelHealthTestPage() {
   const { recordId } = useParams<{ recordId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: models, isLoading: modelsLoading } = useModels();
+  
+  // Data fetching
+  const { data: allModels, isLoading: modelsLoading } = useModels();
   const { data: fullModel, isLoading: fullModelLoading } = useModelByRecordId(recordId);
-  const { findPrimaryTextKey } = useSchemaHelpers();
   
-  const [testResultId, setTestResultId] = useState<string | null>(null);
-  const [generationId, setGenerationId] = useState<string | null>(null);
-  const [parameters, setParameters] = useState<Record<string, any>>({});
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  // Test-specific state
   const [testStatus, setTestStatus] = useState<'idle' | 'running' | 'completed' | 'error'>('idle');
+  const [testStartTime, setTestStartTime] = useState<number | null>(null);
+  const [testEndTime, setTestEndTime] = useState<number | null>(null);
   const [testError, setTestError] = useState<string | null>(null);
+  const [currentStage, setCurrentStage] = useState<'input' | 'validation' | 'generation' | 'storage' | 'output'>('input');
   const [outputUrl, setOutputUrl] = useState<string | null>(null);
-  
-  const model = models?.find((m) => m.record_id === recordId);
-  const imageUploadHooks = useImageUpload(fullModel);
-  const { generate, isGenerating } = useGeneration();
 
-  // Setup generation polling
-  const { startPolling, stopPolling } = useCustomGenerationPolling({
-    onComplete: async (outputs: GenerationOutput[], parentId: string) => {
-      if (outputs.length > 0 && outputs[0].storage_path) {
-        // Get signed URL for the first output
-        const { data: urlData } = await supabase.storage
-          .from('generated-content')
-          .createSignedUrl(outputs[0].storage_path, 3600);
-        
-        if (urlData?.signedUrl) {
-          setOutputUrl(urlData.signedUrl);
-          setTestStatus('completed');
-          
-          // Update test result
-          if (testResultId) {
-            await supabase
-              .from('model_test_results')
-              .update({
-                status: 'success',
-                generation_id: parentId,
-                output_url: urlData.signedUrl,
-                completed_at: new Date().toISOString(),
-              })
-              .eq('id', testResultId);
-          }
-          
-          toast.success('Test completed successfully!');
-        }
+  const outputSectionRef = useRef<HTMLDivElement>(null);
+  
+  // Custom Creation state (reuse exact same state management)
+  const { 
+    state, 
+    updateState, 
+    resetState,
+    setPrompt: setStatePrompt,
+    setSelectedModel: setStateSelectedModel,
+  } = useCustomCreationState();
+
+  // Get current model
+  const model = allModels?.find((m) => m.record_id === recordId);
+  const currentModel = fullModel;
+
+  // Schema helpers
+  const schemaHelpers = useSchemaHelpers();
+  const imageFieldInfo = schemaHelpers.getImageFieldInfo(currentModel);
+
+  // Generation polling (same as Custom Creation)
+  const { startPolling, stopPolling, isPolling } = useGenerationPolling({
+    onComplete: async (outputs, parentId) => {
+      setCurrentStage('output');
+      updateState({
+        generatedOutputs: outputs,
+        generatedOutput: outputs[0]?.storage_path || null,
+        selectedOutputIndex: 0,
+        generationCompleteTime: Date.now(),
+        localGenerating: false,
+        pollingGenerationId: null,
+        parentGenerationId: parentId || null,
+      });
+
+      // Get signed URL for display
+      if (outputs[0]?.storage_path) {
+        const signedUrl = await createSignedUrl('generated-content', outputs[0].storage_path);
+        setOutputUrl(signedUrl);
       }
+
+      setTestStatus('completed');
+      setTestEndTime(Date.now());
+      toast.success('Test completed successfully!');
     },
-    onError: async (error: string) => {
+    onError: (error) => {
       setTestStatus('error');
       setTestError(error);
-      
-      if (testResultId) {
-        await supabase
-          .from('model_test_results')
-          .update({
-            status: 'error',
-            error_message: error,
-            completed_at: new Date().toISOString(),
-          })
-          .eq('id', testResultId);
-      }
-      
+      setTestEndTime(Date.now());
+      updateState({ localGenerating: false, pollingGenerationId: null });
       toast.error('Test failed');
     },
-    onTimeout: async () => {
+    onTimeout: () => {
       setTestStatus('error');
       setTestError('Test timeout');
-      
-      if (testResultId) {
-        await supabase
-          .from('model_test_results')
-          .update({
-            status: 'error',
-            error_message: 'Test timeout',
-            completed_at: new Date().toISOString(),
-          })
-          .eq('id', testResultId);
-      }
-      
+      setTestEndTime(Date.now());
+      updateState({ localGenerating: false, pollingGenerationId: null });
       toast.error('Test timeout');
     }
   });
 
-  // Generate default parameters on mount
-  useEffect(() => {
-    if (!fullModel?.input_schema) return;
+  // Image upload (same as Custom Creation)
+  const {
+    uploadedImages,
+    setUploadedImages,
+    fileInputRef,
+    handleFileUpload,
+    removeImage,
+    uploadImagesToStorage,
+    handleNativeCameraPick,
+    cameraLoading,
+    isNative
+  } = useImageUpload(currentModel);
 
-    const schema = fullModel.input_schema;
-    const properties = schema.properties || {};
-    const defaults: Record<string, any> = {};
+  // Caption generation (same as Custom Creation)
+  const {
+    captionData,
+    isGeneratingCaption,
+    regenerateCaption,
+    copyCaptionToClipboard,
+    copyHashtagsToClipboard,
+  } = useCaptionGeneration(
+    state.generatedOutputs,
+    state.prompt,
+    state.selectedModel,
+    []
+  );
 
-    Object.entries(properties).forEach(([fieldName, fieldSchema]: [string, any]) => {
-      const fieldType = fieldSchema.type;
-      const primaryTextKey = findPrimaryTextKey(properties);
+  // Video generation (same as Custom Creation)
+  const {
+    childVideoGenerations,
+    generatingVideoIndex,
+    handleGenerateVideo,
+  } = useVideoGeneration(state.parentGenerationId);
 
-      if (fieldName === primaryTextKey || fieldName.includes('prompt') || fieldName.includes('text')) {
-        const modelGroupsRaw = fullModel?.groups ?? model?.groups;
-        const groupStr = Array.isArray(modelGroupsRaw)
-          ? modelGroupsRaw.join(",")
-          : typeof modelGroupsRaw === "string"
-            ? modelGroupsRaw
-            : JSON.stringify(modelGroupsRaw ?? "");
-        
-        if (groupStr.includes('image_to_video') || groupStr.includes('image_editing')) {
-          defaults[fieldName] = "Change the attire of this person to black-colored";
-        } else {
-          if (fullModel?.content_type === 'image') {
-            defaults[fieldName] = getSurpriseMePrompt('prompt_to_image');
-          } else if (fullModel?.content_type === 'video') {
-            defaults[fieldName] = getSurpriseMePrompt('prompt_to_video');
-          } else if (fullModel?.content_type === 'audio') {
-            defaults[fieldName] = getSurpriseMePrompt('prompt_to_audio');
-          } else {
-            defaults[fieldName] = "Test prompt for model validation";
-          }
-        }
-      } else if (fieldType === 'string' && fieldSchema.enum) {
-        defaults[fieldName] = fieldSchema.enum[0];
-      } else if (fieldType === 'boolean') {
-        defaults[fieldName] = fieldSchema.default ?? false;
-      } else if (fieldType === 'number' || fieldType === 'integer') {
-        defaults[fieldName] = fieldSchema.default ?? (fieldSchema.minimum || 0);
-      } else if (fieldType === 'string') {
-        defaults[fieldName] = fieldSchema.default || "";
-      }
-    });
+  // Custom generation logic (same as Custom Creation)
+  const {
+    handleGenerate: baseHandleGenerate,
+    estimatedTokens,
+    isGenerating,
+  } = useCustomGeneration({
+    state,
+    updateState,
+    startPolling,
+    uploadedImages,
+    uploadImagesToStorage,
+    imageFieldInfo,
+    filteredModels: [],
+    onboardingProgress: null,
+    updateProgress: () => {},
+    setFirstGeneration: () => {},
+    userTokens: 999999, // Bypass token check for testing
+  });
 
-    setParameters(defaults);
-  }, [fullModel, model, findPrimaryTextKey]);
-
-  // Validate required fields
-  const validateRequiredFields = (): boolean => {
-    if (!fullModel?.input_schema) return true;
-    
-    const schema = fullModel.input_schema;
-    const required = schema.required || [];
-    const errors: string[] = [];
-
-    required.forEach((field: string) => {
-      const value = parameters[field];
-      if (value === undefined || value === null || value === '') {
-        errors.push(`${field} is required`);
-      }
-    });
-
-    setValidationErrors(errors);
-    return errors.length === 0;
-  };
-
-  // Handle test execution
+  // Wrap generation with test tracking
   const handleStartTest = async () => {
-    if (!fullModel || !user) {
-      toast.error("Model or user not found");
-      return;
-    }
-
-    if (!validateRequiredFields()) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
     setTestStatus('running');
+    setTestStartTime(Date.now());
     setTestError(null);
     setOutputUrl(null);
+    setCurrentStage('validation');
+    
+    updateState({
+      generationStartTime: Date.now(),
+      localGenerating: true,
+    });
 
+    setTimeout(() => setCurrentStage('generation'), 500);
+    
     try {
-      // Note: Test result tracking is simplified - using generation_id for tracking
-
-      // Upload images if needed
-      let uploadedUrls: string[] = [];
-      if (imageUploadHooks.uploadedImages.length > 0) {
-        uploadedUrls = await imageUploadHooks.uploadImagesToStorage(user.id);
-      }
-
-      // Build custom parameters using the same logic as Custom Creation
-      const customParams = buildCustomParameters(parameters, fullModel.input_schema);
-
-      // Prepare generation params
-      const primaryTextKey = findPrimaryTextKey(fullModel.input_schema?.properties);
-      const prompt = parameters[primaryTextKey || 'prompt'] || '';
-
-      // Use the exact same generate function as Custom Creation
-      const result = await generate({
-        template_id: fullModel.id,
-        model_id: fullModel.id,
-        prompt,
-        custom_parameters: {
-          ...customParams,
-          ...(uploadedUrls.length > 0 && { imageUrls: uploadedUrls })
-        }
-      });
-
-      if (!result || !result.id) {
-        throw new Error('Generation failed');
-      }
-
-      setGenerationId(result.id);
-
-      // Start polling for completion using the same hook as Custom Creation
-      startPolling(result.id);
-
+      await baseHandleGenerate();
+      setCurrentStage('storage');
     } catch (error: any) {
-      console.error('Test error:', error);
       setTestStatus('error');
       setTestError(error.message);
-      toast.error(`Test failed: ${error.message}`);
-      
-      if (testResultId) {
-        await supabase
-          .from('model_test_results')
-          .update({
-            status: 'error',
-            error_message: error.message,
-            completed_at: new Date().toISOString(),
-          })
-          .eq('id', testResultId);
-      }
+      setTestEndTime(Date.now());
     }
   };
 
   const handleResetTest = () => {
     stopPolling();
-    setTestResultId(null);
-    setGenerationId(null);
     setTestStatus('idle');
+    setTestStartTime(null);
+    setTestEndTime(null);
     setTestError(null);
     setOutputUrl(null);
-    setValidationErrors([]);
+    setCurrentStage('input');
+    setUploadedImages([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    resetState();
   };
 
-  const getStatusIcon = () => {
-    switch (testStatus) {
-      case 'running':
-        return <Loader2 className="h-5 w-5 animate-spin" />;
-      case 'completed':
-        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
-      case 'error':
-        return <XCircle className="h-5 w-5 text-red-500" />;
-      default:
-        return <Clock className="h-5 w-5" />;
-    }
+  const handleDownloadReport = () => {
+    const report = {
+      modelId: recordId,
+      modelName: model?.model_name,
+      status: testStatus,
+      error: testError,
+      outputUrl,
+      startTime: testStartTime,
+      endTime: testEndTime,
+      duration: testEndTime && testStartTime ? testEndTime - testStartTime : null,
+      prompt: state.prompt,
+      parameters: state.modelParameters,
+      timestamp: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `test-report-${recordId}-${Date.now()}.json`;
+    a.click();
   };
 
-  const getStatusVariant = (): "default" | "destructive" | "outline" | "secondary" => {
-    switch (testStatus) {
-      case 'running':
-        return 'secondary';
-      case 'completed':
-        return 'default';
-      case 'error':
-        return 'destructive';
-      default:
-        return 'outline';
+  // Auto-set model and generate default prompt
+  useEffect(() => {
+    if (recordId && !state.selectedModel) {
+      setStateSelectedModel(recordId);
     }
-  };
+  }, [recordId, state.selectedModel, setStateSelectedModel]);
+
+  useEffect(() => {
+    if (currentModel && !state.prompt) {
+      const contentType = currentModel.content_type;
+      let defaultPrompt = '';
+      
+      if (contentType === 'image') {
+        defaultPrompt = getSurpriseMePrompt('prompt_to_image');
+      } else if (contentType === 'video') {
+        defaultPrompt = getSurpriseMePrompt('prompt_to_video');
+      } else if (contentType === 'audio') {
+        defaultPrompt = getSurpriseMePrompt('prompt_to_audio');
+      } else {
+        defaultPrompt = "Test prompt for model validation";
+      }
+      
+      setStatePrompt(defaultPrompt);
+    }
+  }, [currentModel, state.prompt, setStatePrompt]);
+
+  // Compute schema-derived values for InputPanel
+  const modelSchema = currentModel?.input_schema;
+  const textKey = schemaHelpers.findPrimaryTextKey(modelSchema?.properties);
+  const voiceKey = schemaHelpers.findPrimaryVoiceKey(modelSchema?.properties, state.selectedModel || undefined);
+  const hasPromptField = !!textKey;
+  const isPromptRequired = (modelSchema?.required || []).includes(textKey || 'prompt');
+  const maxPromptLength = schemaHelpers.getMaxPromptLength(currentModel, state.modelParameters.customMode);
+  const hasDuration = !!(modelSchema?.properties?.duration);
+  const hasIncrement = !!(modelSchema?.properties?.increment || modelSchema?.properties?.incrementBySeconds);
+  
+  const advancedOptionsRef = useRef<HTMLDivElement>(null);
+  const contentType = currentModel?.content_type || 'image';
+
+  const isGenerateDisabled = 
+    isGenerating || 
+    state.localGenerating || 
+    !state.selectedModel ||
+    (imageFieldInfo.isRequired && uploadedImages.length === 0) ||
+    testStatus === 'running';
 
   if (modelsLoading || fullModelLoading) {
     return (
       <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate('/admin/model-health')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
+        <Button variant="ghost" onClick={() => navigate('/admin/model-health')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin" />
         </div>
-        <div className="text-center py-12">Loading...</div>
       </div>
     );
   }
@@ -295,188 +277,187 @@ export default function ModelHealthTestPage() {
   if (!model || !fullModel) {
     return (
       <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate('/admin/model-health')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-        </div>
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Model not found</AlertDescription>
-        </Alert>
+        <Button variant="ghost" onClick={() => navigate('/admin/model-health')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-muted-foreground">Model not found</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate('/admin/model-health')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">{model.model_name}</h1>
-            <p className="text-muted-foreground">{model.provider} • {model.content_type}</p>
-          </div>
+      {/* Back Button */}
+      <Button variant="ghost" onClick={() => navigate('/admin/model-health')}>
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back to Model Health
+      </Button>
+
+      {/* Test Status Header */}
+      <TestStatusHeader
+        modelName={model.model_name}
+        status={testStatus}
+        startTime={testStartTime}
+        endTime={testEndTime}
+      />
+
+      {/* Model Details Card (shown when idle) */}
+      {testStatus === 'idle' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Model Details</CardTitle>
+            <CardDescription>Testing {model.provider} model</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-3 gap-4 text-sm">
+            <div>
+              <p className="font-medium text-muted-foreground">Provider</p>
+              <p className="mt-1">{model.provider}</p>
+            </div>
+            <div>
+              <p className="font-medium text-muted-foreground">Content Type</p>
+              <p className="mt-1 capitalize">{model.content_type}</p>
+            </div>
+            <div>
+              <p className="font-medium text-muted-foreground">Groups</p>
+              <p className="mt-1">{Array.isArray(model.groups) ? model.groups.join(', ') : model.groups}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Main Grid: Input + Output Panels (reuse exact Custom Creation components) */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <InputPanel
+          selectedModel={state.selectedModel}
+          filteredModels={[]}
+          selectedGroup="prompt_to_image"
+          onModelChange={setStateSelectedModel}
+          modelsLoading={false}
+          prompt={state.prompt}
+          onPromptChange={setStatePrompt}
+          hasPromptField={hasPromptField}
+          isPromptRequired={isPromptRequired}
+          maxPromptLength={maxPromptLength}
+          onSurpriseMe={() => {
+            const surprise = getSurpriseMePrompt('prompt_to_image');
+            setStatePrompt(surprise);
+            toast.success('Surprise prompt generated!');
+          }}
+          generatingSurprise={false}
+          enhancePrompt={state.enhancePrompt}
+          onEnhancePromptChange={(enhance) => updateState({ enhancePrompt: enhance })}
+          generateCaption={state.generateCaption}
+          onGenerateCaptionChange={(generate) => updateState({ generateCaption: generate })}
+          uploadedImages={uploadedImages}
+          onFileUpload={handleFileUpload}
+          onRemoveImage={removeImage}
+          imageFieldName={imageFieldInfo.fieldName}
+          isImageRequired={imageFieldInfo.isRequired}
+          maxImages={imageFieldInfo.maxImages}
+          fileInputRef={fileInputRef}
+          cameraLoading={cameraLoading}
+          isNative={isNative}
+          onNativeCameraPick={handleNativeCameraPick}
+          textKey={textKey}
+          textKeySchema={textKey ? modelSchema?.properties?.[textKey] : undefined}
+          textKeyValue={state.modelParameters[textKey || '']}
+          onTextKeyChange={(value) => updateState({ modelParameters: { ...state.modelParameters, [textKey || '']: value } })}
+          voiceKey={voiceKey}
+          voiceKeySchema={voiceKey ? modelSchema?.properties?.[voiceKey] : undefined}
+          voiceKeyValue={state.modelParameters[voiceKey || '']}
+          onVoiceKeyChange={(value) => updateState({ modelParameters: { ...state.modelParameters, [voiceKey || '']: value } })}
+          hasDuration={hasDuration}
+          durationValue={state.modelParameters.duration}
+          durationSchema={hasDuration ? modelSchema?.properties?.duration : undefined}
+          onDurationChange={(value) => updateState({ modelParameters: { ...state.modelParameters, duration: value } })}
+          hasIncrement={hasIncrement}
+          incrementValue={state.modelParameters.increment || state.modelParameters.incrementBySeconds}
+          onIncrementChange={(value) => updateState({ modelParameters: { ...state.modelParameters, increment: value, incrementBySeconds: value } })}
+          modelParameters={state.modelParameters}
+          onModelParametersChange={(params) => updateState({ modelParameters: params })}
+          modelSchema={modelSchema}
+          advancedOpen={state.advancedOpen}
+          onAdvancedOpenChange={(open) => updateState({ advancedOpen: open })}
+          onGenerate={handleStartTest}
+          isGenerating={isGenerating || state.localGenerating}
+          estimatedTokens={estimatedTokens}
+          modelId={state.selectedModel || ''}
+          provider={currentModel?.provider || ''}
+          excludeFields={['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls', 'frameImages', textKey || '', voiceKey || '', 'duration', 'increment', 'incrementBySeconds'].filter(Boolean) as string[]}
+          onReset={handleResetTest}
+          isPolling={isPolling}
+          pollingGenerationId={state.pollingGenerationId}
+          localGenerating={state.localGenerating}
+          advancedOptionsRef={advancedOptionsRef}
+        />
+
+        <div ref={outputSectionRef}>
+          <OutputPanel
+            generationState={{
+              generatedOutputs: state.generatedOutputs,
+              selectedOutputIndex: state.selectedOutputIndex,
+              showLightbox: state.showLightbox,
+              generationStartTime: state.generationStartTime,
+              generationCompleteTime: state.generationCompleteTime,
+              generatedOutput: state.generatedOutput,
+            }}
+            contentType={contentType}
+            estimatedTimeSeconds={currentModel?.estimated_time_seconds || null}
+            isPolling={isPolling}
+            localGenerating={state.localGenerating}
+            isGenerating={isGenerating}
+            pollingGenerationId={state.pollingGenerationId}
+            onNavigateLightbox={(direction) => {
+              const newIndex = direction === 'next' 
+                ? (state.selectedOutputIndex + 1) % state.generatedOutputs.length
+                : (state.selectedOutputIndex - 1 + state.generatedOutputs.length) % state.generatedOutputs.length;
+              updateState({ selectedOutputIndex: newIndex });
+            }}
+            onOpenLightbox={(index) => updateState({ selectedOutputIndex: index, showLightbox: true })}
+            onCloseLightbox={() => updateState({ showLightbox: false })}
+            onDownloadAll={() => downloadMultipleOutputs(state.generatedOutputs, contentType, () => {})}
+            onViewHistory={() => navigate('/dashboard/history')}
+            onGenerateVideo={handleGenerateVideo}
+            generatingVideoIndex={generatingVideoIndex}
+            userTokensRemaining={999999}
+            captionData={captionData}
+            isGeneratingCaption={isGeneratingCaption}
+            onRegenerateCaption={regenerateCaption}
+            onCopyCaption={copyCaptionToClipboard}
+            onCopyHashtags={copyHashtagsToClipboard}
+            childVideoGenerations={childVideoGenerations}
+            parentGenerationId={state.parentGenerationId}
+            onDownloadSuccess={() => {}}
+            templateBeforeImage={state.templateBeforeImage}
+            templateAfterImage={state.templateAfterImage}
+          />
         </div>
-        <Badge variant={getStatusVariant()} className="flex items-center gap-2">
-          {getStatusIcon()}
-          {testStatus === 'idle' ? 'Ready' : testStatus}
-        </Badge>
       </div>
 
-      {/* Test Configuration or Results */}
-      {testStatus === 'idle' ? (
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Configuration Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Test Configuration</CardTitle>
-              <CardDescription>Configure test parameters for this model</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {fullModel.input_schema && (
-                <ModelParameterForm
-                  modelSchema={fullModel.input_schema}
-                  onChange={setParameters}
-                  currentValues={parameters}
-                  modelId={fullModel.id}
-                  provider={fullModel.provider}
-                />
-              )}
-              
-              {validationErrors.length > 0 && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    <ul className="list-disc list-inside">
-                      {validationErrors.map((error, i) => (
-                        <li key={i}>{error}</li>
-                      ))}
-                    </ul>
-                  </AlertDescription>
-                </Alert>
-              )}
+      {/* Execution Flow Visualizer (shown during test) */}
+      {testStatus === 'running' && (
+        <ExecutionFlowVisualizer
+          currentStage={currentStage}
+          error={testError}
+        />
+      )}
 
-              <Button 
-                onClick={handleStartTest} 
-                disabled={isGenerating}
-                className="w-full"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Running Test...
-                  </>
-                ) : (
-                  'Run Test'
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Model Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Model Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm font-medium">Provider</p>
-                <p className="text-sm text-muted-foreground">{model.provider}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium">Content Type</p>
-                <p className="text-sm text-muted-foreground">{model.content_type}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium">Groups</p>
-                <p className="text-sm text-muted-foreground">
-                  {Array.isArray(model.groups) ? model.groups.join(', ') : model.groups}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Test Results */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {getStatusIcon()}
-                Test Results
-              </CardTitle>
-              <CardDescription>
-                {testStatus === 'running' && 'Test is currently running...'}
-                {testStatus === 'completed' && 'Test completed successfully'}
-                {testStatus === 'error' && 'Test failed'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {testStatus === 'running' && (
-                <div className="space-y-2">
-                  <Progress value={undefined} className="w-full" />
-                  <p className="text-sm text-muted-foreground">Processing generation...</p>
-                </div>
-              )}
-
-              {testError && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{testError}</AlertDescription>
-                </Alert>
-              )}
-
-              {outputUrl && (
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Generated Output:</p>
-                  {fullModel?.content_type === 'image' && (
-                    <img src={outputUrl} alt="Generated" className="rounded-lg max-w-full" />
-                  )}
-                  {fullModel?.content_type === 'video' && (
-                    <video src={outputUrl} controls className="rounded-lg max-w-full" />
-                  )}
-                  {fullModel?.content_type === 'audio' && (
-                    <audio src={outputUrl} controls className="w-full" />
-                  )}
-                </div>
-              )}
-
-              <div className="flex gap-2">
-                <Button onClick={handleResetTest} variant="outline">
-                  Run New Test
-                </Button>
-                {testResultId && (
-                  <Button variant="outline" onClick={() => {
-                    const report = {
-                      testResultId,
-                      generationId,
-                      status: testStatus,
-                      error: testError,
-                      outputUrl,
-                      model: model.model_name,
-                      timestamp: new Date().toISOString(),
-                    };
-                    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `test-report-${testResultId}.json`;
-                    a.click();
-                  }}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Report
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Test Results Card (shown after completion/error) */}
+      {(testStatus === 'completed' || testStatus === 'error') && (
+        <TestResultsCard
+          status={testStatus}
+          error={testError}
+          outputUrl={outputUrl}
+          contentType={contentType}
+          onRunNewTest={handleResetTest}
+          onDownloadReport={handleDownloadReport}
+          generationId={state.pollingGenerationId}
+        />
       )}
     </div>
   );

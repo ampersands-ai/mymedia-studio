@@ -186,38 +186,11 @@ serve(async (req) => {
       });
       const step3Duration = Date.now() - step3Start;
 
-      // Step 4: Generation Submission
+      // Step 4: Call generation function (sync for Runware, async for others)
       const step4Start = Date.now();
-      const { data: generation, error: genError } = await supabaseClient
-        .from('generations')
-        .insert({
-          user_id: testUserId,
-          model_id: model.id,
-          model_record_id: model.record_id,
-          type: model.content_type,
-          prompt: config.prompt_template,
-          tokens_used: model.base_token_cost,
-          status: 'pending',
-          settings: config.custom_parameters,
-        })
-        .select()
-        .single();
-
-      if (genError) {
-        addStep('Generation Submission', 4, {}, `Failed to create generation: ${genError.message}`);
-        throw new Error('Generation submission failed');
-      }
-
-      addStep('Generation Submission', 4, {
-        generation_id: generation.id,
-        provider: model.provider,
-      });
-      const step4Duration = Date.now() - step4Start;
-
-      // Step 5: Call generation function (sync for Runware, async for others)
-      const step5Start = Date.now();
       let outputUrl: string | null = null;
       let generationStatus = 'pending';
+      let generationId: string | null = null;
       
       // Use service role key for authentication in test mode
       const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -260,16 +233,18 @@ serve(async (req) => {
             errorMessage += ` - ${parsedError.error.substring(0, 200)}`;
           }
           
-          addStep('Generation Execution', 5, { 
+          addStep('Generation Execution', 4, { 
             error_status: syncResponse.status,
             error_body: parsedError 
           }, errorMessage);
           generationStatus = 'failed';
         } else {
           const syncResult = await syncResponse.json();
+          generationId = syncResult.id;
           outputUrl = syncResult.output_url;
           generationStatus = 'completed';
-          addStep('Generation Execution', 5, {
+          addStep('Generation Execution', 4, {
+            generation_id: generationId,
             output_url: outputUrl,
             provider_response: syncResult,
           });
@@ -312,12 +287,21 @@ serve(async (req) => {
             errorMessage += ` - ${parsedError.error.substring(0, 200)}`;
           }
           
-          addStep('Generation Execution', 5, { 
+          addStep('Generation Execution', 4, { 
             error_status: asyncResponse.status,
             error_body: parsedError 
           }, errorMessage);
           generationStatus = 'failed';
         } else {
+          // Get generation_id from response
+          const asyncResult = await asyncResponse.json();
+          generationId = asyncResult.id;
+          
+          addStep('Generation Submission', 4, {
+            generation_id: generationId,
+            provider: model.provider,
+          });
+          
           // Poll for completion
           const pollStart = Date.now();
           const timeoutMs = (config.timeout_seconds || 120) * 1000;
@@ -328,7 +312,7 @@ serve(async (req) => {
             const { data: updatedGen } = await supabaseClient
               .from('generations')
               .select('status, output_url')
-              .eq('id', generation.id)
+              .eq('id', generationId)
               .single();
 
             if (updatedGen?.status === 'completed') {
@@ -353,7 +337,7 @@ serve(async (req) => {
         }
       }
 
-      const step5Duration = Date.now() - step5Start;
+      const step4Duration = Date.now() - step4Start;
 
       // Step 6: Output Validation
       const step6Start = Date.now();
@@ -387,14 +371,14 @@ serve(async (req) => {
         .update({
           test_completed_at: new Date().toISOString(),
           status: generationStatus === 'completed' ? 'success' : generationStatus === 'timeout' ? 'timeout' : 'failed',
-          generation_id: generation.id,
+          generation_id: generationId,
           output_url: outputUrl,
           flow_steps: flowSteps,
           total_latency_ms: totalLatency,
           credit_check_ms: step2Duration,
           credit_deduct_ms: step3Duration,
           generation_submit_ms: step4Duration,
-          polling_duration_ms: step5Duration,
+          polling_duration_ms: step4Duration,
           output_receive_ms: step6Duration,
           credits_available_before: creditsAvailable,
           credits_deducted: creditsDeducted,
@@ -406,7 +390,7 @@ serve(async (req) => {
         JSON.stringify({
           success: generationStatus === 'completed',
           testResultId,
-          generationId: generation.id,
+          generationId: generationId,
           outputUrl,
           status: generationStatus,
           flowSteps,
@@ -415,7 +399,7 @@ serve(async (req) => {
             credit_check: step2Duration,
             credit_deduct: step3Duration,
             generation_submit: step4Duration,
-            polling: step5Duration,
+            polling: step4Duration,
             output_receive: step6Duration,
           },
         }),

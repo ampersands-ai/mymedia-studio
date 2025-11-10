@@ -98,7 +98,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
             {currentModel ? (
               <div className="flex items-center gap-3">
                 {currentModel.logo_url && (
-                  <div className="h-10 w-10 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <div className="h-8 w-8 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
                     <img 
                       src={currentModel.logo_url} 
                       alt={currentModel.model_name} 

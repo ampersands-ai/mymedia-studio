@@ -248,7 +248,7 @@ export function ParameterDialog({
               </label>
             </div>
             <p className="text-xs text-muted-foreground">
-              When unchecked, this parameter will be hidden from users (applies to runware models only)
+              When unchecked, this parameter will be hidden from end users
             </p>
           </div>
 

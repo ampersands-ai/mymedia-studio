@@ -28,8 +28,8 @@ interface SchemaInputProps {
 export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema, rows, modelId, provider }: SchemaInputProps) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   
-  // Check if showToUser flag should hide this field (only for runware provider)
-  if (provider === 'runware' && schema.showToUser === false) {
+  // Check if showToUser flag should hide this field
+  if (schema.showToUser === false) {
     return null;
   }
   

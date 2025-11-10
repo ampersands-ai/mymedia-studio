@@ -24,7 +24,7 @@ export interface AIModel {
 }
 
 export const useModels = () => {
-  return useQuery({
+  return useQuery<AIModel[]>({
     queryKey: ["ai-models"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -34,10 +34,13 @@ export const useModels = () => {
         .order("content_type", { ascending: true });
 
       if (error) throw error;
-      return data as AIModel[];
+      return (data || []) as AIModel[];
     },
-    staleTime: 30 * 1000, // 30 seconds (reduced from 5 minutes to prevent stale cache)
-    gcTime: 60 * 1000, // 1 minute (reduced from 10 minutes)
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 60 * 1000, // 1 minute
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
   });
 };
 

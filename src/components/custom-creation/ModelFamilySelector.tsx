@@ -55,12 +55,8 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
       // Only set first family if there's no model selected at all
       const firstFamily = Object.keys(modelsByFamily).sort()[0];
       setSelectedFamily(firstFamily);
-      // Auto-select first model in that family
-      if (modelsByFamily[firstFamily]?.length > 0) {
-        onModelChange(modelsByFamily[firstFamily][0].record_id);
-      }
     }
-  }, [currentModel?.model_family, modelsByFamily, selectedModel, selectedFamily, onModelChange]);
+  }, [currentModel?.model_family, modelsByFamily, selectedModel, selectedFamily]);
 
   // Update family when selected model changes to a different family
   useEffect(() => {

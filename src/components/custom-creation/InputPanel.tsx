@@ -224,6 +224,170 @@ export const InputPanel: React.FC<InputPanelProps> = ({
           />
         )}
 
+        {/* Number of Images Control - Outside Advanced */}
+        {(modelSchema?.properties?.num_images || 
+          modelSchema?.properties?.max_images || 
+          modelSchema?.properties?.numberOfImages ||
+          modelSchema?.properties?.numImages ||
+          modelSchema?.properties?.number_of_images) && (
+          <div className="space-y-2">
+            {modelSchema?.properties?.num_images && (
+              <SchemaInput
+                name="num_images"
+                schema={modelSchema.properties.num_images}
+                value={modelParameters.num_images}
+                onChange={(value) => onModelParametersChange({ ...modelParameters, num_images: value })}
+                modelId={modelId}
+                provider={provider}
+              />
+            )}
+            {modelSchema?.properties?.max_images && (
+              <SchemaInput
+                name="max_images"
+                schema={modelSchema.properties.max_images}
+                value={modelParameters.max_images}
+                onChange={(value) => onModelParametersChange({ ...modelParameters, max_images: value })}
+                modelId={modelId}
+                provider={provider}
+              />
+            )}
+            {modelSchema?.properties?.numberOfImages && (
+              <SchemaInput
+                name="numberOfImages"
+                schema={modelSchema.properties.numberOfImages}
+                value={modelParameters.numberOfImages}
+                onChange={(value) => onModelParametersChange({ ...modelParameters, numberOfImages: value })}
+                modelId={modelId}
+                provider={provider}
+              />
+            )}
+            {modelSchema?.properties?.numImages && (
+              <SchemaInput
+                name="numImages"
+                schema={modelSchema.properties.numImages}
+                value={modelParameters.numImages}
+                onChange={(value) => onModelParametersChange({ ...modelParameters, numImages: value })}
+                modelId={modelId}
+                provider={provider}
+              />
+            )}
+            {modelSchema?.properties?.number_of_images && (
+              <SchemaInput
+                name="number_of_images"
+                schema={modelSchema.properties.number_of_images}
+                value={modelParameters.number_of_images}
+                onChange={(value) => onModelParametersChange({ ...modelParameters, number_of_images: value })}
+                modelId={modelId}
+                provider={provider}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Aspect Ratio / Image Size Control - Outside Advanced */}
+        {(modelSchema?.properties?.aspect_ratio || 
+          modelSchema?.properties?.aspectRatio ||
+          modelSchema?.properties?.image_size ||
+          modelSchema?.properties?.imageSize ||
+          modelSchema?.properties?.image_resolution ||
+          modelSchema?.properties?.imageResolution ||
+          modelSchema?.properties?.resolution ||
+          modelSchema?.properties?.size ||
+          modelSchema?.properties?.dimensions) && (
+          <div className="space-y-2">
+            {modelSchema?.properties?.aspect_ratio && (
+              <SchemaInput
+                name="aspect_ratio"
+                schema={modelSchema.properties.aspect_ratio}
+                value={modelParameters.aspect_ratio}
+                onChange={(value) => onModelParametersChange({ ...modelParameters, aspect_ratio: value })}
+                modelId={modelId}
+                provider={provider}
+              />
+            )}
+            {modelSchema?.properties?.aspectRatio && (
+              <SchemaInput
+                name="aspectRatio"
+                schema={modelSchema.properties.aspectRatio}
+                value={modelParameters.aspectRatio}
+                onChange={(value) => onModelParametersChange({ ...modelParameters, aspectRatio: value })}
+                modelId={modelId}
+                provider={provider}
+              />
+            )}
+            {modelSchema?.properties?.image_size && (
+              <SchemaInput
+                name="image_size"
+                schema={modelSchema.properties.image_size}
+                value={modelParameters.image_size}
+                onChange={(value) => onModelParametersChange({ ...modelParameters, image_size: value })}
+                modelId={modelId}
+                provider={provider}
+              />
+            )}
+            {modelSchema?.properties?.imageSize && (
+              <SchemaInput
+                name="imageSize"
+                schema={modelSchema.properties.imageSize}
+                value={modelParameters.imageSize}
+                onChange={(value) => onModelParametersChange({ ...modelParameters, imageSize: value })}
+                modelId={modelId}
+                provider={provider}
+              />
+            )}
+            {modelSchema?.properties?.image_resolution && (
+              <SchemaInput
+                name="image_resolution"
+                schema={modelSchema.properties.image_resolution}
+                value={modelParameters.image_resolution}
+                onChange={(value) => onModelParametersChange({ ...modelParameters, image_resolution: value })}
+                modelId={modelId}
+                provider={provider}
+              />
+            )}
+            {modelSchema?.properties?.imageResolution && (
+              <SchemaInput
+                name="imageResolution"
+                schema={modelSchema.properties.imageResolution}
+                value={modelParameters.imageResolution}
+                onChange={(value) => onModelParametersChange({ ...modelParameters, imageResolution: value })}
+                modelId={modelId}
+                provider={provider}
+              />
+            )}
+            {modelSchema?.properties?.resolution && (
+              <SchemaInput
+                name="resolution"
+                schema={modelSchema.properties.resolution}
+                value={modelParameters.resolution}
+                onChange={(value) => onModelParametersChange({ ...modelParameters, resolution: value })}
+                modelId={modelId}
+                provider={provider}
+              />
+            )}
+            {modelSchema?.properties?.size && (
+              <SchemaInput
+                name="size"
+                schema={modelSchema.properties.size}
+                value={modelParameters.size}
+                onChange={(value) => onModelParametersChange({ ...modelParameters, size: value })}
+                modelId={modelId}
+                provider={provider}
+              />
+            )}
+            {modelSchema?.properties?.dimensions && (
+              <SchemaInput
+                name="dimensions"
+                schema={modelSchema.properties.dimensions}
+                value={modelParameters.dimensions}
+                onChange={(value) => onModelParametersChange({ ...modelParameters, dimensions: value })}
+                modelId={modelId}
+                provider={provider}
+              />
+            )}
+          </div>
+        )}
+
         {/* Primary text field (script, lyrics, etc.) */}
         {textKey && textKeySchema && !['prompt', 'input_text', 'text'].includes(textKey.toLowerCase()) && (
           <SchemaInput

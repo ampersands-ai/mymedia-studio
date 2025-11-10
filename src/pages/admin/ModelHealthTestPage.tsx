@@ -564,7 +564,23 @@ export default function ModelHealthTestPage() {
           estimatedTokens={estimatedTokens}
           modelId={state.selectedModel || ''}
           provider={currentModel?.provider || ''}
-          excludeFields={['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls', 'frameImages', textKey || '', voiceKey || '', 'duration', 'increment', 'incrementBySeconds'].filter(Boolean) as string[]}
+          excludeFields={[
+            // Image/file upload fields
+            'prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 
+            'filesUrl', 'fileUrls', 'reference_image_urls', 'frameImages',
+            
+            // Primary fields already shown
+            textKey || '', voiceKey || '', 'duration', 'increment', 'incrementBySeconds',
+            
+            // Number of images fields (move outside advanced)
+            'num_images', 'max_images', 'numberOfImages', 'numImages', 'number_of_images',
+            
+            // Aspect ratio / size fields (move outside advanced)
+            'aspect_ratio', 'aspectRatio', 'image_size', 'imageSize', 'image_resolution', 
+            'imageResolution', 'resolution', 'size', 'dimensions',
+            
+            // NOTE: negative_prompt is NOT here - it stays in Advanced Options
+          ].filter(Boolean) as string[]}
           onReset={handleResetTest}
           isPolling={isPolling}
           pollingGenerationId={state.pollingGenerationId}

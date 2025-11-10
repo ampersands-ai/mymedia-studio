@@ -141,21 +141,24 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                     )}
                     <span className="font-medium">{family}</span>
                     {stats && (
-                      <>
-                        <Badge variant="value" className="text-xs">
-                          {stats.cost}💰{stats.hasMultipleVariants && '+'}
-                        </Badge>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Coins className="w-3.5 h-3.5" />
+                          <span>{stats.cost}{stats.hasMultipleVariants && '+'}</span>
+                        </div>
                         {stats.duration && (
-                          <Badge variant="secondary" className="text-xs">
-                            ~{stats.duration}s
-                          </Badge>
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>~{stats.duration}s</span>
+                          </div>
                         )}
                         {stats.outputs && (
-                          <Badge variant="secondary" className="text-xs">
-                            ×{stats.outputs}
-                          </Badge>
+                          <div className="flex items-center gap-1">
+                            <ImageIcon className="w-3.5 h-3.5" />
+                            <span>×{stats.outputs}</span>
+                          </div>
                         )}
-                      </>
+                      </div>
                     )}
                   </div>
                 </SelectItem>
@@ -179,23 +182,28 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
             <SelectContent className="bg-background border-border">
               {variantsInSelectedFamily.map((model) => (
                 <SelectItem key={model.record_id} value={model.record_id}>
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <span className="font-medium">
                       {model.variant_name || model.model_name}
                     </span>
-                    <Badge variant="value" className="text-xs">
-                      {model.base_token_cost}💰
-                    </Badge>
-                    {model.estimated_time_seconds && (
-                      <Badge variant="secondary" className="text-xs">
-                        ~{model.estimated_time_seconds}s
-                      </Badge>
-                    )}
-                    {model.default_outputs && (
-                      <Badge variant="secondary" className="text-xs">
-                        ×{model.default_outputs}
-                      </Badge>
-                    )}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Coins className="w-3.5 h-3.5" />
+                        <span>{model.base_token_cost}</span>
+                      </div>
+                      {model.estimated_time_seconds && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>~{model.estimated_time_seconds}s</span>
+                        </div>
+                      )}
+                      {model.default_outputs && (
+                        <div className="flex items-center gap-1">
+                          <ImageIcon className="w-3.5 h-3.5" />
+                          <span>×{model.default_outputs}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </SelectItem>
               ))}

@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
-import { applyTextOverlay, defaultTextLayer, watermarkTemplates, type TextLayer } from '@/utils/text-overlay';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2, Plus, Trash2, Sparkles, MessageSquare, Tag } from 'lucide-react';
+import { applyTextOverlay, defaultTextLayer, watermarkTemplates, presetTemplates, type TextLayer } from '@/utils/text-overlay';
 
 interface TextOverlayModalProps {
   open: boolean;
@@ -59,6 +60,15 @@ export function TextOverlayModal({
     setSelectedLayerId(newLayer.id);
   };
 
+  const addPresetTemplate = (template: Omit<TextLayer, 'id'>) => {
+    const newLayer: TextLayer = {
+      ...template,
+      id: `preset-${Date.now()}`,
+    };
+    setTextLayers([...textLayers, newLayer]);
+    setSelectedLayerId(newLayer.id);
+  };
+
   const removeLayer = (id: string) => {
     setTextLayers(textLayers.filter(layer => layer.id !== id));
     if (selectedLayerId === id) {
@@ -88,18 +98,26 @@ export function TextOverlayModal({
   };
 
   const getPreviewStyle = (layer: TextLayer) => {
+    const shadows = [];
+    if (layer.strokeWidth > 0) {
+      shadows.push(`0 0 ${layer.strokeWidth}px ${layer.strokeColor}`);
+    }
+    if (layer.shadowBlur > 0) {
+      shadows.push(`${layer.shadowOffsetX / 4}px ${layer.shadowOffsetY / 4}px ${layer.shadowBlur / 4}px ${layer.shadowColor}`);
+    }
+    
     return {
       position: 'absolute' as const,
       left: `${layer.x * 100}%`,
       top: `${layer.y * 100}%`,
-      transform: 'translate(-50%, -50%)',
+      transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
       fontSize: `${layer.fontSize / 4}px`,
       fontFamily: layer.fontFamily,
       fontWeight: layer.fontWeight,
       fontStyle: layer.fontStyle,
       color: layer.color,
       opacity: layer.opacity,
-      textShadow: layer.strokeWidth > 0 ? `0 0 ${layer.strokeWidth}px ${layer.strokeColor}` : 'none',
+      textShadow: shadows.length > 0 ? shadows.join(', ') : 'none',
       backgroundColor: layer.backgroundColor || 'transparent',
       padding: layer.backgroundColor ? `${layer.padding / 2}px` : '0',
       cursor: draggingLayerId === layer.id ? 'grabbing' : 'grab',
@@ -183,42 +201,113 @@ export function TextOverlayModal({
         {/* Controls - Scrollable */}
         <ScrollArea className="flex-1 pr-4">
         <div className="space-y-4 py-4">
-          {/* Add Buttons */}
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addTextLayer}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Text
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => addWatermark(0)}
-            >
-              @username
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => addWatermark(1)}
-            >
-              © Copyright
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => addWatermark(2)}
-            >
-              Made with AI
-            </Button>
-          </div>
+          {/* Quick Add and Presets */}
+          <Tabs defaultValue="quick" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="quick">Quick Add</TabsTrigger>
+              <TabsTrigger value="motivational">
+                <Sparkles className="h-4 w-4 mr-1" />
+                Motivational
+              </TabsTrigger>
+              <TabsTrigger value="social">
+                <MessageSquare className="h-4 w-4 mr-1" />
+                Social
+              </TabsTrigger>
+              <TabsTrigger value="promo">
+                <Tag className="h-4 w-4 mr-1" />
+                Promo
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="quick" className="space-y-2">
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addTextLayer}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Text
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addWatermark(0)}
+                >
+                  @username
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addWatermark(1)}
+                >
+                  © Copyright
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addWatermark(2)}
+                >
+                  Made with AI
+                </Button>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="motivational" className="space-y-2">
+              <div className="grid grid-cols-1 gap-2">
+                {presetTemplates.motivational.map((template, index) => (
+                  <Button
+                    key={index}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addPresetTemplate(template)}
+                    className="justify-start"
+                  >
+                    {template.text}
+                  </Button>
+                ))}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="social" className="space-y-2">
+              <div className="grid grid-cols-1 gap-2">
+                {presetTemplates.social.map((template, index) => (
+                  <Button
+                    key={index}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addPresetTemplate(template)}
+                    className="justify-start"
+                  >
+                    {template.text}
+                  </Button>
+                ))}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="promo" className="space-y-2">
+              <div className="grid grid-cols-1 gap-2">
+                {presetTemplates.promotional.map((template, index) => (
+                  <Button
+                    key={index}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addPresetTemplate(template)}
+                    className="justify-start"
+                  >
+                    {template.text}
+                  </Button>
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
 
           {/* Layer List */}
           {textLayers.length > 0 && (
@@ -430,6 +519,75 @@ export function TextOverlayModal({
                     {selectedLayer.backgroundColor ? 'Remove' : 'Add'}
                   </Button>
                 </div>
+              </div>
+
+              {/* Rotation */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-medium">Rotation</label>
+                  <span className="text-sm text-muted-foreground">{selectedLayer.rotation}°</span>
+                </div>
+                <Slider
+                  value={[selectedLayer.rotation]}
+                  onValueChange={([value]) => updateLayer(selectedLayer.id, { rotation: value })}
+                  min={-180}
+                  max={180}
+                  step={1}
+                />
+              </div>
+
+              {/* Shadow Effects */}
+              <div className="space-y-3 border rounded-lg p-3">
+                <label className="text-sm font-medium">Shadow Effects</label>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm text-muted-foreground">Blur Intensity</label>
+                    <span className="text-sm text-muted-foreground">{selectedLayer.shadowBlur}px</span>
+                  </div>
+                  <Slider
+                    value={[selectedLayer.shadowBlur]}
+                    onValueChange={([value]) => updateLayer(selectedLayer.id, { shadowBlur: value })}
+                    min={0}
+                    max={50}
+                    step={1}
+                  />
+                </div>
+
+                {selectedLayer.shadowBlur > 0 && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm text-muted-foreground">Shadow Color</label>
+                        <Input
+                          type="color"
+                          value={selectedLayer.shadowColor}
+                          onChange={(e) => updateLayer(selectedLayer.id, { shadowColor: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm text-muted-foreground">X Offset: {selectedLayer.shadowOffsetX}px</label>
+                        <Slider
+                          value={[selectedLayer.shadowOffsetX]}
+                          onValueChange={([value]) => updateLayer(selectedLayer.id, { shadowOffsetX: value })}
+                          min={-20}
+                          max={20}
+                          step={1}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm text-muted-foreground">Y Offset: {selectedLayer.shadowOffsetY}px</label>
+                      <Slider
+                        value={[selectedLayer.shadowOffsetY]}
+                        onValueChange={([value]) => updateLayer(selectedLayer.id, { shadowOffsetY: value })}
+                        min={-20}
+                        max={20}
+                        step={1}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}

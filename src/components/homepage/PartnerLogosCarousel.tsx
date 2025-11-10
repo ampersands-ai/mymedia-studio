@@ -3,29 +3,12 @@ import { Autoplay, FreeMode } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/free-mode';
 
-// Import partner logos
-import metaLogo from '@/assets/partners/meta.jpeg';
-import googleLogo from '@/assets/partners/google.png';
-import runwayLogo from '@/assets/partners/runway.png';
-import openaiLogo from '@/assets/partners/openai.png';
-import recraftLogo from '@/assets/partners/recraft.png';
-import perplexityLogo from '@/assets/partners/perplexity.png';
-import anthropicLogo from '@/assets/partners/anthropic.png';
-import ideogramLogo from '@/assets/partners/ideogram.png';
-import grokLogo from '@/assets/partners/grok.png';
-import midjourneyLogo from '@/assets/partners/midjourney.png';
+// Import partner logos here
+// Example: import yourLogo from '@/assets/partners/yourlogo.png';
 
-const partners = [
-  { name: 'Meta AI', logo: metaLogo },
-  { name: 'Google', logo: googleLogo },
-  { name: 'OpenAI', logo: openaiLogo },
-  { name: 'Anthropic', logo: anthropicLogo },
-  { name: 'Grok', logo: grokLogo },
-  { name: 'Runway', logo: runwayLogo },
-  { name: 'Midjourney', logo: midjourneyLogo },
-  { name: 'Ideogram', logo: ideogramLogo },
-  { name: 'Recraft', logo: recraftLogo },
-  { name: 'Perplexity', logo: perplexityLogo },
+const partners: { name: string; logo: string }[] = [
+  // Add your partner logos here
+  // Example: { name: 'Partner Name', logo: yourLogo },
 ];
 
 export const PartnerLogosCarousel = () => {
@@ -33,7 +16,7 @@ export const PartnerLogosCarousel = () => {
     <div className="w-full space-y-4">
       {/* Label */}
       <p className="text-sm text-white/70 text-center md:text-left font-medium tracking-wide">
-        Powered by 10+ leading AI providers
+        Powered by 30+ leading AI providers
       </p>
       
       {/* Carousel container */}

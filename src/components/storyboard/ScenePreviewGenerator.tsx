@@ -366,14 +366,13 @@ export const ScenePreviewGenerator = ({
             onClick={async () => {
               const selectedOutput = batchOutputs[selectedOutputIndex];
               onImageGenerated(scene.id, selectedOutput.output_url);
-              setShowOutputGrid(false);
-              toast.success(`Variation #${selectedOutputIndex + 1} selected!`);
+              toast.success(`Variation #${selectedOutputIndex + 1} applied! You can still change your selection.`);
             }}
             className="w-full"
             disabled={!batchOutputs[selectedOutputIndex]}
           >
             <Sparkles className="w-4 h-4 mr-2" />
-            Use Variation #{selectedOutputIndex + 1}
+            Apply Variation #{selectedOutputIndex + 1}
           </Button>
         </div>
       )}

@@ -202,7 +202,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       }
 
       // Check if model schema has a prompt field
-      const hasPromptField = findPrimaryTextKey(currentModel.input_schema?.properties) !== undefined;
+      const hasPromptField = !!(currentModel.input_schema?.properties?.prompt);
       
       // Generate
       const result = await generate({

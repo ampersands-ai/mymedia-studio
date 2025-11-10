@@ -444,43 +444,67 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
         {/* Render remaining parameters based on count */}
         {(() => {
+          // Fields that should always stay in advanced options
+          const alwaysAdvancedFields = [
+            'negative_prompt', 'negativePrompt', 'negative', 
+            'style_preset', 'stylePreset',
+            'guidance_scale', 'guidanceScale',
+            'num_inference_steps', 'numInferenceSteps', 'steps',
+            'seed', 'random_seed',
+            'cfg_scale', 'cfgScale'
+          ];
+          
           const availableProperties = Object.keys(modelSchema?.properties || {}).filter(
             (key) => !excludeFields.includes(key)
           );
           
-          // Show parameters outside advanced options if less than 3
-          if (availableProperties.length > 0 && availableProperties.length < 3) {
-            return (
-              <div className="space-y-4">
-                {availableProperties.map((key) => (
-                  <SchemaInput
-                    key={key}
-                    name={key}
-                    schema={modelSchema.properties[key]}
-                    value={modelParameters[key]}
-                    onChange={(value) => onModelParametersChange({ ...modelParameters, [key]: value })}
+          // Split into always-advanced and flexible parameters
+          const alwaysAdvanced = availableProperties.filter(key => 
+            alwaysAdvancedFields.includes(key)
+          );
+          const flexibleParams = availableProperties.filter(key => 
+            !alwaysAdvancedFields.includes(key)
+          );
+          
+          // Show flexible parameters outside if less than 3
+          const showOutside = flexibleParams.length > 0 && flexibleParams.length < 3;
+          
+          // Always show advanced panel if there are any always-advanced fields
+          const showAdvancedPanel = alwaysAdvanced.length > 0 || flexibleParams.length >= 3;
+          
+          return (
+            <>
+              {showOutside && (
+                <div className="space-y-4">
+                  {flexibleParams.map((key) => (
+                    <SchemaInput
+                      key={key}
+                      name={key}
+                      schema={modelSchema.properties[key]}
+                      value={modelParameters[key]}
+                      onChange={(value) => onModelParametersChange({ ...modelParameters, [key]: value })}
+                      modelId={modelId}
+                      provider={provider}
+                    />
+                  ))}
+                </div>
+              )}
+              
+              {showAdvancedPanel && (
+                <div ref={advancedOptionsRef}>
+                  <AdvancedOptionsPanel
+                    open={advancedOpen}
+                    onOpenChange={onAdvancedOpenChange}
+                    modelSchema={modelSchema}
+                    parameters={modelParameters}
+                    onParametersChange={onModelParametersChange}
+                    excludeFields={[...excludeFields, ...(showOutside ? flexibleParams : [])]}
                     modelId={modelId}
                     provider={provider}
                   />
-                ))}
-              </div>
-            );
-          }
-          
-          // Show collapsible advanced options if 3 or more parameters
-          return (
-            <div ref={advancedOptionsRef}>
-              <AdvancedOptionsPanel
-                open={advancedOpen}
-                onOpenChange={onAdvancedOpenChange}
-                modelSchema={modelSchema}
-                parameters={modelParameters}
-                onParametersChange={onModelParametersChange}
-                excludeFields={excludeFields}
-                modelId={modelId}
-                provider={provider}
-              />
-            </div>
+                </div>
+              )}
+            </>
           );
         })()}
       </div>

@@ -96,7 +96,7 @@ export const OptimizedGenerationImage = ({
           key="fallback"
           src={fallbackUrl}
           alt={alt}
-          className={`w-full object-contain ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+          className={`w-full h-full object-contain ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
           loading={priority ? "eager" : "lazy"}
           onLoad={() => setIsLoading(false)}
           onError={async () => {
@@ -123,7 +123,7 @@ export const OptimizedGenerationImage = ({
             key="optimized"
             src={jpegUrl}
             alt={alt}
-            className={`w-full object-contain ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+            className={`w-full h-full object-contain ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
             loading={priority ? "eager" : "lazy"}
             onLoad={() => setIsLoading(false)}
             onError={async () => {

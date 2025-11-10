@@ -404,12 +404,12 @@ export const OutputLightbox = ({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent 
-          className="max-w-[95vw] sm:max-w-3xl lg:max-w-5xl max-h-[95vh] p-4 sm:p-6 lg:p-8 flex flex-col backdrop-blur-sm shadow-2xl animate-slide-up"
+          className="max-w-[95vw] sm:max-w-3xl lg:max-w-5xl h-[95vh] p-4 sm:p-6 lg:p-8 flex flex-col backdrop-blur-sm shadow-2xl animate-slide-up"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          <ScrollArea className="max-h-[90vh]">
+          <ScrollArea className="flex-1 min-h-0 pr-1 pb-6">
             {/* Pull to close indicator - Mobile only */}
             <div className="flex justify-center py-2 md:hidden">
               <div className="w-12 h-1 bg-muted-foreground/30 rounded-full" />
@@ -427,20 +427,20 @@ export const OutputLightbox = ({
         </DialogHeader>
 
           {/* Image Preview - Centered, viewport-relative size */}
-          <div className="flex items-center justify-center bg-muted/30 rounded-lg p-4 lg:p-6 my-3 overflow-hidden flex-shrink min-h-0 h-[50vh] sm:h-[60vh] lg:h-[65vh] max-h-[600px] relative">
+          <div className="flex items-center justify-center rounded-xl my-3 overflow-hidden flex-shrink-0 h-[55vh] sm:h-[60vh] lg:h-[68vh] relative">
             {hasAnyEdits ? (
               <img 
                 key={`edited-${currentIndex}-${getCurrentEntry()?.id}`}
                 src={getCurrentImageUrl()} 
                 alt="Edited preview"
-                className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
+                className="w-full h-full object-contain"
               />
             ) : (
               <OptimizedGenerationPreview
                 key={`original-${currentOutput.storage_path}`}
                 storagePath={currentOutput.storage_path}
                 contentType={contentType}
-                className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
+                className="w-full h-full"
               />
             )}
             {/* Edit badges */}

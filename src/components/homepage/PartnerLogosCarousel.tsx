@@ -60,7 +60,7 @@ export const PartnerLogosCarousel = () => {
           spaceBetween={40}
           loop={true}
           loopAdditionalSlides={partners.length}
-          speed={1000}
+          speed={8000}
           autoplay={{
             delay: 0,
             disableOnInteraction: false,

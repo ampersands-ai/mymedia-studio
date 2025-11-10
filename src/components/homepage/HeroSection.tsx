@@ -9,7 +9,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade } from 'swiper/modules';
 import { useState } from 'react';
-import { PartnerLogosCarousel } from './PartnerLogosCarousel';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 
@@ -144,9 +143,6 @@ export const HeroSection = () => {
               <span className="font-semibold text-sm sm:text-base">Watch Demo</span>
             </button>
           </div>
-
-          {/* Partner Logos Carousel */}
-          <PartnerLogosCarousel />
         </div>
       </div>
 

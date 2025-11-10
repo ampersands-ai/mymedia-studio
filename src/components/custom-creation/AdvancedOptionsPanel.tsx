@@ -37,7 +37,7 @@ export const AdvancedOptionsPanel: React.FC<AdvancedOptionsPanelProps> = ({
     (key) => !excludeFields.includes(key)
   );
 
-  if (availableProperties.length === 0) {
+  if (availableProperties.length < 3) {
     return null;
   }
 

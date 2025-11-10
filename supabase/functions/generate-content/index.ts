@@ -75,6 +75,7 @@ serve(async (req) => {
       workflow_execution_id,
       workflow_step_number,
       user_id, // For service role calls (test mode)
+      test_mode = false, // Flag to skip billing for admin tests
     } = await req.json();
     
     // If service role, require user_id in body
@@ -83,7 +84,25 @@ serve(async (req) => {
         throw new Error('user_id required when using service role authentication');
       }
       user = { id: user_id };
-      console.log('Test mode - using user_id from request:', user_id);
+      console.log('Service role detected - using user_id from request:', user_id);
+    }
+
+    // Verify admin status for test_mode
+    let isTestMode = false;
+    if (test_mode && isServiceRole) {
+      const { data: adminRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .single();
+      
+      if (adminRole) {
+        isTestMode = true;
+        console.log('🧪 TEST_MODE: Non-billable test run for admin user', user.id);
+      } else {
+        console.warn('test_mode requested but user is not admin - ignoring flag');
+      }
     }
 
     console.log('Generation request:', { user_id: user.id, template_id, model_id, model_record_id, enhance_prompt });
@@ -177,58 +196,62 @@ serve(async (req) => {
       Array.isArray(model.input_schema?.required) && 
       model.input_schema.required.includes('prompt');
 
-    // Phase 4: Check generation rate limits
-    const { data: userSubscription } = await supabase
-      .from('user_subscriptions')
-      .select('plan')
-      .eq('user_id', user.id)
-      .single();
+    // Phase 4: Check generation rate limits (skip for test mode)
+    if (!isTestMode) {
+      const { data: userSubscription } = await supabase
+        .from('user_subscriptions')
+        .select('plan')
+        .eq('user_id', user.id)
+        .single();
 
-    const userPlan = userSubscription?.plan || 'freemium';
+      const userPlan = userSubscription?.plan || 'freemium';
 
-    // Check hourly generation limit
-    const hourAgo = new Date(Date.now() - 3600000);
-    const { count: hourlyCount } = await supabase
-      .from('generations')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .gte('created_at', hourAgo.toISOString());
+      // Check hourly generation limit
+      const hourAgo = new Date(Date.now() - 3600000);
+      const { count: hourlyCount } = await supabase
+        .from('generations')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('created_at', hourAgo.toISOString());
 
-    const { data: tierLimits } = await supabase
-      .from('rate_limit_tiers')
-      .select('*')
-      .eq('tier', userPlan)
-      .single();
+      const { data: tierLimits } = await supabase
+        .from('rate_limit_tiers')
+        .select('*')
+        .eq('tier', userPlan)
+        .single();
 
-    if (tierLimits && hourlyCount !== null && hourlyCount >= tierLimits.max_generations_per_hour) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Hourly generation limit reached',
-          limit: tierLimits.max_generations_per_hour,
-          current: hourlyCount,
-          reset_in_seconds: 3600 - Math.floor((Date.now() - new Date(hourAgo).getTime()) / 1000)
-        }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+      if (tierLimits && hourlyCount !== null && hourlyCount >= tierLimits.max_generations_per_hour) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Hourly generation limit reached',
+            limit: tierLimits.max_generations_per_hour,
+            current: hourlyCount,
+            reset_in_seconds: 3600 - Math.floor((Date.now() - new Date(hourAgo).getTime()) / 1000)
+          }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
-    // Check concurrent generation limit
-    const { count: concurrentCount } = await supabase
-      .from('generations')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('status', 'pending');
+      // Check concurrent generation limit
+      const { count: concurrentCount } = await supabase
+        .from('generations')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('status', 'pending');
 
-    if (tierLimits && concurrentCount !== null && concurrentCount >= tierLimits.max_concurrent_generations) {
-      console.error(`Concurrent limit exceeded: ${concurrentCount}/${tierLimits.max_concurrent_generations} for user ${user.id}`);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Concurrent generation limit reached. Please wait for your current generation to complete.',
-          limit: tierLimits.max_concurrent_generations,
-          current: concurrentCount
-        }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (tierLimits && concurrentCount !== null && concurrentCount >= tierLimits.max_concurrent_generations) {
+        console.error(`Concurrent limit exceeded: ${concurrentCount}/${tierLimits.max_concurrent_generations} for user ${user.id}`);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Concurrent generation limit reached. Please wait for your current generation to complete.',
+            limit: tierLimits.max_concurrent_generations,
+            current: concurrentCount
+          }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
+      console.log('🧪 TEST_MODE: Skipping rate limit checks');
     }
 
     // Validate required fields based on model's input schema
@@ -433,44 +456,48 @@ serve(async (req) => {
     let generation: any = null;
 
     try {
-      // Step 1: Check and deduct tokens atomically
-      const { data: subscription, error: subError } = await supabase
-        .from('user_subscriptions')
-        .select('tokens_remaining')
-        .eq('user_id', user.id)
-        .single();
+      // Step 1: Check and deduct tokens atomically (skip for test mode)
+      if (!isTestMode) {
+        const { data: subscription, error: subError } = await supabase
+          .from('user_subscriptions')
+          .select('tokens_remaining')
+          .eq('user_id', user.id)
+          .single();
 
-      if (subError || !subscription) {
-        throw new Error('Subscription not found');
+        if (subError || !subscription) {
+          throw new Error('Subscription not found');
+        }
+
+        if (subscription.tokens_remaining < tokenCost) {
+          return new Response(
+            JSON.stringify({ 
+              error: 'Insufficient credits',
+              type: 'INSUFFICIENT_TOKENS',
+              required: tokenCost,
+              available: subscription.tokens_remaining,
+              message: `You need ${tokenCost} credits but only have ${subscription.tokens_remaining} credits available.`
+            }),
+            { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Deduct tokens first
+        const { error: deductError } = await supabase
+          .from('user_subscriptions')
+          .update({ tokens_remaining: subscription.tokens_remaining - tokenCost })
+          .eq('user_id', user.id)
+          .eq('tokens_remaining', subscription.tokens_remaining); // Optimistic locking
+
+        if (deductError) {
+          console.error('Token deduction failed:', deductError);
+          throw new Error('Failed to deduct tokens - possible concurrent update');
+        }
+
+        tokensDeducted = true;
+        console.log('Tokens deducted:', tokenCost);
+      } else {
+        console.log('🧪 TEST_MODE: Skipping token deduction (non-billable)');
       }
-
-      if (subscription.tokens_remaining < tokenCost) {
-        return new Response(
-          JSON.stringify({ 
-            error: 'Insufficient credits',
-            type: 'INSUFFICIENT_TOKENS',
-            required: tokenCost,
-            available: subscription.tokens_remaining,
-            message: `You need ${tokenCost} credits but only have ${subscription.tokens_remaining} credits available.`
-          }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Deduct tokens first
-      const { error: deductError } = await supabase
-        .from('user_subscriptions')
-        .update({ tokens_remaining: subscription.tokens_remaining - tokenCost })
-        .eq('user_id', user.id)
-        .eq('tokens_remaining', subscription.tokens_remaining); // Optimistic locking
-
-      if (deductError) {
-        console.error('Token deduction failed:', deductError);
-        throw new Error('Failed to deduct tokens - possible concurrent update');
-      }
-
-      tokensDeducted = true;
-      console.log('Tokens deducted:', tokenCost);
 
       // Generate unique webhook verification token for security
       const webhookToken = crypto.randomUUID();
@@ -566,14 +593,16 @@ serve(async (req) => {
         });
       }
       
-      // AUTOMATIC ROLLBACK: Refund tokens if deducted
-      if (tokensDeducted) {
+      // AUTOMATIC ROLLBACK: Refund tokens if deducted (skip for test mode)
+      if (tokensDeducted && !isTestMode) {
         console.log('Rolling back token deduction...');
         await supabase.rpc('increment_tokens', {
           user_id_param: user.id,
           amount: tokenCost
         });
         console.log('Tokens refunded:', tokenCost);
+      } else if (isTestMode) {
+        console.log('🧪 TEST_MODE: No token rollback needed (non-billable)');
       }
       
       // Return 400 with specific error message instead of throwing
@@ -588,11 +617,13 @@ serve(async (req) => {
     if (CIRCUIT_BREAKER.failures >= CIRCUIT_BREAKER.threshold) {
       const elapsed = Date.now() - CIRCUIT_BREAKER.lastFailure;
       if (elapsed < CIRCUIT_BREAKER.timeout) {
-        // Refund tokens using RPC for atomicity
-        await supabase.rpc('increment_tokens', {
-          user_id_param: user.id,
-          amount: tokenCost
-        });
+        // Refund tokens using RPC for atomicity (skip for test mode)
+        if (!isTestMode) {
+          await supabase.rpc('increment_tokens', {
+            user_id_param: user.id,
+            amount: tokenCost
+          });
+        }
 
         return new Response(
           JSON.stringify({ 
@@ -836,13 +867,16 @@ serve(async (req) => {
           })
           .eq('id', generation.id);
 
-        // Refund tokens using RPC for atomicity
-        await supabase.rpc('increment_tokens', {
-          user_id_param: user.id,
-          amount: tokenCost
-        });
-
-        console.log(`Credits refunded: ${tokenCost} credits returned to user ${user.id} due to ${isTimeout ? 'timeout' : 'provider failure'}`);
+        // Refund tokens using RPC for atomicity (skip for test mode)
+        if (!isTestMode) {
+          await supabase.rpc('increment_tokens', {
+            user_id_param: user.id,
+            amount: tokenCost
+          });
+          console.log(`Credits refunded: ${tokenCost} credits returned to user ${user.id} due to ${isTimeout ? 'timeout' : 'provider failure'}`);
+        } else {
+          console.log('🧪 TEST_MODE: No token refund needed (non-billable)');
+        }
 
         await supabase.from('audit_logs').insert({
           user_id: user.id,

@@ -97,17 +97,18 @@ Deno.serve(async (req) => {
 
         if (insertError) throw insertError;
 
-        // Call async generate-content (SAME as production)
+        // Call async generate-content with test_mode flag (SAME as production)
         const { data: generateData, error: generateError } = await supabase.functions.invoke('generate-content', {
           body: {
             model_record_id: model.record_id,
             prompt: testPrompt,
-            parameters: {
+            custom_parameters: {
               width: 1024,
               height: 1024,
               num_outputs: 1,
             },
             user_id: user.id,
+            test_mode: true, // Mark as non-billable admin test
           },
         });
 

@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ModelSelector } from "./ModelSelector";
@@ -7,7 +8,7 @@ import { AdvancedOptionsPanel } from "./AdvancedOptionsPanel";
 import { SchemaInput } from "@/components/generation/SchemaInput";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Sparkles, RotateCcw, Coins } from "lucide-react";
+import { Sparkles, RotateCcw, Coins, ArrowUp } from "lucide-react";
 import type { CreationGroup } from "@/constants/creation-groups";
 
 interface InputPanelProps {
@@ -154,13 +155,37 @@ export const InputPanel: React.FC<InputPanelProps> = ({
     (!isImageRequired || uploadedImages.length > 0) &&
     prompt.length <= maxPromptLength;
 
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Track scroll position to show/hide scroll-to-top button
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      // Show button after scrolling down 200px
+      setShowScrollTop(scrollContainer.scrollTop > 200);
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    scrollContainerRef.current?.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
   return (
-    <Card className="h-full flex flex-col border-border/40 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
+    <Card className="h-full flex flex-col border-border/40 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50 relative">
       <div className="border-b border-border px-4 md:px-6 py-3 md:py-4 bg-muted/30 shrink-0">
         <h2 className="text-base md:text-lg font-bold text-foreground">Input</h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
         <ModelSelector
           models={filteredModels}
           selectedModel={selectedModel}
@@ -284,6 +309,18 @@ export const InputPanel: React.FC<InputPanelProps> = ({
           Reset
         </Button>
       </div>
+
+      {/* Floating scroll-to-top button */}
+      {showScrollTop && (
+        <Button
+          onClick={scrollToTop}
+          size="icon"
+          className="absolute bottom-28 right-4 md:bottom-32 md:right-8 z-10 shadow-lg rounded-full h-12 w-12 transition-all duration-300 hover:scale-110"
+          title="Scroll to top"
+        >
+          <ArrowUp className="h-5 w-5" />
+        </Button>
+      )}
     </Card>
   );
 };

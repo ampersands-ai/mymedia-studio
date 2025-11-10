@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Sparkles, RefreshCw, Image as ImageIcon, Video } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, Sparkles, RefreshCw, Image as ImageIcon, Video, CheckCircle2 } from 'lucide-react';
 import { useGeneration } from '@/hooks/useGeneration';
 import { useModels } from '@/hooks/useModels';
 import { useUserTokens } from '@/hooks/useUserTokens';
@@ -37,6 +38,14 @@ export const ScenePreviewGenerator = ({
   const [isAsyncGeneration, setIsAsyncGeneration] = useState(false);
   const [pollStatus, setPollStatus] = useState<string>('pending');
   const [pollOutputUrl, setPollOutputUrl] = useState<string | null>(null);
+  const [batchOutputs, setBatchOutputs] = useState<Array<{
+    id: string;
+    storage_path: string;
+    output_index: number;
+    output_url: string;
+  }>>([]);
+  const [selectedOutputIndex, setSelectedOutputIndex] = useState<number>(0);
+  const [showOutputGrid, setShowOutputGrid] = useState<boolean>(false);
   
   const { generate, isGenerating, result, error } = useGeneration();
   const { data: models } = useModels();
@@ -62,7 +71,7 @@ export const ScenePreviewGenerator = ({
       try {
         const { data, error } = await supabase
           .from('generations')
-          .select('status, output_url')
+          .select('status, output_url, is_batch_output')
           .eq('id', pendingGenerationId)
           .single();
 
@@ -70,8 +79,29 @@ export const ScenePreviewGenerator = ({
 
         setPollStatus(data.status);
 
-        if (data.status === 'completed' && data.output_url) {
-          setPollOutputUrl(data.output_url);
+        if (data.status === 'completed') {
+          if (data.is_batch_output) {
+            // Fetch child generations for batch output (e.g., Midjourney 4 variations)
+            const { data: children, error: childError } = await supabase
+              .from('generations')
+              .select('id, output_url, output_index, storage_path')
+              .eq('parent_generation_id', pendingGenerationId)
+              .not('output_url', 'is', null)
+              .order('output_index', { ascending: true });
+            
+            if (!childError && children && children.length > 0) {
+              console.log('[ScenePreviewGenerator] Batch outputs found:', children.length);
+              setBatchOutputs(children);
+              setShowOutputGrid(true);
+              setPollOutputUrl(children[0].output_url); // Default to first
+            } else {
+              console.error('[ScenePreviewGenerator] No child outputs found for batch generation');
+            }
+          } else if (data.output_url) {
+            // Single output - existing logic
+            setPollOutputUrl(data.output_url);
+          }
+          
           if (pollIntervalRef.current) {
             clearInterval(pollIntervalRef.current);
             pollIntervalRef.current = null;
@@ -203,6 +233,9 @@ export const ScenePreviewGenerator = ({
     lastHandledUrlRef.current = null;
     setPendingGenerationId(null);
     setIsAsyncGeneration(false);
+    setBatchOutputs([]);
+    setShowOutputGrid(false);
+    setSelectedOutputIndex(0);
 
     // For animate mode, pass the image URL as reference
     const customParams = generationMode === 'animate' && displayUrl
@@ -284,6 +317,64 @@ export const ScenePreviewGenerator = ({
               <span>Animate</span>
             </ToggleGroupItem>
           </ToggleGroup>
+        </div>
+      )}
+
+      {/* Batch Output Grid */}
+      {showOutputGrid && batchOutputs.length > 1 && (
+        <div className="space-y-3 mb-4">
+          <p className="text-xs text-muted-foreground font-medium">
+            Select an image variation to use:
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {batchOutputs.map((output, index) => (
+              <div
+                key={output.id}
+                className={cn(
+                  "relative aspect-square cursor-pointer rounded-lg overflow-hidden border-2 transition-all",
+                  selectedOutputIndex === index
+                    ? "border-primary ring-2 ring-primary/20"
+                    : "border-border hover:border-primary/50"
+                )}
+                onClick={() => {
+                  setSelectedOutputIndex(index);
+                  setPollOutputUrl(output.output_url);
+                }}
+              >
+                <img
+                  src={output.output_url}
+                  alt={`Variation ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                <Badge
+                  className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm"
+                  variant={selectedOutputIndex === index ? "default" : "secondary"}
+                >
+                  #{index + 1}
+                </Badge>
+                {selectedOutputIndex === index && (
+                  <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
+                    <div className="bg-primary text-primary-foreground rounded-full p-2">
+                      <CheckCircle2 className="w-5 h-5" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <Button
+            onClick={async () => {
+              const selectedOutput = batchOutputs[selectedOutputIndex];
+              onImageGenerated(scene.id, selectedOutput.output_url);
+              setShowOutputGrid(false);
+              toast.success(`Variation #${selectedOutputIndex + 1} selected!`);
+            }}
+            className="w-full"
+            disabled={!batchOutputs[selectedOutputIndex]}
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Use Variation #{selectedOutputIndex + 1}
+          </Button>
         </div>
       )}
 

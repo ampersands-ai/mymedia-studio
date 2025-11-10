@@ -388,6 +388,17 @@ serve(async (req) => {
       console.log('Applied prompt->text fallback for ElevenLabs model');
     }
 
+    // Safety fallback for Runware models: map prompt to positivePrompt if positivePrompt is missing
+    if (
+      model.provider === 'runware' &&
+      !parameters.positivePrompt &&
+      typeof prompt === 'string' &&
+      prompt.trim().length > 0
+    ) {
+      parameters.positivePrompt = prompt;
+      console.log('Applied prompt->positivePrompt fallback for Runware model');
+    }
+
     let validatedParameters = validateAndFilterParameters(
       parameters,
       model.input_schema

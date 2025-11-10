@@ -470,6 +470,7 @@ const CustomCreation = () => {
           disabled={isGenerateDisabled}
           isGenerating={isGenerating || state.localGenerating}
           estimatedTokens={estimatedTokens}
+          estimatedDuration={currentModel?.estimated_time_seconds}
         />
       </div>
     </div>

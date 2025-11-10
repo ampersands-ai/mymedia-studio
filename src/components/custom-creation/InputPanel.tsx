@@ -8,7 +8,7 @@ import { AdvancedOptionsPanel } from "./AdvancedOptionsPanel";
 import { SchemaInput } from "@/components/generation/SchemaInput";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Sparkles, RotateCcw, Coins, ArrowUp } from "lucide-react";
+import { Sparkles, RotateCcw, Coins, Clock, ArrowUp } from "lucide-react";
 import type { CreationGroup } from "@/constants/creation-groups";
 
 interface InputPanelProps {
@@ -154,6 +154,9 @@ export const InputPanel: React.FC<InputPanelProps> = ({
     (!isPromptRequired || prompt.trim()) &&
     (!isImageRequired || uploadedImages.length > 0) &&
     prompt.length <= maxPromptLength;
+  
+  // Get selected model details for duration display
+  const selectedModelData = filteredModels.find(m => m.record_id === selectedModel);
 
   const [showScrollTop, setShowScrollTop] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -463,9 +466,17 @@ export const InputPanel: React.FC<InputPanelProps> = ({
         >
           <Sparkles className="h-5 w-5" />
           Generate
-          <div className="flex items-center gap-1 bg-black/10 px-2 py-0.5 rounded ml-auto">
-            <Coins className="h-3 w-3" />
-            <span className="text-xs">~{estimatedTokens.toFixed(2)}</span>
+          <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-1 bg-black/10 px-2 py-0.5 rounded">
+              <Coins className="h-3 w-3" />
+              <span className="text-xs">~{estimatedTokens.toFixed(2)}</span>
+            </div>
+            {selectedModelData?.estimated_time_seconds && (
+              <div className="flex items-center gap-1 bg-black/10 px-2 py-0.5 rounded">
+                <Clock className="h-3 w-3" />
+                <span className="text-xs">~{selectedModelData.estimated_time_seconds}s</span>
+              </div>
+            )}
           </div>
         </Button>
         <Button onClick={onReset} variant="outline" className="w-full gap-2">

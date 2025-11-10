@@ -12,7 +12,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Coins, Clock, Image as ImageIcon, ChevronDown } from "lucide-react";
+import { Coins, Image as ImageIcon, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ModelFamilySelectorProps {
@@ -113,13 +113,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                       <Coins className="w-3.5 h-3.5" />
                       <span>{currentModel.base_token_cost}</span>
                     </div>
-                    {currentModel.estimated_time_seconds && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>~{currentModel.estimated_time_seconds}s</span>
-                      </div>
-                    )}
-                    {currentModel.default_outputs && (
+                    {currentModel.default_outputs && currentModel.default_outputs > 1 && (
                       <div className="flex items-center gap-1">
                         <ImageIcon className="w-3.5 h-3.5" />
                         <span>×{currentModel.default_outputs}</span>
@@ -168,13 +162,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                             <Coins className="w-3.5 h-3.5" />
                             <span>{stats.cost}</span>
                           </div>
-                          {stats.duration && (
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-3.5 h-3.5" />
-                              <span>~{stats.duration}s</span>
-                            </div>
-                          )}
-                          {stats.outputs && (
+                          {stats.outputs && stats.outputs > 1 && (
                             <div className="flex items-center gap-1">
                               <ImageIcon className="w-3.5 h-3.5" />
                               <span>×{stats.outputs}</span>
@@ -209,13 +197,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                               <Coins className="w-3.5 h-3.5" />
                               <span>{stats.cost}+</span>
                             </div>
-                            {stats.duration && (
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5" />
-                                <span>~{stats.duration}s+</span>
-                              </div>
-                            )}
-                            {stats.outputs && (
+                            {stats.outputs && stats.outputs > 1 && (
                               <div className="flex items-center gap-1">
                                 <ImageIcon className="w-3.5 h-3.5" />
                                 <span>×{stats.outputs}</span>
@@ -242,13 +224,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                               <Coins className="w-3.5 h-3.5" />
                               <span>{model.base_token_cost}</span>
                             </div>
-                            {model.estimated_time_seconds && (
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5" />
-                                <span>~{model.estimated_time_seconds}s</span>
-                              </div>
-                            )}
-                            {model.default_outputs && (
+                            {model.default_outputs && model.default_outputs > 1 && (
                               <div className="flex items-center gap-1">
                                 <ImageIcon className="w-3.5 h-3.5" />
                                 <span>×{model.default_outputs}</span>

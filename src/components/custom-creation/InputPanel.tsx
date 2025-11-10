@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ModelSelector } from "./ModelSelector";
+import { ModelFamilySelector } from "./ModelFamilySelector";
 import { PromptInput } from "./PromptInput";
 import { ImageUploadSection } from "./ImageUploadSection";
 import { AdvancedOptionsPanel } from "./AdvancedOptionsPanel";
@@ -186,7 +186,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
       </div>
 
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
-        <ModelSelector
+        <ModelFamilySelector
           models={filteredModels}
           selectedModel={selectedModel}
           onModelChange={onModelChange}

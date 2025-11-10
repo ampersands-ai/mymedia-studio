@@ -22,6 +22,7 @@ export type Database = {
           cost_multipliers: Json | null
           created_at: string
           default_outputs: number | null
+          display_order_in_family: number | null
           estimated_time_seconds: number | null
           groups: Json | null
           id: string
@@ -29,11 +30,13 @@ export type Database = {
           is_active: boolean | null
           logo_url: string | null
           max_images: number | null
+          model_family: string | null
           model_name: string
           payload_structure: string
           provider: string
           record_id: string
           updated_at: string
+          variant_name: string | null
         }
         Insert: {
           api_endpoint?: string | null
@@ -42,6 +45,7 @@ export type Database = {
           cost_multipliers?: Json | null
           created_at?: string
           default_outputs?: number | null
+          display_order_in_family?: number | null
           estimated_time_seconds?: number | null
           groups?: Json | null
           id: string
@@ -49,11 +53,13 @@ export type Database = {
           is_active?: boolean | null
           logo_url?: string | null
           max_images?: number | null
+          model_family?: string | null
           model_name: string
           payload_structure?: string
           provider: string
           record_id?: string
           updated_at?: string
+          variant_name?: string | null
         }
         Update: {
           api_endpoint?: string | null
@@ -62,6 +68,7 @@ export type Database = {
           cost_multipliers?: Json | null
           created_at?: string
           default_outputs?: number | null
+          display_order_in_family?: number | null
           estimated_time_seconds?: number | null
           groups?: Json | null
           id?: string
@@ -69,11 +76,13 @@ export type Database = {
           is_active?: boolean | null
           logo_url?: string | null
           max_images?: number | null
+          model_family?: string | null
           model_name?: string
           payload_structure?: string
           provider?: string
           record_id?: string
           updated_at?: string
+          variant_name?: string | null
         }
         Relationships: []
       }

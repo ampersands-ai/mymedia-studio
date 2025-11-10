@@ -48,6 +48,9 @@ interface AIModel {
   max_images?: number | null;
   estimated_time_seconds?: number | null;
   default_outputs?: number | null;
+  model_family?: string | null;
+  variant_name?: string | null;
+  display_order_in_family?: number | null;
 }
 
 export default function AIModelsManager() {
@@ -534,13 +537,14 @@ export default function AIModelsManager() {
                 <TableRow>
                   <TableHead className="font-bold">Model ID</TableHead>
                   <TableHead className="font-bold">Provider</TableHead>
+                  <TableHead className="font-bold">Family</TableHead>
+                  <TableHead className="font-bold">Variant</TableHead>
                   <TableHead className="font-bold">Model Name</TableHead>
                   <TableHead className="font-bold">Type</TableHead>
                   <TableHead className="font-bold">Structure</TableHead>
                   <TableHead className="font-bold">Groups</TableHead>
                   <TableHead className="font-bold">Base Cost</TableHead>
-                  <TableHead className="font-bold">Max Images</TableHead>
-                  <TableHead className="font-bold">Outputs</TableHead>
+                  <TableHead className="font-bold">Order</TableHead>
                   <TableHead className="font-bold">Status</TableHead>
                   <TableHead className="font-bold">Actions</TableHead>
                 </TableRow>
@@ -553,6 +557,18 @@ export default function AIModelsManager() {
                     </TableCell>
                     <TableCell className="font-medium">
                       {model.provider}
+                    </TableCell>
+                    <TableCell>
+                      {(model as any).model_family ? (
+                        <Badge variant="outline">{(model as any).model_family}</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {(model as any).variant_name || (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell>{model.model_name}</TableCell>
                     <TableCell>
@@ -578,17 +594,8 @@ export default function AIModelsManager() {
                     <TableCell className="font-bold">
                       {model.base_token_cost} credits
                     </TableCell>
-                    <TableCell>
-                      {model.max_images === 0 ? (
-                        <span className="text-xs text-muted-foreground">None</span>
-                      ) : model.max_images ? (
-                        <Badge variant="outline">{model.max_images} max</Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">None</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {model.default_outputs || 1}
+                    <TableCell className="text-center text-muted-foreground">
+                      {(model as any).display_order_in_family ?? '-'}
                     </TableCell>
                     <TableCell>
                       {model.is_active ? (

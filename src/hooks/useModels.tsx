@@ -18,6 +18,9 @@ export interface AIModel {
   estimated_time_seconds?: number | null;
   logo_url?: string | null;
   default_outputs?: number | null;
+  model_family?: string | null;
+  variant_name?: string | null;
+  display_order_in_family?: number | null;
 }
 
 export const useModels = () => {

@@ -92,6 +92,9 @@ export function ModelFormDialog({
     max_images: "",
     logo_url: "",
     default_outputs: "",
+    model_family: "",
+    variant_name: "",
+    display_order_in_family: "0",
   });
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -112,6 +115,9 @@ export function ModelFormDialog({
         max_images: model.max_images?.toString() || "",
         logo_url: model.logo_url || "",
         default_outputs: model.default_outputs?.toString() || "1",
+        model_family: (model as any).model_family || "",
+        variant_name: (model as any).variant_name || "",
+        display_order_in_family: (model as any).display_order_in_family?.toString() || "0",
       });
       setSelectedGroups(model.groups || []);
     } else {
@@ -129,6 +135,9 @@ export function ModelFormDialog({
         max_images: "",
         logo_url: "",
         default_outputs: "1",
+        model_family: "",
+        variant_name: "",
+        display_order_in_family: "0",
       });
       setSelectedGroups([]);
     }
@@ -195,6 +204,9 @@ export function ModelFormDialog({
         max_images: formData.max_images ? parseInt(formData.max_images) : 0,
         logo_url: formData.logo_url || null,
         default_outputs: formData.default_outputs ? parseInt(formData.default_outputs) : 1,
+        model_family: formData.model_family || null,
+        variant_name: formData.variant_name || null,
+        display_order_in_family: formData.display_order_in_family ? parseInt(formData.display_order_in_family) : 0,
       };
 
       if (model && model.record_id) {
@@ -420,6 +432,56 @@ export function ModelFormDialog({
               />
               <p className="text-xs text-muted-foreground">
                 Upload a square logo (recommended: 64x64px or 128x128px) for this model. Displayed in dropdowns (20x20px) and Features page (48x48px).
+              </p>
+            </div>
+
+            {/* Model Family */}
+            <div className="space-y-2">
+              <Label htmlFor="model_family">Model Family</Label>
+              <Input
+                id="model_family"
+                value={formData.model_family}
+                onChange={(e) =>
+                  setFormData({ ...formData, model_family: e.target.value })
+                }
+                placeholder="e.g., Google, FLUX, OpenAI"
+              />
+              <p className="text-xs text-muted-foreground">
+                Brand/family grouping for two-level selection (e.g., "Google" for all Google models)
+              </p>
+            </div>
+
+            {/* Variant Name */}
+            <div className="space-y-2">
+              <Label htmlFor="variant_name">Variant Name</Label>
+              <Input
+                id="variant_name"
+                value={formData.variant_name}
+                onChange={(e) =>
+                  setFormData({ ...formData, variant_name: e.target.value })
+                }
+                placeholder="e.g., Imagen 4, Imagen 4 Fast"
+              />
+              <p className="text-xs text-muted-foreground">
+                Specific variant within the family (shown in variant selector)
+              </p>
+            </div>
+
+            {/* Display Order in Family */}
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="display_order_in_family">Display Order in Family</Label>
+              <Input
+                id="display_order_in_family"
+                type="number"
+                value={formData.display_order_in_family}
+                onChange={(e) =>
+                  setFormData({ ...formData, display_order_in_family: e.target.value })
+                }
+                placeholder="0"
+                min="0"
+              />
+              <p className="text-xs text-muted-foreground">
+                Sort order within family (0 = first, higher = later). Base models usually 1, Fast/Turbo 2, Ultra/Pro 3.
               </p>
             </div>
           </div>

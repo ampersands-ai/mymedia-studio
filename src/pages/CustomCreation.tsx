@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { SessionWarning } from "@/components/SessionWarning";
@@ -26,6 +26,8 @@ import { createSignedUrl, extractStoragePath } from "@/lib/storage-utils";
 import { downloadMultipleOutputs } from "@/lib/download-utils";
 import { getSurpriseMePrompt } from "@/data/surpriseMePrompts";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowUpDown } from "lucide-react";
 
 const CustomCreation = () => {
   const { user } = useAuth();
@@ -48,11 +50,27 @@ const CustomCreation = () => {
   const { data: userTokens } = useUserTokens();
   const { progress, updateProgress, setFirstGeneration, markComplete, dismiss } = useOnboarding();
 
-  // Filter models by selected group
+  // Sort preference
+  const [modelSortBy, setModelSortBy] = useState<string>("cost");
+
+  // Filter and sort models by selected group
   const filteredModels = allModels?.filter(model => {
     const groups = model.groups as string[] || [];
     return groups.includes(state.selectedGroup);
-  }).sort((a, b) => a.base_token_cost - b.base_token_cost) || [];
+  }).sort((a, b) => {
+    switch (modelSortBy) {
+      case "name":
+        return a.model_name.localeCompare(b.model_name);
+      case "cost":
+        return a.base_token_cost - b.base_token_cost;
+      case "duration":
+        const aDuration = a.estimated_time_seconds || 999999;
+        const bDuration = b.estimated_time_seconds || 999999;
+        return aDuration - bDuration;
+      default:
+        return a.base_token_cost - b.base_token_cost;
+    }
+  }) || [];
 
   // Get current model
   const currentModel = filteredModels.find(m => m.record_id === state.selectedModel);
@@ -297,6 +315,21 @@ const CustomCreation = () => {
           selectedGroup={state.selectedGroup}
           onGroupChange={setStateSelectedGroup}
         />
+
+        {/* Model Sort Selector */}
+        <div className="mb-4 flex justify-end">
+          <Select value={modelSortBy} onValueChange={setModelSortBy}>
+            <SelectTrigger className="w-[200px]">
+              <ArrowUpDown className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Sort models..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="cost">Cost (Low to High)</SelectItem>
+              <SelectItem value="name">Name (A-Z)</SelectItem>
+              <SelectItem value="duration">Speed (Fastest First)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-2 gap-6 mb-20 md:mb-6">

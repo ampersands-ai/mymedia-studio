@@ -442,18 +442,47 @@ export const InputPanel: React.FC<InputPanelProps> = ({
           </div>
         )}
 
-        <div ref={advancedOptionsRef}>
-          <AdvancedOptionsPanel
-            open={advancedOpen}
-            onOpenChange={onAdvancedOpenChange}
-            modelSchema={modelSchema}
-            parameters={modelParameters}
-            onParametersChange={onModelParametersChange}
-            excludeFields={excludeFields}
-            modelId={modelId}
-            provider={provider}
-          />
-        </div>
+        {/* Render remaining parameters based on count */}
+        {(() => {
+          const availableProperties = Object.keys(modelSchema?.properties || {}).filter(
+            (key) => !excludeFields.includes(key)
+          );
+          
+          // Show parameters outside advanced options if less than 3
+          if (availableProperties.length > 0 && availableProperties.length < 3) {
+            return (
+              <div className="space-y-4">
+                {availableProperties.map((key) => (
+                  <SchemaInput
+                    key={key}
+                    name={key}
+                    schema={modelSchema.properties[key]}
+                    value={modelParameters[key]}
+                    onChange={(value) => onModelParametersChange({ ...modelParameters, [key]: value })}
+                    modelId={modelId}
+                    provider={provider}
+                  />
+                ))}
+              </div>
+            );
+          }
+          
+          // Show collapsible advanced options if 3 or more parameters
+          return (
+            <div ref={advancedOptionsRef}>
+              <AdvancedOptionsPanel
+                open={advancedOpen}
+                onOpenChange={onAdvancedOpenChange}
+                modelSchema={modelSchema}
+                parameters={modelParameters}
+                onParametersChange={onModelParametersChange}
+                excludeFields={excludeFields}
+                modelId={modelId}
+                provider={provider}
+              />
+            </div>
+          );
+        })()}
       </div>
 
       {/* Sticky action buttons at bottom */}

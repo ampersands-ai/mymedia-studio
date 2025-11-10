@@ -421,8 +421,8 @@ export default function ModelHealthTestPage() {
   const modelSchema = currentModel?.input_schema;
   const textKey = schemaHelpers.findPrimaryTextKey(modelSchema?.properties);
   const voiceKey = schemaHelpers.findPrimaryVoiceKey(modelSchema?.properties, state.selectedModel || undefined);
-  const hasPromptField = !!textKey;
-  const isPromptRequired = (modelSchema?.required || []).includes(textKey || 'prompt');
+  const hasPromptField = !!(modelSchema?.properties?.prompt);
+  const isPromptRequired = (modelSchema?.required || []).includes('prompt');
   const maxPromptLength = schemaHelpers.getMaxPromptLength(currentModel, state.modelParameters.customMode);
   const hasDuration = !!(modelSchema?.properties?.duration);
   const hasIncrement = !!(modelSchema?.properties?.increment || modelSchema?.properties?.incrementBySeconds);

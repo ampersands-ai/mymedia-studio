@@ -6,7 +6,7 @@ import { StatCounter } from "@/components/homepage/StatCounter";
 import { ProblemCard } from "@/components/homepage/ProblemCard";
 import { useTemplates } from "@/hooks/useTemplates";
 import { lazy, Suspense, useState } from "react";
-import { Check, Frown, Clock, HelpCircle, DollarSign, Palette, Edit, Download, Video, Image, Music, FileText } from "lucide-react";
+import { Check, Frown, Clock, HelpCircle, DollarSign, Palette, Edit, Download } from "lucide-react";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { GallerySkeleton, PricingSkeleton } from "@/components/ui/skeletons";
 import { usePrefetchOnHover } from "@/hooks/useRoutePreload";
@@ -260,70 +260,6 @@ const IndexV2 = () => {
             <Button asChild variant="outline" size="lg">
               <Link to="/community">Browse Gallery →</Link>
             </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 10: Model Marketplace */}
-      <section className="bg-white dark:bg-white spacing-section">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto space-y-12">
-            <div className="text-center space-y-4">
-              <h2 className="text-heading-lg text-black">
-                Access 30+ AI Models
-              </h2>
-              <p className="text-body-lg text-black">
-                All the best AI tools, one subscription
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <h3 className="text-heading-sm flex items-center gap-2 text-black">
-                  <Video className="w-6 h-6 text-secondary-600" />
-                  VIDEO GENERATION
-                </h3>
-                <div className="flex flex-wrap gap-4">
-                  {/* Video AI provider logos - ready to add */}
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-heading-sm flex items-center gap-2 text-black">
-                  <Image className="w-6 h-6 text-secondary-600" />
-                  IMAGE GENERATION
-                </h3>
-                <div className="flex flex-wrap gap-4">
-                  {/* Image AI provider logos - ready to add */}
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-heading-sm flex items-center gap-2 text-black">
-                  <Music className="w-6 h-6 text-secondary-600" />
-                  AUDIO GENERATION
-                </h3>
-                <div className="flex flex-wrap gap-4">
-                  {/* Audio AI provider logos - ready to add */}
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-heading-sm flex items-center gap-2 text-black">
-                  <FileText className="w-6 h-6 text-secondary-600" />
-                  TEXT GENERATION
-                </h3>
-                <div className="flex flex-wrap gap-4">
-                  {/* Text AI provider logos - ready to add */}
-                </div>
-              </div>
-            </div>
-
-            <div className="text-center">
-              <p className="text-lg font-bold text-black">
-                + 21 more models
-              </p>
-            </div>
           </div>
         </div>
       </section>

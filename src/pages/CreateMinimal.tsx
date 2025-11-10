@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MinimalSidebar } from "@/components/MinimalSidebar";
 import { GlassCard } from "@/components/glass/GlassCard";
@@ -10,6 +10,7 @@ import { Sparkles, Download, History, Settings, ChevronDown } from "lucide-react
 import { useTemplates } from "@/hooks/useTemplates";
 import { useModels } from "@/hooks/useModels";
 import { useGeneration } from "@/hooks/useGeneration";
+import { useGenerationPolling } from "@/hooks/useGenerationPolling";
 import { supabase } from "@/integrations/supabase/client";
 import { OptimizedGenerationPreview } from "@/components/generation/OptimizedGenerationPreview";
 import { cn } from "@/lib/utils";
@@ -25,9 +26,26 @@ export default function CreateMinimal() {
   const [selectedModel, setSelectedModel] = useState<any>(null);
   const [prompt, setPrompt] = useState("");
   const [generatedOutput, setGeneratedOutput] = useState<string | null>(null);
-  const [pollingGenerationId, setPollingGenerationId] = useState<string | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Use realtime + polling hook
+  const { startPolling, isPolling } = useGenerationPolling({
+    onComplete: (outputs) => {
+      if (outputs && outputs.length > 0) {
+        setGeneratedOutput(outputs[0].storage_path);
+        toast.success('Generation complete!');
+      }
+    },
+    onError: (error: string) => {
+      toast.error('Generation failed', {
+        description: error,
+        duration: 5000
+      });
+    },
+    onTimeout: () => {
+      toast.info('Generation is taking longer than expected. Check History for updates.');
+    }
+  });
 
   // Auto-select first template and model
   useEffect(() => {
@@ -44,80 +62,6 @@ export default function CreateMinimal() {
       }
     }
   }, [selectedTemplate, models]);
-
-  // Polling function
-  const pollGenerationStatus = async (generationId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('generations')
-        .select('status, storage_path, type')
-        .eq('id', generationId)
-        .single();
-
-      if (error) throw error;
-
-      if (data.status === 'completed' || data.status === 'failed') {
-        if (pollIntervalRef.current) {
-          clearInterval(pollIntervalRef.current);
-          pollIntervalRef.current = null;
-        }
-        setPollingGenerationId(null);
-
-        if (data.status === 'completed') {
-          setGeneratedOutput(data.storage_path);
-          toast.success('Generation complete!');
-        } else {
-          toast.error('Generation failed');
-        }
-      }
-    } catch (error) {
-      console.error('Polling error:', error);
-    }
-  };
-
-  // Start polling
-  useEffect(() => {
-    if (pollingGenerationId) {
-      const startTime = Date.now();
-      const MAX_POLLING_DURATION = 20 * 60 * 1000;
-
-      const poll5s = setTimeout(() => pollGenerationStatus(pollingGenerationId), 5000);
-      
-      const poll10s = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        if (elapsed >= 60000) {
-          clearInterval(poll10s);
-        } else {
-          pollGenerationStatus(pollingGenerationId);
-        }
-      }, 10000);
-      
-      const poll30s = setTimeout(() => {
-        pollIntervalRef.current = setInterval(() => {
-          const elapsed = Date.now() - startTime;
-          
-          if (elapsed >= MAX_POLLING_DURATION) {
-            clearInterval(pollIntervalRef.current!);
-            pollIntervalRef.current = null;
-            setPollingGenerationId(null);
-            toast.info('Generation is taking longer than expected. Check History for updates.');
-            return;
-          }
-
-          pollGenerationStatus(pollingGenerationId);
-        }, 30000);
-      }, 60000);
-
-      return () => {
-        clearTimeout(poll5s);
-        clearInterval(poll10s);
-        clearTimeout(poll30s);
-        if (pollIntervalRef.current) {
-          clearInterval(pollIntervalRef.current);
-        }
-      };
-    }
-  }, [pollingGenerationId]);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -151,7 +95,7 @@ export default function CreateMinimal() {
       
       const genId = result?.id || result?.generation_id;
       if (genId) {
-        setPollingGenerationId(genId);
+        startPolling(genId);
       }
 
       if (result?.storage_path) {
@@ -283,7 +227,7 @@ export default function CreateMinimal() {
               size="lg"
               className="w-full"
               onClick={handleGenerate}
-              loading={isGenerating || !!pollingGenerationId}
+              loading={isGenerating || isPolling}
             >
               <Sparkles className="w-5 h-5 mr-2" />
               Generate
@@ -324,7 +268,7 @@ export default function CreateMinimal() {
                     contentType={selectedModel?.content_type || 'image'}
                   />
                 </div>
-              ) : (isGenerating || pollingGenerationId) ? (
+              ) : (isGenerating || isPolling) ? (
                 <div className="text-center space-y-4">
                   <div className="w-16 h-16 mx-auto rounded-full border-4 border-white/10 border-t-white/50 animate-spin" />
                   <p className="text-gray-400 font-light">Generating your content...</p>

@@ -7,9 +7,7 @@ import 'swiper/css/free-mode';
 import xai from '@/assets/partners/xai.jpg';
 import midjourney from '@/assets/partners/midjourney.png';
 import metaGradient from '@/assets/partners/meta-gradient.png';
-import openai from '@/assets/partners/openai.png';
 import anthropic from '@/assets/partners/anthropic.png';
-import recraft from '@/assets/partners/recraft.png';
 import perplexity from '@/assets/partners/perplexity.png';
 import googleBars from '@/assets/partners/google-bars.png';
 import sora from '@/assets/partners/sora.png';
@@ -21,15 +19,12 @@ import brainAi from '@/assets/partners/brain-ai.png';
 import geometric from '@/assets/partners/geometric.jpg';
 import meta from '@/assets/partners/meta.jpeg';
 import google from '@/assets/partners/google.png';
-import runway from '@/assets/partners/runway.png';
 
 const partners: { name: string; logo: string }[] = [
   { name: 'xAI', logo: xai },
   { name: 'Midjourney', logo: midjourney },
   { name: 'Meta', logo: metaGradient },
-  { name: 'OpenAI', logo: openai },
   { name: 'Anthropic', logo: anthropic },
-  { name: 'Recraft', logo: recraft },
   { name: 'Perplexity', logo: perplexity },
   { name: 'Google', logo: googleBars },
   { name: 'Sora', logo: sora },
@@ -41,7 +36,6 @@ const partners: { name: string; logo: string }[] = [
   { name: 'Geometric AI', logo: geometric },
   { name: 'Meta AI', logo: meta },
   { name: 'Google AI', logo: google },
-  { name: 'Runway', logo: runway },
 ];
 
 export const PartnerLogosCarousel = () => {
@@ -49,7 +43,7 @@ export const PartnerLogosCarousel = () => {
     <div className="w-full space-y-4">
       {/* Label */}
       <p className="text-sm text-white/70 text-center md:text-left font-medium tracking-wide">
-        Powered by 18+ leading AI providers
+        Powered by 15+ leading AI providers
       </p>
       
       {/* Carousel container */}

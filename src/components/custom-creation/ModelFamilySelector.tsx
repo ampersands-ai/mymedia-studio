@@ -129,8 +129,8 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
         </Select>
       </div>
 
-      {/* Variant Cards */}
-      {selectedFamily && variantsInSelectedFamily.length > 0 && (
+      {/* Variant Cards - only show if more than 1 variant */}
+      {selectedFamily && variantsInSelectedFamily.length > 1 && (
         <div className="space-y-2">
           <Label>Select Variant</Label>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Download, ChevronLeft, ChevronRight, Image as ImageIcon, Share2, Heart, Scissors, Wand2, Type, RotateCcw, Sparkles, Clock, Layout } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, Image as ImageIcon, Share2, Heart, Scissors, Wand2, Type, RotateCcw, Sparkles, Clock, Layout, Maximize2, Minimize2 } from "lucide-react";
 import { OptimizedGenerationPreview } from "./OptimizedGenerationPreview";
 import { ShareModal } from "./ShareModal";
 import { ImageCropModal } from "./ImageCropModal";
@@ -69,6 +69,7 @@ export const OutputLightbox = ({
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isSaved, setIsSaved] = useState(false);
+  const [displayMode, setDisplayMode] = useState<'fit' | 'fill'>('fit');
 
   // Initialize history with original image when modal opens
   useEffect(() => {
@@ -433,14 +434,14 @@ export const OutputLightbox = ({
                 key={`edited-${currentIndex}-${getCurrentEntry()?.id}`}
                 src={getCurrentImageUrl()} 
                 alt="Edited preview"
-                className="w-full h-full object-contain"
+                className={`w-full h-full ${displayMode === 'fit' ? 'object-contain' : 'object-cover'}`}
               />
             ) : (
               <OptimizedGenerationPreview
                 key={`original-${currentOutput.storage_path}`}
                 storagePath={currentOutput.storage_path}
                 contentType={contentType}
-                className="w-full h-full"
+                className={`w-full h-full ${displayMode === 'fit' ? 'object-contain' : 'object-cover'}`}
               />
             )}
             {/* Edit badges */}
@@ -532,47 +533,71 @@ export const OutputLightbox = ({
               
               {/* Image Edit Tools - Only for images */}
               {contentType === "image" && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4">
-                  <Button
-                    onClick={handleCrop}
-                    variant="outline"
-                    className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all"
-                    aria-label="Crop image"
-                  >
-                    <Scissors className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
-                    <span className="text-sm lg:text-base">Crop</span>
-                  </Button>
+                <>
+                  {/* Display Mode Toggle */}
+                  <div className="flex justify-center">
+                    <Button
+                      onClick={() => setDisplayMode(displayMode === 'fit' ? 'fill' : 'fit')}
+                      variant="outline"
+                      className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all px-6"
+                      aria-label={displayMode === 'fit' ? 'Switch to Fill mode' : 'Switch to Fit mode'}
+                    >
+                      {displayMode === 'fit' ? (
+                        <>
+                          <Maximize2 className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
+                          <span className="text-sm lg:text-base">Fill</span>
+                        </>
+                      ) : (
+                        <>
+                          <Minimize2 className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
+                          <span className="text-sm lg:text-base">Fit</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
 
-                  <Button
-                    onClick={handleFilter}
-                    variant="outline"
-                    className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all"
-                    aria-label="Apply filters"
-                  >
-                    <Wand2 className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
-                    <span className="text-sm lg:text-base">Filters</span>
-                  </Button>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4">
+                    <Button
+                      onClick={handleCrop}
+                      variant="outline"
+                      className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all"
+                      aria-label="Crop image"
+                    >
+                      <Scissors className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
+                      <span className="text-sm lg:text-base">Crop</span>
+                    </Button>
 
-                  <Button
-                    onClick={handleEffects}
-                    variant="outline"
-                    className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all"
-                    aria-label="Apply effects"
-                  >
-                    <Sparkles className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
-                    <span className="text-sm lg:text-base">Effects</span>
-                  </Button>
+                    <Button
+                      onClick={handleFilter}
+                      variant="outline"
+                      className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all"
+                      aria-label="Apply filters"
+                    >
+                      <Wand2 className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
+                      <span className="text-sm lg:text-base">Filters</span>
+                    </Button>
 
-                  <Button
-                    onClick={handleTextOverlay}
-                    variant="outline"
-                    className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all"
-                    aria-label="Add text"
-                  >
-                    <Type className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
-                    <span className="text-sm lg:text-base">Text</span>
-                  </Button>
-                </div>
+                    <Button
+                      onClick={handleEffects}
+                      variant="outline"
+                      className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all"
+                      aria-label="Apply effects"
+                    >
+                      <Sparkles className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
+                      <span className="text-sm lg:text-base">Effects</span>
+                    </Button>
+
+                    <Button
+                      onClick={handleTextOverlay}
+                      variant="outline"
+                      className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all"
+                      aria-label="Add text"
+                    >
+                      <Type className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
+                      <span className="text-sm lg:text-base">Text</span>
+                    </Button>
+                  </div>
+                </>
               )}
               
               {/* Action Row - Share and Save */}

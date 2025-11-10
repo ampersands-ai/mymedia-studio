@@ -111,11 +111,13 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                 <SelectItem key={family} value={family}>
                   <div className="flex items-center gap-2">
                     {logo && (
-                      <img 
-                        src={logo} 
-                        alt={family} 
-                        className="w-4 h-4 object-contain"
-                      />
+                      <div className="h-5 w-5 rounded bg-white/90 dark:bg-white/95 p-0.5 flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <img 
+                          src={logo} 
+                          alt={family} 
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
                     )}
                     <span>{family}</span>
                     <span className="text-xs text-muted-foreground">({count} variant{count !== 1 ? 's' : ''})</span>

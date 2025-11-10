@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
-// Show all available models for storyboard scene generation
+// Filter to only prompt-to-image and image-to-video models based on groups
 
 interface Scene {
   id: string;
@@ -149,9 +149,12 @@ export const ScenePreviewGenerator = ({
     }
   }, [error]);
 
-  // Filter models based on generation mode - show ALL available models
+  // Filter to ONLY prompt-to-image and image-to-video models based on groups
   const imageModels = (models ?? [])
-    .filter(m => m.content_type === 'image')
+    .filter(m => {
+      const groups = Array.isArray(m.groups) ? m.groups : [];
+      return m.content_type === 'image' && groups.includes('prompt_to_image');
+    })
     .sort((a, b) => {
       const costA = a.base_token_cost || 0;
       const costB = b.base_token_cost || 0;
@@ -160,7 +163,10 @@ export const ScenePreviewGenerator = ({
     });
 
   const videoModels = (models ?? [])
-    .filter(m => m.content_type === 'video')
+    .filter(m => {
+      const groups = Array.isArray(m.groups) ? m.groups : [];
+      return m.content_type === 'video' && groups.includes('image_to_video');
+    })
     .sort((a, b) => {
       const costA = a.base_token_cost || 0;
       const costB = b.base_token_cost || 0;

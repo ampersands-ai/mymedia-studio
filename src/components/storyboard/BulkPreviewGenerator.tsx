@@ -8,7 +8,7 @@ import { useModels } from '@/hooks/useModels';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-// Show all available models for storyboard scene generation
+// Filter to only prompt-to-image models based on groups
 
 interface Scene {
   id: string;
@@ -49,9 +49,12 @@ export const BulkPreviewGenerator = ({ storyboard, scenes, onGenerateAll }: Bulk
     return null; // All scenes have previews
   }
 
-  // Show ALL image models, sorted by credit cost
+  // Show ONLY prompt-to-image models based on groups
   const imageModels = (models ?? [])
-    .filter(m => m.content_type === 'image')
+    .filter(m => {
+      const groups = Array.isArray(m.groups) ? m.groups : [];
+      return m.content_type === 'image' && groups.includes('prompt_to_image');
+    })
     .sort((a, b) => {
       const costA = a.base_token_cost || 0;
       const costB = b.base_token_cost || 0;

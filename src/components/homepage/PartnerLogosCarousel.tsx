@@ -3,53 +3,12 @@ import { Autoplay, FreeMode } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/free-mode';
 
-// Import partner logos
-import openaiLogo from '@/assets/partners/openai.png';
-import geminiLogo from '@/assets/partners/gemini.png';
-import googleLogo from '@/assets/partners/google.webp';
-import googleAiLogo from '@/assets/partners/google-ai.png';
-import chatgptLogo from '@/assets/partners/chatgpt.png';
-import runwayLogo from '@/assets/partners/runway.png';
-import midjourneyLogo from '@/assets/partners/midjourney.jpg';
-import midjourneyAltLogo from '@/assets/partners/midjourney-alt.webp';
-import elevenLabsLogo from '@/assets/partners/elevenlabs.png';
-import ideogramLogo from '@/assets/partners/ideogram.png';
-import recraftLogo from '@/assets/partners/recraft.png';
-import klingLogo from '@/assets/partners/kling.png';
-import hailuoLogo from '@/assets/partners/hailuo.png';
-import lumaLogo from '@/assets/partners/luma.jpg';
-import bytedanceLogo from '@/assets/partners/bytedance.png';
-import seedanceLogo from '@/assets/partners/seedance.png';
-import wanLogo from '@/assets/partners/wan.png';
-import wanAlibabaLogo from '@/assets/partners/wan-alibaba.avif';
-import topazLogo from '@/assets/partners/topaz.webp';
-import soraLogo from '@/assets/partners/sora2.jpg';
-import veoLogo from '@/assets/partners/veo3.png';
-import sunoSvg from '@/assets/partners/suno.svg';
-import claudeSvg from '@/assets/partners/claude.svg';
-import blackforestSvg from '@/assets/partners/blackforest.svg';
+// Import partner logos here
+// Example: import yourLogo from '@/assets/partners/yourlogo.png';
 
-const partners = [
-  { name: 'OpenAI', logo: openaiLogo },
-  { name: 'Google Gemini', logo: geminiLogo },
-  { name: 'Claude AI', logo: claudeSvg },
-  { name: 'ChatGPT', logo: chatgptLogo },
-  { name: 'Google AI', logo: googleAiLogo },
-  { name: 'Runway', logo: runwayLogo },
-  { name: 'Midjourney', logo: midjourneyLogo },
-  { name: 'ElevenLabs', logo: elevenLabsLogo },
-  { name: 'Ideogram', logo: ideogramLogo },
-  { name: 'Recraft', logo: recraftLogo },
-  { name: 'Kling AI', logo: klingLogo },
-  { name: 'Hailuo AI', logo: hailuoLogo },
-  { name: 'Luma AI', logo: lumaLogo },
-  { name: 'Suno AI', logo: sunoSvg },
-  { name: 'Black Forest Labs', logo: blackforestSvg },
-  { name: 'ByteDance', logo: bytedanceLogo },
-  { name: 'Wan', logo: wanLogo },
-  { name: 'Topaz Labs', logo: topazLogo },
-  { name: 'Sora', logo: soraLogo },
-  { name: 'Veo', logo: veoLogo },
+const partners: { name: string; logo: string }[] = [
+  // Add your partner logos here
+  // Example: { name: 'Partner Name', logo: yourLogo },
 ];
 
 export const PartnerLogosCarousel = () => {

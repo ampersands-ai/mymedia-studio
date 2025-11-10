@@ -356,8 +356,8 @@ const Pricing = () => {
                 }`}
               >
                 ANNUAL
-                <span className="ml-2 inline-flex items-center leading-none h-6 text-xs px-2 py-0.5 bg-secondary text-black rounded-full">
-                  SAVE 25%
+                <span className="ml-2 inline-flex items-center leading-none h-6 text-xs px-2 py-0.5 bg-secondary text-white rounded-full">
+                  SAVE 20%
                 </span>
               </button>
             </div>

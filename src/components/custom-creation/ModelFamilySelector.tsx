@@ -106,16 +106,16 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                     />
                   </div>
                 )}
-                <div className="flex items-center gap-2 flex-1">
-                  <span className="font-medium">{currentModel.model_name}</span>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Coins className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span className="font-medium truncate">{currentModel.model_name}</span>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
+                    <div className="flex items-center gap-0.5">
+                      <Coins className="w-3 h-3" />
                       <span>{currentModel.base_token_cost}</span>
                     </div>
                     {currentModel.default_outputs && currentModel.default_outputs > 1 && (
-                      <div className="flex items-center gap-1">
-                        <ImageIcon className="w-3.5 h-3.5" />
+                      <div className="flex items-center gap-0.5">
+                        <ImageIcon className="w-3 h-3" />
                         <span>×{currentModel.default_outputs}</span>
                       </div>
                     )}
@@ -144,9 +144,9 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                   onClick={() => onModelChange(model.record_id)}
                   className="cursor-pointer p-3"
                 >
-                  <div className="flex items-center gap-3 w-full">
+                  <div className="flex items-center gap-2 w-full min-w-0">
                     {logo && (
-                      <div className="h-8 w-8 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <div className="h-7 w-7 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
                         <img 
                           src={logo} 
                           alt={model.model_name} 
@@ -154,17 +154,17 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                         />
                       </div>
                     )}
-                    <div className="flex items-center gap-2 flex-1">
-                      <span className="font-medium">{model.model_name}</span>
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                      <span className="font-medium text-sm truncate">{model.model_name}</span>
                       {stats && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Coins className="w-3.5 h-3.5" />
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
+                          <div className="flex items-center gap-0.5">
+                            <Coins className="w-3 h-3" />
                             <span>{stats.cost}</span>
                           </div>
                           {stats.outputs && stats.outputs > 1 && (
-                            <div className="flex items-center gap-1">
-                              <ImageIcon className="w-3.5 h-3.5" />
+                            <div className="flex items-center gap-0.5">
+                              <ImageIcon className="w-3 h-3" />
                               <span>×{stats.outputs}</span>
                             </div>
                           )}
@@ -179,9 +179,9 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
               return (
                 <DropdownMenuSub key={family}>
                   <DropdownMenuSubTrigger className="cursor-pointer p-3">
-                    <div className="flex items-center gap-3 w-full">
+                    <div className="flex items-center gap-2 w-full min-w-0">
                       {logo && (
-                        <div className="h-8 w-8 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <div className="h-7 w-7 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
                           <img 
                             src={logo} 
                             alt={family} 
@@ -189,17 +189,17 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                           />
                         </div>
                       )}
-                      <div className="flex items-center gap-2 flex-1">
-                        <span className="font-medium">{family}</span>
+                      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                        <span className="font-medium text-sm truncate">{family}</span>
                         {stats && (
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Coins className="w-3.5 h-3.5" />
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
+                            <div className="flex items-center gap-0.5">
+                              <Coins className="w-3 h-3" />
                               <span>{stats.cost}+</span>
                             </div>
                             {stats.outputs && stats.outputs > 1 && (
-                              <div className="flex items-center gap-1">
-                                <ImageIcon className="w-3.5 h-3.5" />
+                              <div className="flex items-center gap-0.5">
+                                <ImageIcon className="w-3 h-3" />
                                 <span>×{stats.outputs}</span>
                               </div>
                             )}
@@ -215,18 +215,18 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                         onClick={() => onModelChange(model.record_id)}
                         className="cursor-pointer p-2"
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="font-medium text-sm truncate">
                             {model.variant_name || model.model_name}
                           </span>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Coins className="w-3.5 h-3.5" />
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
+                            <div className="flex items-center gap-0.5">
+                              <Coins className="w-3 h-3" />
                               <span>{model.base_token_cost}</span>
                             </div>
                             {model.default_outputs && model.default_outputs > 1 && (
-                              <div className="flex items-center gap-1">
-                                <ImageIcon className="w-3.5 h-3.5" />
+                              <div className="flex items-center gap-0.5">
+                                <ImageIcon className="w-3 h-3" />
                                 <span>×{model.default_outputs}</span>
                               </div>
                             )}

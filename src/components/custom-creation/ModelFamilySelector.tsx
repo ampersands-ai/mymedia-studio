@@ -3,6 +3,7 @@ import { AIModel } from "@/hooks/useModels";
 import { CreationGroup } from "@/constants/creation-groups";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Coins, Clock, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +66,24 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
     }
   }, [currentModel?.model_family, selectedFamily]);
 
+  // Helper function to get stats for a family (minimum cost model's stats)
+  const getFamilyStats = (family: string) => {
+    const familyModels = modelsByFamily[family] || [];
+    if (familyModels.length === 0) return null;
+    
+    // Find the model with minimum cost
+    const minCostModel = familyModels.reduce((min, model) => 
+      (model.base_token_cost < min.base_token_cost) ? model : min
+    );
+    
+    return {
+      cost: minCostModel.base_token_cost,
+      duration: minCostModel.estimated_time_seconds,
+      outputs: minCostModel.default_outputs,
+      hasMultipleVariants: familyModels.length > 1
+    };
+  };
+
   const handleFamilyChange = (family: string) => {
     setSelectedFamily(family);
     // Auto-select first model in new family
@@ -103,13 +122,14 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select a model family" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background border-border">
             {Object.keys(modelsByFamily).sort().map((family) => {
               const logo = getFamilyLogo(family);
-              const count = modelsByFamily[family].length;
+              const stats = getFamilyStats(family);
+              
               return (
                 <SelectItem key={family} value={family}>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {logo && (
                       <div className="h-5 w-5 rounded bg-white/90 dark:bg-white/95 p-0.5 flex items-center justify-center flex-shrink-0 shadow-sm">
                         <img 
@@ -119,8 +139,24 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                         />
                       </div>
                     )}
-                    <span>{family}</span>
-                    <span className="text-xs text-muted-foreground">({count} variant{count !== 1 ? 's' : ''})</span>
+                    <span className="font-medium">{family}</span>
+                    {stats && (
+                      <>
+                        <Badge variant="value" className="text-xs">
+                          {stats.cost}💰{stats.hasMultipleVariants && '+'}
+                        </Badge>
+                        {stats.duration && (
+                          <Badge variant="secondary" className="text-xs">
+                            ~{stats.duration}s
+                          </Badge>
+                        )}
+                        {stats.outputs && (
+                          <Badge variant="secondary" className="text-xs">
+                            ×{stats.outputs}
+                          </Badge>
+                        )}
+                      </>
+                    )}
                   </div>
                 </SelectItem>
               );
@@ -129,70 +165,42 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
         </Select>
       </div>
 
-      {/* Variant Cards - only show if more than 1 variant */}
+      {/* Compact Variant Selector - only show if more than 1 variant */}
       {selectedFamily && variantsInSelectedFamily.length > 1 && (
         <div className="space-y-2">
-          <Label>Select Variant</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {variantsInSelectedFamily.map((model) => {
-              const isSelected = model.record_id === selectedModel;
-              const variantName = model.variant_name || model.model_name;
-              const cost = model.base_token_cost;
-              const duration = model.estimated_time_seconds;
-              const outputs = model.default_outputs || 1;
-
-              return (
-                <button
-                  key={model.record_id}
-                  onClick={() => onModelChange(model.record_id)}
-                  className={cn(
-                    "relative p-4 rounded-lg border-2 transition-all text-left",
-                    "hover:shadow-md hover:-translate-y-0.5",
-                    isSelected
-                      ? "border-primary bg-primary/5"
-                      : "border-border bg-background hover:border-primary/50"
-                  )}
-                >
-                  {/* Checkmark for selected */}
-                  {isSelected && (
-                    <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
-
-                  {/* Variant Name */}
-                  <div className="font-semibold mb-3 pr-6">{variantName}</div>
-
-                  {/* Badges */}
-                  <div className="flex flex-wrap gap-2 text-xs">
-                    {/* Cost Badge */}
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-accent/50 text-accent-foreground">
-                      <Coins className="w-3 h-3" />
-                      <span>{cost}</span>
-                    </div>
-
-                    {/* Duration Badge */}
-                    {duration && (
-                      <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-muted-foreground">
-                        <Clock className="w-3 h-3" />
-                        <span>~{duration}s</span>
-                      </div>
+          <Label className="text-sm">Select Variant</Label>
+          <Select
+            value={selectedModel || undefined}
+            onValueChange={onModelChange}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Choose a variant" />
+            </SelectTrigger>
+            <SelectContent className="bg-background border-border">
+              {variantsInSelectedFamily.map((model) => (
+                <SelectItem key={model.record_id} value={model.record_id}>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium">
+                      {model.variant_name || model.model_name}
+                    </span>
+                    <Badge variant="value" className="text-xs">
+                      {model.base_token_cost}💰
+                    </Badge>
+                    {model.estimated_time_seconds && (
+                      <Badge variant="secondary" className="text-xs">
+                        ~{model.estimated_time_seconds}s
+                      </Badge>
                     )}
-
-                    {/* Outputs Badge */}
-                    {outputs > 1 && (
-                      <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-muted-foreground">
-                        <ImageIcon className="w-3 h-3" />
-                        <span>×{outputs}</span>
-                      </div>
+                    {model.default_outputs && (
+                      <Badge variant="secondary" className="text-xs">
+                        ×{model.default_outputs}
+                      </Badge>
                     )}
                   </div>
-                </button>
-              );
-            })}
-          </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 

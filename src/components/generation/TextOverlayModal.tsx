@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { applyTextOverlay, defaultTextLayer, watermarkTemplates, type TextLayer } from '@/utils/text-overlay';
 
@@ -35,6 +36,7 @@ export function TextOverlayModal({
   const [textLayers, setTextLayers] = useState<TextLayer[]>([]);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
   const [isApplying, setIsApplying] = useState(false);
+  const [draggingLayerId, setDraggingLayerId] = useState<string | null>(null);
 
   const selectedLayer = textLayers.find(layer => layer.id === selectedLayerId);
 
@@ -100,9 +102,34 @@ export function TextOverlayModal({
       textShadow: layer.strokeWidth > 0 ? `0 0 ${layer.strokeWidth}px ${layer.strokeColor}` : 'none',
       backgroundColor: layer.backgroundColor || 'transparent',
       padding: layer.backgroundColor ? `${layer.padding / 2}px` : '0',
-      cursor: 'pointer',
+      cursor: draggingLayerId === layer.id ? 'grabbing' : 'grab',
       whiteSpace: 'nowrap' as const,
+      userSelect: 'none' as const,
     };
+  };
+
+  const handleTextMouseDown = (e: React.MouseEvent, layerId: string) => {
+    e.preventDefault();
+    setDraggingLayerId(layerId);
+    setSelectedLayerId(layerId);
+  };
+
+  const handleTextMouseMove = (e: React.MouseEvent) => {
+    if (!draggingLayerId) return;
+    
+    const previewElement = e.currentTarget as HTMLElement;
+    const rect = previewElement.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    
+    updateLayer(draggingLayerId, { 
+      x: Math.max(0.05, Math.min(0.95, x)), 
+      y: Math.max(0.05, Math.min(0.95, y)) 
+    });
+  };
+
+  const handleTextMouseUp = () => {
+    setDraggingLayerId(null);
   };
 
   // Keyboard shortcuts
@@ -123,31 +150,38 @@ export function TextOverlayModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-5xl h-[95vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Add Text & Watermark</DialogTitle>
         </DialogHeader>
 
-        {/* Preview */}
-        <div className="relative bg-muted/30 rounded-lg p-4 flex items-center justify-center min-h-[300px] max-h-[400px]">
+        {/* Preview - Fixed height */}
+        <div 
+          className="relative bg-muted/30 rounded-lg p-4 flex items-center justify-center min-h-[250px] max-h-[350px] flex-shrink-0"
+          onMouseMove={handleTextMouseMove}
+          onMouseUp={handleTextMouseUp}
+          onMouseLeave={handleTextMouseUp}
+        >
           <img
             src={imageUrl}
             alt="Text overlay preview"
-            className="max-w-full max-h-[350px] object-contain rounded"
+            className="max-w-full max-h-[300px] object-contain rounded"
           />
           {textLayers.map(layer => (
             <div
               key={layer.id}
               style={getPreviewStyle(layer)}
+              onMouseDown={(e) => handleTextMouseDown(e, layer.id)}
               onClick={() => setSelectedLayerId(layer.id)}
-              className={selectedLayerId === layer.id ? 'ring-2 ring-primary' : ''}
+              className={selectedLayerId === layer.id ? 'ring-2 ring-primary rounded' : ''}
             >
               {layer.text}
             </div>
           ))}
         </div>
 
-        {/* Controls */}
+        {/* Controls - Scrollable */}
+        <ScrollArea className="flex-1 pr-4">
         <div className="space-y-4 py-4">
           {/* Add Buttons */}
           <div className="flex gap-2 flex-wrap">
@@ -230,6 +264,31 @@ export function TextOverlayModal({
                   onChange={(e) => updateLayer(selectedLayer.id, { text: e.target.value })}
                   placeholder="Enter text"
                 />
+              </div>
+
+              {/* Font Family */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Font Family</label>
+                <Select
+                  value={selectedLayer.fontFamily}
+                  onValueChange={(value) => updateLayer(selectedLayer.id, { fontFamily: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Arial">Arial</SelectItem>
+                    <SelectItem value="Helvetica">Helvetica</SelectItem>
+                    <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                    <SelectItem value="Georgia">Georgia</SelectItem>
+                    <SelectItem value="Courier New">Courier New</SelectItem>
+                    <SelectItem value="Verdana">Verdana</SelectItem>
+                    <SelectItem value="Impact">Impact</SelectItem>
+                    <SelectItem value="Comic Sans MS">Comic Sans MS</SelectItem>
+                    <SelectItem value="Trebuchet MS">Trebuchet MS</SelectItem>
+                    <SelectItem value="Palatino">Palatino</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Font Size */}
@@ -375,9 +434,10 @@ export function TextOverlayModal({
             </div>
           )}
         </div>
+        </ScrollArea>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-2 pt-4 border-t">
+        {/* Action Buttons - Fixed at bottom */}
+        <div className="flex justify-end gap-2 pt-4 border-t flex-shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isApplying}>
             Cancel
           </Button>

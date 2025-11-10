@@ -157,16 +157,37 @@ export const OutputLightbox = ({
   const handleDownload = async () => {
     try {
       const currentEntry = getCurrentEntry();
+      let blob: Blob;
+      let filename: string;
       
-      if (!currentEntry) {
-        toast.error('No image to download');
-        return;
+      if (currentEntry) {
+        // Download edited version from history
+        blob = currentEntry.blob;
+        filename = `artifio-edited-${currentOutput.output_index + 1}-${Date.now()}.png`;
+        
+        trackEvent('edited_image_downloaded', {
+          generation_id: currentOutput.id,
+          edit_type: currentEntry.editType,
+          edit_count: currentIndex + 1
+        });
+      } else {
+        // Fallback: Download original from Supabase
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const originalUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
+        
+        const response = await fetch(originalUrl);
+        if (!response.ok) throw new Error('Failed to fetch image');
+        
+        blob = await response.blob();
+        filename = `artifio-${currentOutput.output_index + 1}-${Date.now()}.png`;
+        
+        trackEvent('original_image_downloaded', {
+          generation_id: currentOutput.id
+        });
       }
-
-      const filename = `artifio-edited-${currentOutput.output_index + 1}-${Date.now()}.png`;
       
       // Download blob
-      const url = window.URL.createObjectURL(currentEntry.blob);
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
@@ -175,15 +196,9 @@ export const OutputLightbox = ({
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast.success('Download started!');
-      
-      trackEvent('edited_image_downloaded', {
-        generation_id: currentOutput.id,
-        edit_type: currentEntry.editType,
-        edit_count: currentIndex + 1
-      });
     } catch (error) {
       console.error('Download error:', error);
-      toast.error('Failed to download');
+      toast.error('Failed to download image');
     }
   };
 
@@ -415,13 +430,14 @@ export const OutputLightbox = ({
           <div className="flex items-center justify-center bg-muted/30 rounded-lg p-4 lg:p-6 my-3 overflow-hidden flex-shrink min-h-0 h-[50vh] sm:h-[60vh] lg:h-[65vh] max-h-[600px] relative">
             {hasAnyEdits ? (
               <img 
+                key={`edited-${currentIndex}-${getCurrentEntry()?.id}`}
                 src={getCurrentImageUrl()} 
                 alt="Edited preview"
                 className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"
               />
             ) : (
               <OptimizedGenerationPreview
-                key={currentOutput.storage_path}
+                key={`original-${currentOutput.storage_path}`}
                 storagePath={currentOutput.storage_path}
                 contentType={contentType}
                 className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg transition-transform duration-300 hover:scale-105 cursor-pointer"

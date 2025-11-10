@@ -218,13 +218,17 @@ export async function callRunware(
       throw new Error('Invalid response from Runware API');
     }
 
-    // Find the result (imageInference or videoInference)
+    // Find the result (imageInference, videoInference, or background removal tasks)
     const result = responseData.data.find((item: any) => 
-      item.taskType === 'imageInference' || item.taskType === 'videoInference'
+      item.taskType === 'imageInference' || 
+      item.taskType === 'videoInference' ||
+      item.taskType === 'imageBackgroundRemoval' ||
+      item.taskType === 'videoBackgroundRemoval'
     );
     
     if (!result) {
-      throw new Error('No inference result in Runware response');
+      console.error('[Runware] Available taskTypes:', responseData.data.map((d: any) => d.taskType));
+      throw new Error('No result in Runware response');
     }
 
     // Check for errors

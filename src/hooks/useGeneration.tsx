@@ -9,6 +9,7 @@ interface GenerationParams {
   prompt: string;
   custom_parameters?: Record<string, any>;
   enhance_prompt?: boolean;
+  allowEmptyPrompt?: boolean;
 }
 
 interface GenerationResult {
@@ -57,7 +58,7 @@ export const useGeneration = () => {
 
       // Client-side prompt validation and mapping
       const effectivePromptClient = (params.prompt || params.custom_parameters?.positivePrompt || params.custom_parameters?.prompt || '').trim();
-      if (effectivePromptClient.length < 2) {
+      if (!params.allowEmptyPrompt && effectivePromptClient.length < 2) {
         const errorMessage = "Please enter a prompt at least 2 characters long.";
         setError(errorMessage);
         throw new Error("Prompt is required");

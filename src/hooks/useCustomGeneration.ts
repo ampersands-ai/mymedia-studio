@@ -8,6 +8,7 @@ import {
   validateGenerationInputs, 
   handleGenerationError 
 } from "@/lib/custom-creation-utils";
+import { findPrimaryTextKey } from "@/lib/custom-creation-utils";
 import { CAPTION_GENERATION_COST } from "@/constants/custom-creation";
 import { trackEvent } from "@/lib/posthog";
 import type { CustomCreationState } from "@/types/custom-creation";
@@ -200,12 +201,16 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
         }
       }
 
+      // Check if model schema has a prompt field
+      const hasPromptField = findPrimaryTextKey(currentModel.input_schema?.properties) !== undefined;
+      
       // Generate
       const result = await generate({
         model_record_id: state.selectedModel,
         prompt: state.prompt.trim(),
         custom_parameters: customParameters,
         enhance_prompt: state.enhancePrompt,
+        allowEmptyPrompt: !hasPromptField,
       });
 
       // Start polling

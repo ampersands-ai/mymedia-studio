@@ -129,7 +129,12 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-[350px] bg-background border-border z-50 p-1">
-          {Object.keys(modelsByFamily).sort().map((family) => {
+          {Object.keys(modelsByFamily).sort((a, b) => {
+            const statsA = getFamilyStats(a);
+            const statsB = getFamilyStats(b);
+            if (!statsA || !statsB) return 0;
+            return statsA.cost - statsB.cost;
+          }).map((family) => {
             const familyModels = modelsByFamily[family];
             const isSingleModel = familyModels.length === 1;
             const logo = getFamilyLogo(family);
@@ -209,7 +214,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                     </div>
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="bg-background border-border z-50 p-1">
-                    {familyModels.map((model) => (
+                    {familyModels.sort((a, b) => a.base_token_cost - b.base_token_cost).map((model) => (
                       <DropdownMenuItem
                         key={model.record_id}
                         onClick={() => onModelChange(model.record_id)}

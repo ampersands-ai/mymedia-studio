@@ -34,9 +34,7 @@ export const TestConfigDialog = ({
   onOpenChange,
   onSave,
 }: TestConfigDialogProps) => {
-  const [promptTemplate, setPromptTemplate] = useState(
-    "A beautiful sunset over mountains"
-  );
+  const [promptTemplate, setPromptTemplate] = useState("");
   const [numOutputs, setNumOutputs] = useState(1);
   const [deductCredits, setDeductCredits] = useState(false);
   const [timeoutSeconds, setTimeoutSeconds] = useState(120);

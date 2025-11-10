@@ -3,7 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useGeneration } from '@/hooks/useGeneration';
 import { useGenerationPolling } from '@/hooks/useGenerationPolling';
+import { useNavigate } from 'react-router-dom';
 import type { GenerationOutput } from '@/types/custom-creation';
+import { executeGeneration } from '@/lib/generation/executeGeneration';
+import { getMaxPromptLength } from '@/lib/custom-creation-utils';
 
 interface TestResult {
   model_id: string;
@@ -27,6 +30,7 @@ export const useTestModelGroup = () => {
   const [summary, setSummary] = useState<TestSummary | null>(null);
   const { toast } = useToast();
   const { generate } = useGeneration();
+  const navigate = useNavigate();
   
   // Ref to hold the current promise resolver
   const resolverRef = useRef<((value: { outputs: GenerationOutput[], error?: string }) => void) | null>(null);
@@ -64,10 +68,10 @@ export const useTestModelGroup = () => {
         description: `Testing all models in group: ${group}`,
       });
 
-      // Fetch all active models in the group
+      // Fetch all active models with full schema for validation (EXACT SAME as production needs)
       const { data: models, error: modelsError } = await supabase
         .from('ai_models')
-        .select('id, record_id, model_name')
+        .select('id, record_id, model_name, provider, input_schema, content_type, groups, max_images')
         .contains('groups', [group])
         .eq('is_active', true);
 
@@ -81,26 +85,36 @@ export const useTestModelGroup = () => {
       let successCount = 0;
       let totalLatency = 0;
 
-      // Test each model sequentially using the EXACT SAME hooks as production
+      // Test each model sequentially using EXACT SAME PIPELINE as CustomCreation
       for (const model of models) {
         const startTime = Date.now();
         
         try {
-          // Use EXACT SAME generation hook as CustomCreation.tsx (via useCustomGeneration)
-          const generationResult = await generate({
-            model_record_id: model.record_id,
-            prompt: "",
-            custom_parameters: { 
-              width: 1024, 
-              height: 1024,
-              num_outputs: 1
-            }
+          // NO-OP image upload for test (returns empty array)
+          const noOpUploadImages = async (userId: string): Promise<string[]> => [];
+          
+          // Get max prompt length for this model (SAME logic as production)
+          const maxPromptLength = getMaxPromptLength(model, undefined);
+
+          // Use EXACT SAME generation pipeline as CustomCreation.tsx
+          const generationId = await executeGeneration({
+            model,
+            prompt: "", // Empty by default - will trigger validation errors same as production
+            modelParameters: {}, // No default parameters - will trigger validation errors same as production
+            uploadedImages: [],
+            enhancePrompt: false,
+            userId: "test-user-id", // Test user ID (not used since no uploads)
+            uploadImagesToStorage: noOpUploadImages,
+            generate,
+            startPolling,
+            navigate,
+            maxPromptLength,
           });
 
           // Wait for polling to complete using the shared hook
           const pollResult = await new Promise<{ outputs: GenerationOutput[], error?: string }>((resolve) => {
             resolverRef.current = resolve;
-            startPolling(generationResult.id);
+            startPolling(generationId);
           });
 
           const latency = Date.now() - startTime;

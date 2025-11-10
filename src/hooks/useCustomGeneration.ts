@@ -3,15 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useGeneration } from "@/hooks/useGeneration";
 import { useAuth } from "@/contexts/AuthContext";
-import { 
-  buildCustomParameters, 
-  validateGenerationInputs, 
-  handleGenerationError 
-} from "@/lib/custom-creation-utils";
-import { findPrimaryTextKey } from "@/lib/custom-creation-utils";
+import { findPrimaryTextKey, getMaxPromptLength } from "@/lib/custom-creation-utils";
 import { CAPTION_GENERATION_COST } from "@/constants/custom-creation";
 import { trackEvent } from "@/lib/posthog";
 import type { CustomCreationState } from "@/types/custom-creation";
+import { executeGeneration } from "@/lib/generation/executeGeneration";
 
 interface UseCustomGenerationOptions {
   state: CustomCreationState;
@@ -109,7 +105,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
   }, [calculateTokens, state.generateCaption]);
 
   /**
-   * Handle generation
+   * Handle generation - now uses shared executeGeneration pipeline
    */
   const handleGenerate = useCallback(async () => {
     const currentModel = filteredModels.find(m => m.record_id === state.selectedModel);
@@ -117,44 +113,6 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     if (!currentModel) {
       toast.error("Please select a model");
       return;
-    }
-
-    // Get max prompt length for current model/config
-    const isKieAiAudio = currentModel.provider === 'kie_ai' && currentModel.content_type === 'audio';
-    const customMode = state.modelParameters.customMode;
-    const maxPromptLength = (isKieAiAudio && customMode === false) ? 500 : 5000;
-
-    // Validation
-    const validation = validateGenerationInputs(
-      currentModel,
-      state.prompt,
-      uploadedImages,
-      currentModel.input_schema?.required?.includes('prompt') || false,
-      imageFieldInfo.isRequired,
-      maxPromptLength
-    );
-    
-    if (!validation.valid) {
-      toast.error(validation.error);
-      return;
-    }
-
-    // Validate required fields from schema (advanced options)
-    if (currentModel.input_schema) {
-      const requiredFields = currentModel.input_schema.required || [];
-      const schemaProperties = currentModel.input_schema.properties || {};
-      const excludeFields = ['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls', 'frameImages'];
-
-      for (const field of requiredFields) {
-        if (excludeFields.includes(field)) continue;
-        
-        const value = state.modelParameters[field];
-        if (value === undefined || value === null || value === '') {
-          const fieldTitle = schemaProperties[field]?.title || field;
-          toast.error(`Please provide a value for: ${fieldTitle}`);
-          return;
-        }
-      }
     }
 
     // Credit balance check
@@ -176,6 +134,9 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       return;
     }
 
+    // Get max prompt length for current model/config
+    const maxPromptLength = getMaxPromptLength(currentModel, state.modelParameters.customMode);
+
     // Start generation
     updateState({ 
       localGenerating: true, 
@@ -188,37 +149,22 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     });
 
     try {
-      // Build custom parameters with conditional filtering
-      const customParameters = buildCustomParameters(state.modelParameters, currentModel.input_schema);
-
-      // Upload images if required
-      if (imageFieldInfo.fieldName && uploadedImages.length > 0) {
-        const imageUrls = await uploadImagesToStorage(user.id);
-        if (imageFieldInfo.isArray) {
-          customParameters[imageFieldInfo.fieldName] = imageUrls;
-        } else {
-          customParameters[imageFieldInfo.fieldName] = imageUrls[0];
-        }
-      }
-
-      // Check if model schema has a prompt field
-      const hasPromptField = !!(currentModel.input_schema?.properties?.prompt);
-      
-      // Generate
-      const result = await generate({
-        model_record_id: state.selectedModel,
-        prompt: state.prompt.trim(),
-        custom_parameters: customParameters,
-        enhance_prompt: state.enhancePrompt,
-        allowEmptyPrompt: !hasPromptField,
+      // Use shared generation pipeline
+      const genId = await executeGeneration({
+        model: currentModel,
+        prompt: state.prompt,
+        modelParameters: state.modelParameters,
+        uploadedImages,
+        enhancePrompt: state.enhancePrompt,
+        userId: user.id,
+        uploadImagesToStorage,
+        generate,
+        startPolling,
+        navigate,
+        maxPromptLength,
       });
 
-      // Start polling
-      const genId = result?.id || result?.generation_id;
-      if (genId) {
-        startPolling(genId);
-        updateState({ pollingGenerationId: genId });
-      }
+      updateState({ pollingGenerationId: genId });
 
       // Update onboarding
       if (onboardingProgress && !onboardingProgress.checklist.completedFirstGeneration) {
@@ -227,10 +173,8 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       }
 
     } catch (error: any) {
-      const handled = handleGenerationError(error, navigate);
-      if (!handled) {
-        console.error('Generation error:', error);
-      }
+      console.error('Generation error:', error);
+      // Errors are already toasted by executeGeneration
       updateState({ generationStartTime: null });
     } finally {
       updateState({ localGenerating: false });
@@ -240,7 +184,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     estimatedTokens, 
     userTokens, 
     filteredModels, 
-    imageFieldInfo,
+    uploadedImages,
     generate,
     startPolling,
     uploadImagesToStorage,

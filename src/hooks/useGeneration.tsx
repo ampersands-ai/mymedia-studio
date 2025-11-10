@@ -66,6 +66,18 @@ export const useGeneration = () => {
 
       // STEP 2: Proceed with generation using appropriate endpoint
       const bodyToSend = { ...params, prompt: effectivePromptClient } as any;
+      
+      // Dev-only: Log exact payload for test vs production comparison
+      if (import.meta.env.DEV) {
+        console.debug("🚀 GENERATION_PAYLOAD", {
+          model_record_id: bodyToSend.model_record_id,
+          prompt: bodyToSend.prompt,
+          custom_parameters: bodyToSend.custom_parameters,
+          enhance_prompt: bodyToSend.enhance_prompt,
+          allowEmptyPrompt: bodyToSend.allowEmptyPrompt,
+        });
+      }
+      
       const { data, error } = await supabase.functions.invoke(functionName, {
         body: bodyToSend,
       });

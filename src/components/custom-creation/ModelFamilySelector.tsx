@@ -45,27 +45,29 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
   // Get family of currently selected model
   const currentModel = models.find(m => m.record_id === selectedModel);
   
+  // Initialize family from selected model or first available family (only once)
   useEffect(() => {
+    if (selectedFamily) return; // Don't change if already set
+    
     if (currentModel?.model_family) {
       setSelectedFamily(currentModel.model_family);
-    } else if (Object.keys(modelsByFamily).length > 0) {
-      // Set to first family if no selection
+    } else if (Object.keys(modelsByFamily).length > 0 && !selectedModel) {
+      // Only set first family if there's no model selected at all
       const firstFamily = Object.keys(modelsByFamily).sort()[0];
       setSelectedFamily(firstFamily);
-    }
-  }, [currentModel, modelsByFamily]);
-
-  // Auto-select first model in family if current selection isn't in the family
-  useEffect(() => {
-    if (selectedFamily && modelsByFamily[selectedFamily]) {
-      const modelsInFamily = modelsByFamily[selectedFamily];
-      const isCurrentModelInFamily = modelsInFamily.some(m => m.record_id === selectedModel);
-      
-      if (!isCurrentModelInFamily && modelsInFamily.length > 0) {
-        onModelChange(modelsInFamily[0].record_id);
+      // Auto-select first model in that family
+      if (modelsByFamily[firstFamily]?.length > 0) {
+        onModelChange(modelsByFamily[firstFamily][0].record_id);
       }
     }
-  }, [selectedFamily, modelsByFamily, selectedModel, onModelChange]);
+  }, [currentModel?.model_family, modelsByFamily, selectedModel, selectedFamily, onModelChange]);
+
+  // Update family when selected model changes to a different family
+  useEffect(() => {
+    if (currentModel?.model_family && currentModel.model_family !== selectedFamily) {
+      setSelectedFamily(currentModel.model_family);
+    }
+  }, [currentModel?.model_family, selectedFamily]);
 
   const handleFamilyChange = (family: string) => {
     setSelectedFamily(family);

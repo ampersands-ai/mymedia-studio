@@ -320,65 +320,73 @@ export const ScenePreviewGenerator = ({
         </div>
       )}
 
-      {/* Batch Output Grid */}
-      {showOutputGrid && batchOutputs.length > 1 && (
-        <div className="space-y-3 mb-4">
-          <p className="text-xs text-muted-foreground font-medium">
-            Select an image variation to use:
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {batchOutputs.map((output, index) => (
-              <div
-                key={output.id}
-                className={cn(
-                  "relative aspect-square cursor-pointer rounded-lg overflow-hidden border-2 transition-all",
-                  selectedOutputIndex === index
-                    ? "border-primary ring-2 ring-primary/20"
-                    : "border-border hover:border-primary/50"
-                )}
-                onClick={() => {
-                  setSelectedOutputIndex(index);
-                  setPollOutputUrl(output.output_url);
-                }}
-              >
-                <img
-                  src={output.output_url}
-                  alt={`Variation ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-                <Badge
-                  className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm"
-                  variant={selectedOutputIndex === index ? "default" : "secondary"}
+      {/* Horizontal Layout: Grid on Left, Preview on Right */}
+      <div className={cn(
+        "mb-4",
+        showOutputGrid && batchOutputs.length > 1 ? "flex gap-4" : ""
+      )}>
+        {/* Batch Output Grid */}
+        {showOutputGrid && batchOutputs.length > 1 && (
+          <div className="space-y-3 flex-shrink-0 w-[280px]">
+            <p className="text-xs text-muted-foreground font-medium">
+              Select an image variation to use:
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {batchOutputs.map((output, index) => (
+                <div
+                  key={output.id}
+                  className={cn(
+                    "relative aspect-square cursor-pointer rounded-lg overflow-hidden border-2 transition-all",
+                    selectedOutputIndex === index
+                      ? "border-primary ring-2 ring-primary/20"
+                      : "border-border hover:border-primary/50"
+                  )}
+                  onClick={() => {
+                    setSelectedOutputIndex(index);
+                    setPollOutputUrl(output.output_url);
+                  }}
                 >
-                  #{index + 1}
-                </Badge>
-                {selectedOutputIndex === index && (
-                  <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
-                    <div className="bg-primary text-primary-foreground rounded-full p-2">
-                      <CheckCircle2 className="w-5 h-5" />
+                  <img
+                    src={output.output_url}
+                    alt={`Variation ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <Badge
+                    className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm"
+                    variant={selectedOutputIndex === index ? "default" : "secondary"}
+                  >
+                    #{index + 1}
+                  </Badge>
+                  {selectedOutputIndex === index && (
+                    <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
+                      <div className="bg-primary text-primary-foreground rounded-full p-2">
+                        <CheckCircle2 className="w-5 h-5" />
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              ))}
+            </div>
+            <Button
+              onClick={async () => {
+                const selectedOutput = batchOutputs[selectedOutputIndex];
+                onImageGenerated(scene.id, selectedOutput.output_url);
+                toast.success(`Variation #${selectedOutputIndex + 1} applied! You can still change your selection.`);
+              }}
+              className="w-full"
+              disabled={!batchOutputs[selectedOutputIndex]}
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Apply Variation #{selectedOutputIndex + 1}
+            </Button>
           </div>
-          <Button
-            onClick={async () => {
-              const selectedOutput = batchOutputs[selectedOutputIndex];
-              onImageGenerated(scene.id, selectedOutput.output_url);
-              toast.success(`Variation #${selectedOutputIndex + 1} applied! You can still change your selection.`);
-            }}
-            className="w-full"
-            disabled={!batchOutputs[selectedOutputIndex]}
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            Apply Variation #{selectedOutputIndex + 1}
-          </Button>
-        </div>
-      )}
+        )}
 
-      {/* Image Display */}
-      <div className="relative rounded-lg overflow-hidden bg-muted/20 border border-border/20 mb-4 h-[280px] sm:h-[300px]">
+        {/* Image Display */}
+        <div className={cn(
+          "relative rounded-lg overflow-hidden bg-muted/20 border border-border/20 h-[280px] sm:h-[300px]",
+          showOutputGrid && batchOutputs.length > 1 ? "flex-1" : "mb-4"
+        )}>
         {(isGenerating || isAsyncGeneration) ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
               <Loader2 className="w-12 h-12 animate-spin text-primary" />
@@ -441,6 +449,9 @@ export const ScenePreviewGenerator = ({
             </div>
           </div>
         )}
+      </div>
+
+      {/* Close horizontal layout wrapper */}
       </div>
 
       {/* Controls */}

@@ -397,23 +397,8 @@ export default function ModelHealthTestPage() {
   useEffect(() => {
     if (currentModel && !state.prompt) {
       const contentType = currentModel.content_type;
-      const groups = currentModel.groups || [];
-      let defaultPrompt = '';
-      
-      // Check if model belongs to image_editing or image_to_video groups
-      if (groups.includes('image_editing') || groups.includes('image_to_video')) {
-        defaultPrompt = "Change the attire of the person to black color";
-      } else if (contentType === 'image') {
-        defaultPrompt = getSurpriseMePrompt('prompt_to_image');
-      } else if (contentType === 'video') {
-        defaultPrompt = getSurpriseMePrompt('prompt_to_video');
-      } else if (contentType === 'audio') {
-        defaultPrompt = getSurpriseMePrompt('prompt_to_audio');
-      } else {
-        defaultPrompt = "Test prompt for model validation";
-      }
-      
-      setStatePrompt(defaultPrompt);
+      // No default prompts - test with empty prompt to match production behavior
+      setStatePrompt("");
     }
   }, [currentModel, state.prompt, setStatePrompt]);
 

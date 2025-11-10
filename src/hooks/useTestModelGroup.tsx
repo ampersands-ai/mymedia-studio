@@ -89,7 +89,7 @@ export const useTestModelGroup = () => {
           // Use EXACT SAME generation hook as CustomCreation.tsx (via useCustomGeneration)
           const generationResult = await generate({
             model_record_id: model.record_id,
-            prompt: "A beautiful sunset over mountains",
+            prompt: "",
             custom_parameters: { 
               width: 1024, 
               height: 1024,

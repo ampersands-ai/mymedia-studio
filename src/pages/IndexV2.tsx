@@ -22,14 +22,7 @@ const FAQAccordion = lazy(() => import("@/components/homepage/FAQAccordion").the
 const ComparisonTable = lazy(() => import("@/components/homepage/ComparisonTable").then(m => ({ default: m.ComparisonTable })));
 
 // Import assets
-import midjourney from "@/assets/partners/midjourney-alt.webp";
-import openai from "@/assets/partners/openai.png";
-import claude from "@/assets/partners/claude.svg";
-import gemini from "@/assets/partners/gemini.png";
-import runway from "@/assets/partners/runway.png";
-import elevenlabs from "@/assets/partners/elevenlabs.png";
-import suno from "@/assets/partners/suno.svg";
-import pika from "@/assets/partners/hailuo.png";
+// Partner logos removed - ready to add new ones
 
 const IndexV2 = () => {
   const { user } = useAuth();
@@ -291,8 +284,7 @@ const IndexV2 = () => {
                   VIDEO GENERATION
                 </h3>
                 <div className="flex flex-wrap gap-4">
-                  <OptimizedImage src={runway} alt="Runway AI" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
-                  <OptimizedImage src={pika} alt="Hailuo AI" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
+                  {/* Video AI provider logos - ready to add */}
                 </div>
               </div>
 
@@ -302,8 +294,7 @@ const IndexV2 = () => {
                   IMAGE GENERATION
                 </h3>
                 <div className="flex flex-wrap gap-4">
-                  <OptimizedImage src={midjourney} alt="Midjourney AI" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
-                  <OptimizedImage src={openai} alt="OpenAI" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
+                  {/* Image AI provider logos - ready to add */}
                 </div>
               </div>
 
@@ -313,8 +304,7 @@ const IndexV2 = () => {
                   AUDIO GENERATION
                 </h3>
                 <div className="flex flex-wrap gap-4">
-                  <OptimizedImage src={elevenlabs} alt="ElevenLabs" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
-                  <OptimizedImage src={suno} alt="Suno AI" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
+                  {/* Audio AI provider logos - ready to add */}
                 </div>
               </div>
 
@@ -324,9 +314,7 @@ const IndexV2 = () => {
                   TEXT GENERATION
                 </h3>
                 <div className="flex flex-wrap gap-4">
-                  <OptimizedImage src={openai} alt="OpenAI" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
-                  <OptimizedImage src={claude} alt="Claude AI" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
-                  <OptimizedImage src={gemini} alt="Google Gemini" width={80} height={48} className="h-12 object-contain" isSupabaseImage={false} />
+                  {/* Text AI provider logos - ready to add */}
                 </div>
               </div>
             </div>

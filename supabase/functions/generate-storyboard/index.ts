@@ -177,9 +177,17 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     }
 
     const aiData = await aiResponse.json();
-    const content = aiData.choices[0].message.content;
+    let content = aiData.choices[0].message.content;
     
     console.log('[generate-storyboard] Raw AI response content:', content);
+    
+    // Strip markdown code blocks if present
+    content = content.trim();
+    if (content.startsWith('```')) {
+      // Remove opening ```json or ``` and closing ```
+      content = content.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+      console.log('[generate-storyboard] Stripped markdown code blocks from response');
+    }
     
     let parsedContent;
     try {
@@ -187,6 +195,7 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
       console.log('[generate-storyboard] Parsed AI response structure:', JSON.stringify(Object.keys(parsedContent), null, 2));
     } catch (parseError) {
       console.error('[generate-storyboard] JSON parse error:', parseError);
+      console.error('[generate-storyboard] Content after cleanup:', content.substring(0, 200));
       throw new Error(`Failed to parse AI response as JSON: ${parseError instanceof Error ? parseError.message : 'Unknown parse error'}`);
     }
     

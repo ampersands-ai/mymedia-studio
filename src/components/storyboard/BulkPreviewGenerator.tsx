@@ -8,14 +8,7 @@ import { useModels } from '@/hooks/useModels';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-// Approved models for storyboard scene generation
-const APPROVED_STORYBOARD_MODEL_IDS = [
-  'runware:100@1', // Flux.1 Schnell
-  'runware:101@1', // Flux.1 Dev
-  'runware:97@3',  // HiDream Fast
-  'runware:97@2',  // HiDream Dev
-  'google/nano-banana', // Google Nano Banana
-] as const;
+// Show all available models for storyboard scene generation
 
 interface Scene {
   id: string;
@@ -56,10 +49,9 @@ export const BulkPreviewGenerator = ({ storyboard, scenes, onGenerateAll }: Bulk
     return null; // All scenes have previews
   }
 
-  // Filter models: ONLY approved storyboard models, sorted by credit cost
-  const allowed = new Set<string>(APPROVED_STORYBOARD_MODEL_IDS);
+  // Show ALL image models, sorted by credit cost
   const imageModels = (models ?? [])
-    .filter(m => m.content_type === 'image' && allowed.has(m.id))
+    .filter(m => m.content_type === 'image')
     .sort((a, b) => {
       const costA = a.base_token_cost || 0;
       const costB = b.base_token_cost || 0;

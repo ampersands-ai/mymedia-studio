@@ -12,23 +12,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
-// Approved models for storyboard scene generation
-const APPROVED_STORYBOARD_IMAGE_MODEL_IDS = [
-  'runware:100@1', // Flux.1 Schnell
-  'runware:101@1', // Flux.1 Dev
-  'runware:97@3',  // HiDream Fast
-  'runware:97@2',  // HiDream Dev
-  'google/nano-banana', // Google Nano Banana
-  'bytedance/seedream-v4-text-to-image', // ByteDance SeeDream V4
-] as const;
-
-// Approved video models for animation (image-to-video)
-const APPROVED_STORYBOARD_VIDEO_MODEL_IDS = [
-  'bytedance:2@2', // Seedance 1.0 Pro Fast (Runware)
-] as const;
-
-const APPROVED_IMAGE_ORDER = [...APPROVED_STORYBOARD_IMAGE_MODEL_IDS];
-const APPROVED_VIDEO_ORDER = [...APPROVED_STORYBOARD_VIDEO_MODEL_IDS];
+// Show all available models for storyboard scene generation
 
 interface Scene {
   id: string;
@@ -165,12 +149,9 @@ export const ScenePreviewGenerator = ({
     }
   }, [error]);
 
-  // Filter models based on generation mode
-  const allowedImageIds = new Set<string>(APPROVED_STORYBOARD_IMAGE_MODEL_IDS);
-  const allowedVideoIds = new Set<string>(APPROVED_STORYBOARD_VIDEO_MODEL_IDS);
-
+  // Filter models based on generation mode - show ALL available models
   const imageModels = (models ?? [])
-    .filter(m => m.content_type === 'image' && allowedImageIds.has(m.id))
+    .filter(m => m.content_type === 'image')
     .sort((a, b) => {
       const costA = a.base_token_cost || 0;
       const costB = b.base_token_cost || 0;
@@ -179,7 +160,7 @@ export const ScenePreviewGenerator = ({
     });
 
   const videoModels = (models ?? [])
-    .filter(m => m.content_type === 'video' && allowedVideoIds.has(m.id))
+    .filter(m => m.content_type === 'video')
     .sort((a, b) => {
       const costA = a.base_token_cost || 0;
       const costB = b.base_token_cost || 0;
@@ -189,7 +170,6 @@ export const ScenePreviewGenerator = ({
 
   // Use appropriate model list based on mode
   const availableModels = generationMode === 'animate' ? videoModels : imageModels;
-  const approvedOrder = generationMode === 'animate' ? APPROVED_VIDEO_ORDER : APPROVED_IMAGE_ORDER;
 
   // DEBUG: Confirm what ends up in the dropdown
   useEffect(() => {
@@ -199,19 +179,17 @@ export const ScenePreviewGenerator = ({
     }
   }, [availableModels, generationMode]);
 
-  // Auto-select first available model from approved order if current selection is invalid
+  // Auto-select first available model if current selection is invalid
   useEffect(() => {
     if (availableModels.length > 0 && !availableModels.find(m => m.id === selectedModelId)) {
-      const firstAvailable = approvedOrder.find(id => availableModels.some(m => m.id === id));
-      setSelectedModelId(firstAvailable ?? availableModels[0].id);
+      setSelectedModelId(availableModels[0].id);
     }
-  }, [availableModels, selectedModelId, approvedOrder]);
+  }, [availableModels, selectedModelId]);
 
   // Reset to first model when switching modes
   useEffect(() => {
     if (availableModels.length > 0) {
-      const firstAvailable = approvedOrder.find(id => availableModels.some(m => m.id === id));
-      setSelectedModelId(firstAvailable ?? availableModels[0].id);
+      setSelectedModelId(availableModels[0].id);
     }
   }, [generationMode]);
 

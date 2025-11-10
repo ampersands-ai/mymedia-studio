@@ -160,7 +160,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
         <h2 className="text-base md:text-lg font-bold text-foreground">Input</h2>
       </div>
 
-      <div className="flex-1 max-h-[calc(100vh-200px)] overflow-y-auto p-4 md:p-8 space-y-6 pb-8">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
         <ModelSelector
           models={filteredModels}
           selectedModel={selectedModel}
@@ -262,27 +262,27 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             provider={provider}
           />
         </div>
+      </div>
 
-        {/* Desktop action buttons */}
-        <div className="hidden md:flex flex-col gap-3">
-          <Button
-            onClick={onGenerate}
-            disabled={!canGenerate || isDisabled}
-            size="lg"
-            className="w-full gap-2 font-bold"
-          >
-            <Sparkles className="h-5 w-5" />
-            Generate
-            <div className="flex items-center gap-1 bg-black/10 px-2 py-0.5 rounded ml-auto">
-              <Coins className="h-3 w-3" />
-              <span className="text-xs">~{estimatedTokens.toFixed(2)}</span>
-            </div>
-          </Button>
-          <Button onClick={onReset} variant="outline" className="w-full gap-2">
-            <RotateCcw className="h-4 w-4" />
-            Reset
-          </Button>
-        </div>
+      {/* Sticky action buttons at bottom */}
+      <div className="hidden md:flex flex-col gap-3 p-4 md:px-8 md:pb-6 border-t border-border bg-card/80 backdrop-blur shrink-0">
+        <Button
+          onClick={onGenerate}
+          disabled={!canGenerate || isDisabled}
+          size="lg"
+          className="w-full gap-2 font-bold"
+        >
+          <Sparkles className="h-5 w-5" />
+          Generate
+          <div className="flex items-center gap-1 bg-black/10 px-2 py-0.5 rounded ml-auto">
+            <Coins className="h-3 w-3" />
+            <span className="text-xs">~{estimatedTokens.toFixed(2)}</span>
+          </div>
+        </Button>
+        <Button onClick={onReset} variant="outline" className="w-full gap-2">
+          <RotateCcw className="h-4 w-4" />
+          Reset
+        </Button>
       </div>
     </Card>
   );

@@ -958,4 +958,10 @@ All colors MUST be HSL.
     border: 1px solid hsl(var(--border)) !important;
     z-index: 50 !important;
   }
+
+  /* Smooth continuous carousel scroll - linear motion without easing */
+  .partner-logos-swiper .swiper-wrapper {
+    transition-timing-function: linear !important;
+    will-change: transform;
+  }
 }

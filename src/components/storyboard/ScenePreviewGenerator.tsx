@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Sparkles, RefreshCw, Image as ImageIcon, Video, Coins, Clock, Images } from 'lucide-react';
 import { useGeneration } from '@/hooks/useGeneration';
-import { useModels } from '@/hooks/useModels';
+import { useModels, AIModel } from '@/hooks/useModels';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -32,7 +32,7 @@ export const ScenePreviewGenerator = ({
   onImageGenerated,
 }: ScenePreviewGeneratorProps) => {
   const [generationMode, setGenerationMode] = useState<'regenerate' | 'animate'>('regenerate');
-  const [selectedModelId, setSelectedModelId] = useState<string>('runware:100@1');
+  const [selectedModelId, setSelectedModelId] = useState<string>('');
   const [pendingGenerationId, setPendingGenerationId] = useState<string | null>(null);
   const [isAsyncGeneration, setIsAsyncGeneration] = useState(false);
   const [pollStatus, setPollStatus] = useState<string>('pending');
@@ -154,28 +154,44 @@ export const ScenePreviewGenerator = ({
     .filter(m => {
       const groups = Array.isArray(m.groups) ? m.groups : [];
       return m.content_type === 'image' && groups.includes('prompt_to_image');
-    })
-    .sort((a, b) => {
-      const costA = a.base_token_cost || 0;
-      const costB = b.base_token_cost || 0;
-      if (costA !== costB) return costA - costB;
-      return (a.model_name || '').localeCompare(b.model_name || '');
     });
 
   const videoModels = (models ?? [])
     .filter(m => {
       const groups = Array.isArray(m.groups) ? m.groups : [];
       return m.content_type === 'video' && groups.includes('image_to_video');
-    })
-    .sort((a, b) => {
-      const costA = a.base_token_cost || 0;
-      const costB = b.base_token_cost || 0;
-      if (costA !== costB) return costA - costB;
-      return (a.model_name || '').localeCompare(b.model_name || '');
     });
 
   // Use appropriate model list based on mode
   const availableModels = generationMode === 'animate' ? videoModels : imageModels;
+
+  // Group models by family (same as custom creation page)
+  const modelsByFamily = useMemo(() => {
+    const grouped: Record<string, AIModel[]> = {};
+    availableModels.forEach(model => {
+      const family = model.model_family || 'Other';
+      if (!grouped[family]) grouped[family] = [];
+      grouped[family].push(model);
+    });
+    
+    // Sort models within each family by display_order_in_family
+    Object.keys(grouped).forEach(family => {
+      grouped[family].sort((a, b) => 
+        (a.display_order_in_family || 0) - (b.display_order_in_family || 0)
+      );
+    });
+    
+    return grouped;
+  }, [availableModels]);
+
+  // Get sorted family names by minimum cost
+  const sortedFamilies = useMemo(() => {
+    return Object.keys(modelsByFamily).sort((a, b) => {
+      const minCostA = Math.min(...modelsByFamily[a].map(m => m.base_token_cost || 0));
+      const minCostB = Math.min(...modelsByFamily[b].map(m => m.base_token_cost || 0));
+      return minCostA - minCostB;
+    });
+  }, [modelsByFamily]);
 
   // DEBUG: Confirm what ends up in the dropdown
   useEffect(() => {
@@ -187,19 +203,19 @@ export const ScenePreviewGenerator = ({
 
   // Auto-select first available model if current selection is invalid
   useEffect(() => {
-    if (availableModels.length > 0 && !availableModels.find(m => m.id === selectedModelId)) {
-      setSelectedModelId(availableModels[0].id);
+    if (availableModels.length > 0 && !availableModels.find(m => m.record_id === selectedModelId)) {
+      setSelectedModelId(availableModels[0].record_id);
     }
   }, [availableModels, selectedModelId]);
 
   // Reset to first model when switching modes
   useEffect(() => {
     if (availableModels.length > 0) {
-      setSelectedModelId(availableModels[0].id);
+      setSelectedModelId(availableModels[0].record_id);
     }
   }, [generationMode]);
 
-  const selectedModel = availableModels.find(m => m.id === selectedModelId) || availableModels[0];
+  const selectedModel = availableModels.find(m => m.record_id === selectedModelId) || availableModels[0];
   const tokenCost = selectedModel?.base_token_cost || 1;
 
   const handleGenerate = async () => {
@@ -222,7 +238,7 @@ export const ScenePreviewGenerator = ({
       : {};
 
     const generationResult = await generate({
-      model_id: selectedModelId,
+      model_record_id: selectedModelId,
       prompt: scene.image_prompt,
       custom_parameters: customParams,
     });
@@ -416,45 +432,98 @@ export const ScenePreviewGenerator = ({
                       )}
                     </SelectValue>
                   </SelectTrigger>
-                  <SelectContent className="bg-background border-border">
-                    {availableModels.map(model => (
-                      <SelectItem key={model.id} value={model.id}>
-                        <div className="flex items-center gap-3 py-1">
-                          {model.logo_url && (
-                            <div className="h-8 w-8 rounded-md bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
-                              <img 
-                                src={model.logo_url} 
-                                alt={model.model_name || ''} 
-                                className="w-full h-full object-contain"
-                              />
-                            </div>
-                          )}
-                          <div className="flex flex-col items-start gap-1 min-w-0 flex-1">
-                            <span className="font-semibold text-foreground">
-                              {model.model_name}
-                            </span>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Coins className="w-3 h-3" />
-                                <span>{model.base_token_cost}</span>
+                  <SelectContent className="bg-background border-border max-h-[400px] overflow-y-auto">
+                    {sortedFamilies.map(family => {
+                      const familyModels = modelsByFamily[family];
+                      const isSingleModel = familyModels.length === 1;
+                      
+                      if (isSingleModel) {
+                        const model = familyModels[0];
+                        return (
+                          <SelectItem key={model.record_id} value={model.record_id}>
+                            <div className="flex items-center gap-3 py-1">
+                              {model.logo_url && (
+                                <div className="h-8 w-8 rounded-md bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                  <img 
+                                    src={model.logo_url} 
+                                    alt={model.model_name || ''} 
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+                              )}
+                              <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                <span className="font-semibold text-sm truncate">{model.model_name}</span>
+                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                  <div className="flex items-center gap-1">
+                                    <Coins className="w-3 h-3" />
+                                    <span>{model.base_token_cost}</span>
+                                  </div>
+                                  {model.estimated_time_seconds && (
+                                    <div className="flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      <span>{model.estimated_time_seconds}s</span>
+                                    </div>
+                                  )}
+                                  {model.default_outputs && model.default_outputs > 1 && (
+                                    <div className="flex items-center gap-1">
+                                      <Images className="w-3 h-3" />
+                                      <span>{model.default_outputs}</span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                              {model.estimated_time_seconds && (
-                                <div className="flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  <span>{model.estimated_time_seconds}s</span>
-                                </div>
-                              )}
-                              {model.default_outputs && model.default_outputs > 1 && (
-                                <div className="flex items-center gap-1">
-                                  <Images className="w-3 h-3" />
-                                  <span>{model.default_outputs}</span>
-                                </div>
-                              )}
                             </div>
+                          </SelectItem>
+                        );
+                      } else {
+                        // Group header for family with multiple models
+                        const logo = familyModels[0]?.logo_url;
+                        const minCost = Math.min(...familyModels.map(m => m.base_token_cost || 0));
+                        
+                        return (
+                          <div key={family} className="px-2 py-1">
+                            <div className="flex items-center gap-2 px-2 py-1 text-xs font-semibold text-muted-foreground">
+                              {logo && (
+                                <div className="h-5 w-5 rounded bg-white/90 dark:bg-white/95 p-0.5 flex items-center justify-center flex-shrink-0">
+                                  <img src={logo} alt={family} className="w-full h-full object-contain" />
+                                </div>
+                              )}
+                              <span>{family}</span>
+                              <span className="text-[10px]">from {minCost}⚡</span>
+                            </div>
+                            {familyModels.map(model => (
+                              <SelectItem key={model.record_id} value={model.record_id} className="pl-8">
+                                <div className="flex items-center gap-2 py-0.5">
+                                  <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                                    <span className="font-medium text-sm truncate">
+                                      {model.variant_name || model.model_name}
+                                    </span>
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                      <div className="flex items-center gap-1">
+                                        <Coins className="w-3 h-3" />
+                                        <span>{model.base_token_cost}</span>
+                                      </div>
+                                      {model.estimated_time_seconds && (
+                                        <div className="flex items-center gap-1">
+                                          <Clock className="w-3 h-3" />
+                                          <span>{model.estimated_time_seconds}s</span>
+                                        </div>
+                                      )}
+                                      {model.default_outputs && model.default_outputs > 1 && (
+                                        <div className="flex items-center gap-1">
+                                          <Images className="w-3 h-3" />
+                                          <span>{model.default_outputs}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </SelectItem>
+                            ))}
                           </div>
-                        </div>
-                      </SelectItem>
-                    ))}
+                        );
+                      }
+                    })}
                   </SelectContent>
                 </Select>
               ) : (

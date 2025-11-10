@@ -78,7 +78,7 @@ export const ScenePreviewGenerator = ({
       try {
         const { data, error } = await supabase
           .from('generations')
-          .select('status, storage_path')
+          .select('status, output_url')
           .eq('id', pendingGenerationId)
           .single();
 
@@ -86,8 +86,8 @@ export const ScenePreviewGenerator = ({
 
         setPollStatus(data.status);
 
-        if (data.status === 'completed' && data.storage_path) {
-          setPollOutputUrl(data.storage_path);
+        if (data.status === 'completed' && data.output_url) {
+          setPollOutputUrl(data.output_url);
           if (pollIntervalRef.current) {
             clearInterval(pollIntervalRef.current);
             pollIntervalRef.current = null;

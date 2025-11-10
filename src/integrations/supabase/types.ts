@@ -21,6 +21,7 @@ export type Database = {
           content_type: string
           cost_multipliers: Json | null
           created_at: string
+          default_outputs: number | null
           estimated_time_seconds: number | null
           groups: Json | null
           id: string
@@ -40,6 +41,7 @@ export type Database = {
           content_type: string
           cost_multipliers?: Json | null
           created_at?: string
+          default_outputs?: number | null
           estimated_time_seconds?: number | null
           groups?: Json | null
           id: string
@@ -59,6 +61,7 @@ export type Database = {
           content_type?: string
           cost_multipliers?: Json | null
           created_at?: string
+          default_outputs?: number | null
           estimated_time_seconds?: number | null
           groups?: Json | null
           id?: string

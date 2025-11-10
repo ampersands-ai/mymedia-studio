@@ -46,6 +46,8 @@ interface AIModel {
   groups?: any; // Json type from Supabase
   payload_structure?: string;
   max_images?: number | null;
+  estimated_time_seconds?: number | null;
+  default_outputs?: number | null;
 }
 
 export default function AIModelsManager() {
@@ -249,6 +251,10 @@ export default function AIModelsManager() {
         return a.content_type.localeCompare(b.content_type);
       case "cost":
         return a.base_token_cost - b.base_token_cost;
+      case "duration":
+        const aDuration = a.estimated_time_seconds || 0;
+        const bDuration = b.estimated_time_seconds || 0;
+        return aDuration - bDuration;
       case "status":
         return (a.is_active === b.is_active) ? 0 : a.is_active ? -1 : 1;
       case "created_at":
@@ -333,6 +339,7 @@ export default function AIModelsManager() {
                   <SelectItem value="provider">Provider</SelectItem>
                   <SelectItem value="type">Content Type</SelectItem>
                   <SelectItem value="cost">Base Cost</SelectItem>
+                  <SelectItem value="duration">Duration (Fastest First)</SelectItem>
                   <SelectItem value="status">Status</SelectItem>
                 </SelectContent>
               </Select>
@@ -533,6 +540,7 @@ export default function AIModelsManager() {
                   <TableHead className="font-bold">Groups</TableHead>
                   <TableHead className="font-bold">Base Cost</TableHead>
                   <TableHead className="font-bold">Max Images</TableHead>
+                  <TableHead className="font-bold">Outputs</TableHead>
                   <TableHead className="font-bold">Status</TableHead>
                   <TableHead className="font-bold">Actions</TableHead>
                 </TableRow>
@@ -578,6 +586,9 @@ export default function AIModelsManager() {
                       ) : (
                         <span className="text-xs text-muted-foreground">None</span>
                       )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {model.default_outputs || 1}
                     </TableCell>
                     <TableCell>
                       {model.is_active ? (

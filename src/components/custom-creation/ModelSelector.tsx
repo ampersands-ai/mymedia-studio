@@ -1,6 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Clock, Coins } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Loader2, Clock, Coins, Images } from "lucide-react";
 import type { CreationGroup } from "@/constants/creation-groups";
 
 interface ModelSelectorProps {
@@ -37,7 +38,8 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium text-foreground">AI Model</label>
-      <Select value={selectedModel || undefined} onValueChange={onModelChange}>
+      <TooltipProvider>
+        <Select value={selectedModel || undefined} onValueChange={onModelChange}>
         <SelectTrigger className="w-full h-auto py-3 px-4 bg-background border-border hover:bg-muted/30 transition-colors">
           <SelectValue placeholder="Select a model">
             {currentModel && (
@@ -65,6 +67,19 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                         <Clock className="h-3 w-3" />
                         ~{currentModel.estimated_time_seconds}s
                       </span>
+                    )}
+                    {currentModel.default_outputs && currentModel.default_outputs > 1 && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1 cursor-help">
+                            <Images className="h-3 w-3" />
+                            ×{currentModel.default_outputs}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Minimum number of images for the credits displayed</p>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                   </div>
                 </div>
@@ -109,6 +124,19 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                           ~{model.estimated_time_seconds}s
                         </span>
                       )}
+                      {model.default_outputs && model.default_outputs > 1 && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="flex items-center gap-1 cursor-help">
+                              <Images className="h-3 w-3" />
+                              ×{model.default_outputs}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Minimum number of images for the credits displayed</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                     </div>
                     {otherGroups.length > 0 && (
                       <div className="flex items-center gap-1 mt-1 flex-wrap">
@@ -131,6 +159,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           })}
         </SelectContent>
       </Select>
+      </TooltipProvider>
     </div>
   );
 };

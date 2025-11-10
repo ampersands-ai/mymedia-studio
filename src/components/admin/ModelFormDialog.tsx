@@ -62,6 +62,7 @@ interface AIModel {
   payload_structure?: string;
   max_images?: number | null;
   logo_url?: string | null;
+  default_outputs?: number | null;
 }
 
 interface ModelFormDialogProps {
@@ -90,6 +91,7 @@ export function ModelFormDialog({
     estimated_time_seconds: "",
     max_images: "",
     logo_url: "",
+    default_outputs: "",
   });
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -109,6 +111,7 @@ export function ModelFormDialog({
         estimated_time_seconds: model.estimated_time_seconds?.toString() || "",
         max_images: model.max_images?.toString() || "",
         logo_url: model.logo_url || "",
+        default_outputs: model.default_outputs?.toString() || "1",
       });
       setSelectedGroups(model.groups || []);
     } else {
@@ -125,6 +128,7 @@ export function ModelFormDialog({
         estimated_time_seconds: "",
         max_images: "",
         logo_url: "",
+        default_outputs: "1",
       });
       setSelectedGroups([]);
     }
@@ -190,6 +194,7 @@ export function ModelFormDialog({
           : null,
         max_images: formData.max_images ? parseInt(formData.max_images) : 0,
         logo_url: formData.logo_url || null,
+        default_outputs: formData.default_outputs ? parseInt(formData.default_outputs) : 1,
       };
 
       if (model && model.record_id) {
@@ -385,6 +390,23 @@ export function ModelFormDialog({
               />
               <p className="text-xs text-muted-foreground">
                 Maximum number of images users can upload (0 = no images needed, leave empty = 0)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="default_outputs">Default Number of Outputs</Label>
+              <Input
+                id="default_outputs"
+                type="number"
+                value={formData.default_outputs}
+                onChange={(e) =>
+                  setFormData({ ...formData, default_outputs: e.target.value })
+                }
+                placeholder="1"
+                min="1"
+              />
+              <p className="text-xs text-muted-foreground">
+                How many outputs this model generates per request (e.g., 1 for single image, 4 for batch generation)
               </p>
             </div>
 

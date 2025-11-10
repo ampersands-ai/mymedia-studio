@@ -17,6 +17,7 @@ export interface AIModel {
   max_images?: number | null;
   estimated_time_seconds?: number | null;
   logo_url?: string | null;
+  default_outputs?: number | null;
 }
 
 export const useModels = () => {

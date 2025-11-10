@@ -106,7 +106,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                     />
                   </div>
                 )}
-                <div className="flex flex-col gap-1 items-start">
+                <div className="flex items-center gap-2 flex-1">
                   <span className="font-medium">{currentModel.model_name}</span>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
@@ -128,7 +128,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-[500px] bg-background border-border z-50 p-2">
+        <DropdownMenuContent className="w-[500px] bg-background border-border z-50 p-1">
           {Object.keys(modelsByFamily).sort().map((family) => {
             const familyModels = modelsByFamily[family];
             const isSingleModel = familyModels.length === 1;
@@ -142,7 +142,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                 <DropdownMenuItem
                   key={family}
                   onClick={() => onModelChange(model.record_id)}
-                  className="cursor-pointer p-4"
+                  className="cursor-pointer p-3"
                 >
                   <div className="flex items-center gap-3 w-full">
                     {logo && (
@@ -178,7 +178,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
               // Multi-model family - cascading submenu
               return (
                 <DropdownMenuSub key={family}>
-                  <DropdownMenuSubTrigger className="cursor-pointer p-4">
+                  <DropdownMenuSubTrigger className="cursor-pointer p-3">
                     <div className="flex items-center gap-3 w-full">
                       {logo && (
                         <div className="h-8 w-8 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
@@ -208,12 +208,12 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                       </div>
                     </div>
                   </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="bg-background border-border z-50 p-2">
+                  <DropdownMenuSubContent className="bg-background border-border z-50 p-1">
                     {familyModels.map((model) => (
                       <DropdownMenuItem
                         key={model.record_id}
                         onClick={() => onModelChange(model.record_id)}
-                        className="cursor-pointer p-3"
+                        className="cursor-pointer p-2"
                       >
                         <div className="flex flex-col gap-1">
                           <span className="font-medium">

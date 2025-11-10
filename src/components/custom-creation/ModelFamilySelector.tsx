@@ -128,7 +128,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-[500px] bg-background border-border z-50 p-1">
+        <DropdownMenuContent className="w-[350px] bg-background border-border z-50 p-1">
           {Object.keys(modelsByFamily).sort().map((family) => {
             const familyModels = modelsByFamily[family];
             const isSingleModel = familyModels.length === 1;

@@ -89,19 +89,23 @@ export async function executeGeneration({
     }
   }
 
-  // Step 6: Determine allowEmptyPrompt based on schema
+  // Step 6: Determine if schema has prompt field
   const hasPromptField = !!(model.input_schema?.properties?.prompt);
-  const allowEmptyPrompt = !hasPromptField;
 
   // Step 7: Call generation API
   try {
-    const result = await generate({
+    const generateParams: any = {
       model_record_id: model.record_id,
-      prompt: prompt.trim(),
       custom_parameters: customParameters,
       enhance_prompt: enhancePrompt,
-      allowEmptyPrompt,
-    });
+    };
+    
+    // Only include prompt if schema defines it
+    if (hasPromptField) {
+      generateParams.prompt = prompt.trim();
+    }
+    
+    const result = await generate(generateParams);
 
     const genId = result?.id || result?.generation_id;
     if (!genId) {

@@ -6,10 +6,9 @@ interface GenerationParams {
   template_id?: string;
   model_id?: string;
   model_record_id?: string;
-  prompt: string;
+  prompt?: string;
   custom_parameters?: Record<string, any>;
   enhance_prompt?: boolean;
-  allowEmptyPrompt?: boolean;
 }
 
 interface GenerationResult {
@@ -56,16 +55,18 @@ export const useGeneration = () => {
       const functionName = 'generate-content';
       console.log('Using unified async endpoint for all providers');
 
-      // Client-side prompt validation and mapping
-      const effectivePromptClient = (params.prompt || params.custom_parameters?.positivePrompt || params.custom_parameters?.prompt || '').trim();
-      if (!params.allowEmptyPrompt && effectivePromptClient.length < 2) {
-        const errorMessage = "Please enter a prompt at least 2 characters long.";
-        setError(errorMessage);
-        throw new Error("Prompt is required");
+      // Client-side prompt validation (only if prompt is being sent)
+      if (params.prompt !== undefined) {
+        const effectivePromptClient = params.prompt.trim();
+        if (effectivePromptClient.length < 2) {
+          const errorMessage = "Please enter a prompt at least 2 characters long.";
+          setError(errorMessage);
+          throw new Error("Prompt is required");
+        }
       }
 
       // STEP 2: Proceed with generation using appropriate endpoint
-      const bodyToSend = { ...params, prompt: effectivePromptClient } as any;
+      const bodyToSend = { ...params } as any;
       
       // Dev-only: Log exact payload for test vs production comparison
       if (import.meta.env.DEV) {
@@ -74,7 +75,6 @@ export const useGeneration = () => {
           prompt: bodyToSend.prompt,
           custom_parameters: bodyToSend.custom_parameters,
           enhance_prompt: bodyToSend.enhance_prompt,
-          allowEmptyPrompt: bodyToSend.allowEmptyPrompt,
         });
       }
       

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Sparkles, RefreshCw, Image as ImageIcon, Video } from 'lucide-react';
+import { Loader2, Sparkles, RefreshCw, Image as ImageIcon, Video, Coins, Clock, Images } from 'lucide-react';
 import { useGeneration } from '@/hooks/useGeneration';
 import { useModels } from '@/hooks/useModels';
 import { useUserTokens } from '@/hooks/useUserTokens';
@@ -392,18 +392,82 @@ export const ScenePreviewGenerator = ({
                   value={selectedModelId} 
                   onValueChange={setSelectedModelId}
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
+                  <SelectTrigger className="w-full h-auto py-3 px-4 bg-background border-border hover:bg-muted/30 transition-colors">
+                    <SelectValue>
+                      {selectedModel && (
+                        <div className="flex items-center gap-3">
+                          {selectedModel.logo_url && (
+                            <div className="h-8 w-8 rounded-md bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                              <img 
+                                src={selectedModel.logo_url} 
+                                alt={selectedModel.model_name || ''} 
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                          )}
+                          <div className="flex flex-col items-start gap-1 min-w-0 flex-1">
+                            <span className="font-semibold text-foreground truncate w-full text-left">
+                              {selectedModel.model_name}
+                            </span>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Coins className="w-3 h-3" />
+                                <span>{selectedModel.base_token_cost}</span>
+                              </div>
+                              {selectedModel.estimated_time_seconds && (
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{selectedModel.estimated_time_seconds}s</span>
+                                </div>
+                              )}
+                              {selectedModel.default_outputs && selectedModel.default_outputs > 1 && (
+                                <div className="flex items-center gap-1">
+                                  <Images className="w-3 h-3" />
+                                  <span>{selectedModel.default_outputs}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </SelectValue>
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background border-border">
                     {availableModels.map(model => (
                       <SelectItem key={model.id} value={model.id}>
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="w-4 h-4" />
-                          <span>{model.model_name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            (~{model.base_token_cost} token{model.base_token_cost !== 1 ? 's' : ''})
-                          </span>
+                        <div className="flex items-center gap-3 py-1">
+                          {model.logo_url && (
+                            <div className="h-8 w-8 rounded-md bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                              <img 
+                                src={model.logo_url} 
+                                alt={model.model_name || ''} 
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                          )}
+                          <div className="flex flex-col items-start gap-1 min-w-0 flex-1">
+                            <span className="font-semibold text-foreground">
+                              {model.model_name}
+                            </span>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Coins className="w-3 h-3" />
+                                <span>{model.base_token_cost}</span>
+                              </div>
+                              {model.estimated_time_seconds && (
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{model.estimated_time_seconds}s</span>
+                                </div>
+                              )}
+                              {model.default_outputs && model.default_outputs > 1 && (
+                                <div className="flex items-center gap-1">
+                                  <Images className="w-3 h-3" />
+                                  <span>{model.default_outputs}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </SelectItem>
                     ))}
@@ -449,18 +513,82 @@ export const ScenePreviewGenerator = ({
                       value={selectedModelId} 
                       onValueChange={setSelectedModelId}
                     >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
+                      <SelectTrigger className="w-full h-auto py-3 px-4 bg-background border-border hover:bg-muted/30 transition-colors">
+                        <SelectValue>
+                          {selectedModel && (
+                            <div className="flex items-center gap-3">
+                              {selectedModel.logo_url && (
+                                <div className="h-8 w-8 rounded-md bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                  <img 
+                                    src={selectedModel.logo_url} 
+                                    alt={selectedModel.model_name || ''} 
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+                              )}
+                              <div className="flex flex-col items-start gap-1 min-w-0 flex-1">
+                                <span className="font-semibold text-foreground truncate w-full text-left">
+                                  {selectedModel.model_name}
+                                </span>
+                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                  <div className="flex items-center gap-1">
+                                    <Coins className="w-3 h-3" />
+                                    <span>{selectedModel.base_token_cost}</span>
+                                  </div>
+                                  {selectedModel.estimated_time_seconds && (
+                                    <div className="flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      <span>{selectedModel.estimated_time_seconds}s</span>
+                                    </div>
+                                  )}
+                                  {selectedModel.default_outputs && selectedModel.default_outputs > 1 && (
+                                    <div className="flex items-center gap-1">
+                                      <Images className="w-3 h-3" />
+                                      <span>{selectedModel.default_outputs}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </SelectValue>
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-background border-border">
                         {availableModels.map(model => (
                           <SelectItem key={model.id} value={model.id}>
-                            <div className="flex items-center gap-2">
-                              <Sparkles className="w-4 h-4" />
-                              <span>{model.model_name}</span>
-                              <span className="text-xs text-muted-foreground">
-                                (~{model.base_token_cost} credit{model.base_token_cost !== 1 ? 's' : ''})
-                              </span>
+                            <div className="flex items-center gap-3 py-1">
+                              {model.logo_url && (
+                                <div className="h-8 w-8 rounded-md bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                  <img 
+                                    src={model.logo_url} 
+                                    alt={model.model_name || ''} 
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+                              )}
+                              <div className="flex flex-col items-start gap-1 min-w-0 flex-1">
+                                <span className="font-semibold text-foreground">
+                                  {model.model_name}
+                                </span>
+                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                  <div className="flex items-center gap-1">
+                                    <Coins className="w-3 h-3" />
+                                    <span>{model.base_token_cost}</span>
+                                  </div>
+                                  {model.estimated_time_seconds && (
+                                    <div className="flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      <span>{model.estimated_time_seconds}s</span>
+                                    </div>
+                                  )}
+                                  {model.default_outputs && model.default_outputs > 1 && (
+                                    <div className="flex items-center gap-1">
+                                      <Images className="w-3 h-3" />
+                                      <span>{model.default_outputs}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </SelectItem>
                         ))}

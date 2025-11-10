@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useGeneration } from '@/hooks/useGeneration';
-import { useCustomGenerationPolling } from '@/hooks/useCustomGenerationPolling';
+import { useGenerationPolling } from '@/hooks/useGenerationPolling';
 import type { GenerationOutput } from '@/types/custom-creation';
 
 interface TestResult {
@@ -31,8 +31,8 @@ export const useTestModelGroup = () => {
   // Ref to hold the current promise resolver
   const resolverRef = useRef<((value: { outputs: GenerationOutput[], error?: string }) => void) | null>(null);
 
-  // Use EXACT SAME polling hook as CustomCreation.tsx
-  const { startPolling } = useCustomGenerationPolling({
+  // Use EXACT SAME polling hook as CustomCreation.tsx (line 13, 83)
+  const { startPolling } = useGenerationPolling({
     onComplete: (outputs, parentId) => {
       if (resolverRef.current) {
         resolverRef.current({ outputs });
@@ -86,7 +86,7 @@ export const useTestModelGroup = () => {
         const startTime = Date.now();
         
         try {
-          // Use EXACT SAME generation hook as CustomCreation.tsx
+          // Use EXACT SAME generation hook as CustomCreation.tsx (via useCustomGeneration)
           const generationResult = await generate({
             model_record_id: model.record_id,
             prompt: "A beautiful sunset over mountains",

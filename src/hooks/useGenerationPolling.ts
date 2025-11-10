@@ -50,6 +50,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
           provider_task_id,
           model_id,
           model_record_id,
+          provider_response,
           ai_models!inner(provider)
         `)
         .eq('id', generationId)
@@ -128,8 +129,10 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
           // Call completion callback with parent ID
           options.onComplete(uniqueOutputs, generationId);
         } else {
-          // Failed generation
-          options.onError?.('Generation failed');
+          // Failed generation - extract detailed error
+          const providerResponse = parentData.provider_response as any;
+          const errorMessage = providerResponse?.error || 'Generation failed';
+          options.onError?.(errorMessage);
         }
       }
     } catch (error: any) {

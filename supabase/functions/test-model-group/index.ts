@@ -97,8 +97,8 @@ Deno.serve(async (req) => {
 
         if (insertError) throw insertError;
 
-        // Call generate-content-sync
-        const generateResponse = await supabase.functions.invoke('generate-content-sync', {
+        // Call async generate-content (SAME as production)
+        const { data: generateData, error: generateError } = await supabase.functions.invoke('generate-content', {
           body: {
             model_record_id: model.record_id,
             prompt: testPrompt,
@@ -107,38 +107,70 @@ Deno.serve(async (req) => {
               height: 1024,
               num_outputs: 1,
             },
-            test_mode: true,
+            user_id: user.id,
           },
         });
 
-        const latency = Date.now() - testStartTime;
+        if (generateError) throw generateError;
 
-        if (generateResponse.error) {
-          throw generateResponse.error;
+        const generationId = generateData.generation_id;
+
+        // Poll for completion (SAME as production)
+        let attempts = 0;
+        const maxAttempts = 120; // 10 minutes max (5s intervals)
+        let generationStatus = 'processing';
+        let outputUrl = null;
+        let providerError = null;
+
+        while (attempts < maxAttempts && generationStatus === 'processing') {
+          await new Promise(resolve => setTimeout(resolve, 5000)); // 5s interval
+          
+          const { data: genData } = await supabase
+            .from('generations')
+            .select('status, storage_path, provider_response')
+            .eq('id', generationId)
+            .single();
+          
+          if (genData) {
+            generationStatus = genData.status;
+            outputUrl = genData.storage_path;
+            
+            if (genData.status === 'failed' && genData.provider_response) {
+              providerError = (genData.provider_response as any)?.error || 'Generation failed';
+            }
+          }
+          
+          attempts++;
         }
 
-        const { data: generateData } = generateResponse;
+        const latency = Date.now() - testStartTime;
 
-        // Update test record with success
-        await supabase
-          .from('model_test_results')
-          .update({
-            status: 'completed',
-            test_completed_at: new Date().toISOString(),
-            total_latency_ms: latency,
-            output_url: generateData?.output_url,
-          })
-          .eq('id', testRecord.id);
+        if (generationStatus === 'completed') {
+          // Success - update test record
+          await supabase
+            .from('model_test_results')
+            .update({
+              status: 'completed',
+              test_completed_at: new Date().toISOString(),
+              total_latency_ms: latency,
+              output_url: outputUrl,
+              generation_id: generationId,
+            })
+            .eq('id', testRecord.id);
 
-        results.push({
-          model_id: model.id,
-          model_name: model.model_name,
-          status: 'success',
-          latency_ms: latency,
-          output_url: generateData?.output_url,
-        });
+          results.push({
+            model_id: model.id,
+            model_name: model.model_name,
+            status: 'success',
+            latency_ms: latency,
+            output_url: outputUrl,
+          });
 
-        console.log(`✓ ${model.model_name}: SUCCESS (${latency}ms)`);
+          console.log(`✓ ${model.model_name}: SUCCESS (${latency}ms)`);
+        } else {
+          // Failed or timeout
+          throw new Error(providerError || `Timeout after ${attempts * 5}s`);
+        }
       } catch (error) {
         const latency = Date.now() - testStartTime;
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';

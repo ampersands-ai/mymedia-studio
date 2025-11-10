@@ -32,8 +32,8 @@ const plans = [
     monthlyPrice: "$9.99",
     annualPrice: "$7.99",
     period: "/mo",
-    credits: "100",
-    perCredit: "$0.08 per credit",
+    credits: "375",
+    perCredit: "$0.021 per credit",
     features: [
       "No watermark",
       "Global availability",
@@ -42,7 +42,7 @@ const plans = [
     popular: false,
     color: "bg-neon-pink",
     badge: "FOR CREATORS",
-    description: "The indie creator's choice. 100 credits for just $7.99/mo—competitors charge $30-50 for similar plans.",
+    description: "The indie creator's choice. 375 credits for just $7.99/mo—competitors charge $30-50 for similar plans.",
     savings: "Save $22-42/mo vs competitors",
   },
   {
@@ -50,8 +50,8 @@ const plans = [
     monthlyPrice: "$24.99",
     annualPrice: "$19.99",
     period: "/mo",
-    credits: "325",
-    perCredit: "$0.061 per credit",
+    credits: "1000",
+    perCredit: "$0.020 per credit",
     features: [
       "No watermark",
       "Unlimited image & text gens",
@@ -60,7 +60,7 @@ const plans = [
     popular: true,
     color: "bg-primary",
     badge: "MOST POPULAR",
-    description: "All the tools you need for less than $20/mo. 325 credits + unlimited image & text. Save $100s every year.",
+    description: "All the tools you need for less than $20/mo. 1000 credits + unlimited image & text. Save $100s every year.",
     savings: "Save $80-105/mo vs competitors",
   },
   {
@@ -68,8 +68,8 @@ const plans = [
     monthlyPrice: "$49.99",
     annualPrice: "$39.99",
     period: "/mo",
-    credits: "750",
-    perCredit: "$0.053 per credit",
+    credits: "2500",
+    perCredit: "$0.016 per credit",
     features: [
       "No watermark",
       "Commercial license",
@@ -78,16 +78,16 @@ const plans = [
     popular: false,
     badge: "BEST VALUE",
     color: "bg-neon-red",
-    description: "Enterprise power at freelancer prices. 750 credits for just $39.99/mo—competitors charge $99+ for less.",
+    description: "Enterprise power at freelancer prices. 2500 credits for just $39.99/mo—competitors charge $99+ for less.",
     savings: "Save $60-85/mo vs competitors",
   },
   {
     name: "Veo Connoisseur",
-    monthlyPrice: "$119.99",
-    annualPrice: "$89.99",
+    monthlyPrice: "$94.99",
+    annualPrice: "$74.99",
     period: "/mo",
-    credits: "2,000",
-    perCredit: "$0.045 per credit",
+    credits: "5000",
+    perCredit: "$0.015 per credit",
     features: [
       "No watermark",
       "Commercial license",
@@ -97,7 +97,7 @@ const plans = [
     popular: false,
     badge: "PREMIUM",
     color: "bg-accent",
-    description: "Ultimate power for professionals and agencies. 2,000 credits at the best rate—unmatched value for serious creators.",
+    description: "Ultimate power for professionals and agencies. 5000 credits at the best rate—unmatched value for serious creators.",
     savings: "Best per-credit pricing available",
   },
 ];
@@ -215,7 +215,7 @@ const Pricing = () => {
           "name": "What is the cheapest AI video creation plan?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Artifio.ai Explorer plan is the cheapest at $7.99/mo (annual billing) with 100 credits, perfect for APAC and LATAM creators."
+            "text": "Artifio.ai Explorer plan is the cheapest at $7.99/mo (annual billing) with 375 credits, perfect for APAC and LATAM creators."
           }
         },
         {

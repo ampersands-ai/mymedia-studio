@@ -126,6 +126,9 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
             {Object.keys(modelsByFamily).sort().map((family) => {
               const logo = getFamilyLogo(family);
               const stats = getFamilyStats(family);
+              const familyModels = modelsByFamily[family];
+              const isSingleModel = familyModels.length === 1;
+              const displayName = isSingleModel ? familyModels[0].model_name : family;
               
               return (
                 <SelectItem key={family} value={family}>
@@ -139,7 +142,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                         />
                       </div>
                     )}
-                    <span className="font-medium">{family}</span>
+                    <span className="font-medium">{displayName}</span>
                     {stats && (
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">

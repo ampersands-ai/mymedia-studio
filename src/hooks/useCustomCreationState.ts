@@ -48,18 +48,12 @@ export const useCustomCreationState = () => {
   const [state, setState] = useState<CustomCreationState>(() => ({
     ...INITIAL_STATE,
     selectedGroup: (localStorage.getItem('customCreation_selectedGroup') as CreationGroup) || "prompt_to_image",
-    advancedOpen: localStorage.getItem('customCreation_advancedOpen') === 'true',
   }));
 
   // Persist selectedGroup to localStorage
   useEffect(() => {
     localStorage.setItem('customCreation_selectedGroup', state.selectedGroup);
   }, [state.selectedGroup]);
-
-  // Persist advancedOpen to localStorage
-  useEffect(() => {
-    localStorage.setItem('customCreation_advancedOpen', state.advancedOpen.toString());
-  }, [state.advancedOpen]);
 
   /**
    * Update partial state
@@ -75,7 +69,6 @@ export const useCustomCreationState = () => {
     setState(prev => ({
       ...INITIAL_STATE,
       selectedGroup: prev.selectedGroup, // Keep selected group
-      advancedOpen: prev.advancedOpen,   // Keep advanced panel state
     }));
   }, []);
 

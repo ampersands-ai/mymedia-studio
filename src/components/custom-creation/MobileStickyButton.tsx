@@ -23,7 +23,7 @@ export const MobileStickyButton: React.FC<MobileStickyButtonProps> = ({
     <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-40 safe-area-padding-bottom">
       <Button 
         onClick={onGenerate} 
-        disabled={disabled}
+        disabled={disabled || isGenerating}
         size="lg"
         className="w-full h-14 text-base font-bold bg-primary-500 hover:bg-primary-600 text-neutral-900 border-2 border-primary-600 shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40"
       >

@@ -472,6 +472,202 @@ export function VideoCreator() {
               </Select>
             </div>
 
+            {/* Font Family */}
+            <div className="space-y-2">
+              <Label className="text-xs">Font Family</Label>
+              <Select 
+                value={customCaptionStyle.fontFamily} 
+                onValueChange={(value) => {
+                  const fontUrls: Record<string, string | undefined> = {
+                    'Space Grotesk Bold': 'https://github.com/floriankarsten/space-grotesk/raw/master/fonts/SpaceGrotesk-Bold.ttf',
+                    'Permanent Marker': undefined,
+                    'Clear Sans': undefined,
+                    'Didact Gothic': undefined,
+                    'Montserrat Bold': 'https://github.com/JulietaUla/Montserrat/raw/master/fonts/ttf/Montserrat-Bold.ttf',
+                    'Bebas Neue': undefined,
+                    'Oswald Bold': undefined,
+                    'Roboto Black': undefined
+                  };
+                  setCustomCaptionStyle({
+                    ...customCaptionStyle,
+                    fontFamily: value,
+                    fontUrl: fontUrls[value]
+                  });
+                }} 
+                disabled={isDisabled}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Space Grotesk Bold">Space Grotesk Bold</SelectItem>
+                  <SelectItem value="Montserrat Bold">Montserrat Bold</SelectItem>
+                  <SelectItem value="Bebas Neue">Bebas Neue</SelectItem>
+                  <SelectItem value="Oswald Bold">Oswald Bold</SelectItem>
+                  <SelectItem value="Roboto Black">Roboto Black</SelectItem>
+                  <SelectItem value="Permanent Marker">Permanent Marker</SelectItem>
+                  <SelectItem value="Clear Sans">Clear Sans</SelectItem>
+                  <SelectItem value="Didact Gothic">Didact Gothic</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Font Weight */}
+            <div className="space-y-2">
+              <Label className="text-xs">Font Weight</Label>
+              <Select 
+                value={customCaptionStyle.fontWeight} 
+                onValueChange={(value: 'normal' | 'bold' | 'black') => 
+                  setCustomCaptionStyle({
+                    ...customCaptionStyle,
+                    fontWeight: value
+                  })
+                } 
+                disabled={isDisabled}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="bold">Bold</SelectItem>
+                  <SelectItem value="black">Black (Extra Bold)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Text Outline (Stroke) */}
+            <div className="space-y-2">
+              <Label className="text-xs">Text Outline Width: {customCaptionStyle.strokeWidth ?? 0}px</Label>
+              <Slider
+                min={0}
+                max={8}
+                step={1}
+                value={[customCaptionStyle.strokeWidth ?? 0]}
+                onValueChange={(value) => setCustomCaptionStyle({
+                  ...customCaptionStyle,
+                  strokeWidth: value[0]
+                })}
+                disabled={isDisabled}
+              />
+            </div>
+
+            {customCaptionStyle.strokeWidth && customCaptionStyle.strokeWidth > 0 && (
+              <div className="space-y-2">
+                <Label className="text-xs">Outline Color</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start gap-2"
+                      disabled={isDisabled}
+                    >
+                      <div 
+                        className="w-6 h-6 rounded border-2" 
+                        style={{ backgroundColor: customCaptionStyle.strokeColor ?? '#000000' }}
+                      />
+                      {customCaptionStyle.strokeColor ?? '#000000'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64">
+                    <Input
+                      type="color"
+                      value={customCaptionStyle.strokeColor ?? '#000000'}
+                      onChange={(e) => setCustomCaptionStyle({
+                        ...customCaptionStyle,
+                        strokeColor: e.target.value
+                      })}
+                      className="h-10 cursor-pointer"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+
+            {/* Text Shadow Blur */}
+            <div className="space-y-2">
+              <Label className="text-xs">Text Shadow Blur: {customCaptionStyle.shadowBlur ?? 0}px</Label>
+              <Slider
+                min={0}
+                max={20}
+                step={1}
+                value={[customCaptionStyle.shadowBlur ?? 0]}
+                onValueChange={(value) => setCustomCaptionStyle({
+                  ...customCaptionStyle,
+                  shadowBlur: value[0]
+                })}
+                disabled={isDisabled}
+              />
+            </div>
+
+            {customCaptionStyle.shadowBlur && customCaptionStyle.shadowBlur > 0 && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-xs">Shadow Color</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start gap-2"
+                        disabled={isDisabled}
+                      >
+                        <div 
+                          className="w-6 h-6 rounded border-2" 
+                          style={{ backgroundColor: customCaptionStyle.shadowColor ?? '#000000' }}
+                        />
+                        {customCaptionStyle.shadowColor ?? '#000000'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64">
+                      <Input
+                        type="color"
+                        value={customCaptionStyle.shadowColor ?? '#000000'}
+                        onChange={(e) => setCustomCaptionStyle({
+                          ...customCaptionStyle,
+                          shadowColor: e.target.value
+                        })}
+                        className="h-10 cursor-pointer"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs">
+                    Shadow Offset X: {customCaptionStyle.shadowOffsetX ?? 0}px
+                  </Label>
+                  <Slider
+                    min={-10}
+                    max={10}
+                    step={1}
+                    value={[customCaptionStyle.shadowOffsetX ?? 0]}
+                    onValueChange={(value) => setCustomCaptionStyle({
+                      ...customCaptionStyle,
+                      shadowOffsetX: value[0]
+                    })}
+                    disabled={isDisabled}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs">
+                    Shadow Offset Y: {customCaptionStyle.shadowOffsetY ?? 0}px
+                  </Label>
+                  <Slider
+                    min={-10}
+                    max={10}
+                    step={1}
+                    value={[customCaptionStyle.shadowOffsetY ?? 0]}
+                    onValueChange={(value) => setCustomCaptionStyle({
+                      ...customCaptionStyle,
+                      shadowOffsetY: value[0]
+                    })}
+                    disabled={isDisabled}
+                  />
+                </div>
+              </>
+            )}
+
             {/* Preview Box */}
             <div 
               className="mt-4 p-4 rounded-lg border-2 border-dashed relative"
@@ -492,7 +688,13 @@ export function VideoCreator() {
                     color: customCaptionStyle.textColor,
                     fontSize: `${Math.min(customCaptionStyle.fontSize / 2, 24)}px`,
                     fontWeight: customCaptionStyle.fontWeight,
-                    lineHeight: customCaptionStyle.lineHeight ?? 1.3
+                    lineHeight: customCaptionStyle.lineHeight ?? 1.3,
+                    WebkitTextStroke: customCaptionStyle.strokeWidth 
+                      ? `${customCaptionStyle.strokeWidth}px ${customCaptionStyle.strokeColor ?? '#000000'}`
+                      : undefined,
+                    textShadow: customCaptionStyle.shadowBlur
+                      ? `${customCaptionStyle.shadowOffsetX ?? 0}px ${customCaptionStyle.shadowOffsetY ?? 0}px ${customCaptionStyle.shadowBlur}px ${customCaptionStyle.shadowColor ?? '#000000'}`
+                      : undefined
                   }}
                 >
                   Sample Caption Text

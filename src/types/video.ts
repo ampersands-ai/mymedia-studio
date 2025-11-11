@@ -21,6 +21,10 @@ export interface CaptionStyle {
   verticalAlignment?: 'top' | 'center' | 'bottom';
   strokeColor?: string;
   strokeWidth?: number;
+  shadowColor?: string;
+  shadowOffsetX?: number;
+  shadowOffsetY?: number;
+  shadowBlur?: number;
 }
 
 export interface VideoJobInput {

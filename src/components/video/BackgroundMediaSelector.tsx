@@ -85,7 +85,7 @@ export function BackgroundMediaSelector({
           query,
           type,
           orientation: getOrientation(aspectRatio),
-          per_page: 20,
+          per_page: 100,
         },
       });
 
@@ -219,7 +219,7 @@ export function BackgroundMediaSelector({
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh]">
+        <DialogContent className="max-w-[95vw] max-h-[95vh] w-full">
           <DialogHeader>
             <DialogTitle>Select Background Media</DialogTitle>
             <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
@@ -342,7 +342,7 @@ export function BackgroundMediaSelector({
               )}
 
             {/* Media Grid */}
-            <ScrollArea className="h-[500px] rounded-md border p-4">
+            <ScrollArea className="h-[calc(95vh-280px)] rounded-md border p-4">
               {loading ? (
                 <div className="flex items-center justify-center h-full">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -354,7 +354,7 @@ export function BackgroundMediaSelector({
                   <p className="text-sm text-muted-foreground">Try a different search term</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                   {mediaItems.map((media) => (
                     <div
                       key={media.id}

@@ -8,6 +8,7 @@ import { Footer } from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
+import hidreamLogo from "@/assets/hidream-logo.png";
 import { trackEvent } from "@/lib/posthog";
 
 const plans = [
@@ -287,7 +288,7 @@ const Pricing = () => {
             <div className="flex items-center justify-between">
               <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <img 
-                  src={logo} 
+                  src={hidreamLogo} 
                   alt="artifio.ai logo" 
                   className="h-6 md:h-8 object-contain"
                 />

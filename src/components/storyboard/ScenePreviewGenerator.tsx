@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ModelFamilySelector } from '@/components/custom-creation/ModelFamilySelector';
+import { mapAspectRatioToModelParameters } from '@/lib/aspect-ratio-mapper';
 
 
 
@@ -293,26 +294,21 @@ export const ScenePreviewGenerator = ({
       }
     }
 
-    // Map storyboard aspect ratio to dimensions
-    const aspectRatioDimensions: Record<string, { width: number; height: number }> = {
-      'sd': { width: 640, height: 480 },
-      'hd': { width: 1280, height: 720 },
-      'full-hd': { width: 1920, height: 1080 },
-      'squared': { width: 1080, height: 1080 },
-      'instagram-story': { width: 1080, height: 1920 },
-      'instagram-feed': { width: 1080, height: 1350 },
-    };
+    // Get the selected model's schema to auto-detect aspect ratio format
+    const selectedModelData = availableModels.find(m => m.record_id === selectedModelId);
+    
+    // Map aspect ratio to model-specific parameters
+    const aspectRatioParams = mapAspectRatioToModelParameters(
+      aspectRatio,
+      selectedModelData?.input_schema
+    );
 
-    const dimensions = aspectRatio 
-      ? aspectRatioDimensions[aspectRatio] || { width: 1920, height: 1080 }
-      : { width: 1920, height: 1080 };
-
-    console.log('[ScenePreviewGenerator] Using dimensions from aspectRatio:', dimensions, 'aspect_ratio:', aspectRatio);
+    console.log('[ScenePreviewGenerator] Mapped aspect ratio params:', aspectRatioParams);
 
     // For animate mode, pass the image URL as reference
     const customParams = generationMode === 'animate' && displayUrl
-      ? { image: displayUrl, width: dimensions.width, height: dimensions.height }
-      : { width: dimensions.width, height: dimensions.height };
+      ? { image: displayUrl, ...aspectRatioParams }
+      : aspectRatioParams;
 
     const generationResult = await generate({
       model_record_id: selectedModelId,

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Upload, ArrowLeft, Loader2, Clock, Camera, Sparkles, Coins } from "lucide-react";
+import { Upload, ArrowLeft, Loader2, Clock, Camera, Sparkles, Coins, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +16,9 @@ import { useUserTokens } from "@/hooks/useUserTokens";
 import { useWorkflowTokenCost } from "@/hooks/useWorkflowTokenCost";
 import { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { formatEstimatedTime } from "@/lib/time-utils";
+import { WorkflowPromptInput } from "./WorkflowPromptInput";
+import { useWorkflowSurpriseMe } from "@/hooks/useWorkflowSurpriseMe";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface WorkflowInputPanelProps {
   workflow: WorkflowTemplate;
@@ -34,6 +37,14 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
   const [isUploading, setIsUploading] = useState(false);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  
+  // Enhancement states
+  const [enhancePrompt, setEnhancePrompt] = useState(false);
+  const [generateCaption, setGenerateCaption] = useState(false);
+  const [generatingSurprise, setGeneratingSurprise] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  
+  const { getSurprisePrompt } = useWorkflowSurpriseMe(workflow.category);
 
   const requiredFields = workflow.user_input_fields?.filter(f => f.required) || [];
   const { estimatedTokens, isCalculating } = useWorkflowTokenCost(workflow, inputs);
@@ -166,18 +177,37 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
     onExecute(inputs);
   };
 
+  const handleSurpriseMe = () => {
+    setGeneratingSurprise(true);
+    const surprisePrompt = getSurprisePrompt();
+    if (surprisePrompt) {
+      // Find the first textarea field (usually the prompt field)
+      const promptField = workflow.user_input_fields?.find(f => f.type === 'textarea');
+      if (promptField) {
+        handleInputChange(promptField.name, surprisePrompt);
+      }
+    }
+    setGeneratingSurprise(false);
+  };
+
   const renderInputField = (field: any) => {
     const isMultiple = field.max_files && field.max_files > 1;
 
     switch (field.type) {
       case 'textarea':
         return (
-          <Textarea
+          <WorkflowPromptInput
             value={inputs[field.name] || ''}
-            onChange={(e) => handleInputChange(field.name, e.target.value)}
-            placeholder={`Enter ${field.label.toLowerCase()}...`}
-            disabled={isExecuting}
-            className="min-h-[120px] resize-none"
+            onChange={(value) => handleInputChange(field.name, value)}
+            isRequired={field.required || false}
+            maxLength={5000}
+            onSurpriseMe={handleSurpriseMe}
+            onEnhance={setEnhancePrompt}
+            enhanceEnabled={enhancePrompt}
+            disabled={isExecuting || isUploading}
+            generateCaption={generateCaption}
+            onGenerateCaptionChange={setGenerateCaption}
+            generatingSurprise={generatingSurprise}
           />
         );
 
@@ -334,15 +364,77 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
       <CardContent className="p-6 space-y-6">
         {/* Input Fields */}
         <div className="space-y-4">
-          {workflow.user_input_fields?.map((field) => (
-            <div key={field.name} className="space-y-2">
-              <Label className="text-sm font-medium">
-                {field.label}
-                {field.required && <span className="text-destructive ml-1">*</span>}
-              </Label>
-              {renderInputField(field)}
-            </div>
-          ))}
+          {(() => {
+            // Define which fields are "advanced"
+            const advancedFieldNames = ['number_of_images', 'numberOfImages', 'output_format', 'outputFormat', 'outputType'];
+            
+            const regularFields = workflow.user_input_fields?.filter(
+              f => !advancedFieldNames.includes(f.name)
+            ) || [];
+            
+            const advancedFields = workflow.user_input_fields?.filter(
+              f => advancedFieldNames.includes(f.name)
+            ) || [];
+            
+            return (
+              <>
+                {/* Render regular fields */}
+                {regularFields.map((field) => (
+                  <div key={field.name} className="space-y-2">
+                    {field.type !== 'textarea' && (
+                      <Label className="text-sm font-medium">
+                        {field.label}
+                        {field.required && <span className="text-destructive ml-1">*</span>}
+                      </Label>
+                    )}
+                    {renderInputField(field)}
+                  </div>
+                ))}
+                
+                {/* Advanced options - only show collapsible if 3+ fields */}
+                {advancedFields.length >= 3 ? (
+                  <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+                    <CollapsibleTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-between px-0 hover:bg-transparent"
+                      >
+                        <span className="text-sm font-medium">Advanced Options</span>
+                        <ChevronDown
+                          className={`h-4 w-4 transition-transform ${
+                            advancedOpen ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="space-y-4 pt-4">
+                      {advancedFields.map((field) => (
+                        <div key={field.name} className="space-y-2">
+                          <Label className="text-sm font-medium">
+                            {field.label}
+                            {field.required && <span className="text-destructive ml-1">*</span>}
+                          </Label>
+                          {renderInputField(field)}
+                        </div>
+                      ))}
+                    </CollapsibleContent>
+                  </Collapsible>
+                ) : (
+                  /* If less than 3 advanced fields, render them normally */
+                  advancedFields.map((field) => (
+                    <div key={field.name} className="space-y-2">
+                      <Label className="text-sm font-medium">
+                        {field.label}
+                        {field.required && <span className="text-destructive ml-1">*</span>}
+                      </Label>
+                      {renderInputField(field)}
+                    </div>
+                  ))
+                )}
+              </>
+            );
+          })()}
         </div>
 
         {/* Credit Cost Info */}

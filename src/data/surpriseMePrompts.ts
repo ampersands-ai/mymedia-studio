@@ -73,6 +73,51 @@ export const audioPrompts = [
   "Retro 80s synthwave with analog synthesizers, gated reverb drums, nostalgic melodies, neon-soaked aesthetic",
 ];
 
+// Workflow-specific prompts organized by category
+export const workflowPrompts: Record<string, string[]> = {
+  'Headshot Creation': imagePrompts,
+  'Product Photography': [
+    "Luxury watch on marble surface with dramatic lighting, commercial photography style, ultra detailed",
+    "Premium skincare product with water droplets, clean white background, soft studio lighting, e-commerce ready",
+    "Artisan coffee bag with scattered beans, rustic wooden surface, warm natural lighting, lifestyle product shot",
+    "Designer sneakers on geometric platform, bold colors and shadows, modern product photography",
+    "Elegant perfume bottle with floral elements, soft focus background, luxury brand aesthetic",
+  ],
+  'Social Media Content': videoPrompts.slice(0, 5),
+  'Logo Design': [
+    "Modern minimalist logo for tech startup, geometric shapes, clean lines, professional and innovative",
+    "Elegant vintage logo with ornate details, classic typography, timeless design for luxury brand",
+    "Bold playful logo with bright colors, fun shapes, energetic and youthful brand identity",
+    "Nature-inspired logo with organic elements, earth tones, eco-friendly and sustainable aesthetic",
+    "Abstract geometric logo, monochromatic color scheme, sophisticated and contemporary design",
+  ],
+  'Background Removal': imageEditingPrompts.slice(0, 5),
+  'Image Enhancement': imageEditingPrompts,
+  'Style Transfer': [
+    "Transform into anime art style with bold outlines, vibrant colors, and expressive features",
+    "Convert to impressionist painting style with visible brush strokes and soft color blending",
+    "Apply Van Gogh's Starry Night artistic style with swirling patterns and bold colors",
+    "Transform into pixel art style, retro gaming aesthetic with limited color palette",
+    "Apply studio Ghibli animation style with soft colors and whimsical atmosphere",
+  ],
+};
+
+/**
+ * Get random prompt for workflow templates based on category
+ */
+export function getWorkflowSurpriseMePrompt(category: string): string {
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
+  );
+  const randomOffset = Math.floor(Math.random() * 30);
+  
+  // Get prompts for this category, fallback to image prompts
+  const prompts = workflowPrompts[category] || imagePrompts;
+  const index = (dayOfYear * 7 + randomOffset) % prompts.length;
+  
+  return prompts[index];
+}
+
 /**
  * Get random prompt based on creation type
  */

@@ -41,10 +41,10 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 
       {/* Uploaded images preview */}
       {images.length > 0 && (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="flex flex-wrap gap-2">
           {images.map((file, index) => (
-            <Card key={index} className="relative p-2 border-border bg-muted/30 overflow-visible">
-              <div className="aspect-square rounded overflow-hidden bg-muted">
+            <div key={index} className="relative">
+              <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted border border-border">
                 <img
                   src={URL.createObjectURL(file)}
                   alt={`Upload ${index + 1}`}
@@ -54,16 +54,13 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
               <Button
                 variant="destructive"
                 size="icon"
-                className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-lg z-10 border-2 border-background"
+                className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full shadow-lg z-10 border border-background"
                 onClick={() => onRemove(index)}
                 aria-label="Remove image"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3 w-3" />
               </Button>
-              <p className="text-xs text-muted-foreground mt-1 truncate">
-                {file.name}
-              </p>
-            </Card>
+            </div>
           ))}
         </div>
       )}

@@ -249,6 +249,40 @@ export function VideoCreator() {
             />
           </CollapsibleTrigger>
           
+          {/* Preview Box */}
+          <div 
+            className="mt-2 p-4 rounded-lg border-2 border-dashed relative"
+            style={{ minHeight: '100px' }}
+          >
+            <div className="text-xs text-muted-foreground mb-2">Caption Preview</div>
+            <div 
+              className="inline-block px-3 py-2 rounded"
+              style={{
+                backgroundColor: customCaptionStyle.backgroundColor,
+                opacity: customCaptionStyle.backgroundOpacity ?? 0.95,
+                padding: `${customCaptionStyle.backgroundPadding ?? 15}px`,
+                borderRadius: `${customCaptionStyle.backgroundBorderRadius ?? 8}px`
+              }}
+            >
+              <span 
+                style={{
+                  color: customCaptionStyle.textColor,
+                  fontSize: `${Math.min(customCaptionStyle.fontSize / 2, 24)}px`,
+                  fontWeight: customCaptionStyle.fontWeight,
+                  lineHeight: customCaptionStyle.lineHeight ?? 1.3,
+                  WebkitTextStroke: customCaptionStyle.strokeWidth 
+                    ? `${customCaptionStyle.strokeWidth}px ${customCaptionStyle.strokeColor ?? '#000000'}`
+                    : undefined,
+                  textShadow: customCaptionStyle.shadowBlur
+                    ? `${customCaptionStyle.shadowOffsetX ?? 0}px ${customCaptionStyle.shadowOffsetY ?? 0}px ${customCaptionStyle.shadowBlur}px ${customCaptionStyle.shadowColor ?? '#000000'}`
+                    : undefined
+                }}
+              >
+                Sample Caption Text
+              </span>
+            </div>
+          </div>
+          
           <CollapsibleContent className="space-y-3 pt-2">
             {/* Preset selector */}
             <div className="space-y-2">
@@ -809,39 +843,6 @@ export function VideoCreator() {
               </>
             )}
 
-            {/* Preview Box */}
-            <div 
-              className="mt-2 p-4 rounded-lg border-2 border-dashed relative"
-              style={{ minHeight: '100px' }}
-            >
-              <div className="text-xs text-muted-foreground mb-2">Caption Preview</div>
-              <div 
-                className="inline-block px-3 py-2 rounded"
-                style={{
-                  backgroundColor: customCaptionStyle.backgroundColor,
-                  opacity: customCaptionStyle.backgroundOpacity ?? 0.95,
-                  padding: `${customCaptionStyle.backgroundPadding ?? 15}px`,
-                  borderRadius: `${customCaptionStyle.backgroundBorderRadius ?? 8}px`
-                }}
-              >
-                <span 
-                  style={{
-                    color: customCaptionStyle.textColor,
-                    fontSize: `${Math.min(customCaptionStyle.fontSize / 2, 24)}px`,
-                    fontWeight: customCaptionStyle.fontWeight,
-                    lineHeight: customCaptionStyle.lineHeight ?? 1.3,
-                    WebkitTextStroke: customCaptionStyle.strokeWidth 
-                      ? `${customCaptionStyle.strokeWidth}px ${customCaptionStyle.strokeColor ?? '#000000'}`
-                      : undefined,
-                    textShadow: customCaptionStyle.shadowBlur
-                      ? `${customCaptionStyle.shadowOffsetX ?? 0}px ${customCaptionStyle.shadowOffsetY ?? 0}px ${customCaptionStyle.shadowBlur}px ${customCaptionStyle.shadowColor ?? '#000000'}`
-                      : undefined
-                  }}
-                >
-                  Sample Caption Text
-                </span>
-              </div>
-            </div>
           </CollapsibleContent>
         </Collapsible>
 

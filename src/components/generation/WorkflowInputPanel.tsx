@@ -321,7 +321,6 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
                 onReset?.();
                 toast.success('Inputs reset');
               }}
-              disabled={isExecuting}
             >
               Reset
             </Button>
@@ -333,24 +332,6 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
       </div>
 
       <CardContent className="p-6 space-y-6">
-        {/* Workflow Info */}
-        <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <span className="text-sm font-medium">
-              {workflow.workflow_steps?.length || 0} steps
-            </span>
-          </div>
-          {workflow.estimated_time_seconds && (
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                ~{formatEstimatedTime(workflow.estimated_time_seconds)}
-              </span>
-            </div>
-          )}
-        </div>
-
         {/* Input Fields */}
         <div className="space-y-4">
           {workflow.user_input_fields?.map((field) => (
@@ -365,19 +346,13 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
         </div>
 
         {/* Credit Cost Info */}
-        <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+        <div className="p-4 bg-muted/50 rounded-lg">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium flex items-center gap-2">
               <Coins className="h-4 w-4 text-primary" />
               Estimated Cost
             </span>
             <Badge variant="secondary">{Number(estimatedTokens).toFixed(2)} credits</Badge>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Your balance:</span>
-            <span className={hasEnoughCredits ? "text-green-600 font-semibold" : "text-destructive font-semibold"}>
-              {Number(creditBalance).toFixed(2)} credits
-            </span>
           </div>
         </div>
 

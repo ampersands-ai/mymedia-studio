@@ -18,19 +18,6 @@ serve(async (req) => {
       throw new Error('Query parameter is required');
     }
 
-    // Verify authentication
-    const authHeader = req.headers.get('Authorization')!;
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
-      throw new Error('Unauthorized');
-    }
-
     const pixabayApiKey = Deno.env.get('PIXABAY_API_KEY');
     if (!pixabayApiKey) {
       throw new Error('Pixabay API key not configured');

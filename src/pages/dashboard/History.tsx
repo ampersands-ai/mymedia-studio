@@ -851,7 +851,7 @@ const History = () => {
               </div>
               
               <CardContent className="p-2 space-y-1">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-1">
                   <div className="flex items-center gap-1">
                     {getTypeIcon(generation.type)}
                     <span className="font-bold text-xs capitalize">{generation.type}</span>

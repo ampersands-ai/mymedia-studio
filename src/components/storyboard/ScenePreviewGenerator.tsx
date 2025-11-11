@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, RefreshCw, Image as ImageIcon, Video, CheckCircle2 } from 'lucide-react';
+import { Loader2, Sparkles, RefreshCw, Image as ImageIcon, Video, CheckCircle2, Clock } from 'lucide-react';
 import { useGeneration } from '@/hooks/useGeneration';
 import { useModels } from '@/hooks/useModels';
 import { useUserTokens } from '@/hooks/useUserTokens';
@@ -53,6 +53,12 @@ export const ScenePreviewGenerator = ({
   const queryClient = useQueryClient();
   const lastHandledUrlRef = useRef<string | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Timer state for free regeneration after 5 minutes
+  const [generationStartTime, setGenerationStartTime] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+  const [isFreeRegeneration, setIsFreeRegeneration] = useState<boolean>(false);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // DEBUG: Log raw models data on mount
   useEffect(() => {
@@ -132,6 +138,37 @@ export const ScenePreviewGenerator = ({
       }
     };
   }, [pendingGenerationId, isAsyncGeneration]);
+
+  // Timer effect for tracking elapsed time and enabling free regeneration
+  useEffect(() => {
+    if (!generationStartTime || (!isGenerating && !isAsyncGeneration)) {
+      // Clear timer when generation completes
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+      setElapsedSeconds(0);
+      return;
+    }
+
+    // Update elapsed time every second
+    timerIntervalRef.current = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - generationStartTime) / 1000);
+      setElapsedSeconds(elapsed);
+      
+      // Enable free regeneration after 300 seconds (5 minutes)
+      if (elapsed >= 300) {
+        setIsFreeRegeneration(true);
+      }
+    }, 1000);
+
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    };
+  }, [generationStartTime, isGenerating, isAsyncGeneration]);
 
   // Compute display URL from result or scene prop
   const displayUrl = result?.output_url ?? pollOutputUrl ?? scene.image_preview_url ?? null;
@@ -220,12 +257,13 @@ export const ScenePreviewGenerator = ({
   const selectedModel = availableModels.find(m => m.record_id === selectedModelId);
   const tokenCost = selectedModel?.base_token_cost || 0;
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (isFreeRetry = false) => {
     if (!scene.image_prompt) {
       return; // Silent no-op
     }
 
-    if ((tokenData?.tokens_remaining || 0) < tokenCost) {
+    // Only check token cost if not a free retry
+    if (!isFreeRetry && (tokenData?.tokens_remaining || 0) < tokenCost) {
       return; // Silent no-op, UI already shows insufficient credits message
     }
   
@@ -236,6 +274,22 @@ export const ScenePreviewGenerator = ({
     setBatchOutputs([]);
     setShowOutputGrid(false);
     setSelectedOutputIndex(0);
+    setGenerationStartTime(Date.now());
+    setElapsedSeconds(0);
+    setIsFreeRegeneration(false);
+
+    // Cancel previous generation if it exists and this is a free retry
+    if (isFreeRetry && pendingGenerationId) {
+      try {
+        await supabase
+          .from('generations')
+          .update({ status: 'cancelled' })
+          .eq('id', pendingGenerationId);
+        console.log('[ScenePreviewGenerator] Cancelled previous generation:', pendingGenerationId);
+      } catch (error) {
+        console.error('Failed to cancel previous generation:', error);
+      }
+    }
 
     // For animate mode, pass the image URL as reference
     const customParams = generationMode === 'animate' && displayUrl
@@ -245,7 +299,10 @@ export const ScenePreviewGenerator = ({
     const generationResult = await generate({
       model_record_id: selectedModelId,
       prompt: scene.image_prompt,
-      custom_parameters: customParams,
+      custom_parameters: {
+        ...customParams,
+        skip_token_deduction: isFreeRetry
+      },
     });
 
     // Check if this is an async generation (no output_url yet)
@@ -289,7 +346,7 @@ export const ScenePreviewGenerator = ({
             <Button
               size="sm"
               variant="ghost"
-              onClick={handleGenerate}
+              onClick={() => handleGenerate()}
               className="h-8 px-2"
               title="Regenerate preview"
             >
@@ -388,9 +445,9 @@ export const ScenePreviewGenerator = ({
           showOutputGrid && batchOutputs.length > 1 ? "flex-1" : "mb-4"
         )}>
         {(isGenerating || isAsyncGeneration) ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6">
               <Loader2 className="w-12 h-12 animate-spin text-primary" />
-              <div className="text-center space-y-1">
+              <div className="text-center space-y-2 max-w-md">
                 {isGenerating ? (
                   <>
                     <p className="text-sm font-medium">Submitting generation...</p>
@@ -404,12 +461,50 @@ export const ScenePreviewGenerator = ({
                     <p className="text-xs text-muted-foreground">
                       Status: {pollStatus}
                     </p>
-                    <p className="text-xs text-muted-foreground/70">
-                      This may take 20-60 seconds
-                    </p>
+                    <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground/70 mt-2">
+                      <Clock className="w-3 h-3" />
+                      <span>
+                        Elapsed: {Math.floor(elapsedSeconds / 60)}:{(elapsedSeconds % 60).toString().padStart(2, '0')}
+                      </span>
+                    </div>
+                    
+                    {/* Timer progress bar */}
+                    <div className="w-48 h-1.5 bg-muted rounded-full overflow-hidden mx-auto mt-3">
+                      <div 
+                        className="h-full bg-primary transition-all duration-1000 ease-linear"
+                        style={{ width: `${Math.min((elapsedSeconds / 300) * 100, 100)}%` }}
+                      />
+                    </div>
+                    
+                    {elapsedSeconds < 300 ? (
+                      <p className="text-xs text-muted-foreground/70 mt-2">
+                        Free regeneration available in {300 - elapsedSeconds}s
+                      </p>
+                    ) : (
+                      <p className="text-xs text-yellow-600 dark:text-yellow-400 font-medium mt-2">
+                        ⚡ Free regeneration now available!
+                      </p>
+                    )}
                   </>
                 )}
               </div>
+              
+              {/* Free Regeneration Button */}
+              {isFreeRegeneration && isAsyncGeneration && (
+                <div className="space-y-2 w-full max-w-xs mt-4">
+                  <Button
+                    onClick={() => handleGenerate(true)}
+                    variant="outline"
+                    className="w-full border-yellow-500/50 hover:bg-yellow-500/10 hover:border-yellow-500"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Free Regeneration (No Charge)
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center px-2">
+                    Generation is taking longer than expected. Retry without using credits.
+                  </p>
+                </div>
+              )}
             </div>
         ) : displayUrl ? (
           <div className="relative w-full h-full group">
@@ -479,7 +574,7 @@ export const ScenePreviewGenerator = ({
               )}
 
               <Button
-                onClick={handleGenerate}
+                onClick={() => handleGenerate()}
                 disabled={isGenerating || isAsyncGeneration || (tokenData?.tokens_remaining || 0) < tokenCost || availableModels.length === 0}
                 className="w-full"
                 variant="outline"
@@ -513,7 +608,7 @@ export const ScenePreviewGenerator = ({
                     />
                     
                     <Button
-                      onClick={handleGenerate}
+                      onClick={() => handleGenerate()}
                       disabled={isGenerating || isAsyncGeneration || (tokenData?.tokens_remaining || 0) < tokenCost}
                       className="w-full"
                       variant="outline"

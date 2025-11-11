@@ -237,41 +237,48 @@ serve(async (req) => {
 
     console.log('[sync] Token cost calculated:', tokenCost);
 
-    // Check and deduct tokens
-    const { data: subscription, error: subError } = await supabase
-      .from('user_subscriptions')
-      .select('tokens_remaining')
-      .eq('user_id', user.id)
-      .single();
+    // Check if this is a free retry (skip token deduction for generations taking >5 minutes)
+    const skipTokenDeduction = custom_parameters.skip_token_deduction === true;
 
-    if (subError || !subscription) {
-      throw new Error('Subscription not found');
+    if (skipTokenDeduction) {
+      console.log('[sync] Free regeneration - skipping token deduction');
+    } else {
+      // Check and deduct tokens
+      const { data: subscription, error: subError } = await supabase
+        .from('user_subscriptions')
+        .select('tokens_remaining')
+        .eq('user_id', user.id)
+        .single();
+
+      if (subError || !subscription) {
+        throw new Error('Subscription not found');
+      }
+
+      if (subscription.tokens_remaining < tokenCost) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Insufficient credits',
+            type: 'INSUFFICIENT_TOKENS',
+            required: tokenCost,
+            available: subscription.tokens_remaining,
+          }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Deduct tokens
+      const { error: deductError } = await supabase
+        .from('user_subscriptions')
+        .update({ tokens_remaining: subscription.tokens_remaining - tokenCost })
+        .eq('user_id', user.id)
+        .eq('tokens_remaining', subscription.tokens_remaining);
+
+      if (deductError) {
+        throw new Error('Failed to deduct tokens');
+      }
+
+      console.log('[sync] Tokens deducted:', tokenCost);
     }
-
-    if (subscription.tokens_remaining < tokenCost) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Insufficient credits',
-          type: 'INSUFFICIENT_TOKENS',
-          required: tokenCost,
-          available: subscription.tokens_remaining,
-        }),
-        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Deduct tokens
-    const { error: deductError } = await supabase
-      .from('user_subscriptions')
-      .update({ tokens_remaining: subscription.tokens_remaining - tokenCost })
-      .eq('user_id', user.id)
-      .eq('tokens_remaining', subscription.tokens_remaining);
-
-    if (deductError) {
-      throw new Error('Failed to deduct tokens');
-    }
-
-    console.log('[sync] Tokens deducted:', tokenCost);
 
     // Create generation record
     const { data: generation, error: genError } = await supabase

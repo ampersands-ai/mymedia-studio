@@ -11,6 +11,7 @@ import { Autoplay, EffectFade } from 'swiper/modules';
 import { useState } from 'react';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
+import { PartnerLogosCarousel } from './PartnerLogosCarousel';
 
 export const HeroSection = () => {
   const scrollY = useScrollY();
@@ -142,6 +143,11 @@ export const HeroSection = () => {
               <Play className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="font-semibold text-sm sm:text-base">Watch Demo</span>
             </button>
+          </div>
+
+          {/* Partner Logos Carousel */}
+          <div className="mt-8">
+            <PartnerLogosCarousel />
           </div>
         </div>
       </div>

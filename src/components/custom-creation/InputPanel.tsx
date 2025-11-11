@@ -511,8 +511,8 @@ export const InputPanel: React.FC<InputPanelProps> = ({
         })()}
       </div>
 
-      {/* Sticky action buttons at bottom */}
-      <div className="hidden md:flex flex-col gap-3 p-4 md:px-8 md:pb-6 border-t border-border bg-card/80 backdrop-blur shrink-0">
+      {/* Sticky action buttons at bottom - DESKTOP */}
+      <div className="hidden md:flex md:fixed md:bottom-0 md:left-0 md:right-0 md:max-w-[600px] md:mx-auto flex-col gap-3 p-4 md:px-8 md:pb-6 border-t border-border bg-background/95 backdrop-blur-sm shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-40">
         <Button
           onClick={onGenerate}
           disabled={!canGenerate || isDisabled}

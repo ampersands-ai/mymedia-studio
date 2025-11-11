@@ -68,6 +68,88 @@ export const captionPresets: Record<string, CaptionStyle> = {
   }
 };
 
+export const textEffectPresets: Record<string, Partial<CaptionStyle>> = {
+  none: {
+    strokeWidth: 0,
+    shadowBlur: 0,
+    shadowOffsetX: 0,
+    shadowOffsetY: 0
+  },
+  neonGlow: {
+    strokeWidth: 0,
+    shadowBlur: 15,
+    shadowOffsetX: 0,
+    shadowOffsetY: 0,
+    shadowColor: '#00ff88',
+    textColor: '#ffffff'
+  },
+  classicShadow: {
+    strokeWidth: 0,
+    shadowBlur: 4,
+    shadowOffsetX: 3,
+    shadowOffsetY: 3,
+    shadowColor: '#000000'
+  },
+  boldOutline: {
+    strokeWidth: 4,
+    strokeColor: '#000000',
+    shadowBlur: 0,
+    textColor: '#ffffff'
+  },
+  dramaticGlow: {
+    strokeWidth: 2,
+    strokeColor: '#000000',
+    shadowBlur: 20,
+    shadowOffsetX: 0,
+    shadowOffsetY: 0,
+    shadowColor: '#ff0055',
+    textColor: '#ffffff'
+  },
+  softShadow: {
+    strokeWidth: 0,
+    shadowBlur: 8,
+    shadowOffsetX: 2,
+    shadowOffsetY: 2,
+    shadowColor: '#00000088'
+  },
+  retroGlow: {
+    strokeWidth: 3,
+    strokeColor: '#ff00ff',
+    shadowBlur: 15,
+    shadowOffsetX: 0,
+    shadowOffsetY: 0,
+    shadowColor: '#00ffff',
+    textColor: '#ffffff'
+  },
+  goldLuxury: {
+    strokeWidth: 2,
+    strokeColor: '#8b4513',
+    shadowBlur: 10,
+    shadowOffsetX: 2,
+    shadowOffsetY: 2,
+    shadowColor: '#ffd700',
+    textColor: '#ffd700'
+  },
+  iceEffect: {
+    strokeWidth: 2,
+    strokeColor: '#4169e1',
+    shadowBlur: 12,
+    shadowOffsetX: 0,
+    shadowOffsetY: 0,
+    shadowColor: '#00bfff',
+    textColor: '#e0ffff'
+  },
+  fireGlow: {
+    strokeWidth: 1,
+    strokeColor: '#8b0000',
+    shadowBlur: 18,
+    shadowOffsetX: 0,
+    shadowOffsetY: 0,
+    shadowColor: '#ff4500',
+    textColor: '#ff6347'
+  }
+};
+
 export const aspectRatioConfig = {
   '16:9': { width: 1920, height: 1080, label: 'Landscape (YouTube)' },
   '9:16': { width: 1080, height: 1920, label: 'Vertical (TikTok, Reels)' },

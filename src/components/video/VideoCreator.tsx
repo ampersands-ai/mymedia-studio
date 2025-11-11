@@ -16,7 +16,7 @@ import { Loader2, Coins, Sparkles, Volume2, Clock, ChevronDown } from 'lucide-re
 import { toast } from 'sonner';
 import { VoiceSelector } from '../generation/VoiceSelector';
 import { BackgroundMediaSelector } from './BackgroundMediaSelector';
-import { captionPresets, aspectRatioConfig } from '@/config/captionStyles';
+import { captionPresets, aspectRatioConfig, textEffectPresets } from '@/config/captionStyles';
 import { CaptionStyle } from '@/types/video';
 
 export function VideoCreator() {
@@ -31,6 +31,7 @@ export function VideoCreator() {
   const [captionStyle, setCaptionStyle] = useState<string>('modern');
   const [customCaptionStyle, setCustomCaptionStyle] = useState<CaptionStyle>(captionPresets.modern);
   const [captionCustomizationOpen, setCaptionCustomizationOpen] = useState(true);
+  const [textEffect, setTextEffect] = useState<string>('none');
   const [backgroundVideoUrl, setBackgroundVideoUrl] = useState<string>('');
   const [backgroundThumbnail, setBackgroundThumbnail] = useState<string>('');
   const [backgroundMediaType, setBackgroundMediaType] = useState<'video' | 'image'>('video');
@@ -270,6 +271,41 @@ export function VideoCreator() {
                   <SelectItem value="elegant">Elegant</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Text Effect Presets */}
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">✨ Text Effects (Quick Apply)</Label>
+              <Select 
+                value={textEffect} 
+                onValueChange={(value) => {
+                  setTextEffect(value);
+                  setCustomCaptionStyle({
+                    ...customCaptionStyle,
+                    ...textEffectPresets[value]
+                  });
+                }} 
+                disabled={isDisabled}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  <SelectItem value="none">🚫 No Effect</SelectItem>
+                  <SelectItem value="classicShadow">🌑 Classic Shadow</SelectItem>
+                  <SelectItem value="softShadow">☁️ Soft Shadow</SelectItem>
+                  <SelectItem value="boldOutline">⚫ Bold Outline</SelectItem>
+                  <SelectItem value="neonGlow">💚 Neon Glow</SelectItem>
+                  <SelectItem value="dramaticGlow">💖 Dramatic Glow</SelectItem>
+                  <SelectItem value="retroGlow">🌈 Retro Glow</SelectItem>
+                  <SelectItem value="goldLuxury">✨ Gold Luxury</SelectItem>
+                  <SelectItem value="iceEffect">❄️ Ice Effect</SelectItem>
+                  <SelectItem value="fireGlow">🔥 Fire Glow</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Apply a preset effect or customize manually below
+              </p>
             </div>
 
             {/* Text Color Picker */}

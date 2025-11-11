@@ -19,8 +19,10 @@ import brainAi from '@/assets/partners/brain-ai.png';
 import geometric from '@/assets/partners/geometric.jpg';
 import meta from '@/assets/partners/meta.jpeg';
 import google from '@/assets/partners/google.png';
+import hidream from '@/assets/partners/hidream.png';
 
 const partners: { name: string; logo: string }[] = [
+  { name: 'HiDream AI', logo: hidream },
   { name: 'xAI', logo: xai },
   { name: 'Midjourney', logo: midjourney },
   { name: 'Meta', logo: metaGradient },
@@ -43,7 +45,7 @@ export const PartnerLogosCarousel = () => {
     <div className="w-full space-y-4">
       {/* Label */}
       <p className="text-sm text-white/70 text-center md:text-left font-medium tracking-wide">
-        Powered by 15+ leading AI providers
+        Powered by 16+ leading AI providers
       </p>
       
       {/* Carousel container */}

@@ -953,49 +953,39 @@ const History = () => {
           
           {previewGeneration && (
             <div className="space-y-4">
-              {(() => {
-                // Check if generation is stuck (processing for >10 minutes)
-                const isStuck = (previewGeneration.status === "processing" || previewGeneration.status === "pending") &&
-                  Math.floor((Date.now() - new Date(previewGeneration.created_at).getTime()) / 60000) > 10;
-                
-                const isFailed = previewGeneration.status === "failed";
-                
-                if (isFailed || isStuck) {
-                  return (
-                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6">
-                      <div className="flex items-start gap-3 mb-4">
-                        <AlertCircle className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" />
-                        <div className="flex-1">
-                          <h4 className="font-bold text-red-500 mb-2">
-                            {isStuck ? "Generation Timed Out" : "Generation Failed"}
-                          </h4>
-                          <div className="space-y-3">
+              {previewGeneration.status === "failed" ? (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6">
+                  <div className="flex items-start gap-3 mb-4">
+                    <AlertCircle className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-bold text-red-500 mb-2">Generation Failed</h4>
+                      <div className="space-y-3">
+                        {previewGeneration.provider_response?.error || previewGeneration.provider_response?.data?.failMsg ? (
+                          <p className="text-sm text-foreground/80">
+                            {previewGeneration.provider_response?.error || previewGeneration.provider_response?.data?.failMsg}
+                          </p>
+                        ) : (
+                          <>
                             <p className="text-sm text-foreground/80">
-                              {previewGeneration.provider_response?.data?.failMsg || 
-                               previewGeneration.provider_response?.error || 
-                               "We couldn't complete your generation. This could be due to:"}
+                              We couldn't complete your generation. This could be due to:
                             </p>
-                            {!previewGeneration.provider_response?.data?.failMsg && !previewGeneration.provider_response?.error && (
-                              <div className="text-sm text-foreground/70 space-y-2 pl-4 border-l-2 border-red-500/30">
-                                <p><strong>a.</strong> The upstream API service timed out and no results were returned. Please try again.</p>
-                                <p><strong>b.</strong> The model does not support your request. Try changing the model or parameters.</p>
-                              </div>
-                            )}
-                            <p className="text-xs text-green-600 dark:text-green-400 font-medium mt-3">
-                              ✓ Any credits deducted ({Number(previewGeneration.tokens_used).toFixed(2)}) will be refunded.
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Visit <span className="font-medium">My Creations</span> logs for more information.
-                            </p>
-                          </div>
-                        </div>
+                            <div className="text-sm text-foreground/70 space-y-2 pl-4 border-l-2 border-red-500/30">
+                              <p><strong>a.</strong> The upstream API service timed out and no results were returned. Please try again.</p>
+                              <p><strong>b.</strong> The model does not support your request. Try changing the model or parameters.</p>
+                            </div>
+                          </>
+                        )}
+                        <p className="text-xs text-green-600 dark:text-green-400 font-medium mt-3">
+                          ✓ Any credits deducted ({Number(previewGeneration.tokens_used).toFixed(2)}) will be refunded.
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Visit <span className="font-medium">My Creations</span> logs for more information.
+                        </p>
                       </div>
                     </div>
-                  );
-                }
-                
-                if ((previewGeneration.storage_path || previewGeneration.output_url) && previewGeneration.status === "completed") {
-                  return (
+                  </div>
+                </div>
+              ) : (previewGeneration.storage_path || previewGeneration.output_url) && previewGeneration.status === "completed" ? (
                 <div className="aspect-video relative overflow-hidden bg-muted rounded-lg">
                   {previewGeneration.type === "video" ? (
                     previewGeneration.is_video_job && previewGeneration.output_url ? (
@@ -1029,11 +1019,7 @@ const History = () => {
                     </div>
                   )}
                 </div>
-                  );
-                }
-                
-                return null;
-              })()}
+              ) : null}
 
               {!previewGeneration.workflow_execution_id && (
                 <div className="space-y-2">

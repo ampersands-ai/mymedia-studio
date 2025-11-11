@@ -14,6 +14,7 @@ import { HeroSection } from "@/components/homepage/HeroSection";
 import { TemplateCarousel } from "@/components/homepage/TemplateCarousel";
 import { WorkflowSteps } from "@/components/homepage/WorkflowSteps";
 import { GlobalHeader } from "@/components/GlobalHeader";
+import { PartnerLogosCarousel } from "@/components/homepage/PartnerLogosCarousel";
 
 // Lazy load heavy components
 const FeatureShowcase = lazy(() => import("@/components/homepage/FeatureShowcase").then(m => ({ default: m.FeatureShowcase })));
@@ -43,6 +44,11 @@ const IndexV2 = () => {
 
       {/* Hero Section - New Design */}
       <HeroSection />
+
+      {/* Partner Logos Carousel */}
+      <section className="container mx-auto px-4 py-16">
+        <PartnerLogosCarousel />
+      </section>
 
       {/* Section 2: Social Proof Bar */}
       <section className="border-y-4 border-black bg-neutral-50 dark:bg-neutral-900 py-12">

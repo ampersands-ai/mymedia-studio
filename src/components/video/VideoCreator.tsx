@@ -11,8 +11,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useUserTokens } from '@/hooks/useUserTokens';
+import { useSavedCaptionPresets } from '@/hooks/useSavedCaptionPresets';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Coins, Sparkles, Volume2, Clock, ChevronDown, Minus, Plus } from 'lucide-react';
+import { Loader2, Coins, Sparkles, Volume2, Clock, ChevronDown, Minus, Plus, Save, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { VoiceSelector } from '../generation/VoiceSelector';
 import { BackgroundMediaSelector } from './BackgroundMediaSelector';
@@ -35,8 +36,11 @@ export function VideoCreator() {
   const [backgroundVideoUrl, setBackgroundVideoUrl] = useState<string>('');
   const [backgroundThumbnail, setBackgroundThumbnail] = useState<string>('');
   const [backgroundMediaType, setBackgroundMediaType] = useState<'video' | 'image'>('video');
+  const [savePresetDialogOpen, setSavePresetDialogOpen] = useState(false);
+  const [presetName, setPresetName] = useState('');
   const { createJob, isCreating, jobs } = useVideoJobs();
   const { data: tokens } = useUserTokens();
+  const { presets, savePreset, deletePreset } = useSavedCaptionPresets();
 
   // Calculate dynamic cost based on duration (0.5 credits per second)
   const estimatedCost = duration * 0.5;
@@ -282,6 +286,97 @@ export function VideoCreator() {
               </span>
             </div>
           </div>
+          
+          {/* Saved Presets Section */}
+          {presets && presets.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">Your Saved Presets</Label>
+              <div className="grid gap-2">
+                {presets.map((preset) => (
+                  <div key={preset.id} className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 justify-start h-9"
+                      onClick={() => {
+                        setCustomCaptionStyle(preset.settings as unknown as CaptionStyle);
+                        toast.success(`Loaded "${preset.name}"`);
+                      }}
+                      disabled={isDisabled}
+                    >
+                      {preset.name}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 flex-shrink-0"
+                      onClick={() => deletePreset.mutate(preset.id)}
+                      disabled={isDisabled}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Save Current Settings Button */}
+          <Dialog open={savePresetDialogOpen} onOpenChange={setSavePresetDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full h-9"
+                disabled={isDisabled || (presets && presets.length >= 3)}
+              >
+                <Save className="mr-2 h-4 w-4" />
+                Save Current Settings {presets && `(${presets.length}/3)`}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Save Caption Preset</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="preset-name">Preset Name</Label>
+                  <Input
+                    id="preset-name"
+                    placeholder="e.g., My Bold Style"
+                    value={presetName}
+                    onChange={(e) => setPresetName(e.target.value)}
+                    maxLength={30}
+                  />
+                </div>
+                <Button
+                  onClick={() => {
+                    if (!presetName.trim()) {
+                      toast.error('Please enter a preset name');
+                      return;
+                    }
+                    savePreset.mutate({
+                      name: presetName.trim(),
+                      settings: customCaptionStyle,
+                    });
+                    setPresetName('');
+                    setSavePresetDialogOpen(false);
+                  }}
+                  disabled={!presetName.trim() || savePreset.isPending}
+                  className="w-full"
+                >
+                  {savePreset.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Preset'
+                  )}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
           
           <CollapsibleContent className="space-y-3 pt-2">
             {/* Preset selector */}

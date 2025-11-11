@@ -31,7 +31,7 @@ export function VideoCreator() {
   const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16' | '4:5' | '1:1'>('4:5');
   const [captionStyle, setCaptionStyle] = useState<string>('modern');
   const [customCaptionStyle, setCustomCaptionStyle] = useState<CaptionStyle>(captionPresets.modern);
-  const [captionCustomizationOpen, setCaptionCustomizationOpen] = useState(true);
+  const [captionCustomizationOpen, setCaptionCustomizationOpen] = useState(false);
   const [textEffect, setTextEffect] = useState<string>('none');
   const [selectedBackgroundMedia, setSelectedBackgroundMedia] = useState<SelectedMedia[]>([]);
   const [savePresetDialogOpen, setSavePresetDialogOpen] = useState(false);

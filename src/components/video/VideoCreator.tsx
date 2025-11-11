@@ -250,6 +250,40 @@ export function VideoCreator() {
           </CollapsibleTrigger>
           
           <CollapsibleContent className="space-y-3 pt-2">
+            {/* Preview Box - Moved to Top */}
+            <div 
+              className="p-4 rounded-lg border-2 border-dashed relative"
+              style={{ minHeight: '100px' }}
+            >
+              <div className="text-xs text-muted-foreground mb-2">Caption Preview</div>
+              <div 
+                className="inline-block px-3 py-2 rounded"
+                style={{
+                  backgroundColor: customCaptionStyle.backgroundColor,
+                  opacity: customCaptionStyle.backgroundOpacity ?? 0.95,
+                  padding: `${customCaptionStyle.backgroundPadding ?? 15}px`,
+                  borderRadius: `${customCaptionStyle.backgroundBorderRadius ?? 8}px`
+                }}
+              >
+                <span 
+                  style={{
+                    color: customCaptionStyle.textColor,
+                    fontSize: `${Math.min(customCaptionStyle.fontSize / 2, 24)}px`,
+                    fontWeight: customCaptionStyle.fontWeight,
+                    lineHeight: customCaptionStyle.lineHeight ?? 1.3,
+                    WebkitTextStroke: customCaptionStyle.strokeWidth 
+                      ? `${customCaptionStyle.strokeWidth}px ${customCaptionStyle.strokeColor ?? '#000000'}`
+                      : undefined,
+                    textShadow: customCaptionStyle.shadowBlur
+                      ? `${customCaptionStyle.shadowOffsetX ?? 0}px ${customCaptionStyle.shadowOffsetY ?? 0}px ${customCaptionStyle.shadowBlur}px ${customCaptionStyle.shadowColor ?? '#000000'}`
+                      : undefined
+                  }}
+                >
+                  Sample Caption Text
+                </span>
+              </div>
+            </div>
+
             {/* Preset selector */}
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Start with a Preset</Label>
@@ -308,20 +342,20 @@ export function VideoCreator() {
               </p>
             </div>
 
-            {/* 2-Column Grid Layout */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* 3-Column Grid Layout */}
+            <div className="grid grid-cols-3 gap-2">
               {/* Text Color Picker */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label className="text-xs">Text Color</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button 
                       variant="outline" 
-                      className="w-full justify-start gap-2 h-9 px-2"
+                      className="w-full justify-start gap-1.5 h-9 px-2"
                       disabled={isDisabled}
                     >
                       <div 
-                        className="w-5 h-5 rounded border-2 flex-shrink-0" 
+                        className="w-4 h-4 rounded border flex-shrink-0" 
                         style={{ backgroundColor: customCaptionStyle.textColor }}
                       />
                       <span className="text-xs truncate">{customCaptionStyle.textColor}</span>
@@ -342,17 +376,17 @@ export function VideoCreator() {
               </div>
 
               {/* Background Color Picker */}
-              <div className="space-y-2">
-                <Label className="text-xs">Background Color</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs">BG Color</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button 
                       variant="outline" 
-                      className="w-full justify-start gap-2 h-9 px-2"
+                      className="w-full justify-start gap-1.5 h-9 px-2"
                       disabled={isDisabled}
                     >
                       <div 
-                        className="w-5 h-5 rounded border-2 flex-shrink-0" 
+                        className="w-4 h-4 rounded border flex-shrink-0" 
                         style={{ backgroundColor: customCaptionStyle.backgroundColor }}
                       />
                       <span className="text-xs truncate">{customCaptionStyle.backgroundColor}</span>
@@ -373,9 +407,9 @@ export function VideoCreator() {
               </div>
 
               {/* Font Size */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label className="text-xs">Font Size</Label>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   <Button
                     variant="outline"
                     size="icon"
@@ -386,9 +420,9 @@ export function VideoCreator() {
                     })}
                     disabled={isDisabled || customCaptionStyle.fontSize <= 30}
                   >
-                    <Minus className="h-3.5 w-3.5" />
+                    <Minus className="h-3 w-3" />
                   </Button>
-                  <div className="flex-1 text-center font-medium text-sm">
+                  <div className="flex-1 text-center font-medium text-xs">
                     {customCaptionStyle.fontSize}px
                   </div>
                   <Button
@@ -401,15 +435,15 @@ export function VideoCreator() {
                     })}
                     disabled={isDisabled || customCaptionStyle.fontSize >= 80}
                   >
-                    <Plus className="h-3.5 w-3.5" />
+                    <Plus className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
 
               {/* Line Height */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label className="text-xs">Line Height</Label>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   <Button
                     variant="outline"
                     size="icon"
@@ -420,9 +454,9 @@ export function VideoCreator() {
                     })}
                     disabled={isDisabled || (customCaptionStyle.lineHeight ?? 1.3) <= 1.0}
                   >
-                    <Minus className="h-3.5 w-3.5" />
+                    <Minus className="h-3 w-3" />
                   </Button>
-                  <div className="flex-1 text-center font-medium text-sm">
+                  <div className="flex-1 text-center font-medium text-xs">
                     {(customCaptionStyle.lineHeight ?? 1.3).toFixed(1)}
                   </div>
                   <Button
@@ -435,15 +469,15 @@ export function VideoCreator() {
                     })}
                     disabled={isDisabled || (customCaptionStyle.lineHeight ?? 1.3) >= 2.0}
                   >
-                    <Plus className="h-3.5 w-3.5" />
+                    <Plus className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
 
               {/* Background Opacity */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label className="text-xs">BG Opacity</Label>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   <Button
                     variant="outline"
                     size="icon"
@@ -454,9 +488,9 @@ export function VideoCreator() {
                     })}
                     disabled={isDisabled || (customCaptionStyle.backgroundOpacity ?? 0.95) <= 0}
                   >
-                    <Minus className="h-3.5 w-3.5" />
+                    <Minus className="h-3 w-3" />
                   </Button>
-                  <div className="flex-1 text-center font-medium text-sm">
+                  <div className="flex-1 text-center font-medium text-xs">
                     {((customCaptionStyle.backgroundOpacity ?? 0.95) * 100).toFixed(0)}%
                   </div>
                   <Button
@@ -469,15 +503,15 @@ export function VideoCreator() {
                     })}
                     disabled={isDisabled || (customCaptionStyle.backgroundOpacity ?? 0.95) >= 1}
                   >
-                    <Plus className="h-3.5 w-3.5" />
+                    <Plus className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
 
               {/* Background Padding */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label className="text-xs">BG Padding</Label>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   <Button
                     variant="outline"
                     size="icon"
@@ -488,9 +522,9 @@ export function VideoCreator() {
                     })}
                     disabled={isDisabled || (customCaptionStyle.backgroundPadding ?? 15) <= 0}
                   >
-                    <Minus className="h-3.5 w-3.5" />
+                    <Minus className="h-3 w-3" />
                   </Button>
-                  <div className="flex-1 text-center font-medium text-sm">
+                  <div className="flex-1 text-center font-medium text-xs">
                     {customCaptionStyle.backgroundPadding ?? 15}px
                   </div>
                   <Button
@@ -503,15 +537,15 @@ export function VideoCreator() {
                     })}
                     disabled={isDisabled || (customCaptionStyle.backgroundPadding ?? 15) >= 30}
                   >
-                    <Plus className="h-3.5 w-3.5" />
+                    <Plus className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
 
               {/* Border Radius */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label className="text-xs">Border Radius</Label>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   <Button
                     variant="outline"
                     size="icon"
@@ -522,9 +556,9 @@ export function VideoCreator() {
                     })}
                     disabled={isDisabled || (customCaptionStyle.backgroundBorderRadius ?? 8) <= 0}
                   >
-                    <Minus className="h-3.5 w-3.5" />
+                    <Minus className="h-3 w-3" />
                   </Button>
-                  <div className="flex-1 text-center font-medium text-sm">
+                  <div className="flex-1 text-center font-medium text-xs">
                     {customCaptionStyle.backgroundBorderRadius ?? 8}px
                   </div>
                   <Button
@@ -537,15 +571,15 @@ export function VideoCreator() {
                     })}
                     disabled={isDisabled || (customCaptionStyle.backgroundBorderRadius ?? 8) >= 20}
                   >
-                    <Plus className="h-3.5 w-3.5" />
+                    <Plus className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
 
               {/* Text Outline Width */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label className="text-xs">Outline Width</Label>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   <Button
                     variant="outline"
                     size="icon"
@@ -556,9 +590,9 @@ export function VideoCreator() {
                     })}
                     disabled={isDisabled || (customCaptionStyle.strokeWidth ?? 0) <= 0}
                   >
-                    <Minus className="h-3.5 w-3.5" />
+                    <Minus className="h-3 w-3" />
                   </Button>
-                  <div className="flex-1 text-center font-medium text-sm">
+                  <div className="flex-1 text-center font-medium text-xs">
                     {customCaptionStyle.strokeWidth ?? 0}px
                   </div>
                   <Button
@@ -571,13 +605,13 @@ export function VideoCreator() {
                     })}
                     disabled={isDisabled || (customCaptionStyle.strokeWidth ?? 0) >= 8}
                   >
-                    <Plus className="h-3.5 w-3.5" />
+                    <Plus className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
 
               {/* Horizontal Alignment */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label className="text-xs">H-Align</Label>
                 <Select 
                   value={customCaptionStyle.horizontalAlignment ?? 'center'} 
@@ -601,7 +635,7 @@ export function VideoCreator() {
               </div>
 
               {/* Vertical Alignment */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label className="text-xs">V-Align</Label>
                 <Select 
                   value={customCaptionStyle.verticalAlignment ?? 'center'} 
@@ -625,7 +659,7 @@ export function VideoCreator() {
               </div>
 
               {/* Font Family */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label className="text-xs">Font Family</Label>
                 <Select 
                   value={customCaptionStyle.fontFamily} 
@@ -665,7 +699,7 @@ export function VideoCreator() {
               </div>
 
               {/* Font Weight */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label className="text-xs">Font Weight</Label>
                 <Select 
                   value={customCaptionStyle.fontWeight} 

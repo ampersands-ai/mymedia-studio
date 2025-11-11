@@ -405,7 +405,7 @@ export const OutputLightbox = ({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent 
-          className="max-w-[95vw] sm:max-w-3xl lg:max-w-5xl h-[95vh] p-4 sm:p-6 lg:p-8 flex flex-col backdrop-blur-sm shadow-2xl animate-slide-up"
+          className="max-w-[95vw] sm:max-w-3xl lg:max-w-4xl max-h-[90vh] p-4 sm:p-6 flex flex-col backdrop-blur-sm shadow-2xl animate-slide-up"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
@@ -428,7 +428,7 @@ export const OutputLightbox = ({
         </DialogHeader>
 
           {/* Image Preview - Centered, viewport-relative size */}
-          <div className="flex items-center justify-center rounded-xl my-3 overflow-hidden flex-shrink-0 h-[55vh] sm:h-[60vh] lg:h-[68vh] relative">
+          <div className="flex items-center justify-center rounded-xl my-3 overflow-hidden flex-shrink-0 h-[40vh] sm:h-[45vh] lg:h-[50vh] bg-muted/20 relative">
             {hasAnyEdits ? (
               <img 
                 key={`edited-${currentIndex}-${getCurrentEntry()?.id}`}
@@ -460,7 +460,7 @@ export const OutputLightbox = ({
               <Button
                 variant="outline"
                 size="default"
-                className="h-12"
+                className="h-10"
                 onClick={() => handleNavigate('prev')}
                 disabled={selectedIndex === 0}
                 aria-label="Previous image"
@@ -471,7 +471,7 @@ export const OutputLightbox = ({
               <Button
                 variant="outline"
                 size="default"
-                className="h-12"
+                className="h-10"
                 onClick={() => handleNavigate('next')}
                 disabled={selectedIndex === outputs.length - 1}
                 aria-label="Next image"
@@ -490,18 +490,18 @@ export const OutputLightbox = ({
                 <Button
                   onClick={() => setShowHistoryPanel(!showHistoryPanel)}
                   variant="secondary"
-                  className="h-12 lg:h-14"
+                  className="h-10 lg:h-11"
                 >
-                  <Clock className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
-                  <span className="text-sm lg:text-base">History ({history.length})</span>
+                  <Clock className="h-4 w-4 mr-2" />
+                  <span className="text-sm">History ({history.length})</span>
                 </Button>
                 <Button
                   onClick={() => setShowTemplateModal(true)}
                   variant="secondary"
-                  className="h-12 lg:h-14"
+                  className="h-10 lg:h-11"
                 >
-                  <Layout className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
-                  <span className="text-sm lg:text-base">Templates</span>
+                  <Layout className="h-4 w-4 mr-2" />
+                  <span className="text-sm">Templates</span>
                 </Button>
               </div>
             )}
@@ -524,10 +524,10 @@ export const OutputLightbox = ({
               {/* Download - Full Width Primary CTA */}
               <Button
                 onClick={handleDownload}
-                className="w-full h-14 lg:h-16 bg-yellow-400 hover:bg-yellow-500 text-black font-bold text-base lg:text-lg shadow-lg hover:shadow-xl transition-all"
+                className="w-full h-11 lg:h-12 bg-yellow-400 hover:bg-yellow-500 text-black font-bold text-sm lg:text-base shadow-lg hover:shadow-xl transition-all"
                 aria-label="Download image"
               >
-                <Download className="h-5 w-5 lg:h-6 lg:w-6 mr-2" />
+                <Download className="h-4 w-4 mr-2" />
                 {hasAnyEdits ? "Download Edited" : "Download"}
               </Button>
               
@@ -539,86 +539,86 @@ export const OutputLightbox = ({
                     <Button
                       onClick={() => setDisplayMode(displayMode === 'fit' ? 'fill' : 'fit')}
                       variant="outline"
-                      className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all px-6"
+                      className="h-10 border-2 hover:-translate-y-0.5 transition-all px-6"
                       aria-label={displayMode === 'fit' ? 'Switch to Fill mode' : 'Switch to Fit mode'}
                     >
                       {displayMode === 'fit' ? (
                         <>
-                          <Maximize2 className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
-                          <span className="text-sm lg:text-base">Fill</span>
+                          <Maximize2 className="h-4 w-4 mr-2" />
+                          <span className="text-sm">Fill</span>
                         </>
                       ) : (
                         <>
-                          <Minimize2 className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
-                          <span className="text-sm lg:text-base">Fit</span>
+                          <Minimize2 className="h-4 w-4 mr-2" />
+                          <span className="text-sm">Fit</span>
                         </>
                       )}
                     </Button>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:gap-3">
                     <Button
                       onClick={handleCrop}
                       variant="outline"
-                      className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all"
+                      className="h-10 border-2 hover:-translate-y-0.5 transition-all"
                       aria-label="Crop image"
                     >
-                      <Scissors className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
-                      <span className="text-sm lg:text-base">Crop</span>
+                      <Scissors className="h-4 w-4 mr-1.5" />
+                      <span className="text-sm">Crop</span>
                     </Button>
 
                     <Button
                       onClick={handleFilter}
                       variant="outline"
-                      className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all"
+                      className="h-10 border-2 hover:-translate-y-0.5 transition-all"
                       aria-label="Apply filters"
                     >
-                      <Wand2 className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
-                      <span className="text-sm lg:text-base">Filters</span>
+                      <Wand2 className="h-4 w-4 mr-1.5" />
+                      <span className="text-sm">Filters</span>
                     </Button>
 
                     <Button
                       onClick={handleEffects}
                       variant="outline"
-                      className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all"
+                      className="h-10 border-2 hover:-translate-y-0.5 transition-all"
                       aria-label="Apply effects"
                     >
-                      <Sparkles className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
-                      <span className="text-sm lg:text-base">Effects</span>
+                      <Sparkles className="h-4 w-4 mr-1.5" />
+                      <span className="text-sm">Effects</span>
                     </Button>
 
                     <Button
                       onClick={handleTextOverlay}
                       variant="outline"
-                      className="h-12 lg:h-14 border-2 hover:-translate-y-0.5 transition-all"
+                      className="h-10 border-2 hover:-translate-y-0.5 transition-all"
                       aria-label="Add text"
                     >
-                      <Type className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
-                      <span className="text-sm lg:text-base">Text</span>
+                      <Type className="h-4 w-4 mr-1.5" />
+                      <span className="text-sm">Text</span>
                     </Button>
                   </div>
                 </>
               )}
               
               {/* Action Row - Share and Save */}
-              <div className="flex gap-3 lg:gap-4">
+              <div className="flex gap-2 lg:gap-3">
                 <Button
                   onClick={handleShare}
                   variant="ghost"
-                  className="flex-1 h-12 lg:h-14 hover:bg-secondary-50 dark:hover:bg-secondary-900/20"
+                  className="flex-1 h-10 hover:bg-secondary-50 dark:hover:bg-secondary-900/20"
                   aria-label="Share image"
                 >
-                  <Share2 className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
-                  <span className="text-sm lg:text-base">Share</span>
+                  <Share2 className="h-4 w-4 mr-2" />
+                  <span className="text-sm">Share</span>
                 </Button>
                 
                 <Button
                   onClick={handleSave}
                   variant="ghost"
-                  className="w-14 lg:w-16 h-12 lg:h-14 hover:bg-secondary-50 dark:hover:bg-secondary-900/20"
+                  className="w-12 h-10 hover:bg-secondary-50 dark:hover:bg-secondary-900/20"
                   aria-label={isSaved ? "Remove from favorites" : "Save to favorites"}
                 >
-                  <Heart className={`h-5 w-5 lg:h-6 lg:w-6 ${isSaved ? 'fill-current text-red-500' : ''}`} />
+                  <Heart className={`h-5 w-5 ${isSaved ? 'fill-current text-red-500' : ''}`} />
                 </Button>
               </div>
             </div>

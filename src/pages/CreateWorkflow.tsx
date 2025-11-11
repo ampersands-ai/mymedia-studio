@@ -81,6 +81,7 @@ const CreateWorkflow = () => {
   const handleExecute = async (formattedInputs: Record<string, any>) => {
     if (!workflow) return;
 
+    console.log('[CreateWorkflow] Starting workflow execution...');
     setResult(null);
     setGenerationCompleteTime(null);
     setExecutionId(null);
@@ -91,15 +92,20 @@ const CreateWorkflow = () => {
       user_inputs: formattedInputs,
     });
 
+    console.log('[CreateWorkflow] Workflow result:', result);
+
     if (result?.execution_id) {
       setExecutionId(result.execution_id);
+      console.log('[CreateWorkflow] Execution ID set:', result.execution_id);
     }
 
     if (result?.final_output_url) {
+      console.log('[CreateWorkflow] Setting result with URL:', result.final_output_url);
       setGenerationCompleteTime(Date.now());
       setResult({ url: result.final_output_url, tokens: result.tokens_used });
       toast.success('Workflow completed!');
     } else {
+      console.error('[CreateWorkflow] No final_output_url in result:', result);
       generationStartTimeRef.current = null;
       toast.error('Workflow failed');
     }
@@ -285,51 +291,37 @@ const CreateWorkflow = () => {
                   )}
 
                   {isExecuting && (
-                    <div className="space-y-4">
-                      <Card className="border border-gray-200 shadow-sm bg-muted/50 rounded-xl">
-                        <CardContent className="p-4 space-y-4">
-                          <div className="flex items-start gap-2">
-                            <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                            <p className="text-xs text-muted-foreground">
-                              Feel free to navigate away - your generation will be saved in History
-                            </p>
-                          </div>
-
-                          {generationStartTimeRef.current && (
-                            <GenerationProgress
-                              startTime={generationStartTimeRef.current}
-                              isComplete={!!result}
-                              completedAt={generationCompleteTime || undefined}
-                              estimatedTimeSeconds={workflow?.estimated_time_seconds}
-                            />
-                          )}
-
-                          {executionId && !result && (
-                            <button
-                              onClick={handleCancelExecution}
-                              className="w-full px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors font-medium"
-                            >
-                              Cancel Workflow
-                            </button>
-                          )}
-                        </CardContent>
-                      </Card>
-
-                      {result && (
-                        <div className="space-y-6 max-w-4xl mx-auto animate-fade-in">
-                          <div className="rounded-lg border border-border overflow-hidden shadow-sm">
-                            <GenerationPreview
-                              storagePath={result.url}
-                              contentType="image"
-                              className="w-full h-auto"
-                            />
-                          </div>
+                    <Card className="border border-gray-200 shadow-sm bg-muted/50 rounded-xl">
+                      <CardContent className="p-4 space-y-4">
+                        <div className="flex items-start gap-2">
+                          <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                          <p className="text-xs text-muted-foreground">
+                            Feel free to navigate away - your generation will be saved in History
+                          </p>
                         </div>
-                      )}
-                    </div>
+
+                        {generationStartTimeRef.current && (
+                          <GenerationProgress
+                            startTime={generationStartTimeRef.current}
+                            isComplete={!!result}
+                            completedAt={generationCompleteTime || undefined}
+                            estimatedTimeSeconds={workflow?.estimated_time_seconds}
+                          />
+                        )}
+
+                        {executionId && !result && (
+                          <button
+                            onClick={handleCancelExecution}
+                            className="w-full px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors font-medium"
+                          >
+                            Cancel Workflow
+                          </button>
+                        )}
+                      </CardContent>
+                    </Card>
                   )}
 
-                  {!isExecuting && result && (
+                  {result && (
                     <div className="space-y-6 max-w-4xl mx-auto">
                       <div className="rounded-lg border border-border overflow-hidden shadow-sm">
                         <GenerationPreview

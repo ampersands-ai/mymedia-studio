@@ -84,15 +84,16 @@ export const GenerationDialog = ({
               </div>
               
               {/* Token Cost Preview */}
-              {selectedTemplate?.ai_models?.base_token_cost && (() => {
+              {(() => {
+                const baseCost = selectedTemplate?.ai_models?.base_token_cost || 0;
                 // Track viewed token cost on render
-                if (onboardingProgress && !onboardingProgress.checklist.viewedTokenCost && updateOnboardingProgress) {
+                if (onboardingProgress && !onboardingProgress.checklist.viewedTokenCost && updateOnboardingProgress && baseCost > 0) {
                   setTimeout(() => updateOnboardingProgress({ viewedTokenCost: true }), 1000);
                 }
                 return (
                   <TokenCostPreview
-                    baseCost={selectedTemplate.ai_models.base_token_cost}
-                    totalCost={selectedTemplate.ai_models.base_token_cost}
+                    baseCost={baseCost}
+                    totalCost={baseCost}
                     userTokens={userTokens}
                   />
                 );

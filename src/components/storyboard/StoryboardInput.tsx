@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { useStoryboardForm } from '@/hooks/storyboard/useStoryboardForm';
-import { Film, Loader2 } from 'lucide-react';
+import { Film, Loader2, Sparkles, Edit3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { TopicSection } from './sections/TopicSection';
 import { DurationSection } from './sections/DurationSection';
@@ -12,8 +14,10 @@ import { StyleSelector } from './sections/StyleSelector';
 import { ToneSelector } from './sections/ToneSelector';
 import { MediaTypeSelector } from './sections/MediaTypeSelector';
 import { CostDisplay } from './sections/CostDisplay';
+import { CustomStoryboardInput } from './CustomStoryboardInput';
 
 export function StoryboardInput() {
+  const [mode, setMode] = useState<'ai' | 'custom'>('ai');
   const { formState, updateField, estimatedRenderCost, canGenerate } = useStoryboardForm();
   const { generateStoryboard, isGenerating } = useStoryboard();
   const { data: tokenData } = useUserTokens();
@@ -75,84 +79,103 @@ export function StoryboardInput() {
   };
 
   return (
-    <Card className="relative overflow-hidden bg-card border-2">
-      <CardHeader className="space-y-2">
-        <CardTitle className="text-xl font-black flex items-center gap-2">
-          <Film className="w-5 h-5" />
-          CREATE STORYBOARD
-        </CardTitle>
-        <CardDescription className="text-sm">
-          Generate AI-powered video scripts with full editing control. Credits are charged when you render the video.
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        <TopicSection
-          topic={formState.topic}
-          onTopicChange={(topic) => updateField('topic', topic)}
-          disabled={isGenerating}
-        />
+    <Tabs value={mode} onValueChange={(v) => setMode(v as 'ai' | 'custom')} className="w-full">
+      <TabsList className="grid w-full grid-cols-2 mb-4">
+        <TabsTrigger value="ai" className="gap-2">
+          <Sparkles className="w-4 h-4" />
+          AI Generated
+        </TabsTrigger>
+        <TabsTrigger value="custom" className="gap-2">
+          <Edit3 className="w-4 h-4" />
+          Custom
+        </TabsTrigger>
+      </TabsList>
 
-        <DurationSection
-          duration={formState.duration}
-          onDurationChange={(duration) => updateField('duration', duration)}
-          disabled={isGenerating}
-        />
+      <TabsContent value="ai" className="mt-0">
+        <Card className="relative overflow-hidden bg-card border-2">
+          <CardHeader className="space-y-2">
+            <CardTitle className="text-xl font-black flex items-center gap-2">
+              <Sparkles className="w-5 h-5" />
+              AI GENERATED STORYBOARD
+            </CardTitle>
+            <CardDescription className="text-sm">
+              Generate AI-powered video scripts with full editing control. Credits are charged when you render the video.
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="space-y-4">
+            <TopicSection
+              topic={formState.topic}
+              onTopicChange={(topic) => updateField('topic', topic)}
+              disabled={isGenerating}
+            />
 
-        <ResolutionSelector
-          aspectRatio={formState.aspectRatio}
-          onAspectRatioChange={(ratio) => updateField('aspectRatio', ratio)}
-          disabled={isGenerating}
-        />
+            <DurationSection
+              duration={formState.duration}
+              onDurationChange={(duration) => updateField('duration', duration)}
+              disabled={isGenerating}
+            />
 
-        <StyleSelector
-          style={formState.style}
-          onStyleChange={(style) => updateField('style', style)}
-          disabled={isGenerating}
-        />
+            <ResolutionSelector
+              aspectRatio={formState.aspectRatio}
+              onAspectRatioChange={(ratio) => updateField('aspectRatio', ratio)}
+              disabled={isGenerating}
+            />
 
-        <ToneSelector
-          tone={formState.tone}
-          onToneChange={(tone) => updateField('tone', tone)}
-          disabled={isGenerating}
-        />
+            <StyleSelector
+              style={formState.style}
+              onStyleChange={(style) => updateField('style', style)}
+              disabled={isGenerating}
+            />
 
-        <MediaTypeSelector
-          mediaType={formState.mediaType}
-          onMediaTypeChange={(type) => updateField('mediaType', type)}
-          disabled={isGenerating}
-        />
+            <ToneSelector
+              tone={formState.tone}
+              onToneChange={(tone) => updateField('tone', tone)}
+              disabled={isGenerating}
+            />
 
-        <CostDisplay
-          duration={formState.duration}
-          estimatedCost={estimatedRenderCost}
-          tokensRemaining={Number(tokenData?.tokens_remaining || 0)}
-        />
+            <MediaTypeSelector
+              mediaType={formState.mediaType}
+              onMediaTypeChange={(type) => updateField('mediaType', type)}
+              disabled={isGenerating}
+            />
 
-        <Button
-          onClick={handleGenerate}
-          disabled={!canGenerate || isGenerating}
-          className="w-full"
-        >
-          {isGenerating ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            <>
-              Generate Storyboard
-              <Film className="w-4 h-4 ml-2" />
-            </>
-          )}
-        </Button>
+            <CostDisplay
+              duration={formState.duration}
+              estimatedCost={estimatedRenderCost}
+              tokensRemaining={Number(tokenData?.tokens_remaining || 0)}
+            />
 
-        {isGenerating && (
-          <p className="text-sm text-center text-muted-foreground">
-            ✨ AI is crafting your video script...
-          </p>
-        )}
-      </CardContent>
-    </Card>
+            <Button
+              onClick={handleGenerate}
+              disabled={!canGenerate || isGenerating}
+              className="w-full"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  Generate Storyboard
+                  <Film className="w-4 h-4 ml-2" />
+                </>
+              )}
+            </Button>
+
+            {isGenerating && (
+              <p className="text-sm text-center text-muted-foreground">
+                ✨ AI is crafting your video script...
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="custom" className="mt-0">
+        <CustomStoryboardInput />
+      </TabsContent>
+    </Tabs>
   );
 }

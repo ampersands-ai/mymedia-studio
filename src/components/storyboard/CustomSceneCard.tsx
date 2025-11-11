@@ -199,7 +199,7 @@ export function CustomSceneCard({
             onChange={(e) => onUpdate('imagePrompt', e.target.value)}
             placeholder="Describe the visual for this scene..."
             disabled={disabled}
-            className="min-h-[60px] resize-none"
+            className="min-h-[120px] resize-y"
           />
         </div>
 

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AIModel } from "@/hooks/useModels";
 import { CreationGroup } from "@/constants/creation-groups";
 import { Label } from "@/components/ui/label";
@@ -12,8 +12,11 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Coins, Image as ImageIcon, ChevronDown } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Coins, Image as ImageIcon, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ModelFamilySelectorProps {
   models: AIModel[];
@@ -30,6 +33,10 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
   selectedGroup,
   isLoading,
 }) => {
+  const isMobile = useIsMobile();
+  const [mobileDialogOpen, setMobileDialogOpen] = useState(false);
+  const [expandedFamilies, setExpandedFamilies] = useState<Record<string, boolean>>({});
+
   // Group models by family
   const modelsByFamily = useMemo(() => {
     const grouped: Record<string, AIModel[]> = {};
@@ -76,6 +83,18 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
     return firstModel?.logo_url;
   };
 
+  const handleModelSelect = (modelId: string) => {
+    onModelChange(modelId);
+    setMobileDialogOpen(false);
+  };
+
+  const toggleFamily = (family: string) => {
+    setExpandedFamilies(prev => ({
+      ...prev,
+      [family]: !prev[family]
+    }));
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4 animate-pulse">
@@ -89,6 +108,191 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
     );
   }
 
+  // Mobile View - Dialog with Collapsible families
+  if (isMobile) {
+    return (
+      <div className="space-y-2">
+        <Label>Model</Label>
+        <Button 
+          variant="outline" 
+          className="w-full justify-between"
+          onClick={() => setMobileDialogOpen(true)}
+        >
+          {currentModel ? (
+            <div className="flex items-center gap-3">
+              {currentModel.logo_url && (
+                <div className="h-8 w-8 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <img 
+                    src={currentModel.logo_url} 
+                    alt={currentModel.model_name} 
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+              )}
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <span className="font-medium truncate">{currentModel.model_name}</span>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
+                  <div className="flex items-center gap-0.5">
+                    <Coins className="w-3 h-3" />
+                    <span>{currentModel.base_token_cost}</span>
+                  </div>
+                  {currentModel.default_outputs && currentModel.default_outputs > 1 && (
+                    <div className="flex items-center gap-0.5">
+                      <ImageIcon className="w-3 h-3" />
+                      <span>×{currentModel.default_outputs}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <span className="text-muted-foreground">Select a model</span>
+          )}
+          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+
+        <Dialog open={mobileDialogOpen} onOpenChange={setMobileDialogOpen}>
+          <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Select Model</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2">
+              {Object.keys(modelsByFamily).sort((a, b) => {
+                const statsA = getFamilyStats(a);
+                const statsB = getFamilyStats(b);
+                if (!statsA || !statsB) return 0;
+                return statsA.cost - statsB.cost;
+              }).map((family) => {
+                const familyModels = modelsByFamily[family];
+                const isSingleModel = familyModels.length === 1;
+                const logo = getFamilyLogo(family);
+                const stats = getFamilyStats(family);
+                
+                if (isSingleModel) {
+                  const model = familyModels[0];
+                  return (
+                    <Button
+                      key={family}
+                      variant={selectedModel === model.record_id ? "secondary" : "outline"}
+                      className="w-full justify-start h-auto p-3"
+                      onClick={() => handleModelSelect(model.record_id)}
+                    >
+                      <div className="flex items-center gap-2 w-full min-w-0">
+                        {logo && (
+                          <div className="h-7 w-7 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                            <img 
+                              src={logo} 
+                              alt={model.model_name} 
+                              className="h-full w-full object-contain"
+                            />
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                          <span className="font-medium text-sm truncate">{model.model_name}</span>
+                          {stats && (
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
+                              <div className="flex items-center gap-0.5">
+                                <Coins className="w-3 h-3" />
+                                <span>{stats.cost}</span>
+                              </div>
+                              {stats.outputs && stats.outputs > 1 && (
+                                <div className="flex items-center gap-0.5">
+                                  <ImageIcon className="w-3 h-3" />
+                                  <span>×{stats.outputs}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Button>
+                  );
+                } else {
+                  return (
+                    <Collapsible
+                      key={family}
+                      open={expandedFamilies[family]}
+                      onOpenChange={() => toggleFamily(family)}
+                    >
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-between h-auto p-3"
+                        >
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            {logo && (
+                              <div className="h-7 w-7 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                <img 
+                                  src={logo} 
+                                  alt={family} 
+                                  className="h-full w-full object-contain"
+                                />
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                              <span className="font-medium text-sm truncate">{family}</span>
+                              {stats && (
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
+                                  <div className="flex items-center gap-0.5">
+                                    <Coins className="w-3 h-3" />
+                                    <span>{stats.cost}+</span>
+                                  </div>
+                                  {stats.outputs && stats.outputs > 1 && (
+                                    <div className="flex items-center gap-0.5">
+                                      <ImageIcon className="w-3 h-3" />
+                                      <span>×{stats.outputs}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <ChevronRight className={cn(
+                            "h-4 w-4 shrink-0 transition-transform",
+                            expandedFamilies[family] && "rotate-90"
+                          )} />
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="space-y-1 mt-1 pl-4">
+                        {familyModels.sort((a, b) => a.base_token_cost - b.base_token_cost).map((model) => (
+                          <Button
+                            key={model.record_id}
+                            variant={selectedModel === model.record_id ? "secondary" : "ghost"}
+                            className="w-full justify-start h-auto p-2"
+                            onClick={() => handleModelSelect(model.record_id)}
+                          >
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="font-medium text-sm truncate">
+                                {model.variant_name || model.model_name}
+                              </span>
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
+                                <div className="flex items-center gap-0.5">
+                                  <Coins className="w-3 h-3" />
+                                  <span>{model.base_token_cost}</span>
+                                </div>
+                                {model.default_outputs && model.default_outputs > 1 && (
+                                  <div className="flex items-center gap-0.5">
+                                    <ImageIcon className="w-3 h-3" />
+                                    <span>×{model.default_outputs}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </Button>
+                        ))}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  );
+                }
+              })}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // Desktop View - Keep existing dropdown
   return (
     <div className="space-y-2">
       <Label>Model</Label>

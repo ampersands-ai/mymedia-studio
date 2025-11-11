@@ -16,7 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Coins, Sparkles, Volume2, Clock, ChevronDown, Minus, Plus, Save, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { VoiceSelector } from '../generation/VoiceSelector';
-import { BackgroundMediaSelector } from './BackgroundMediaSelector';
+import { BackgroundMediaSelector, SelectedMedia } from './BackgroundMediaSelector';
 import { captionPresets, aspectRatioConfig, textEffectPresets } from '@/config/captionStyles';
 import { CaptionStyle } from '@/types/video';
 
@@ -33,9 +33,7 @@ export function VideoCreator() {
   const [customCaptionStyle, setCustomCaptionStyle] = useState<CaptionStyle>(captionPresets.modern);
   const [captionCustomizationOpen, setCaptionCustomizationOpen] = useState(true);
   const [textEffect, setTextEffect] = useState<string>('none');
-  const [backgroundVideoUrl, setBackgroundVideoUrl] = useState<string>('');
-  const [backgroundThumbnail, setBackgroundThumbnail] = useState<string>('');
-  const [backgroundMediaType, setBackgroundMediaType] = useState<'video' | 'image'>('video');
+  const [selectedBackgroundMedia, setSelectedBackgroundMedia] = useState<SelectedMedia[]>([]);
   const [savePresetDialogOpen, setSavePresetDialogOpen] = useState(false);
   const [presetName, setPresetName] = useState('');
   const { createJob, isCreating, jobs } = useVideoJobs();
@@ -83,9 +81,9 @@ export function VideoCreator() {
       voice_id: voiceId,
       voice_name: voiceName,
       aspect_ratio: aspectRatio,
-      background_video_url: backgroundVideoUrl || undefined,
-      background_video_thumbnail: backgroundThumbnail || undefined,
-      background_media_type: backgroundMediaType,
+      background_video_url: selectedBackgroundMedia[0]?.url || undefined,
+      background_video_thumbnail: selectedBackgroundMedia[0]?.thumbnail || undefined,
+      background_media_type: selectedBackgroundMedia[0]?.type || 'video',
       caption_style: customCaptionStyle,
     });
 
@@ -814,13 +812,8 @@ export function VideoCreator() {
           style={style}
           duration={duration}
           aspectRatio={aspectRatio}
-          selectedMediaUrl={backgroundVideoUrl}
-          selectedMediaType={backgroundMediaType}
-          onSelectMedia={(url, thumbnail, type) => {
-            setBackgroundVideoUrl(url);
-            setBackgroundThumbnail(thumbnail);
-            setBackgroundMediaType(type);
-          }}
+          selectedMedia={selectedBackgroundMedia}
+          onSelectMedia={setSelectedBackgroundMedia}
         />
 
         {hasActiveJob && (

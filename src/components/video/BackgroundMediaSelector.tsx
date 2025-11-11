@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Search, Loader2, Image, Video, RefreshCw } from 'lucide-react';
+import { Search, Loader2, Image, Video, RefreshCw, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -23,21 +23,26 @@ interface PixabayMedia {
   height: number;
 }
 
+export interface SelectedMedia {
+  url: string;
+  thumbnail: string;
+  type: 'video' | 'image';
+  duration?: number;
+}
+
 interface BackgroundMediaSelectorProps {
   style: string;
   duration: number;
   aspectRatio: string;
-  selectedMediaUrl: string;
-  selectedMediaType: 'video' | 'image';
-  onSelectMedia: (url: string, thumbnail: string, type: 'video' | 'image') => void;
+  selectedMedia: SelectedMedia[];
+  onSelectMedia: (mediaList: SelectedMedia[]) => void;
 }
 
 export function BackgroundMediaSelector({
   style,
   duration,
   aspectRatio,
-  selectedMediaUrl,
-  selectedMediaType,
+  selectedMedia,
   onSelectMedia,
 }: BackgroundMediaSelectorProps) {
   const [open, setOpen] = useState(false);
@@ -45,7 +50,6 @@ export function BackgroundMediaSelector({
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [mediaType, setMediaType] = useState<'video' | 'image'>('video');
-  const [selectedThumbnail, setSelectedThumbnail] = useState<string>('');
 
   useEffect(() => {
     if (open && mediaItems.length === 0) {
@@ -119,11 +123,37 @@ export function BackgroundMediaSelector({
     }
 
     if (mediaUrl) {
-      setSelectedThumbnail(thumbnail);
-      onSelectMedia(mediaUrl, thumbnail, media.type);
-      toast.success(`${media.type === 'video' ? 'Video' : 'Image'} selected`);
-      setOpen(false);
+      // Check if already selected
+      const isAlreadySelected = selectedMedia.some(item => item.url === mediaUrl);
+      
+      if (isAlreadySelected) {
+        // Remove from selection
+        const updatedMedia = selectedMedia.filter(item => item.url !== mediaUrl);
+        onSelectMedia(updatedMedia);
+        toast.success('Removed from selection');
+      } else {
+        // Add to selection
+        const newMedia: SelectedMedia = {
+          url: mediaUrl,
+          thumbnail,
+          type: media.type,
+          duration: media.duration
+        };
+        onSelectMedia([...selectedMedia, newMedia]);
+        toast.success(`${media.type === 'video' ? 'Video' : 'Image'} added (${selectedMedia.length + 1} total)`);
+      }
     }
+  };
+
+  const handleRemoveMedia = (url: string) => {
+    const updatedMedia = selectedMedia.filter(item => item.url !== url);
+    onSelectMedia(updatedMedia);
+    toast.success('Removed from selection');
+  };
+
+  const isMediaSelected = (media: PixabayMedia): boolean => {
+    const mediaUrl = media.type === 'video' ? media.videoURL : (media.fullHDURL || media.largeImageURL || media.imageURL);
+    return selectedMedia.some(item => item.url === mediaUrl);
   };
 
   const handleCustomSearch = () => {
@@ -144,23 +174,48 @@ export function BackgroundMediaSelector({
 
   return (
     <>
-      <Button
-        variant="outline"
-        onClick={() => setOpen(true)}
-        className="w-full justify-start"
-      >
-        {selectedMediaUrl ? (
-          <div className="flex items-center gap-2 w-full">
-            {selectedMediaType === 'video' ? <Video className="h-4 w-4" /> : <Image className="h-4 w-4" />}
-            <span className="truncate">Custom {selectedMediaType} selected</span>
-          </div>
-        ) : (
+      <div className="space-y-2">
+        <Button
+          variant="outline"
+          onClick={() => setOpen(true)}
+          className="w-full justify-start"
+        >
           <div className="flex items-center gap-2">
             <Video className="h-4 w-4" />
-            <span>Choose Background Media</span>
+            <span>Choose Background Media ({selectedMedia.length} selected)</span>
+          </div>
+        </Button>
+        
+        {/* Selected Media Preview */}
+        {selectedMedia.length > 0 && (
+          <div className="p-3 bg-accent/30 rounded-lg border space-y-2">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{selectedMedia.length} media file{selectedMedia.length > 1 ? 's' : ''} selected</span>
+              <span className="text-primary">Will play in sequence</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {selectedMedia.map((media, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={media.thumbnail}
+                    alt={`Selected ${media.type} ${index + 1}`}
+                    className="h-16 w-20 object-cover rounded border-2 border-primary/50"
+                  />
+                  <button
+                    onClick={() => handleRemoveMedia(media.url)}
+                    className="absolute -top-1 -right-1 h-5 w-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                  >
+                    ×
+                  </button>
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1 py-0.5 text-center">
+                    {index + 1}. {media.type}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
-      </Button>
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-4xl max-h-[80vh]">
@@ -214,28 +269,18 @@ export function BackgroundMediaSelector({
               </Button>
             </div>
 
-            {/* Current Selection Display */}
-            {selectedMediaUrl && (
-              <div className="p-3 bg-accent/50 rounded-lg border">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {selectedMediaType === 'video' ? (
-                      <Video className="h-4 w-4 text-primary" />
-                    ) : (
-                      <Image className="h-4 w-4 text-primary" />
-                    )}
-                    <span className="text-sm font-medium">
-                      Currently Selected {selectedMediaType === 'video' ? 'Video' : 'Image'}
-                    </span>
-                  </div>
-                  {selectedThumbnail && (
-                    <img
-                      src={selectedThumbnail}
-                      alt="Selected preview"
-                      className="h-12 w-20 object-cover rounded"
-                    />
-                  )}
+            {/* Selection Info */}
+            {selectedMedia.length > 0 && (
+              <div className="p-3 bg-primary/10 rounded-lg border border-primary/30">
+                <div className="flex items-center gap-2 text-sm">
+                  <Badge variant="default">{selectedMedia.length}</Badge>
+                  <span className="font-medium">
+                    media file{selectedMedia.length > 1 ? 's' : ''} selected - will play in sequence
+                  </span>
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Click items below to add or remove from your selection
+                </p>
               </div>
             )}
 
@@ -257,7 +302,7 @@ export function BackgroundMediaSelector({
                     <div
                       key={media.id}
                       className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all hover:border-primary ${
-                        selectedMediaUrl === (media.type === 'video' ? media.videoURL : (media.fullHDURL || media.largeImageURL || media.imageURL))
+                        isMediaSelected(media)
                           ? 'border-primary ring-2 ring-primary'
                           : 'border-transparent'
                       }`}
@@ -291,7 +336,7 @@ export function BackgroundMediaSelector({
                           {media.width}×{media.height}
                         </Badge>
                       </div>
-                      {selectedMediaUrl === (media.type === 'video' ? media.videoURL : (media.fullHDURL || media.largeImageURL || media.imageURL)) && (
+                      {isMediaSelected(media) && (
                         <div className="absolute top-2 right-2">
                           <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center">
                             <svg className="h-4 w-4 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">

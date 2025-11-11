@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 interface CustomScene {
   voiceOverText: string;
   imagePrompt: string;
+  imageUrl?: string;
 }
 
 interface CreateCustomStoryboardInput {
@@ -40,6 +41,7 @@ export const useCustomStoryboard = () => {
           voice_name: 'Rachel',
           intro_image_prompt: input.scenes[0]?.imagePrompt || '',
           intro_voiceover_text: input.scenes[0]?.voiceOverText || '',
+          intro_image_preview_url: input.scenes[0]?.imageUrl || null,
           status: 'draft',
           tokens_cost: 0, // No AI generation cost for custom
           estimated_render_cost: duration * 1.5, // Estimate based on duration
@@ -57,6 +59,7 @@ export const useCustomStoryboard = () => {
         order_number: index + 1,
         voice_over_text: scene.voiceOverText,
         image_prompt: scene.imagePrompt,
+        image_preview_url: scene.imageUrl || null,
         is_edited: false,
       }));
 

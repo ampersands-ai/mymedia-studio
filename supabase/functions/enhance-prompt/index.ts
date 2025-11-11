@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,10 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
   try {
     const { prompt, category } = await req.json();
 
@@ -18,6 +23,45 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Missing required field: prompt' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Authenticate user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'No authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check user credits
+    const ENHANCEMENT_COST = 0.1;
+    const { data: subscription, error: subError } = await supabase
+      .from('user_subscriptions')
+      .select('tokens_remaining')
+      .eq('user_id', user.id)
+      .single();
+
+    if (subError) {
+      console.error('Error fetching subscription:', subError);
+      throw new Error('Failed to check credits');
+    }
+
+    if (!subscription || subscription.tokens_remaining < ENHANCEMENT_COST) {
+      return new Response(
+        JSON.stringify({ error: 'Insufficient credits. You need 0.1 credits to enhance prompts.' }),
+        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -70,7 +114,21 @@ Provide an enhanced version that will produce better AI-generated content.`;
       throw new Error('No enhanced prompt returned from AI');
     }
 
-    console.log('Prompt enhanced successfully');
+    // Deduct credits
+    const { error: deductError } = await supabase
+      .from('user_subscriptions')
+      .update({ 
+        tokens_remaining: subscription.tokens_remaining - ENHANCEMENT_COST,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', user.id);
+
+    if (deductError) {
+      console.error('Error deducting credits:', deductError);
+      throw new Error('Failed to deduct credits');
+    }
+
+    console.log(`Prompt enhanced successfully. ${ENHANCEMENT_COST} credits deducted from user ${user.id}`);
 
     return new Response(
       JSON.stringify({

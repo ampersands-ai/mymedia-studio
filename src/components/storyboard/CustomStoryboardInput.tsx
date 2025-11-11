@@ -1,28 +1,28 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Film, Plus, Trash2, Check } from 'lucide-react';
+import { Film, Plus, Check } from 'lucide-react';
 import { ResolutionSelector } from './sections/ResolutionSelector';
 import { useCustomStoryboard } from '@/hooks/storyboard/useCustomStoryboard';
 import { toast } from 'sonner';
+import { CustomSceneCard } from './CustomSceneCard';
 
 interface CustomScene {
   voiceOverText: string;
   imagePrompt: string;
+  imageUrl?: string;
 }
 
 export function CustomStoryboardInput() {
   const [aspectRatio, setAspectRatio] = useState('hd');
   const [scenes, setScenes] = useState<CustomScene[]>([
-    { voiceOverText: '', imagePrompt: '' }
+    { voiceOverText: '', imagePrompt: '', imageUrl: '' }
   ]);
   const { createCustomStoryboard, isCreating } = useCustomStoryboard();
 
   const handleAddScene = () => {
-    setScenes([...scenes, { voiceOverText: '', imagePrompt: '' }]);
+    setScenes([...scenes, { voiceOverText: '', imagePrompt: '', imageUrl: '' }]);
   };
 
   const handleRemoveScene = (index: number) => {
@@ -96,50 +96,15 @@ export function CustomStoryboardInput() {
 
           <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
             {scenes.map((scene, index) => (
-              <Card key={index} className="relative bg-muted/30">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-semibold">
-                      Scene {index + 1} (5s)
-                    </CardTitle>
-                    {scenes.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveScene(index)}
-                        disabled={isCreating}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="space-y-2">
-                    <Label className="text-sm">Voice-Over Text</Label>
-                    <Textarea
-                      value={scene.voiceOverText}
-                      onChange={(e) => handleUpdateScene(index, 'voiceOverText', e.target.value)}
-                      placeholder="Enter the narration text for this scene..."
-                      disabled={isCreating}
-                      className="min-h-[80px] resize-none"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label className="text-sm">Image Prompt</Label>
-                    <Textarea
-                      value={scene.imagePrompt}
-                      onChange={(e) => handleUpdateScene(index, 'imagePrompt', e.target.value)}
-                      placeholder="Describe the visual for this scene..."
-                      disabled={isCreating}
-                      className="min-h-[60px] resize-none"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+              <CustomSceneCard
+                key={index}
+                scene={scene}
+                index={index}
+                totalScenes={scenes.length}
+                disabled={isCreating}
+                onUpdate={(field, value) => handleUpdateScene(index, field, value)}
+                onRemove={() => handleRemoveScene(index)}
+              />
             ))}
           </div>
         </div>

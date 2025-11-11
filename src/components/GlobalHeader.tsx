@@ -105,6 +105,15 @@ export const GlobalHeader = () => {
           <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
 
+            {!user && (
+              <button
+                onClick={() => navigate("/auth")}
+                className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 text-foreground hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md font-semibold"
+              >
+                Login
+              </button>
+            )}
+
             {user && (
               <button
                 onClick={() => navigate("/dashboard/templates")}

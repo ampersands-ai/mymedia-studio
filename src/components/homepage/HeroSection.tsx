@@ -131,7 +131,7 @@ export const HeroSection = () => {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <Link to="/create" className="w-full sm:w-auto">
+            <Link to="/dashboard/create" className="w-full sm:w-auto">
               <GradientButton size="lg" className="group w-full">
                 Start Creating Free
                 <ArrowRight className="inline ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />

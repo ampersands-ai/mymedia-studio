@@ -437,274 +437,143 @@ export function VideoCreator() {
               </p>
             </div>
 
-            {/* 2-Column Grid Layout */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* Text Color Picker */}
-              <div className="space-y-2">
-                <Label className="text-xs">Text Color</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start gap-2 h-9 px-2"
-                      disabled={isDisabled}
-                    >
-                      <div 
-                        className="w-5 h-5 rounded border-2 flex-shrink-0" 
-                        style={{ backgroundColor: customCaptionStyle.textColor }}
-                      />
-                      <span className="text-xs truncate">{customCaptionStyle.textColor}</span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64">
-                    <Input
-                      type="color"
-                      value={customCaptionStyle.textColor}
-                      onChange={(e) => setCustomCaptionStyle({
-                        ...customCaptionStyle,
-                        textColor: e.target.value
-                      })}
-                      className="h-10 cursor-pointer"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Background Color Picker */}
-              <div className="space-y-2">
-                <Label className="text-xs">Background Color</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start gap-2 h-9 px-2"
-                      disabled={isDisabled}
-                    >
-                      <div 
-                        className="w-5 h-5 rounded border-2 flex-shrink-0" 
-                        style={{ backgroundColor: customCaptionStyle.backgroundColor }}
-                      />
-                      <span className="text-xs truncate">{customCaptionStyle.backgroundColor}</span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64">
-                    <Input
-                      type="color"
-                      value={customCaptionStyle.backgroundColor}
-                      onChange={(e) => setCustomCaptionStyle({
-                        ...customCaptionStyle,
-                        backgroundColor: e.target.value
-                      })}
-                      className="h-10 cursor-pointer"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
+            {/* 2x3 Grid Layout for desktop spinners */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {/* Font Size */}
               <div className="space-y-2">
-                <Label className="text-xs">Font Size</Label>
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 flex-shrink-0"
-                    onClick={() => setCustomCaptionStyle({
+                <Label htmlFor="fontSize" className="text-xs">Font Size</Label>
+                <Input
+                  id="fontSize"
+                  type="number"
+                  min={30}
+                  max={80}
+                  step={1}
+                  value={customCaptionStyle.fontSize}
+                  onChange={(e) => {
+                    const value = Math.max(30, Math.min(80, Number(e.target.value)));
+                    setCustomCaptionStyle({
                       ...customCaptionStyle,
-                      fontSize: Math.max(30, customCaptionStyle.fontSize - 1)
-                    })}
-                    disabled={isDisabled || customCaptionStyle.fontSize <= 30}
-                  >
-                    <Minus className="h-3.5 w-3.5" />
-                  </Button>
-                  <div className="flex-1 text-center font-medium text-sm">
-                    {customCaptionStyle.fontSize}px
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 flex-shrink-0"
-                    onClick={() => setCustomCaptionStyle({
-                      ...customCaptionStyle,
-                      fontSize: Math.min(80, customCaptionStyle.fontSize + 1)
-                    })}
-                    disabled={isDisabled || customCaptionStyle.fontSize >= 80}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                      fontSize: value
+                    });
+                  }}
+                  disabled={isDisabled}
+                  className="h-9"
+                />
               </div>
 
               {/* Line Height */}
               <div className="space-y-2">
-                <Label className="text-xs">Line Height</Label>
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 flex-shrink-0"
-                    onClick={() => setCustomCaptionStyle({
+                <Label htmlFor="lineHeight" className="text-xs">Line Height</Label>
+                <Input
+                  id="lineHeight"
+                  type="number"
+                  min={1.0}
+                  max={2.0}
+                  step={0.1}
+                  value={(customCaptionStyle.lineHeight ?? 1.3).toFixed(1)}
+                  onChange={(e) => {
+                    const value = Math.max(1.0, Math.min(2.0, Number(e.target.value)));
+                    setCustomCaptionStyle({
                       ...customCaptionStyle,
-                      lineHeight: Math.max(1.0, Number(((customCaptionStyle.lineHeight ?? 1.3) - 0.1).toFixed(1)))
-                    })}
-                    disabled={isDisabled || (customCaptionStyle.lineHeight ?? 1.3) <= 1.0}
-                  >
-                    <Minus className="h-3.5 w-3.5" />
-                  </Button>
-                  <div className="flex-1 text-center font-medium text-sm">
-                    {(customCaptionStyle.lineHeight ?? 1.3).toFixed(1)}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 flex-shrink-0"
-                    onClick={() => setCustomCaptionStyle({
-                      ...customCaptionStyle,
-                      lineHeight: Math.min(2.0, Number(((customCaptionStyle.lineHeight ?? 1.3) + 0.1).toFixed(1)))
-                    })}
-                    disabled={isDisabled || (customCaptionStyle.lineHeight ?? 1.3) >= 2.0}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                      lineHeight: Number(value.toFixed(1))
+                    });
+                  }}
+                  disabled={isDisabled}
+                  className="h-9"
+                />
               </div>
 
               {/* Background Opacity */}
               <div className="space-y-2">
-                <Label className="text-xs">BG Opacity</Label>
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 flex-shrink-0"
-                    onClick={() => setCustomCaptionStyle({
+                <Label htmlFor="bgOpacity" className="text-xs">BG Opacity</Label>
+                <Input
+                  id="bgOpacity"
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={Math.round((customCaptionStyle.backgroundOpacity ?? 0.95) * 100)}
+                  onChange={(e) => {
+                    const value = Math.max(0, Math.min(100, Number(e.target.value)));
+                    setCustomCaptionStyle({
                       ...customCaptionStyle,
-                      backgroundOpacity: Math.max(0, (customCaptionStyle.backgroundOpacity ?? 0.95) - 0.05)
-                    })}
-                    disabled={isDisabled || (customCaptionStyle.backgroundOpacity ?? 0.95) <= 0}
-                  >
-                    <Minus className="h-3.5 w-3.5" />
-                  </Button>
-                  <div className="flex-1 text-center font-medium text-sm">
-                    {((customCaptionStyle.backgroundOpacity ?? 0.95) * 100).toFixed(0)}%
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 flex-shrink-0"
-                    onClick={() => setCustomCaptionStyle({
-                      ...customCaptionStyle,
-                      backgroundOpacity: Math.min(1, (customCaptionStyle.backgroundOpacity ?? 0.95) + 0.05)
-                    })}
-                    disabled={isDisabled || (customCaptionStyle.backgroundOpacity ?? 0.95) >= 1}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                      backgroundOpacity: value / 100
+                    });
+                  }}
+                  disabled={isDisabled}
+                  className="h-9"
+                />
               </div>
 
               {/* Background Padding */}
               <div className="space-y-2">
-                <Label className="text-xs">BG Padding</Label>
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 flex-shrink-0"
-                    onClick={() => setCustomCaptionStyle({
+                <Label htmlFor="bgPadding" className="text-xs">BG Padding</Label>
+                <Input
+                  id="bgPadding"
+                  type="number"
+                  min={0}
+                  max={30}
+                  step={1}
+                  value={customCaptionStyle.backgroundPadding ?? 15}
+                  onChange={(e) => {
+                    const value = Math.max(0, Math.min(30, Number(e.target.value)));
+                    setCustomCaptionStyle({
                       ...customCaptionStyle,
-                      backgroundPadding: Math.max(0, (customCaptionStyle.backgroundPadding ?? 15) - 1)
-                    })}
-                    disabled={isDisabled || (customCaptionStyle.backgroundPadding ?? 15) <= 0}
-                  >
-                    <Minus className="h-3.5 w-3.5" />
-                  </Button>
-                  <div className="flex-1 text-center font-medium text-sm">
-                    {customCaptionStyle.backgroundPadding ?? 15}px
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 flex-shrink-0"
-                    onClick={() => setCustomCaptionStyle({
-                      ...customCaptionStyle,
-                      backgroundPadding: Math.min(30, (customCaptionStyle.backgroundPadding ?? 15) + 1)
-                    })}
-                    disabled={isDisabled || (customCaptionStyle.backgroundPadding ?? 15) >= 30}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                      backgroundPadding: value
+                    });
+                  }}
+                  disabled={isDisabled}
+                  className="h-9"
+                />
               </div>
 
               {/* Border Radius */}
               <div className="space-y-2">
-                <Label className="text-xs">Border Radius</Label>
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 flex-shrink-0"
-                    onClick={() => setCustomCaptionStyle({
+                <Label htmlFor="borderRadius" className="text-xs">Border Radius</Label>
+                <Input
+                  id="borderRadius"
+                  type="number"
+                  min={0}
+                  max={20}
+                  step={1}
+                  value={customCaptionStyle.backgroundBorderRadius ?? 8}
+                  onChange={(e) => {
+                    const value = Math.max(0, Math.min(20, Number(e.target.value)));
+                    setCustomCaptionStyle({
                       ...customCaptionStyle,
-                      backgroundBorderRadius: Math.max(0, (customCaptionStyle.backgroundBorderRadius ?? 8) - 1)
-                    })}
-                    disabled={isDisabled || (customCaptionStyle.backgroundBorderRadius ?? 8) <= 0}
-                  >
-                    <Minus className="h-3.5 w-3.5" />
-                  </Button>
-                  <div className="flex-1 text-center font-medium text-sm">
-                    {customCaptionStyle.backgroundBorderRadius ?? 8}px
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 flex-shrink-0"
-                    onClick={() => setCustomCaptionStyle({
-                      ...customCaptionStyle,
-                      backgroundBorderRadius: Math.min(20, (customCaptionStyle.backgroundBorderRadius ?? 8) + 1)
-                    })}
-                    disabled={isDisabled || (customCaptionStyle.backgroundBorderRadius ?? 8) >= 20}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                      backgroundBorderRadius: value
+                    });
+                  }}
+                  disabled={isDisabled}
+                  className="h-9"
+                />
               </div>
 
               {/* Text Outline Width */}
               <div className="space-y-2">
-                <Label className="text-xs">Outline Width</Label>
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 flex-shrink-0"
-                    onClick={() => setCustomCaptionStyle({
+                <Label htmlFor="outlineWidth" className="text-xs">Outline Width</Label>
+                <Input
+                  id="outlineWidth"
+                  type="number"
+                  min={0}
+                  max={8}
+                  step={1}
+                  value={customCaptionStyle.strokeWidth ?? 0}
+                  onChange={(e) => {
+                    const value = Math.max(0, Math.min(8, Number(e.target.value)));
+                    setCustomCaptionStyle({
                       ...customCaptionStyle,
-                      strokeWidth: Math.max(0, (customCaptionStyle.strokeWidth ?? 0) - 1)
-                    })}
-                    disabled={isDisabled || (customCaptionStyle.strokeWidth ?? 0) <= 0}
-                  >
-                    <Minus className="h-3.5 w-3.5" />
-                  </Button>
-                  <div className="flex-1 text-center font-medium text-sm">
-                    {customCaptionStyle.strokeWidth ?? 0}px
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 flex-shrink-0"
-                    onClick={() => setCustomCaptionStyle({
-                      ...customCaptionStyle,
-                      strokeWidth: Math.min(8, (customCaptionStyle.strokeWidth ?? 0) + 1)
-                    })}
-                    disabled={isDisabled || (customCaptionStyle.strokeWidth ?? 0) >= 8}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                      strokeWidth: value
+                    });
+                  }}
+                  disabled={isDisabled}
+                  className="h-9"
+                />
               </div>
+            </div>
 
+            {/* 2-Column Grid for remaining controls */}
+            <div className="grid grid-cols-2 gap-3">
               {/* Horizontal Alignment */}
               <div className="space-y-2">
                 <Label className="text-xs">H-Align</Label>

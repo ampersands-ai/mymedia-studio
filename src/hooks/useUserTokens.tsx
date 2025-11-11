@@ -66,7 +66,20 @@ export const useUserTokens = () => {
         .eq("user_id", user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Check if it's an auth error
+        const errorMessage = error.message?.toLowerCase() || '';
+        if (
+          errorMessage.includes('jwt') ||
+          errorMessage.includes('session') ||
+          error.code === 'PGRST301'
+        ) {
+          console.error('[useUserTokens] Auth error detected:', error);
+          // Return default values instead of throwing
+          return { tokens_remaining: 0, plan: "freemium" };
+        }
+        throw error;
+      }
       return data;
     },
     enabled: !!user,

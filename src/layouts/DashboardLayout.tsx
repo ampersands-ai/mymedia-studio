@@ -8,6 +8,7 @@ import { Footer } from "@/components/Footer";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
 import { MobileMenu } from "@/components/MobileMenu";
+import { supabase } from "@/integrations/supabase/client";
 
 export const DashboardLayout = () => {
   const navigate = useNavigate();
@@ -20,6 +21,22 @@ export const DashboardLayout = () => {
       navigate("/auth");
     }
   }, [session, loading, navigate]);
+
+  // Check session validity on route changes
+  useEffect(() => {
+    const checkSession = async () => {
+      if (loading) return;
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        console.log('[DashboardLayout] No valid session, redirecting to auth');
+        navigate("/auth");
+      }
+    };
+    
+    checkSession();
+  }, [location.pathname, loading, navigate]);
 
   const isActive = (path: string) => location.pathname === path;
 

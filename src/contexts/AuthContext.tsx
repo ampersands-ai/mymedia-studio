@@ -36,28 +36,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      async (event, session) => {
+        console.log('[AuthContext] Auth event:', event);
         
-        // Track signup event
-        if (event === 'SIGNED_IN' && session?.user) {
-          const isNewUser = new Date(session.user.created_at).getTime() > Date.now() - 5000;
-          if (isNewUser) {
-            trackEvent('signup', {
-              user_id: session.user.id,
-              email: session.user.email,
-            });
-          }
-          identifyUser(session.user.id, {
-            email: session.user.email,
-            signup_date: session.user.created_at,
-          });
+        // Handle token expired or refresh failed
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          console.log('[AuthContext] Token refresh failed, signing out');
+          await supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
         }
         
-        // Reset PostHog on logout
         if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
           resetPostHog();
+        } else {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          // Track signup event
+          if (event === 'SIGNED_IN' && session?.user) {
+            const isNewUser = new Date(session.user.created_at).getTime() > Date.now() - 5000;
+            if (isNewUser) {
+              trackEvent('signup', {
+                user_id: session.user.id,
+                email: session.user.email,
+              });
+            }
+            identifyUser(session.user.id, {
+              email: session.user.email,
+              signup_date: session.user.created_at,
+            });
+          }
         }
         
         // Avoid turning off loading on INITIAL_SESSION if we're about to exchange the code

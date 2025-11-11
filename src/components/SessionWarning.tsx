@@ -10,7 +10,13 @@ export const SessionWarning = () => {
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      
+      if (!session) {
+        // Session has expired
+        console.log('[SessionWarning] Session expired, redirecting...');
+        window.location.href = '/auth';
+        return;
+      }
 
       const expiresAt = session.expires_at;
       if (!expiresAt) return;
@@ -22,7 +28,10 @@ export const SessionWarning = () => {
       // Show warning 5 minutes before expiry
       const WARNING_THRESHOLD = 5 * 60 * 1000;
       
-      if (remaining < WARNING_THRESHOLD && remaining > 0) {
+      if (remaining <= 0) {
+        // Already expired, redirect
+        window.location.href = '/auth';
+      } else if (remaining < WARNING_THRESHOLD) {
         setShowWarning(true);
         setTimeRemaining(Math.floor(remaining / 1000 / 60)); // Minutes
       } else {

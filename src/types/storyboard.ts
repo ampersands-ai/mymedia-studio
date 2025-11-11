@@ -53,6 +53,7 @@ export interface Storyboard {
   tokens_cost: number;
   estimated_render_cost: number;
   video_quality?: string;
+  aspect_ratio?: string | null;
   subtitle_settings?: Record<string, any>;
   music_settings?: Record<string, any>;
   image_animation_settings?: {

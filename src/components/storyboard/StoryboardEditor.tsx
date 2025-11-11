@@ -210,6 +210,7 @@ export const StoryboardEditor = () => {
             onRegenerate={regenerateScene}
             onClick={() => setActiveScene(scene.id)}
             onImageGenerated={handleImageGenerated}
+            aspectRatio={storyboard?.aspect_ratio}
           />
         ))}
       </ScenesCollapsible>

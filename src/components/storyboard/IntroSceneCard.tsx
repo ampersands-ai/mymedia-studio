@@ -75,6 +75,7 @@ export const IntroSceneCard = ({
           }}
           sceneNumber={1}
           onImageGenerated={onImageGenerated}
+          aspectRatio={storyboard.aspect_ratio}
         />
       </div>
     </div>

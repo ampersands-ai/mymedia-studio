@@ -15,6 +15,7 @@ interface SceneCardWithPreviewProps {
   onRegenerate: (sceneId: string) => void;
   onClick: () => void;
   onImageGenerated: (sceneId: string, imageUrl: string) => void;
+  aspectRatio?: string | null;
 }
 
 /**
@@ -29,6 +30,7 @@ export const SceneCardWithPreview = ({
   onRegenerate,
   onClick,
   onImageGenerated,
+  aspectRatio,
 }: SceneCardWithPreviewProps) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
@@ -47,6 +49,7 @@ export const SceneCardWithPreview = ({
           scene={scene}
           sceneNumber={sceneNumber}
           onImageGenerated={onImageGenerated}
+          aspectRatio={aspectRatio}
         />
       </div>
     </div>

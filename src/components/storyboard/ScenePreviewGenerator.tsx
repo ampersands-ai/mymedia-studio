@@ -25,12 +25,14 @@ interface ScenePreviewGeneratorProps {
   scene: Scene;
   sceneNumber: number;
   onImageGenerated: (sceneId: string, imageUrl: string) => void;
+  aspectRatio?: string | null;
 }
 
 export const ScenePreviewGenerator = ({
   scene,
   sceneNumber,
   onImageGenerated,
+  aspectRatio,
 }: ScenePreviewGeneratorProps) => {
   const [generationMode, setGenerationMode] = useState<'regenerate' | 'animate'>('regenerate');
   const [selectedModelId, setSelectedModelId] = useState<string>('');
@@ -291,10 +293,26 @@ export const ScenePreviewGenerator = ({
       }
     }
 
+    // Map storyboard aspect ratio to dimensions
+    const aspectRatioDimensions: Record<string, { width: number; height: number }> = {
+      'sd': { width: 640, height: 480 },
+      'hd': { width: 1280, height: 720 },
+      'full-hd': { width: 1920, height: 1080 },
+      'squared': { width: 1080, height: 1080 },
+      'instagram-story': { width: 1080, height: 1920 },
+      'instagram-feed': { width: 1080, height: 1350 },
+    };
+
+    const dimensions = aspectRatio 
+      ? aspectRatioDimensions[aspectRatio] || { width: 1920, height: 1080 }
+      : { width: 1920, height: 1080 };
+
+    console.log('[ScenePreviewGenerator] Using dimensions from aspectRatio:', dimensions, 'aspect_ratio:', aspectRatio);
+
     // For animate mode, pass the image URL as reference
     const customParams = generationMode === 'animate' && displayUrl
-      ? { image: displayUrl }
-      : {};
+      ? { image: displayUrl, width: dimensions.width, height: dimensions.height }
+      : { width: dimensions.width, height: dimensions.height };
 
     const generationResult = await generate({
       model_record_id: selectedModelId,

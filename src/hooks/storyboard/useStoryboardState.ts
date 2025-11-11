@@ -38,6 +38,7 @@ interface Storyboard {
   updated_at: string;
   completed_at?: string;
   video_quality?: string;
+  aspect_ratio?: string | null;
   subtitle_settings?: {
     style?: string;
     fontFamily?: string;

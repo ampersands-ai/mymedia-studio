@@ -13,7 +13,6 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import logoImage from "@/assets/logo.png";
-import hidreamLogo from "@/assets/hidream-logo.png";
 
 export const GlobalHeader = () => {
   const navigate = useNavigate();
@@ -67,7 +66,7 @@ export const GlobalHeader = () => {
           {/* Left Side - Logo */}
           <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
             <OptimizedImage 
-              src={hidreamLogo} 
+              src={logoImage} 
               alt="artifio.ai logo" 
               width={32}
               height={32}

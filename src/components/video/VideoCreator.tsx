@@ -37,9 +37,9 @@ export function VideoCreator() {
   const { createJob, isCreating, jobs } = useVideoJobs();
   const { data: tokens } = useUserTokens();
 
-  // Calculate dynamic cost based on duration (15 credits per second)
-  const estimatedCost = duration * 15;
-  const maxAffordableDuration = Math.floor((tokens?.tokens_remaining ?? 0) / 15);
+  // Calculate dynamic cost based on duration (0.5 credits per second)
+  const estimatedCost = duration * 0.5;
+  const maxAffordableDuration = Math.floor((tokens?.tokens_remaining ?? 0) / 0.5);
 
   const handleSurpriseMe = async () => {
     setIsGeneratingTopic(true);
@@ -164,7 +164,7 @@ export function VideoCreator() {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Approximate only: final length of the video to be determined by the audio time (1s = 15 credits)
+            Approximate only: final length of the video to be determined by the audio time (1s = 0.5 credits)
           </p>
         </div>
 

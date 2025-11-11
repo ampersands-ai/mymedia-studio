@@ -23,7 +23,8 @@ export const useWorkflowExecution = () => {
   } | null>(null);
 
   const executeWorkflow = async (
-    params: WorkflowExecutionParams
+    params: WorkflowExecutionParams,
+    shouldGenerateCaption: boolean = false
   ): Promise<WorkflowExecutionResult | null> => {
     setIsExecuting(true);
     setProgress(null);
@@ -76,6 +77,23 @@ export const useWorkflowExecution = () => {
               // Check for completion
               if (execution.status === 'completed' && execution.final_output_url) {
                 console.log('[Realtime] Workflow completed:', execution.final_output_url);
+                
+                // Generate caption if requested (fire and forget)
+                if (shouldGenerateCaption && params.user_inputs.prompt) {
+                  supabase.functions.invoke('generate-caption', {
+                    body: {
+                      generation_id: executionId,
+                      prompt: params.user_inputs.prompt,
+                      content_type: 'image',
+                      model_name: 'workflow'
+                    }
+                  }).then(() => {
+                    console.log('[Realtime] Caption generation initiated');
+                  }).catch((captionError) => {
+                    console.error('[Realtime] Caption generation failed:', captionError);
+                  });
+                }
+                
                 supabase.removeChannel(channel);
                 setIsExecuting(false);
                 resolve({

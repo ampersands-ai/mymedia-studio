@@ -78,7 +78,7 @@ const CreateWorkflow = () => {
     loadTemplateImages();
   }, [workflow]);
 
-  const handleExecute = async (formattedInputs: Record<string, any>) => {
+  const handleExecute = async (formattedInputs: Record<string, any>, shouldGenerateCaption?: boolean) => {
     if (!workflow) return;
 
     console.log('[CreateWorkflow] Starting workflow execution...');
@@ -90,7 +90,7 @@ const CreateWorkflow = () => {
     const result = await executeWorkflow({
       workflow_template_id: workflow.id,
       user_inputs: formattedInputs,
-    });
+    }, shouldGenerateCaption);
 
     console.log('[CreateWorkflow] Workflow result:', result);
 

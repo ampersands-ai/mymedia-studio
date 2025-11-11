@@ -18,11 +18,12 @@ import { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { formatEstimatedTime } from "@/lib/time-utils";
 import { WorkflowPromptInput } from "./WorkflowPromptInput";
 import { useWorkflowSurpriseMe } from "@/hooks/useWorkflowSurpriseMe";
+import { usePromptEnhancement } from "@/hooks/usePromptEnhancement";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface WorkflowInputPanelProps {
   workflow: WorkflowTemplate;
-  onExecute: (inputs: Record<string, any>) => void;
+  onExecute: (inputs: Record<string, any>, shouldGenerateCaption?: boolean) => void;
   onBack: () => void;
   isExecuting: boolean;
   onReset?: () => void;
@@ -42,6 +43,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
   const [enhancePrompt, setEnhancePrompt] = useState(false);
   const [generateCaption, setGenerateCaption] = useState(false);
   const [generatingSurprise, setGeneratingSurprise] = useState(false);
+  const { enhancePrompt: enhancePromptFn, isEnhancing } = usePromptEnhancement();
   const [advancedOpen, setAdvancedOpen] = useState(false);
   
   const { getSurprisePrompt } = useWorkflowSurpriseMe(workflow.category);
@@ -52,8 +54,23 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
   const creditBalance = userTokens?.tokens_remaining || 0;
   const hasEnoughCredits = creditBalance >= estimatedTokens;
 
-  const handleInputChange = (fieldName: string, value: any) => {
-    setInputs(prev => ({ ...prev, [fieldName]: value }));
+  const handleInputChange = async (fieldName: string, value: any, shouldEnhance: boolean = false) => {
+    // If prompt enhancement is enabled and this is a prompt field
+    if (shouldEnhance && enhancePrompt && value && typeof value === 'string') {
+      const enhanced = await enhancePromptFn(value, workflow?.name);
+      if (enhanced) {
+        setInputs(prev => ({
+          ...prev,
+          [fieldName]: enhanced
+        }));
+        return;
+      }
+    }
+    
+    setInputs(prev => ({
+      ...prev,
+      [fieldName]: value
+    }));
   };
 
   const handleFileUpload = async (fieldName: string, files: FileList | null, isMultiple: boolean) => {
@@ -174,7 +191,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
       }
     }
 
-    onExecute(inputs);
+    onExecute(inputs, generateCaption);
   };
 
   const handleSurpriseMe = () => {
@@ -198,13 +215,13 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
         return (
           <WorkflowPromptInput
             value={inputs[field.name] || ''}
-            onChange={(value) => handleInputChange(field.name, value)}
+            onChange={(value) => handleInputChange(field.name, value, true)}
             isRequired={field.required || false}
             maxLength={5000}
             onSurpriseMe={handleSurpriseMe}
             onEnhance={setEnhancePrompt}
             enhanceEnabled={enhancePrompt}
-            disabled={isExecuting || isUploading}
+            disabled={isExecuting || isUploading || isEnhancing}
             generateCaption={generateCaption}
             onGenerateCaptionChange={setGenerateCaption}
             generatingSurprise={generatingSurprise}

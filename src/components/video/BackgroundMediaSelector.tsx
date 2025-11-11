@@ -50,6 +50,7 @@ export function BackgroundMediaSelector({
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [mediaType, setMediaType] = useState<'video' | 'image'>('video');
+  const [previewMedia, setPreviewMedia] = useState<PixabayMedia | null>(null);
 
   useEffect(() => {
     if (open && mediaItems.length === 0) {
@@ -218,7 +219,7 @@ export function BackgroundMediaSelector({
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh]">
+        <DialogContent className="max-w-6xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Select Background Media</DialogTitle>
             <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
@@ -234,7 +235,9 @@ export function BackgroundMediaSelector({
             </div>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Left Side - Controls */}
+            <div className="lg:col-span-1 space-y-4">
             {/* Media Type Toggle */}
             <Tabs value={mediaType} onValueChange={handleMediaTypeChange as any}>
               <TabsList className="grid w-full grid-cols-2">
@@ -250,7 +253,7 @@ export function BackgroundMediaSelector({
             </Tabs>
 
             {/* Search Bar */}
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -261,12 +264,14 @@ export function BackgroundMediaSelector({
                   className="pl-9"
                 />
               </div>
-              <Button onClick={handleCustomSearch} disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              </Button>
-              <Button variant="outline" onClick={handleRefresh} disabled={loading}>
-                <RefreshCw className="h-4 w-4" />
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleCustomSearch} disabled={loading} className="flex-1">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                </Button>
+                <Button variant="outline" onClick={handleRefresh} disabled={loading}>
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             {/* Selection Info */}
@@ -275,17 +280,69 @@ export function BackgroundMediaSelector({
                 <div className="flex items-center gap-2 text-sm">
                   <Badge variant="default">{selectedMedia.length}</Badge>
                   <span className="font-medium">
-                    media file{selectedMedia.length > 1 ? 's' : ''} selected - will play in sequence
+                    media file{selectedMedia.length > 1 ? 's' : ''} selected
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Click items below to add or remove from your selection
+                  Will play in sequence
                 </p>
               </div>
             )}
+            </div>
+
+            {/* Right Side - Media Grid & Preview */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Preview Section */}
+              {previewMedia && (
+                <div className="rounded-lg border bg-accent/50 overflow-hidden">
+                  <div className="p-3 border-b bg-background/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        {previewMedia.type === 'video' ? (
+                          <Video className="h-4 w-4 text-primary" />
+                        ) : (
+                          <Image className="h-4 w-4 text-primary" />
+                        )}
+                        Preview
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => setPreviewMedia(null)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="aspect-video bg-black flex items-center justify-center p-4">
+                    {previewMedia.type === 'video' ? (
+                      <video
+                        key={previewMedia.videoURL}
+                        src={previewMedia.videoURL}
+                        className="max-h-full max-w-full rounded"
+                        controls
+                        autoPlay
+                        muted
+                        loop
+                      />
+                    ) : (
+                      <img
+                        src={previewMedia.largeImageURL || previewMedia.fullHDURL || previewMedia.imageURL}
+                        alt="Preview"
+                        className="max-h-full max-w-full rounded object-contain"
+                      />
+                    )}
+                  </div>
+                  <div className="p-3 bg-background/50 text-xs text-muted-foreground">
+                    {previewMedia.width} × {previewMedia.height}
+                    {previewMedia.duration && ` • ${Math.round(previewMedia.duration)}s`}
+                  </div>
+                </div>
+              )}
 
             {/* Media Grid */}
-            <ScrollArea className="h-[400px] rounded-md border p-4">
+            <ScrollArea className="h-[500px] rounded-md border p-4">
               {loading ? (
                 <div className="flex items-center justify-center h-full">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -297,7 +354,7 @@ export function BackgroundMediaSelector({
                   <p className="text-sm text-muted-foreground">Try a different search term</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {mediaItems.map((media) => (
                     <div
                       key={media.id}
@@ -306,50 +363,49 @@ export function BackgroundMediaSelector({
                           ? 'border-primary ring-2 ring-primary'
                           : 'border-transparent'
                       }`}
-                      onClick={() => handleSelectMedia(media)}
                     >
-                      <img
-                        src={media.preview}
-                        alt={`${media.type} ${media.id}`}
-                        className="w-full h-32 object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
-                        {media.type === 'video' ? (
-                          <Video className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                        ) : (
-                          <Image className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                        )}
-                      </div>
-                      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-                        {media.type === 'video' && media.duration && (
-                          <Badge variant="secondary" className="text-xs">
-                            {Math.round(media.duration)}s
-                          </Badge>
-                        )}
-                        {media.type === 'image' && (
-                          <div className="flex gap-1">
-                            {media.fullHDURL && <Badge variant="secondary" className="text-xs">Full HD</Badge>}
-                            {media.vectorURL && <Badge variant="secondary" className="text-xs">Vector</Badge>}
-                          </div>
-                        )}
-                        <Badge variant="secondary" className="text-xs ml-auto">
-                          {media.width}×{media.height}
-                        </Badge>
-                      </div>
-                      {isMediaSelected(media) && (
-                        <div className="absolute top-2 right-2">
-                          <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center">
-                            <svg className="h-4 w-4 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </div>
+                      <div 
+                        onClick={() => handleSelectMedia(media)}
+                        onMouseEnter={() => setPreviewMedia(media)}
+                      >
+                        <img
+                          src={media.preview}
+                          alt={`${media.type} ${media.id}`}
+                          className="w-full h-24 object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                          {media.type === 'video' ? (
+                            <Video className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          ) : (
+                            <Image className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          )}
                         </div>
-                      )}
+                        <div className="absolute bottom-1 left-1 right-1 flex items-center justify-between">
+                          {media.type === 'video' && media.duration && (
+                            <Badge variant="secondary" className="text-[10px] h-5">
+                              {Math.round(media.duration)}s
+                            </Badge>
+                          )}
+                          <Badge variant="secondary" className="text-[10px] h-5 ml-auto">
+                            {media.width}×{media.height}
+                          </Badge>
+                        </div>
+                        {isMediaSelected(media) && (
+                          <div className="absolute top-1 right-1">
+                            <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                              <svg className="h-3 w-3 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
             </ScrollArea>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

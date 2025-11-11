@@ -918,7 +918,7 @@ const History = () => {
             Previous
           </Button>
           <span className="text-sm text-muted-foreground px-4">
-            Page {currentPage}
+            Page {currentPage} of {Math.ceil((totalCount || 0) / ITEMS_PER_PAGE)}
           </span>
           <Button
             onClick={() => setCurrentPage(p => p + 1)}

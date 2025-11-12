@@ -1,4 +1,4 @@
-import { SupabaseClient } from 'jsr:@supabase/supabase-js@2';
+import { SupabaseClient } from 'supabase';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical';
 

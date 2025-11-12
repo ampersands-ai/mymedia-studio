@@ -3,7 +3,7 @@
  * Handles base64 image conversion and signed URL generation
  */
 
-import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
+import { SupabaseClient } from "supabase";
 
 /**
  * Upload a base64 image and return signed URL

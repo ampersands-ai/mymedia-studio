@@ -1,12 +1,16 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Image, Video, Music, ChevronRight } from "lucide-react";
+import { Loader2, Image, Video, Music, ChevronRight, XCircle } from "lucide-react";
 import { useActiveGenerations } from "@/hooks/useActiveGenerations";
 import { useConcurrentGenerationLimit } from "@/hooks/useConcurrentGenerationLimit";
 import { formatDistanceToNow } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface GenerationsInProgressProps {
   onNavigateToGeneration?: (modelRecordId: string) => void;
@@ -19,6 +23,36 @@ export const GenerationsInProgress = ({
 }: GenerationsInProgressProps) => {
   const { data: activeGenerations = [], isLoading } = useActiveGenerations();
   const { data: maxConcurrent = 1 } = useConcurrentGenerationLimit();
+  const [cancelingId, setCancelingId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const handleCancelGeneration = async (generationId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    setCancelingId(generationId);
+    try {
+      const { data, error } = await supabase.functions.invoke('cancel-generation', {
+        body: { generation_id: generationId }
+      });
+
+      if (error) throw error;
+
+      toast.success(data.message || 'Generation canceled and tokens refunded');
+      
+      // Refresh the active generations list and user tokens
+      queryClient.invalidateQueries({ queryKey: ['active-generations'] });
+      queryClient.invalidateQueries({ queryKey: ['user-tokens'] });
+    } catch (error: any) {
+      console.error('Cancel generation error:', error);
+      toast.error(error.message || 'Failed to cancel generation');
+    } finally {
+      setCancelingId(null);
+    }
+  };
+
+  const getElapsedMinutes = (createdAt: string) => {
+    return Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
+  };
 
   const getContentIcon = (contentType: string) => {
     switch (contentType) {
@@ -77,18 +111,46 @@ export const GenerationsInProgress = ({
                 <p className="text-[10px] text-muted-foreground mt-1">
                   {formatDistanceToNow(new Date(gen.created_at), { addSuffix: true })}
                 </p>
+                {getElapsedMinutes(gen.created_at) >= 5 && (
+                  <p className="text-[10px] text-warning mt-1">
+                    ⚠️ Taking longer than expected
+                  </p>
+                )}
               </div>
 
-              {gen.model_record_id !== currentModelRecordId && onNavigateToGeneration && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 flex-shrink-0"
-                  onClick={() => onNavigateToGeneration(gen.model_record_id)}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              )}
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {/* Show cancel button after 5 minutes */}
+                {gen.status === "processing" && getElapsedMinutes(gen.created_at) >= 5 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={(e) => handleCancelGeneration(gen.id, e)}
+                    disabled={cancelingId === gen.id}
+                    title="Cancel and refund tokens"
+                  >
+                    {cancelingId === gen.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <>
+                        <XCircle className="h-3 w-3 mr-1" />
+                        <span className="text-[10px]">Cancel</span>
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                {gen.model_record_id !== currentModelRecordId && onNavigateToGeneration && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => onNavigateToGeneration(gen.model_record_id)}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
           ))}
         </div>

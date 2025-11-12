@@ -1,6 +1,88 @@
 import { useState, useEffect, useCallback } from "react";
 import type { CustomCreationState } from "@/types/custom-creation";
 import type { CreationGroup } from "@/constants/creation-groups";
+import { logger } from "@/lib/logger";
+
+const STORAGE_VERSION = '1.0';
+const MAX_STORAGE_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+interface StoredState {
+  selectedGroup: CreationGroup;
+  selectedModel: string | null;
+  timestamp: number;
+  version: string;
+}
+
+/**
+ * Load validated state from localStorage
+ */
+function loadFromStorage(): Partial<CustomCreationState> {
+  try {
+    const stored = localStorage.getItem('customCreation_state');
+    if (!stored) return {};
+    
+    const parsed: StoredState = JSON.parse(stored);
+    
+    // Validate version
+    if (parsed.version !== STORAGE_VERSION) {
+      logger.info('Storage version mismatch, clearing state', {
+        stored: parsed.version,
+        current: STORAGE_VERSION
+      });
+      localStorage.removeItem('customCreation_state');
+      return {};
+    }
+    
+    // Check expiration
+    if (Date.now() - parsed.timestamp > MAX_STORAGE_AGE) {
+      logger.info('Storage expired, clearing state');
+      localStorage.removeItem('customCreation_state');
+      return {};
+    }
+    
+    return {
+      selectedGroup: parsed.selectedGroup,
+      selectedModel: parsed.selectedModel,
+    };
+  } catch (e) {
+    logger.error('Failed to load state from storage', e);
+    localStorage.removeItem('customCreation_state');
+    return {};
+  }
+}
+
+/**
+ * Clean stale generation states on mount
+ */
+function cleanStaleGenerationStates() {
+  const keysToCheck = [
+    'pending_generation',
+    'currentStoryboardId',
+    'customCreation_pollingId'
+  ];
+  
+  let cleaned = 0;
+  keysToCheck.forEach(key => {
+    try {
+      const value = localStorage.getItem(key);
+      if (value) {
+        const data = JSON.parse(value);
+        // If older than 24 hours, remove
+        if (data.timestamp && Date.now() - data.timestamp > 24 * 60 * 60 * 1000) {
+          localStorage.removeItem(key);
+          cleaned++;
+        }
+      }
+    } catch (e) {
+      localStorage.removeItem(key);
+      cleaned++;
+    }
+  });
+  
+  if (cleaned > 0) {
+    logger.info(`Cleaned ${cleaned} stale generation states`);
+  }
+}
 
 const INITIAL_STATE: CustomCreationState = {
   // Form state
@@ -45,22 +127,33 @@ const INITIAL_STATE: CustomCreationState = {
  * Manages 25+ state variables in a single object
  */
 export const useCustomCreationState = () => {
-  const [state, setState] = useState<CustomCreationState>(() => ({
-    ...INITIAL_STATE,
-    selectedGroup: (localStorage.getItem('customCreation_selectedGroup') as CreationGroup) || "prompt_to_image",
-    selectedModel: localStorage.getItem('customCreation_selectedModel') || null,
-  }));
-
-  // Persist selectedGroup and selectedModel to localStorage
+  // Clean stale generation states on mount
   useEffect(() => {
-    localStorage.setItem('customCreation_selectedGroup', state.selectedGroup);
-  }, [state.selectedGroup]);
+    cleanStaleGenerationStates();
+  }, []);
 
+  const [state, setState] = useState<CustomCreationState>(() => {
+    const loadedState = loadFromStorage();
+    return {
+      ...INITIAL_STATE,
+      ...loadedState,
+    };
+  });
+
+  // Persist selectedGroup and selectedModel to localStorage with validation
   useEffect(() => {
-    if (state.selectedModel) {
-      localStorage.setItem('customCreation_selectedModel', state.selectedModel);
+    try {
+      const storedState: StoredState = {
+        selectedGroup: state.selectedGroup,
+        selectedModel: state.selectedModel,
+        timestamp: Date.now(),
+        version: STORAGE_VERSION,
+      };
+      localStorage.setItem('customCreation_state', JSON.stringify(storedState));
+    } catch (e) {
+      logger.error('Failed to persist state to storage', e);
     }
-  }, [state.selectedModel]);
+  }, [state.selectedGroup, state.selectedModel]);
 
   /**
    * Update partial state

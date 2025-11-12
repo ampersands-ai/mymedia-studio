@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { POLLING_CONFIG } from "@/constants/generation";
 import type { GenerationOutput } from "./useGenerationState";
+import { logger } from "@/lib/logger";
 
 /**
  * Polling options and callbacks
@@ -225,9 +226,29 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      if (isPolling) {
+        logger.info('useGenerationPolling unmounting, cleaning up polling');
+      }
       clearAllTimers();
     };
-  }, [clearAllTimers]);
+  }, [clearAllTimers, isPolling]);
+
+  // Auto-recovery: Force reset if polling for more than 30 minutes
+  useEffect(() => {
+    if (isPolling && pollingId) {
+      const timeout = setTimeout(() => {
+        logger.warn('Polling exceeded maximum duration (30 min), force resetting', {
+          pollingId,
+          duration: '30 minutes'
+        });
+        
+        stopPolling();
+        options.onTimeout?.();
+      }, 30 * 60 * 1000);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [isPolling, pollingId, stopPolling, options]);
 
   return {
     startPolling,

@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Sparkles, Loader2 } from "lucide-react";
 import { CAPTION_GENERATION_COST } from "@/constants/custom-creation";
+import { logger } from "@/lib/logger";
 
 interface PromptInputProps {
   value: string;
@@ -48,7 +49,18 @@ export const PromptInput: React.FC<PromptInputProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={onSurpriseMe}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              logger.info('Surprise Me button clicked', {
+                isDisabled: generatingSurprise || disabled,
+                generatingSurprise,
+                disabled,
+                timestamp: Date.now()
+              });
+              onSurpriseMe();
+            }}
             disabled={generatingSurprise || disabled}
             className="h-7 gap-1.5 text-xs"
           >
@@ -85,7 +97,12 @@ export const PromptInput: React.FC<PromptInputProps> = ({
         <Button
           variant={enhanceEnabled ? "secondary" : "outline"}
           size="sm"
-          onClick={() => onEnhance(!enhanceEnabled)}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onEnhance(!enhanceEnabled);
+          }}
           disabled={disabled}
           className="h-8 text-xs gap-1.5"
         >
@@ -96,7 +113,12 @@ export const PromptInput: React.FC<PromptInputProps> = ({
         <Button
           variant={generateCaption ? "secondary" : "outline"}
           size="sm"
-          onClick={() => onGenerateCaptionChange(!generateCaption)}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onGenerateCaptionChange(!generateCaption);
+          }}
           disabled={disabled}
           className="h-8 text-xs gap-1.5"
         >

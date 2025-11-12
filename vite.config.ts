@@ -81,9 +81,17 @@ export default defineConfig(({ mode }) => ({
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true,
+        drop_console: false, // Keep console logs for production debugging
         drop_debugger: true,
+        pure_funcs: [
+          'console.debug', // Remove verbose logs
+          'console.trace',
+        ],
       },
+      mangle: {
+        // Don't mangle event handler names for debugging
+        reserved: ['onClick', 'onSurpriseMe', 'onGenerate', 'handleClick']
+      }
     },
     rollupOptions: {
       output: {

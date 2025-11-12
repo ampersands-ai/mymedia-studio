@@ -1,5 +1,7 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
+import { logger } from "@/lib/logger";
 import { useAuth } from "@/contexts/AuthContext";
+import { GenerationErrorBoundary } from "@/components/error/GenerationErrorBoundary";
 import { useNavigate } from "react-router-dom";
 import { SessionWarning } from "@/components/SessionWarning";
 import { useOnboarding } from "@/hooks/useOnboarding";
@@ -189,13 +191,15 @@ const CustomCreation = () => {
     userTokens: userTokens?.tokens_remaining || 0,
   });
 
-  // Surprise Me handler
-  const onSurpriseMe = () => {
+  // Surprise Me handler - wrapped in useCallback for stable reference
+  const onSurpriseMe = useCallback(() => {
+    logger.info('Surprise Me triggered', { selectedGroup: state.selectedGroup });
     updateState({ generatingSurprise: true });
     const surprisePrompt = getSurpriseMePrompt(state.selectedGroup);
     setStatePrompt(surprisePrompt);
     updateState({ generatingSurprise: false });
-  };
+    toast.success('Surprise!', { description: 'Try this creative prompt' });
+  }, [state.selectedGroup, updateState, setStatePrompt]);
 
   // Download all outputs
   const handleDownloadAll = async () => {
@@ -306,7 +310,15 @@ const CustomCreation = () => {
     (imageFieldInfo.isRequired && uploadedImages.length === 0);
 
   return (
-    <div className="min-h-screen bg-background">
+    <GenerationErrorBoundary onReset={() => {
+      updateState({ 
+        localGenerating: false, 
+        pollingGenerationId: null,
+        generatingSurprise: false 
+      });
+      stopPolling();
+    }}>
+      <div className="min-h-screen bg-background">
       <SessionWarning />
       
       {/* Onboarding */}
@@ -483,6 +495,7 @@ const CustomCreation = () => {
 
       </div>
     </div>
+    </GenerationErrorBoundary>
   );
 };
 

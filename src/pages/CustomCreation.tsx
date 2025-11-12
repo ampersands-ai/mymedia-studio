@@ -53,7 +53,7 @@ const CustomCreation = () => {
 
   // Filter and sort models by selected group (default to cost sorting)
   const filteredModels = allModels?.filter(model => {
-    const groups = model.groups as string[] || [];
+    const groups = (Array.isArray(model.groups) ? model.groups : []) as string[];
     return groups.includes(state.selectedGroup);
   }).sort((a, b) => {
     return a.base_token_cost - b.base_token_cost;
@@ -289,7 +289,10 @@ const CustomCreation = () => {
   }, [state.prompt, progress, updateProgress]);
 
   // Compute schema-derived values for InputPanel
-  const modelSchema = currentModel?.input_schema;
+  const modelSchema = currentModel?.input_schema as { 
+    properties?: Record<string, unknown>; 
+    required?: string[] 
+  } | null | undefined;
   const textKey = schemaHelpers.findPrimaryTextKey(modelSchema?.properties);
   const voiceKey = schemaHelpers.findPrimaryVoiceKey(modelSchema?.properties, state.selectedModel || undefined);
   const hasPromptField = !!(modelSchema?.properties?.prompt);
@@ -349,9 +352,9 @@ const CustomCreation = () => {
             const targetModel = allModels?.find(m => m.record_id === modelRecordId);
             if (targetModel) {
               // Switch to the model's group if needed
-              const modelGroups = targetModel.groups as string[] || [];
+              const modelGroups = (Array.isArray(targetModel.groups) ? targetModel.groups : []) as string[];
               if (modelGroups.length > 0 && !modelGroups.includes(state.selectedGroup)) {
-                setStateSelectedGroup(modelGroups[0] as any);
+                setStateSelectedGroup(modelGroups[0] as CreationGroup);
               }
               // Select the model
               setStateSelectedModel(modelRecordId);

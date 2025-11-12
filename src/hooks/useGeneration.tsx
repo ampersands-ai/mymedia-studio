@@ -16,7 +16,9 @@ interface GenerationParams {
 
 interface GenerationResult {
   id: string;
+  generation_id?: string; // Alternative ID field
   output_url?: string; // Optional for async generations
+  storage_path?: string; // Storage path for completed generations
   tokens_used: number;
   status: string;
   content_type: string;

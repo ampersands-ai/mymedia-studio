@@ -403,7 +403,10 @@ export default function ModelHealthTestPage() {
   }, [currentModel, state.prompt, setStatePrompt]);
 
   // Compute schema-derived values for InputPanel
-  const modelSchema = currentModel?.input_schema;
+  const modelSchema = currentModel?.input_schema as { 
+    properties?: Record<string, unknown>; 
+    required?: string[] 
+  } | null | undefined;
   const textKey = schemaHelpers.findPrimaryTextKey(modelSchema?.properties);
   const voiceKey = schemaHelpers.findPrimaryVoiceKey(modelSchema?.properties, state.selectedModel || undefined);
   const hasPromptField = !!(modelSchema?.properties?.prompt);
@@ -486,7 +489,13 @@ export default function ModelHealthTestPage() {
             </div>
             <div>
               <p className="font-medium text-muted-foreground">Groups</p>
-              <p className="mt-1">{Array.isArray(model.groups) ? model.groups.join(', ') : model.groups}</p>
+              <p className="mt-1">
+                {Array.isArray(model.groups) 
+                  ? model.groups.join(', ') 
+                  : typeof model.groups === 'string' 
+                  ? model.groups 
+                  : 'N/A'}
+              </p>
             </div>
           </CardContent>
         </Card>

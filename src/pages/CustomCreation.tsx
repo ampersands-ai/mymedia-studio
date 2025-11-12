@@ -488,14 +488,16 @@ const CustomCreation = () => {
         {/* Best Practices */}
         <BestPracticesCard />
 
-        {/* Mobile Sticky Button */}
-        <MobileStickyButton
-          onGenerate={handleGenerate}
-          disabled={isGenerateDisabled}
-          isGenerating={isGenerating || state.localGenerating}
-          estimatedTokens={estimatedTokens}
-          estimatedDuration={currentModel?.estimated_time_seconds}
-        />
+        {/* Mobile Sticky Button - Hidden as InputPanel has its own sticky button */}
+        <div className="hidden">
+          <MobileStickyButton
+            onGenerate={handleGenerate}
+            disabled={isGenerateDisabled}
+            isGenerating={isGenerating || state.localGenerating}
+            estimatedTokens={estimatedTokens}
+            estimatedDuration={currentModel?.estimated_time_seconds}
+          />
+        </div>
       </div>
     </div>
   );

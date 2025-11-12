@@ -1,0 +1,51 @@
+/**
+ * Provider Registry
+ * Central configuration for all AI providers
+ */
+
+export interface ProviderConfig {
+  name: string;
+  webhook: string;
+  recovery?: string;
+  statusEndpoint?: string;
+  supports: ('image' | 'video' | 'audio')[];
+  requiresWebhook: boolean;
+}
+
+export const PROVIDERS: Record<string, ProviderConfig> = {
+  'kie_ai': {
+    name: 'KIE AI',
+    webhook: '/functions/v1/webhooks/kie-webhook',
+    recovery: '/functions/v1/recovery/recover-kie-generation',
+    statusEndpoint: 'https://api.kie.ai/api/v1/jobs/queryTask',
+    supports: ['image', 'video', 'audio'],
+    requiresWebhook: true
+  },
+  'runware': {
+    name: 'Runware',
+    webhook: '/functions/v1/webhooks/runware-webhook',
+    supports: ['image', 'video'],
+    requiresWebhook: false // Sync provider
+  },
+  'midjourney': {
+    name: 'Midjourney',
+    webhook: '/functions/v1/webhooks/kie-webhook', // Uses KIE webhook
+    supports: ['image'],
+    requiresWebhook: true
+  }
+};
+
+/**
+ * Get provider config by name
+ */
+export function getProviderConfig(provider: string): ProviderConfig | null {
+  return PROVIDERS[provider] || null;
+}
+
+/**
+ * Check if provider supports content type
+ */
+export function providerSupports(provider: string, contentType: 'image' | 'video' | 'audio'): boolean {
+  const config = getProviderConfig(provider);
+  return config?.supports.includes(contentType) || false;
+}

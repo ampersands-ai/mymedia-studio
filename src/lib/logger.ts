@@ -1,6 +1,8 @@
+import { clientLogger } from '@/lib/logging/client-logger';
+
 /**
- * Production-safe logging utility
- * Provides structured logging with appropriate levels
+ * Production-safe structured logging utility
+ * Provides comprehensive logging with proper severity levels and backend integration
  */
 
 declare global {
@@ -9,53 +11,117 @@ declare global {
   }
 }
 
-export const logger = {
-  /**
-   * Error logging - always logged, sent to monitoring
-   */
-  error: (message: string, context?: any) => {
-    console.error(`[ERROR] ${message}`, context);
-    
-    // Send to PostHog if available
-    if (typeof window !== 'undefined' && window.posthog) {
-      window.posthog.capture('error', { message, context });
-    }
-  },
+interface LogContext {
+  component?: string;
+  userId?: string;
+  route?: string;
+  routeName?: string;
+  metadata?: Record<string, unknown>;
+  [key: string]: any; // Allow additional properties
+}
+
+class Logger {
+  private context: LogContext = {};
 
   /**
-   * Warning logging - always logged
+   * Create a child logger with additional context
    */
-  warn: (message: string, context?: any) => {
-    console.warn(`[WARN] ${message}`, context);
-  },
+  child(context: LogContext): Logger {
+    const childLogger = new Logger();
+    childLogger.context = { ...this.context, ...context };
+    return childLogger;
+  }
 
-  /**
-   * Info logging - only in development
-   */
-  info: (message: string, context?: any) => {
-    if (import.meta.env.DEV) {
-      console.log(`[INFO] ${message}`, context);
-    }
-  },
-
-  /**
-   * Critical logging - always logged, shows toast, sent to monitoring
-   */
-  critical: (message: string, context?: any) => {
-    console.error(`[CRITICAL] ${message}`, context);
-    
-    // Send to PostHog if available
-    if (typeof window !== 'undefined' && window.posthog) {
-      window.posthog.capture('critical_error', { message, context });
-    }
-  },
+  private formatMessage(level: string, message: string, context?: LogContext): string {
+    const ctx = { ...this.context, ...context };
+    return `[${level.toUpperCase()}] ${message} ${JSON.stringify(ctx)}`;
+  }
 
   /**
    * Debug logging - only in development
    */
-  debug: (message: string, context?: any) => {
+  debug(message: string, context?: LogContext) {
     if (import.meta.env.DEV) {
-      console.debug(`[DEBUG] ${message}`, context);
+      console.debug(this.formatMessage('debug', message, context));
     }
   }
-};
+
+  /**
+   * Info logging - only in development
+   */
+  info(message: string, context?: LogContext) {
+    if (import.meta.env.DEV) {
+      console.log(this.formatMessage('info', message, context));
+    }
+  }
+
+  /**
+   * Warning logging - always logged, sent to PostHog in production
+   */
+  warn(message: string, context?: LogContext) {
+    console.warn(this.formatMessage('warn', message, context));
+    
+    if (!import.meta.env.DEV && typeof window !== 'undefined' && window.posthog) {
+      window.posthog.capture('warning', {
+        message,
+        ...this.context,
+        ...context
+      });
+    }
+  }
+
+  /**
+   * Error logging - always logged, sent to backend and PostHog
+   */
+  error(message: string, error?: Error, context?: LogContext) {
+    console.error(this.formatMessage('error', message, context), error);
+    
+    const errorContext = {
+      message,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      stack: error?.stack,
+      ...this.context,
+      ...context
+    };
+
+    // Send to backend
+    if (error) {
+      clientLogger.error(error, errorContext).catch(console.error);
+    }
+
+    // Send to PostHog
+    if (typeof window !== 'undefined' && window.posthog) {
+      window.posthog.capture('error', errorContext);
+    }
+  }
+
+  /**
+   * Critical error logging - highest priority, always sent to monitoring
+   */
+  critical(message: string, error?: Error, context?: LogContext) {
+    console.error(this.formatMessage('critical', message, context), error);
+    
+    const errorContext = {
+      message,
+      severity: 'critical',
+      errorName: error?.name,
+      errorMessage: error?.message,
+      stack: error?.stack,
+      ...this.context,
+      ...context
+    };
+
+    // Always log critical errors to backend
+    if (error) {
+      clientLogger.error(error, errorContext).catch(console.error);
+    }
+
+    // Send to PostHog with high priority
+    if (typeof window !== 'undefined' && window.posthog) {
+      window.posthog.capture('critical_error', errorContext);
+    }
+  }
+}
+
+export const logger = new Logger();

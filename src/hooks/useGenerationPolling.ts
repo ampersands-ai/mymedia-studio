@@ -40,6 +40,8 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
    */
   const pollStatus = useCallback(async (generationId: string) => {
     try {
+      logger.debug('Polling generation status', { generationId });
+      
       // Fetch parent generation with model info
       const { data: parentData, error } = await supabase
         .from('generations')
@@ -58,7 +60,10 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
         .eq('id', generationId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.error('Failed to fetch generation', error, { generationId });
+        throw error;
+      }
 
       // Treat 'cancelled' as terminal state
       if (parentData.status === 'cancelled') {
@@ -132,7 +137,12 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
             }
             
             // Wait before retry
-            console.log(`[Polling] No outputs ready yet, retrying in ${retryDelay}ms (${retryCount + 1}/${maxRetries})`);
+            logger.debug('No outputs ready, retrying', { 
+              generationId,
+              retryCount: retryCount + 1,
+              maxRetries,
+              delayMs: retryDelay
+            });
             await new Promise(resolve => setTimeout(resolve, retryDelay));
             retryCount++;
           }
@@ -143,12 +153,15 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
           );
 
           if (uniqueOutputs.length === 0) {
-            console.error('[Polling] Generation completed but outputs are not ready after retries');
+            logger.error('Generation completed but outputs not ready', undefined, {
+              generationId,
+              retriesUsed: retryCount
+            });
             options.onError?.('Generation completed but outputs are not ready after retries.');
             return;
           }
 
-          console.log('[Polling] Generation complete with outputs:', {
+          logger.info('Generation complete', {
             generationId,
             outputCount: uniqueOutputs.length,
             retriesUsed: retryCount
@@ -164,7 +177,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
         }
       }
     } catch (error: any) {
-      console.error('Polling error:', error);
+      logger.error('Polling error', error, { generationId });
       options.onError?.(error.message || 'Failed to check generation status');
     }
   }, [options, clearAllTimers]);
@@ -174,10 +187,14 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
    */
   const startPolling = useCallback((generationId: string) => {
     if (isPolling) {
-      console.warn('Already polling, stopping previous poll');
+      logger.warn('Already polling, stopping previous poll', { 
+        currentPollingId: pollingId,
+        newGenerationId: generationId
+      });
       stopPolling();
     }
 
+    logger.info('Starting generation polling', { generationId });
     setIsPolling(true);
     setPollingId(generationId);
     const startTime = Date.now();

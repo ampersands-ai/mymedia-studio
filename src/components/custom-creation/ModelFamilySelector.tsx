@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Coins, Image as ImageIcon, ChevronDown, ChevronRight } from "lucide-react";
+import { Coins, Image as ImageIcon, ChevronDown, ChevronRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -170,11 +170,15 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                 
                 if (isSingleModel) {
                   const model = familyModels[0];
+                  const isSelected = selectedModel === model.record_id;
                   return (
                     <Button
                       key={family}
-                      variant={selectedModel === model.record_id ? "secondary" : "outline"}
-                      className="w-full justify-start h-auto p-3"
+                      variant={isSelected ? "default" : "outline"}
+                      className={cn(
+                        "w-full justify-start h-auto p-3",
+                        isSelected && "border-2 border-primary"
+                      )}
                       onClick={() => handleModelSelect(model.record_id)}
                     >
                       <div className="flex items-center gap-2 w-full min-w-0">
@@ -190,7 +194,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                         <div className="flex items-center gap-1.5 flex-1 min-w-0">
                           <span className="font-medium text-sm truncate">{model.model_name}</span>
                           {stats && (
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
+                            <div className="flex items-center gap-1.5 text-xs flex-shrink-0">
                               <div className="flex items-center gap-0.5">
                                 <Coins className="w-3 h-3" />
                                 <span>{stats.cost}</span>
@@ -204,6 +208,9 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                             </div>
                           )}
                         </div>
+                        {isSelected && (
+                          <Check className="h-4 w-4 ml-auto flex-shrink-0" />
+                        )}
                       </div>
                     </Button>
                   );
@@ -216,8 +223,8 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                     >
                       <CollapsibleTrigger asChild>
                         <Button
-                          variant="outline"
-                          className="w-full justify-between h-auto p-3"
+                          variant="ghost"
+                          className="w-full justify-between h-auto p-3 bg-muted/50"
                         >
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             {logo && (
@@ -254,32 +261,41 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                         </Button>
                       </CollapsibleTrigger>
                       <CollapsibleContent className="space-y-1 mt-1 pl-4">
-                        {familyModels.sort((a, b) => a.base_token_cost - b.base_token_cost).map((model) => (
-                          <Button
-                            key={model.record_id}
-                            variant={selectedModel === model.record_id ? "secondary" : "ghost"}
-                            className="w-full justify-start h-auto p-2"
-                            onClick={() => handleModelSelect(model.record_id)}
-                          >
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <span className="font-medium text-sm truncate">
-                                {model.variant_name || model.model_name}
-                              </span>
-                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
-                                <div className="flex items-center gap-0.5">
-                                  <Coins className="w-3 h-3" />
-                                  <span>{model.base_token_cost}</span>
-                                </div>
-                                {model.default_outputs && model.default_outputs > 1 && (
+                        {familyModels.sort((a, b) => a.base_token_cost - b.base_token_cost).map((model) => {
+                          const isSelected = selectedModel === model.record_id;
+                          return (
+                            <Button
+                              key={model.record_id}
+                              variant={isSelected ? "default" : "ghost"}
+                              className={cn(
+                                "w-full justify-start h-auto p-2",
+                                isSelected && "border-2 border-primary"
+                              )}
+                              onClick={() => handleModelSelect(model.record_id)}
+                            >
+                              <div className="flex items-center gap-1.5 w-full min-w-0">
+                                <span className="font-medium text-sm truncate">
+                                  {model.variant_name || model.model_name}
+                                </span>
+                                <div className="flex items-center gap-1.5 text-xs flex-shrink-0">
                                   <div className="flex items-center gap-0.5">
-                                    <ImageIcon className="w-3 h-3" />
-                                    <span>×{model.default_outputs}</span>
+                                    <Coins className="w-3 h-3" />
+                                    <span>{model.base_token_cost}</span>
                                   </div>
+                                  {model.default_outputs && model.default_outputs > 1 && (
+                                    <div className="flex items-center gap-0.5">
+                                      <ImageIcon className="w-3 h-3" />
+                                      <span>×{model.default_outputs}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                {isSelected && (
+                                  <Check className="h-4 w-4 ml-auto flex-shrink-0" />
                                 )}
                               </div>
-                            </div>
-                          </Button>
-                        ))}
+                            </Button>
+                          );
+                        })}
                       </CollapsibleContent>
                     </Collapsible>
                   );

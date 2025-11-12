@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { logger } from '@/lib/logger';
 
 export const useRenderCount = (componentName: string, logThreshold: number = 10) => {
   const renderCount = useRef(0);
@@ -11,19 +12,28 @@ export const useRenderCount = (componentName: string, logThreshold: number = 10)
     const count = renderCount.current;
 
     if (count === 1) {
-      console.log(`[RenderTracker] ${componentName} mounted`);
+      logger.debug('Component mounted', {
+        component: componentName,
+        operation: 'renderTracker'
+      });
     } else {
       const elapsed = Date.now() - startTime.current;
-      console.log(
-        `[RenderTracker] ${componentName} rendered ${count} times (${elapsed}ms since mount)`
-      );
+      logger.debug('Component rendered', {
+        component: componentName,
+        operation: 'renderTracker',
+        renderCount: count,
+        elapsedMs: elapsed
+      });
     }
 
     // Warn if threshold exceeded
     if (count === logThreshold) {
-      console.warn(
-        `⚠️ [RenderTracker] ${componentName} has rendered ${count} times! Consider optimization.`
-      );
+      logger.warn('Component render count exceeded threshold', {
+        component: componentName,
+        operation: 'renderTracker',
+        renderCount: count,
+        threshold: logThreshold
+      });
     }
   });
 

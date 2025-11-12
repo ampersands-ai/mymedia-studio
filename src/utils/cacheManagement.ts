@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Cache Management Utilities
  * Manual cache clearing for admin/troubleshooting
@@ -9,24 +11,41 @@ export async function clearAllCaches() {
       // Unregister service worker
       const registrations = await navigator.serviceWorker.getRegistrations();
       await Promise.all(registrations.map((reg) => reg.unregister()));
-      console.log('[Cache] Service workers unregistered');
+      logger.info('Service workers unregistered', {
+        component: 'cacheManagement',
+        operation: 'clearAllCaches',
+        count: registrations.length
+      });
 
       // Clear all caches
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames.map((name) => caches.delete(name)));
-      console.log('[Cache] All caches deleted');
+      logger.info('All caches deleted', {
+        component: 'cacheManagement',
+        operation: 'clearAllCaches',
+        cacheCount: cacheNames.length
+      });
 
       // Clear storage
       localStorage.clear();
       sessionStorage.clear();
-      console.log('[Cache] Local/session storage cleared');
+      logger.info('Local/session storage cleared', {
+        component: 'cacheManagement',
+        operation: 'clearAllCaches'
+      });
 
-      console.log('✅ All caches cleared successfully');
+      logger.info('All caches cleared successfully', {
+        component: 'cacheManagement',
+        operation: 'clearAllCaches'
+      });
       
       // Reload page
       window.location.reload();
     } catch (error) {
-      console.error('[Cache] Failed to clear caches:', error);
+      logger.error('Failed to clear caches', error as Error, {
+        component: 'cacheManagement',
+        operation: 'clearAllCaches'
+      });
     }
   }
 }
@@ -76,11 +95,19 @@ export async function clearOldCaches(currentVersion: string) {
     
     await Promise.all(
       oldCaches.map(name => {
-        console.log('[Cache] Deleting old cache:', name);
+        logger.debug('Deleting old cache', {
+          component: 'cacheManagement',
+          operation: 'clearOldCaches',
+          cacheName: name
+        });
         return caches.delete(name);
       })
     );
     
-    console.log(`[Cache] Cleared ${oldCaches.length} old cache(s)`);
+    logger.info('Cleared old caches', {
+      component: 'cacheManagement',
+      operation: 'clearOldCaches',
+      count: oldCaches.length
+    });
   }
 }

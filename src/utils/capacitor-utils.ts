@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { StatusBar, Style } from '@capacitor/status-bar';
+import { logger } from '@/lib/logger';
 
 /**
  * Check if the app is running on a native platform (iOS/Android)
@@ -52,7 +53,12 @@ export const triggerHaptic = async (style: 'light' | 'medium' | 'heavy' = 'mediu
     
     await Haptics.impact({ style: impactStyle });
   } catch (error) {
-    console.warn('Haptic feedback not available:', error);
+    logger.warn('Haptic feedback not available', {
+      component: 'capacitor-utils',
+      operation: 'triggerHaptic',
+      style,
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
 };
 
@@ -67,7 +73,12 @@ export const setStatusBarStyle = async (style: 'light' | 'dark') => {
       style: style === 'light' ? Style.Light : Style.Dark 
     });
   } catch (error) {
-    console.warn('Status bar API not available:', error);
+    logger.warn('Status bar API not available', {
+      component: 'capacitor-utils',
+      operation: 'setStatusBarStyle',
+      style,
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
 };
 

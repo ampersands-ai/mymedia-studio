@@ -214,7 +214,12 @@ export const ScenePreviewGenerator = ({
   // Handle async generation result from polling
   useEffect(() => {
     if (pollStatus === 'completed' && pollOutputUrl && lastHandledUrlRef.current !== pollOutputUrl) {
-      console.log('[ScenePreviewGenerator] Async generation completed:', pollOutputUrl);
+      logger.debug('Async generation completed', {
+        component: 'ScenePreviewGenerator',
+        sceneId: scene.id,
+        outputUrl: pollOutputUrl.substring(0, 100),
+        operation: 'asyncGenerationMonitor'
+      });
       lastHandledUrlRef.current = pollOutputUrl;
       onImageGenerated(scene.id, pollOutputUrl);
       setIsAsyncGeneration(false);
@@ -268,8 +273,12 @@ export const ScenePreviewGenerator = ({
   // DEBUG: Confirm what ends up in the dropdown
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.log('[ScenePreviewGenerator] Mode:', generationMode);
-      console.log('[ScenePreviewGenerator] Available models:', availableModels.map(m => ({ id: m.id, name: m.model_name, type: m.content_type })));
+      logger.debug('Model dropdown populated (dev)', {
+        component: 'ScenePreviewGenerator',
+        generationMode,
+        availableModels: availableModels.map(m => ({ id: m.id, name: m.model_name, type: m.content_type })),
+        operation: 'debugModelDropdown'
+      });
     }
   }, [availableModels, generationMode]);
 

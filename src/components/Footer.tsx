@@ -3,12 +3,16 @@ import { Twitter, Linkedin, Youtube, Instagram, Facebook } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
+import { logger } from "@/lib/logger";
 
 export const Footer = () => {
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Integrate with email service (Mailchimp/ConvertKit/Loops)
-    console.log("Newsletter signup");
+    logger.debug('Newsletter signup attempted', {
+      component: 'Footer',
+      operation: 'handleNewsletterSubmit'
+    });
   };
 
   return (

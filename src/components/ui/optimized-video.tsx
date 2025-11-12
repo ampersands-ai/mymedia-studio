@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { detectConnectionSpeed, getPreloadStrategy, getPreloadMargin } from '@/lib/supabase-videos';
+import { logger } from '@/lib/logger';
 
 interface OptimizedVideoProps {
   src: string;
@@ -59,7 +60,11 @@ export function OptimizedVideo({
       videoRef.current.play()
         .then(() => setIsPlaying(true))
         .catch(err => {
-          console.warn('Autoplay blocked:', err);
+          logger.warn('Autoplay blocked', {
+            component: 'OptimizedVideo',
+            operation: 'autoPlay',
+            error: err instanceof Error ? err.message : String(err)
+          });
         });
     } else {
       videoRef.current.pause();
@@ -88,7 +93,11 @@ export function OptimizedVideo({
     if (isHovering) {
       videoRef.current.play()
         .then(() => setIsPlaying(true))
-        .catch(err => console.warn('Hover play blocked:', err));
+        .catch(err => logger.warn('Hover play blocked', {
+          component: 'OptimizedVideo',
+          operation: 'hoverPlay',
+          error: err instanceof Error ? err.message : String(err)
+        }));
     } else {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
@@ -105,7 +114,10 @@ export function OptimizedVideo({
     } else {
       videoRef.current.play()
         .then(() => setIsPlaying(true))
-        .catch(err => console.error('Play failed:', err));
+        .catch(err => logger.error('Play failed', err as Error, {
+          component: 'OptimizedVideo',
+          operation: 'handlePlayPause'
+        }));
     }
   };
 
@@ -150,7 +162,11 @@ export function OptimizedVideo({
         controls={controls}
         onLoadedData={() => setIsLoaded(true)}
         onError={(e) => {
-          console.error('Video load error:', e);
+          logger.error('Video load error', new Error('Failed to load video'), {
+            component: 'OptimizedVideo',
+            operation: 'videoElement',
+            src: src.substring(0, 100)
+          });
           setLoadError(true);
         }}
         className={`w-full h-full object-cover ${isLoaded ? 'block' : 'hidden'}`}

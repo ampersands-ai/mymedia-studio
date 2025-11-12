@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Client-side video poster frame extraction utilities
  * Generates thumbnail images from video first frame
@@ -55,7 +57,11 @@ export async function extractPosterFrame(
         cleanup();
         resolve(posterUrl);
       } catch (error) {
-        console.error('Failed to extract poster frame:', error);
+        logger.error('Failed to extract poster frame', error as Error, {
+          component: 'video-poster',
+          operation: 'extractPosterFrame',
+          videoUrl: videoUrl.substring(0, 100)
+        });
         cleanup();
         resolve(null);
       }
@@ -64,7 +70,11 @@ export async function extractPosterFrame(
     video.onerror = () => {
       if (resolved) return;
       resolved = true;
-      console.error('Video load error during poster extraction');
+      logger.error('Video load error during poster extraction', new Error('Video failed to load'), {
+        component: 'video-poster',
+        operation: 'extractPosterFrame',
+        videoUrl: videoUrl.substring(0, 100)
+      });
       cleanup();
       resolve(null);
     };
@@ -145,7 +155,11 @@ export class PosterCache {
         JSON.stringify(cacheEntry)
       );
     } catch (error) {
-      console.warn('Failed to cache poster:', error);
+      logger.warn('Failed to cache poster', {
+        component: 'PosterCache',
+        operation: 'set',
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   }
   
@@ -168,7 +182,11 @@ export class PosterCache {
       
       return entry.poster;
     } catch (error) {
-      console.warn('Failed to retrieve cached poster:', error);
+      logger.warn('Failed to retrieve cached poster', {
+        component: 'PosterCache',
+        operation: 'get',
+        error: error instanceof Error ? error.message : String(error)
+      });
       return null;
     }
   }
@@ -179,7 +197,11 @@ export class PosterCache {
         this.CACHE_PREFIX + this.hashUrl(videoUrl)
       );
     } catch (error) {
-      console.warn('Failed to remove cached poster:', error);
+      logger.warn('Failed to remove cached poster', {
+        component: 'PosterCache',
+        operation: 'remove',
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   }
   
@@ -192,7 +214,11 @@ export class PosterCache {
         }
       });
     } catch (error) {
-      console.warn('Failed to clear poster cache:', error);
+      logger.warn('Failed to clear poster cache', {
+        component: 'PosterCache',
+        operation: 'clear',
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   }
   

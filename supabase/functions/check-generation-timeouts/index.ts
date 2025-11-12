@@ -24,7 +24,18 @@ serve(async (req) => {
     
     const { data: stuckGenerations, error: queryError } = await supabase
       .from('generations')
-      .select('id, user_id, status, created_at, model_name, prompt')
+      .select(`
+        id, 
+        user_id, 
+        status, 
+        created_at, 
+        prompt,
+        model_record_id,
+        ai_models!inner(
+          model_name,
+          provider
+        )
+      `)
       .eq('status', 'processing')
       .lt('created_at', fiveMinutesAgo);
 
@@ -80,7 +91,8 @@ serve(async (req) => {
             generation_id: gen.id,
             user_id: gen.user_id,
             elapsed_minutes: elapsedMinutes,
-            model_name: gen.model_name,
+            model_name: (gen as any).ai_models?.model_name || 'Unknown',
+            provider: (gen as any).ai_models?.provider || 'Unknown',
             user_email: emailMap.get(gen.user_id),
             prompt: gen.prompt,
           }

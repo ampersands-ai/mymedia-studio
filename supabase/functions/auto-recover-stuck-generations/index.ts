@@ -26,7 +26,16 @@ serve(async (req) => {
     
     const { data: stuckGenerations, error } = await supabase
       .from('generations')
-      .select('id, provider, provider_task_id, created_at')
+      .select(`
+        id, 
+        provider_task_id, 
+        created_at,
+        model_record_id,
+        ai_models!inner(
+          provider,
+          model_name
+        )
+      `)
       .eq('status', 'processing')
       .not('provider_task_id', 'is', null)
       .lt('created_at', threeMinutesAgo)
@@ -65,24 +74,26 @@ serve(async (req) => {
 
     // Process each stuck generation using unified recovery
     for (const generation of stuckGenerations) {
+      const provider = (generation as any).ai_models?.provider || 'unknown';
+      
       webhookLogger.info('Attempting recovery', { 
         generationId: generation.id,
-        provider: generation.provider 
+        provider 
       });
       
       try {
-        const providerConfig = getProviderConfig(generation.provider);
+        const providerConfig = getProviderConfig(provider);
         
         // Check if provider supports recovery
         if (!providerConfig?.recovery) {
           webhookLogger.info('No recovery support', {
             generationId: generation.id,
-            provider: generation.provider
+            provider
           });
           results.no_recovery++;
           results.generations.push({
             id: generation.id,
-            provider: generation.provider,
+            provider,
             status: 'no_recovery_support'
           });
           continue;
@@ -103,7 +114,7 @@ serve(async (req) => {
           results.failed++;
           results.generations.push({
             id: generation.id,
-            provider: generation.provider,
+            provider,
             status: 'failed',
             error: recoveryError.message
           });
@@ -111,7 +122,7 @@ serve(async (req) => {
           results.recovered++;
           results.generations.push({
             id: generation.id,
-            provider: generation.provider,
+            provider,
             status: 'recovered'
           });
           webhookLogger.success(generation.id, { recovered: true });
@@ -119,7 +130,7 @@ serve(async (req) => {
           results.still_processing++;
           results.generations.push({
             id: generation.id,
-            provider: generation.provider,
+            provider,
             status: 'still_processing'
           });
           webhookLogger.info('Still processing', { generationId: generation.id });
@@ -131,7 +142,7 @@ serve(async (req) => {
         results.failed++;
         results.generations.push({
           id: generation.id,
-          provider: generation.provider,
+          provider,
           status: 'error',
           error: err.message
         });

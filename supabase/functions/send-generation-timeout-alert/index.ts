@@ -22,7 +22,7 @@ serve(async (req) => {
     );
 
     const body = await req.json();
-    const { generation_id, elapsed_minutes, model_name, user_email, prompt } = body;
+    const { generation_id, elapsed_minutes, model_name, provider, user_email, prompt } = body;
 
     // Get admin email from settings
     const { data: settings } = await supabase
@@ -54,6 +54,7 @@ serve(async (req) => {
             <p><strong>What happened?</strong><br/>A generation has been running for over 5 minutes without completion.</p>
             <p><strong>Generation ID:</strong><br/>${generation_id}</p>
             <p><strong>Elapsed Time:</strong><br/>${elapsed_minutes} minutes</p>
+            <p><strong>Provider:</strong><br/>${provider || 'Unknown'}</p>
             <p><strong>Model:</strong><br/>${model_name || 'Unknown'}</p>
             ${user_email ? `<p><strong>User:</strong><br/>${user_email}</p>` : ''}
             ${prompt ? `<p><strong>Prompt:</strong><br/>${prompt.substring(0, 200)}${prompt.length > 200 ? '...' : ''}</p>` : ''}
@@ -111,6 +112,7 @@ Recommended Actions:
       metadata: {
         generation_id,
         elapsed_minutes,
+        provider,
         model_name,
         alert_sent: true,
       }

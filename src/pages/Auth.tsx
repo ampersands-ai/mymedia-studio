@@ -137,6 +137,7 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [countryCode, setCountryCode] = useState("+1");
@@ -177,6 +178,7 @@ const Auth = () => {
         const result = signupSchema.safeParse({
           email,
           password,
+          confirmPassword,
           firstName,
           lastName,
           phoneNumber: phoneNumber ? `${countryCode}${phoneNumber}` : "",
@@ -503,7 +505,7 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
-                      setValidationErrors(prev => ({ ...prev, password: "" }));
+                      setValidationErrors(prev => ({ ...prev, password: "", confirmPassword: "" }));
                     }}
                     required
                     className={cn(
@@ -515,6 +517,30 @@ const Auth = () => {
                     <p className="text-sm text-red-600 flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
                       {validationErrors.password}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="font-bold">Confirm Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      setValidationErrors(prev => ({ ...prev, confirmPassword: "" }));
+                    }}
+                    required
+                    className={cn(
+                      "border-3 border-black brutal-shadow h-12 font-medium",
+                      validationErrors.confirmPassword && "border-red-500"
+                    )}
+                  />
+                  {validationErrors.confirmPassword && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {validationErrors.confirmPassword}
                     </p>
                   )}
                 </div>

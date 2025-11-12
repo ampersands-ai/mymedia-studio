@@ -16,10 +16,10 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
   const [isExpanded, setIsExpanded] = useState(true);
 
   const checklistItems = [
-    { key: 'viewedTemplates', label: 'View template gallery', completed: progress.checklist.viewedTemplates },
-    { key: 'selectedTemplate', label: 'Select a template', completed: progress.checklist.selectedTemplate },
-    { key: 'enteredPrompt', label: 'Enter your prompt', completed: progress.checklist.enteredPrompt },
-    { key: 'viewedTokenCost', label: 'Review credit cost', completed: progress.checklist.viewedTokenCost },
+    { key: 'viewedTemplates', label: 'Explore creation options', completed: progress.checklist.viewedTemplates },
+    { key: 'selectedTemplate', label: 'Choose how to create', completed: progress.checklist.selectedTemplate },
+    { key: 'enteredPrompt', label: 'Describe what you want to create', completed: progress.checklist.enteredPrompt },
+    { key: 'viewedTokenCost', label: 'Check your credit balance', completed: progress.checklist.viewedTokenCost },
     { key: 'completedFirstGeneration', label: 'Generate your first creation', completed: progress.checklist.completedFirstGeneration },
     { key: 'viewedResult', label: 'View the result', completed: progress.checklist.viewedResult },
     { key: 'downloadedResult', label: 'Download your creation', completed: progress.checklist.downloadedResult },
@@ -94,7 +94,7 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
                   <span
                     className={cn(
                       "text-sm flex-1",
-                      item.completed ? "font-semibold text-neutral-900" : "text-neutral-600"
+                      item.completed ? "font-semibold text-neutral-900" : "font-medium text-neutral-800"
                     )}
                   >
                     {item.label}

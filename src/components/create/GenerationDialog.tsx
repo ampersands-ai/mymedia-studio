@@ -84,20 +84,11 @@ export const GenerationDialog = ({
               </div>
               
               {/* Token Cost Preview */}
-              {(() => {
-                const baseCost = selectedTemplate?.ai_models?.base_token_cost || 0;
-                // Track viewed token cost on render
-                if (onboardingProgress && !onboardingProgress.checklist.viewedTokenCost && updateOnboardingProgress && baseCost > 0) {
-                  setTimeout(() => updateOnboardingProgress({ viewedTokenCost: true }), 1000);
-                }
-                return (
-                  <TokenCostPreview
-                    baseCost={baseCost}
-                    totalCost={baseCost}
-                    userTokens={userTokens}
-                  />
-                );
-              })()}
+              <TokenCostPreview
+                baseCost={selectedTemplate?.ai_models?.base_token_cost || 0}
+                totalCost={selectedTemplate?.ai_models?.base_token_cost || 0}
+                userTokens={userTokens}
+              />
               
               <div className="flex gap-2">
                 <Button

@@ -53,10 +53,14 @@ export const nameSchema = z
 export const signupSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
+  confirmPassword: z.string().min(1, { message: "Please confirm your password" }),
   firstName: nameSchema,
   lastName: nameSchema,
   phoneNumber: phoneSchema,
   zipcode: zipcodeSchema,
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
 export const loginSchema = z.object({

@@ -82,6 +82,11 @@ const CustomCreation = () => {
         updateProgress({ completedFirstGeneration: true });
         setFirstGeneration(outputs[0]?.id || '');
       }
+      
+      // Track viewing result
+      if (progress && !progress.checklist.viewedResult && outputs.length > 0) {
+        updateProgress({ viewedResult: true });
+      }
 
       // Auto-scroll to output on mobile
       setTimeout(() => {

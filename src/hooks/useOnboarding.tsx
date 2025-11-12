@@ -9,13 +9,13 @@ export interface OnboardingProgress {
   isComplete: boolean;
   dismissed: boolean;
   checklist: {
-    viewedTemplates: boolean;
-    selectedTemplate: boolean;
-    enteredPrompt: boolean;
-    viewedTokenCost: boolean;
-    completedFirstGeneration: boolean;
-    viewedResult: boolean;
-    downloadedResult: boolean;
+    viewedTemplates: boolean; // Track when user lands on Create page
+    selectedTemplate: boolean; // Track when user selects a template OR model
+    enteredPrompt: boolean; // Track when user enters prompt (>10 chars)
+    viewedTokenCost: boolean; // Track when user views generation dialog with cost
+    completedFirstGeneration: boolean; // Track when first generation completes
+    viewedResult: boolean; // Track when user views output
+    downloadedResult: boolean; // Track when user downloads result
   };
   completedCount: number;
   totalCount: number;

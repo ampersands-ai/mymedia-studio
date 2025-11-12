@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useTemplatesByCategory } from "@/hooks/useTemplates";
@@ -53,6 +53,11 @@ const Create = () => {
         onboardingFlow.setFirstGeneration(pollingId!);
         onboardingFlow.setShowConfetti(true);
       }
+      
+      // Track viewing result
+      if (onboardingFlow.progress && !onboardingFlow.progress.checklist.viewedResult && outputs.length > 0) {
+        onboardingFlow.updateProgress({ viewedResult: true });
+      }
     },
     onError: (error) => {
       toast.error('Generation failed', { 
@@ -96,14 +101,27 @@ const Create = () => {
   // SEO
   useSEO(CREATE_PAGE_SEO);
   
+  // Track viewing template gallery
+  useEffect(() => {
+    if (onboardingFlow.progress && !onboardingFlow.progress.checklist.viewedTemplates) {
+      onboardingFlow.updateProgress({ viewedTemplates: true });
+    }
+  }, [onboardingFlow.progress, onboardingFlow.updateProgress]);
+  
   // Handlers
   const handleTemplateSelect = (template: ContentTemplate) => {
     setTemplate(template);
     resetGenerationState();
     setDialogOpen(true);
     
+    // Track template selection
     if (onboardingFlow.progress && !onboardingFlow.progress.checklist.selectedTemplate) {
       onboardingFlow.updateProgress({ selectedTemplate: true });
+    }
+    
+    // Track viewed token cost when dialog opens
+    if (onboardingFlow.progress && !onboardingFlow.progress.checklist.viewedTokenCost) {
+      onboardingFlow.updateProgress({ viewedTokenCost: true });
     }
   };
   

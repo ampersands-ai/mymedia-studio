@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database, FileText, Zap, TrendingUp, Users } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -92,7 +93,10 @@ export default function AdminDashboard() {
           setCommunityEnabled((communitySettings.setting_value as { enabled: boolean }).enabled === true);
         }
       } catch (error) {
-        console.error("Error fetching stats:", error);
+        logger.error("Failed to fetch dashboard stats", error as Error, { 
+          component: 'AdminDashboard',
+          operation: 'fetchStats'
+        });
       }
     };
 
@@ -115,7 +119,11 @@ export default function AdminDashboard() {
       setCommunityEnabled(checked);
       toast.success(`Community ${checked ? 'enabled' : 'disabled'} successfully`);
     } catch (error) {
-      console.error("Error updating community setting:", error);
+      logger.error("Failed to update community setting", error as Error, { 
+        component: 'AdminDashboard',
+        operation: 'handleCommunityToggle',
+        checked
+      });
       toast.error("Failed to update community setting");
     } finally {
       setLoadingCommunityToggle(false);

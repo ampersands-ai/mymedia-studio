@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -40,7 +41,10 @@ export default function EmailSettings() {
         setSettings({ admin_notifications: data.setting_value as any });
       }
     } catch (error: any) {
-      console.error('Error loading settings:', error);
+      logger.error('Failed to load email settings', error as Error, { 
+        component: 'EmailSettings',
+        operation: 'loadSettings'
+      });
       toast.error('Failed to load email settings');
     }
   };
@@ -59,7 +63,10 @@ export default function EmailSettings() {
       if (error) throw error;
       toast.success('Email settings saved successfully');
     } catch (error: any) {
-      console.error('Error saving settings:', error);
+      logger.error('Failed to save email settings', error as Error, { 
+        component: 'EmailSettings',
+        operation: 'handleSave'
+      });
       toast.error('Failed to save email settings');
     } finally {
       setLoading(false);
@@ -81,7 +88,10 @@ export default function EmailSettings() {
       if (error) throw error;
       toast.success('Test email sent! Check your inbox.');
     } catch (error: any) {
-      console.error('Error sending test email:', error);
+      logger.error('Failed to send test email', error as Error, { 
+        component: 'EmailSettings',
+        operation: 'handleTestEmail'
+      });
       toast.error('Failed to send test email');
     } finally {
       setTestingEmail(false);

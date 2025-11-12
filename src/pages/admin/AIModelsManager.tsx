@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -88,7 +89,11 @@ export default function AIModelsManager() {
         
         if (isRLSError) {
           toast.error("Access denied. Please ensure you have admin privileges.");
-          console.error("RLS policy blocked access:", error);
+          logger.error("RLS policy blocked access to AI models", error as Error, { 
+            component: 'AIModelsManager',
+            operation: 'fetchModels',
+            errorCode: error.code
+          });
         } else {
           throw error;
         }
@@ -97,7 +102,10 @@ export default function AIModelsManager() {
       
       setModels(data || []);
     } catch (error) {
-      console.error("Error fetching models:", error);
+      logger.error("Failed to fetch AI models", error as Error, { 
+        component: 'AIModelsManager',
+        operation: 'fetchModels'
+      });
       toast.error("Failed to load AI models");
     } finally {
       setLoading(false);
@@ -116,7 +124,12 @@ export default function AIModelsManager() {
       toast.success(`Model ${!currentStatus ? "enabled" : "disabled"}`);
       fetchModels();
     } catch (error) {
-      console.error("Error toggling model status:", error);
+      logger.error("Failed to toggle model status", error as Error, { 
+        component: 'AIModelsManager',
+        operation: 'toggleModelStatus',
+        recordId,
+        currentStatus
+      });
       toast.error("Failed to update model status");
     }
   };
@@ -137,7 +150,11 @@ export default function AIModelsManager() {
       toast.success("Model deleted successfully");
       fetchModels();
     } catch (error) {
-      console.error("Error deleting model:", error);
+      logger.error("Failed to delete model", error as Error, { 
+        component: 'AIModelsManager',
+        operation: 'handleDelete',
+        recordId
+      });
       toast.error("Failed to delete model");
     }
   };
@@ -181,7 +198,10 @@ export default function AIModelsManager() {
       toast.success("All models enabled");
       fetchModels();
     } catch (error) {
-      console.error("Error enabling all models:", error);
+      logger.error("Failed to enable all models", error as Error, { 
+        component: 'AIModelsManager',
+        operation: 'handleEnableAll'
+      });
       toast.error("Failed to enable all models");
     }
   };
@@ -199,7 +219,10 @@ export default function AIModelsManager() {
       toast.success("All models disabled");
       fetchModels();
     } catch (error) {
-      console.error("Error disabling all models:", error);
+      logger.error("Failed to disable all models", error as Error, { 
+        component: 'AIModelsManager',
+        operation: 'handleDisableAll'
+      });
       toast.error("Failed to disable all models");
     }
   };

@@ -6,6 +6,7 @@ import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
 import { BookOpen, Calendar, User } from "lucide-react";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 const Blog = () => {
   const [email, setEmail] = useState("");
@@ -26,7 +27,11 @@ const Blog = () => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    console.log("Newsletter signup:", email);
+    logger.info("Newsletter signup submitted", { 
+      component: 'Blog',
+      operation: 'handleSubscribe',
+      email
+    });
     toast.success("Thanks for subscribing! We'll notify you when we publish.");
     setEmail("");
     setIsSubmitting(false);

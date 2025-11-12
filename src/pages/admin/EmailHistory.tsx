@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -58,7 +59,10 @@ export const EmailHistory = () => {
       if (error) throw error;
       setEmails(data || []);
     } catch (error) {
-      console.error('Error fetching email history:', error);
+      logger.error('Failed to fetch email history', error as Error, { 
+        component: 'EmailHistory',
+        operation: 'fetchEmailHistory'
+      });
       toast.error('Failed to load email history');
     } finally {
       setLoading(false);

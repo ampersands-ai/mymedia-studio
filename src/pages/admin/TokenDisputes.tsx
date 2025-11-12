@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -173,7 +174,12 @@ export const TokenDisputes = () => {
 
         const { data, error } = await query;
         if (error) {
-          console.error('Error fetching disputes:', error);
+          logger.error('Failed to fetch token disputes', error as Error, { 
+            component: 'TokenDisputes',
+            operation: 'fetchDisputes',
+            statusFilter,
+            viewMode
+          });
           throw error;
         }
         return data as unknown as TokenDispute[];
@@ -204,7 +210,10 @@ export const TokenDisputes = () => {
     },
     onError: (error) => {
       toast.error('Failed to update dispute');
-      console.error(error);
+      logger.error('Failed to update dispute', error as Error, { 
+        component: 'TokenDisputes',
+        operation: 'updateDispute'
+      });
     },
   });
 
@@ -253,7 +262,10 @@ export const TokenDisputes = () => {
     },
     onError: (error) => {
       toast.error(`Failed to refund credits: ${error.message}`);
-      console.error(error);
+      logger.error('Failed to refund credits', error as Error, { 
+        component: 'TokenDisputes',
+        operation: 'refundTokens'
+      });
     },
   });
 
@@ -328,7 +340,10 @@ export const TokenDisputes = () => {
     },
     onError: (error) => {
       toast.error(`Failed to process bulk action: ${error.message}`);
-      console.error(error);
+      logger.error('Failed to process bulk dispute action', error as Error, { 
+        component: 'TokenDisputes',
+        operation: 'bulkUpdateDisputes'
+      });
     },
   });
 

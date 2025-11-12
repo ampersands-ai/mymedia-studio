@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { logger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -119,7 +120,12 @@ const Templates = () => {
             return createSignedUrl('generated-content', cleanPath);
           }
         } catch (error) {
-          console.warn('Failed to generate signed URL for:', url, error);
+          logger.warn('Failed to generate signed URL for template', { 
+            component: 'Templates',
+            operation: 'generateSignedUrls',
+            url,
+            error: (error as Error).message
+          });
         }
         return null;
       };

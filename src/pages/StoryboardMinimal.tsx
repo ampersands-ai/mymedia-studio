@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { MinimalSidebar } from '@/components/MinimalSidebar';
 import { GlassCard } from '@/components/glass/GlassCard';
 import { GlassButton } from '@/components/glass/GlassButton';
@@ -78,7 +79,14 @@ export default function StoryboardMinimal() {
       });
       toast.success('Storyboard generated!');
     } catch (error: any) {
-      console.error('Generate error:', error);
+      logger.error('Failed to generate storyboard', error as Error, { 
+        component: 'StoryboardMinimal',
+        operation: 'handleGenerateStoryboard',
+        topic,
+        duration,
+        style,
+        tone
+      });
     }
   };
 
@@ -87,7 +95,11 @@ export default function StoryboardMinimal() {
       await renderVideo();
       toast.success('Video rendering started!');
     } catch (error: any) {
-      console.error('Render error:', error);
+      logger.error('Failed to render video', error as Error, { 
+        component: 'StoryboardMinimal',
+        operation: 'handleRenderVideo',
+        storyboardId: storyboard?.id
+      });
     }
   };
 

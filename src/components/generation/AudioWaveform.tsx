@@ -1,4 +1,5 @@
 import { Music } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 interface AudioWaveformProps {
   audioUrl: string;
@@ -24,7 +25,12 @@ export const AudioWaveform = ({ audioUrl, className }: AudioWaveformProps) => {
         preload="metadata"
         className="w-full"
         onError={(e) => {
-          console.error('Audio playback error:', e);
+          logger.error('Audio playback failed', new Error('Audio element error'), {
+            component: 'AudioWaveform',
+            audioUrl,
+            errorType: 'playback_error',
+            eventType: e.type
+          });
         }}
       />
     </div>

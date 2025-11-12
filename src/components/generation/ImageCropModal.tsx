@@ -7,6 +7,7 @@ import { AspectRatioSelector } from "./AspectRatioSelector";
 import { getCroppedImg, Area } from "@/utils/crop-canvas";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { logger } from '@/lib/logger';
 
 interface ImageCropModalProps {
   open: boolean;
@@ -52,7 +53,13 @@ export const ImageCropModal = ({
       toast.success("Image cropped successfully!");
       onOpenChange(false);
     } catch (error) {
-      console.error("Error cropping image:", error);
+      logger.error('Image crop processing failed', error as Error, {
+        component: 'ImageCropModal',
+        imageUrl: imageUrl.substring(0, 50),
+        rotation,
+        zoom,
+        aspectRatio
+      });
       toast.error("Failed to crop image");
     } finally {
       setIsProcessing(false);

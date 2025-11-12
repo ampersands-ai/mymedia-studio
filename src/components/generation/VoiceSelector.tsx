@@ -12,6 +12,7 @@ import { VOICE_DATABASE, VoiceData, getVoiceById } from '@/lib/voice-mapping';
 import { useAzureVoices, useAzureVoiceFilters, AzureVoice } from '@/hooks/useAzureVoices';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 
 interface VoiceSelectorProps {
   selectedValue: string;              // voice_id for highlighting selected voice
@@ -212,7 +213,11 @@ export function VoiceSelector({ selectedValue, onSelectVoice, disabled, showAzur
       const audio = new Audio(previewUrl);
       
       audio.play().catch(err => {
-        console.error('Error playing audio preview:', err);
+        logger.error('Voice preview playback failed', err, {
+          component: 'VoiceSelector',
+          voiceId,
+          previewUrl: previewUrl?.substring(0, 50)
+        });
         toast.error('Playback error', {
           description: 'Failed to play audio preview.'
         });
@@ -226,7 +231,11 @@ export function VoiceSelector({ selectedValue, onSelectVoice, disabled, showAzur
         audioRef.current = null;
       };
     } catch (error) {
-      console.error('Error in handlePreview:', error);
+      logger.error('Voice preview initialization failed', error as Error, {
+        component: 'VoiceSelector',
+        voiceId,
+        hasPreviewUrl: !!previewUrl
+      });
     }
   };
 

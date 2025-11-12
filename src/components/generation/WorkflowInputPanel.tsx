@@ -20,6 +20,7 @@ import { WorkflowPromptInput } from "./WorkflowPromptInput";
 import { useWorkflowSurpriseMe } from "@/hooks/useWorkflowSurpriseMe";
 import { usePromptEnhancement } from "@/hooks/usePromptEnhancement";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { logger } from '@/lib/logger';
 
 interface WorkflowInputPanelProps {
   workflow: WorkflowTemplate;
@@ -108,7 +109,13 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
 
       if (uploadError) {
         toast.error(`Failed to upload: ${file.name}`);
-        console.error('Upload error:', uploadError);
+        logger.error('Workflow file upload failed', uploadError as Error, {
+          component: 'WorkflowInputPanel',
+          fieldName,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type
+        });
         return;
       }
 
@@ -152,13 +159,14 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
     // Check if target parameter expects an array
     const expectsArray = targetParameterSchema?.type === 'array';
 
-    console.log('🔍 Array detection:', {
+    logger.debug('Workflow parameter array detection', {
+      component: 'WorkflowInputPanel',
       userInputField: fieldName,
       targetParameter: targetParameterName,
       targetSchemaType: targetParameterSchema?.type,
       expectsArray,
       storingAs: expectsArray ? 'array' : 'single',
-      imageUrls
+      imageCount: imageUrls.length
     });
 
       // Store as array or single value based on target parameter type

@@ -45,6 +45,7 @@ export function ParameterDialog({
     type: 'string',
     required: false,
     showToUser: true,
+    isAdvanced: false,
   });
   const [enumInput, setEnumInput] = useState('');
   const [enumList, setEnumList] = useState<any[]>([]);
@@ -61,6 +62,7 @@ export function ParameterDialog({
         type: 'string',
         required: false,
         showToUser: true,
+        isAdvanced: false,
       });
       setEnumList([]);
     }
@@ -249,6 +251,25 @@ export function ParameterDialog({
             </div>
             <p className="text-xs text-muted-foreground">
               When unchecked, this parameter will be hidden from end users
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="block">Advanced Options</Label>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="isAdvanced"
+                checked={formData.isAdvanced === true}
+                onCheckedChange={(checked) => 
+                  setFormData({ ...formData, isAdvanced: checked as boolean })
+                }
+              />
+              <label htmlFor="isAdvanced" className="text-sm cursor-pointer">
+                Show in Advanced Options panel
+              </label>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              When checked, this parameter will appear under "Advanced Options"
             </p>
           </div>
 

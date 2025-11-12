@@ -13,6 +13,7 @@ export interface Parameter {
   items?: { type: string; format?: string };
   format?: string;
   showToUser?: boolean; // Control visibility in end-user forms (default: true)
+  isAdvanced?: boolean; // Show in Advanced Options panel (default: false)
 }
 
 /**
@@ -46,7 +47,8 @@ export function parseSchema(schema: Record<string, any>): Parameter[] {
       maxLength: prop.maxLength,
       items: prop.items,
       format: prop.format,
-      showToUser: prop.showToUser !== undefined ? prop.showToUser : true // Default to true for backward compatibility
+      showToUser: prop.showToUser !== undefined ? prop.showToUser : true, // Default to true for backward compatibility
+      isAdvanced: prop.isAdvanced === true // Default to false for backward compatibility
     });
   });
 
@@ -105,6 +107,11 @@ export function generateSchema(parameters: Parameter[]): Record<string, any> {
     // Save showToUser flag (only if explicitly set to false, to keep backward compatibility)
     if (param.showToUser === false) {
       property.showToUser = false;
+    }
+
+    // Save isAdvanced flag (only if explicitly set to true)
+    if (param.isAdvanced === true) {
+      property.isAdvanced = true;
     }
 
     schema.properties[param.name] = property;

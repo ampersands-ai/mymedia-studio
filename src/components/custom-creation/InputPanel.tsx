@@ -444,35 +444,26 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
         {/* Render remaining parameters based on count */}
         {(() => {
-          // Fields that should always stay in advanced options
-          const alwaysAdvancedFields = [
-            'negative_prompt', 'negativePrompt', 'negative', 
-            'style_preset', 'stylePreset',
-            'guidance_scale', 'guidanceScale',
-            'num_inference_steps', 'numInferenceSteps', 'steps',
-            'seed', 'random_seed',
-            'cfg_scale', 'cfgScale'
-          ];
-          
           const availableProperties = Object.keys(modelSchema?.properties || {}).filter(
             (key) => !excludeFields.includes(key)
           );
           
-          // Split into always-advanced and flexible parameters
-          const alwaysAdvanced = availableProperties.filter(key => 
-            alwaysAdvancedFields.includes(key)
-          );
-          const flexibleParams = availableProperties.filter(key => 
-            !alwaysAdvancedFields.includes(key)
+          // Get parameters that should be in Advanced Options based on schema
+          const advancedParams = availableProperties.filter(key => {
+            const prop = modelSchema.properties[key];
+            return prop?.isAdvanced === true;
+          });
+
+          // Get remaining flexible parameters (not excluded, not advanced)
+          const flexibleParams = availableProperties.filter(
+            (key) => !advancedParams.includes(key)
           );
           
           // Show flexible parameters outside if less than 3
           const showOutside = flexibleParams.length > 0 && flexibleParams.length < 3;
           
-          // Show advanced panel if:
-          // 1. There are any always-advanced fields (like negative_prompt), OR
-          // 2. There are 3+ flexible parameters that should go in advanced
-          const showAdvancedPanel = alwaysAdvanced.length > 0 || flexibleParams.length >= 3;
+          // Only show Advanced Options panel if there are advanced params OR 3+ flexible params
+          const showAdvancedPanel = advancedParams.length > 0 || flexibleParams.length >= 3;
           
           return (
             <>

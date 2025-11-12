@@ -24,12 +24,14 @@ export const PROVIDERS: Record<string, ProviderConfig> = {
   'runware': {
     name: 'Runware',
     webhook: '/functions/v1/webhooks/runware-webhook',
+    recovery: '/functions/v1/recovery/recover-runware-generation',
     supports: ['image', 'video'],
     requiresWebhook: false // Sync provider
   },
   'midjourney': {
     name: 'Midjourney',
-    webhook: '/functions/v1/webhooks/kie-webhook', // Uses KIE webhook
+    webhook: '/functions/v1/webhooks/midjourney-webhook',
+    recovery: '/functions/v1/recovery/recover-kie-generation', // Uses KIE recovery
     supports: ['image'],
     requiresWebhook: true
   }

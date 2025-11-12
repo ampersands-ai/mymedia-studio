@@ -75,48 +75,67 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
         setPollingId(null);
 
         if (parentData.status === 'completed') {
-          // Fetch child generations (batch outputs) with model info
-          const { data: childrenData } = await supabase
-            .from('generations')
-            .select(`
-              id, 
-              storage_path, 
-              output_index, 
-              type,
-              provider_task_id,
-              model_id,
-              model_record_id,
-              ai_models!inner(provider)
-            `)
-            .eq('parent_generation_id', generationId)
-            .eq('type', parentData.type)
-            .order('output_index', { ascending: true });
+          // Retry logic for child generations
+          let retryCount = 0;
+          const maxRetries = 3;
+          const retryDelay = 2000; // 2 seconds
+          
+          let validOutputs: GenerationOutput[] = [];
+          
+          // Retry loop for fetching children
+          while (retryCount <= maxRetries) {
+            const { data: childrenData } = await supabase
+              .from('generations')
+              .select(`
+                id, 
+                storage_path, 
+                output_index, 
+                type,
+                provider_task_id,
+                model_id,
+                model_record_id,
+                ai_models!inner(provider)
+              `)
+              .eq('parent_generation_id', generationId)
+              .eq('type', parentData.type)
+              .order('output_index', { ascending: true });
 
-          // Extract provider from nested model data
-          const parentProvider = (parentData.ai_models as any)?.provider || null;
+            // Extract provider from nested model data
+            const parentProvider = (parentData.ai_models as any)?.provider || null;
 
-          // Build all outputs (parent + children)
-          const allOutputs: GenerationOutput[] = [
-            {
-              id: parentData.id,
-              storage_path: parentData.storage_path,
-              output_index: 0,
-              provider_task_id: parentData.provider_task_id,
-              model_id: parentData.model_id,
-              provider: parentProvider
-            },
-            ...(childrenData || []).map((child: any) => ({
-              id: child.id,
-              storage_path: child.storage_path,
-              output_index: child.output_index,
-              provider_task_id: child.provider_task_id,
-              model_id: child.model_id,
-              provider: child.ai_models?.provider || null
-            }))
-          ];
+            // Build all outputs (parent + children)
+            const allOutputs: GenerationOutput[] = [
+              {
+                id: parentData.id,
+                storage_path: parentData.storage_path,
+                output_index: 0,
+                provider_task_id: parentData.provider_task_id,
+                model_id: parentData.model_id,
+                provider: parentProvider
+              },
+              ...(childrenData || []).map((child: any) => ({
+                id: child.id,
+                storage_path: child.storage_path,
+                output_index: child.output_index,
+                provider_task_id: child.provider_task_id,
+                model_id: child.model_id,
+                provider: child.ai_models?.provider || null
+              }))
+            ];
 
-          // Filter valid outputs with storage_path
-          const validOutputs = allOutputs.filter(o => !!o.storage_path);
+            // Filter valid outputs with storage_path
+            validOutputs = allOutputs.filter(o => !!o.storage_path);
+            
+            // If we have outputs OR max retries reached, break
+            if (validOutputs.length > 0 || retryCount === maxRetries) {
+              break;
+            }
+            
+            // Wait before retry
+            console.log(`[Polling] No outputs ready yet, retrying in ${retryDelay}ms (${retryCount + 1}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            retryCount++;
+          }
           
           // Remove duplicates by storage_path
           const uniqueOutputs = validOutputs.filter((output, index, self) =>
@@ -124,9 +143,16 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
           );
 
           if (uniqueOutputs.length === 0) {
-            options.onError?.('Generation completed but outputs are not ready.');
+            console.error('[Polling] Generation completed but outputs are not ready after retries');
+            options.onError?.('Generation completed but outputs are not ready after retries.');
             return;
           }
+
+          console.log('[Polling] Generation complete with outputs:', {
+            generationId,
+            outputCount: uniqueOutputs.length,
+            retriesUsed: retryCount
+          });
 
           // Call completion callback with parent ID
           options.onComplete(uniqueOutputs, generationId);

@@ -31,6 +31,25 @@ export const GenerationConsole = ({
   onViewHistory,
 }: GenerationConsoleProps) => {
   if (!isPolling && !generationState.currentOutput) {
+    // Show "finalizing" state if we just completed polling
+    if (generationState.startTime && generationState.completeTime) {
+      return (
+        <Card className="border-2 border-primary/20 bg-muted/50">
+          <CardContent className="p-4 space-y-4">
+            <div className="flex items-center gap-2">
+              <Info className="h-4 w-4 text-muted-foreground animate-pulse" />
+              <p className="text-sm">Finalizing your generation...</p>
+            </div>
+            <GenerationProgress
+              startTime={generationState.startTime}
+              isComplete={false}
+              completedAt={undefined}
+            />
+          </CardContent>
+        </Card>
+      );
+    }
+    
     return null;
   }
 

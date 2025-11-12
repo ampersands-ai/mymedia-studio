@@ -3,6 +3,9 @@ import { getImageUrl } from '@/lib/media/images';
 import { createSignedUrl } from '@/lib/storage-utils';
 import { type ImageMediaOptions } from '@/lib/media/types';
 import { MEDIA_CONFIG } from '@/lib/media/config';
+import { logger } from '@/lib/logger';
+
+const componentLogger = logger.child({ component: 'useImageUrl' });
 
 interface UseImageUrlResult {
   url: string | null;
@@ -71,7 +74,14 @@ export function useImageUrl(
           setUrl(publicUrl);
         }
       } catch (err) {
-        console.error('[useImageUrl] Error fetching image URL:', err);
+        componentLogger.error('Image URL fetch failed', err, {
+          operation: 'fetchUrl',
+          storagePath,
+          strategy,
+          bucket,
+          width,
+          height
+        });
         setError(true);
         setUrl(null);
       } finally {

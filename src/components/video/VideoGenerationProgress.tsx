@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Video, RefreshCw, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logger } from '@/lib/logger';
+
+const componentLogger = logger.child({ component: 'VideoGenerationProgress' });
 
 interface VideoGenerationProgressProps {
   generationId: string;
@@ -39,11 +42,18 @@ export function VideoGenerationProgress({
           .single();
 
         if (generation?.status === 'completed' || generation?.status === 'failed') {
-          console.log(`✅ Video generation ${generation.status}:`, generationId);
+          componentLogger.debug('Video generation status changed', {
+            operation: 'autoPolling',
+            generationId,
+            status: generation.status
+          });
           onStatusChange?.();
         }
       } catch (error) {
-        console.error('Auto-polling error:', error);
+        componentLogger.error('Auto-polling error', error, {
+          operation: 'autoPolling',
+          generationId
+        });
       }
     };
 
@@ -78,7 +88,10 @@ export function VideoGenerationProgress({
         toast.info('Video is still being generated. Please wait...');
       }
     } catch (error: any) {
-      console.error('Failed to check status:', error);
+      componentLogger.error('Status check failed', error, {
+        operation: 'handleCheckStatus',
+        generationId
+      });
       toast.error('Failed to check status. Please try again.');
     } finally {
       setIsChecking(false);

@@ -15,6 +15,9 @@ import { toast } from 'sonner';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useVideoUrl } from '@/hooks/media';
+import { logger } from '@/lib/logger';
+
+const componentLogger = logger.child({ component: 'VideoPreviewModal' });
 
 interface VideoPreviewModalProps {
   job: VideoJob;
@@ -136,7 +139,11 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
       document.body.removeChild(a);
       toast.success('Download started!', { id: 'video-download' });
     } catch (error) {
-      console.error('[VideoPreviewModal] Download error:', error);
+      componentLogger.error('Video download failed', error, {
+        operation: 'handleDownload',
+        jobId: job.id,
+        videoUrl: job.final_video_url
+      });
       toast.error(`Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'video-download' });
     }
   };
@@ -157,8 +164,11 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
               className="w-full"
               playsInline
               onError={(e) => {
-                console.error('[VideoPreviewModal] Video load error:', e);
-                console.error('[VideoPreviewModal] Failed URL:', videoSignedUrl || job.final_video_url);
+                componentLogger.error('Video load error', new Error('Video load failed'), {
+                  operation: 'videoPlayback',
+                  videoUrl: videoSignedUrl || job.final_video_url,
+                  eventType: e.type
+                });
               }}
             >
               Your browser does not support the video tag.

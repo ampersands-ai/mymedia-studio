@@ -3,6 +3,9 @@ import { getVideoUrl, requiresAuth } from '@/lib/media/videos';
 import { createSignedUrl } from '@/lib/storage-utils';
 import { type VideoMediaOptions } from '@/lib/media/types';
 import { MEDIA_CONFIG } from '@/lib/media/config';
+import { logger } from '@/lib/logger';
+
+const componentLogger = logger.child({ component: 'useVideoUrl' });
 
 interface UseVideoUrlResult {
   url: string | null;
@@ -58,7 +61,12 @@ export function useVideoUrl(
           setUrl(publicUrl);
         }
       } catch (err) {
-        console.error('[useVideoUrl] Error fetching video URL:', err);
+        componentLogger.error('Video URL fetch failed', err, {
+          operation: 'fetchUrl',
+          storagePath,
+          strategy,
+          bucket
+        });
         setError(true);
         setUrl(null);
       } finally {

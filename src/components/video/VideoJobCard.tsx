@@ -862,13 +862,18 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                   className="w-full"
                   playsInline
                   onError={(e) => {
-                    console.error('[VideoJobCard] Video playback failed');
-                    console.error('[VideoJobCard] Signed URL:', videoSignedUrl);
-                    console.error('[VideoJobCard] Error:', e);
+                    componentLogger.error('Video playback failed', new Error('Video playback error'), {
+                      operation: 'videoPlayback',
+                      videoUrl: videoSignedUrl,
+                      eventType: e.type
+                    });
                     setVideoError(true);
                   }}
                   onLoadedData={() => {
-                    console.log('[VideoJobCard] Video loaded successfully:', videoSignedUrl);
+                    componentLogger.debug('Video loaded successfully', {
+                      operation: 'videoPlayback',
+                      videoUrl: videoSignedUrl
+                    });
                     setVideoError(false);
                   }}
                 >

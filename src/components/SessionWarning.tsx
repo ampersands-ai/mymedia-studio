@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Clock, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 export const SessionWarning = () => {
   const [showWarning, setShowWarning] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [extending, setExtending] = useState(false);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -45,14 +48,61 @@ export const SessionWarning = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const handleExtendSession = async () => {
+    setExtending(true);
+    try {
+      const { error } = await supabase.functions.invoke('extend-session');
+      
+      if (error) throw error;
+      
+      // Refresh the session
+      await supabase.auth.refreshSession();
+      
+      toast.success('Session extended successfully');
+      setShowWarning(false);
+    } catch (error) {
+      console.error('Failed to extend session:', error);
+      toast.error('Failed to extend session. Please save your work and log in again.');
+    } finally {
+      setExtending(false);
+    }
+  };
+
   if (!showWarning) return null;
 
+  const minutes = Math.floor(timeRemaining);
+  const seconds = Math.round((timeRemaining - minutes) * 60);
+
   return (
-    <Alert className="mb-4">
-      <Clock className="h-4 w-4" />
-      <AlertDescription>
-        Your session will expire in {timeRemaining} minute{timeRemaining !== 1 ? 's' : ''}. 
-        Your work is being auto-saved.
+    <Alert className="mb-4 border-orange-500/50 bg-orange-500/10">
+      <Clock className="h-4 w-4 text-orange-500" />
+      <AlertDescription className="flex items-center justify-between gap-4">
+        <div className="flex-1">
+          <p className="font-medium text-orange-500">
+            Session expiring in {minutes}:{seconds.toString().padStart(2, '0')}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Your work is being auto-saved. Extend your session to continue working.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleExtendSession}
+            disabled={extending}
+            size="sm"
+            className="shrink-0"
+          >
+            {extending ? 'Extending...' : 'Stay Logged In'}
+          </Button>
+          <Button
+            onClick={() => setShowWarning(false)}
+            variant="ghost"
+            size="sm"
+            className="shrink-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </AlertDescription>
     </Alert>
   );

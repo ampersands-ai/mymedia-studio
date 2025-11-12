@@ -67,6 +67,8 @@ const TestModelGroupPage = lazy(() => import("./pages/admin/TestModelGroupPage")
 const SharedContent = lazy(() => import("./pages/SharedContent"));
 const UserLogs = lazy(() => import("./pages/admin/UserLogs"));
 const EmailSettings = lazy(() => import("./pages/admin/EmailSettings"));
+const EmailHistory = lazy(() => import("./pages/admin/EmailHistory").then(m => ({ default: m.EmailHistory })));
+const AdvancedAnalytics = lazy(() => import("./pages/admin/AdvancedAnalytics").then(m => ({ default: m.AdvancedAnalytics })));
 const DebugPanel = lazy(() => import("./components/dev/DebugPanel").then(m => ({ default: m.DebugPanel })));
 const RouteErrorBoundary = lazy(() => import("./components/error/RouteErrorBoundary").then(m => ({ default: m.RouteErrorBoundary })));
 
@@ -161,6 +163,8 @@ const AppContent = () => {
               <Route path="cinematic-prompts" element={<RouteErrorBoundary routeName="Admin > Cinematic Prompts"><CinematicPromptsManager /></RouteErrorBoundary>} />
               <Route path="user-logs" element={<RouteErrorBoundary routeName="Admin > User Logs"><UserLogs /></RouteErrorBoundary>} />
               <Route path="email-settings" element={<RouteErrorBoundary routeName="Admin > Email Settings"><EmailSettings /></RouteErrorBoundary>} />
+              <Route path="email-history" element={<RouteErrorBoundary routeName="Admin > Email History"><EmailHistory /></RouteErrorBoundary>} />
+              <Route path="advanced-analytics" element={<RouteErrorBoundary routeName="Admin > Advanced Analytics"><AdvancedAnalytics /></RouteErrorBoundary>} />
             </Route>
             <Route path="/pricing" element={<RouteErrorBoundary routeName="Pricing"><Pricing /></RouteErrorBoundary>} />
             <Route path="/privacy" element={<RouteErrorBoundary routeName="Privacy"><Privacy /></RouteErrorBoundary>} />

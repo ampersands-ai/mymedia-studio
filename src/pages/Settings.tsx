@@ -18,6 +18,7 @@ import { useConfetti } from "@/hooks/useConfetti";
 import { Progress } from "@/components/ui/progress";
 import { differenceInMonths } from "date-fns";
 import { clearAllCaches, getCacheStats } from "@/utils/cacheManagement";
+import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -332,11 +333,12 @@ const Settings = () => {
         <h1 className="text-4xl font-black gradient-text mb-8">Settings</h1>
         
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 gap-1">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="subscription">Subscription</TabsTrigger>
             <TabsTrigger value="usage">Credit Usage</TabsTrigger>
             <TabsTrigger value="history">Generation Logs</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
           </TabsList>
           
           <TabsContent value="profile" className="space-y-4 mt-6">
@@ -845,6 +847,10 @@ const Settings = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="notifications" className="space-y-4 mt-6">
+            <NotificationPreferences />
           </TabsContent>
           
         </Tabs>

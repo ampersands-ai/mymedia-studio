@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@3.5.0";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -147,6 +147,16 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     console.log("Test email sent successfully:", emailResponse);
+
+    // Log to email_history
+    await supabase.from("email_history").insert({
+      recipient_email: adminEmail,
+      email_type: "test",
+      subject: "✅ Test Email - Email System Working!",
+      delivery_status: "sent",
+      resend_email_id: (emailResponse as any).data?.id || (emailResponse as any).id,
+      metadata: { test: true }
+    });
 
     return new Response(
       JSON.stringify({ 

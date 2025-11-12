@@ -471,6 +471,104 @@ export type Database = {
           },
         ]
       }
+      email_history: {
+        Row: {
+          clicked_at: string | null
+          created_at: string
+          delivery_status: string
+          email_type: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          opened_at: string | null
+          recipient_email: string
+          resend_email_id: string | null
+          sent_at: string
+          subject: string
+          user_id: string | null
+        }
+        Insert: {
+          clicked_at?: string | null
+          created_at?: string
+          delivery_status?: string
+          email_type: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          recipient_email: string
+          resend_email_id?: string | null
+          sent_at?: string
+          subject: string
+          user_id?: string | null
+        }
+        Update: {
+          clicked_at?: string | null
+          created_at?: string
+          delivery_status?: string
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          recipient_email?: string
+          resend_email_id?: string | null
+          sent_at?: string
+          subject?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      generation_notifications: {
+        Row: {
+          clicked_at: string | null
+          created_at: string
+          delivery_status: string
+          email_id: string | null
+          error_message: string | null
+          generation_id: string
+          id: string
+          notification_type: string
+          opened_at: string | null
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          clicked_at?: string | null
+          created_at?: string
+          delivery_status?: string
+          email_id?: string | null
+          error_message?: string | null
+          generation_id: string
+          id?: string
+          notification_type: string
+          opened_at?: string | null
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          clicked_at?: string | null
+          created_at?: string
+          delivery_status?: string
+          email_id?: string | null
+          error_message?: string | null
+          generation_id?: string
+          id?: string
+          notification_type?: string
+          opened_at?: string | null
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generation_notifications_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generations: {
         Row: {
           actual_token_cost: number | null
@@ -1021,6 +1119,7 @@ export type Database = {
           email_verified: boolean | null
           full_name: string | null
           id: string
+          keep_logged_in: boolean | null
           phone_number: string | null
           updated_at: string
           zipcode: string | null
@@ -1032,6 +1131,7 @@ export type Database = {
           email_verified?: boolean | null
           full_name?: string | null
           id: string
+          keep_logged_in?: boolean | null
           phone_number?: string | null
           updated_at?: string
           zipcode?: string | null
@@ -1043,6 +1143,7 @@ export type Database = {
           email_verified?: boolean | null
           full_name?: string | null
           id?: string
+          keep_logged_in?: boolean | null
           phone_number?: string | null
           updated_at?: string
           zipcode?: string | null
@@ -1830,6 +1931,36 @@ export type Database = {
           total_activities?: number | null
           total_errors?: number | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_notification_preferences: {
+        Row: {
+          created_at: string
+          email_on_completion: boolean
+          id: string
+          notification_threshold_seconds: number
+          push_on_completion: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_on_completion?: boolean
+          id?: string
+          notification_threshold_seconds?: number
+          push_on_completion?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_on_completion?: boolean
+          id?: string
+          notification_threshold_seconds?: number
+          push_on_completion?: boolean
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

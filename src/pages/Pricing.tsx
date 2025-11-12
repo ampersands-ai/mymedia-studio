@@ -572,7 +572,7 @@ const Pricing = () => {
                           <td key={plan.name} className="py-6 px-4 text-center">
                             <Button
                               className="w-full font-bold"
-                              variant={plan.badge === "MOST POPULAR" ? "default" : "outline"}
+                              variant="default"
                               onClick={() => handleSubscribe(plan.name)}
                               disabled={isCreatingPayment === plan.name}
                             >

@@ -5,6 +5,7 @@ import { StuckGeneration } from "@/hooks/admin/useWebhookMonitoring";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
+import { logger } from "@/lib/logger";
 
 interface WebhookActionsPanelProps {
   stuckGenerations: StuckGeneration[];
@@ -45,14 +46,25 @@ export const WebhookActionsPanel = ({ stuckGenerations, onRefresh }: WebhookActi
         });
         
         if (refundError) {
-          console.error('Failed to refund tokens for', gen.id, refundError);
+          logger.error('Token refund failed for stuck generation', refundError, {
+            component: 'WebhookActionsPanel',
+            generationId: gen.id,
+            userId: gen.user_id,
+            tokensToRefund: gen.tokens_used,
+            operation: 'refundTokens'
+          });
         }
       }
 
       toast.success(`Fixed ${stuckGenerations.length} stuck generation${stuckGenerations.length > 1 ? 's' : ''} and refunded tokens`);
       onRefresh();
     } catch (error: any) {
-      console.error('Error fixing stuck generations:', error);
+      logger.error('Stuck generations fix operation failed', error, {
+        component: 'WebhookActionsPanel',
+        stuckCount: stuckGenerations.length,
+        generationIds: stuckGenerations.map(g => g.id),
+        operation: 'fixStuckGenerations'
+      });
       toast.error(`Failed to fix stuck generations: ${error.message}`);
     } finally {
       setFixing(false);

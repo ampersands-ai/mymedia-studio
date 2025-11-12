@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 import {
   Dialog,
   DialogContent,
@@ -155,7 +156,11 @@ export function ModelFormDialog({
       if (error) throw error;
       toast.success("Parameter order saved");
     } catch (error: any) {
-      console.error("Error saving parameter order:", error);
+      logger.error('Model parameter order save failed', error, {
+        component: 'ModelFormDialog',
+        modelRecordId: model.record_id,
+        operation: 'saveParameterOrder'
+      });
       toast.error("Failed to save parameter order");
       throw error;
     }
@@ -228,7 +233,12 @@ export function ModelFormDialog({
 
       onSuccess();
     } catch (error: any) {
-      console.error("Error saving model:", error);
+      logger.error('Model save operation failed', error, {
+        component: 'ModelFormDialog',
+        isNewModel: !model,
+        modelId: model?.id,
+        operation: 'saveModel'
+      });
       toast.error(error.message || "Failed to save model");
     } finally {
       setSaving(false);

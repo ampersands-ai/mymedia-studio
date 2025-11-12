@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, X, Loader2, ExternalLink } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 interface ImageUploaderProps {
   value?: string;
@@ -69,7 +70,13 @@ export function ImageUploader({ value, onChange, label, bucket = "generated-cont
         description: "Image uploaded successfully",
       });
     } catch (error: any) {
-      console.error("Upload error:", error);
+      logger.error('Template landing image upload failed', error, {
+        component: 'ImageUploader',
+        bucket,
+        fileName: file?.name,
+        fileSize: file?.size,
+        operation: 'uploadImage'
+      });
       toast({
         title: "Upload failed",
         description: error.message,

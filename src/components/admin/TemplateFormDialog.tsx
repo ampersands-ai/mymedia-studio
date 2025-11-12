@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 import {
   Dialog,
   DialogContent,
@@ -166,7 +167,10 @@ export function TemplateFormDialog({
       if (error) throw error;
       setModels(data || []);
     } catch (error) {
-      console.error("Error fetching models:", error);
+      logger.error('Template models fetch failed', error as Error, {
+        component: 'TemplateFormDialog',
+        operation: 'fetchModels'
+      });
       toast.error("Failed to load models");
     }
   };
@@ -182,7 +186,11 @@ export function TemplateFormDialog({
       if (error) throw error;
       setSelectedModel(data);
     } catch (error) {
-      console.error("Error fetching model details:", error);
+      logger.error('Model details fetch failed', error as Error, {
+        component: 'TemplateFormDialog',
+        modelId,
+        operation: 'fetchModelDetails'
+      });
     }
   };
 
@@ -292,7 +300,12 @@ export function TemplateFormDialog({
 
       onSuccess();
     } catch (error: any) {
-      console.error("Error saving template:", error);
+      logger.error('Template save operation failed', error, {
+        component: 'TemplateFormDialog',
+        isNewTemplate: !template,
+        templateId: template?.id,
+        operation: 'saveTemplate'
+      });
       toast.error(error.message || "Failed to save template");
     } finally {
       setSaving(false);

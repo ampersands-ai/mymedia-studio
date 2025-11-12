@@ -6,6 +6,7 @@ import {
   handleGenerationError,
   getImageFieldInfo,
 } from "@/lib/custom-creation-utils";
+import { logger } from "@/lib/logger";
 
 interface ExecuteGenerationParams {
   model: any;
@@ -120,7 +121,14 @@ export async function executeGeneration({
     // Re-use shared error handling
     const handled = handleGenerationError(error, navigate);
     if (!handled) {
-      console.error('Generation error:', error);
+      logger.error('Generation execution failed', error, {
+        utility: 'executeGeneration',
+        modelId: model?.id,
+        userId,
+        hasImages: uploadedImages.length > 0,
+        enhancePrompt,
+        operation: 'executeGeneration'
+      });
       throw error;
     }
     throw error;

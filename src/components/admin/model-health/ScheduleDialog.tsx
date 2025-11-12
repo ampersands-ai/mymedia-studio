@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import type { ModelHealthSummary } from "@/types/admin/model-health";
+import { logger } from "@/lib/logger";
 
 interface ScheduleDialogProps {
   model: ModelHealthSummary | null;
@@ -55,7 +56,12 @@ export const ScheduleDialog = ({ model, open, onOpenChange }: ScheduleDialogProp
       onOpenChange(false);
       setScheduleName("");
     } catch (error) {
-      console.error("Error creating schedule:", error);
+      logger.error('Model health schedule creation failed', error as Error, {
+        component: 'ScheduleDialog',
+        modelId: model?.model_id,
+        cronExpression,
+        operation: 'createSchedule'
+      });
       toast.error("Failed to create schedule");
     } finally {
       setLoading(false);

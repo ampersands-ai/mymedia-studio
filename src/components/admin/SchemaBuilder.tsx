@@ -6,6 +6,7 @@ import { Plus, Edit, Trash2, ChevronDown, ChevronUp, ArrowUp, ArrowDown } from "
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ParameterDialog } from "./ParameterDialog";
 import { parseSchema, generateSchema, type Parameter } from "@/lib/schema-utils";
+import { logger } from "@/lib/logger";
 
 interface SchemaBuilderProps {
   schema: Record<string, any>;
@@ -26,7 +27,11 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
       const parsed = parseSchema(schema);
       setParameters(parsed);
     } catch (error) {
-      console.error('Failed to parse schema:', error);
+      logger.error('Schema parsing failed', error as Error, {
+        component: 'SchemaBuilder',
+        modelRecordId,
+        operation: 'parseSchema'
+      });
       setParameters([]);
     }
   }, [schema]);

@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { MergedTemplate } from "@/hooks/useTemplates";
 import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 /**
  * Toggle the active status of a template (content or workflow)
@@ -25,7 +26,13 @@ export async function toggleTemplateActive(
     
     toast.success(`Template ${!template.is_active ? "enabled" : "disabled"}`);
   } catch (error) {
-    console.error("Error toggling template status:", error);
+    logger.error('Template status toggle failed', error as Error, {
+      utility: 'template-operations',
+      templateId: template.id,
+      templateType: template.template_type,
+      currentStatus: template.is_active,
+      operation: 'toggleTemplateActive'
+    });
     toast.error("Failed to update template status");
     throw error;
   }
@@ -47,7 +54,13 @@ export async function deleteTemplate(
     ? 'content_templates' 
     : 'workflow_templates';
 
-  console.log(`Attempting to delete ${template.template_type} with ID: ${template.id} from table: ${table}`);
+  logger.debug('Template deletion initiated', {
+    utility: 'template-operations',
+    templateId: template.id,
+    templateType: template.template_type,
+    table,
+    operation: 'deleteTemplate'
+  });
 
   try {
     const { error, data } = await supabase
@@ -56,21 +69,34 @@ export async function deleteTemplate(
       .eq('id', template.id)
       .select();
 
-    console.log('Delete response:', { error, data });
+    logger.debug('Template deletion response received', {
+      utility: 'template-operations',
+      templateId: template.id,
+      success: !error,
+      deletedCount: data?.length || 0,
+      operation: 'deleteTemplate'
+    });
 
     if (error) {
-      console.error("Delete error details:", {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
+      logger.error('Template deletion database error', error, {
+        utility: 'template-operations',
+        templateId: template.id,
+        templateType: template.template_type,
+        errorCode: error.code,
+        errorHint: error.hint,
+        operation: 'deleteTemplate'
       });
       throw error;
     }
     
     toast.success("Template deleted successfully");
   } catch (error: any) {
-    console.error("Error deleting template:", error);
+    logger.error('Template deletion failed', error, {
+      utility: 'template-operations',
+      templateId: template.id,
+      templateType: template.template_type,
+      operation: 'deleteTemplate'
+    });
     toast.error(`Failed to delete template: ${error.message || 'Unknown error'}`);
     throw error;
   }
@@ -195,7 +221,11 @@ export async function bulkUpdateActive(
       toast.success("All templates disabled");
     }
   } catch (error) {
-    console.error(`Error ${isActive ? 'enabling' : 'disabling'} all templates:`, error);
+    logger.error('Bulk template status update failed', error as Error, {
+      utility: 'template-operations',
+      targetStatus: isActive,
+      operation: 'bulkUpdateActive'
+    });
     toast.error(`Failed to ${isActive ? 'enable' : 'disable'} all templates`);
     throw error;
   }

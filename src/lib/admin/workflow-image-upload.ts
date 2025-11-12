@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { createSignedUrl } from "@/lib/storage-utils";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 /**
  * Upload a workflow image file to Supabase storage
@@ -30,7 +31,14 @@ export async function uploadWorkflowImage(
       });
 
     if (uploadError) {
-      console.error('Upload error:', uploadError);
+      logger.error('Workflow image upload failed', uploadError, {
+        utility: 'workflow-image-upload',
+        imageType: type,
+        fileName: file.name,
+        fileSize: file.size,
+        filePath,
+        operation: 'uploadWorkflowImage'
+      });
       toast.error(`Failed to upload ${type} image`);
       return null;
     }
@@ -38,7 +46,12 @@ export async function uploadWorkflowImage(
     // Return the storage path instead of URL (for signed URL generation later)
     return filePath;
   } catch (error) {
-    console.error('Upload error:', error);
+    logger.error('Workflow image upload exception', error as Error, {
+      utility: 'workflow-image-upload',
+      imageType: type,
+      fileName: file.name,
+      operation: 'uploadWorkflowImage'
+    });
     toast.error(`Failed to upload ${type} image`);
     return null;
   }
@@ -56,7 +69,11 @@ export async function getSignedImageUrl(
     const signedUrl = await createSignedUrl('generated-content', storagePath);
     return signedUrl;
   } catch (error) {
-    console.error('Error generating signed URL:', error);
+    logger.error('Workflow image signed URL generation failed', error as Error, {
+      utility: 'workflow-image-upload',
+      storagePath: storagePath.substring(0, 50),
+      operation: 'getSignedImageUrl'
+    });
     return null;
   }
 }

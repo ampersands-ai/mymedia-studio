@@ -1,6 +1,7 @@
 import JSZip from 'jszip';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 export async function downloadSingleOutput(
   storagePath: string,
@@ -32,7 +33,13 @@ export async function downloadSingleOutput(
     toast.success('Download started!');
     onDownloadSuccess?.();
   } catch (error) {
-    console.error('Download error:', error);
+    logger.error('Single output download failed', error as Error, {
+      utility: 'download-utils',
+      storagePath: storagePath.substring(0, 50),
+      contentType,
+      outputIndex,
+      operation: 'downloadSingleOutput'
+    });
     toast.error('Failed to download');
   }
 }
@@ -96,7 +103,12 @@ export async function downloadMultipleOutputs(
     toast.success(`Successfully downloaded ${outputs.length} outputs!`, { id: toastId });
     onDownloadSuccess?.();
   } catch (error) {
-    console.error('Batch download error:', error);
+    logger.error('Batch outputs download failed', error as Error, {
+      utility: 'download-utils',
+      outputCount: outputs.length,
+      contentType,
+      operation: 'downloadMultipleOutputs'
+    });
     toast.error('Failed to download files. Try downloading individually from History.');
   }
 }

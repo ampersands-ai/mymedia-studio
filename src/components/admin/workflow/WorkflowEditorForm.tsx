@@ -11,6 +11,7 @@ import { WorkflowUserFields } from "./WorkflowUserFields";
 import { WorkflowStepsManager } from "./WorkflowStepsManager";
 import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import type { AIModel } from "@/hooks/useModels";
+import { logger } from "@/lib/logger";
 
 interface WorkflowEditorFormProps {
   workflow: Partial<WorkflowTemplate> | null;
@@ -65,7 +66,10 @@ export function WorkflowEditorForm({
       onSuccess();
     },
     onError: (error) => {
-      console.error("Error creating workflow:", error);
+      logger.error('Workflow creation failed', error as Error, {
+        component: 'WorkflowEditorForm',
+        operation: 'createWorkflow'
+      });
       toast.error("Failed to create workflow");
     },
   });
@@ -85,7 +89,11 @@ export function WorkflowEditorForm({
       onSuccess();
     },
     onError: (error) => {
-      console.error("Error updating workflow:", error);
+      logger.error('Workflow update failed', error as Error, {
+        component: 'WorkflowEditorForm',
+        workflowId: workflow?.id,
+        operation: 'updateWorkflow'
+      });
       toast.error("Failed to update workflow");
     },
   });
@@ -142,7 +150,13 @@ export function WorkflowEditorForm({
         await updateWorkflowMutation.mutateAsync(workflowData);
       }
     } catch (error) {
-      console.error("Error saving workflow:", error);
+      logger.error('Workflow save operation failed', error as Error, {
+        component: 'WorkflowEditorForm',
+        isNew,
+        workflowId: localWorkflow.id,
+        hasOriginalId: !!originalWorkflowId,
+        operation: 'saveWorkflow'
+      });
       toast.error("Failed to save workflow");
     }
   };

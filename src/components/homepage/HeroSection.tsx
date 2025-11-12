@@ -1,4 +1,4 @@
-import { ArrowRight, Play, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import { GradientButton } from '@/components/ui/gradient-button';
 import { AnimatedBadge } from '@/components/ui/animated-badge';
 import { GlassCard } from '@/components/ui/glass-card';
@@ -138,11 +138,6 @@ export const HeroSection = () => {
                 <ArrowRight className="inline ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </GradientButton>
             </Link>
-            
-            <button className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-full border-2 border-white/30 hover:border-white/60 transition-all duration-300 flex items-center justify-center space-x-2 hover:scale-105 text-white backdrop-blur-sm bg-white/10">
-              <Play className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="font-semibold text-sm sm:text-base">Watch Demo</span>
-            </button>
           </div>
 
           {/* Partner Logos Carousel */}

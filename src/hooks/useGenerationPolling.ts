@@ -43,10 +43,11 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
       const { data: parentData, error } = await supabase
         .from('generations')
         .select(`
-          id, 
-          status, 
-          storage_path, 
+          id,
+          status,
+          storage_path,
           type,
+          created_at,
           provider_task_id,
           model_id,
           model_record_id,

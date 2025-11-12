@@ -110,11 +110,35 @@ const CustomCreation = () => {
         generateCaption();
       }
     },
-    onError: () => {
+    onError: (message?: string) => {
       updateState({ localGenerating: false, pollingGenerationId: null });
+      toast.error(message || 'Generation failed', {
+        description: 'The provider reported an error. Your credits will be refunded automatically if nothing is produced.',
+        action: {
+          label: 'View History',
+          onClick: () => navigate('/dashboard/history')
+        }
+      });
     },
     onTimeout: () => {
       updateState({ localGenerating: false, pollingGenerationId: null });
+      toast.warning('This is taking longer than usual', {
+        description: 'We will check the provider and refund credits if it failed. You can navigate away; results will appear in History.',
+      });
+
+      // Proactively check provider status and recover/refund if needed
+      if (state.pollingGenerationId) {
+        supabase.functions.invoke('poll-kie-status', {
+          body: { generation_id: state.pollingGenerationId }
+        }).then(({ data, error }) => {
+          if (error) return;
+          if (data?.status === 'failed') {
+            toast.error('Generation failed on provider side. Credits refunded.');
+          } else if (data?.status === 'completed') {
+            toast.success('Generation completed in background. Check History.');
+          }
+        });
+      }
     }
   });
 

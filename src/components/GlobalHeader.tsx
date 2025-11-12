@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import logoImage from "@/assets/logo.png";
+import { logger } from "@/lib/logger";
 
 export const GlobalHeader = () => {
   const navigate = useNavigate();
@@ -37,8 +38,11 @@ export const GlobalHeader = () => {
       navigate("/");
       toast.success("Signed out successfully");
     } catch (error) {
+      logger.error('Sign out failed', error as Error, {
+        component: 'GlobalHeader',
+        operation: 'handleSignOut'
+      });
       toast.error("Error signing out");
-      console.error("Sign out error:", error);
     }
   };
 

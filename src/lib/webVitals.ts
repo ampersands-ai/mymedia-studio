@@ -1,6 +1,8 @@
 // Web Vitals tracking for performance monitoring
 // Uses native browser APIs - no external dependencies needed
 
+import { logger } from '@/lib/logger';
+
 interface WebVitalMetric {
   name: string;
   value: number;
@@ -20,9 +22,12 @@ function sendToAnalytics(metric: WebVitalMetric) {
   
   // Console log in development
   if (import.meta.env.DEV) {
-    console.log(`[Web Vital] ${metric.name}:`, {
-      value: `${Math.round(metric.value)}ms`,
-      rating: metric.rating
+    logger.debug('Web Vital measurement', {
+      utility: 'webVitals',
+      metric: metric.name,
+      value: Math.round(metric.value),
+      rating: metric.rating,
+      operation: 'sendToAnalytics'
     });
   }
 }
@@ -62,7 +67,11 @@ export function reportWebVitals() {
       
       lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
     } catch (e) {
-      console.warn('LCP observer failed:', e);
+      logger.warn('LCP Performance Observer failed', {
+        utility: 'webVitals',
+        error: e instanceof Error ? e.message : 'Unknown error',
+        operation: 'reportWebVitals'
+      });
     }
     
     // FID - First Input Delay
@@ -83,7 +92,11 @@ export function reportWebVitals() {
       
       fidObserver.observe({ type: 'first-input', buffered: true });
     } catch (e) {
-      console.warn('FID observer failed:', e);
+      logger.warn('FID Performance Observer failed', {
+        utility: 'webVitals',
+        error: e instanceof Error ? e.message : 'Unknown error',
+        operation: 'reportWebVitals'
+      });
     }
     
     // CLS - Cumulative Layout Shift
@@ -108,7 +121,11 @@ export function reportWebVitals() {
       
       clsObserver.observe({ type: 'layout-shift', buffered: true });
     } catch (e) {
-      console.warn('CLS observer failed:', e);
+      logger.warn('CLS Performance Observer failed', {
+        utility: 'webVitals',
+        error: e instanceof Error ? e.message : 'Unknown error',
+        operation: 'reportWebVitals'
+      });
     }
     
     // FCP - First Contentful Paint
@@ -127,7 +144,11 @@ export function reportWebVitals() {
       
       fcpObserver.observe({ type: 'paint', buffered: true });
     } catch (e) {
-      console.warn('FCP observer failed:', e);
+      logger.warn('FCP Performance Observer failed', {
+        utility: 'webVitals',
+        error: e instanceof Error ? e.message : 'Unknown error',
+        operation: 'reportWebVitals'
+      });
     }
   }
   
@@ -157,9 +178,11 @@ export function monitorPerformance() {
     const longTaskObserver = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
         if (entry.duration > 50) {
-          console.warn('[Performance] Long task detected:', {
-            duration: `${Math.round(entry.duration)}ms`,
-            startTime: entry.startTime
+          logger.warn('Long task detected - performance bottleneck', {
+            utility: 'webVitals',
+            duration: Math.round(entry.duration),
+            startTime: entry.startTime,
+            operation: 'monitorPerformance'
           });
         }
       }

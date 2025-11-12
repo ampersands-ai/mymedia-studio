@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export const clientLogger = {
   /**
@@ -34,7 +35,11 @@ export const clientLogger = {
         }
       });
     } catch (logError) {
-      console.error('Failed to log error:', logError);
+      logger.error('Failed to log error to backend', logError as Error, {
+        utility: 'client-logger',
+        routeName: context.routeName,
+        operation: 'error'
+      });
     }
   },
 
@@ -62,7 +67,11 @@ export const clientLogger = {
         }
       });
     } catch (logError) {
-      console.error('Failed to log activity:', logError);
+      logger.error('Failed to log activity to backend', logError as Error, {
+        utility: 'client-logger',
+        activityType: activity.activityType,
+        operation: 'activity'
+      });
     }
   },
 };

@@ -18,6 +18,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 
 interface MobileMenuProps {
   creditBalance?: number;
@@ -37,8 +38,11 @@ export const MobileMenu = ({ creditBalance }: MobileMenuProps) => {
       navigate("/");
       toast.success("Signed out successfully");
     } catch (error) {
+      logger.error('Sign out failed', error as Error, {
+        component: 'MobileMenu',
+        operation: 'handleSignOut'
+      });
       toast.error("Error signing out");
-      console.error("Sign out error:", error);
     }
   };
 

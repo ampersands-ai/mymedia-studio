@@ -17,6 +17,7 @@ import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { reportWebVitals, monitorPerformance } from "@/lib/webVitals";
 import { queryClient } from "@/lib/queryClient";
 import { useRoutePreload } from "./hooks/useRoutePreload";
+import { logger } from "@/lib/logger";
 
 // Lazy load pages for better performance
 const IndexV2 = lazy(() => import("./pages/IndexV2"));
@@ -101,7 +102,11 @@ const AppContent = () => {
     // Listen for app state changes
     let appStateListener: any;
     CapacitorApp.addListener('appStateChange', ({ isActive }) => {
-      console.log('App state changed. Is active:', isActive);
+      logger.debug('Capacitor app state changed', {
+        component: 'App',
+        isActive,
+        operation: 'appStateListener'
+      });
     }).then(listener => {
       appStateListener = listener;
     });

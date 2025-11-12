@@ -12,27 +12,22 @@ declare global {
 }
 
 interface LogContext {
-  component?: string;
-  userId?: string;
-  route?: string;
-  routeName?: string;
-  metadata?: Record<string, unknown>;
-  [key: string]: any; // Allow additional properties
+  [key: string]: any;
 }
 
 class Logger {
-  private context: LogContext = {};
+  private context: Record<string, any> = {};
 
   /**
    * Create a child logger with additional context
    */
-  child(context: LogContext): Logger {
+  child(context: Record<string, any>): Logger {
     const childLogger = new Logger();
     childLogger.context = { ...this.context, ...context };
     return childLogger;
   }
 
-  private formatMessage(level: string, message: string, context?: LogContext): string {
+  private formatMessage(level: string, message: string, context?: Record<string, any>): string {
     const ctx = { ...this.context, ...context };
     return `[${level.toUpperCase()}] ${message} ${JSON.stringify(ctx)}`;
   }
@@ -40,7 +35,7 @@ class Logger {
   /**
    * Debug logging - only in development
    */
-  debug(message: string, context?: LogContext) {
+  debug(message: string, context?: Record<string, any>) {
     if (import.meta.env.DEV) {
       console.debug(this.formatMessage('debug', message, context));
     }
@@ -49,7 +44,7 @@ class Logger {
   /**
    * Info logging - only in development
    */
-  info(message: string, context?: LogContext) {
+  info(message: string, context?: Record<string, any>) {
     if (import.meta.env.DEV) {
       console.log(this.formatMessage('info', message, context));
     }
@@ -58,7 +53,7 @@ class Logger {
   /**
    * Warning logging - always logged, sent to PostHog in production
    */
-  warn(message: string, context?: LogContext) {
+  warn(message: string, context?: Record<string, any>) {
     console.warn(this.formatMessage('warn', message, context));
     
     if (!import.meta.env.DEV && typeof window !== 'undefined' && window.posthog) {
@@ -73,10 +68,10 @@ class Logger {
   /**
    * Error logging - always logged, sent to backend and PostHog
    */
-  error(message: string, error?: Error, context?: LogContext) {
+  error(message: string, error?: Error, context?: Record<string, any>) {
     console.error(this.formatMessage('error', message, context), error);
     
-    const errorContext = {
+    const errorContext: any = {
       message,
       errorName: error?.name,
       errorMessage: error?.message,
@@ -87,7 +82,10 @@ class Logger {
 
     // Send to backend
     if (error) {
-      clientLogger.error(error, errorContext).catch(console.error);
+      clientLogger.error(error, {
+        routeName: errorContext.routeName || errorContext.route || 'unknown',
+        ...errorContext
+      } as any).catch(console.error);
     }
 
     // Send to PostHog
@@ -99,10 +97,10 @@ class Logger {
   /**
    * Critical error logging - highest priority, always sent to monitoring
    */
-  critical(message: string, error?: Error, context?: LogContext) {
+  critical(message: string, error?: Error, context?: Record<string, any>) {
     console.error(this.formatMessage('critical', message, context), error);
     
-    const errorContext = {
+    const errorContext: any = {
       message,
       severity: 'critical',
       errorName: error?.name,
@@ -114,7 +112,10 @@ class Logger {
 
     // Always log critical errors to backend
     if (error) {
-      clientLogger.error(error, errorContext).catch(console.error);
+      clientLogger.error(error, {
+        routeName: errorContext.routeName || errorContext.route || 'unknown',
+        ...errorContext
+      } as any).catch(console.error);
     }
 
     // Send to PostHog with high priority

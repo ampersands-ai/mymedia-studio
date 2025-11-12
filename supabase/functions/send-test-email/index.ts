@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@3.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -8,24 +9,39 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface TestEmailRequest {
-  email: string;
-  name?: string;
-}
-
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { email, name = "User" }: TestEmailRequest = await req.json();
+    // Initialize Supabase client
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
 
-    console.log(`Sending test email to: ${email}`);
+    // Fetch admin email from settings
+    const { data: settings, error: settingsError } = await supabase
+      .from("app_settings")
+      .select("setting_value")
+      .eq("setting_key", "admin_notifications")
+      .single();
+
+    if (settingsError || !settings) {
+      throw new Error("Admin email not configured in settings");
+    }
+
+    const adminEmail = settings.setting_value?.admin_email;
+    if (!adminEmail) {
+      throw new Error("Admin email not found in admin_notifications settings");
+    }
+
+    console.log(`Sending test email to admin: ${adminEmail}`);
 
     const emailResponse = await resend.emails.send({
       from: "Artifio System <noreply@artifio.ai>",
-      to: [email],
+      to: [adminEmail],
       subject: "✅ Test Email - Email System Working!",
       html: `
         <!DOCTYPE html>
@@ -90,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
             
             <div class="content">
-              <p>Hi <strong>${name}</strong>,</p>
+              <p>Hi <strong>Admin</strong>,</p>
               
               <p>This is a test email from your application's email system. If you're seeing this, it means:</p>
               
@@ -135,7 +151,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: `Test email sent to ${email}`,
+        message: `Test email sent to admin: ${adminEmail}`,
         data: emailResponse 
       }),
       {

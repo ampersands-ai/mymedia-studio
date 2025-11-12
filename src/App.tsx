@@ -65,6 +65,9 @@ const ModelHealthTestPage = lazy(() => import("./pages/admin/ModelHealthTestPage
 const ModelAlerts = lazy(() => import("./pages/admin/ModelAlerts"));
 const TestModelGroupPage = lazy(() => import("./pages/admin/TestModelGroupPage"));
 const SharedContent = lazy(() => import("./pages/SharedContent"));
+const UserLogs = lazy(() => import("./pages/admin/UserLogs"));
+const DebugPanel = lazy(() => import("./components/dev/DebugPanel").then(m => ({ default: m.DebugPanel })));
+const RouteErrorBoundary = lazy(() => import("./components/error/RouteErrorBoundary").then(m => ({ default: m.RouteErrorBoundary })));
 
 const AppContent = () => {
   // Initialize PostHog
@@ -117,6 +120,7 @@ const AppContent = () => {
           </div>
         }>
           <Analytics />
+          {import.meta.env.DEV && <DebugPanel />}
               <Routes>
                 <Route path="/" element={<IndexV2 />} />
           <Route path="/minimal" element={<IndexMinimal />} />
@@ -154,6 +158,7 @@ const AppContent = () => {
               <Route path="template-analytics" element={<TemplateAnalytics />} />
               <Route path="migrate-storyboards" element={<MigrateStoryboards />} />
               <Route path="cinematic-prompts" element={<CinematicPromptsManager />} />
+              <Route path="user-logs" element={<UserLogs />} />
             </Route>
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/privacy" element={<Privacy />} />

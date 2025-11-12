@@ -1665,6 +1665,174 @@ export type Database = {
           },
         ]
       }
+      user_activity_logs: {
+        Row: {
+          activity_name: string
+          activity_type: string
+          created_at: string | null
+          description: string | null
+          duration_ms: number | null
+          id: string
+          metadata: Json | null
+          route_name: string | null
+          route_path: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          activity_name: string
+          activity_type: string
+          created_at?: string | null
+          description?: string | null
+          duration_ms?: number | null
+          id?: string
+          metadata?: Json | null
+          route_name?: string | null
+          route_path?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          activity_name?: string
+          activity_type?: string
+          created_at?: string | null
+          description?: string | null
+          duration_ms?: number | null
+          id?: string
+          metadata?: Json | null
+          route_name?: string | null
+          route_path?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_error_logs: {
+        Row: {
+          admin_notes: string | null
+          alert_sent: boolean | null
+          browser_info: Json | null
+          category: string | null
+          component_name: string | null
+          component_stack: string | null
+          created_at: string | null
+          error_message: string
+          error_stack: string | null
+          error_type: string
+          id: string
+          is_resolved: boolean | null
+          metadata: Json | null
+          resolved_at: string | null
+          route_name: string
+          route_path: string | null
+          session_id: string | null
+          severity: string
+          user_action: string | null
+          user_id: string | null
+          viewport: Json | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          alert_sent?: boolean | null
+          browser_info?: Json | null
+          category?: string | null
+          component_name?: string | null
+          component_stack?: string | null
+          created_at?: string | null
+          error_message: string
+          error_stack?: string | null
+          error_type: string
+          id?: string
+          is_resolved?: boolean | null
+          metadata?: Json | null
+          resolved_at?: string | null
+          route_name: string
+          route_path?: string | null
+          session_id?: string | null
+          severity: string
+          user_action?: string | null
+          user_id?: string | null
+          viewport?: Json | null
+        }
+        Update: {
+          admin_notes?: string | null
+          alert_sent?: boolean | null
+          browser_info?: Json | null
+          category?: string | null
+          component_name?: string | null
+          component_stack?: string | null
+          created_at?: string | null
+          error_message?: string
+          error_stack?: string | null
+          error_type?: string
+          id?: string
+          is_resolved?: boolean | null
+          metadata?: Json | null
+          resolved_at?: string | null
+          route_name?: string
+          route_path?: string | null
+          session_id?: string | null
+          severity?: string
+          user_action?: string | null
+          user_id?: string | null
+          viewport?: Json | null
+        }
+        Relationships: []
+      }
+      user_log_summaries: {
+        Row: {
+          created_at: string | null
+          critical_errors: number | null
+          full_log_data: Json | null
+          health_score: number | null
+          high_severity_errors: number | null
+          id: string
+          period_end: string
+          period_start: string
+          period_type: string
+          summary_text: string | null
+          technical_summary: string | null
+          top_errors: Json | null
+          total_activities: number | null
+          total_errors: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          critical_errors?: number | null
+          full_log_data?: Json | null
+          health_score?: number | null
+          high_severity_errors?: number | null
+          id?: string
+          period_end: string
+          period_start: string
+          period_type: string
+          summary_text?: string | null
+          technical_summary?: string | null
+          top_errors?: Json | null
+          total_activities?: number | null
+          total_errors?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          critical_errors?: number | null
+          full_log_data?: Json | null
+          health_score?: number | null
+          high_severity_errors?: number | null
+          id?: string
+          period_end?: string
+          period_start?: string
+          period_type?: string
+          summary_text?: string | null
+          technical_summary?: string | null
+          top_errors?: Json | null
+          total_activities?: number | null
+          total_errors?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_onboarding_progress: {
         Row: {
           bonus_awarded: boolean | null

@@ -1,0 +1,112 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
+import { generateEmailHTML } from "../_shared/email-templates.ts";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const body = await req.json();
+    
+    // Get admin notification settings
+    const { data: settings } = await supabase
+      .from('app_settings')
+      .select('setting_value')
+      .eq('setting_key', 'admin_notifications')
+      .single();
+
+    if (!settings?.setting_value?.user_registration?.enabled) {
+      return new Response(
+        JSON.stringify({ message: 'User registration alerts disabled' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const adminEmail = settings.setting_value.admin_email;
+    
+    // Generate email HTML
+    const emailHTML = generateEmailHTML({
+      title: `New User Registration`,
+      preheader: `${body.email} just signed up`,
+      headerColor: '#16a34a',
+      headerEmoji: '🎉',
+      sections: [
+        {
+          type: 'summary',
+          title: 'User Information',
+          content: `
+            <p><strong>Email:</strong> ${body.email}</p>
+            ${body.full_name ? `<p><strong>Name:</strong> ${body.full_name}</p>` : ''}
+            ${body.phone_number ? `<p><strong>Phone:</strong> ${body.phone_number}</p>` : ''}
+            ${body.country ? `<p><strong>Location:</strong> ${body.country}${body.zipcode ? `, ${body.zipcode}` : ''}</p>` : ''}
+            <p><strong>Signup Method:</strong> ${body.signup_method}</p>
+            <p><strong>Registered:</strong> Just now</p>
+          `
+        },
+        {
+          type: 'summary',
+          title: 'Account Details',
+          content: `
+            <p><strong>Plan:</strong> Freemium (5 credits)</p>
+            <p><strong>Email Verified:</strong> ${body.signup_method !== 'email' ? 'Yes (via OAuth)' : 'Pending'}</p>
+            <p><strong>Onboarding:</strong> 0% complete</p>
+          `
+        },
+        {
+          type: 'actions',
+          title: 'Quick Actions',
+          content: [
+            {
+              label: 'View User Profile',
+              url: `https://artifio.ai/admin/users`
+            },
+            {
+              label: 'View Activity Logs',
+              url: `https://artifio.ai/admin/user-logs`
+            }
+          ]
+        }
+      ],
+      footer: 'Sent by Artifio Monitoring System'
+    });
+
+    // Send email
+    const { error: emailError } = await resend.emails.send({
+      from: 'Artifio Alerts <alerts@artifio.ai>',
+      to: [adminEmail],
+      subject: `🎉 New User Registration - ${body.email}`,
+      html: emailHTML,
+    });
+
+    if (emailError) {
+      console.error('Failed to send email:', emailError);
+      throw emailError;
+    }
+
+    return new Response(
+      JSON.stringify({ success: true }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error: any) {
+    console.error('Error in send-new-user-alert function:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});

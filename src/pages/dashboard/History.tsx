@@ -19,6 +19,7 @@ import { GallerySkeleton } from "@/components/ui/skeletons/GallerySkeleton";
 import { LoadingTransition } from "@/components/ui/loading-transition";
 import { useImagePreloader } from "@/hooks/useImagePreloader";
 import { Skeleton } from "@/components/ui/skeleton";
+import { clientLogger } from "@/lib/logging/client-logger";
 
 // Component to render image with optimized loading (no signed URL needed for public bucket)
 const ImageWithOptimizedLoading = ({ generation, className }: { generation: Generation; className?: string }) => {
@@ -602,6 +603,19 @@ const History = () => {
         window.URL.revokeObjectURL(blobUrl);
         document.body.removeChild(a);
         toast.success('Download started successfully!', { id: 'download-toast' });
+        
+        // Track activity
+        clientLogger.activity({
+          activityType: 'download',
+          activityName: 'content_downloaded',
+          routeName: 'History',
+          description: `Downloaded ${type} from history`,
+          metadata: {
+            content_type: type,
+            source: 'direct_url',
+          },
+        });
+        
         return;
       } catch (error) {
         console.error('Download error:', error);
@@ -648,6 +662,18 @@ const History = () => {
       window.URL.revokeObjectURL(blobUrl);
       document.body.removeChild(a);
       toast.success('Download started successfully!', { id: 'download-toast' });
+      
+      // Track activity
+      clientLogger.activity({
+        activityType: 'download',
+        activityName: 'content_downloaded',
+        routeName: 'History',
+        description: `Downloaded ${type} from history`,
+        metadata: {
+          content_type: type,
+          storage_path: storagePath,
+        },
+      });
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download file', { id: 'download-toast' });

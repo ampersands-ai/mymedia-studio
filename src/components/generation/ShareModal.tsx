@@ -4,6 +4,7 @@ import { Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { trackEvent } from "@/lib/posthog";
 import { supabase } from "@/integrations/supabase/client";
+import { clientLogger } from "@/lib/logging/client-logger";
 
 interface ShareModalProps {
   open: boolean;
@@ -64,6 +65,20 @@ export const ShareModal = ({
       await navigator.clipboard.writeText(share_url);
       toast.success('Secure share link copied! Expires in 7 days.');
       trackEvent('share_copy_link', { method: 'secure_token' });
+      
+      // Track activity
+      clientLogger.activity({
+        activityType: 'share',
+        activityName: 'share_link_created',
+        routeName: 'Share Modal',
+        description: 'Created secure share link',
+        metadata: {
+          content_type: contentType,
+          generation_id: generationId,
+          has_caption: !!caption,
+          has_hashtags: !!(hashtags && hashtags.length > 0),
+        },
+      });
     } catch (error) {
       console.error('Copy failed:', error);
       toast.error('Failed to create share link');

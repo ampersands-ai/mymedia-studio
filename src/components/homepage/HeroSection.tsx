@@ -108,11 +108,20 @@ export const HeroSection = () => {
       {/* Content overlay with backdrop blur */}
       <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 pt-24 pb-20 flex items-center justify-center md:justify-start">
         <div className="space-y-6 md:space-y-8 flex flex-col w-full max-w-4xl backdrop-blur-sm bg-black/30 rounded-3xl p-4 sm:p-6 md:p-8">
-          {/* Badge */}
-          <div className="flex justify-start">
-            <AnimatedBadge icon={Sparkles}>
-              Trusted by 10,000+ creators
-            </AnimatedBadge>
+          {/* AI Models */}
+          <div className="flex flex-wrap gap-2 sm:gap-3 justify-start">
+            <span className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-medium">
+              Veo 3.1
+            </span>
+            <span className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-medium">
+              Sora 2
+            </span>
+            <span className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-medium">
+              Wan 2.5
+            </span>
+            <span className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-medium">
+              xAI Imagine
+            </span>
           </div>
 
           {/* Main headline with enhanced text shadow */}

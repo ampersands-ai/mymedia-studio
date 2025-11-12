@@ -7,6 +7,7 @@ import { TOAST_IDS, DOWNLOAD_CONFIG } from "@/constants/generation";
 import type { GenerationState } from "./useGenerationState";
 import type { OnboardingProgress } from "./useOnboarding";
 import { clientLogger } from "@/lib/logging/client-logger";
+import { logger } from '@/lib/logger';
 
 /**
  * Options for generation actions hook
@@ -178,7 +179,11 @@ export const useGenerationActions = (options: UseGenerationActionsOptions) => {
         updateOnboardingProgress({ downloadedResult: true });
       }
     } catch (error) {
-      console.error('Download error:', error);
+      logger.error('Download failed', error, {
+        component: 'useGenerationActions',
+        operation: 'handleDownload',
+        storagePath
+      });
       toast.error('Failed to download file');
     }
   }, [options]);
@@ -201,7 +206,12 @@ export const useGenerationActions = (options: UseGenerationActionsOptions) => {
           );
         }
       } catch (error) {
-        console.error('Batch download error:', error);
+        logger.error('Batch download error', error, {
+          component: 'useGenerationActions',
+          operation: 'handleDownloadAll',
+          fileIndex: i,
+          totalFiles
+        });
       }
     }
     

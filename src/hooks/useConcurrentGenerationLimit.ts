@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserTokens } from "./useUserTokens";
+import { logger } from '@/lib/logger';
 
 export const useConcurrentGenerationLimit = () => {
   const { data: userTokens } = useUserTokens();
@@ -35,7 +36,11 @@ export const useConcurrentGenerationLimit = () => {
         .single();
 
       if (error) {
-        console.error("Error fetching concurrent limit:", error);
+        logger.error('Failed to fetch concurrent limit', error, {
+          component: 'useConcurrentGenerationLimit',
+          operation: 'fetchLimit',
+          plan
+        });
         return 1; // Default to 1 for freemium
       }
 

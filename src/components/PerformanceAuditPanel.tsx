@@ -9,6 +9,7 @@ import {
   logPerformanceReport,
   type PerformanceReport 
 } from '@/utils/performanceAudit';
+import { logger } from '@/lib/logger';
 
 export function PerformanceAuditPanel() {
   const [report, setReport] = useState<PerformanceReport | null>(null);
@@ -21,7 +22,10 @@ export function PerformanceAuditPanel() {
       setReport(auditReport);
       logPerformanceReport(auditReport);
     } catch (error) {
-      console.error('Audit failed:', error);
+      logger.error('Performance audit failed', error, {
+        component: 'PerformanceAuditPanel',
+        operation: 'handleRunAudit'
+      });
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 export const usePromptEnhancement = () => {
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -31,7 +32,12 @@ export const usePromptEnhancement = () => {
       return data.enhanced_prompt;
 
     } catch (error: any) {
-      console.error('Error enhancing prompt:', error);
+      logger.error('Prompt enhancement failed', error, {
+        component: 'usePromptEnhancement',
+        operation: 'enhancePrompt',
+        category,
+        promptLength: prompt.length
+      });
       toast.error(error.message || 'Failed to enhance prompt');
       return null;
     } finally {

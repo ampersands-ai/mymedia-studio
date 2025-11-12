@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { logger } from '@/lib/logger';
 
 interface PerformanceMetrics {
   fps: number;
@@ -59,7 +60,10 @@ export function DevPerformanceMonitor() {
           }
           setMetrics(prev => ({ ...prev, cacheSize: totalSize }));
         } catch (err) {
-          console.error('Cache check failed:', err);
+          logger.error('Cache size check failed', err, {
+            component: 'DevPerformanceMonitor',
+            operation: 'measureCacheSize'
+          });
         }
       }
 
@@ -72,7 +76,11 @@ export function DevPerformanceMonitor() {
       
       // Warn if too many will-change elements
       if (willChangeElements.length > 10) {
-        console.warn(`⚠️ Too many will-change: ${willChangeElements.length} elements`);
+        logger.warn('Excessive will-change elements detected', {
+          component: 'DevPerformanceMonitor',
+          operation: 'checkWillChange',
+          count: willChangeElements.length
+        });
       }
     }, 1000);
 

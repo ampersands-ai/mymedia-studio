@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 export interface WebhookStats {
   successRate: number;
@@ -202,7 +203,10 @@ export const useWebhookMonitoring = () => {
 
   // Real-time subscription to generations table changes
   useEffect(() => {
-    console.log('🔴 Setting up real-time webhook monitoring subscription');
+    logger.debug('Setting up real-time webhook monitoring', {
+      component: 'useWebhookMonitoring',
+      operation: 'setupRealtime'
+    });
     
     const channel = supabase
       .channel('webhook-monitor-realtime')
@@ -215,7 +219,12 @@ export const useWebhookMonitoring = () => {
           filter: 'provider_task_id=not.is.null'
         },
         (payload) => {
-          console.log('🎯 Real-time webhook event received:', payload);
+          logger.debug('Webhook realtime event received', {
+            component: 'useWebhookMonitoring',
+            operation: 'realtimeEvent',
+            eventType: payload.eventType,
+            generationId: (payload.new as any)?.id
+          });
           
           // Invalidate all queries to refresh data
           queryClient.invalidateQueries({ queryKey: ['webhook-stats'] });
@@ -243,11 +252,18 @@ export const useWebhookMonitoring = () => {
         }
       )
       .subscribe((status) => {
-        console.log('📡 Realtime subscription status:', status);
+        logger.debug('Realtime subscription status change', {
+          component: 'useWebhookMonitoring',
+          operation: 'subscriptionStatus',
+          status
+        });
       });
 
     return () => {
-      console.log('🔴 Cleaning up real-time subscription');
+      logger.debug('Cleaning up realtime subscription', {
+        component: 'useWebhookMonitoring',
+        operation: 'cleanup'
+      });
       supabase.removeChannel(channel);
     };
   }, [queryClient, toast]);

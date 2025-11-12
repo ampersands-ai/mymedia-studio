@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { logger } from '@/lib/logger';
 
 interface CustomScene {
   voiceOverText: string;
@@ -80,7 +81,12 @@ export const useCustomStoryboard = () => {
         description: 'Now customize voice and caption settings, then render your video.',
       });
     } catch (error: any) {
-      console.error('[useCustomStoryboard] Error:', error);
+      logger.error('Custom storyboard creation failed', error, {
+        component: 'useCustomStoryboard',
+        operation: 'createCustomStoryboard',
+        sceneCount: input.scenes.length,
+        aspectRatio: input.aspectRatio
+      });
       toast.error(error?.message || 'Failed to create custom storyboard');
     } finally {
       setIsCreating(false);

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 interface StoryboardInput {
   topic: string;
@@ -116,7 +117,10 @@ export const useStoryboardGeneration = (
       queryClient.invalidateQueries({ queryKey: ['storyboard-scenes', newStoryboardId] });
     },
     onError: (error: any) => {
-      console.error('[useStoryboard] Generate error:', error);
+      logger.error('Storyboard generation failed', error, {
+        component: 'useStoryboardGeneration',
+        operation: 'generateMutation'
+      });
       const errorMessage = error?.message || 'Failed to generate storyboard';
       toast.error(errorMessage, {
         description: 'Please check your credits and try again',
@@ -137,7 +141,12 @@ export const useStoryboardGeneration = (
       await generateMutation.mutateAsync(input);
       toast.success('Storyboard generated successfully!', { id: 'generate-storyboard' });
     } catch (error: any) {
-      console.error('[generateStoryboard] Error:', error);
+      logger.error('Storyboard generation error', error, {
+        component: 'useStoryboardGeneration',
+        operation: 'generateStoryboard',
+        topic: input.topic,
+        duration: input.duration
+      });
       toast.error(
         error?.message || 'Failed to generate storyboard', 
         { 

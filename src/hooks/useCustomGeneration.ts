@@ -8,6 +8,7 @@ import { CAPTION_GENERATION_COST } from "@/constants/custom-creation";
 import { trackEvent } from "@/lib/posthog";
 import type { CustomCreationState } from "@/types/custom-creation";
 import { executeGeneration } from "@/lib/generation/executeGeneration";
+import { logger } from '@/lib/logger';
 
 interface UseCustomGenerationOptions {
   state: CustomCreationState;
@@ -173,7 +174,12 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       }
 
     } catch (error: any) {
-      console.error('Generation error:', error);
+      logger.error('Custom generation failed', error, {
+        component: 'useCustomGeneration',
+        operation: 'handleGenerate',
+        modelId: state.selectedModel,
+        prompt: state.prompt.substring(0, 100)
+      });
       // Errors are already toasted by executeGeneration
       updateState({ generationStartTime: null });
     } finally {
@@ -216,7 +222,11 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       
       toast.success(`${promptTypeLabels[state.selectedGroup]} prompt loaded!`);
     } catch (error) {
-      console.error('Surprise me error:', error);
+      logger.error('Surprise me generation failed', error, {
+        component: 'useCustomGeneration',
+        operation: 'handleSurpriseMe',
+        group: state.selectedGroup
+      });
       toast.error("Failed to load prompt. Please try again.");
       updateState({ generatingSurprise: false });
     }
@@ -243,12 +253,24 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
         .in('status', ['pending', 'processing']); // Cancel if pending or processing
       
       if (error) {
-        console.error('Failed to cancel generation:', error);
+        logger.error('Failed to cancel generation', error, {
+          component: 'useCustomGeneration',
+          operation: 'handleCancelGeneration',
+          generationId
+        });
       } else {
-        console.log('Generation cancelled:', generationId);
+        logger.debug('Generation cancelled', {
+          component: 'useCustomGeneration',
+          operation: 'handleCancelGeneration',
+          generationId
+        });
       }
     } catch (error) {
-      console.error('Error cancelling generation:', error);
+      logger.error('Error cancelling generation', error, {
+        component: 'useCustomGeneration',
+        operation: 'handleCancelGeneration',
+        generationId
+      });
     }
   }, [updateState]);
 

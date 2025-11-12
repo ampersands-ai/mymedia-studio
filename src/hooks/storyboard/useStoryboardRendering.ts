@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Storyboard } from './useStoryboardState';
+import { logger } from '@/lib/logger';
 
 export const useStoryboardRendering = (
   currentStoryboardId: string | null,
@@ -47,7 +48,11 @@ export const useStoryboardRendering = (
       }
     },
     onError: (error: any) => {
-      console.error('[useStoryboard] Render start error:', error);
+      logger.error('Render video start failed', error, {
+        component: 'useStoryboardRendering',
+        operation: 'renderVideoMutation',
+        storyboardId: currentStoryboardId
+      });
     },
   });
 
@@ -69,7 +74,11 @@ export const useStoryboardRendering = (
       toast.success('Render canceled. Status updated to draft.');
     },
     onError: (error: any) => {
-      console.error('[useStoryboard] Cancel render error:', error);
+      logger.error('Cancel render failed', error, {
+        component: 'useStoryboardRendering',
+        operation: 'cancelRenderMutation',
+        storyboardId: currentStoryboardId
+      });
       toast.error(`Failed to cancel render: ${error.message}`);
     },
   });
@@ -116,7 +125,12 @@ export const useStoryboardRendering = (
 
         // Phase 4: Timeout detection (10 minutes)
         if (renderingStartTime && Date.now() - renderingStartTime > 10 * 60 * 1000) {
-          console.warn('[useStoryboard] Rendering timeout detected, attempting manual fetch...');
+          logger.warn('Rendering timeout detected, attempting recovery', {
+            component: 'useStoryboardRendering',
+            operation: 'pollRenderStatus',
+            storyboardId: currentStoryboardId,
+            elapsedMinutes: Math.round((Date.now() - renderingStartTime) / 60000)
+          });
           
           // Try manual fetch from JSON2Video
           const { data: storyboardData } = await supabase
@@ -132,18 +146,30 @@ export const useStoryboardRendering = (
             );
 
             if (!fetchError && fetchData?.success) {
-              console.log('[useStoryboard] Video recovered successfully');
+              logger.info('Video recovered after timeout', {
+                component: 'useStoryboardRendering',
+                operation: 'manualFetch',
+                storyboardId: currentStoryboardId
+              });
               setIsRendering(false);
               setRenderingStartTime(null);
               setEstimatedRenderTime(null);
               queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
             } else {
-              console.warn('[useStoryboard] Manual fetch failed, rendering still in progress');
+              logger.warn('Manual fetch failed, rendering still in progress', {
+                component: 'useStoryboardRendering',
+                operation: 'manualFetch',
+                storyboardId: currentStoryboardId
+              });
             }
           }
         }
       } catch (error) {
-        console.error('[useStoryboard] Poll error:', error);
+        logger.error('Poll render status error', error, {
+          component: 'useStoryboardRendering',
+          operation: 'pollRenderStatus',
+          storyboardId: currentStoryboardId
+        });
       }
     }, 5000); // Poll every 5 seconds
 
@@ -211,7 +237,11 @@ export const useStoryboardRendering = (
         return;
       }
 
-      console.log('[useStoryboard] Checking video status...');
+      logger.debug('Checking video status', {
+        component: 'useStoryboardRendering',
+        operation: 'refreshStatus',
+        storyboardId: currentStoryboardId
+      });
 
       const { data, error } = await supabase.functions.invoke(
         'fetch-video-status',
@@ -221,19 +251,36 @@ export const useStoryboardRendering = (
       if (error) throw error;
 
       if (data.status === 'complete') {
-        console.log('[useStoryboard] Video is ready');
+        logger.info('Video status check: complete', {
+          component: 'useStoryboardRendering',
+          operation: 'refreshStatus',
+          storyboardId: currentStoryboardId
+        });
         setIsRendering(false);
         setRenderingStartTime(null);
         queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
       } else if (data.status === 'failed') {
-        console.warn('[useStoryboard] Video rendering failed');
+        logger.warn('Video rendering failed', {
+          component: 'useStoryboardRendering',
+          operation: 'refreshStatus',
+          storyboardId: currentStoryboardId
+        });
         setIsRendering(false);
         setRenderingStartTime(null);
       } else {
-        console.log('[useStoryboard] Still rendering...');
+        logger.debug('Video still rendering', {
+          component: 'useStoryboardRendering',
+          operation: 'refreshStatus',
+          storyboardId: currentStoryboardId,
+          status: data.status
+        });
       }
     } catch (error: any) {
-      console.error('[useStoryboard] Failed to check status:', error);
+      logger.error('Video status check failed', error, {
+        component: 'useStoryboardRendering',
+        operation: 'refreshStatus',
+        storyboardId: currentStoryboardId
+      });
     }
   }, [currentStoryboardId, queryClient]);
 

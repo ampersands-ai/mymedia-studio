@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { CaptionData, GenerationOutput } from "@/types/custom-creation";
+import { logger } from '@/lib/logger';
 
 /**
  * Caption and hashtags management
@@ -44,7 +45,11 @@ export const useCaptionGeneration = (
       
       toast.success("Caption and hashtags generated!");
     } catch (err) {
-      console.error("Caption generation failed:", err);
+      logger.error('Caption generation failed', err, {
+        component: 'useCaptionGeneration',
+        operation: 'generateCaption',
+        generationId: generatedOutputs[0]?.id
+      });
       toast.error("Failed to generate caption");
     } finally {
       setIsGeneratingCaption(false);

@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Scene, Storyboard } from './useStoryboardState';
+import { logger } from '@/lib/logger';
 
 export const useStoryboardScenes = (
   currentStoryboardId: string | null,
@@ -117,8 +118,12 @@ export const useStoryboardScenes = (
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['storyboard-scenes', currentStoryboardId] });
     },
-    onError: (error: any) => {
-      console.error('[useStoryboard] Regenerate scene error:', error);
+    onError: (error: any, variables) => {
+      logger.error('Regenerate scene failed', error, {
+        component: 'useStoryboardScenes',
+        operation: 'regenerateSceneMutation',
+        sceneId: variables.sceneId
+      });
     },
   });
 
@@ -321,7 +326,12 @@ export const useStoryboardScenes = (
         });
 
       } catch (error: any) {
-        console.error(`Failed to generate scene ${scene.sceneNumber}:`, error);
+        logger.error('Scene generation failed', error, {
+          component: 'useStoryboardScenes',
+          operation: 'generateAllScenePreviews',
+          sceneNumber: scene.sceneNumber,
+          isIntro: scene.isIntro
+        });
         results.push({
           sceneNumber: scene.sceneNumber,
           success: false,
@@ -337,7 +347,12 @@ export const useStoryboardScenes = (
     const failCount = results.filter((r: any) => !r.success).length;
     
     if (failCount > 0) {
-      console.warn(`⚠️ Bulk generation completed with ${failCount} failures`);
+      logger.warn('Bulk generation completed with failures', {
+        component: 'useStoryboardScenes',
+        operation: 'generateAllScenePreviews',
+        failed: failCount,
+        succeeded: successCount
+      });
     }
 
     toast.success(`Generated ${successCount} of ${scenesToGenerate.length} previews`);

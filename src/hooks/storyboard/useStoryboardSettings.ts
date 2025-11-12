@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 export const useStoryboardSettings = (currentStoryboardId: string | null) => {
   const queryClient = useQueryClient();
@@ -46,7 +47,11 @@ export const useStoryboardSettings = (currentStoryboardId: string | null) => {
       });
     },
     onError: (error: any) => {
-      console.error('[useStoryboard] Update render settings error:', error);
+      logger.error('Update render settings failed', error, {
+        component: 'useStoryboardSettings',
+        operation: 'updateRenderSettingsMutation',
+        storyboardId: currentStoryboardId
+      });
       toast.error('Failed to update settings');
     },
   });

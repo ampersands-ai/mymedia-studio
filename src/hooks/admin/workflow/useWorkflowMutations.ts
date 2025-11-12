@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type { MergedTemplate } from "@/hooks/useTemplates";
 import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import type { ContentTemplateDialogState, WorkflowDialogState } from "@/types/admin/workflow-editor";
+import { logger } from '@/lib/logger';
 
 interface UseWorkflowMutationsOptions {
   onEditContentTemplate: (state: ContentTemplateDialogState) => void;
@@ -37,7 +38,12 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
       toast.success(`Template ${!item.is_active ? "enabled" : "disabled"}`);
       queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
     } catch (error) {
-      console.error("Error toggling template status:", error);
+      logger.error('Template toggle failed', error, {
+        component: 'useWorkflowMutations',
+        operation: 'handleToggleActive',
+        templateId: item.id,
+        templateType: item.template_type
+      });
       toast.error("Failed to update template status");
     }
   }, [queryClient]);
@@ -54,7 +60,13 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
       ? 'content_templates' 
       : 'workflow_templates';
 
-    console.log(`Attempting to delete ${item.template_type} with ID: ${item.id} from table: ${table}`);
+    logger.debug('Template deletion initiated', {
+      component: 'useWorkflowMutations',
+      operation: 'handleDelete',
+      templateType: item.template_type,
+      templateId: item.id,
+      table
+    });
 
     try {
       const { error, data } = await supabase
@@ -63,14 +75,13 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
         .eq('id', item.id)
         .select();
 
-      console.log('Delete response:', { error, data });
-
       if (error) {
-        console.error("Delete error details:", {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
+        logger.error('Template deletion failed', error, {
+          component: 'useWorkflowMutations',
+          operation: 'handleDelete',
+          templateId: item.id,
+          errorCode: error.code,
+          errorHint: error.hint
         });
         throw error;
       }
@@ -78,7 +89,11 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
       toast.success("Template deleted successfully");
       queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
     } catch (error: any) {
-      console.error("Error deleting template:", error);
+      logger.error('Template deletion error', error, {
+        component: 'useWorkflowMutations',
+        operation: 'handleDelete',
+        templateId: item.id
+      });
       toast.error(`Failed to delete template: ${error.message || 'Unknown error'}`);
     }
   }, [queryClient]);
@@ -201,7 +216,10 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
       toast.success("All templates enabled");
       queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
     } catch (error) {
-      console.error("Error enabling all templates:", error);
+      logger.error('Enable all templates failed', error, {
+        component: 'useWorkflowMutations',
+        operation: 'handleEnableAll'
+      });
       toast.error("Failed to enable all templates");
     }
   }, [queryClient]);
@@ -221,7 +239,10 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
       toast.success("All templates disabled");
       queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
     } catch (error) {
-      console.error("Error disabling all templates:", error);
+      logger.error('Disable all templates failed', error, {
+        component: 'useWorkflowMutations',
+        operation: 'handleDisableAll'
+      });
       toast.error("Failed to disable all templates");
     }
   }, [queryClient]);

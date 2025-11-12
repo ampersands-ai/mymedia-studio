@@ -3,7 +3,7 @@ import { GradientButton } from '@/components/ui/gradient-button';
 import { AnimatedBadge } from '@/components/ui/animated-badge';
 import { GlassCard } from '@/components/ui/glass-card';
 import { OptimizedVideo } from '@/components/ui/optimized-video';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useScrollY } from '@/hooks/useScrollY';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -12,14 +12,50 @@ import { useState } from 'react';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 import { PartnerLogosCarousel } from './PartnerLogosCarousel';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import type { CreationGroup } from '@/constants/creation-groups';
 
 export const HeroSection = () => {
   const scrollY = useScrollY();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [swiperInstance, setSwiperInstance] = useState<any>(null);
   
   // Disable parallax on mobile for better performance
   const parallaxY = isMobile ? 0 : scrollY;
+
+  // AI Model badges with their details
+  const aiModels = [
+    {
+      name: 'Veo 3.1',
+      description: 'Google\'s advanced video generation model',
+      group: 'prompt_to_video' as CreationGroup,
+      delay: '0ms'
+    },
+    {
+      name: 'Sora 2',
+      description: 'OpenAI\'s cutting-edge video creation',
+      group: 'prompt_to_video' as CreationGroup,
+      delay: '100ms'
+    },
+    {
+      name: 'Wan 2.5',
+      description: 'Next-gen video synthesis technology',
+      group: 'prompt_to_video' as CreationGroup,
+      delay: '200ms'
+    },
+    {
+      name: 'xAI Imagine',
+      description: 'Advanced image generation from xAI',
+      group: 'prompt_to_image' as CreationGroup,
+      delay: '300ms'
+    }
+  ];
+
+  const handleModelClick = (group: CreationGroup) => {
+    localStorage.setItem('customCreation_selectedGroup', group);
+    navigate('/custom-creation');
+  };
 
   // Define video sources
   const desktopVideos = [
@@ -109,20 +145,32 @@ export const HeroSection = () => {
       <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 pt-24 pb-20 flex items-center justify-center md:justify-start">
         <div className="space-y-6 md:space-y-8 flex flex-col w-full max-w-4xl backdrop-blur-sm bg-black/30 rounded-3xl p-4 sm:p-6 md:p-8">
           {/* AI Models */}
-          <div className="flex flex-wrap gap-2 sm:gap-3 justify-start">
-            <span className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-medium">
-              Veo 3.1
-            </span>
-            <span className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-medium">
-              Sora 2
-            </span>
-            <span className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-medium">
-              Wan 2.5
-            </span>
-            <span className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-medium">
-              xAI Imagine
-            </span>
-          </div>
+          <TooltipProvider>
+            <div className="flex flex-wrap gap-2 sm:gap-3 justify-start">
+              {aiModels.map((model, index) => (
+                <Tooltip key={model.name}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => handleModelClick(model.group)}
+                      className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-medium transition-all duration-300 hover:bg-white/20 hover:scale-105 hover:border-white/40 cursor-pointer animate-fade-in opacity-0"
+                      style={{ 
+                        animationDelay: model.delay,
+                        animationFillMode: 'forwards'
+                      }}
+                    >
+                      {model.name}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent 
+                    side="bottom" 
+                    className="bg-black/90 backdrop-blur-md border-white/20 text-white"
+                  >
+                    <p className="text-sm">{model.description}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </TooltipProvider>
 
           {/* Main headline with enhanced text shadow */}
           <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold leading-tight drop-shadow-2xl">

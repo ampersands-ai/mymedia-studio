@@ -48,12 +48,19 @@ export const useCustomCreationState = () => {
   const [state, setState] = useState<CustomCreationState>(() => ({
     ...INITIAL_STATE,
     selectedGroup: (localStorage.getItem('customCreation_selectedGroup') as CreationGroup) || "prompt_to_image",
+    selectedModel: localStorage.getItem('customCreation_selectedModel') || null,
   }));
 
-  // Persist selectedGroup to localStorage
+  // Persist selectedGroup and selectedModel to localStorage
   useEffect(() => {
     localStorage.setItem('customCreation_selectedGroup', state.selectedGroup);
   }, [state.selectedGroup]);
+
+  useEffect(() => {
+    if (state.selectedModel) {
+      localStorage.setItem('customCreation_selectedModel', state.selectedModel);
+    }
+  }, [state.selectedModel]);
 
   /**
    * Update partial state
@@ -101,14 +108,29 @@ export const useCustomCreationState = () => {
    * Convenience setter: Update selected model
    */
   const setSelectedModel = useCallback((selectedModel: string | null) => {
-    setState(prev => ({ ...prev, selectedModel }));
+    setState(prev => ({ 
+      ...prev, 
+      selectedModel,
+      // Clear outputs when model changes
+      generatedOutput: null,
+      generatedOutputs: [],
+      selectedOutputIndex: 0,
+    }));
   }, []);
 
   /**
    * Convenience setter: Update selected group
    */
   const setSelectedGroup = useCallback((selectedGroup: CreationGroup) => {
-    setState(prev => ({ ...prev, selectedGroup, selectedModel: null })); // Reset model on group change
+    setState(prev => ({ 
+      ...prev, 
+      selectedGroup, 
+      selectedModel: null,
+      // Clear outputs when group changes
+      generatedOutput: null,
+      generatedOutputs: [],
+      selectedOutputIndex: 0,
+    }));
   }, []);
 
   return {

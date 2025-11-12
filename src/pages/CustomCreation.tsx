@@ -19,7 +19,7 @@ import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
 import { CreationGroupSelector } from "@/components/custom-creation/CreationGroupSelector";
 import { InputPanel } from "@/components/custom-creation/InputPanel";
 import { OutputPanel } from "@/components/custom-creation/OutputPanel";
-
+import { GenerationsInProgress } from "@/components/custom-creation/GenerationsInProgress";
 import { BestPracticesCard } from "@/components/custom-creation/BestPracticesCard";
 import { supabase } from "@/integrations/supabase/client";
 import { createSignedUrl, extractStoragePath } from "@/lib/storage-utils";
@@ -50,8 +50,15 @@ const CustomCreation = () => {
   const { data: userTokens } = useUserTokens();
   const { progress, updateProgress, setFirstGeneration, markComplete, dismiss } = useOnboarding();
 
-  // Sort preference
-  const [modelSortBy, setModelSortBy] = useState<string>("cost");
+  // Sort preference - persist to localStorage
+  const [modelSortBy, setModelSortBy] = useState<string>(() => {
+    return localStorage.getItem('customCreation_sortBy') || "cost";
+  });
+
+  // Persist sort preference
+  useEffect(() => {
+    localStorage.setItem('customCreation_sortBy', modelSortBy);
+  }, [modelSortBy]);
 
   // Filter and sort models by selected group
   const filteredModels = allModels?.filter(model => {
@@ -338,6 +345,24 @@ const CustomCreation = () => {
         <CreationGroupSelector 
           selectedGroup={state.selectedGroup}
           onGroupChange={setStateSelectedGroup}
+        />
+
+        {/* Generations in Progress */}
+        <GenerationsInProgress
+          onNavigateToGeneration={(modelRecordId) => {
+            // Find and select the model
+            const targetModel = allModels?.find(m => m.record_id === modelRecordId);
+            if (targetModel) {
+              // Switch to the model's group if needed
+              const modelGroups = targetModel.groups as string[] || [];
+              if (modelGroups.length > 0 && !modelGroups.includes(state.selectedGroup)) {
+                setStateSelectedGroup(modelGroups[0] as any);
+              }
+              // Select the model
+              setStateSelectedModel(modelRecordId);
+            }
+          }}
+          currentModelRecordId={state.selectedModel}
         />
 
         {/* Model Sort Selector */}

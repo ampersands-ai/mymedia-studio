@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { logger } from '@/lib/logger';
 
 function isAuthError(error: any): boolean {
   const errorMessage = error?.message?.toLowerCase() || '';
@@ -17,12 +18,18 @@ function isAuthError(error: any): boolean {
 }
 
 async function handleAuthError() {
-  console.log('[Auth Error] Session expired, signing out...');
+  logger.warn('Authentication session expired, signing out', {
+    utility: 'queryClient',
+    operation: 'handleAuthError'
+  });
   
   try {
     await supabase.auth.signOut();
   } catch (e) {
-    console.error('Error during signout:', e);
+    logger.error('Sign out during auth error handling failed', e as Error, {
+      utility: 'queryClient',
+      operation: 'handleAuthError'
+    });
   }
   
   toast({

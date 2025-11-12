@@ -3,6 +3,8 @@
  * Only registers in production to avoid dev issues
  */
 
+import { logger } from '@/lib/logger';
+
 export function registerServiceWorker() {
   // ✅ ONLY register in production
   if ('serviceWorker' in navigator && import.meta.env.PROD) {
@@ -10,7 +12,11 @@ export function registerServiceWorker() {
       navigator.serviceWorker
         .register('/sw.js')
         .then((registration) => {
-          console.log('[SW] Registered successfully');
+          logger.info('Service Worker registered successfully', {
+            utility: 'serviceWorker',
+            scope: registration.scope,
+            operation: 'registerServiceWorker'
+          });
 
           // Check for updates every hour
           setInterval(() => {
@@ -30,7 +36,12 @@ export function registerServiceWorker() {
             });
           });
         })
-        .catch((err) => console.error('[SW] Registration failed:', err));
+        .catch((err) => {
+          logger.error('Service Worker registration failed', err, {
+            utility: 'serviceWorker',
+            operation: 'registerServiceWorker'
+          });
+        });
     });
   }
 }
@@ -42,8 +53,11 @@ export function unregisterServiceWorker() {
   if (import.meta.env.DEV && 'serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then((registrations) => {
       if (registrations.length > 0) {
-        console.warn('⚠️ Service Worker active in dev mode. Auto-unregistering...');
-        console.warn('Chrome: DevTools > Application > Service Workers > Unregister');
+        logger.warn('Service Worker active in dev mode, auto-unregistering', {
+          utility: 'serviceWorker',
+          registrationCount: registrations.length,
+          operation: 'unregisterServiceWorker'
+        });
         registrations.forEach((reg) => reg.unregister());
       }
     });
@@ -106,7 +120,12 @@ export async function clearAllCaches() {
     localStorage.clear();
     sessionStorage.clear();
 
-    console.log('[Cache] All caches cleared');
+    logger.info('All caches and storage cleared', {
+      utility: 'serviceWorker',
+      cacheCount: cacheNames.length,
+      registrationCount: registrations.length,
+      operation: 'clearAllCaches'
+    });
     window.location.reload();
   }
 }

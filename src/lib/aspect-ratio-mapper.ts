@@ -3,6 +3,8 @@
  * Maps storyboard aspect ratios to model-specific parameter formats
  */
 
+import { logger } from '@/lib/logger';
+
 // Map storyboard aspect ratio codes to actual ratios
 const ASPECT_RATIO_MAP: Record<string, string> = {
   'sd': '4:3',          // 640×480
@@ -45,25 +47,43 @@ export function mapAspectRatioToModelParameters(
 ): Record<string, any> {
   // If no aspect ratio provided, return empty
   if (!storyboardAspectRatio) {
-    console.log('[AspectRatioMapper] No aspect ratio provided, returning empty params');
+    logger.debug('No aspect ratio provided for mapping', {
+      utility: 'aspect-ratio-mapper',
+      operation: 'mapAspectRatioToModelParameters'
+    });
     return {};
   }
 
   // Get the actual ratio (e.g., "16:9") from storyboard code (e.g., "hd")
   const actualRatio = ASPECT_RATIO_MAP[storyboardAspectRatio];
   if (!actualRatio) {
-    console.warn(`[AspectRatioMapper] Unknown aspect ratio: ${storyboardAspectRatio}`);
+    logger.warn('Unknown aspect ratio mapping', {
+      utility: 'aspect-ratio-mapper',
+      storyboardAspectRatio,
+      availableRatios: Object.keys(ASPECT_RATIO_MAP),
+      operation: 'mapAspectRatioToModelParameters'
+    });
     return {};
   }
 
-  console.log(`[AspectRatioMapper] Mapping ${storyboardAspectRatio} → ${actualRatio}`);
+  logger.debug('Mapping aspect ratio', {
+    utility: 'aspect-ratio-mapper',
+    storyboardAspectRatio,
+    actualRatio,
+    operation: 'mapAspectRatioToModelParameters'
+  });
 
   // Get schema properties
   const properties = modelInputSchema?.properties || {};
 
   // Check for aspectRatio parameter (Midjourney, FLUX, etc.)
   if (properties.aspectRatio || properties.aspect_ratio) {
-    console.log(`[AspectRatioMapper] Using aspectRatio parameter: ${actualRatio}`);
+    logger.debug('Using aspectRatio parameter', {
+      utility: 'aspect-ratio-mapper',
+      actualRatio,
+      parameterType: 'aspectRatio',
+      operation: 'mapAspectRatioToModelParameters'
+    });
     return { 
       aspectRatio: actualRatio,
       aspect_ratio: actualRatio // Some models use snake_case
@@ -73,14 +93,26 @@ export function mapAspectRatioToModelParameters(
   // Check for image_size parameter (Seedream)
   if (properties.image_size) {
     const seedreamSize = SEEDREAM_SIZE_MAP[actualRatio] || 'landscape_16_9';
-    console.log(`[AspectRatioMapper] Using image_size parameter: ${seedreamSize}`);
+    logger.debug('Using image_size parameter', {
+      utility: 'aspect-ratio-mapper',
+      actualRatio,
+      seedreamSize,
+      parameterType: 'image_size',
+      operation: 'mapAspectRatioToModelParameters'
+    });
     return { image_size: seedreamSize };
   }
 
   // Check for width/height parameters (Runware, legacy models)
   if (properties.width && properties.height) {
     const dimensions = DIMENSIONS_MAP[actualRatio] || { width: 1920, height: 1080 };
-    console.log(`[AspectRatioMapper] Using width/height parameters: ${dimensions.width}x${dimensions.height}`);
+    logger.debug('Using width/height parameters', {
+      utility: 'aspect-ratio-mapper',
+      actualRatio,
+      dimensions,
+      parameterType: 'width_height',
+      operation: 'mapAspectRatioToModelParameters'
+    });
     return dimensions;
   }
 
@@ -88,13 +120,25 @@ export function mapAspectRatioToModelParameters(
   if (properties.size) {
     const dimensions = DIMENSIONS_MAP[actualRatio] || { width: 1920, height: 1080 };
     const sizeString = `${dimensions.width}x${dimensions.height}`;
-    console.log(`[AspectRatioMapper] Using size parameter: ${sizeString}`);
+    logger.debug('Using size parameter', {
+      utility: 'aspect-ratio-mapper',
+      actualRatio,
+      sizeString,
+      parameterType: 'size',
+      operation: 'mapAspectRatioToModelParameters'
+    });
     return { size: sizeString };
   }
 
   // Fallback to dimensions if no recognized parameter
   const dimensions = DIMENSIONS_MAP[actualRatio] || { width: 1920, height: 1080 };
-  console.log(`[AspectRatioMapper] No recognized aspect ratio parameter in schema, using dimensions fallback: ${dimensions.width}x${dimensions.height}`);
+  logger.debug('Using dimensions fallback', {
+    utility: 'aspect-ratio-mapper',
+    actualRatio,
+    dimensions,
+    reason: 'no_recognized_parameter',
+    operation: 'mapAspectRatioToModelParameters'
+  });
   return dimensions;
 }
 

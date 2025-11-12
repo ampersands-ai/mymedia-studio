@@ -1,4 +1,5 @@
 import posthog from 'posthog-js';
+import { logger } from '@/lib/logger';
 
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY;
 const POSTHOG_HOST = 'https://app.posthog.com';
@@ -17,7 +18,11 @@ const getDeviceId = (): string => {
     ).join('');
     
     localStorage.setItem(DEVICE_ID_KEY, deviceId);
-    console.log('Generated new device ID:', deviceId);
+    logger.debug('Generated new PostHog device ID', {
+      utility: 'posthog',
+      deviceIdLength: deviceId.length,
+      operation: 'getDeviceId'
+    });
   }
   
   return deviceId;
@@ -31,7 +36,12 @@ export const initPostHog = () => {
       api_host: POSTHOG_HOST,
       loaded: (posthog) => {
         if (import.meta.env.DEV) {
-          console.log('PostHog initialized with device ID:', deviceId);
+          logger.debug('PostHog analytics initialized', {
+            utility: 'posthog',
+            deviceId,
+            platform: 'artifio.ai',
+            operation: 'initPostHog'
+          });
         }
       },
       capture_pageview: false, // We'll handle this manually with router

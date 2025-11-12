@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 
 /**
  * Generate a signed URL for secure access to storage files
@@ -18,13 +19,23 @@ export async function createSignedUrl(
       .createSignedUrl(filePath, expiresIn);
 
     if (error) {
-      console.error('Error creating signed URL:', error);
+      logger.error('Signed URL creation failed', error, {
+        utility: 'storage-utils',
+        bucket,
+        filePath: filePath.substring(0, 50),
+        operation: 'createSignedUrl'
+      });
       return null;
     }
 
     return data.signedUrl;
   } catch (error) {
-    console.error('Failed to create signed URL:', error);
+    logger.error('Signed URL generation exception', error as Error, {
+      utility: 'storage-utils',
+      bucket,
+      filePath: filePath.substring(0, 50),
+      operation: 'createSignedUrl'
+    });
     return null;
   }
 }
@@ -57,7 +68,13 @@ export async function createSignedUrls(
  * @returns Public URL to the voice preview audio file
  */
 export function getVoicePreviewUrl(voiceId: string): string {
-  console.warn('[DEPRECATED] getVoicePreviewUrl: Use useAudioUrl hook from @/hooks/media instead');
+  logger.warn('Deprecated function called', {
+    utility: 'storage-utils',
+    function: 'getVoicePreviewUrl',
+    voiceId,
+    recommendation: 'Use useAudioUrl hook from @/hooks/media instead',
+    operation: 'getVoicePreviewUrl'
+  });
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   return `${supabaseUrl}/storage/v1/object/public/voice-previews/${voiceId}.mp3`;
 }
@@ -93,7 +110,12 @@ export const extractStoragePath = (url: string | null): string => {
     // Last resort: clean the pathname
     return urlObj.pathname.split('?')[0].replace(/^\/+/, '');
   } catch (error) {
-    console.warn('Failed to extract path from URL:', url, error);
+    logger.warn('Storage path extraction failed', {
+      utility: 'storage-utils',
+      url: url.substring(0, 50),
+      error: error instanceof Error ? error.message : 'Unknown error',
+      operation: 'extractStoragePath'
+    });
     // Return the original URL cleaned as fallback
     return url.split('?')[0].replace(/^\/+/, '');
   }

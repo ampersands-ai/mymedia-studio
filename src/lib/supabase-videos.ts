@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 
 /**
  * Video optimization utilities for faster loading with CDN
@@ -89,13 +90,22 @@ export async function isBucketPublic(bucket: string): Promise<boolean> {
     const { data, error } = await supabase.storage.getBucket(bucket);
     
     if (error) {
-      console.warn(`Failed to check bucket visibility for ${bucket}:`, error);
+      logger.warn('Bucket visibility check failed', {
+        utility: 'supabase-videos',
+        bucket,
+        error: error.message,
+        operation: 'isBucketPublic'
+      });
       return false;
     }
     
     return data?.public ?? false;
   } catch (error) {
-    console.error(`Error checking bucket visibility:`, error);
+    logger.error('Bucket visibility check exception', error as Error, {
+      utility: 'supabase-videos',
+      bucket,
+      operation: 'isBucketPublic'
+    });
     return false;
   }
 }
@@ -126,13 +136,23 @@ export async function getVideoUrlWithFallback(
     
     if (error || !data?.signedUrl) {
       // Last resort: try public URL anyway
-      console.warn('Signed URL creation failed, attempting public URL');
+      logger.warn('Signed URL fallback to public URL', {
+        utility: 'supabase-videos',
+        bucket,
+        storagePath: storagePath.substring(0, 50),
+        operation: 'getVideoUrlWithFallback'
+      });
       return getOptimizedVideoUrl(storagePath, bucket);
     }
     
     return data.signedUrl;
   } catch (error) {
-    console.error('Error getting video URL:', error);
+    logger.error('Video URL retrieval failed', error as Error, {
+      utility: 'supabase-videos',
+      bucket,
+      storagePath: storagePath.substring(0, 50),
+      operation: 'getVideoUrlWithFallback'
+    });
     // Final fallback: return public URL
     return getOptimizedVideoUrl(storagePath, bucket);
   }
@@ -152,7 +172,12 @@ export async function isProgressiveMp4(videoUrl: string): Promise<boolean> {
     });
     
     if (!response.ok) {
-      console.warn('Failed to fetch video header for progressive check');
+      logger.warn('Progressive MP4 check failed', {
+        utility: 'supabase-videos',
+        videoUrl: videoUrl.substring(0, 50),
+        responseStatus: response.status,
+        operation: 'isProgressiveMp4'
+      });
       return false;
     }
     
@@ -175,7 +200,11 @@ export async function isProgressiveMp4(videoUrl: string): Promise<boolean> {
     
     return false;
   } catch (error) {
-    console.error('Error checking progressive MP4:', error);
+    logger.error('Progressive MP4 validation failed', error as Error, {
+      utility: 'supabase-videos',
+      videoUrl: videoUrl.substring(0, 50),
+      operation: 'isProgressiveMp4'
+    });
     return false; // Assume not progressive on error
   }
 }

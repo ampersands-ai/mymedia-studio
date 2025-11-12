@@ -469,10 +469,10 @@ export const InputPanel: React.FC<InputPanelProps> = ({
           // Show flexible parameters outside if less than 3
           const showOutside = flexibleParams.length > 0 && flexibleParams.length < 3;
           
-          // Only show advanced panel if there are 3 or more total advanced parameters
-          // Advanced parameters = always-advanced + flexible (only when there are 3+ of them)
-          const advancedParamsCount = alwaysAdvanced.length + (flexibleParams.length >= 3 ? flexibleParams.length : 0);
-          const showAdvancedPanel = advancedParamsCount >= 3;
+          // Show advanced panel if:
+          // 1. There are any always-advanced fields (like negative_prompt), OR
+          // 2. There are 3+ flexible parameters that should go in advanced
+          const showAdvancedPanel = alwaysAdvanced.length > 0 || flexibleParams.length >= 3;
           
           return (
             <>

@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { trackEvent } from "@/lib/posthog";
+import { logger } from "@/lib/logger";
 
 const plans = [
   {
@@ -146,7 +147,12 @@ const Pricing = () => {
       });
 
       if (error) {
-        console.error('Payment creation error:', error);
+        logger.error('Payment creation error', error instanceof Error ? error : new Error(String(error)), {
+          component: 'Pricing',
+          operation: 'handlePayment',
+          planName,
+          isAnnual
+        });
         
         // Check if it's a 503 service unavailable error
         if (error.message?.includes('SERVICE_UNAVAILABLE') || 
@@ -171,7 +177,12 @@ const Pricing = () => {
         throw new Error('No checkout URL returned');
       }
     } catch (error) {
-      console.error('Error creating payment:', error);
+      logger.error('Error creating payment', error instanceof Error ? error : new Error(String(error)), {
+        component: 'Pricing',
+        operation: 'handlePayment',
+        planName,
+        isAnnual
+      });
       toast.error('Failed to create payment session. Please try again.');
       setIsCreatingPayment(null);
     }

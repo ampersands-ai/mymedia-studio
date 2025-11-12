@@ -9,6 +9,7 @@ import { Eye, Heart, User, Calendar, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { GlobalHeader } from "@/components/GlobalHeader";
+import { logger } from "@/lib/logger";
 
 interface CommunityCreation {
   id: string;
@@ -99,7 +100,12 @@ const Community = () => {
 
       setCreations(creationsWithUrls);
     } catch (error) {
-      console.error("Error fetching community creations:", error);
+      logger.error("Error fetching community creations", error instanceof Error ? error : new Error(String(error)), {
+        component: 'Community',
+        operation: 'fetchCreations',
+        filter,
+        sort
+      });
       toast.error("Failed to load community creations");
     } finally {
       setLoading(false);

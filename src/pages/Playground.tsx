@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { ImageIcon, X, Upload, Coins, LogOut, Sparkles, Download, History, Play } from "lucide-react";
 
 import { SessionWarning } from "@/components/SessionWarning";
+import { logger } from "@/lib/logger";
 
 const Playground = () => {
   const navigate = useNavigate();
@@ -110,7 +111,11 @@ const Playground = () => {
       .single();
 
     if (error) {
-      console.error("Error fetching tokens:", error);
+      logger.error("Error fetching tokens", error instanceof Error ? error : new Error(String(error)), {
+        component: 'Playground',
+        operation: 'fetchTokenBalance',
+        userId
+      });
       return;
     }
     setTokensRemaining(data?.tokens_remaining || 0);

@@ -13,6 +13,7 @@ import { ArrowLeft, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { Skeleton } from "@/components/ui/skeleton";
+import { logger } from "@/lib/logger";
 
 const CreateWorkflow = () => {
   const [searchParams] = useSearchParams();
@@ -41,13 +42,18 @@ const CreateWorkflow = () => {
 
   useEffect(() => {
     const loadTemplateImages = async () => {
-      console.log('🖼️ Loading template images...', {
-        before_image_url: workflow?.before_image_url,
-        after_image_url: workflow?.after_image_url
+      logger.debug('Loading template images', {
+        component: 'CreateWorkflow',
+        operation: 'loadTemplateImages',
+        hasBeforeImage: !!workflow?.before_image_url,
+        hasAfterImage: !!workflow?.after_image_url
       });
       
       if (!workflow?.before_image_url && !workflow?.after_image_url) {
-        console.log('⚠️ No template images available');
+        logger.debug('No template images available', {
+          component: 'CreateWorkflow',
+          operation: 'loadTemplateImages'
+        });
         return;
       }
       
@@ -57,19 +63,33 @@ const CreateWorkflow = () => {
         const beforePath = workflow.before_image_url ? extractStoragePath(workflow.before_image_url) : null;
         const afterPath = workflow.after_image_url ? extractStoragePath(workflow.after_image_url) : null;
         
-        console.log('📁 Extracted paths:', { beforePath, afterPath });
+        logger.debug('Extracted storage paths', {
+          component: 'CreateWorkflow',
+          operation: 'loadTemplateImages',
+          beforePath,
+          afterPath
+        });
         
         const [beforeUrl, afterUrl] = await Promise.all([
           beforePath ? createSignedUrl('generated-content', beforePath) : null,
           afterPath ? createSignedUrl('generated-content', afterPath) : null,
         ]);
         
-        console.log('🔗 Signed URLs:', { beforeUrl, afterUrl });
+        logger.debug('Created signed URLs', {
+          component: 'CreateWorkflow',
+          operation: 'loadTemplateImages',
+          hasBeforeUrl: !!beforeUrl,
+          hasAfterUrl: !!afterUrl
+        });
         
         setTemplateBeforeImage(beforeUrl);
         setTemplateAfterImage(afterUrl);
       } catch (error) {
-        console.error('❌ Failed to load template images:', error);
+        logger.error('Failed to load template images', error instanceof Error ? error : new Error(String(error)), {
+          component: 'CreateWorkflow',
+          operation: 'loadTemplateImages',
+          workflowId: workflow?.id
+        });
       } finally {
         setIsLoadingPreview(false);
       }
@@ -81,7 +101,12 @@ const CreateWorkflow = () => {
   const handleExecute = async (formattedInputs: Record<string, any>, shouldGenerateCaption?: boolean) => {
     if (!workflow) return;
 
-    console.log('[CreateWorkflow] Starting workflow execution...');
+    logger.info('Starting workflow execution', {
+      component: 'CreateWorkflow',
+      operation: 'handleExecute',
+      workflowId: workflow.id,
+      shouldGenerateCaption
+    });
     setResult(null);
     setGenerationCompleteTime(null);
     setExecutionId(null);
@@ -92,20 +117,36 @@ const CreateWorkflow = () => {
       user_inputs: formattedInputs,
     }, shouldGenerateCaption);
 
-    console.log('[CreateWorkflow] Workflow result:', result);
+    logger.info('Workflow result received', {
+      component: 'CreateWorkflow',
+      operation: 'handleExecute',
+      hasExecutionId: !!result?.execution_id,
+      hasFinalOutput: !!result?.final_output_url
+    });
 
     if (result?.execution_id) {
       setExecutionId(result.execution_id);
-      console.log('[CreateWorkflow] Execution ID set:', result.execution_id);
+      logger.debug('Execution ID set', {
+        component: 'CreateWorkflow',
+        executionId: result.execution_id
+      });
     }
 
     if (result?.final_output_url) {
-      console.log('[CreateWorkflow] Setting result with URL:', result.final_output_url);
+      logger.info('Setting result with URL', {
+        component: 'CreateWorkflow',
+        operation: 'handleExecute',
+        hasUrl: true
+      });
       setGenerationCompleteTime(Date.now());
       setResult({ url: result.final_output_url, tokens: result.tokens_used });
       toast.success('Workflow completed!');
     } else {
-      console.error('[CreateWorkflow] No final_output_url in result:', result);
+      logger.error('No final_output_url in result', new Error('Missing final_output_url'), {
+        component: 'CreateWorkflow',
+        operation: 'handleExecute',
+        executionId: result?.execution_id
+      });
       generationStartTimeRef.current = null;
       toast.error('Workflow failed');
     }
@@ -123,16 +164,28 @@ const CreateWorkflow = () => {
         .in('status', ['pending', 'processing']);
       
       if (error) {
-        console.error('Failed to cancel workflow:', error);
+        logger.error('Failed to cancel workflow', error instanceof Error ? error : new Error(String(error)), {
+          component: 'CreateWorkflow',
+          operation: 'handleCancelExecution',
+          executionId
+        });
         toast.error('Failed to cancel workflow');
       } else {
-        console.log('Workflow cancelled:', executionId);
+        logger.info('Workflow cancelled', {
+          component: 'CreateWorkflow',
+          operation: 'handleCancelExecution',
+          executionId
+        });
         toast.success('Workflow cancelled');
         generationStartTimeRef.current = null;
         setExecutionId(null);
       }
     } catch (error) {
-      console.error('Error cancelling workflow:', error);
+      logger.error('Error cancelling workflow', error instanceof Error ? error : new Error(String(error)), {
+        component: 'CreateWorkflow',
+        operation: 'handleCancelExecution',
+        executionId
+      });
       toast.error('Error cancelling workflow');
     }
   };
@@ -150,7 +203,11 @@ const CreateWorkflow = () => {
       const extension = result.url.split('.').pop() || 'jpg';
       await downloadFile(signedUrl, `workflow-${Date.now()}.${extension}`);
     } catch (error) {
-      console.error('Download error:', error);
+      logger.error('Download error', error instanceof Error ? error : new Error(String(error)), {
+        component: 'CreateWorkflow',
+        operation: 'handleDownload',
+        resultUrl: result?.url
+      });
       toast.error('Failed to download file');
     }
   };

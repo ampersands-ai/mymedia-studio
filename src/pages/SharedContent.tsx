@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Download, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 export default function SharedContent() {
   const { token } = useParams<{ token: string }>();
@@ -39,7 +40,12 @@ export default function SharedContent() {
         setContentType(data.content_type);
       }
     } catch (err: any) {
-      console.error('Error fetching shared content:', err);
+      logger.error('Error fetching shared content', err instanceof Error ? err : new Error(String(err)), {
+        component: 'SharedContent',
+        operation: 'fetchSharedContent',
+        token,
+        errorMessage: err?.message
+      });
       setError(err.message || 'Failed to load shared content');
     } finally {
       setLoading(false);

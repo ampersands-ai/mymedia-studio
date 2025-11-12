@@ -172,7 +172,11 @@ const Settings = () => {
       if (error) throw error;
       setGenerations(data || []);
     } catch (error) {
-      console.error("Error fetching generations:", error);
+      logger.error('Error fetching generations', error as Error, {
+        component: 'Settings',
+        operation: 'fetchGenerations',
+        userId: user?.id
+      });
       toast.error("Failed to load generation history");
     } finally {
       setLoadingGenerations(false);

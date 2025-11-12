@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { logger } from "@/lib/logger";
 import { toast } from "sonner";
 import { Shield, Coins, Crown } from "lucide-react";
 
@@ -75,7 +76,10 @@ export default function UsersManager() {
 
       setUsers(usersWithData || []);
     } catch (error) {
-      console.error("Error fetching users:", error);
+      logger.error('Error fetching users', error as Error, {
+        component: 'UsersManager',
+        operation: 'fetchUsers'
+      });
       toast.error("Failed to load users");
     }
   };
@@ -106,7 +110,12 @@ export default function UsersManager() {
       setTokenAmount("");
       fetchUsers();
     } catch (error) {
-      console.error("Error adding tokens:", error);
+      logger.error('Error adding tokens', error as Error, {
+        component: 'UsersManager',
+        operation: 'handleAddTokens',
+        userId: selectedUser.id,
+        amount: tokenAmount
+      });
       toast.error("Failed to add tokens");
     }
   };
@@ -127,7 +136,12 @@ export default function UsersManager() {
       toast.success(currentlyAdmin ? "Admin role removed" : "Admin role granted");
       fetchUsers();
     } catch (error) {
-      console.error("Error toggling admin role:", error);
+      logger.error('Error toggling admin role', error as Error, {
+        component: 'UsersManager',
+        operation: 'handleToggleAdmin',
+        userId,
+        currentlyAdmin
+      });
       toast.error("Failed to update admin role");
     }
   };

@@ -6,6 +6,7 @@ import {
   getPreloadMargin,
   type ConnectionSpeed 
 } from '@/lib/supabase-videos';
+import { logger } from '@/lib/logger';
 
 interface UseVideoPreloadOptions {
   src: string;
@@ -74,7 +75,12 @@ export function useVideoPreload({
     
     const handleCanPlay = () => {
       setIsPreloaded(true);
-      console.log(`[useVideoPreload] Video preloaded (${connectionSpeed} connection):`, src);
+      logger.debug('Video preloaded', {
+        component: 'useVideoPreload',
+        operation: 'preload',
+        connectionSpeed,
+        src: src.substring(0, 100)
+      });
     };
     
     video.addEventListener('canplay', handleCanPlay);

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 
 export async function failStuckGenerations() {
   const generationIds = [
@@ -12,11 +13,19 @@ export async function failStuckGenerations() {
   });
 
   if (error) {
-    console.error('Failed to manually fail generations:', error);
+    logger.error('Failed to manually fail generations', error as Error, {
+      component: 'failStuckGenerations',
+      operation: 'invoke',
+      generationIds
+    });
     return { success: false, error };
   }
 
-  console.log('Successfully failed stuck generations:', data);
+  logger.info('Successfully failed stuck generations', {
+    component: 'failStuckGenerations',
+    operation: 'invoke',
+    data
+  });
   return { success: true, data };
 }
 

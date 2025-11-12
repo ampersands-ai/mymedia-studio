@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { WorkflowTemplate } from "./useWorkflowTemplates";
+import { logger } from "@/lib/logger";
 
 export const useWorkflowTokenCost = (
   workflow: WorkflowTemplate,
@@ -80,7 +81,11 @@ export const useWorkflowTokenCost = (
 
         setEstimatedTokens(Math.round(totalCost * 100) / 100);
       } catch (error) {
-        console.error("Error calculating workflow credit cost:", error);
+        logger.error('Error calculating workflow credit cost', error as Error, {
+          component: 'useWorkflowTokenCost',
+          operation: 'calculateCost',
+          workflowId: workflow.id
+        });
         setEstimatedTokens(50);
       } finally {
         setIsCalculating(false);

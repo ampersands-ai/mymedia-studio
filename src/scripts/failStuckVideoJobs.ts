@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 
 export async function failStuckVideoJobs() {
   const videoJobIds = [
@@ -12,11 +13,19 @@ export async function failStuckVideoJobs() {
   });
 
   if (error) {
-    console.error('Failed to manually fail video jobs:', error);
+    logger.error('Failed to manually fail video jobs', error as Error, {
+      component: 'failStuckVideoJobs',
+      operation: 'invoke',
+      videoJobIds
+    });
     return { success: false, error };
   }
 
-  console.log('Successfully failed stuck video jobs:', data);
+  logger.info('Successfully failed stuck video jobs', {
+    component: 'failStuckVideoJobs',
+    operation: 'invoke',
+    data
+  });
   return { success: true, data };
 }
 

@@ -324,7 +324,11 @@ const CreateWorkflow = () => {
                             alt="Template preview"
                             className="w-full rounded-lg shadow-lg"
                             onError={(e) => {
-                              console.error('❌ Failed to load image:', e.currentTarget.src);
+                              logger.error('Failed to load template image', new Error('Image load error'), {
+                                component: 'CreateWorkflow',
+                                operation: 'templateImageLoad',
+                                src: e.currentTarget.src
+                              });
                             }}
                           />
                           <p className="text-sm text-muted-foreground">

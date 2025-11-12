@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { VideoJob, VideoJobInput } from '@/types/video';
+import { logger } from '@/lib/logger';
 
 const PINNED_JOB_KEY = 'pinnedVideoJobId';
 const CLEARED_FLAG_KEY = 'videoJobsCleared';
@@ -216,7 +217,12 @@ export function useVideoJobs() {
           const errorMsg = err?.message || String(err);
           // Retry once on "Failed to send" or 503 errors
           if (attempt === 1 && (errorMsg.includes('Failed to send a request to the Edge Function') || errorMsg.includes('503'))) {
-            console.log('[approve-script] Retrying after transient error...');
+            logger.debug('Retrying after transient error', {
+              component: 'useVideoJobs',
+              operation: 'approveScript',
+              attempt,
+              error: errorMsg
+            });
             await new Promise(resolve => setTimeout(resolve, 500));
             return invokeWithRetry(2);
           }
@@ -251,7 +257,11 @@ export function useVideoJobs() {
   // Approve voiceover mutation
   const approveVoiceover = useMutation({
     mutationFn: async (jobId: string) => {
-      console.log('[useVideoJobs] Starting voiceover approval for job:', jobId);
+      logger.debug('Starting voiceover approval', {
+        component: 'useVideoJobs',
+        operation: 'approveVoiceover',
+        jobId
+      });
       
       // Check session before calling function
       const { data: { session } } = await supabase.auth.getSession();
@@ -259,7 +269,11 @@ export function useVideoJobs() {
         throw new Error('Please sign in to continue');
       }
       
-      console.log('[useVideoJobs] Session valid, invoking approve-voiceover function...');
+      logger.debug('Session valid, invoking approve-voiceover function', {
+        component: 'useVideoJobs',
+        operation: 'approveVoiceover',
+        jobId
+      });
       
       // Retry helper for transient failures
       const invokeWithRetry = async (attempt = 1): Promise<any> => {
@@ -271,26 +285,56 @@ export function useVideoJobs() {
             },
           });
 
-          console.log('[useVideoJobs] Function response:', { data, error, attempt });
+          logger.debug('Function response received', {
+            component: 'useVideoJobs',
+            operation: 'approveVoiceover',
+            jobId,
+            attempt,
+            hasData: !!data,
+            hasError: !!error
+          });
           
           if (error) {
-            console.error('[useVideoJobs] Function invocation error:', error);
+            logger.error('Function invocation error', error as Error, {
+              component: 'useVideoJobs',
+              operation: 'approveVoiceover',
+              jobId
+            });
             throw error;
           }
           if (data?.error) {
-            console.error('[useVideoJobs] Function returned error:', data.error);
+            logger.error('Function returned error', new Error(data.error), {
+              component: 'useVideoJobs',
+              operation: 'approveVoiceover',
+              jobId
+            });
             throw new Error(data.error);
           }
           
-          console.log('[useVideoJobs] ✅ Voiceover approval successful');
+          logger.debug('Voiceover approval successful', {
+            component: 'useVideoJobs',
+            operation: 'approveVoiceover',
+            jobId
+          });
           return data;
         } catch (err: any) {
           const errorMsg = err?.message || String(err);
-          console.error('[useVideoJobs] Attempt', attempt, 'failed:', errorMsg);
+          logger.error('Attempt failed', err as Error, {
+            component: 'useVideoJobs',
+            operation: 'approveVoiceover',
+            jobId,
+            attempt,
+            errorMsg
+          });
           
           // Retry once on "Failed to send" or 503 errors
           if (attempt === 1 && (errorMsg.includes('Failed to send a request to the Edge Function') || errorMsg.includes('503'))) {
-            console.log('[useVideoJobs] Retrying after transient error...');
+            logger.debug('Retrying after transient error', {
+              component: 'useVideoJobs',
+              operation: 'approveVoiceover',
+              jobId,
+              attempt
+            });
             await new Promise(resolve => setTimeout(resolve, 500));
             return invokeWithRetry(2);
           }
@@ -301,12 +345,18 @@ export function useVideoJobs() {
       return invokeWithRetry();
     },
     onSuccess: async () => {
-      console.log('[useVideoJobs] Mutation successful, refetching jobs...');
+      logger.debug('Mutation successful, refetching jobs', {
+        component: 'useVideoJobs',
+        operation: 'approveVoiceover'
+      });
       // Force immediate refetch to update UI
       await queryClient.refetchQueries({ queryKey: ['video-jobs'] });
     },
     onError: (error: any) => {
-      console.error('[useVideoJobs] Mutation error:', error);
+      logger.error('Mutation error', error as Error, {
+        component: 'useVideoJobs',
+        operation: 'approveVoiceover'
+      });
       const message = error.message || 'Failed to approve voiceover';
       
       // Parse specific error types for better user feedback
@@ -398,7 +448,10 @@ export function useVideoJobs() {
       await queryClient.refetchQueries({ queryKey: ['video-jobs'] });
     },
     onError: (error: any) => {
-      console.error('Caption generation error:', error);
+      logger.error('Caption generation error', error as Error, {
+        component: 'useVideoJobs',
+        operation: 'generateCaption'
+      });
       toast.error(error.message || 'Failed to generate caption');
     }
   });
@@ -432,7 +485,10 @@ export function useVideoJobs() {
       toast.success('Job status synced successfully');
     },
     onError: (error: any) => {
-      console.error('Recovery error:', error);
+      logger.error('Recovery error', error as Error, {
+        component: 'useVideoJobs',
+        operation: 'recoverJob'
+      });
       toast.error(error.message || 'Failed to sync job status');
     }
   });

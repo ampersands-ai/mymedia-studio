@@ -13,6 +13,7 @@ import { PerformanceCharts } from "@/components/admin/model-health/PerformanceCh
 import { TestHistoryTable } from "@/components/admin/model-health/TestHistoryTable";
 import { ScheduleDialog } from "@/components/admin/model-health/ScheduleDialog";
 import { ModelAlertSettings } from "@/components/admin/model-health/ModelAlertSettings";
+import { logger } from "@/lib/logger";
 import { SchedulesList } from "@/components/admin/model-health/SchedulesList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -462,7 +463,11 @@ export default function ModelHealthDashboard() {
         model={configDialogModel}
         open={!!configDialogModel}
         onOpenChange={(open) => !open && setConfigDialogModel(null)}
-        onSave={(config) => console.log("Save config:", config)}
+        onSave={(config) => logger.debug('Config saved', {
+          component: 'ModelHealthDashboard',
+          operation: 'saveConfig',
+          config
+        })}
       />
 
       <TestHistoryDialog

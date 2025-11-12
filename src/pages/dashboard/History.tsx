@@ -18,6 +18,7 @@ import { OptimizedGenerationImage } from "@/components/generation/OptimizedGener
 import { GallerySkeleton } from "@/components/ui/skeletons/GallerySkeleton";
 import { LoadingTransition } from "@/components/ui/loading-transition";
 import { useImagePreloader } from "@/hooks/useImagePreloader";
+import { logger } from "@/lib/logger";
 import { Skeleton } from "@/components/ui/skeleton";
 import { clientLogger } from "@/lib/logging/client-logger";
 
@@ -228,7 +229,10 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
               document.body.removeChild(a);
               toast.success('Download started successfully!', { id: 'video-download' });
             } catch (error) {
-              console.error('[History] Download error:', error);
+              logger.error('Video download error', error as Error, {
+                component: 'History',
+                operation: 'handleVideoDownload'
+              });
               toast.error('Failed to download', { id: 'video-download' });
             }
           }}
@@ -269,10 +273,18 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onError={() => {
-        console.error('Video playback error for:', finalVideoUrl);
+        logger.error('Video playback error', new Error('Video failed to load'), {
+          component: 'History',
+          operation: 'videoPlayback',
+          videoUrl: finalVideoUrl?.substring(0, 100)
+        });
         setVideoError(true);
       }}
-      onLoadedMetadata={() => console.log('Video loaded successfully:', finalVideoUrl)}
+      onLoadedMetadata={() => logger.debug('Video loaded successfully', {
+        component: 'History',
+        operation: 'videoPlayback',
+        videoUrl: finalVideoUrl?.substring(0, 100)
+      })}
     />
   );
 };
@@ -553,7 +565,11 @@ const History = () => {
     },
     onError: (error) => {
       toast.error("Failed to submit report. Please try again.");
-      console.error(error);
+      logger.error('Failed to submit token issue report', error as Error, {
+        component: 'History',
+        operation: 'reportTokenIssue',
+        generationId: reportingGeneration?.id
+      });
     },
   });
 
@@ -618,7 +634,11 @@ const History = () => {
         
         return;
       } catch (error) {
-        console.error('Download error:', error);
+        logger.error('Download error (direct URL)', error as Error, {
+          component: 'History',
+          operation: 'handleDownload',
+          outputUrl: outputUrl.substring(0, 100)
+        });
         toast.error('Failed to download file', { id: 'download-toast' });
         return;
       }
@@ -675,7 +695,12 @@ const History = () => {
         },
       });
     } catch (error) {
-      console.error('Download error:', error);
+      logger.error('Download error (storage)', error as Error, {
+        component: 'History',
+        operation: 'handleDownload',
+        storagePath,
+        type
+      });
       toast.error('Failed to download file', { id: 'download-toast' });
     }
   };

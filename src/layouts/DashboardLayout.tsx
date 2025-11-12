@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
 import { MobileMenu } from "@/components/MobileMenu";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 
 export const DashboardLayout = () => {
   const navigate = useNavigate();
@@ -30,7 +31,11 @@ export const DashboardLayout = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        console.log('[DashboardLayout] No valid session, redirecting to auth');
+        logger.debug('No valid session, redirecting to auth', {
+          component: 'DashboardLayout',
+          operation: 'checkSession',
+          pathname: location.pathname
+        });
         navigate("/auth");
       }
     };

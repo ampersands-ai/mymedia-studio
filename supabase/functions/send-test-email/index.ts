@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import { Resend } from "npm:resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -8,18 +8,25 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+interface TestEmailRequest {
+  email: string;
+  name?: string;
+}
+
+const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log("📧 Sending test email...");
+    const { email, name = "User" }: TestEmailRequest = await req.json();
+
+    console.log(`Sending test email to: ${email}`);
 
     const emailResponse = await resend.emails.send({
-      from: "Model Health Monitor <hello@artifio.ai>",
-      to: ["ampersands.ai@gmail.com"],
-      subject: "🧪 Test Email - Model Health Dashboard",
+      from: "System Test <onboarding@resend.dev>",
+      to: [email],
+      subject: "✅ Test Email - Email System Working!",
       html: `
         <!DOCTYPE html>
         <html>
@@ -27,19 +34,18 @@ serve(async (req) => {
             <meta charset="utf-8">
             <style>
               body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
                 line-height: 1.6;
                 color: #333;
                 max-width: 600px;
                 margin: 0 auto;
                 padding: 20px;
-                background-color: #f9fafb;
               }
               .header {
-                background: linear-gradient(135deg, #FDB022 0%, #FB923C 100%);
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 color: white;
                 padding: 30px;
-                border-radius: 8px 8px 0 0;
+                border-radius: 10px 10px 0 0;
                 text-align: center;
               }
               .content {
@@ -47,85 +53,90 @@ serve(async (req) => {
                 padding: 30px;
                 border: 1px solid #e0e0e0;
                 border-top: none;
-                border-radius: 0 0 8px 8px;
+              }
+              .footer {
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 0 0 10px 10px;
+                text-align: center;
+                color: #6c757d;
+                font-size: 14px;
+                border: 1px solid #e0e0e0;
+                border-top: none;
               }
               .badge {
                 display: inline-block;
-                padding: 8px 16px;
-                background: linear-gradient(135deg, #FDB022 0%, #FB923C 100%);
+                background: #28a745;
                 color: white;
+                padding: 5px 15px;
                 border-radius: 20px;
-                font-size: 14px;
-                font-weight: 600;
-                margin: 20px 0;
-              }
-              .info-box {
-                background: #f3f4f6;
-                padding: 20px;
-                border-radius: 8px;
-                margin: 20px 0;
-              }
-              .footer {
-                text-align: center;
-                color: #666;
                 font-size: 12px;
-                margin-top: 30px;
-                padding-top: 20px;
-                border-top: 1px solid #e0e0e0;
+                font-weight: bold;
+                margin: 10px 0;
+              }
+              .feature {
+                background: #f8f9fa;
+                padding: 15px;
+                margin: 15px 0;
+                border-left: 4px solid #667eea;
+                border-radius: 4px;
               }
             </style>
           </head>
           <body>
             <div class="header">
-              <h1 style="margin: 0; font-size: 28px;">🧪 Test Email Successful!</h1>
-              <p style="margin: 10px 0 0 0; opacity: 0.9;">Model Health Monitoring System</p>
+              <h1>🎉 Test Email Successful!</h1>
+              <p>Your email system is working perfectly</p>
             </div>
             
             <div class="content">
-              <div class="badge">✅ Email System Working</div>
+              <p>Hi <strong>${name}</strong>,</p>
               
-              <h2>Hello!</h2>
+              <p>This is a test email from your application's email system. If you're seeing this, it means:</p>
               
-              <p>This is a test email from your Model Health Dashboard to confirm that the email system is properly configured.</p>
-              
-              <div class="info-box">
-                <h3 style="margin-top: 0;">📊 System Status</h3>
-                <ul style="margin: 0; padding-left: 20px;">
-                  <li><strong>Email Service:</strong> Active ✓</li>
-                  <li><strong>Resend Integration:</strong> Connected ✓</li>
-                  <li><strong>Alert System:</strong> Ready ✓</li>
-                  <li><strong>Timestamp:</strong> ${new Date().toISOString()}</li>
-                </ul>
+              <div class="feature">
+                <strong>✅ Resend Integration:</strong> Successfully connected and authenticated
               </div>
               
-              <h3>What's Next?</h3>
-              <p>Your email alerts are now configured and ready to use. You'll receive notifications when:</p>
+              <div class="feature">
+                <strong>✅ Edge Function:</strong> send-test-email is working correctly
+              </div>
+              
+              <div class="feature">
+                <strong>✅ Email Delivery:</strong> Emails are being delivered successfully
+              </div>
+              
+              <p>You can now use this email system to send:</p>
               <ul>
-                <li>🚨 Model failure rates exceed thresholds</li>
-                <li>⚠️ Critical system issues are detected</li>
-                <li>📈 Important health status changes occur</li>
+                <li>Welcome emails to new users</li>
+                <li>Password reset notifications</li>
+                <li>System alerts and notifications</li>
+                <li>Custom transactional emails</li>
               </ul>
               
-              <p><strong>Note:</strong> This test email is sent from Resend's default domain (<code>onboarding@resend.dev</code>). For production use, consider verifying your own domain at <a href="https://resend.com/domains">resend.com/domains</a>.</p>
+              <p style="margin-top: 30px;">
+                <span class="badge">SYSTEM STATUS: OPERATIONAL</span>
+              </p>
             </div>
             
             <div class="footer">
-              <p>Sent by Model Health Monitoring System</p>
-              <p style="color: #999;">This is an automated test email.</p>
+              <p>This is an automated test email sent at ${new Date().toLocaleString()}</p>
+              <p style="color: #999; font-size: 12px; margin-top: 10px;">
+                Sent via Resend • Powered by Supabase Edge Functions
+              </p>
             </div>
           </body>
         </html>
       `,
     });
 
-    console.log("✅ Email sent successfully:", emailResponse);
+    console.log("Test email sent successfully:", emailResponse);
 
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        message: "Test email sent successfully",
-        emailResponse,
-        recipient: "ampersands.ai@gmail.com"
+        success: true,
+        message: `Test email sent to ${email}`,
+        data: emailResponse 
       }),
       {
         status: 200,
@@ -135,22 +146,20 @@ serve(async (req) => {
         },
       }
     );
-  } catch (error) {
-    console.error("❌ Error sending test email:", error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+  } catch (error: any) {
+    console.error("Error sending test email:", error);
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: errorMessage,
-        hint: "Make sure RESEND_API_KEY is configured and your domain is verified at resend.com/domains"
+        error: error.message,
+        details: error 
       }),
       {
         status: 500,
-        headers: { 
-          "Content-Type": "application/json", 
-          ...corsHeaders 
-        },
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
   }
-});
+};
+
+serve(handler);

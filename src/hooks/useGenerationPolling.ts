@@ -69,6 +69,67 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
         return;
       }
 
+      // Fallback: outputs may be ready even if status hasn't flipped yet
+      try {
+        const parentProvider = (parentData.ai_models as any)?.provider || null;
+        const candidateOutputs: GenerationOutput[] = [];
+
+        // Parent output present
+        if (parentData.storage_path) {
+          candidateOutputs.push({
+            id: parentData.id,
+            storage_path: parentData.storage_path,
+            output_index: 0,
+            provider_task_id: parentData.provider_task_id as any,
+            model_id: parentData.model_id as any,
+            provider: parentProvider as any,
+          } as any);
+        }
+
+        // Children with ready storage paths
+        const { data: childrenReady } = await supabase
+          .from('generations')
+          .select(`
+            id,
+            storage_path,
+            output_index,
+            provider_task_id,
+            model_id,
+            ai_models!inner(provider)
+          `)
+          .eq('parent_generation_id', generationId)
+          .not('storage_path', 'is', null)
+          .order('output_index', { ascending: true });
+
+        if (childrenReady && childrenReady.length > 0) {
+          candidateOutputs.push(
+            ...childrenReady.map((child: any) => ({
+              id: child.id,
+              storage_path: child.storage_path,
+              output_index: child.output_index,
+              provider_task_id: child.provider_task_id,
+              model_id: child.model_id,
+              provider: child.ai_models?.provider || null,
+            }))
+          );
+        }
+
+        const valid = candidateOutputs.filter((o) => !!o.storage_path);
+        const uniqueOutputs = valid.filter(
+          (output, index, self) => index === self.findIndex((o) => o.storage_path === output.storage_path)
+        );
+
+        if (uniqueOutputs.length > 0) {
+          clearAllTimers();
+          setIsPolling(false);
+          setPollingId(null);
+          options.onComplete(uniqueOutputs, generationId);
+          return;
+        }
+      } catch (_) {
+        // ignore fallback errors
+      }
+
       if (parentData.status === 'completed' || parentData.status === 'failed') {
         clearAllTimers();
         setIsPolling(false);

@@ -1,4 +1,5 @@
 import { createClient } from 'supabase';
+import { webhookLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -56,7 +57,10 @@ async function logApiCall(
       additional_metadata: request.additionalMetadata,
     });
   } catch (error) {
-    console.error('Failed to log API call:', error);
+    webhookLogger.error('Failed to log API call', error, { 
+      videoJobId: request.videoJobId,
+      serviceName: request.serviceName 
+    });
   }
 }
 
@@ -82,7 +86,12 @@ async function fetchWithRetry(
       if (response.status === 429 || response.status >= 500) {
         if (attempt < maxRetries - 1) {
           const delay = Math.pow(2, attempt) * 1000; // 0s, 1s, 2s
-          console.log(`Retry ${attempt + 1}/${maxRetries} after ${delay}ms...`);
+          webhookLogger.info('Retrying request', {
+            attempt: attempt + 1,
+            maxRetries,
+            delayMs: delay,
+            status: response.status
+          });
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
@@ -95,7 +104,12 @@ async function fetchWithRetry(
       }
       if (attempt < maxRetries - 1) {
         const delay = Math.pow(2, attempt) * 1000;
-        console.log(`Network error, retry ${attempt + 1}/${maxRetries} after ${delay}ms...`);
+        webhookLogger.info('Network error, retrying', {
+          attempt: attempt + 1,
+          maxRetries,
+          delayMs: delay,
+          errorName: error.name
+        });
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
@@ -161,7 +175,12 @@ Deno.serve(async (req) => {
     // If regenerating voiceover (edited_script provided), calculate and deduct tokens
     if (edited_script && edited_script !== job.script) {
       const voiceoverCost = Math.ceil((edited_script.length / 1000) * 144);
-      console.log(`[${job_id}] Regenerating voiceover, cost: ${voiceoverCost} tokens`);
+      webhookLogger.info('Regenerating voiceover', {
+        videoJobId: job_id,
+        userId: user.id,
+        cost: voiceoverCost,
+        scriptLength: edited_script.length
+      });
 
       // Check token balance
       const { data: subscription, error: subError } = await supabaseClient
@@ -186,14 +205,26 @@ Deno.serve(async (req) => {
         .eq('tokens_remaining', subscription.tokens_remaining);
 
       if (deductError) {
-        console.error('Token deduction error:', deductError);
+        webhookLogger.error('Token deduction failed', deductError, {
+          videoJobId: job_id,
+          userId: user.id,
+          cost: voiceoverCost
+        });
         throw new Error('Failed to deduct tokens. Please try again.');
       }
 
-      console.log(`[${job_id}] Deducted ${voiceoverCost} tokens for voiceover regeneration`);
+      webhookLogger.info('Tokens deducted for voiceover regeneration', {
+        videoJobId: job_id,
+        userId: user.id,
+        tokensDeducted: voiceoverCost
+      });
     }
 
-    console.log(`[${job_id}] Script approved, generating voiceover...`);
+    webhookLogger.processing(job_id, {
+      userId: user.id,
+      step: 'generating_voiceover',
+      scriptLength: finalScript.length
+    });
 
     // Update status to generating_voice
     await supabaseClient
@@ -256,7 +287,7 @@ Deno.serve(async (req) => {
         isError: !voiceResponse.ok,
         errorMessage: voiceResponse.ok ? undefined : `ElevenLabs returned ${voiceResponse.status}`
       }
-    ).catch(e => console.error('Failed to log API call:', e));
+    ).catch(e => webhookLogger.error('Failed to log API call', e, { videoJobId: job_id }));
 
     if (!voiceResponse.ok) {
       const errorText = await voiceResponse.text();
@@ -281,7 +312,11 @@ Deno.serve(async (req) => {
     const words = finalScript.split(' ').filter((w: string) => w.trim().length > 0);
     const wordsPerSecond = 2.5;
     const actualAudioDuration = words.length / wordsPerSecond;
-    console.log(`[${job_id}] Calculated audio duration: ${actualAudioDuration}s from ${words.length} words`);
+    webhookLogger.info('Audio duration calculated', {
+      videoJobId: job_id,
+      duration: actualAudioDuration,
+      wordCount: words.length
+    });
 
     // Upload voiceover to storage
     const voiceFileName = `${job_id}_voiceover.mp3`;
@@ -298,7 +333,10 @@ Deno.serve(async (req) => {
 
     // Construct full public URL for voiceover (bucket is public)
     const voiceoverPublicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${voiceFileName}`;
-    console.log(`[${job_id}] Voiceover stored at: ${voiceoverPublicUrl}`);
+    webhookLogger.upload(voiceFileName, true, {
+      videoJobId: job_id,
+      url: voiceoverPublicUrl
+    });
 
     // Update job with FULL PUBLIC URL, actual duration, and new status
     const { error: updateError } = await supabaseClient
@@ -312,11 +350,15 @@ Deno.serve(async (req) => {
       .eq('id', job_id);
 
     if (updateError) {
-      console.error(`[${job_id}] Failed to update job with voiceover:`, updateError);
+      webhookLogger.error('Failed to update job with voiceover', updateError, {
+        videoJobId: job_id
+      });
       throw new Error(`Failed to update job with voiceover: ${updateError.message}`);
     }
 
-    console.log(`[${job_id}] Job updated, verifying database storage...`);
+    webhookLogger.info('Job updated, verifying database storage', {
+      videoJobId: job_id
+    });
     
     // Verify the URL was stored correctly
     const { data: verifyJob, error: verifyError } = await supabaseClient
@@ -326,20 +368,32 @@ Deno.serve(async (req) => {
       .single();
 
     if (verifyError) {
-      console.error(`[${job_id}] Failed to verify voiceover URL:`, verifyError);
+      webhookLogger.error('Failed to verify voiceover URL', verifyError, {
+        videoJobId: job_id
+      });
       throw new Error('Failed to verify voiceover URL was saved');
     }
 
-    console.log(`[${job_id}] Verification - Expected URL: ${voiceoverPublicUrl}`);
-    console.log(`[${job_id}] Verification - Actual URL in DB: ${verifyJob?.voiceover_url}`);
+    webhookLogger.info('URL verification check', {
+      videoJobId: job_id,
+      expectedUrl: voiceoverPublicUrl,
+      actualUrl: verifyJob?.voiceover_url
+    });
 
     if (verifyJob?.voiceover_url !== voiceoverPublicUrl) {
-      console.error(`[${job_id}] URL MISMATCH! Database contains: ${verifyJob?.voiceover_url}`);
+      webhookLogger.error('URL mismatch detected', new Error('URL mismatch'), {
+        videoJobId: job_id,
+        expectedUrl: voiceoverPublicUrl,
+        actualUrl: verifyJob?.voiceover_url
+      });
       throw new Error('Voiceover URL was not stored correctly in database');
     }
 
-    console.log(`[${job_id}] ✅ Verification passed - URL stored correctly`);
-    console.log(`[${job_id}] Voiceover generated, awaiting approval`);
+    webhookLogger.success(job_id, {
+      userId: user.id,
+      status: 'awaiting_voice_approval',
+      duration: actualAudioDuration
+    });
 
     return new Response(
       JSON.stringify({ 
@@ -351,7 +405,9 @@ Deno.serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('approve-script error:', error);
+    webhookLogger.error('approve-script failed', error, {
+      errorMessage: error?.message
+    });
     return new Response(
       JSON.stringify({ error: error?.message || 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

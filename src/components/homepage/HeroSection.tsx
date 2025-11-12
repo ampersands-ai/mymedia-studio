@@ -152,10 +152,9 @@ export const HeroSection = () => {
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => handleModelClick(model.group)}
-                      className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-medium transition-all duration-300 hover:bg-white/20 hover:scale-105 hover:border-white/40 cursor-pointer animate-fade-in opacity-0"
+                      className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-medium transition-all duration-300 hover:bg-white/20 hover:scale-105 hover:border-white/40 cursor-pointer animate-fade-in"
                       style={{ 
-                        animationDelay: model.delay,
-                        animationFillMode: 'forwards'
+                        animationDelay: model.delay
                       }}
                     >
                       {model.name}

@@ -1,23 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { WorkflowTemplate } from "./useWorkflowTemplates";
+import type { AIModel } from "./useModels";
 
-export interface AIModel {
-  record_id: string;
-  id: string;
-  provider: string;
-  model_name: string;
-  content_type: string;
-  base_token_cost: number;
-  cost_multipliers: any;
-  input_schema: any;
-  api_endpoint: string | null;
-  is_active: boolean;
-  groups?: string[];
-  estimated_time_seconds?: number | null;
-  payload_structure?: string;
-  max_images?: number | null;
-}
+// Re-export AIModel for backward compatibility
+export type { AIModel };
 
 export interface ContentTemplate {
   id: string;

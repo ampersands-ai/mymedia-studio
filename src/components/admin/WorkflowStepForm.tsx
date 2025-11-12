@@ -36,7 +36,7 @@ export function WorkflowStepForm({
   const [parameterModes, setParameterModes] = useState<Record<string, 'static' | 'mapped'>>({});
 
   const selectedModel = availableModels.find(m => m.id === localStep.model_id);
-  const modelSchema = selectedModel?.input_schema;
+  const modelSchema = selectedModel?.input_schema as { properties?: Record<string, any>; required?: string[] } | null | undefined;
   const hasPromptInSchema = modelSchema?.properties?.prompt !== undefined;
 
   const handleChange = (updates: Partial<WorkflowStep>) => {
@@ -287,8 +287,8 @@ export function WorkflowStepForm({
               Configure model-specific parameters. Required fields can use static values or map to user inputs.
             </p>
             <div className="space-y-3">
-              {Object.entries(modelSchema.properties).map(([paramName, paramSchema]: [string, any]) => {
-                const isRequired = modelSchema.required?.includes(paramName);
+              {Object.entries(modelSchema?.properties || {}).map(([paramName, paramSchema]: [string, any]) => {
+                const isRequired = modelSchema?.required?.includes(paramName);
                 return renderModelParameter(paramName, paramSchema, isRequired);
               })}
             </div>

@@ -4,6 +4,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Clock, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
+
+const sessionLogger = logger.child({ component: 'SessionWarning' });
 
 export const SessionWarning = () => {
   const [showWarning, setShowWarning] = useState(false);
@@ -16,7 +19,7 @@ export const SessionWarning = () => {
       
       if (!session) {
         // Session has expired
-        console.log('[SessionWarning] Session expired, redirecting...');
+        sessionLogger.warn('Session expired, redirecting to auth');
         window.location.href = '/auth';
         return;
       }
@@ -50,6 +53,8 @@ export const SessionWarning = () => {
 
   const handleExtendSession = async () => {
     setExtending(true);
+    const timer = sessionLogger.startTimer('extendSession');
+    
     try {
       const { error } = await supabase.functions.invoke('extend-session');
       
@@ -58,10 +63,12 @@ export const SessionWarning = () => {
       // Refresh the session
       await supabase.auth.refreshSession();
       
+      timer.end({ success: true });
+      sessionLogger.info('Session extended successfully');
       toast.success('Session extended successfully');
       setShowWarning(false);
     } catch (error) {
-      console.error('Failed to extend session:', error);
+      sessionLogger.error('Failed to extend session', error as Error);
       toast.error('Failed to extend session. Please save your work and log in again.');
     } finally {
       setExtending(false);

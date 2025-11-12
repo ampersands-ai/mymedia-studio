@@ -1,10 +1,19 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logger, generateRequestId } from "@/lib/logger";
+
+const videoLogger = logger.child({ component: 'useGenerateSunoVideo' });
 
 interface GenerateVideoParams {
   generationId: string;
   outputIndex: number;
+}
+
+interface VideoError {
+  status: number;
+  message: string;
+  details?: string;
 }
 
 export function useGenerateSunoVideo() {
@@ -12,16 +21,27 @@ export function useGenerateSunoVideo() {
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: async ({ generationId, outputIndex }: GenerateVideoParams) => {
+      const requestId = generateRequestId();
+      const timer = videoLogger.startTimer('generateVideo', { requestId, generationId, outputIndex });
+      
       // Ensure we have a valid user session and forward it explicitly
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
+        videoLogger.warn('No session found for video generation', { requestId });
         throw {
           status: 401,
           message: 'Please sign in again to continue'
-        };
+        } as VideoError;
       }
 
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-suno-mp4`;
+      
+      videoLogger.info('Starting video generation', { 
+        requestId, 
+        generationId, 
+        outputIndex 
+      });
+      
       const resp = await fetch(url, {
         method: 'POST',
         headers: {
@@ -35,16 +55,30 @@ export function useGenerateSunoVideo() {
         })
       });
 
-      let data: any = null;
-      try { data = await resp.json(); } catch { /* ignore non-JSON */ }
+      let data: Record<string, unknown> | null = null;
+      try { 
+        data = await resp.json(); 
+      } catch { 
+        videoLogger.warn('Failed to parse JSON response', { requestId });
+      }
 
       if (!resp.ok) {
         const status = resp.status;
-        const message = data?.error || data?.message || 'Failed to start video generation';
-        const details = data?.details || data?.error || undefined;
-        throw { status, message, details };
+        const message = data?.error as string || data?.message as string || 'Failed to start video generation';
+        const details = data?.details as string || data?.error as string || undefined;
+        
+        videoLogger.error('Video generation failed', new Error(message), { 
+          requestId, 
+          status, 
+          details 
+        });
+        
+        throw { status, message, details } as VideoError;
       }
 
+      timer.end({ success: true });
+      videoLogger.info('Video generation started successfully', { requestId, generationId });
+      
       return data;
     },
     onSuccess: (data, variables) => {
@@ -59,12 +93,15 @@ export function useGenerateSunoVideo() {
         queryKey: ['child-video-generations', variables.generationId] 
       });
     },
-    onError: (error: any) => {
-      console.error('Video generation error:', error);
+    onError: (error: VideoError) => {
+      videoLogger.error('Video generation mutation error', new Error(error.message), {
+        status: error.status,
+        details: error.details
+      });
       
       const status = error?.status;
       const errorMessage = error?.message || 'Failed to start video generation';
-      const errorDetails = error?.details || error?.error;
+      const errorDetails = error?.details || error?.message;
       
       // Map status codes to user-friendly messages
       let description = errorDetails || errorMessage;

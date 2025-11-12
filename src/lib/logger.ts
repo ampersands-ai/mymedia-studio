@@ -1,7 +1,8 @@
 import { clientLogger } from '@/lib/logging/client-logger';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Production-safe structured logging utility
+ * Production-safe structured logging utility with request tracking and performance monitoring
  * Provides comprehensive logging with proper severity levels and backend integration
  */
 
@@ -11,17 +12,142 @@ declare global {
   }
 }
 
+let requestIdCounter = 0;
 
-class Logger {
-  private context: any = {};
+/**
+ * Generate a unique request ID for tracking related log entries
+ */
+export function generateRequestId(): string {
+  return `req_${Date.now()}_${++requestIdCounter}`;
+}
+
+/**
+ * Get current user context for automatic attachment to logs
+ */
+async function getUserContext(): Promise<{ userId?: string; email?: string }> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    return {
+      userId: user?.id,
+      email: user?.email,
+    };
+  } catch {
+    return {};
+  }
+}
+
+interface LogBatch {
+  logs: Array<{ level: string; message: string; context: any; timestamp: number }>;
+  timeout: NodeJS.Timeout | null;
+}
+
+const logBatch: LogBatch = {
+  logs: [],
+  timeout: null,
+};
+
+/**
+ * Flush batched logs to backend
+ */
+async function flushLogs(): Promise<void> {
+  if (logBatch.logs.length === 0) return;
+  
+  const logsToSend = [...logBatch.logs];
+  logBatch.logs = [];
+  
+  // Send to backend in production
+  if (!import.meta.env.DEV && logsToSend.some(log => ['error', 'critical'].includes(log.level))) {
+    try {
+      const errorLogs = logsToSend.filter(log => ['error', 'critical'].includes(log.level));
+      for (const log of errorLogs) {
+        await clientLogger.error(new Error(log.message), {
+          routeName: log.context.route || 'unknown',
+          ...log.context
+        } as any);
+      }
+    } catch (e) {
+      console.error('Failed to flush logs:', e);
+    }
+  }
+}
+
+/**
+ * Add log to batch for efficient backend transmission
+ */
+function batchLog(level: string, message: string, context: any): void {
+  logBatch.logs.push({
+    level,
+    message,
+    context,
+    timestamp: Date.now(),
+  });
+  
+  // Auto-flush after 100 logs or 5 seconds
+  if (logBatch.logs.length >= 100) {
+    if (logBatch.timeout) clearTimeout(logBatch.timeout);
+    flushLogs();
+  } else if (!logBatch.timeout) {
+    logBatch.timeout = setTimeout(() => {
+      logBatch.timeout = null;
+      flushLogs();
+    }, 5000);
+  }
+}
+
+/**
+ * Performance timing helper
+ */
+export class PerformanceTimer {
+  private startTime: number;
+  private operation: string;
+  private context: any;
+
+  constructor(operation: string, context?: any) {
+    this.operation = operation;
+    this.context = context || {};
+    this.startTime = performance.now();
+  }
 
   /**
-   * Create a child logger with additional context
+   * End timing and log the duration
    */
-  child(context: any): Logger {
+  end(additionalContext?: any): number {
+    const duration = Math.round(performance.now() - this.startTime);
+    logger.info(`${this.operation} completed`, {
+      ...this.context,
+      ...additionalContext,
+      duration,
+      performanceMetric: true,
+    });
+    return duration;
+  }
+}
+
+class Logger {
+  private context: Record<string, unknown> = {};
+
+  /**
+   * Create a child logger with additional context (e.g., component name, request ID)
+   */
+  child(context: Record<string, unknown>): Logger {
     const childLogger = new Logger();
     childLogger.context = { ...this.context, ...context };
     return childLogger;
+  }
+
+  /**
+   * Create a child logger with automatic user context attachment
+   */
+  async childWithUser(context: Record<string, unknown>): Promise<Logger> {
+    const userContext = await getUserContext();
+    return this.child({ ...context, ...userContext });
+  }
+
+  /**
+   * Create a performance timer for measuring operation duration
+   */
+  startTimer(operation: string, context?: Record<string, unknown>): PerformanceTimer {
+    return new PerformanceTimer(operation, { ...this.context, ...context });
   }
 
   private formatMessage(level: string, message: string, context?: any): string {
@@ -77,13 +203,8 @@ class Logger {
       ...context
     };
 
-    // Send to backend
-    if (error) {
-      clientLogger.error(error, {
-        routeName: errorContext.routeName || errorContext.route || 'unknown',
-        ...errorContext
-      } as any).catch(console.error);
-    }
+    // Batch for efficient backend transmission
+    batchLog('error', message, errorContext);
 
     // Send to PostHog
     if (typeof window !== 'undefined' && window.posthog) {
@@ -107,13 +228,8 @@ class Logger {
       ...context
     };
 
-    // Always log critical errors to backend
-    if (error) {
-      clientLogger.error(error, {
-        routeName: errorContext.routeName || errorContext.route || 'unknown',
-        ...errorContext
-      } as any).catch(console.error);
-    }
+    // Batch for efficient backend transmission
+    batchLog('critical', message, errorContext);
 
     // Send to PostHog with high priority
     if (typeof window !== 'undefined' && window.posthog) {
@@ -123,3 +239,10 @@ class Logger {
 }
 
 export const logger = new Logger();
+
+// Flush logs on page unload
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    flushLogs();
+  });
+}

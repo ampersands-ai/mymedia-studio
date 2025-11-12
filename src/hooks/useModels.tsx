@@ -8,11 +8,11 @@ export interface AIModel {
   model_name: string;
   content_type: string;
   base_token_cost: number;
-  cost_multipliers: any;
-  input_schema: any;
+  cost_multipliers: Record<string, unknown> | null;
+  input_schema: Record<string, unknown> | null;
   api_endpoint: string | null;
   is_active: boolean;
-  groups?: any;
+  groups?: Record<string, unknown> | null;
   payload_structure?: string;
   max_images?: number | null;
   estimated_time_seconds?: number | null;

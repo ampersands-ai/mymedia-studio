@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/posthog";
+import { logger, generateRequestId } from "@/lib/logger";
+
+const generationLogger = logger.child({ component: 'useGeneration' });
 
 interface GenerationParams {
   template_id?: string;
   model_id?: string;
   model_record_id?: string;
   prompt?: string;
-  custom_parameters?: Record<string, any>;
+  custom_parameters?: Record<string, unknown>;
   enhance_prompt?: boolean;
 }
 
@@ -26,7 +29,10 @@ export const useGeneration = () => {
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const generate = async (params: GenerationParams) => {
+  const generate = async (params: GenerationParams): Promise<GenerationResult> => {
+    const requestId = generateRequestId();
+    const timer = generationLogger.startTimer('generate', { requestId });
+    
     setIsGenerating(true);
     setResult(null);
     setError(null);
@@ -36,7 +42,10 @@ export const useGeneration = () => {
       const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
 
       if (sessionError || !session) {
-        console.error("Session refresh failed:", sessionError);
+        generationLogger.error("Session refresh failed", sessionError as Error, { 
+          requestId,
+          reason: 'session_expired'
+        });
         
         // Save the generation attempt data before forcing logout
         const draftKey = 'pending_generation';
@@ -53,7 +62,11 @@ export const useGeneration = () => {
 
       // Always use async endpoint (unified flow for all providers)
       const functionName = 'generate-content';
-      console.log('Using unified async endpoint for all providers');
+      generationLogger.info('Using unified async endpoint', { 
+        requestId,
+        model_record_id: params.model_record_id,
+        has_prompt: !!params.prompt
+      });
 
       // Client-side prompt validation (only if prompt is being sent)
       if (params.prompt !== undefined) {
@@ -66,27 +79,30 @@ export const useGeneration = () => {
       }
 
       // STEP 2: Proceed with generation using appropriate endpoint
-      const bodyToSend = { ...params } as any;
+      const bodyToSend = { ...params };
       
       // Dev-only: Log exact payload for test vs production comparison
-      if (import.meta.env.DEV) {
-        console.debug("🚀 GENERATION_PAYLOAD", {
-          model_record_id: bodyToSend.model_record_id,
-          prompt: bodyToSend.prompt,
-          custom_parameters: bodyToSend.custom_parameters,
-          enhance_prompt: bodyToSend.enhance_prompt,
-        });
-      }
+      generationLogger.debug("Generation payload prepared", {
+        requestId,
+        model_record_id: bodyToSend.model_record_id,
+        prompt: bodyToSend.prompt?.substring(0, 100), // Log first 100 chars only
+        custom_parameters: bodyToSend.custom_parameters,
+        enhance_prompt: bodyToSend.enhance_prompt,
+      });
       
       const { data, error } = await supabase.functions.invoke(functionName, {
         body: bodyToSend,
       });
 
       if (error) {
-        console.error("Edge function error:", error);
+        generationLogger.error("Edge function error", error as Error, { 
+          requestId,
+          errorMessage: error.message 
+        });
         
         // Handle 401 specifically (shouldn't happen after refresh, but defensive)
         if (error.message?.includes("401") || error.message?.toLowerCase().includes("unauthorized")) {
+          generationLogger.warn("Unauthorized error after refresh, forcing logout", { requestId });
           localStorage.setItem('pending_generation', JSON.stringify({
             params,
             timestamp: Date.now(),
@@ -145,21 +161,35 @@ export const useGeneration = () => {
       }
 
       // Track generation created
+      const duration = timer.end({ 
+        generation_id: data.id,
+        tokens_used: data.tokens_used 
+      });
+      
       trackEvent('generation_created', {
         generation_id: data.id,
         model_id: params.model_id,
         template_id: params.template_id,
         tokens_used: data.tokens_used,
         content_type: data.content_type,
+        duration,
+      });
+
+      generationLogger.info('Generation completed', {
+        requestId,
+        generation_id: data.id,
+        status: data.status,
+        duration,
       });
 
       setResult(data);
       // Don't show success toast immediately for async generations
       // Components will handle their own success messages
       return data;
-    } catch (error: any) {
-      console.error("Generation error:", error);
-      const errorMessage = error.message || "Failed to generate content";
+    } catch (error) {
+      const err = error as Error;
+      generationLogger.error("Generation failed", err, { requestId });
+      const errorMessage = err.message || "Failed to generate content";
       setError(errorMessage);
       throw error;
     } finally {

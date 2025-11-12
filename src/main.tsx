@@ -3,6 +3,10 @@ import App from "./App.tsx";
 import "./index.css";
 import { registerServiceWorker, unregisterServiceWorker } from "./lib/serviceWorker";
 import { onCLS, onINP, onFCP, onLCP, onTTFB } from 'web-vitals';
+import { logger } from '@/lib/logger';
+import { env } from '@/lib/env'; // Validate environment on startup
+
+const vitalsLogger = logger.child({ component: 'web-vitals' });
 
 // Register service worker (production only)
 registerServiceWorker();
@@ -11,10 +15,13 @@ registerServiceWorker();
 unregisterServiceWorker();
 
 // Track Web Vitals
-function sendToAnalytics(metric: any) {
-  if (import.meta.env.DEV) {
-    console.log('Web Vital:', metric.name, metric.value, metric.rating);
-  }
+function sendToAnalytics(metric: { name: string; value: number; rating: string }) {
+  vitalsLogger.info('Web Vital measured', {
+    metric: metric.name,
+    value: metric.value,
+    rating: metric.rating
+  });
+  
   // Send to PostHog if available
   if (typeof window !== 'undefined' && (window as any).posthog) {
     (window as any).posthog.capture('web_vital', {

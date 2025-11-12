@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
+import { Resend } from "npm:resend@3.5.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -24,7 +24,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending test email to: ${email}`);
 
     const emailResponse = await resend.emails.send({
-      from: "System Test <onboarding@resend.dev>",
+      from: "Artifio System <noreply@artifio.ai>",
       to: [email],
       subject: "✅ Test Email - Email System Working!",
       html: `

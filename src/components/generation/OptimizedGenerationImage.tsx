@@ -4,6 +4,9 @@ import { getOptimizedImageUrl, getBlurPlaceholder, getPublicImageUrl, getStorage
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageIcon } from "lucide-react";
 import { createSignedUrl } from "@/lib/storage-utils";
+import { logger } from "@/lib/logger";
+
+const imageLogger = logger.child({ component: 'OptimizedGenerationImage' });
 
 interface OptimizedGenerationImageProps {
   storagePath: string;
@@ -100,17 +103,25 @@ export const OptimizedGenerationImage = ({
           loading={priority ? "eager" : "lazy"}
           onLoad={() => setIsLoading(false)}
           onError={async () => {
-            console.warn('Fallback image failed to load:', { fallbackUrl });
+            imageLogger.warn('Fallback image failed to load', { 
+              fallbackUrl: fallbackUrl?.substring(0, 50),
+              storagePath: storagePath.substring(0, 50) 
+            });
             // If public URL failed, try signed URL
             if (fallbackUrl === publicUrl) {
               const signed = await createSignedUrl('generated-content', storageRelativePath);
               if (signed) {
-                console.warn('Using signed URL fallback for image');
+                imageLogger.info('Using signed URL fallback', { 
+                  storagePath: storagePath.substring(0, 50) 
+                });
                 setFallbackUrl(signed);
                 setIsLoading(true);
                 return;
               }
             }
+            imageLogger.error('All image fallback URLs failed', new Error('Image load error'), { 
+              storagePath: storagePath.substring(0, 50) 
+            });
             setHasError(true);
           }}
         />
@@ -127,27 +138,38 @@ export const OptimizedGenerationImage = ({
             loading={priority ? "eager" : "lazy"}
             onLoad={() => setIsLoading(false)}
             onError={async () => {
-              console.warn('Optimized image load failed, using fallback:', {
-                storagePath,
-                jpegUrl
+              imageLogger.warn('Optimized image load failed, trying fallback', {
+                storagePath: storagePath.substring(0, 50),
+                jpegUrl: jpegUrl.substring(0, 50)
               });
               
               // Immediately try public URL (no retry delay)
               if (!fallbackUrl) {
-                console.warn('Falling back to public object URL for image');
+                imageLogger.debug('Falling back to public URL', { 
+                  storagePath: storagePath.substring(0, 50) 
+                });
                 setFallbackUrl(publicUrl);
                 setIsLoading(true);
               } else if (fallbackUrl === publicUrl) {
                 // If public URL also failed, try signed URL
                 const signed = await createSignedUrl('generated-content', storageRelativePath);
                 if (signed) {
-                  console.warn('Using signed URL fallback for image');
+                  imageLogger.info('Using signed URL as final fallback', { 
+                    storagePath: storagePath.substring(0, 50) 
+                  });
                   setFallbackUrl(signed);
                   setIsLoading(true);
                 } else {
+                  imageLogger.error('All image load attempts failed', new Error('Image load error'), { 
+                    storagePath: storagePath.substring(0, 50) 
+                  });
                   setHasError(true);
                 }
               } else {
+                imageLogger.error('Unexpected fallback state', new Error('Image load error'), { 
+                  storagePath: storagePath.substring(0, 50),
+                  fallbackUrl: fallbackUrl?.substring(0, 50) 
+                });
                 setHasError(true);
               }
             }}

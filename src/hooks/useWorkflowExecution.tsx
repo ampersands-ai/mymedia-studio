@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logger, generateRequestId } from "@/lib/logger";
+
+const workflowLogger = logger.child({ component: 'useWorkflowExecution' });
 
 interface WorkflowExecutionParams {
   workflow_template_id: string;
-  user_inputs: Record<string, any>;
+  user_inputs: Record<string, unknown>;
 }
 
 interface WorkflowExecutionResult {
@@ -26,6 +29,12 @@ export const useWorkflowExecution = () => {
     params: WorkflowExecutionParams,
     shouldGenerateCaption: boolean = false
   ): Promise<WorkflowExecutionResult | null> => {
+    const requestId = generateRequestId();
+    const timer = workflowLogger.startTimer('executeWorkflow', { 
+      requestId,
+      workflow_template_id: params.workflow_template_id 
+    });
+    
     setIsExecuting(true);
     setProgress(null);
 
@@ -40,10 +49,15 @@ export const useWorkflowExecution = () => {
       const executionId = data?.execution_id;
       
       if (!executionId) {
+        workflowLogger.error('No execution ID returned from workflow executor', undefined, { requestId });
         throw new Error('No execution ID returned');
       }
 
-      console.log('[useWorkflowExecution] Workflow started:', executionId);
+      workflowLogger.info('Workflow execution started', { 
+        requestId, 
+        executionId,
+        workflow_template_id: params.workflow_template_id 
+      });
 
       // Subscribe to Realtime updates on workflow_executions
       return new Promise((resolve, reject) => {
@@ -58,9 +72,10 @@ export const useWorkflowExecution = () => {
               filter: `id=eq.${executionId}`,
             },
             (payload) => {
-              const execution = payload.new as any;
-              console.log('[Realtime] Workflow execution updated:', {
-                id: executionId,
+              const execution = payload.new as Record<string, unknown>;
+              workflowLogger.info('Realtime workflow update received', {
+                requestId,
+                executionId,
                 status: execution.status,
                 current_step: execution.current_step,
                 total_steps: execution.total_steps,
@@ -69,14 +84,25 @@ export const useWorkflowExecution = () => {
               // Update progress
               if (execution.current_step && execution.total_steps) {
                 setProgress({
-                  currentStep: execution.current_step,
-                  totalSteps: execution.total_steps,
+                  currentStep: execution.current_step as number,
+                  totalSteps: execution.total_steps as number,
                 });
               }
 
               // Check for completion
               if (execution.status === 'completed' && execution.final_output_url) {
-                console.log('[Realtime] Workflow completed:', execution.final_output_url);
+                timer.end({ 
+                  success: true, 
+                  final_output_url: execution.final_output_url,
+                  tokens_used: execution.tokens_used 
+                });
+                
+                workflowLogger.info('Workflow completed successfully', {
+                  requestId,
+                  executionId,
+                  final_output_url: execution.final_output_url,
+                  tokens_used: execution.tokens_used
+                });
                 
                 // Generate caption if requested (fire and forget)
                 if (shouldGenerateCaption && params.user_inputs.prompt) {
@@ -88,9 +114,12 @@ export const useWorkflowExecution = () => {
                       model_name: 'workflow'
                     }
                   }).then(() => {
-                    console.log('[Realtime] Caption generation initiated');
+                    workflowLogger.info('Caption generation initiated', { requestId, executionId });
                   }).catch((captionError) => {
-                    console.error('[Realtime] Caption generation failed:', captionError);
+                    workflowLogger.error('Caption generation failed', captionError as Error, { 
+                      requestId, 
+                      executionId 
+                    });
                   });
                 }
                 
@@ -99,22 +128,26 @@ export const useWorkflowExecution = () => {
                 resolve({
                   execution_id: executionId,
                   status: 'completed',
-                  final_output_url: execution.final_output_url,
-                  tokens_used: execution.tokens_used || 0,
+                  final_output_url: execution.final_output_url as string,
+                  tokens_used: (execution.tokens_used as number) || 0,
                 });
               }
 
               // Check for failure
               if (execution.status === 'failed') {
-                console.error('[Realtime] Workflow failed:', execution.error_message);
+                workflowLogger.error('Workflow execution failed', new Error(execution.error_message as string), {
+                  requestId,
+                  executionId,
+                  error_message: execution.error_message
+                });
                 supabase.removeChannel(channel);
                 setIsExecuting(false);
-                reject(new Error(execution.error_message || 'Workflow execution failed'));
+                reject(new Error((execution.error_message as string) || 'Workflow execution failed'));
               }
 
               // Check for cancellation
               if (execution.status === 'cancelled') {
-                console.log('[Realtime] Workflow cancelled');
+                workflowLogger.warn('Workflow execution cancelled', { requestId, executionId });
                 supabase.removeChannel(channel);
                 setIsExecuting(false);
                 reject(new Error('Workflow execution cancelled'));
@@ -123,7 +156,7 @@ export const useWorkflowExecution = () => {
           )
           .subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {
-              console.log('[Realtime] Subscribed to workflow execution:', executionId);
+              workflowLogger.info('Subscribed to realtime workflow updates', { requestId, executionId });
               
               // Check initial status immediately in case it already completed
               const { data: currentExecution } = await supabase
@@ -141,7 +174,11 @@ export const useWorkflowExecution = () => {
                 }
 
                 if (currentExecution.status === 'completed' && currentExecution.final_output_url) {
-                  console.log('[Realtime] Initial status: completed');
+                  workflowLogger.info('Workflow already completed on subscription', { 
+                    requestId, 
+                    executionId,
+                    final_output_url: currentExecution.final_output_url 
+                  });
                   supabase.removeChannel(channel);
                   setIsExecuting(false);
                   resolve({
@@ -151,12 +188,15 @@ export const useWorkflowExecution = () => {
                     tokens_used: currentExecution.tokens_used || 0,
                   });
                 } else if (currentExecution.status === 'failed') {
-                  console.error('[Realtime] Initial status: failed');
+                  workflowLogger.error('Workflow already failed on subscription', 
+                    new Error(currentExecution.error_message || 'Unknown error'), 
+                    { requestId, executionId }
+                  );
                   supabase.removeChannel(channel);
                   setIsExecuting(false);
                   reject(new Error(currentExecution.error_message || 'Workflow execution failed'));
                 } else if (currentExecution.status === 'cancelled') {
-                  console.log('[Realtime] Initial status: cancelled');
+                  workflowLogger.warn('Workflow already cancelled on subscription', { requestId, executionId });
                   supabase.removeChannel(channel);
                   setIsExecuting(false);
                   reject(new Error('Workflow execution cancelled'));
@@ -167,7 +207,11 @@ export const useWorkflowExecution = () => {
 
         // Safety timeout (20 minutes)
         const timeout = setTimeout(() => {
-          console.warn('[Realtime] Workflow execution timed out after 20 minutes');
+          workflowLogger.warn('Workflow execution timed out', { 
+            requestId, 
+            executionId,
+            timeout_minutes: 20 
+          });
           supabase.removeChannel(channel);
           setIsExecuting(false);
           reject(new Error('Workflow execution timed out after 20 minutes. Check your generations history.'));
@@ -176,26 +220,30 @@ export const useWorkflowExecution = () => {
         // Store cleanup function
         const originalResolve = resolve;
         const originalReject = reject;
-        resolve = (value: any) => {
+        resolve = (value: WorkflowExecutionResult | null) => {
           clearTimeout(timeout);
           originalResolve(value);
         };
-        reject = (error: any) => {
+        reject = (error: Error) => {
           clearTimeout(timeout);
           originalReject(error);
         };
       });
       
-    } catch (error: any) {
-      console.error('Workflow execution error:', error);
+    } catch (error) {
+      const err = error as Error;
+      workflowLogger.error('Workflow execution error', err, { 
+        requestId,
+        workflow_template_id: params.workflow_template_id 
+      });
       
       let errorMessage = 'Failed to execute workflow';
-      if (error.message?.includes('Missing required parameter')) {
-        errorMessage = `Configuration error: ${error.message}`;
-      } else if (error.message?.includes('timed out')) {
-        errorMessage = error.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (err.message?.includes('Missing required parameter')) {
+        errorMessage = `Configuration error: ${err.message}`;
+      } else if (err.message?.includes('timed out')) {
+        errorMessage = err.message;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       
       toast.error(errorMessage, { duration: 5000 });

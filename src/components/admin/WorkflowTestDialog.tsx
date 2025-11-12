@@ -14,6 +14,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { useAuth } from "@/contexts/AuthContext";
+import { logger, generateRequestId } from "@/lib/logger";
+
+const testLogger = logger.child({ component: 'WorkflowTestDialog' });
 
 interface WorkflowTestDialogProps {
   workflow: Partial<WorkflowTemplate> | null;
@@ -174,19 +177,20 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
       if (fieldInfo?.expectsArray) {
         // Model expects array of URLs
         setInputs(prev => ({ ...prev, [fieldName]: [signedData.signedUrl] }));
-        console.log(`Stored ${fieldName} as array:`, [signedData.signedUrl]);
+        testLogger.debug('File stored as array', { fieldName, format: 'array' });
       } else {
         // Model expects single URL string
         setInputs(prev => ({ ...prev, [fieldName]: signedData.signedUrl }));
-        console.log(`Stored ${fieldName} as string:`, signedData.signedUrl);
+        testLogger.debug('File stored as string', { fieldName, format: 'string' });
       }
       
       // Store preview URL separately for UI display
       setPreviewUrls(prev => ({ ...prev, [fieldName]: signedData.signedUrl }));
 
+      testLogger.info('File uploaded successfully', { fieldName, fileName: file.name });
       toast.success('File uploaded successfully');
     } catch (error) {
-      console.error('Upload error:', error);
+      testLogger.error('File upload failed', error as Error, { fieldName, fileName: file?.name });
       toast.error('Failed to upload file');
     } finally {
       setUploadingFiles(prev => {
@@ -259,10 +263,17 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
       }
     }, 3000);
 
+    const requestId = generateRequestId();
+    
     try {
       // Note: inputs already contain properly formatted signed URLs
       // No conversion needed - they're in the exact format Custom Creation uses
-      console.log('Executing workflow with pre-formatted inputs:', inputs);
+      testLogger.info('Starting workflow test execution', { 
+        requestId,
+        workflow_id: workflow.id,
+        workflow_name: workflow.name,
+        input_count: Object.keys(inputs).length 
+      });
       
       const result = await executeWorkflow({
         workflow_template_id: workflow.id,
@@ -270,15 +281,24 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
       });
 
       if (result?.final_output_url) {
+        testLogger.info('Workflow test completed successfully', { 
+          requestId,
+          workflow_id: workflow.id,
+          tokens_used: result.tokens_used 
+        });
         setStatusMessage('');
         setResult({ url: result.final_output_url, credits: result.tokens_used });
         toast.success('Workflow test completed!');
       } else {
+        testLogger.warn('Workflow test failed or timed out', { requestId, workflow_id: workflow.id });
         setStatusMessage('');
         toast.error('Workflow execution failed or timed out');
       }
     } catch (error) {
-      console.error('Test execution error:', error);
+      testLogger.error('Workflow test execution error', error as Error, { 
+        requestId,
+        workflow_id: workflow.id 
+      });
       toast.error('Failed to execute workflow');
     }
   };

@@ -14,6 +14,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { getOptimizedVideoUrl, getOptimizedAudioUrl, detectConnectionSpeed } from "@/lib/supabase-videos";
 import { useVideoPreload } from "@/hooks/useVideoPreload";
 import { extractPosterFrame, PosterCache } from "@/utils/video-poster";
+import { logger } from "@/lib/logger";
+
+const previewLogger = logger.child({ component: 'OptimizedGenerationPreview' });
 
 interface OptimizedGenerationPreviewProps {
   storagePath: string | null;
@@ -96,9 +99,13 @@ export const OptimizedGenerationPreview = ({
         if (posterDataUrl) {
           setPosterUrl(posterDataUrl);
           PosterCache.set(videoUrl, posterDataUrl);
+          previewLogger.debug('Poster frame extracted', { videoUrl: videoUrl.substring(0, 50) });
         }
       }).catch(error => {
-        console.warn('Failed to extract poster frame:', error);
+        previewLogger.warn('Failed to extract poster frame', { 
+          error: (error as Error).message,
+          videoUrl: videoUrl.substring(0, 50) 
+        });
       });
     }
   }, [videoUrl, contentType, connectionSpeed]);
@@ -127,8 +134,9 @@ export const OptimizedGenerationPreview = ({
       
       await shareFile(shareUrl, 'Check out my AI creation!');
       await triggerHaptic('light');
+      previewLogger.info('Content shared successfully', { contentType });
     } catch (error) {
-      console.error('Share failed:', error);
+      previewLogger.error('Share failed', error as Error, { contentType, storagePath });
       toast.error('Failed to share');
     }
   };
@@ -169,8 +177,9 @@ export const OptimizedGenerationPreview = ({
       }
       
       await downloadFile(downloadUrl, filename);
+      previewLogger.info('Content downloaded successfully', { contentType, filename });
     } catch (error) {
-      console.error('Download failed:', error);
+      previewLogger.error('Download failed', error as Error, { contentType, storagePath });
       toast.error('Download failed');
     }
   };
@@ -266,11 +275,17 @@ export const OptimizedGenerationPreview = ({
           playsInline
           muted
           onError={(e) => {
-            console.warn('Video load failed, trying fallback URL');
             if (!videoError) {
+              previewLogger.warn('Video load failed, trying fallback URL', { 
+                storagePath,
+                videoUrl: videoUrl?.substring(0, 50) 
+              });
               setVideoError(true);
             } else {
-              console.error('Video failed to load even with fallback');
+              previewLogger.error('Video failed to load with fallback', new Error('Video playback error'), { 
+                storagePath,
+                fallbackUrl: fallbackSignedUrl?.substring(0, 50) 
+              });
             }
           }}
         />

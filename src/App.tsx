@@ -122,57 +122,57 @@ const AppContent = () => {
           <Analytics />
           {import.meta.env.DEV && <DebugPanel />}
               <Routes>
-                <Route path="/" element={<IndexV2 />} />
-          <Route path="/minimal" element={<IndexMinimal />} />
-          <Route path="/create-minimal" element={<CreateMinimal />} />
-          <Route path="/storyboard-minimal" element={<StoryboardMinimal />} />
-                <Route path="/auth" element={<Auth />} />
+                <Route path="/" element={<RouteErrorBoundary routeName="Home"><IndexV2 /></RouteErrorBoundary>} />
+          <Route path="/minimal" element={<RouteErrorBoundary routeName="Home Minimal"><IndexMinimal /></RouteErrorBoundary>} />
+          <Route path="/create-minimal" element={<RouteErrorBoundary routeName="Create Minimal"><CreateMinimal /></RouteErrorBoundary>} />
+          <Route path="/storyboard-minimal" element={<RouteErrorBoundary routeName="Storyboard Minimal"><StoryboardMinimal /></RouteErrorBoundary>} />
+                <Route path="/auth" element={<RouteErrorBoundary routeName="Auth"><Auth /></RouteErrorBoundary>} />
             <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route path="create" element={<Create />} />
-              <Route path="create-workflow" element={<CreateWorkflow />} />
-              <Route path="custom-creation" element={<CustomCreation />} />
-              <Route path="templates" element={<Templates />} />
-              <Route path="history" element={<History />} />
-              <Route path="video-studio" element={<VideoStudio />} />
-              <Route path="storyboard" element={<StoryboardPage />} />
-              <Route path="settings" element={<Settings />} />
+              <Route path="create" element={<RouteErrorBoundary routeName="Dashboard > Create"><Create /></RouteErrorBoundary>} />
+              <Route path="create-workflow" element={<RouteErrorBoundary routeName="Dashboard > Create Workflow"><CreateWorkflow /></RouteErrorBoundary>} />
+              <Route path="custom-creation" element={<RouteErrorBoundary routeName="Dashboard > Custom Creation"><CustomCreation /></RouteErrorBoundary>} />
+              <Route path="templates" element={<RouteErrorBoundary routeName="Dashboard > Templates"><Templates /></RouteErrorBoundary>} />
+              <Route path="history" element={<RouteErrorBoundary routeName="Dashboard > History"><History /></RouteErrorBoundary>} />
+              <Route path="video-studio" element={<RouteErrorBoundary routeName="Dashboard > Video Studio"><VideoStudio /></RouteErrorBoundary>} />
+              <Route path="storyboard" element={<RouteErrorBoundary routeName="Dashboard > Storyboard"><StoryboardPage /></RouteErrorBoundary>} />
+              <Route path="settings" element={<RouteErrorBoundary routeName="Dashboard > Settings"><Settings /></RouteErrorBoundary>} />
             </Route>
             <Route path="/admin" element={<AdminLayout />}>
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="models" element={<AIModelsManager />} />
-              <Route path="templates" element={<TemplatesManager />} />
-              <Route path="users" element={<UsersManager />} />
-              <Route path="generations" element={<AllGenerations />} />
-              <Route path="disputes" element={<TokenDisputes />} />
-              <Route path="analytics" element={<AnalyticsDashboard />} />
-              <Route path="threshold-breach" element={<ThresholdBreach />} />
-              <Route path="webhook-monitor" element={<WebhookMonitor />} />
-              <Route path="model-health" element={<ModelHealthDashboard />} />
-              <Route path="model-health/test/:recordId" element={<ModelHealthTestPage />} />
-              <Route path="model-alerts" element={<ModelAlerts />} />
-              <Route path="test-model-group" element={<TestModelGroupPage />} />
-              <Route path="video-jobs" element={<VideoJobs />} />
-              <Route path="template-landing" element={<TemplateLandingManager />} />
-              <Route path="template-landing/:id" element={<TemplateLandingEditor />} />
-              <Route path="template-categories" element={<TemplateCategoriesManager />} />
-              <Route path="template-analytics" element={<TemplateAnalytics />} />
-              <Route path="migrate-storyboards" element={<MigrateStoryboards />} />
-              <Route path="cinematic-prompts" element={<CinematicPromptsManager />} />
-              <Route path="user-logs" element={<UserLogs />} />
+              <Route path="dashboard" element={<RouteErrorBoundary routeName="Admin > Dashboard"><AdminDashboard /></RouteErrorBoundary>} />
+              <Route path="models" element={<RouteErrorBoundary routeName="Admin > AI Models"><AIModelsManager /></RouteErrorBoundary>} />
+              <Route path="templates" element={<RouteErrorBoundary routeName="Admin > Templates"><TemplatesManager /></RouteErrorBoundary>} />
+              <Route path="users" element={<RouteErrorBoundary routeName="Admin > Users"><UsersManager /></RouteErrorBoundary>} />
+              <Route path="generations" element={<RouteErrorBoundary routeName="Admin > Generations"><AllGenerations /></RouteErrorBoundary>} />
+              <Route path="disputes" element={<RouteErrorBoundary routeName="Admin > Token Disputes"><TokenDisputes /></RouteErrorBoundary>} />
+              <Route path="analytics" element={<RouteErrorBoundary routeName="Admin > Analytics"><AnalyticsDashboard /></RouteErrorBoundary>} />
+              <Route path="threshold-breach" element={<RouteErrorBoundary routeName="Admin > Threshold Breach"><ThresholdBreach /></RouteErrorBoundary>} />
+              <Route path="webhook-monitor" element={<RouteErrorBoundary routeName="Admin > Webhook Monitor"><WebhookMonitor /></RouteErrorBoundary>} />
+              <Route path="model-health" element={<RouteErrorBoundary routeName="Admin > Model Health"><ModelHealthDashboard /></RouteErrorBoundary>} />
+              <Route path="model-health/test/:recordId" element={<RouteErrorBoundary routeName="Admin > Model Health Test"><ModelHealthTestPage /></RouteErrorBoundary>} />
+              <Route path="model-alerts" element={<RouteErrorBoundary routeName="Admin > Model Alerts"><ModelAlerts /></RouteErrorBoundary>} />
+              <Route path="test-model-group" element={<RouteErrorBoundary routeName="Admin > Test Model Group"><TestModelGroupPage /></RouteErrorBoundary>} />
+              <Route path="video-jobs" element={<RouteErrorBoundary routeName="Admin > Video Jobs"><VideoJobs /></RouteErrorBoundary>} />
+              <Route path="template-landing" element={<RouteErrorBoundary routeName="Admin > Template Landing"><TemplateLandingManager /></RouteErrorBoundary>} />
+              <Route path="template-landing/:id" element={<RouteErrorBoundary routeName="Admin > Template Landing Editor"><TemplateLandingEditor /></RouteErrorBoundary>} />
+              <Route path="template-categories" element={<RouteErrorBoundary routeName="Admin > Template Categories"><TemplateCategoriesManager /></RouteErrorBoundary>} />
+              <Route path="template-analytics" element={<RouteErrorBoundary routeName="Admin > Template Analytics"><TemplateAnalytics /></RouteErrorBoundary>} />
+              <Route path="migrate-storyboards" element={<RouteErrorBoundary routeName="Admin > Migrate Storyboards"><MigrateStoryboards /></RouteErrorBoundary>} />
+              <Route path="cinematic-prompts" element={<RouteErrorBoundary routeName="Admin > Cinematic Prompts"><CinematicPromptsManager /></RouteErrorBoundary>} />
+              <Route path="user-logs" element={<RouteErrorBoundary routeName="Admin > User Logs"><UserLogs /></RouteErrorBoundary>} />
             </Route>
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/community" element={<Community />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/features" element={<Features />} />
+            <Route path="/pricing" element={<RouteErrorBoundary routeName="Pricing"><Pricing /></RouteErrorBoundary>} />
+            <Route path="/privacy" element={<RouteErrorBoundary routeName="Privacy"><Privacy /></RouteErrorBoundary>} />
+            <Route path="/terms" element={<RouteErrorBoundary routeName="Terms"><Terms /></RouteErrorBoundary>} />
+            <Route path="/community" element={<RouteErrorBoundary routeName="Community"><Community /></RouteErrorBoundary>} />
+            <Route path="/about" element={<RouteErrorBoundary routeName="About"><About /></RouteErrorBoundary>} />
+            <Route path="/blog" element={<RouteErrorBoundary routeName="Blog"><Blog /></RouteErrorBoundary>} />
+            <Route path="/faq" element={<RouteErrorBoundary routeName="FAQ"><FAQ /></RouteErrorBoundary>} />
+            <Route path="/features" element={<RouteErrorBoundary routeName="Features"><Features /></RouteErrorBoundary>} />
             <Route path="/templates" element={<Navigate to="/dashboard/templates" replace />} />
-            <Route path="/templates/:category/:slug" element={<TemplateLanding />} />
-            <Route path="/share/:token" element={<SharedContent />} />
+            <Route path="/templates/:category/:slug" element={<RouteErrorBoundary routeName="Template Landing"><TemplateLanding /></RouteErrorBoundary>} />
+            <Route path="/share/:token" element={<RouteErrorBoundary routeName="Shared Content"><SharedContent /></RouteErrorBoundary>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={<RouteErrorBoundary routeName="404 Not Found"><NotFound /></RouteErrorBoundary>} />
           </Routes>
         </Suspense>
       </div>

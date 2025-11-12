@@ -101,7 +101,7 @@ export const OutputGrid = ({
             >
               {/* Output number badge */}
               <Badge 
-                className="absolute top-2 right-2 z-10 bg-background/90 backdrop-blur-sm border shadow-sm"
+                className="absolute bottom-2 right-2 z-10 bg-background/90 backdrop-blur-sm border shadow-sm"
                 variant="secondary"
               >
                 #{output.output_index + 1}

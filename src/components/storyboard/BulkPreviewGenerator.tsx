@@ -7,6 +7,7 @@ import { Sparkles, X, AlertCircle } from 'lucide-react';
 import { useModels } from '@/hooks/useModels';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { logger } from '@/lib/logger';
 
 // Filter to only prompt-to-image models based on groups
 
@@ -79,13 +80,28 @@ export const BulkPreviewGenerator = ({ storyboard, scenes, onGenerateAll }: Bulk
       });
       
       if (result.failed > 0) {
-        console.warn(`Bulk generation completed with ${result.failed} failures`);
+        logger.warn('Bulk generation completed with failures', {
+          component: 'BulkPreviewGenerator',
+          operation: 'handleGenerate',
+          storyboardId: storyboard.id,
+          failed: result.failed,
+          generated: result.generated
+        });
       }
     } catch (error: any) {
       if (error.name === 'AbortError' || error.message.includes('cancelled')) {
-        console.log('Generation cancelled by user');
+        logger.debug('Bulk generation cancelled', {
+          component: 'BulkPreviewGenerator',
+          operation: 'handleGenerate',
+          storyboardId: storyboard.id
+        });
       } else {
-        console.error('Bulk generation error:', error);
+        logger.error('Bulk generation failed', error, {
+          component: 'BulkPreviewGenerator',
+          operation: 'handleGenerate',
+          storyboardId: storyboard.id,
+          modelId: selectedModelId
+        });
       }
     } finally {
       setIsGenerating(false);

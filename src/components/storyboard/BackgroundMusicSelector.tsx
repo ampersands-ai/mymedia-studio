@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
+import { logger } from '@/lib/logger';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface PixabayAudio {
@@ -100,7 +101,11 @@ export function BackgroundMusicSelector({
         toast.info('No music found. Try a different search.');
       }
     } catch (error: any) {
-      console.error('Error searching music:', error);
+      logger.error('Music search failed', error, {
+        component: 'BackgroundMusicSelector',
+        operation: 'searchMusic',
+        query
+      });
       toast.error(error.message || 'Failed to search music');
     } finally {
       setLoading(false);
@@ -153,7 +158,12 @@ export function BackgroundMusicSelector({
     try {
       await newAudio.play();
     } catch (error) {
-      console.error('Error playing audio:', error);
+      logger.warn('Audio preview autoplay blocked', {
+        component: 'BackgroundMusicSelector',
+        operation: 'handlePlayPreview',
+        trackId: audio.id,
+        error
+      });
       if (!hasShownAutoplayWarning.current) {
         toast.error('Unable to play preview. Tap again to allow audio.');
         hasShownAutoplayWarning.current = true;
@@ -210,7 +220,12 @@ export function BackgroundMusicSelector({
       await audio.play();
       setIsSelectedPlaying(true);
     } catch (error) {
-      console.error('Error playing audio:', error);
+      logger.warn('Selected music autoplay blocked', {
+        component: 'BackgroundMusicSelector',
+        operation: 'handlePlaySelectedMusic',
+        musicUrl: selectedMusicUrl,
+        error
+      });
       if (!hasShownAutoplayWarning.current) {
         toast.error('Unable to play preview. Tap again to allow audio.');
         hasShownAutoplayWarning.current = true;

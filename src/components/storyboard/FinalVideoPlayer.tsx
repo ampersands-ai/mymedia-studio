@@ -6,6 +6,7 @@
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 interface FinalVideoPlayerProps {
   videoUrl: string | null;
@@ -42,7 +43,12 @@ export const FinalVideoPlayer = ({
       
       toast.success('Video downloaded!', { id: 'download-video' });
     } catch (error) {
-      console.error('[FinalVideoPlayer] Download error:', error);
+      logger.error('Video download failed', error, {
+        component: 'FinalVideoPlayer',
+        operation: 'handleDownload',
+        storyboardId,
+        videoUrl
+      });
       toast.error('Failed to download video. Try "Open in New Tab" and save from there.', { 
         id: 'download-video' 
       });

@@ -16,6 +16,7 @@ import { useIntroSceneSync } from '@/hooks/storyboard/useIntroSceneSync';
 import { useStoryboardKeyboardNav } from '@/hooks/storyboard/useStoryboardKeyboardNav';
 import { useStoryboardAutoCollapse } from '@/hooks/storyboard/useStoryboardAutoCollapse';
 import { validateScenesComplete, hasInsufficientCredits } from '@/lib/storyboard-validation';
+import { logger } from '@/lib/logger';
 import { RenderStatusAlert } from './RenderStatusAlert';
 import { StuckVideoAlert } from './StuckVideoAlert';
 import { StoryboardHeader } from './StoryboardHeader';
@@ -108,7 +109,12 @@ export const StoryboardEditor = () => {
       
       toast.success('Video rendering started!');
     } catch (error: any) {
-      console.error('Render error:', error);
+      logger.error('Video rendering failed to start', error, {
+        component: 'StoryboardEditor',
+        operation: 'handleRender',
+        storyboardId: storyboard?.id,
+        sceneCount: scenes.length
+      });
       toast.error(error.message || 'Failed to start rendering');
     }
   };
@@ -119,7 +125,11 @@ export const StoryboardEditor = () => {
       await renderVideo(true);
       toast.success('Video re-rendering started!');
     } catch (error: any) {
-      console.error('Re-render error:', error);
+      logger.error('Video re-rendering failed to start', error, {
+        component: 'StoryboardEditor',
+        operation: 'handleConfirmRerender',
+        storyboardId: storyboard?.id
+      });
       toast.error(error.message || 'Failed to start re-rendering');
     }
   };

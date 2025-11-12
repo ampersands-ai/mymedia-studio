@@ -305,6 +305,20 @@ const Auth = () => {
           } catch (logError) {
             console.error('Failed to log audit event:', logError);
           }
+
+          // Send welcome email
+          try {
+            await supabase.functions.invoke('send-welcome-email', {
+              body: {
+                userId: data.user.id,
+                email: data.user.email,
+                fullName: `${firstName} ${lastName}`.trim(),
+              }
+            });
+          } catch (emailError) {
+            console.error('Failed to send welcome email:', emailError);
+            // Don't block signup if email fails
+          }
         }
         
         const hasAllFields = phoneNumber && zipcode;

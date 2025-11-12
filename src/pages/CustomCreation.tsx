@@ -19,7 +19,7 @@ import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
 import { CreationGroupSelector } from "@/components/custom-creation/CreationGroupSelector";
 import { InputPanel } from "@/components/custom-creation/InputPanel";
 import { OutputPanel } from "@/components/custom-creation/OutputPanel";
-import { MobileStickyButton } from "@/components/custom-creation/MobileStickyButton";
+
 import { BestPracticesCard } from "@/components/custom-creation/BestPracticesCard";
 import { supabase } from "@/integrations/supabase/client";
 import { createSignedUrl, extractStoragePath } from "@/lib/storage-utils";
@@ -488,16 +488,6 @@ const CustomCreation = () => {
         {/* Best Practices */}
         <BestPracticesCard />
 
-        {/* Mobile Sticky Button - Hidden as InputPanel has its own sticky button */}
-        <div className="hidden">
-          <MobileStickyButton
-            onGenerate={handleGenerate}
-            disabled={isGenerateDisabled}
-            isGenerating={isGenerating || state.localGenerating}
-            estimatedTokens={estimatedTokens}
-            estimatedDuration={currentModel?.estimated_time_seconds}
-          />
-        </div>
       </div>
     </div>
   );

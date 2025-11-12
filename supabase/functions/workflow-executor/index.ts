@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { 
   processImageUploads, 
   sanitizeParametersForProviders 
@@ -21,6 +22,9 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  const requestId = crypto.randomUUID();
+
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -33,14 +37,20 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
+    const logger = new EdgeLogger('workflow-executor', requestId, supabase, true);
+
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
+      logger.error('Authentication failed', userError);
       throw new Error('Unauthorized');
     }
 
     const { workflow_template_id, user_inputs } = await req.json();
 
-    console.log('[workflow-executor] Kickoff workflow:', workflow_template_id, 'for user:', user.id);
+    logger.info('Workflow execution started', {
+      userId: user.id,
+      metadata: { workflow_template_id }
+    });
 
     // Process any image uploads to generate signed URLs
     const processedInputs = await processImageUploads(user_inputs, user.id, supabase);
@@ -76,11 +86,23 @@ serve(async (req) => {
       throw new Error('Failed to create workflow execution');
     }
 
-    console.log('[workflow-executor] Created execution:', execution.id);
+    logger.info('Workflow execution created', {
+      userId: user.id,
+      metadata: { 
+        execution_id: execution.id,
+        total_steps: totalSteps 
+      }
+    });
 
     // 3. Start ONLY the first step (orchestration will be handled by webhook)
     const firstStep = steps[0];
-    console.log('[workflow-executor] Starting step 1:', firstStep.step_name);
+    logger.info('Starting first step', {
+      userId: user.id,
+      metadata: { 
+        step_number: 1,
+        step_name: firstStep.step_name 
+      }
+    });
 
     // Update current step
     await supabase
@@ -112,13 +134,13 @@ serve(async (req) => {
           .eq('record_id', firstStep.model_record_id)
           .single();
         if (modelLoadError) {
-          console.warn('[workflow-executor] Could not load model schema:', modelLoadError);
+          logger.warn('Could not load model schema', { metadata: { error: modelLoadError.message } });
         } else if (modelData?.input_schema) {
           coercedParameters = coerceParametersToSchema(allParameters, modelData.input_schema);
         }
       }
     } catch (e) {
-      console.warn('[workflow-executor] Schema coercion skipped:', e);
+      logger.warn('Schema coercion skipped', { metadata: { error: e instanceof Error ? e.message : String(e) } });
     }
 
     // Sanitize parameters to convert base64 images
@@ -135,8 +157,13 @@ serve(async (req) => {
       resolvedPrompt = replaceTemplateVariables(firstStep.prompt_template, context);
     }
 
-    console.log('[workflow-executor] Resolved prompt for step 1:', resolvedPrompt);
-    console.log('[workflow-executor] Parameters:', sanitizedParameters);
+    logger.debug('Step 1 configuration resolved', {
+      userId: user.id,
+      metadata: { 
+        prompt_length: resolvedPrompt.length,
+        parameter_keys: Object.keys(sanitizedParameters)
+      }
+    });
 
     // Call generate-content for step 1
     const generateResponse = await supabase.functions.invoke('generate-content', {
@@ -151,11 +178,20 @@ serve(async (req) => {
     });
 
     if (generateResponse.error) {
-      console.error('[workflow-executor] Step 1 failed:', generateResponse.error);
+      logger.error('Step 1 generation failed', generateResponse.error, {
+        userId: user.id,
+        metadata: { execution_id: execution.id }
+      });
       throw new Error(`Step 1 failed: ${generateResponse.error.message}`);
     }
 
-    console.log('[workflow-executor] Step 1 initiated, returning immediately');
+    logger.logDuration('Workflow execution initiated', startTime, {
+      userId: user.id,
+      metadata: { 
+        execution_id: execution.id,
+        workflow_template_id 
+      }
+    });
 
     // Return immediately - webhook will handle orchestration
     return new Response(

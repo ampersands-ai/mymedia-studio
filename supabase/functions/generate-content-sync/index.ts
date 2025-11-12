@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { callRunware } from "./providers/runware.ts";
 import { calculateTokenCost } from "./utils/token-calculator.ts";
 import { uploadToStorage } from "./utils/storage.ts";
@@ -20,11 +21,14 @@ serve(async (req) => {
   }
 
   const startTime = Date.now();
+  const requestId = crypto.randomUUID();
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    const logger = new EdgeLogger('generate-content-sync', requestId, supabase, true);
 
     // Authenticate user (allow service role for testing)
     const authHeader = req.headers.get('Authorization');
@@ -39,11 +43,12 @@ serve(async (req) => {
     
     let user: any;
     if (isServiceRole) {
-      console.log('[sync] Service role authentication detected - test mode');
+      logger.info('Service role authentication - test mode');
       user = null; // Will be set from request body
     } else {
       const { data: userData, error: authError } = await supabase.auth.getUser(token);
       if (authError || !userData.user) {
+        logger.error('Authentication failed', authError);
         throw new Error('Unauthorized: Invalid user token');
       }
       user = userData.user;
@@ -65,7 +70,7 @@ serve(async (req) => {
         throw new Error('user_id required when using service role authentication');
       }
       user = { id: user_id };
-      console.log('[sync] Test mode - using user_id from request:', user_id);
+      logger.info('Test mode - using user_id from request', { metadata: { user_id } });
     }
 
     // Compute effective prompt with fallbacks and validate early
@@ -82,7 +87,10 @@ serve(async (req) => {
       );
     }
 
-    console.log('[sync] Generation request:', { user_id: user.id, model_record_id, model_id });
+    logger.info('Synchronous generation request', {
+      userId: user.id,
+      metadata: { model_record_id, model_id }
+    });
 
     // Load model configuration
     let model: any;
@@ -118,7 +126,9 @@ serve(async (req) => {
       }
 
       if (count && count > 1) {
-        console.warn(`⚠️ [sync] Duplicate model_id detected: "${model_id}" has ${count} active records. Using most recently updated.`);
+        logger.warn('Duplicate model_id detected', {
+          metadata: { model_id, duplicate_count: count }
+        });
         return new Response(
           JSON.stringify({ 
             error: `Duplicate model id found. Multiple active models share id "${model_id}". Please use model_record_id instead.`,
@@ -140,7 +150,10 @@ serve(async (req) => {
       throw new Error('This endpoint only supports Runware models. Use generate-content for other providers.');
     }
 
-    console.log('[sync] Using model:', model.id, 'Provider:', model.provider);
+    logger.info('Model loaded', {
+      userId: user.id,
+      metadata: { model_id: model.id, provider: model.provider }
+    });
 
     // Rate limiting check
     const { data: userSubscription } = await supabase
@@ -226,7 +239,10 @@ serve(async (req) => {
 
     const parameters = validateAndFilterParameters(custom_parameters, model.input_schema);
     
-    console.log('[sync] Validated parameters before provider call:', JSON.stringify(parameters, null, 2));
+    logger.debug('Parameters validated', {
+      userId: user.id,
+      metadata: { parameter_keys: Object.keys(parameters) }
+    });
 
     // Calculate token cost
     const tokenCost = calculateTokenCost(
@@ -235,13 +251,16 @@ serve(async (req) => {
       parameters
     );
 
-    console.log('[sync] Token cost calculated:', tokenCost);
+    logger.info('Token cost calculated', {
+      userId: user.id,
+      metadata: { token_cost: tokenCost }
+    });
 
     // Check if this is a free retry (skip token deduction for generations taking >5 minutes)
     const skipTokenDeduction = custom_parameters.skip_token_deduction === true;
 
     if (skipTokenDeduction) {
-      console.log('[sync] Free regeneration - skipping token deduction');
+      logger.info('Free regeneration - skipping token deduction', { userId: user.id });
     } else {
       // Check and deduct tokens
       const { data: subscription, error: subError } = await supabase
@@ -277,7 +296,10 @@ serve(async (req) => {
         throw new Error('Failed to deduct tokens');
       }
 
-      console.log('[sync] Tokens deducted:', tokenCost);
+      logger.info('Tokens deducted', {
+        userId: user.id,
+        metadata: { tokens_deducted: tokenCost }
+      });
     }
 
     // Create generation record
@@ -309,7 +331,10 @@ serve(async (req) => {
       throw new Error('Failed to create generation record');
     }
 
-    console.log('[sync] Generation created:', generation.id);
+    logger.info('Generation record created', {
+      userId: user.id,
+      metadata: { generation_id: generation.id }
+    });
 
     try {
       // Call Runware provider synchronously
@@ -319,18 +344,27 @@ serve(async (req) => {
         parameters: parameters,
       };
 
-      console.log('[sync] Calling Runware provider...');
+      logger.info('Calling Runware provider', {
+        userId: user.id,
+        metadata: { generation_id: generation.id }
+      });
       
       const providerResponse = await callRunware(providerRequest);
 
-      console.log('[sync] Provider response received, uploading to storage...');
+      logger.info('Provider response received', {
+        userId: user.id,
+        metadata: { generation_id: generation.id }
+      });
 
       let storagePath: string;
       let fileSize = providerResponse.file_size;
 
       // Check if provider already uploaded to storage
       if (providerResponse.storage_path) {
-        console.log('[sync] Content already in storage:', providerResponse.storage_path);
+        logger.info('Content already in storage', {
+          userId: user.id,
+          metadata: { storage_path: providerResponse.storage_path }
+        });
         storagePath = providerResponse.storage_path;
         
         // Get actual file size if not provided
@@ -390,14 +424,15 @@ serve(async (req) => {
         }
       });
 
-      console.log('[sync] Generation completed:', generation.id);
-      console.log(JSON.stringify({
-        metric: 'sync_generation_success',
-        duration_ms: Date.now() - startTime,
-        model_id: model.id,
-        user_id: user.id,
-        provider: 'runware'
-      }));
+      logger.logDuration('Synchronous generation completed', startTime, {
+        userId: user.id,
+        metadata: {
+          generation_id: generation.id,
+          model_id: model.id,
+          tokens_used: tokenCost,
+          provider: 'runware'
+        }
+      });
 
       return new Response(
         JSON.stringify({
@@ -411,7 +446,10 @@ serve(async (req) => {
       );
 
     } catch (providerError: any) {
-      console.error('[sync] Provider error:', providerError);
+      logger.error('Provider error', providerError, {
+        userId: user.id,
+        metadata: { generation_id: generation.id }
+      });
 
       // Update generation to failed
       await supabase
@@ -432,7 +470,10 @@ serve(async (req) => {
         amount: tokenCost
       });
 
-      console.log(`[sync] Tokens refunded: ${tokenCost}`);
+      logger.info('Tokens refunded', {
+        userId: user.id,
+        metadata: { tokens_refunded: tokenCost }
+      });
 
       await supabase.from('audit_logs').insert({
         user_id: user.id,

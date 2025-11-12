@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { callProvider } from "./providers/index.ts";
 import { calculateTokenCost } from "./utils/token-calculator.ts";
 import { uploadToStorage } from "./utils/storage.ts";
@@ -28,6 +29,7 @@ serve(async (req) => {
   }
 
   const startTime = Date.now();
+  const requestId = crypto.randomUUID();
 
   try {
     // Check request queue capacity
@@ -40,6 +42,8 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    const logger = new EdgeLogger('generate-content', requestId, supabase, true);
 
     // Authenticate user (allow service role for testing)
     const authHeader = req.headers.get('Authorization');
@@ -54,11 +58,12 @@ serve(async (req) => {
     
     let user: any;
     if (isServiceRole) {
-      console.log('Service role authentication detected - test mode');
+      logger.info('Service role authentication - test mode');
       user = null; // Will be set from request body
     } else {
       const { data: userData, error: authError } = await supabase.auth.getUser(token);
       if (authError || !userData.user) {
+        logger.error('Authentication failed', authError);
         throw new Error('Unauthorized: Invalid user token');
       }
       user = userData.user;
@@ -84,7 +89,7 @@ serve(async (req) => {
         throw new Error('user_id required when using service role authentication');
       }
       user = { id: user_id };
-      console.log('Service role detected - using user_id from request:', user_id);
+      logger.info('Service role detected - using user_id from request', { metadata: { user_id } });
     }
 
     // Verify admin status for test_mode
@@ -99,13 +104,16 @@ serve(async (req) => {
       
       if (adminRole) {
         isTestMode = true;
-        console.log('🧪 TEST_MODE: Non-billable test run for admin user', user.id);
+        logger.info('TEST_MODE: Non-billable test run for admin user', { userId: user.id });
       } else {
-        console.warn('test_mode requested but user is not admin - ignoring flag');
+        logger.warn('test_mode requested but user is not admin - ignoring flag', { userId: user.id });
       }
     }
 
-    console.log('Generation request:', { user_id: user.id, template_id, model_id, model_record_id, enhance_prompt });
+    logger.info('Async generation request', {
+      userId: user.id,
+      metadata: { template_id, model_id, model_record_id, enhance_prompt }
+    });
 
     // Validate: template_id XOR (model_id or model_record_id)
     if ((!template_id && !model_id && !model_record_id) || (template_id && (model_id || model_record_id))) {
@@ -167,9 +175,11 @@ serve(async (req) => {
           throw new Error('Model not found or inactive');
         }
 
-        if (count && count > 1) {
-          console.warn(`⚠️ Duplicate model_id detected: "${model_id}" has ${count} active records. Using most recently updated.`);
-          return new Response(
+      if (count && count > 1) {
+        logger.warn('Duplicate model_id detected', {
+          metadata: { model_id, duplicate_count: count }
+        });
+        return new Response(
             JSON.stringify({ 
               error: `Duplicate model id found. Multiple active models share id "${model_id}". Please use model_record_id instead.`,
               code: 'DUPLICATE_MODEL_ID',
@@ -188,7 +198,10 @@ serve(async (req) => {
       parameters = custom_parameters;
     }
 
-    console.log('Using model:', model.id, 'Provider:', model.provider);
+    logger.info('Model loaded', {
+      userId: user.id,
+      metadata: { model_id: model.id, provider: model.provider }
+    });
 
     // Check if model has prompt field in schema
     const hasPromptField = Boolean(model.input_schema?.properties?.prompt);
@@ -240,7 +253,13 @@ serve(async (req) => {
         .eq('status', 'pending');
 
       if (tierLimits && concurrentCount !== null && concurrentCount >= tierLimits.max_concurrent_generations) {
-        console.error(`Concurrent limit exceeded: ${concurrentCount}/${tierLimits.max_concurrent_generations} for user ${user.id}`);
+        logger.error('Concurrent generation limit exceeded', undefined, {
+          userId: user.id,
+          metadata: { 
+            current: concurrentCount,
+            limit: tierLimits.max_concurrent_generations 
+          }
+        });
         return new Response(
           JSON.stringify({ 
             error: 'Concurrent generation limit reached. Please wait for your current generation to complete.',
@@ -250,9 +269,9 @@ serve(async (req) => {
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-    } else {
-      console.log('🧪 TEST_MODE: Skipping rate limit checks');
-    }
+      } else {
+        logger.info('TEST_MODE: Skipping rate limit checks', { userId: user.id });
+      }
 
     // Validate required fields based on model's input schema
     const inputSchema = model.input_schema || {};
@@ -271,7 +290,7 @@ serve(async (req) => {
     let usedEnhancementProvider = null;
 
     if (hasPromptField && prompt && (enhance_prompt || enhancementInstruction)) {
-      console.log('Enhancing prompt...');
+      logger.info('Enhancing prompt', { userId: user.id });
       try {
         const enhancementResult = await enhancePrompt(
           prompt,
@@ -283,9 +302,14 @@ serve(async (req) => {
         );
         finalPrompt = enhancementResult.enhanced;
         usedEnhancementProvider = enhancementResult.provider;
-        console.log('Prompt enhanced successfully');
+        logger.info('Prompt enhanced successfully', {
+          userId: user.id,
+          metadata: { provider: usedEnhancementProvider }
+        });
       } catch (error) {
-        console.error('Prompt enhancement failed:', error);
+        logger.error('Prompt enhancement failed', error instanceof Error ? error : undefined, {
+          userId: user.id
+        });
         // Continue with original prompt
       }
     }
@@ -349,10 +373,12 @@ serve(async (req) => {
         }
       }
       
-      console.log('Parameters filtered from schema:', {
-        original: Object.keys(parameters),
-        filtered: Object.keys(filtered),
-        appliedDefaults: appliedDefaults.length > 0 ? appliedDefaults : 'none'
+      logger.debug('Parameters filtered from schema', {
+        metadata: {
+          original_keys: Object.keys(parameters).length,
+          filtered_keys: Object.keys(filtered).length,
+          defaults_applied: appliedDefaults.length
+        }
       });
       
       return filtered;
@@ -371,9 +397,11 @@ serve(async (req) => {
     // Store original keys for logging
     const originalParamKeys = Object.keys(parameters || {});
     parameters = normalizeParameterKeys(parameters);
-    console.log('Parameter keys normalized:', { 
-      original: originalParamKeys, 
-      normalized: Object.keys(parameters || {}) 
+    logger.debug('Parameter keys normalized', {
+      metadata: {
+        original_count: originalParamKeys.length,
+        normalized_count: Object.keys(parameters || {}).length
+      }
     });
 
     // Safety fallback for ElevenLabs models: map prompt to text if text is missing
@@ -448,7 +476,9 @@ serve(async (req) => {
         }
       }
       
-      console.log('Applied video format defaults for mobile compatibility');
+      logger.debug('Applied video format defaults for mobile compatibility', {
+        metadata: { content_type: 'video' }
+      });
     }
 
     // Calculate token cost with validated parameters
@@ -458,7 +488,10 @@ serve(async (req) => {
       validatedParameters
     );
 
-    console.log('Token cost calculated:', tokenCost);
+    logger.info('Token cost calculated', {
+      userId: user.id,
+      metadata: { token_cost: tokenCost }
+    });
 
     // SECURITY FIX: Transaction-like token deduction + generation creation
     // This prevents race conditions where tokens are deducted but generation fails
@@ -505,14 +538,17 @@ serve(async (req) => {
         }
 
         tokensDeducted = true;
-        console.log('Tokens deducted:', tokenCost);
+        logger.info('Tokens deducted', {
+          userId: user.id,
+          metadata: { tokens_deducted: tokenCost }
+        });
       } else {
-        console.log('🧪 TEST_MODE: Skipping token deduction (non-billable)');
+        logger.info('TEST_MODE: Skipping token deduction (non-billable)', { userId: user.id });
       }
 
       // Generate unique webhook verification token for security
       const webhookToken = crypto.randomUUID();
-      console.log('Generated webhook verification token for security layer 2');
+      logger.debug('Generated webhook verification token', { userId: user.id });
 
       // Step 2: Create generation record with webhook token in settings
       const generationSettings = {
@@ -550,8 +586,10 @@ serve(async (req) => {
 
       generation = gen;
       generationCreated = true;
-      console.log('Generation record created:', generation.id);
-      console.log('Webhook token stored securely in settings._webhook_token');
+      logger.info('Generation record created', {
+        userId: user.id,
+        metadata: { generation_id: generation.id }
+      });
 
       // Validate prompt only if model has prompt field
       if (hasPromptField) {
@@ -606,14 +644,16 @@ serve(async (req) => {
       
       // AUTOMATIC ROLLBACK: Refund tokens if deducted (skip for test mode)
       if (tokensDeducted && !isTestMode) {
-        console.log('Rolling back token deduction...');
+        logger.info('Rolling back token deduction', {
+          userId: user.id,
+          metadata: { tokens_refunded: tokenCost }
+        });
         await supabase.rpc('increment_tokens', {
           user_id_param: user.id,
           amount: tokenCost
         });
-        console.log('Tokens refunded:', tokenCost);
       } else if (isTestMode) {
-        console.log('🧪 TEST_MODE: No token rollback needed (non-billable)');
+        logger.info('TEST_MODE: No token rollback needed (non-billable)', { userId: user.id });
       }
       
       // Return 400 with specific error message instead of throwing
@@ -663,7 +703,10 @@ serve(async (req) => {
           }, TIMEOUT_MS) as unknown as number;
         });
 
-        console.log('Parameters being sent to provider:', JSON.stringify(validatedParameters));
+        logger.debug('Sending parameters to provider', {
+          userId: user.id,
+          metadata: { parameter_keys: Object.keys(validatedParameters) }
+        });
         
         providerRequest = {
           model: model.id,
@@ -679,7 +722,14 @@ serve(async (req) => {
           providerRequest.prompt = finalPrompt;
         }
 
-        console.log('Provider request:', JSON.stringify(providerRequest));
+        logger.debug('Provider request prepared', {
+          userId: user.id,
+          metadata: { 
+            model_id: model.id,
+            generation_id: generation.id,
+            has_prompt: !!providerRequest.prompt
+          }
+        });
         
         // Get webhookToken from generation settings for Kie.ai provider
         const webhookToken = generation.settings?._webhook_token;
@@ -691,7 +741,10 @@ serve(async (req) => {
 
         if (timeoutId) clearTimeout(timeoutId);
 
-        console.log('Provider response received');
+        logger.info('Provider response received', {
+          userId: user.id,
+          metadata: { generation_id: generation.id }
+        });
 
         // Check if this is a webhook-based provider (Kie.ai)
         const isWebhookProvider = model.provider === 'kie_ai' && providerResponse.metadata?.task_id;
@@ -699,7 +752,10 @@ serve(async (req) => {
         if (isWebhookProvider) {
           // For webhook providers, update with task_id and mark as processing
           const taskId = providerResponse.metadata.task_id;
-          console.log('Webhook-based provider. Task ID:', taskId);
+          logger.info('Webhook-based provider', {
+            userId: user.id,
+            metadata: { task_id: taskId, generation_id: generation.id }
+          });
           
           const { error: updateError } = await supabase
             .from('generations')
@@ -712,7 +768,10 @@ serve(async (req) => {
             .eq('id', generation.id);
 
           if (updateError) {
-            console.error('Failed to update generation with task ID:', updateError);
+            logger.error('Failed to update generation with task ID', updateError, {
+              userId: user.id,
+              metadata: { generation_id: generation.id }
+            });
           }
           
           // Return immediately - webhook will complete the generation
@@ -738,7 +797,10 @@ serve(async (req) => {
 
             // Check if provider already uploaded to storage
             if (providerResponse.storage_path) {
-              console.log('Content already in storage:', providerResponse.storage_path);
+              logger.info('Content already in storage', {
+                userId: user.id,
+                metadata: { storage_path: providerResponse.storage_path }
+              });
               storagePath = providerResponse.storage_path;
               
               // Get actual file size if not provided
@@ -767,7 +829,10 @@ serve(async (req) => {
               );
             }
 
-            console.log('Uploaded to storage:', storagePath);
+            logger.info('Uploaded to storage', {
+              userId: user.id,
+              metadata: { storage_path: storagePath }
+            });
 
             const { data: { publicUrl } } = supabase.storage
               .from('generated-content')
@@ -799,9 +864,15 @@ serve(async (req) => {
               }
             });
 
-            console.log('Background processing completed');
+            logger.info('Background processing completed', {
+              userId: user.id,
+              metadata: { generation_id: generationId }
+            });
           } catch (bgError) {
-            console.error('Background processing error:', bgError);
+            logger.error('Background processing error', bgError instanceof Error ? bgError : undefined, {
+              userId: user.id,
+              metadata: { generation_id: generationId }
+            });
             
             // Update to failed status if background task fails
             const errorMessage = bgError instanceof Error ? bgError.message : 'Background processing failed';
@@ -823,17 +894,15 @@ serve(async (req) => {
         // Reset circuit breaker on success
         CIRCUIT_BREAKER.failures = 0;
 
-        // Phase 5: Performance logging
-        console.log(JSON.stringify({
-          metric: 'generation_success',
-          duration_ms: Date.now() - startTime,
-          model_id: model.id,
-          user_id: user.id,
-          tokens_used: tokenCost,
-          content_type: model.content_type
-        }));
-
-        console.log('Generation processing started');
+        logger.logDuration('Generation processing started', startTime, {
+          userId: user.id,
+          metadata: {
+            generation_id: generation.id,
+            model_id: model.id,
+            tokens_used: tokenCost,
+            content_type: model.content_type
+          }
+        });
 
         return new Response(
           JSON.stringify({
@@ -847,12 +916,9 @@ serve(async (req) => {
         );
 
       } catch (providerError: any) {
-        // Log full error server-side for debugging
-        console.error('Provider error details:', {
-          message: providerError.message,
-          stack: providerError.stack,
-          generation_id: generation.id,
-          user_id: user.id
+        logger.error('Provider error', providerError, {
+          userId: user.id,
+          metadata: { generation_id: generation.id }
         });
 
         // Increment circuit breaker on failure
@@ -884,9 +950,15 @@ serve(async (req) => {
             user_id_param: user.id,
             amount: tokenCost
           });
-          console.log(`Credits refunded: ${tokenCost} credits returned to user ${user.id} due to ${isTimeout ? 'timeout' : 'provider failure'}`);
+          logger.info('Credits refunded', {
+            userId: user.id,
+            metadata: { 
+              tokens_refunded: tokenCost,
+              reason: isTimeout ? 'timeout' : 'provider_failure'
+            }
+          });
         } else {
-          console.log('🧪 TEST_MODE: No token refund needed (non-billable)');
+          logger.info('TEST_MODE: No token refund needed (non-billable)', { userId: user.id });
         }
 
         await supabase.from('audit_logs').insert({
@@ -903,15 +975,15 @@ serve(async (req) => {
           }
         });
 
-        // Phase 5: Performance logging
-        console.log(JSON.stringify({
-          metric: 'generation_failure',
-          duration_ms: Date.now() - startTime,
-          model_id: model.id,
-          user_id: user.id,
-          error: providerError.message,
-          circuit_breaker_failures: CIRCUIT_BREAKER.failures
-        }));
+        logger.error('Generation failed', providerError, {
+          userId: user.id,
+          duration: Date.now() - startTime,
+          metadata: {
+            generation_id: generation.id,
+            model_id: model.id,
+            circuit_breaker_failures: CIRCUIT_BREAKER.failures
+          }
+        });
 
         throw providerError;
       }

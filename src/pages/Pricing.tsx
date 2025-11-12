@@ -17,7 +17,8 @@ const plans = [
     annualPrice: "$74.99",
     period: "/mo",
     credits: "5000",
-    perCredit: "$0.015 per credit",
+    monthlyPerCredit: "$0.019",
+    annualPerCredit: "$0.015",
     features: [
       "No watermark",
       "Commercial license",
@@ -25,10 +26,11 @@ const plans = [
       "Early access to new features",
     ],
     popular: false,
-    badge: "PREMIUM",
+    badge: "BEST VALUE",
     color: "bg-accent",
     description: "Ultimate power for professionals and agencies. 5000 credits at the best rate—unmatched value for serious creators.",
     savings: "Best per-credit pricing available",
+    concurrentGenerations: 7,
   },
   {
     name: "Ultimate",
@@ -36,17 +38,19 @@ const plans = [
     annualPrice: "$39.99",
     period: "/mo",
     credits: "2500",
-    perCredit: "$0.016 per credit",
+    monthlyPerCredit: "$0.020",
+    annualPerCredit: "$0.016",
     features: [
       "No watermark",
       "Commercial license",
       "24/7 premium support",
     ],
     popular: false,
-    badge: "BEST VALUE",
+    badge: "MOST POPULAR",
     color: "bg-neon-red",
     description: "Enterprise power at freelancer prices. 2500 credits for just $39.99/mo—competitors charge $99+ for less.",
     savings: "Save $60-85/mo vs competitors",
+    concurrentGenerations: 5,
   },
   {
     name: "Professional",
@@ -54,7 +58,8 @@ const plans = [
     annualPrice: "$19.99",
     period: "/mo",
     credits: "1000",
-    perCredit: "$0.020 per credit",
+    monthlyPerCredit: "$0.025",
+    annualPerCredit: "$0.020",
     features: [
       "No watermark",
       "Unlimited image & text gens",
@@ -62,9 +67,10 @@ const plans = [
     ],
     popular: true,
     color: "bg-primary",
-    badge: "MOST POPULAR",
+    badge: undefined,
     description: "All the tools you need for less than $20/mo. 1000 credits + unlimited image & text. Save $100s every year.",
     savings: "Save $80-105/mo vs competitors",
+    concurrentGenerations: 3,
   },
   {
     name: "Explorer",
@@ -72,7 +78,8 @@ const plans = [
     annualPrice: "$7.99",
     period: "/mo",
     credits: "375",
-    perCredit: "$0.021 per credit",
+    monthlyPerCredit: "$0.027",
+    annualPerCredit: "$0.021",
     features: [
       "No watermark",
       "Global availability",
@@ -80,9 +87,10 @@ const plans = [
     ],
     popular: false,
     color: "bg-neon-pink",
-    badge: "FOR CREATORS",
+    badge: undefined,
     description: "The indie creator's choice. 375 credits for just $7.99/mo—competitors charge $30-50 for similar plans.",
     savings: "Save $22-42/mo vs competitors",
+    concurrentGenerations: 1,
   },
   {
     name: "Freemium",
@@ -90,7 +98,8 @@ const plans = [
     monthlyPrice: "FREE",
     annualPrice: "FREE",
     credits: "5",
-    perCredit: "Always Free",
+    monthlyPerCredit: "Free",
+    annualPerCredit: "Free",
     features: [
       "Watermark on videos",
       "Limited access",
@@ -329,8 +338,11 @@ const Pricing = () => {
         <main className="container mx-auto px-4 py-16">
           <div className="text-center space-y-6 mb-12">
             <h2 className="text-5xl md:text-6xl font-black">Simple, Transparent Pricing</h2>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-              Choose the plan that fits your needs. All plans include no watermark on exports.
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
+              One of the best in the market in Pricing, Consistency and Features.
+            </p>
+            <p className="text-2xl md:text-3xl font-bold text-primary">
+              Throwaway prices. Premium Experience.
             </p>
           </div>
 
@@ -399,8 +411,18 @@ const Pricing = () => {
                       </div>
                     )}
                   </div>
-                  <div className="text-xs text-muted-foreground pt-2">
-                    {plan.credits} credits
+                  <div className="space-y-1 pt-2">
+                    <div className="text-xs text-muted-foreground">
+                      {plan.credits} credits
+                    </div>
+                    <div className="text-sm font-bold text-primary">
+                      {isAnnual ? plan.annualPerCredit : plan.monthlyPerCredit} per credit
+                    </div>
+                    {plan.concurrentGenerations && (
+                      <div className="text-xs text-muted-foreground">
+                        {plan.concurrentGenerations} concurrent generation{plan.concurrentGenerations > 1 ? 's' : ''}
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -428,91 +450,6 @@ const Pricing = () => {
               </Card>
             </div>
           ))}
-          </div>
-
-          {/* All Plans Comparison */}
-          <div className="max-w-6xl mx-auto mb-16">
-            <h3 className="text-3xl font-black text-center mb-8">Compare All Plans</h3>
-            <Card className="brutal-card">
-              <CardContent className="p-4 md:p-8">
-                <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-                  <table className="w-full min-w-[600px]">
-                    <thead>
-                        <tr className="border-b-2 border-black">
-                        <th className="py-4 px-4 text-left font-black">Plan</th>
-                        <th className="py-4 px-4 text-center font-black">Price</th>
-                        <th className="py-4 px-4 text-center font-black">Credits</th>
-                        <th className="py-4 px-4 text-center font-black">Best For</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {plans.map((plan) => (
-                        <tr key={plan.name} className="border-b border-border">
-                          <td className="py-4 px-4 font-bold">{plan.name}</td>
-                          <td className="py-4 px-4 text-center font-medium">
-                            {plan.monthlyPrice === "FREE" ? "FREE" : isAnnual ? plan.annualPrice + "/mo" : plan.monthlyPrice + "/mo"}
-                          </td>
-                          <td className="py-4 px-4 text-center text-muted-foreground">{plan.credits}</td>
-                          <td className="py-4 px-4 text-center text-sm text-muted-foreground">
-                            {plan.name === "Freemium" && "Testing & trying"}
-                            {plan.name === "Explorer" && "APAC/LATAM entry"}
-                            {plan.name === "Creators" && "Most users"}
-                            {plan.name === "Professional" && "Small teams"}
-                            {plan.name === "Ultimate" && "Power users"}
-                            {plan.name === "Veo Connoisseur" && "Agencies"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Competitor Comparison */}
-          <div className="max-w-4xl mx-auto mb-16">
-            <h3 className="text-3xl font-black text-center mb-8">Why Choose Artifio.ai?</h3>
-            <Card className="brutal-card">
-              <CardContent className="p-6 md:p-8">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-center">
-                    <thead>
-                      <tr className="border-b-2 border-black">
-                        <th className="py-3 px-4 font-black">Feature</th>
-                        <th className="py-3 px-4 font-black text-primary">Artifio.ai</th>
-                        <th className="py-3 px-4 font-bold text-muted-foreground">Midjourney</th>
-                        <th className="py-3 px-4 font-bold text-muted-foreground">Runway</th>
-                        <th className="py-3 px-4 font-bold text-muted-foreground">Jasper.ai</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b border-border">
-                        <td className="py-3 px-4 font-medium">Starting Price</td>
-                        <td className="py-3 px-4 font-black text-primary">$7.99/mo</td>
-                        <td className="py-3 px-4">$10/mo</td>
-                        <td className="py-3 px-4">$15/mo</td>
-                        <td className="py-3 px-4">$39/mo</td>
-                      </tr>
-                      <tr className="border-b border-border">
-                        <td className="py-3 px-4 font-medium">Free Tier</td>
-                        <td className="py-3 px-4 font-black text-primary">✅ 5 credits</td>
-                        <td className="py-3 px-4">❌</td>
-                        <td className="py-3 px-4">❌</td>
-                        <td className="py-3 px-4">❌</td>
-                      </tr>
-                      <tr>
-                        <td className="py-3 px-4 font-medium">Video Creation</td>
-                        <td className="py-3 px-4 font-black text-primary">✅</td>
-                        <td className="py-3 px-4">❌</td>
-                        <td className="py-3 px-4">✅</td>
-                        <td className="py-3 px-4">❌</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Final CTA Section */}

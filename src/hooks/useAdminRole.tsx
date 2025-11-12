@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { logger } from "@/lib/logger";
 
 /**
  * ⚠️ SECURITY NOTE: This client-side check is for UX purposes only.
@@ -46,7 +47,11 @@ export const useAdminRole = () => {
         if (error) throw error;
         setIsAdmin(!!data);
       } catch (error) {
-        console.error("Error checking admin role:", error);
+        logger.error("Error checking admin role", error instanceof Error ? error : new Error(String(error)), {
+          component: 'useAdminRole',
+          operation: 'checkAdminRole',
+          userId: user?.id
+        });
         setIsAdmin(false);
       } finally {
         setLoading(false);

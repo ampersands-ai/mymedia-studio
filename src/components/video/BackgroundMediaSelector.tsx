@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { logger } from '@/lib/logger';
 
 interface PixabayMedia {
   id: number;
@@ -105,7 +106,13 @@ export function BackgroundMediaSelector({
         toast.info(`No ${type}s found matching your criteria. Try a different search.`);
       }
     } catch (error: any) {
-      console.error('Error searching Pixabay:', error);
+      logger.error('Error searching Pixabay', error instanceof Error ? error : new Error(String(error)), {
+        component: 'BackgroundMediaSelector',
+        operation: 'handleSearch',
+        type,
+        query,
+        errorMessage: error?.message
+      });
       toast.error(error.message || `Failed to search ${type}s`);
     } finally {
       setLoading(false);

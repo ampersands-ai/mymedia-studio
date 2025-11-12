@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { ContentTemplate } from "@/hooks/useTemplates";
+import { logger } from "@/lib/logger";
 
 // Popular template IDs - manually curated based on usage and versatility
 export const POPULAR_TEMPLATE_IDS = [
@@ -17,7 +18,10 @@ export const getPopularTemplates = async (): Promise<ContentTemplate[]> => {
     .limit(3);
 
   if (error) {
-    console.error('Error fetching popular templates:', error);
+    logger.error('Error fetching popular templates', error instanceof Error ? error : new Error(String(error)), {
+      component: 'popularTemplates',
+      operation: 'getPopularTemplates'
+    });
     return [];
   }
 

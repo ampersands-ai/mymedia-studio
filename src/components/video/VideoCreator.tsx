@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { VoiceSelector } from '../generation/VoiceSelector';
 import { BackgroundMediaSelector, SelectedMedia } from './BackgroundMediaSelector';
 import { captionPresets, aspectRatioConfig, textEffectPresets } from '@/config/captionStyles';
+import { logger } from '@/lib/logger';
 import { CaptionStyle } from '@/types/video';
 
 export function VideoCreator() {
@@ -56,7 +57,11 @@ export function VideoCreator() {
         setTopic(data.topic);
       }
     } catch (error: any) {
-      console.error('Error generating topic:', error);
+      logger.error('Error generating topic', error instanceof Error ? error : new Error(String(error)), {
+        component: 'VideoCreator',
+        operation: 'generateTopic',
+        errorMessage: error?.message
+      });
       toast.error(error.message || 'Failed to generate topic');
     } finally {
       setIsGeneratingTopic(false);

@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
+import { logger } from "@/lib/logger";
 
 export const useUserTokens = () => {
   const { user } = useAuth();
@@ -26,20 +27,35 @@ export const useUserTokens = () => {
             filter: `user_id=eq.${user.id}`
           },
           (payload) => {
-            console.log('Credit update received:', payload.new);
+            logger.debug('Credit update received', {
+              component: 'useUserTokens',
+              operation: 'realtime_update',
+              userId: user.id,
+              newTokens: payload.new?.tokens_remaining
+            });
             queryClient.setQueryData(['user-tokens', user.id], payload.new);
           }
         )
         .on('system', {}, (payload) => {
           if (payload.status === 'CHANNEL_ERROR') {
-            console.error('Channel error, reconnecting...', payload);
+            logger.error('Channel error, reconnecting', new Error('Realtime channel error'), {
+              component: 'useUserTokens',
+              operation: 'realtime_channel',
+              userId: user.id,
+              status: payload.status
+            });
             setIsConnected(false);
           }
         })
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
             setIsConnected(true);
-            console.log('Connected to user credits realtime');
+            logger.debug('Connected to user credits realtime', {
+              component: 'useUserTokens',
+              operation: 'realtime_subscribe',
+              userId: user.id,
+              status
+            });
           }
         });
 
@@ -74,7 +90,12 @@ export const useUserTokens = () => {
           errorMessage.includes('session') ||
           error.code === 'PGRST301'
         ) {
-          console.error('[useUserTokens] Auth error detected:', error);
+          logger.error('Auth error detected in useUserTokens', error instanceof Error ? error : new Error(String(error)), {
+            component: 'useUserTokens',
+            operation: 'queryFn',
+            errorCode: error.code,
+            userId: user?.id
+          });
           // Return default values instead of throwing
           return { tokens_remaining: 0, plan: "freemium" };
         }

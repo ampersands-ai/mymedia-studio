@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import type { GenerationOutput } from '@/types/custom-creation';
 import { executeGeneration } from '@/lib/generation/executeGeneration';
 import { getMaxPromptLength } from '@/lib/custom-creation-utils';
+import { logger } from '@/lib/logger';
 
 interface TestResult {
   model_id: string;
@@ -168,7 +169,11 @@ export const useTestModelGroup = () => {
 
       return { results: testResults, summary: testSummary };
     } catch (error) {
-      console.error('Error testing model group:', error);
+      logger.error('Error testing model group', error instanceof Error ? error : new Error(String(error)), {
+        component: 'useTestModelGroup',
+        operation: 'testGroup',
+        group
+      });
       toast({
         title: "Test failed",
         description: error instanceof Error ? error.message : "Failed to test models",

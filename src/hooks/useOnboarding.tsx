@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 export interface OnboardingProgress {
   isNewUser: boolean;
@@ -40,7 +41,11 @@ export const useOnboarding = () => {
         .single();
 
       if (error) {
-        console.error('Error fetching onboarding progress:', error);
+        logger.error('Error fetching onboarding progress', error instanceof Error ? error : new Error(String(error)), {
+          component: 'useOnboarding',
+          operation: 'queryFn',
+          userId: user?.id
+        });
         return null;
       }
 

@@ -40,7 +40,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
    */
   const pollStatus = useCallback(async (generationId: string) => {
     try {
-      logger.debug('Polling generation status', { generationId });
+      logger.debug('Polling generation status', { generationId } as any);
       
       // Fetch parent generation with model info
       const { data: parentData, error } = await supabase
@@ -61,7 +61,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
         .single();
 
       if (error) {
-        logger.error('Failed to fetch generation', error, { generationId });
+        logger.error('Failed to fetch generation', error, { generationId } as any);
         throw error;
       }
 
@@ -142,7 +142,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
               retryCount: retryCount + 1,
               maxRetries,
               delayMs: retryDelay
-            });
+            } as any);
             await new Promise(resolve => setTimeout(resolve, retryDelay));
             retryCount++;
           }
@@ -156,7 +156,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
             logger.error('Generation completed but outputs not ready', undefined, {
               generationId,
               retriesUsed: retryCount
-            });
+            } as any);
             options.onError?.('Generation completed but outputs are not ready after retries.');
             return;
           }
@@ -165,7 +165,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
             generationId,
             outputCount: uniqueOutputs.length,
             retriesUsed: retryCount
-          });
+          } as any);
 
           // Call completion callback with parent ID
           options.onComplete(uniqueOutputs, generationId);
@@ -177,7 +177,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
         }
       }
     } catch (error: any) {
-      logger.error('Polling error', error, { generationId });
+      logger.error('Polling error', error, { generationId } as any);
       options.onError?.(error.message || 'Failed to check generation status');
     }
   }, [options, clearAllTimers]);
@@ -190,11 +190,11 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
       logger.warn('Already polling, stopping previous poll', { 
         currentPollingId: pollingId,
         newGenerationId: generationId
-      });
+      } as any);
       stopPolling();
     }
 
-    logger.info('Starting generation polling', { generationId });
+    logger.info('Starting generation polling', { generationId } as any);
     setIsPolling(true);
     setPollingId(generationId);
     const startTime = Date.now();
@@ -283,7 +283,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
         logger.warn('Polling exceeded maximum duration (30 min), force resetting', {
           pollingId,
           duration: '30 minutes'
-        });
+        } as any);
         
         stopPolling();
         options.onTimeout?.();

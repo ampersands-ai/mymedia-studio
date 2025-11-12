@@ -34,7 +34,7 @@ export class StorageManager {
     // Check cache
     const cached = this.signedUrlCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) {
-      logger.debug('Using cached signed URL', { path, bucket });
+      logger.debug('Using cached signed URL', { path, bucket } as any);
       return cached.url;
     }
 
@@ -53,10 +53,10 @@ export class StorageManager {
         expiresAt,
       });
 
-      logger.debug('Generated new signed URL', { path, bucket, expiresIn });
+      logger.debug('Generated new signed URL', { path, bucket, expiresIn } as any);
       return data.signedUrl;
     } catch (error) {
-      logger.error('Failed to get signed URL', error as Error, { path, bucket });
+      logger.error('Failed to get signed URL', error as Error, { path, bucket } as any);
       throw error;
     }
   }
@@ -87,6 +87,6 @@ export class StorageManager {
   static clearCacheForPath(path: string, bucket: string = 'generated-content'): void {
     const cacheKey = `${bucket}:${path}`;
     this.signedUrlCache.delete(cacheKey);
-    logger.debug('Cleared cached URL', { path, bucket });
+    logger.debug('Cleared cached URL', { path, bucket } as any);
   }
 }

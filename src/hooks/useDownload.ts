@@ -35,7 +35,7 @@ export function useDownload() {
       toast.success('Download complete', { id: toastId });
     } catch (error) {
       const appError = handleError(error, { url, filename });
-      logger.error('Download failed', error as Error, { url, filename });
+      logger.error('Download failed', error as Error, { url, filename } as any);
       toast.error(appError.message, { id: toastId });
       throw appError;
     } finally {
@@ -54,7 +54,7 @@ export function useDownload() {
         toast.success(`Downloaded ${items.length} files`, { id: toastId });
       } catch (error) {
         const appError = handleError(error);
-        logger.error('Batch download failed', error as Error, { count: items.length });
+        logger.error('Batch download failed', error as Error, { count: items.length } as any);
         toast.error(appError.message, { id: toastId });
         throw appError;
       } finally {

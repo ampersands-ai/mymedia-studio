@@ -32,7 +32,7 @@ class Logger {
   /**
    * Debug logging - only in development
    */
-  debug(message: string, context?: any) {
+  debug(message: string, context?: any): void {
     if (import.meta.env.DEV) {
       console.debug(this.formatMessage('debug', message, context));
     }
@@ -41,7 +41,7 @@ class Logger {
   /**
    * Info logging - only in development
    */
-  info(message: string, context?: any) {
+  info(message: string, context?: any): void {
     if (import.meta.env.DEV) {
       console.log(this.formatMessage('info', message, context));
     }
@@ -50,7 +50,7 @@ class Logger {
   /**
    * Warning logging - always logged, sent to PostHog in production
    */
-  warn(message: string, context?: any) {
+  warn(message: string, context?: any): void {
     console.warn(this.formatMessage('warn', message, context));
     
     if (!import.meta.env.DEV && typeof window !== 'undefined' && window.posthog) {
@@ -65,7 +65,7 @@ class Logger {
   /**
    * Error logging - always logged, sent to backend and PostHog
    */
-  error(message: string, error?: Error, context?: any) {
+  error(message: string, error?: Error, context?: any): void {
     console.error(this.formatMessage('error', message, context), error);
     
     const errorContext: any = {
@@ -94,7 +94,7 @@ class Logger {
   /**
    * Critical error logging - highest priority, always sent to monitoring
    */
-  critical(message: string, error?: Error, context?: any) {
+  critical(message: string, error?: Error, context?: any): void {
     console.error(this.formatMessage('critical', message, context), error);
     
     const errorContext: any = {

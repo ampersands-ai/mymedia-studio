@@ -193,7 +193,7 @@ const CustomCreation = () => {
 
   // Surprise Me handler - wrapped in useCallback for stable reference
   const onSurpriseMe = useCallback(() => {
-    logger.info('Surprise Me triggered', { selectedGroup: state.selectedGroup });
+    logger.info('Surprise Me triggered', { selectedGroup: state.selectedGroup } as any);
     updateState({ generatingSurprise: true });
     const surprisePrompt = getSurpriseMePrompt(state.selectedGroup);
     setStatePrompt(surprisePrompt);

@@ -31,7 +31,7 @@ export class DownloadManager {
     onProgress?: (progress: number) => void
   ): Promise<void> {
     try {
-      logger.info('Download started', { filename, url });
+      logger.info('Download started', { filename, url } as any);
 
       const response = await fetch(url);
       if (!response.ok) {
@@ -51,10 +51,10 @@ export class DownloadManager {
       // Cleanup object URL after a delay
       setTimeout(() => window.URL.revokeObjectURL(downloadUrl), 100);
 
-      logger.info('Download completed', { filename });
+      logger.info('Download completed', { filename } as any);
       onProgress?.(100);
     } catch (error) {
-      logger.error('Download failed', error as Error, { filename, url });
+      logger.error('Download failed', error as Error, { filename, url } as any);
       throw error;
     }
   }

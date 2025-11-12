@@ -2,6 +2,9 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent, identifyUser, resetPostHog } from "@/lib/posthog";
+import { logger } from "@/lib/logger";
+
+const authLogger = logger.child({ component: 'AuthContext' });
 
 interface AuthContextType {
   user: User | null;
@@ -37,11 +40,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('[AuthContext] Auth event:', event);
+        authLogger.debug('Auth event received', { event, hasSession: !!session } as any);
         
         // Handle token expired or refresh failed
         if (event === 'TOKEN_REFRESHED' && !session) {
-          console.log('[AuthContext] Token refresh failed, signing out');
+          authLogger.warn('Token refresh failed, signing out');
           await supabase.auth.signOut();
           setSession(null);
           setUser(null);
@@ -84,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Perform the OAuth code exchange once, then auth listener will update state
       supabase.auth
         .exchangeCodeForSession(window.location.href)
-        .catch((e) => console.error("OAuth exchange failed:", e))
+        .catch((e) => authLogger.error("OAuth exchange failed", e as Error))
         .finally(() => {
           // Clean the URL so we don't keep re-exchanging the code on refresh
           const cleanUrl = `${url.origin}${url.pathname}${url.hash}`;

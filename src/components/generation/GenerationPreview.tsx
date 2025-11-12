@@ -10,6 +10,7 @@ import { useNativeShare } from "@/hooks/useNativeShare";
 import { useNativeDownload } from "@/hooks/useNativeDownload";
 import { triggerHaptic } from "@/utils/capacitor-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { logger } from "@/lib/logger";
 
 interface GenerationPreviewProps {
   storagePath: string | null;
@@ -96,7 +97,8 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
       
       await downloadFile(signedUrl, filename);
     } catch (error) {
-      console.error('Download failed:', error);
+      const file = storagePath?.split('/').pop() || 'unknown';
+      logger.error('Download failed', error as Error, { component: 'GenerationPreview', file } as any);
       toast.error('Download failed');
     }
   };
@@ -133,11 +135,11 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
         
         if (response.ok) {
           setThumbnailGenerated(true);
-          console.log('Thumbnail generated successfully');
+          logger.debug('Thumbnail generated successfully', { thumbPath });
         }
       }, 'image/jpeg', 0.8);
     } catch (error) {
-      console.error('Failed to generate thumbnail:', error);
+      logger.warn('Failed to generate thumbnail', { error, thumbPath });
     }
   };
 
@@ -260,10 +262,10 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
             controls
             preload="metadata"
             onError={() => {
-              console.error('Audio playback error for:', storagePath);
+              logger.warn('Audio playback error', { storagePath, component: 'GenerationPreview' });
               setAudioPlaybackError(true);
             }}
-            onLoadedMetadata={() => console.log('Audio loaded successfully:', storagePath)}
+            onLoadedMetadata={() => logger.debug('Audio loaded successfully', { storagePath })}
           />
           
           {/* Action buttons */}
@@ -352,10 +354,10 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
           muted
           onLoadedData={generateThumbnail}
           onError={() => {
-            console.error('Video playback error for:', storagePath);
+            logger.warn('Video playback error', { storagePath, component: 'GenerationPreview' });
             setVideoPlaybackError(true);
           }}
-          onLoadedMetadata={() => console.log('Video loaded successfully:', storagePath)}
+          onLoadedMetadata={() => logger.debug('Video loaded successfully', { storagePath })}
         >
           <source src={videoSrc} type={mime} />
         </video>

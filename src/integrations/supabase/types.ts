@@ -519,6 +519,51 @@ export type Database = {
         }
         Relationships: []
       }
+      function_logs: {
+        Row: {
+          context: Json | null
+          created_at: string | null
+          duration_ms: number | null
+          error_message: string | null
+          error_name: string | null
+          error_stack: string | null
+          function_name: string
+          id: string
+          log_level: string
+          message: string
+          request_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          error_name?: string | null
+          error_stack?: string | null
+          function_name: string
+          id?: string
+          log_level: string
+          message: string
+          request_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          error_name?: string | null
+          error_stack?: string | null
+          function_name?: string
+          id?: string
+          log_level?: string
+          message?: string
+          request_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       generation_notifications: {
         Row: {
           clicked_at: string | null
@@ -2668,6 +2713,7 @@ export type Database = {
         Returns: boolean
       }
       cleanup_expired_sessions: { Args: never; Returns: undefined }
+      cleanup_old_function_logs: { Args: never; Returns: undefined }
       cleanup_old_webhook_events: { Args: never; Returns: undefined }
       cleanup_rate_limits: { Args: never; Returns: undefined }
       has_role: {

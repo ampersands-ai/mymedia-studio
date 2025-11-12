@@ -15,6 +15,9 @@ import { useVideoUrl, useAudioUrl } from '@/hooks/media';
 import { Slider } from '@/components/ui/slider';
 import { GenerationProgress } from '@/components/generation/GenerationProgress';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
+
+const componentLogger = logger.child({ component: 'VideoJobCard' });
 
 
 interface VideoJobCardProps {
@@ -165,12 +168,13 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   // Diagnostic logging for voiceover review
   useEffect(() => {
     if (job.status === 'awaiting_voice_approval') {
-      console.log('=== VOICEOVER REVIEW DEBUG ===');
-      console.log('Job status:', job.status);
-      console.log('Voiceover URL:', job.voiceover_url);
-      console.log('Signed URL:', voiceoverSignedUrl);
-      console.log('Is loading signed URL:', isLoadingVoiceUrl);
-      console.log('==============================');
+      componentLogger.debug('Voiceover review debug', {
+        jobStatus: job.status,
+        voiceoverUrl: job.voiceover_url,
+        signedUrl: voiceoverSignedUrl,
+        isLoading: isLoadingVoiceUrl,
+        jobId: job.id
+      } as any);
     }
   }, [job.status, job.voiceover_url, voiceoverSignedUrl, isLoadingVoiceUrl]);
 
@@ -232,17 +236,17 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     }
     
     // Verify URL is accessible before creating audio instance
-    console.log('[VideoJobCard] Validating voiceover URL:', voiceoverSignedUrl);
+    componentLogger.debug('Validating voiceover URL', { url: voiceoverSignedUrl, jobId: job.id } as any);
     try {
       const testResponse = await fetch(voiceoverSignedUrl, { method: 'HEAD' });
       if (!testResponse.ok) {
-        console.error('[VideoJobCard] Voiceover URL not accessible:', testResponse.status);
+        componentLogger.error('Voiceover URL not accessible', new Error(`HTTP ${testResponse.status}`), { jobId: job.id, status: testResponse.status } as any);
         toast.error(`Voiceover file is not accessible (HTTP ${testResponse.status}). Please try again.`);
         return;
       }
-      console.log('[VideoJobCard] ✅ Voiceover URL validation passed');
+      componentLogger.debug('Voiceover URL validation passed', { jobId: job.id } as any);
     } catch (err) {
-      console.error('[VideoJobCard] Failed to validate voiceover URL:', err);
+      componentLogger.error('Failed to validate voiceover URL', err as Error, { jobId: job.id } as any);
       toast.error('Unable to validate voiceover file. Please check your connection.');
       return;
     }
@@ -266,14 +270,14 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     };
     
     audio.onerror = (e) => {
-      console.error('[VideoJobCard] Audio playback error:', e);
+      componentLogger.error('Audio playback error', new Error('Audio playback failed'), { jobId: job.id, event: e } as any);
       setIsPlayingAudio(false);
       audioRef.current = null;
       toast.error('Failed to play voiceover. The file may be corrupted or inaccessible.');
     };
     
     audio.play().catch(err => {
-      console.error('[VideoJobCard] Failed to start audio playback:', err);
+      componentLogger.error('Failed to start audio playback', err as Error, { jobId: job.id } as any);
       toast.error('Failed to start playback. Please try again.');
       setIsPlayingAudio(false);
     });
@@ -331,8 +335,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   };
 
   const handleApproveVoiceover = () => {
-    console.log('[VideoJobCard] Approving voiceover for job:', job.id);
-    console.log('[VideoJobCard] Job voiceover URL:', job.voiceover_url);
+    componentLogger.info('Approving voiceover', { jobId: job.id, voiceoverUrl: job.voiceover_url } as any);
     approveVoiceover.mutate(job.id);
   };
 
@@ -366,12 +369,12 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     
     try {
       if (!videoSignedUrl) {
-        console.error('[VideoJobCard] Download failed: No signed URL available');
+        componentLogger.error('Download failed: No signed URL available', new Error('No signed URL'), { jobId: job.id } as any);
         toast.error('Download unavailable - video URL not ready', { id: 'video-download' });
         return;
       }
       
-      console.log('[VideoJobCard] Downloading from signed URL:', videoSignedUrl);
+      componentLogger.info('Downloading video', { jobId: job.id, url: videoSignedUrl } as any);
       const response = await fetch(videoSignedUrl);
       
       if (!response.ok) {
@@ -389,7 +392,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
       document.body.removeChild(a);
       toast.success('Download started!', { id: 'video-download' });
     } catch (error) {
-      console.error('[VideoJobCard] Download error:', error);
+      componentLogger.error('Download error', error as Error, { jobId: job.id } as any);
       toast.error(
         `Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 
         { id: 'video-download' }

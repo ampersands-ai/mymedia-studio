@@ -38,11 +38,9 @@ export class GenerationErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log error with full context
-    logger.error('Generation error caught by boundary', {
-      error: error.message,
-      stack: error.stack,
+    logger.error('Generation error caught by boundary', error, {
       componentStack: errorInfo.componentStack,
-    });
+    } as any);
 
     // Send to PostHog if available
     if (typeof window !== 'undefined' && (window as any).posthog) {

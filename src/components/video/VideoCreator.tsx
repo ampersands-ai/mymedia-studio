@@ -85,6 +85,24 @@ export function VideoCreator() {
       background_video_thumbnail: selectedBackgroundMedia[0]?.thumbnail || undefined,
       background_media_type: selectedBackgroundMedia[0]?.type || 'video',
       caption_style: customCaptionStyle,
+    }, {
+      onSuccess: (data) => {
+        // Track activity
+        import('@/lib/logging/client-logger').then(({ clientLogger }) => {
+          clientLogger.activity({
+            activityType: 'video',
+            activityName: 'video_job_created',
+            routeName: 'Video Studio',
+            description: 'Created new video job',
+            metadata: {
+              video_job_id: data.job.id,
+              duration,
+              style,
+              aspect_ratio: aspectRatio,
+            },
+          });
+        });
+      }
     });
 
     // Don't reset form - keep current generation visible until user explicitly cancels/resets

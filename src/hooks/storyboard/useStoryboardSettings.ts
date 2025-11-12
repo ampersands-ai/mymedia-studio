@@ -28,8 +28,22 @@ export const useStoryboardSettings = (currentStoryboardId: string | null) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
+      
+      // Track activity
+      import('@/lib/logging/client-logger').then(({ clientLogger }) => {
+        clientLogger.activity({
+          activityType: 'storyboard',
+          activityName: 'storyboard_settings_updated',
+          routeName: 'Storyboard',
+          description: 'Updated storyboard render settings',
+          metadata: {
+            storyboard_id: currentStoryboardId,
+            settings: Object.keys(variables),
+          },
+        });
+      });
     },
     onError: (error: any) => {
       console.error('[useStoryboard] Update render settings error:', error);

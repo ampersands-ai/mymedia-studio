@@ -17,6 +17,7 @@ import { SuccessConfetti } from "@/components/onboarding/SuccessConfetti";
 import { CREATE_PAGE_SEO } from "@/constants/seo";
 import { TOAST_IDS } from "@/constants/generation";
 import type { ContentTemplate } from "@/hooks/useTemplates";
+import { clientLogger } from "@/lib/logging/client-logger";
 
 /**
  * Main Create page component

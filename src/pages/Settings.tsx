@@ -285,6 +285,22 @@ const Settings = () => {
       } catch (logError) {
         console.error('Failed to log audit event:', logError);
       }
+
+      // Track activity
+      try {
+        const { clientLogger } = await import('@/lib/logging/client-logger');
+        await clientLogger.activity({
+          activityType: 'settings',
+          activityName: 'profile_updated',
+          routeName: 'Settings',
+          description: 'Updated profile settings',
+          metadata: {
+            fields_changed: Object.keys({ full_name: profileData.full_name, phone_number: profileData.phone_number, zipcode: profileData.zipcode }),
+          },
+        });
+      } catch (trackError) {
+        console.error('Failed to track activity:', trackError);
+      }
       
       toast.success("Profile updated successfully!");
     } catch (error: any) {

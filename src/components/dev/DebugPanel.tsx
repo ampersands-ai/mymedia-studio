@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bug, X, User, Route as RouteIcon, Database, Zap } from 'lucide-react';
+import { Bug, X, User, Route as RouteIcon, Database, Zap, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'react-router-dom';
 
@@ -138,6 +138,29 @@ export const DebugPanel = () => {
                       2
                     )}
                   </pre>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      const { clientLogger } = await import('@/lib/logging/client-logger');
+                      const { toast } = await import('sonner');
+                      const testError = new Error('Test error from debug panel');
+                      await clientLogger.error(testError, {
+                        routeName: 'Debug Panel',
+                        userAction: 'test_error_button',
+                        severity: 'low',
+                        metadata: {
+                          test: true,
+                          timestamp: new Date().toISOString(),
+                        },
+                      });
+                      toast.success('Test error logged! Check /admin/user-logs');
+                    }}
+                    className="w-full mt-2"
+                  >
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                    Test Error Logging
+                  </Button>
                 </div>
               </TabsContent>
             </Tabs>

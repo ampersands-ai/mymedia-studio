@@ -6,6 +6,7 @@ import { useGeneration } from "./useGeneration";
 import { TOAST_IDS, DOWNLOAD_CONFIG } from "@/constants/generation";
 import type { GenerationState } from "./useGenerationState";
 import type { OnboardingProgress } from "./useOnboarding";
+import { clientLogger } from "@/lib/logging/client-logger";
 
 /**
  * Options for generation actions hook
@@ -76,6 +77,19 @@ export const useGenerationActions = (options: UseGenerationActionsOptions) => {
       if (genId) {
         startPolling(genId);
         updateGenerationState({ pollingId: genId });
+        
+        // Track activity
+        clientLogger.activity({
+          activityType: 'generation',
+          activityName: 'image_generation_started',
+          routeName: 'Create',
+          description: `Started generation with ${generationState.selectedTemplate.model_id || 'unknown model'}`,
+          metadata: {
+            model_id: generationState.selectedTemplate.model_id,
+            template_id: generationState.selectedTemplate.id,
+            template_name: generationState.selectedTemplate.name,
+          },
+        });
       }
 
       // If immediate result, show it

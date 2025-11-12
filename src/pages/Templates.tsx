@@ -285,6 +285,21 @@ const Templates = () => {
       return;
     }
     
+    // Track activity
+    import('@/lib/logging/client-logger').then(({ clientLogger }) => {
+      clientLogger.activity({
+        activityType: 'template',
+        activityName: 'template_selected',
+        routeName: 'Templates',
+        description: `Selected template: ${template.name}`,
+        metadata: {
+          template_id: template.id,
+          template_name: template.name,
+          template_type: template.template_type,
+        },
+      });
+    });
+    
     // Navigate based on template type
     if (template.template_type === 'workflow') {
       navigate(`/dashboard/create-workflow?workflow=${template.id}`);

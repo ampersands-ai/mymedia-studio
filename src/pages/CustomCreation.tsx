@@ -51,7 +51,7 @@ const CustomCreation = () => {
   const { progress, updateProgress, setFirstGeneration, markComplete, dismiss } = useOnboarding();
 
   // Sort preference
-  const [modelSortBy, setModelSortBy] = useState<string>("name");
+  const [modelSortBy, setModelSortBy] = useState<string>("cost");
 
   // Filter and sort models by selected group
   const filteredModels = allModels?.filter(model => {

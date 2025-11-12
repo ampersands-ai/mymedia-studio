@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { createSignedUrl } from '@/lib/storage-utils';
 import { getOptimizedVideoUrl } from '@/lib/supabase-videos';
+import { logger } from '@/lib/logger';
+
+const componentLogger = logger.child({ component: 'useSignedUrlLazy' });
 
 /**
  * @deprecated Use content-specific hooks from @/hooks/media instead:
@@ -33,14 +36,13 @@ export const useSignedUrlLazy = (
   // Deprecation warning in development
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.warn(
-        '⚠️ useSignedUrlLazy is deprecated. Use content-specific hooks from @/hooks/media instead:\n' +
-        '  - useImageUrl for images (supports lazy loading)\n' +
-        '  - useVideoUrl for videos (supports lazy loading)\n' +
-        '  - useAudioUrl for audio'
-      );
+      componentLogger.warn('useSignedUrlLazy is deprecated, use content-specific hooks', {
+        operation: 'deprecationWarning',
+        storagePath,
+        bucket
+      });
     }
-  }, []);
+  }, [storagePath, bucket]);
 
   useEffect(() => {
     if (!storagePath) {
@@ -59,7 +61,10 @@ export const useSignedUrlLazy = (
         
         // Case 1: Already an absolute URL - use it directly
         if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
-          console.log(`[useSignedUrlLazy] Using absolute URL directly: ${storagePath}`);
+          componentLogger.debug('Using absolute URL directly', {
+            operation: 'fetchSignedUrl',
+            storagePath
+          });
           setSignedUrl(storagePath);
           setError(false);
           setIsLoading(false);
@@ -71,7 +76,11 @@ export const useSignedUrlLazy = (
           const pathMatch = storagePath.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)/);
           if (pathMatch) {
             actualPath = pathMatch[1];
-            console.log(`[useSignedUrlLazy] Extracted path from storage URL: ${actualPath}`);
+            componentLogger.debug('Extracted path from storage URL', {
+              operation: 'fetchSignedUrl',
+              actualPath,
+              original: storagePath
+            });
           }
         } 
         // Case 3: Relative path with bucket name
@@ -79,32 +88,52 @@ export const useSignedUrlLazy = (
           const pathMatch = storagePath.split(`/${bucket}/`)[1];
           if (pathMatch) {
             actualPath = pathMatch;
-            console.log(`[useSignedUrlLazy] Extracted path from bucket reference: ${actualPath}`);
+            componentLogger.debug('Extracted path from bucket reference', {
+              operation: 'fetchSignedUrl',
+              actualPath,
+              original: storagePath
+            });
           }
         }
         // Case 4: Pure filename (no slashes, no http) - CRITICAL FIX
         else if (!storagePath.includes('/')) {
           actualPath = storagePath;
-          console.log(`[useSignedUrlLazy] Detected filename-only input: "${storagePath}"`);
+          componentLogger.debug('Detected filename-only input', {
+            operation: 'fetchSignedUrl',
+            storagePath
+          });
         }
 
         // For generated-content bucket, prefer public URL (CDN-optimized)
         if (bucket === 'generated-content') {
           const publicUrl = getOptimizedVideoUrl(actualPath, bucket);
-          console.log(`[useSignedUrlLazy] Using optimized public URL: ${publicUrl}`);
+          componentLogger.debug('Using optimized public URL', {
+            operation: 'fetchSignedUrl',
+            publicUrl,
+            actualPath
+          });
           setSignedUrl(publicUrl);
           setError(false);
           setIsLoading(false);
           return;
         }
 
-        console.log(`[useSignedUrlLazy] Fetching signed URL for bucket: ${bucket}, path: ${actualPath} (original: ${storagePath})`);
+        componentLogger.debug('Fetching signed URL', {
+          operation: 'fetchSignedUrl',
+          bucket,
+          actualPath,
+          original: storagePath
+        });
         const url = await createSignedUrl(bucket, actualPath, 14400);
         
         if (!url) {
           // Fallback to public URL construction
           const publicUrl = getOptimizedVideoUrl(actualPath, bucket);
-          console.log(`[useSignedUrlLazy] Signed URL generation failed, using public URL: ${publicUrl}`);
+          componentLogger.warn('Signed URL generation failed, using public URL', {
+            operation: 'fetchSignedUrl',
+            publicUrl,
+            actualPath
+          });
           setSignedUrl(publicUrl);
           setError(false);
         } else {
@@ -112,7 +141,11 @@ export const useSignedUrlLazy = (
           setError(false);
         }
       } catch (error) {
-        console.error('Error fetching signed URL:', error);
+        componentLogger.error('Signed URL fetch error, using public URL fallback', error, {
+          operation: 'fetchSignedUrl',
+          storagePath,
+          bucket
+        });
         // Fallback to public URL construction on error
         let actualPath = storagePath;
         
@@ -129,7 +162,6 @@ export const useSignedUrlLazy = (
         }
         
         const publicUrl = getOptimizedVideoUrl(actualPath, bucket);
-        console.log(`[useSignedUrlLazy] Error caught, using public URL fallback: ${publicUrl}`);
         setSignedUrl(publicUrl);
         setError(false);
       } finally {

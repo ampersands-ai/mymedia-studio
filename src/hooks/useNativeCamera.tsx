@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { isNativePlatform, triggerHaptic } from '@/utils/capacitor-utils';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
+
+const componentLogger = logger.child({ component: 'useNativeCamera' });
 
 export interface UseNativeCameraResult {
   pickImage: (source?: 'camera' | 'gallery') => Promise<File | null>;
@@ -75,7 +78,11 @@ export const useNativeCamera = (): UseNativeCameraResult => {
       return file;
     } catch (error: any) {
       if (error.message !== 'User cancelled photos app') {
-        console.error('Error picking image:', error);
+        componentLogger.error('Image pick failed', error, {
+          operation: 'pickImage',
+          source,
+          isNative
+        });
         toast.error('Failed to pick image');
       }
       return null;
@@ -143,7 +150,12 @@ export const useNativeCamera = (): UseNativeCameraResult => {
       return files;
     } catch (error: any) {
       if (error.message !== 'User cancelled photos app') {
-        console.error('Error picking images:', error);
+        componentLogger.error('Multiple image pick failed', error, {
+          operation: 'pickMultipleImages',
+          maxImages,
+          selectedCount: files.length,
+          isNative
+        });
         toast.error('Failed to pick images');
       }
       return files; // Return whatever was selected so far

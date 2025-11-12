@@ -1,6 +1,9 @@
 import { Share } from '@capacitor/share';
 import { isNativePlatform, triggerHaptic } from '@/utils/capacitor-utils';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
+
+const componentLogger = logger.child({ component: 'useNativeShare' });
 
 export interface UseNativeShareResult {
   shareUrl: (url: string, title?: string, text?: string) => Promise<void>;
@@ -32,7 +35,11 @@ export const useNativeShare = (): UseNativeShareResult => {
         await triggerHaptic('light');
       } catch (error: any) {
         if (error.message !== 'Share canceled') {
-          console.error('Error sharing:', error);
+          componentLogger.error('Native share URL failed', error, {
+            operation: 'shareUrl',
+            url,
+            title
+          });
           toast.error('Failed to share');
         }
       }
@@ -49,7 +56,11 @@ export const useNativeShare = (): UseNativeShareResult => {
         });
       } catch (error: any) {
         if (error.name !== 'AbortError') {
-          console.error('Error sharing:', error);
+          componentLogger.warn('Web share failed, falling back to clipboard', {
+            operation: 'shareUrl',
+            url,
+            errorName: error.name
+          });
           // Fallback to clipboard
           await copyToClipboard(url);
         }
@@ -74,7 +85,11 @@ export const useNativeShare = (): UseNativeShareResult => {
         await triggerHaptic('light');
       } catch (error: any) {
         if (error.message !== 'Share canceled') {
-          console.error('Error sharing file:', error);
+          componentLogger.error('Native share file failed', error, {
+            operation: 'shareFile',
+            url,
+            title
+          });
           toast.error('Failed to share file');
         }
       }
@@ -96,7 +111,11 @@ export const useNativeShare = (): UseNativeShareResult => {
           return;
         }
       } catch (error) {
-        console.error('Error sharing file:', error);
+        componentLogger.warn('Web file share failed, falling back to clipboard', {
+          operation: 'shareFile',
+          url,
+          error
+        });
       }
     }
 
@@ -112,7 +131,10 @@ export const useNativeShare = (): UseNativeShareResult => {
       await navigator.clipboard.writeText(text);
       toast.success('Link copied to clipboard!');
     } catch (error) {
-      console.error('Failed to copy:', error);
+      componentLogger.error('Clipboard copy failed', error, {
+        operation: 'copyToClipboard',
+        textLength: text.length
+      });
       toast.error('Failed to copy link');
     }
   };

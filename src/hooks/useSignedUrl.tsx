@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { createSignedUrl } from '@/lib/storage-utils';
 import { getOptimizedVideoUrl, getProxiedVideoUrl } from '@/lib/supabase-videos';
+import { logger } from '@/lib/logger';
+
+const componentLogger = logger.child({ component: 'useSignedUrl' });
 
 /**
  * @deprecated Use content-specific hooks from @/hooks/media instead:
@@ -23,14 +26,13 @@ export const useSignedUrl = (storagePath: string | null, bucket: string = 'gener
   // Deprecation warning in development
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.warn(
-        '⚠️ useSignedUrl is deprecated. Use content-specific hooks from @/hooks/media instead:\n' +
-        '  - useImageUrl for images\n' +
-        '  - useVideoUrl for videos\n' +
-        '  - useAudioUrl for audio'
-      );
+      componentLogger.warn('useSignedUrl is deprecated, use content-specific hooks', {
+        operation: 'deprecationWarning',
+        storagePath,
+        bucket
+      });
     }
-  }, []);
+  }, [storagePath, bucket]);
 
   useEffect(() => {
     if (!storagePath) {
@@ -71,7 +73,11 @@ export const useSignedUrl = (storagePath: string | null, bucket: string = 'gener
         const url = await createSignedUrl(bucket, actualPath, 14400);
         
         if (!url) {
-          console.warn('Failed to create signed URL, trying public URL:', actualPath);
+          componentLogger.warn('Signed URL creation failed, using public URL fallback', {
+            operation: 'fetchSignedUrl',
+            bucket,
+            actualPath
+          });
           // Fallback to public URL if bucket is public
           const publicUrl = getOptimizedVideoUrl(actualPath, bucket);
           setSignedUrl(publicUrl);
@@ -81,7 +87,11 @@ export const useSignedUrl = (storagePath: string | null, bucket: string = 'gener
           setError(false);
         }
       } catch (error) {
-        console.error('Error fetching signed URL:', error);
+        componentLogger.error('Signed URL fetch failed', error, {
+          operation: 'fetchSignedUrl',
+          bucket,
+          storagePath
+        });
         setError(true);
         setSignedUrl(null);
       } finally {

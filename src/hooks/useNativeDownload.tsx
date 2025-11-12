@@ -1,6 +1,9 @@
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { isNativePlatform, isIOS, triggerHaptic } from '@/utils/capacitor-utils';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
+
+const componentLogger = logger.child({ component: 'useNativeDownload' });
 
 export interface UseNativeDownloadResult {
   downloadFile: (url: string, filename?: string) => Promise<void>;
@@ -60,7 +63,11 @@ export const useNativeDownload = (): UseNativeDownloadResult => {
         
         toast.success('Download started!');
       } catch (error) {
-        console.error('Download error:', error);
+        componentLogger.error('Web download failed', error, {
+          operation: 'downloadFile',
+          url,
+          filename: name
+        });
         toast.error('Failed to download file');
       }
       return;
@@ -111,9 +118,18 @@ export const useNativeDownload = (): UseNativeDownloadResult => {
         toast.success(`Saved to ${isImage ? 'Gallery' : isVideo ? 'Videos' : 'Downloads'}!`);
       }
       
-      console.log('File saved:', result.uri);
+      componentLogger.debug('File saved to device', {
+        operation: 'downloadFile',
+        filename: name,
+        directory,
+        isIOS: isIOS()
+      });
     } catch (error) {
-      console.error('Native download error:', error);
+      componentLogger.error('Native download failed', error, {
+        operation: 'downloadFile',
+        url,
+        filename: name
+      });
       toast.error('Failed to download file', {
         description: 'Please check app permissions',
       });

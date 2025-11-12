@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { OptimizedGenerationPreview } from "@/components/generation/OptimizedGenerationPreview";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { logger } from "@/lib/logger";
 
 export default function CreateMinimal() {
   const navigate = useNavigate();
@@ -134,7 +135,11 @@ export default function CreateMinimal() {
       document.body.removeChild(a);
       toast.success('Download started!');
     } catch (error) {
-      console.error('Download error:', error);
+      logger.error('Download error', error instanceof Error ? error : new Error(String(error)), {
+        component: 'CreateMinimal',
+        operation: 'handleDownload',
+        outputUrl: generatedOutput
+      });
       toast.error('Failed to download file');
     }
   };

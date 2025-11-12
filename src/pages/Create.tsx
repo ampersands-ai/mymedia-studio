@@ -40,14 +40,24 @@ const Create = () => {
   // Polling with callbacks
   const { startPolling, stopPolling, isPolling, pollingId } = useGenerationPolling({
     onComplete: (outputs) => {
-      console.log('[Create] Generation complete:', {
-        generationId: pollingId,
-        outputCount: outputs.length,
-        hasValidPaths: outputs.every(o => !!o.storage_path)
+      clientLogger.activity({
+        activityType: 'generation',
+        activityName: 'generation_complete',
+        routeName: 'Create',
+        metadata: {
+          generationId: pollingId,
+          outputCount: outputs.length,
+          hasValidPaths: outputs.every(o => !!o.storage_path)
+        }
       });
       
       if (outputs.length === 0) {
-        console.error('[Create] No outputs received after completion');
+        clientLogger.error(new Error('No outputs received after completion'), {
+          routeName: 'Create',
+          metadata: {
+            generationId: pollingId
+          }
+        });
         toast.error('Generation completed but outputs not ready. Check History.', {
           id: TOAST_IDS.GENERATION_PROGRESS,
           action: {

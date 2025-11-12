@@ -19,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import { differenceInMonths } from "date-fns";
 import { clearAllCaches, getCacheStats } from "@/utils/cacheManagement";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
+import { logger } from "@/lib/logger";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -76,7 +77,11 @@ const Settings = () => {
         setUserCreatedAt(new Date(data.created_at));
       }
     } catch (error) {
-      console.error("Error fetching user created date:", error);
+      logger.error("Error fetching user created date", error instanceof Error ? error : new Error(String(error)), {
+        component: 'Settings',
+        operation: 'fetchUserCreatedDate',
+        userId: user?.id
+      });
     }
   };
 
@@ -145,7 +150,11 @@ const Settings = () => {
         });
       }
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      logger.error("Error fetching profile", error instanceof Error ? error : new Error(String(error)), {
+        component: 'Settings',
+        operation: 'fetchProfile',
+        userId: user?.id
+      });
       toast.error("Failed to load profile data");
     }
   };
@@ -181,7 +190,11 @@ const Settings = () => {
       if (error) throw error;
       setSubscription(data);
     } catch (error) {
-      console.error("Error fetching subscription:", error);
+      logger.error("Error fetching subscription", error instanceof Error ? error : new Error(String(error)), {
+        component: 'Settings',
+        operation: 'fetchSubscription',
+        userId: user?.id
+      });
     }
   };
 
@@ -195,7 +208,11 @@ const Settings = () => {
       if (error) throw error;
       setSessions(data?.sessions || []);
     } catch (error) {
-      console.error("Error fetching sessions:", error);
+      logger.error("Error fetching sessions", error instanceof Error ? error : new Error(String(error)), {
+        component: 'Settings',
+        operation: 'fetchSessions',
+        userId: user?.id
+      });
     } finally {
       setLoadingSessions(false);
     }
@@ -214,7 +231,11 @@ const Settings = () => {
       if (error) throw error;
       setAuditLogs(data || []);
     } catch (error) {
-      console.error("Error fetching audit logs:", error);
+      logger.error("Error fetching audit logs", error instanceof Error ? error : new Error(String(error)), {
+        component: 'Settings',
+        operation: 'fetchAuditLogs',
+        userId: user?.id
+      });
     } finally {
       setLoadingAuditLogs(false);
     }
@@ -230,7 +251,12 @@ const Settings = () => {
       toast.success("Session revoked successfully");
       fetchSessions();
     } catch (error: any) {
-      console.error("Error revoking session:", error);
+      logger.error("Error revoking session", error instanceof Error ? error : new Error(String(error)), {
+        component: 'Settings',
+        operation: 'handleRevokeSession',
+        sessionId,
+        userId: user?.id
+      });
       toast.error(error.message || "Failed to revoke session");
     }
   };
@@ -283,8 +309,12 @@ const Settings = () => {
             }
           }
         });
-      } catch (logError) {
-        console.error('Failed to log audit event:', logError);
+        } catch (logError) {
+        logger.error('Failed to log audit event', logError instanceof Error ? logError : new Error(String(logError)), {
+          component: 'Settings',
+          operation: 'profile_update_audit',
+          userId: user?.id
+        });
       }
 
       // Track activity
@@ -299,13 +329,21 @@ const Settings = () => {
             fields_changed: Object.keys({ full_name: profileData.full_name, phone_number: profileData.phone_number, zipcode: profileData.zipcode }),
           },
         });
-      } catch (trackError) {
-        console.error('Failed to track activity:', trackError);
+        } catch (trackError) {
+        logger.error('Failed to track activity', trackError instanceof Error ? trackError : new Error(String(trackError)), {
+          component: 'Settings',
+          operation: 'profile_update_activity',
+          userId: user?.id
+        });
       }
       
       toast.success("Profile updated successfully!");
     } catch (error: any) {
-      console.error("Error updating profile:", error);
+      logger.error("Error updating profile", error instanceof Error ? error : new Error(String(error)), {
+        component: 'Settings',
+        operation: 'handleUpdateProfile',
+        userId: user?.id
+      });
       toast.error(error.message || "Failed to update profile");
     } finally {
       setLoading(false);

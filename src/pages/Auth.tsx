@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { signupSchema, loginSchema } from "@/lib/validation-schemas";
 import { Footer } from "@/components/Footer";
 import logo from "@/assets/logo.png";
+import { logger } from "@/lib/logger";
 
 
 const countryCodes = [
@@ -227,7 +228,11 @@ const Auth = () => {
               }
             });
           } catch (logError) {
-            console.error('Failed to log audit event:', logError);
+            logger.error('Failed to log audit event', logError instanceof Error ? logError : new Error(String(logError)), {
+              component: 'Auth',
+              operation: 'login_failed_audit',
+              email: email.toLowerCase()
+            });
           }
           // Generic error message to prevent user enumeration
           throw new Error("Invalid credentials. Please check your email and password.");
@@ -240,7 +245,11 @@ const Auth = () => {
               body: { action: 'create' }
             });
           } catch (sessionError) {
-            console.error('Failed to create session record:', sessionError);
+            logger.error('Failed to create session record', sessionError instanceof Error ? sessionError : new Error(String(sessionError)), {
+              component: 'Auth',
+              operation: 'create_session',
+              userId: authData.session?.user.id
+            });
           }
         }
         
@@ -253,7 +262,11 @@ const Auth = () => {
             }
           });
         } catch (logError) {
-          console.error('Failed to log audit event:', logError);
+          logger.error('Failed to log audit event', logError instanceof Error ? logError : new Error(String(logError)), {
+            component: 'Auth',
+            operation: 'login_success_audit',
+            email: email.toLowerCase()
+          });
         }
         
         toast.success("Welcome back!");
@@ -283,7 +296,11 @@ const Auth = () => {
               }
             });
           } catch (logError) {
-            console.error('Failed to log audit event:', logError);
+            logger.error('Failed to log audit event', logError instanceof Error ? logError : new Error(String(logError)), {
+              component: 'Auth',
+              operation: 'signup_failed_audit',
+              email: email.toLowerCase()
+            });
           }
           // Generic error message to prevent user enumeration
           throw new Error("Unable to create account. Please try a different email.");
@@ -303,7 +320,12 @@ const Auth = () => {
               }
             });
           } catch (logError) {
-            console.error('Failed to log audit event:', logError);
+            logger.error('Failed to log audit event', logError instanceof Error ? logError : new Error(String(logError)), {
+              component: 'Auth',
+              operation: 'signup_success_audit',
+              email: email.toLowerCase(),
+              userId: data.user.id
+            });
           }
 
           // Send welcome email
@@ -316,7 +338,12 @@ const Auth = () => {
               }
             });
           } catch (emailError) {
-            console.error('Failed to send welcome email:', emailError);
+            logger.error('Failed to send welcome email', emailError instanceof Error ? emailError : new Error(String(emailError)), {
+              component: 'Auth',
+              operation: 'send_welcome_email',
+              userId: data.user.id,
+              email: data.user.email
+            });
             // Don't block signup if email fails
           }
         }

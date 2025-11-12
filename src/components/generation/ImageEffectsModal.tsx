@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Sparkles } from 'lucide-react';
 import { applyEffectsToImage, defaultEffects, effectPresets, type ImageEffects } from '@/utils/image-effects';
+import { logger } from '@/lib/logger';
 
 interface ImageEffectsModalProps {
   open: boolean;
@@ -32,7 +33,12 @@ export function ImageEffectsModal({
       onEffectsComplete(blob, url);
       onOpenChange(false);
     } catch (error) {
-      console.error('Error applying effects:', error);
+      logger.error('Image effects application failed', error as Error, {
+        component: 'ImageEffectsModal',
+        imageUrl: imageUrl.substring(0, 50),
+        effects,
+        operation: 'handleApplyEffects'
+      });
     } finally {
       setIsApplying(false);
     }

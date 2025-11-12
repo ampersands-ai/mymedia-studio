@@ -14,6 +14,7 @@ import 'swiper/css/effect-fade';
 import { PartnerLogosCarousel } from './PartnerLogosCarousel';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { CreationGroup } from '@/constants/creation-groups';
+import { logger } from '@/lib/logger';
 
 export const HeroSection = () => {
   const scrollY = useScrollY();
@@ -103,7 +104,14 @@ export const HeroSection = () => {
             
             if (activeVideo) {
               activeVideo.currentTime = 0;
-              activeVideo.play().catch(err => console.warn('Video play failed:', err));
+              activeVideo.play().catch(err => {
+                logger.warn('Hero video autoplay failed', {
+                  component: 'HeroSection',
+                  error: err.message,
+                  slideIndex: swiper.activeIndex,
+                  operation: 'onSlideChange'
+                });
+              });
             }
           }}
           autoplay={{

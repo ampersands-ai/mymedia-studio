@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ModelFamilySelector } from '@/components/custom-creation/ModelFamilySelector';
 import { mapAspectRatioToModelParameters } from '@/lib/aspect-ratio-mapper';
+import { logger } from '@/lib/logger';
 
 
 
@@ -66,9 +67,12 @@ export const ScenePreviewGenerator = ({
   // DEBUG: Log raw models data on mount
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.log('[ScenePreviewGenerator] Raw models from useModels:', models);
-      console.log('[ScenePreviewGenerator] Total models:', models?.length);
-      console.log('[ScenePreviewGenerator] Image models:', models?.filter(m => m.content_type === 'image').length);
+      logger.debug('Models data loaded (dev)', {
+        component: 'ScenePreviewGenerator',
+        totalModels: models?.length,
+        imageModels: models?.filter(m => m.content_type === 'image').length,
+        operation: 'debugModels'
+      });
     }
   }, [models]);
   
@@ -99,12 +103,22 @@ export const ScenePreviewGenerator = ({
               .order('output_index', { ascending: true });
             
             if (!childError && children && children.length > 0) {
-              console.log('[ScenePreviewGenerator] Batch outputs found:', children.length);
+              logger.debug('Batch generation outputs received', {
+                component: 'ScenePreviewGenerator',
+                sceneId: scene.id,
+                outputCount: children.length,
+                operation: 'pollGeneration'
+              });
               setBatchOutputs(children);
               setShowOutputGrid(true);
               setPollOutputUrl(children[0].output_url); // Default to first
             } else {
-              console.error('[ScenePreviewGenerator] No child outputs found for batch generation');
+              logger.error('No batch outputs found', new Error('Empty batch results'), {
+                component: 'ScenePreviewGenerator',
+                sceneId: scene.id,
+                generationId: pendingGenerationId,
+                operation: 'pollGeneration'
+              });
             }
           } else if (data.output_url) {
             // Single output - existing logic
@@ -124,7 +138,12 @@ export const ScenePreviewGenerator = ({
           }
         }
       } catch (error) {
-        console.error('[ScenePreviewGenerator] Polling error:', error);
+        logger.error('Scene generation polling failed', error as Error, {
+          component: 'ScenePreviewGenerator',
+          sceneId: scene.id,
+          generationId: pendingGenerationId,
+          operation: 'pollGeneration'
+        });
       }
     };
 
@@ -203,7 +222,12 @@ export const ScenePreviewGenerator = ({
       setPollStatus('pending');
       setPollOutputUrl(null);
     } else if (pollStatus === 'failed') {
-      console.error('[ScenePreviewGenerator] Async generation failed');
+      logger.error('Async scene generation failed', new Error('Generation status: failed'), {
+        component: 'ScenePreviewGenerator',
+        sceneId: scene.id,
+        generationId: pendingGenerationId,
+        operation: 'asyncGenerationMonitor'
+      });
       setIsAsyncGeneration(false);
       setPendingGenerationId(null);
       setPollStatus('pending');
@@ -214,7 +238,13 @@ export const ScenePreviewGenerator = ({
   // Log errors to console instead of toasting
   useEffect(() => {
     if (error) {
-      console.error('[ScenePreviewGenerator] Generation error:', error);
+      logger.error('Scene generation error occurred', new Error(error), {
+        component: 'ScenePreviewGenerator',
+        sceneId: scene.id,
+        selectedModelId,
+        generationMode,
+        operation: 'generationErrorHandler'
+      });
       toast.error(error);
     }
   }, [error]);
@@ -288,9 +318,18 @@ export const ScenePreviewGenerator = ({
           .from('generations')
           .update({ status: 'cancelled' })
           .eq('id', pendingGenerationId);
-        console.log('[ScenePreviewGenerator] Cancelled previous generation:', pendingGenerationId);
+        logger.debug('Previous generation cancelled for retry', {
+          component: 'ScenePreviewGenerator',
+          cancelledGenerationId: pendingGenerationId,
+          operation: 'handleGeneratePreview'
+        });
       } catch (error) {
-        console.error('Failed to cancel previous generation:', error);
+        logger.error('Failed to cancel previous generation', error as Error, {
+          component: 'ScenePreviewGenerator',
+          sceneId: scene.id,
+          generationId: pendingGenerationId,
+          operation: 'handleGeneratePreview'
+        });
       }
     }
 
@@ -303,7 +342,14 @@ export const ScenePreviewGenerator = ({
       selectedModelData?.input_schema
     );
 
-    console.log('[ScenePreviewGenerator] Mapped aspect ratio params:', aspectRatioParams);
+    logger.debug('Scene generation initiated', {
+      component: 'ScenePreviewGenerator',
+      sceneId: scene.id,
+      aspectRatioParams,
+      generationMode,
+      hasDisplayUrl: !!displayUrl,
+      operation: 'handleGeneratePreview'
+    });
 
     // For animate mode, pass the image URL as reference
     const customParams = generationMode === 'animate' && displayUrl
@@ -321,7 +367,12 @@ export const ScenePreviewGenerator = ({
 
     // Check if this is an async generation (no output_url yet)
     if (!generationResult.output_url && generationResult.id) {
-      console.log('[ScenePreviewGenerator] Async generation started:', generationResult.id);
+      logger.debug('Async scene generation started', {
+        component: 'ScenePreviewGenerator',
+        sceneId: scene.id,
+        generationId: generationResult.id,
+        operation: 'handleGeneratePreview'
+      });
       setPendingGenerationId(generationResult.id);
       setIsAsyncGeneration(true);
     }
@@ -347,7 +398,10 @@ export const ScenePreviewGenerator = ({
               variant="outline"
               onClick={() => {
                 queryClient.invalidateQueries({ queryKey: ['ai-models'] });
-                console.log('🔄 Cache cleared! Refetching models...');
+                logger.debug('Model cache cleared (dev mode)', {
+                  component: 'ScenePreviewGenerator',
+                  operation: 'clearCache'
+                });
                 toast.success('Model cache cleared');
               }}
               className="h-8 px-2 text-xs"

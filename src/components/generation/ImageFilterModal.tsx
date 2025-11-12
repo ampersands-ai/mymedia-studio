@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Loader2 } from 'lucide-react';
 import { applyFiltersToImage, defaultFilters, filterPresets, type FilterSettings } from '@/utils/image-filters';
+import { logger } from '@/lib/logger';
 
 interface ImageFilterModalProps {
   open: boolean;
@@ -28,7 +29,12 @@ export function ImageFilterModal({
       onFilterComplete(blob, url);
       onOpenChange(false);
     } catch (error) {
-      console.error('Error applying filters:', error);
+      logger.error('Image filter application failed', error as Error, {
+        component: 'ImageFilterModal',
+        imageUrl: imageUrl.substring(0, 50),
+        filters,
+        operation: 'handleApplyFilters'
+      });
     } finally {
       setIsApplying(false);
     }

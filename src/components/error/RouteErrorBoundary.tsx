@@ -29,8 +29,14 @@ export class RouteErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     const { routeName } = this.props;
     
-    // Log to console
-    console.error(`[RouteErrorBoundary: ${routeName}]`, error, errorInfo);
+    // Log structured error
+    logger.error('Route error boundary caught error', error, {
+      component: 'RouteErrorBoundary',
+      routeName,
+      componentStack: errorInfo.componentStack,
+      severity: this.classifyErrorSeverity(error),
+      operation: 'componentDidCatch'
+    });
     
     // Log to PostHog
     if (typeof window !== 'undefined' && (window as any).posthog) {
@@ -104,7 +110,12 @@ export class RouteErrorBoundary extends Component<Props, State> {
         }
       });
     } catch (logError) {
-      console.error('Failed to log error to database:', logError);
+      logger.error('Failed to log route error to database', logError as Error, {
+        component: 'RouteErrorBoundary',
+        routeName: this.props.routeName,
+        originalError: error.message,
+        operation: 'logErrorToDatabase'
+      });
     }
   }
 

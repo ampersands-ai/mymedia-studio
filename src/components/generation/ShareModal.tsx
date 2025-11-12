@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { trackEvent } from "@/lib/posthog";
 import { supabase } from "@/integrations/supabase/client";
 import { clientLogger } from "@/lib/logging/client-logger";
+import { logger } from "@/lib/logger";
 
 interface ShareModalProps {
   open: boolean;
@@ -26,23 +27,23 @@ export const ShareModal = ({
   generationId 
 }: ShareModalProps) => {
   const handleCopyLink = async () => {
+    // Determine content type upfront
+    let storagePath = imageUrl;
+    if (imageUrl.includes('/storage/v1/object/public/')) {
+      const parts = imageUrl.split('/storage/v1/object/public/generated-content/');
+      storagePath = parts[1] || imageUrl;
+    }
+    
+    const extension = storagePath.split('.').pop()?.toLowerCase() || '';
+    let contentType = 'image';
+    if (['mp4', 'mov', 'avi', 'webm'].includes(extension)) {
+      contentType = 'video';
+    } else if (['mp3', 'wav', 'ogg', 'm4a'].includes(extension)) {
+      contentType = 'audio';
+    }
+
     try {
       // Extract storage path from imageUrl
-      let storagePath = imageUrl;
-      if (imageUrl.includes('/storage/v1/object/public/')) {
-        const parts = imageUrl.split('/storage/v1/object/public/generated-content/');
-        storagePath = parts[1] || imageUrl;
-      }
-
-      // Determine content type
-      const extension = storagePath.split('.').pop()?.toLowerCase() || '';
-      let contentType = 'image';
-      if (['mp4', 'mov', 'avi', 'webm'].includes(extension)) {
-        contentType = 'video';
-      } else if (['mp3', 'wav', 'ogg', 'm4a'].includes(extension)) {
-        contentType = 'audio';
-      }
-
       // Call create-share-link edge function
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -80,7 +81,13 @@ export const ShareModal = ({
         },
       });
     } catch (error) {
-      console.error('Copy failed:', error);
+      logger.error('Share link creation failed', error as Error, {
+        component: 'ShareModal',
+        generationId,
+        contentType,
+        hasCaption: !!caption,
+        operation: 'handleCopyLink'
+      });
       toast.error('Failed to create share link');
     }
   };

@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { logger } from "@/lib/logger";
 
 interface GenerationsInProgressProps {
   onNavigateToGeneration?: (modelRecordId: string) => void;
@@ -43,7 +44,11 @@ export const GenerationsInProgress = ({
       queryClient.invalidateQueries({ queryKey: ['active-generations'] });
       queryClient.invalidateQueries({ queryKey: ['user-tokens'] });
     } catch (error: any) {
-      console.error('Cancel generation error:', error);
+      logger.error('Generation cancellation failed', error, {
+        component: 'GenerationsInProgress',
+        generationId,
+        operation: 'handleCancelGeneration'
+      });
       toast.error(error.message || 'Failed to cancel generation');
     } finally {
       setCancelingId(null);

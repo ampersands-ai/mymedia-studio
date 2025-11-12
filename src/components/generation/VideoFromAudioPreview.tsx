@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Download, RefreshCw, Video } from "lucide-react";
 import { useVideoUrl } from "@/hooks/media";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 interface VideoFromAudioPreviewProps {
   storagePath: string;
@@ -34,7 +35,12 @@ export function VideoFromAudioPreview({
       document.body.removeChild(link);
       toast.success('Video downloaded successfully');
     } catch (error) {
-      console.error('Download error:', error);
+      logger.error('Video download failed', error as Error, {
+        component: 'VideoFromAudioPreview',
+        storagePath: storagePath.substring(0, 50),
+        outputIndex,
+        operation: 'handleDownload'
+      });
       toast.error('Failed to download video');
     } finally {
       setIsDownloading(false);

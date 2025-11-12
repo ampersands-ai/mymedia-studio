@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Plus, Trash2, Sparkles, MessageSquare, Tag } from 'lucide-react';
 import { applyTextOverlay, defaultTextLayer, watermarkTemplates, presetTemplates, type TextLayer } from '@/utils/text-overlay';
+import { logger } from '@/lib/logger';
 
 interface TextOverlayModalProps {
   open: boolean;
@@ -91,7 +92,12 @@ export function TextOverlayModal({
       onOverlayComplete(blob, url);
       onOpenChange(false);
     } catch (error) {
-      console.error('Error applying text overlay:', error);
+      logger.error('Text overlay application failed', error as Error, {
+        component: 'TextOverlayModal',
+        layerCount: textLayers.length,
+        imageUrl: imageUrl.substring(0, 50),
+        operation: 'handleApplyOverlay'
+      });
     } finally {
       setIsApplying(false);
     }

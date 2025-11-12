@@ -8,6 +8,7 @@ import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Bell, Mail, Loader2 } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 interface NotificationPreferences {
   email_on_completion: boolean;
@@ -51,7 +52,11 @@ export const NotificationPreferences = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching preferences:', error);
+      logger.error('Notification preferences fetch failed', error as Error, {
+        component: 'NotificationPreferences',
+        userId: user?.id,
+        operation: 'fetchPreferences'
+      });
       toast.error('Failed to load notification preferences');
     } finally {
       setLoading(false);
@@ -79,7 +84,12 @@ export const NotificationPreferences = () => {
       
       toast.success('Notification preferences saved successfully');
     } catch (error) {
-      console.error('Error saving preferences:', error);
+      logger.error('Notification preferences save failed', error as Error, {
+        component: 'NotificationPreferences',
+        userId: user?.id,
+        preferences,
+        operation: 'savePreferences'
+      });
       toast.error('Failed to save preferences');
     } finally {
       setSaving(false);

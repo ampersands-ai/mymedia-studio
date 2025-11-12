@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BackgroundMediaSelector } from '../video/BackgroundMediaSelector';
 import type { SelectedMedia } from '../video/BackgroundMediaSelector';
+import { logger } from '@/lib/logger';
 
 interface CustomScene {
   voiceOverText: string;
@@ -69,7 +70,12 @@ export function CustomSceneCard({
         refetchTokens();
       }
     } catch (error: any) {
-      console.error('Enhancement error:', error);
+      logger.error('Scene prompt enhancement failed', error, {
+        component: 'CustomSceneCard',
+        sceneIndex: index,
+        promptLength: scene.imagePrompt.length,
+        operation: 'handleEnhancePrompt'
+      });
       toast.error(error.message || 'Failed to enhance prompt');
     } finally {
       setIsEnhancing(false);
@@ -100,7 +106,12 @@ export function CustomSceneCard({
         refetchTokens();
       }
     } catch (error: any) {
-      console.error('Generation error:', error);
+      logger.error('Scene image generation failed', error, {
+        component: 'CustomSceneCard',
+        sceneIndex: index,
+        promptLength: scene.imagePrompt.length,
+        operation: 'handleGenerateImage'
+      });
       toast.error(error.message || 'Failed to generate image');
     } finally {
       setIsGenerating(false);
@@ -129,7 +140,13 @@ export function CustomSceneCard({
       toast.success('Image uploaded successfully!');
       setUploadDialogOpen(false);
     } catch (error: any) {
-      console.error('Upload error:', error);
+      logger.error('Scene image upload failed', error, {
+        component: 'CustomSceneCard',
+        sceneIndex: index,
+        fileName: file.name,
+        fileSize: file.size,
+        operation: 'handleUploadImage'
+      });
       toast.error(error.message || 'Failed to upload image');
     }
   };

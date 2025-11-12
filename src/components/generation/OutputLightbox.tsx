@@ -19,6 +19,7 @@ import { trackEvent } from "@/lib/posthog";
 import { applyTextOverlay } from "@/utils/text-overlay";
 import { getCroppedImg } from "@/utils/crop-canvas";
 import type { SocialMediaTemplate } from "@/utils/social-media-templates";
+import { logger } from "@/lib/logger";
 
 interface OutputLightboxProps {
   outputs: Array<{
@@ -198,7 +199,12 @@ export const OutputLightbox = ({
       document.body.removeChild(a);
       toast.success('Download started!');
     } catch (error) {
-      console.error('Download error:', error);
+      logger.error('Output download failed', error as Error, {
+        component: 'OutputLightbox',
+        generationId: currentOutput.id,
+        contentType,
+        operation: 'handleDownload'
+      });
       toast.error('Failed to download image');
     }
   };
@@ -219,7 +225,13 @@ export const OutputLightbox = ({
         setShowShareModal(true);
       }
     } catch (error) {
-      console.error('Share error:', error);
+      logger.error('Output share failed', error as Error, {
+        component: 'OutputLightbox',
+        generationId: currentOutput.id,
+        contentType,
+        canShare,
+        operation: 'handleShare'
+      });
       setShowShareModal(true);
     }
   };
@@ -360,7 +372,13 @@ export const OutputLightbox = ({
         template: template.id
       });
     } catch (error) {
-      console.error('Error applying template:', error);
+      logger.error('Social media template application failed', error as Error, {
+        component: 'OutputLightbox',
+        generationId: currentOutput.id,
+        templateId: template.id,
+        templateName: template.name,
+        operation: 'handleApplyTemplate'
+      });
       toast.error('Failed to apply template');
     }
   }, [getCurrentEntry, addToHistory, currentOutput]);

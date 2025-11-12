@@ -1,6 +1,7 @@
 import React, { Component, ReactNode } from 'react';
 import { Button } from './button';
 import { AlertCircle } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 interface Props {
   children: ReactNode;
@@ -23,7 +24,11 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('[ErrorBoundary] Error caught:', error, errorInfo);
+    logger.error('Error boundary caught error', error, {
+      component: 'ErrorBoundary',
+      componentStack: errorInfo.componentStack,
+      operation: 'componentDidCatch'
+    });
     
     // Send to error tracking service
     if (typeof window !== 'undefined' && (window as any).posthog) {

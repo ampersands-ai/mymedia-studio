@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { webhookLogger } from "../_shared/logger.ts";
+import { getProviderConfig } from "../_shared/providers/registry.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,95 +14,149 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🔄 Starting auto-recovery scan for stuck generations...');
+    webhookLogger.info('Auto-recovery started', {});
     
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-    // Find generations stuck in processing for > 3 minutes with provider_task_id
+    // Find generations stuck in 'processing' for more than 3 minutes
     const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
     
-    const { data: stuckGenerations, error: fetchError } = await supabase
+    const { data: stuckGenerations, error } = await supabase
       .from('generations')
-      .select('id, provider_task_id, user_id, tokens_used, created_at')
+      .select('id, provider, provider_task_id, created_at')
       .eq('status', 'processing')
       .not('provider_task_id', 'is', null)
       .lt('created_at', threeMinutesAgo)
+      .order('created_at', { ascending: true })
       .limit(10);
 
-    if (fetchError) throw fetchError;
-
-    if (!stuckGenerations || stuckGenerations.length === 0) {
-      console.log('✅ No stuck generations found');
+    if (error) {
+      webhookLogger.error('Query failed', error, {});
       return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'No stuck generations found',
-          checked_at: new Date().toISOString()
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Failed to query stuck generations' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`📊 Found ${stuckGenerations.length} stuck generation(s), attempting recovery...`);
+    if (!stuckGenerations || stuckGenerations.length === 0) {
+      webhookLogger.info('No stuck generations found', {});
+      return new Response(
+        JSON.stringify({ 
+          message: 'No stuck generations found',
+          checked_at: new Date().toISOString()
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    webhookLogger.info(`Found stuck generations`, { count: stuckGenerations.length });
 
     const results = {
       total: stuckGenerations.length,
       recovered: 0,
       still_processing: 0,
       failed: 0,
-      errors: [] as string[]
+      no_recovery: 0,
+      generations: [] as any[]
     };
 
-    // Process each stuck generation
-    for (const gen of stuckGenerations) {
+    // Process each stuck generation using unified recovery
+    for (const generation of stuckGenerations) {
+      webhookLogger.info('Attempting recovery', { 
+        generationId: generation.id,
+        provider: generation.provider 
+      });
+      
       try {
-        console.log(`🔍 Checking generation ${gen.id} (${gen.provider_task_id})`);
+        const providerConfig = getProviderConfig(generation.provider);
         
-        const { data, error } = await supabase.functions.invoke('poll-kie-status', {
-          body: { generation_id: gen.id }
-        });
-
-        if (error) {
-          console.error(`❌ Error polling ${gen.id}:`, error);
-          results.errors.push(`${gen.id}: ${error.message}`);
-          results.failed++;
+        // Check if provider supports recovery
+        if (!providerConfig?.recovery) {
+          webhookLogger.info('No recovery support', {
+            generationId: generation.id,
+            provider: generation.provider
+          });
+          results.no_recovery++;
+          results.generations.push({
+            id: generation.id,
+            provider: generation.provider,
+            status: 'no_recovery_support'
+          });
           continue;
         }
 
-        if (data?.status === 'completed') {
-          console.log(`✅ Recovered ${gen.id}`);
-          results.recovered++;
-        } else if (data?.status === 'processing') {
-          console.log(`⏳ ${gen.id} still processing`);
-          results.still_processing++;
-        } else {
-          console.log(`❌ ${gen.id} failed`);
+        // Call unified recovery router
+        const { data: recoveryResult, error: recoveryError } = await supabase.functions.invoke(
+          'recover-generation',
+          {
+            body: { generation_id: generation.id }
+          }
+        );
+
+        if (recoveryError) {
+          webhookLogger.error('Recovery failed', recoveryError, { 
+            generationId: generation.id 
+          });
           results.failed++;
+          results.generations.push({
+            id: generation.id,
+            provider: generation.provider,
+            status: 'failed',
+            error: recoveryError.message
+          });
+        } else if (recoveryResult?.success) {
+          results.recovered++;
+          results.generations.push({
+            id: generation.id,
+            provider: generation.provider,
+            status: 'recovered'
+          });
+          webhookLogger.success(generation.id, { recovered: true });
+        } else {
+          results.still_processing++;
+          results.generations.push({
+            id: generation.id,
+            provider: generation.provider,
+            status: 'still_processing'
+          });
+          webhookLogger.info('Still processing', { generationId: generation.id });
         }
       } catch (err: any) {
-        console.error(`Error processing ${gen.id}:`, err);
-        results.errors.push(`${gen.id}: ${err.message}`);
+        webhookLogger.error('Exception during recovery', err, { 
+          generationId: generation.id 
+        });
         results.failed++;
+        results.generations.push({
+          id: generation.id,
+          provider: generation.provider,
+          status: 'error',
+          error: err.message
+        });
       }
     }
 
-    console.log('📊 Recovery results:', results);
+    webhookLogger.info('Recovery complete', { 
+      recovered: results.recovered,
+      stillProcessing: results.still_processing,
+      failed: results.failed,
+      noRecovery: results.no_recovery
+    });
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        ...results,
-        checked_at: new Date().toISOString()
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify(results),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error: any) {
-    console.error('❌ Auto-recovery error:', error);
+    webhookLogger.error('Auto-recovery failed', error, {});
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: 'Auto-recovery failed',
+        message: error.message 
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

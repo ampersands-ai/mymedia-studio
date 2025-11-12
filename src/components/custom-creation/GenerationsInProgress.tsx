@@ -50,6 +50,36 @@ export const GenerationsInProgress = ({
     }
   };
 
+  const handleRecoverGeneration = async (generationId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    setCancelingId(generationId);
+    
+    try {
+      toast.info('Checking provider status...');
+      
+      const { data, error } = await supabase.functions.invoke('poll-kie-status', {
+        body: { generation_id: generationId }
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.status === 'completed') {
+        toast.success('Generation recovered successfully!');
+        queryClient.invalidateQueries({ queryKey: ['active-generations'] });
+        queryClient.invalidateQueries({ queryKey: ['user-tokens'] });
+      } else if (data?.status === 'processing') {
+        toast.info('Generation still processing on provider');
+      } else {
+        toast.warning('Unable to recover generation');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to check provider status');
+    } finally {
+      setCancelingId(null);
+    }
+  };
+
   const getElapsedMinutes = (createdAt: string) => {
     return Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
   };
@@ -119,25 +149,44 @@ export const GenerationsInProgress = ({
               </div>
 
               <div className="flex items-center gap-1 flex-shrink-0">
-                {/* Show cancel button after 5 minutes */}
-                {gen.status === "processing" && getElapsedMinutes(gen.created_at) >= 5 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={(e) => handleCancelGeneration(gen.id, e)}
-                    disabled={cancelingId === gen.id}
-                    title="Cancel and refund tokens"
-                  >
-                    {cancelingId === gen.id ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <>
-                        <XCircle className="h-3 w-3 mr-1" />
-                        <span className="text-[10px]">Cancel</span>
-                      </>
+                {/* Show check provider button after 3 minutes, cancel after 5 */}
+                {gen.status === "processing" && getElapsedMinutes(gen.created_at) >= 3 && (
+                  <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-2 text-primary hover:text-primary hover:bg-primary/10"
+                      onClick={(e) => handleRecoverGeneration(gen.id, e)}
+                      disabled={cancelingId === gen.id}
+                      title="Check provider status"
+                    >
+                      {cancelingId === gen.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <span className="text-[10px]">Check Provider</span>
+                      )}
+                    </Button>
+                    
+                    {getElapsedMinutes(gen.created_at) >= 5 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => handleCancelGeneration(gen.id, e)}
+                        disabled={cancelingId === gen.id}
+                        title="Cancel and refund tokens"
+                      >
+                        {cancelingId === gen.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <>
+                            <XCircle className="h-3 w-3 mr-1" />
+                            <span className="text-[10px]">Cancel</span>
+                          </>
+                        )}
+                      </Button>
                     )}
-                  </Button>
+                  </div>
                 )}
 
                 {gen.model_record_id !== currentModelRecordId && onNavigateToGeneration && (

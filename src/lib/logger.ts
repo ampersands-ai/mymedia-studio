@@ -11,23 +11,20 @@ declare global {
   }
 }
 
-interface LogContext {
-  [key: string]: any;
-}
 
 class Logger {
-  private context: Record<string, any> = {};
+  private context: any = {};
 
   /**
    * Create a child logger with additional context
    */
-  child(context: Record<string, any>): Logger {
+  child(context: any): Logger {
     const childLogger = new Logger();
     childLogger.context = { ...this.context, ...context };
     return childLogger;
   }
 
-  private formatMessage(level: string, message: string, context?: Record<string, any>): string {
+  private formatMessage(level: string, message: string, context?: any): string {
     const ctx = { ...this.context, ...context };
     return `[${level.toUpperCase()}] ${message} ${JSON.stringify(ctx)}`;
   }
@@ -35,7 +32,7 @@ class Logger {
   /**
    * Debug logging - only in development
    */
-  debug(message: string, context?: Record<string, any>) {
+  debug(message: string, context?: any) {
     if (import.meta.env.DEV) {
       console.debug(this.formatMessage('debug', message, context));
     }
@@ -44,7 +41,7 @@ class Logger {
   /**
    * Info logging - only in development
    */
-  info(message: string, context?: Record<string, any>) {
+  info(message: string, context?: any) {
     if (import.meta.env.DEV) {
       console.log(this.formatMessage('info', message, context));
     }
@@ -53,7 +50,7 @@ class Logger {
   /**
    * Warning logging - always logged, sent to PostHog in production
    */
-  warn(message: string, context?: Record<string, any>) {
+  warn(message: string, context?: any) {
     console.warn(this.formatMessage('warn', message, context));
     
     if (!import.meta.env.DEV && typeof window !== 'undefined' && window.posthog) {
@@ -68,7 +65,7 @@ class Logger {
   /**
    * Error logging - always logged, sent to backend and PostHog
    */
-  error(message: string, error?: Error, context?: Record<string, any>) {
+  error(message: string, error?: Error, context?: any) {
     console.error(this.formatMessage('error', message, context), error);
     
     const errorContext: any = {
@@ -97,7 +94,7 @@ class Logger {
   /**
    * Critical error logging - highest priority, always sent to monitoring
    */
-  critical(message: string, error?: Error, context?: Record<string, any>) {
+  critical(message: string, error?: Error, context?: any) {
     console.error(this.formatMessage('critical', message, context), error);
     
     const errorContext: any = {

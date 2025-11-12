@@ -452,6 +452,142 @@ const Pricing = () => {
           ))}
           </div>
 
+          {/* Feature Comparison Chart */}
+          <div className="max-w-7xl mx-auto mb-16">
+            <h3 className="text-3xl md:text-4xl font-black text-center mb-12">Compare Plans</h3>
+            <Card className="brutal-card overflow-hidden">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[800px]">
+                    <thead>
+                      <tr className="border-b-3 border-black bg-muted/30">
+                        <th className="py-6 px-6 text-left font-black text-lg w-1/4">Features</th>
+                        {plans.filter(p => p.name !== "Freemium").map((plan) => (
+                          <th key={plan.name} className="py-6 px-4 text-center w-[18.75%]">
+                            <div className="space-y-2">
+                              {plan.badge && (
+                                <div className="inline-block bg-primary px-3 py-1 rounded-full text-xs font-black text-black mb-2">
+                                  {plan.badge}
+                                </div>
+                              )}
+                              <div className="font-black text-lg">{plan.name}</div>
+                              <div className="text-2xl font-black text-primary">
+                                {isAnnual ? plan.annualPrice : plan.monthlyPrice}
+                                <span className="text-sm text-muted-foreground font-normal">/mo</span>
+                              </div>
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* Credits */}
+                      <tr className="border-b border-border hover:bg-muted/20 transition-colors">
+                        <td className="py-4 px-6 font-semibold">Credits per month</td>
+                        {plans.filter(p => p.name !== "Freemium").map((plan) => (
+                          <td key={plan.name} className="py-4 px-4 text-center font-bold text-primary">
+                            {plan.credits}
+                          </td>
+                        ))}
+                      </tr>
+                      
+                      {/* Price per credit */}
+                      <tr className="border-b border-border hover:bg-muted/20 transition-colors">
+                        <td className="py-4 px-6 font-semibold">Price per credit</td>
+                        {plans.filter(p => p.name !== "Freemium").map((plan) => (
+                          <td key={plan.name} className="py-4 px-4 text-center text-sm text-muted-foreground">
+                            {isAnnual ? plan.annualPerCredit : plan.monthlyPerCredit}
+                          </td>
+                        ))}
+                      </tr>
+                      
+                      {/* Concurrent Generations */}
+                      <tr className="border-b border-border hover:bg-muted/20 transition-colors">
+                        <td className="py-4 px-6 font-semibold">Concurrent generations</td>
+                        {plans.filter(p => p.name !== "Freemium").map((plan) => (
+                          <td key={plan.name} className="py-4 px-4 text-center font-bold">
+                            {plan.concurrentGenerations || 1}
+                          </td>
+                        ))}
+                      </tr>
+                      
+                      {/* Watermark */}
+                      <tr className="border-b border-border hover:bg-muted/20 transition-colors">
+                        <td className="py-4 px-6 font-semibold">No watermark</td>
+                        {plans.filter(p => p.name !== "Freemium").map((plan) => (
+                          <td key={plan.name} className="py-4 px-4 text-center">
+                            <Check className="h-5 w-5 text-primary mx-auto" />
+                          </td>
+                        ))}
+                      </tr>
+                      
+                      {/* Commercial License */}
+                      <tr className="border-b border-border hover:bg-muted/20 transition-colors">
+                        <td className="py-4 px-6 font-semibold">Commercial license</td>
+                        {plans.filter(p => p.name !== "Freemium").map((plan) => (
+                          <td key={plan.name} className="py-4 px-4 text-center">
+                            {plan.name === "Veo Connoisseur" || plan.name === "Ultimate" ? (
+                              <Check className="h-5 w-5 text-primary mx-auto" />
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                      
+                      {/* Support */}
+                      <tr className="border-b border-border hover:bg-muted/20 transition-colors">
+                        <td className="py-4 px-6 font-semibold">Support level</td>
+                        {plans.filter(p => p.name !== "Freemium").map((plan) => (
+                          <td key={plan.name} className="py-4 px-4 text-center text-sm">
+                            {plan.name === "Veo Connoisseur" || plan.name === "Ultimate" ? (
+                              <span className="font-bold text-primary">24/7 Premium</span>
+                            ) : plan.name === "Professional" ? (
+                              <span>Dedicated</span>
+                            ) : (
+                              <span>Standard</span>
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                      
+                      {/* Early Access */}
+                      <tr className="border-b border-border hover:bg-muted/20 transition-colors">
+                        <td className="py-4 px-6 font-semibold">Early access to features</td>
+                        {plans.filter(p => p.name !== "Freemium").map((plan) => (
+                          <td key={plan.name} className="py-4 px-4 text-center">
+                            {plan.name === "Veo Connoisseur" ? (
+                              <Check className="h-5 w-5 text-primary mx-auto" />
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                      
+                      {/* CTA Row */}
+                      <tr className="bg-muted/10">
+                        <td className="py-6 px-6"></td>
+                        {plans.filter(p => p.name !== "Freemium").map((plan) => (
+                          <td key={plan.name} className="py-6 px-4 text-center">
+                            <Button
+                              className="w-full font-bold"
+                              variant={plan.badge === "MOST POPULAR" ? "default" : "outline"}
+                              onClick={() => handleSubscribe(plan.name)}
+                              disabled={isCreatingPayment === plan.name}
+                            >
+                              {isCreatingPayment === plan.name ? "Loading..." : "Get Started"}
+                            </Button>
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Final CTA Section */}
           <div className="max-w-3xl mx-auto text-center space-y-6 py-16">
             <h3 className="text-4xl md:text-5xl font-black">Ready to Start Creating?</h3>

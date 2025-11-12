@@ -8,6 +8,24 @@ export const useConcurrentGenerationLimit = () => {
   return useQuery({
     queryKey: ["concurrent-generation-limit", userTokens?.plan],
     queryFn: async () => {
+      // Check if user is admin
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin")
+          .maybeSingle();
+        
+        // If admin, return effectively unlimited
+        if (roleData) {
+          return 999;
+        }
+      }
+      
+      // For non-admins, get tier limit
       const plan = userTokens?.plan || "freemium";
       
       const { data, error } = await supabase

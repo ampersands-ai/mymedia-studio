@@ -1,12 +1,15 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('manual-fail-video-jobs', requestId);
+  const startTime = Date.now();
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -20,13 +23,16 @@ serve(async (req) => {
     const { video_job_ids } = await req.json();
 
     if (!Array.isArray(video_job_ids) || video_job_ids.length === 0) {
+      logger.warn('Invalid request: missing or invalid video_job_ids');
       return new Response(
         JSON.stringify({ error: 'video_job_ids array is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Manually failing ${video_job_ids.length} video jobs:`, video_job_ids);
+    logger.info('Starting manual video job failure', {
+      metadata: { jobCount: video_job_ids.length, videoJobIds: video_job_ids }
+    });
 
     // Update video jobs to failed status
     const { data: updatedJobs, error: updateError } = await supabaseClient
@@ -43,7 +49,10 @@ serve(async (req) => {
       throw updateError;
     }
 
-    console.log(`Successfully failed ${updatedJobs?.length || 0} video jobs`);
+    logger.info('Manual video job failure completed', {
+      metadata: { failedCount: updatedJobs?.length || 0 }
+    });
+    logger.logDuration('Manual video job failure', startTime);
 
     return new Response(
       JSON.stringify({ 
@@ -54,7 +63,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error in manual-fail-video-jobs:', error);
+    logger.error('Error in manual-fail-video-jobs', error as Error);
     
     return new Response(
       JSON.stringify({ error: error.message }),

@@ -1,39 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// Inline helper: sanitize errors before logging
-function sanitizeError(error: any): any {
-  if (error && typeof error === 'object') {
-    const { authorization, token, api_key, apiKey, secret, ...safe } = error;
-    return safe;
-  }
-  return error;
-}
-
-// Inline helper: log errors to console
-function logError(context: string, error: any, metadata?: any): void {
-  console.error(`[ERROR] ${context}:`, sanitizeError(error), metadata);
-}
-
-// Inline helper: create standardized error response
-function createErrorResponse(error: any, headers: any, context: string, metadata?: any): Response {
-  logError(context, error, metadata);
-  const message = error?.message || 'An error occurred';
-  const status = message.includes('Unauthorized') || message.includes('authorization') ? 401
-    : message.includes('Forbidden') ? 403
-    : message.includes('not found') ? 404
-    : 400;
-  
-  return new Response(
-    JSON.stringify({ error: message }),
-    { status, headers: { ...headers, 'Content-Type': 'application/json' } }
-  );
-}
 
 const roleManagementSchema = z.object({
   user_id: z.string().uuid(),
@@ -42,6 +14,10 @@ const roleManagementSchema = z.object({
 });
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('manage-user-role', requestId);
+  const startTime = Date.now();
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -50,6 +26,7 @@ Deno.serve(async (req) => {
   let user: any;
 
   try {
+    logger.info('Processing role management request');
     // Authenticate the requesting user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -83,6 +60,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (roleError || !roleData) {
+      logger.warn('Non-admin user attempted role management', { userId: user.id });
       throw new Error('Forbidden: Admin access required');
     }
 
@@ -90,8 +68,13 @@ Deno.serve(async (req) => {
     body = await req.json();
     const { user_id, role, action } = roleManagementSchema.parse(body);
 
+    logger.info('Role management request validated', { 
+      metadata: { targetUserId: user_id, role, action, adminId: user.id }
+    });
+
     // Prevent self-modification
     if (user_id === user.id) {
+      logger.warn('Admin attempted to modify own role', { userId: user.id });
       throw new Error('Cannot modify your own role');
     }
 
@@ -145,18 +128,34 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log(`[SUCCESS] Role ${action} completed: ${role} for user ${user_id}`);
+    logger.info('Role management completed successfully', {
+      metadata: { targetUserId: user_id, role, action }
+    });
+    logger.logDuration('Role management request', startTime);
 
     return new Response(
       JSON.stringify({ success: true }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    return createErrorResponse(error, corsHeaders, 'manage-user-role', {
-      admin_user_id: user?.id,
-      target_user_id: body?.user_id,
-      role: body?.role,
-      action: body?.action,
+    logger.error('Role management failed', error as Error, {
+      metadata: {
+        adminUserId: user?.id,
+        targetUserId: body?.user_id,
+        role: body?.role,
+        action: body?.action,
+      }
     });
+
+    const message = (error as Error)?.message || 'An error occurred';
+    const status = message.includes('Unauthorized') || message.includes('authorization') ? 401
+      : message.includes('Forbidden') ? 403
+      : message.includes('not found') ? 404
+      : 400;
+    
+    return new Response(
+      JSON.stringify({ error: message }),
+      { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 });

@@ -1,12 +1,15 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('manual-fail-generations', requestId);
+  const startTime = Date.now();
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -15,17 +18,20 @@ serve(async (req) => {
     const { generation_ids } = await req.json();
     
     if (!generation_ids || !Array.isArray(generation_ids) || generation_ids.length === 0) {
+      logger.warn('Invalid request: missing or invalid generation_ids');
       return new Response(
         JSON.stringify({ error: 'Missing or invalid generation_ids array' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    logger.info('Starting manual generation failure', {
+      metadata: { generationCount: generation_ids.length, generationIds: generation_ids }
+    });
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    console.log(`Manually failing ${generation_ids.length} generations:`, generation_ids);
 
     // Get generation details
     const { data: generations, error: getError } = await supabase
@@ -41,7 +47,9 @@ serve(async (req) => {
     const results = [];
 
     for (const gen of generations) {
-      console.log(`Failing generation ${gen.id}, refunding ${gen.tokens_used} tokens`);
+      logger.info('Failing generation', { 
+        metadata: { generationId: gen.id, tokensUsed: gen.tokens_used, userId: gen.user_id }
+      });
       
       // Update to failed
       const { error: updateError } = await supabase
@@ -56,7 +64,9 @@ serve(async (req) => {
         .eq('id', gen.id);
 
       if (updateError) {
-        console.error(`Failed to update generation ${gen.id}:`, updateError);
+        logger.error('Failed to update generation', updateError as Error, {
+          metadata: { generationId: gen.id }
+        });
         results.push({ id: gen.id, success: false, error: updateError.message });
         continue;
       }
@@ -68,7 +78,9 @@ serve(async (req) => {
       });
 
       if (refundError) {
-        console.error(`Failed to refund tokens for ${gen.id}:`, refundError);
+        logger.error('Failed to refund tokens', refundError as Error, {
+          metadata: { generationId: gen.id, tokensUsed: gen.tokens_used }
+        });
         results.push({ id: gen.id, success: false, error: refundError.message });
         continue;
       }
@@ -89,6 +101,15 @@ serve(async (req) => {
       });
     }
 
+    logger.info('Manual generation failure completed', {
+      metadata: { 
+        totalTokensRefunded, 
+        successCount: results.filter(r => r.success).length,
+        failureCount: results.filter(r => !r.success).length
+      }
+    });
+    logger.logDuration('Manual generation failure', startTime);
+
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -99,7 +120,7 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('Manual fail error:', error);
+    logger.error('Manual fail error', error as Error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -1,7 +1,7 @@
 // Dodo Payments Webhook Handler - v2.0 - Enhanced Diagnostics
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Webhook } from "https://esm.sh/svix@1";
-import { webhookLogger } from "../_shared/logger.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 
 const WEBHOOK_VERSION = "2.0-svix-dual-headers";
@@ -19,18 +19,19 @@ const PLAN_TOKENS = {
   'veo_connoisseur': 200000,
 };
 
-// Log deployment on boot
-webhookLogger.info('Dodo Payments Webhook deployed', { 
-  version: WEBHOOK_VERSION,
-  features: ['svix-* headers', 'webhook-* headers']
-});
-
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('dodo-payments-webhook', requestId);
+  const webhookStartTime = Date.now();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    logger.info('Webhook deployed', { 
+      metadata: { version: WEBHOOK_VERSION, features: ['svix-* headers', 'webhook-* headers'] }
+    });
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const webhookSecret = Deno.env.get('DODO_WEBHOOK_KEY');
@@ -39,7 +40,7 @@ Deno.serve(async (req) => {
 
     // SECURITY: Webhook secret is required
     if (!webhookSecret) {
-      webhookLogger.error('CRITICAL SECURITY ERROR: DODO_WEBHOOK_KEY not configured', new Error('Missing webhook secret'));
+      logger.critical('DODO_WEBHOOK_KEY not configured', new Error('Missing webhook secret'));
       return new Response(
         JSON.stringify({ error: 'Webhook secret not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -56,22 +57,22 @@ Deno.serve(async (req) => {
     
     const headerSet = req.headers.get('svix-id') ? 'svix-*' : 'webhook-*';
     
-    webhookLogger.received('dodo-payments', svixId || 'unknown', {
-      version: WEBHOOK_VERSION,
-      headerSet,
-      headers: {
-        id: svixId ? 'present' : 'missing',
-        timestamp: svixTimestamp ? 'present' : 'missing',
-        signature: svixSignature ? 'present' : 'missing'
+    logger.info('Webhook received', {
+      metadata: {
+        version: WEBHOOK_VERSION,
+        headerSet,
+        svixId: svixId || 'unknown',
+        headers: {
+          id: svixId ? 'present' : 'missing',
+          timestamp: svixTimestamp ? 'present' : 'missing',
+          signature: svixSignature ? 'present' : 'missing'
+        }
       }
     });
     
     if (!svixSignature || !svixId || !svixTimestamp) {
-      webhookLogger.security('svix_headers', false, {
-        headerSet,
-        svixId,
-        svixTimestamp,
-        svixSignature: svixSignature ? 'present' : 'missing'
+      logger.warn('Missing webhook signature headers', {
+        metadata: { headerSet, svixId, svixTimestamp, svixSignature: svixSignature ? 'present' : 'missing' }
       });
       return new Response(
         JSON.stringify({ error: 'Missing webhook signature headers' }),

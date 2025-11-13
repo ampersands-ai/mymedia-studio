@@ -1,5 +1,5 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,6 +7,10 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('create-share-link', requestId);
+  const startTime = Date.now();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -14,6 +18,7 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      logger.warn('Missing authorization header');
       throw new Error('Missing authorization header');
     }
 
@@ -25,10 +30,15 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
+      logger.warn('Unauthorized request');
       throw new Error('Unauthorized');
     }
 
     const { generation_id, video_job_id, content_type, storage_path, bucket_name } = await req.json();
+    
+    logger.info('Creating share link', { 
+      metadata: { userId: user.id, generation_id, video_job_id, content_type } 
+    });
 
     if (!storage_path || !content_type) {
       throw new Error('Missing required fields: storage_path, content_type');
@@ -63,6 +73,9 @@ Deno.serve(async (req) => {
       : 'https://artifio.ai';
     const shareUrl = `${appUrl}/share/${token}`;
 
+    logger.info('Share link created successfully', { metadata: { token, shareUrl } });
+    logger.logDuration('Share link creation', startTime);
+
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -74,7 +87,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error creating share link:', error);
+    logger.error('Failed to create share link', error as Error);
     const message = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
       JSON.stringify({ error: message }),

@@ -1,5 +1,4 @@
-import { serve } from "std/http/server.ts";
-import { createClient } from "supabase";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { 
@@ -11,13 +10,19 @@ import {
   resolveInputMappings,
   coerceParametersToSchema
 } from "./helpers/parameter-resolver.ts";
+import {
+  WorkflowExecutorRequestSchema,
+  WorkflowStepSchema,
+  type WorkflowExecutorRequest,
+  type WorkflowStep
+} from "../_shared/schemas.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -45,7 +50,10 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { workflow_template_id, user_inputs } = await req.json();
+    // Validate request body with Zod
+    const requestBody = await req.json();
+    const validatedRequest: WorkflowExecutorRequest = WorkflowExecutorRequestSchema.parse(requestBody);
+    const { workflow_template_id, user_inputs } = validatedRequest;
 
     logger.info('Workflow execution started', {
       userId: user.id,
@@ -66,7 +74,8 @@ serve(async (req) => {
       throw new Error('Workflow template not found');
     }
 
-    const steps = workflow.workflow_steps as any[];
+    // Validate workflow steps with Zod
+    const steps: WorkflowStep[] = WorkflowStepSchema.array().parse(workflow.workflow_steps);
     const totalSteps = steps.length;
 
     // 2. Create workflow execution record

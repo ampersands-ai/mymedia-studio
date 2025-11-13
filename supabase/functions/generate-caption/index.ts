@@ -1,6 +1,14 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { createSafeErrorResponse } from "../_shared/error-handler.ts";
+import {
+  GenerateCaptionRequestSchema,
+  CaptionResponseSchema,
+  AIToolCallSchema,
+  type GenerateCaptionRequest,
+  type CaptionResponse
+} from "../_shared/schemas.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,15 +20,29 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const { generation_id, video_job_id, prompt, content_type, model_name } = await req.json();
+  const startTime = Date.now();
+  const requestId = crypto.randomUUID();
 
-    if ((!generation_id && !video_job_id) || !prompt || !content_type) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields: (generation_id OR video_job_id), prompt, content_type' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    const logger = new EdgeLogger('generate-caption', requestId, supabase, true);
+
+    // Validate request body with Zod
+    const requestBody = await req.json();
+    const validatedRequest: GenerateCaptionRequest = GenerateCaptionRequestSchema.parse(requestBody);
+    const { generation_id, video_job_id, prompt, content_type, model_name } = validatedRequest;
+
+    logger.info('Caption generation started', {
+      metadata: { 
+        generation_id, 
+        video_job_id, 
+        content_type,
+        prompt_length: prompt.length 
+      }
+    });
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -94,45 +116,44 @@ IMPORTANT: Each hashtag MUST include the # symbol (e.g., #Fashion, #Style).`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Lovable AI error:', response.status, errorText);
+      logger.error('Lovable AI request failed', undefined, {
+        metadata: { status: response.status, error: errorText }
+      });
       throw new Error(`AI generation failed: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('AI Response:', JSON.stringify(data));
+    logger.debug('AI response received', { metadata: { has_tool_calls: Boolean(data.choices?.[0]?.message?.tool_calls) } });
 
+    // Validate tool call structure
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall) {
+      logger.error('No tool call in AI response', undefined, { metadata: { response: JSON.stringify(data) } });
+      throw new Error('AI did not return expected tool call format');
+    }
+
+    const validatedToolCall = AIToolCallSchema.parse(toolCall);
+    const result = JSON.parse(validatedToolCall.function.arguments);
+
+    // Validate caption and hashtags with Zod
+    const validatedResult: CaptionResponse = CaptionResponseSchema.parse(result);
+    const { caption, hashtags } = validatedResult;
+
+    logger.info('Caption validation passed', {
+      metadata: { 
+        caption_length: caption.length,
+        hashtags_count: hashtags.length 
+      }
+    });
       throw new Error('No tool call in AI response');
     }
 
-    const result = JSON.parse(toolCall.function.arguments);
-    const { caption, hashtags } = result;
-
-    if (!caption || !Array.isArray(hashtags) || hashtags.length !== 15) {
-      throw new Error('Invalid response format from AI');
-    }
-
-    // Validate caption is complete
-    const trimmedCaption = caption.trim();
-    if (!trimmedCaption.match(/[.!?]$/)) {
-      console.error('Incomplete caption received:', caption);
-      throw new Error('Caption is incomplete - does not end with proper punctuation');
-    }
-    if (trimmedCaption.length < 50) {
-      console.error('Caption too short:', caption);
-      throw new Error('Caption is too short - minimum 50 characters required');
-    }
-
-    // Ensure all hashtags have # symbol
+    // Ensure all hashtags have # symbol (Zod validates they start with #)
     const formattedHashtags = hashtags.map(tag => 
       tag.startsWith('#') ? tag : `#${tag}`
     );
 
     // Update the generation or video_job record
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const now = new Date().toISOString();
     const updateData = {
@@ -148,20 +169,28 @@ IMPORTANT: Each hashtag MUST include the # symbol (e.g., #Fashion, #Style).`;
         .update(updateData)
         .eq('id', video_job_id);
       updateError = result.error;
-      console.log('Caption generated successfully for video job:', video_job_id);
+      logger.info('Caption saved to video job', { metadata: { video_job_id } });
     } else {
       const result = await supabase
         .from('generations')
         .update(updateData)
         .eq('id', generation_id);
       updateError = result.error;
-      console.log('Caption generated successfully for generation:', generation_id);
+      logger.info('Caption saved to generation', { metadata: { generation_id } });
     }
 
     if (updateError) {
-      console.error('Database update error:', updateError);
+      logger.error('Database update failed', updateError);
       throw new Error('Failed to save caption to database');
     }
+
+    logger.logDuration('Caption generation completed', startTime, {
+      metadata: { 
+        generation_id,
+        video_job_id,
+        caption_length: caption.length
+      }
+    });
 
     return new Response(
       JSON.stringify({
@@ -173,11 +202,6 @@ IMPORTANT: Each hashtag MUST include the # symbol (e.g., #Fashion, #Style).`;
     );
 
   } catch (error) {
-    console.error('Error in generate-caption function:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to generate caption';
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createSafeErrorResponse(error, 'generate-caption', corsHeaders);
   }
 });

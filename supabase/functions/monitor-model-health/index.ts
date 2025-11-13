@@ -1,23 +1,28 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  const startTime = Date.now();
+  const requestId = crypto.randomUUID();
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('🔍 Starting model health monitoring check...');
-    
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
+
+    const logger = new EdgeLogger('monitor-model-health', requestId, supabase, true);
+
+    logger.info('Starting model health monitoring check');
 
     // Fetch alert settings
     const { data: settings } = await supabase
@@ -32,7 +37,7 @@ serve(async (req) => {
     const windowMinutes = Number(settingsMap.get('model_failure_window_minutes')) || 60;
 
     if (!alertsEnabled) {
-      console.log('⏸️ Model alerts are disabled, skipping check');
+      logger.info('Model alerts are disabled, skipping check');
       return new Response(
         JSON.stringify({ success: true, message: 'Alerts disabled' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -67,7 +72,7 @@ serve(async (req) => {
       .map(([id]) => id);
 
     if (failingModelIds.length === 0) {
-      console.log('✅ No models exceeding failure threshold');
+      logger.info('No models exceeding failure threshold');
       return new Response(
         JSON.stringify({ 
           success: true, 
@@ -108,7 +113,12 @@ serve(async (req) => {
           }
         };
 
-        console.log(`🚨 Sending alert for model ${model?.model_name}`);
+        logger.warn('Sending alert for failing model', { 
+          metadata: { 
+            modelName: model?.model_name, 
+            failedTests: stats.failed 
+          } 
+        });
         
         const { data, error: alertError } = await supabase.functions.invoke('send-webhook-alert', {
           body: alertPayload
@@ -119,8 +129,22 @@ serve(async (req) => {
           sent: !alertError,
           error: alertError?.message
         });
+
+        if (alertError) {
+          logger.error('Failed to send model alert', alertError instanceof Error ? alertError : undefined, { 
+            metadata: { modelName: model?.model_name } 
+          });
+        }
       }
     }
+
+    logger.logDuration('Model health monitoring complete', startTime, { 
+      metadata: { 
+        totalModels: modelFailures.size, 
+        failingModels: failingModelIds.length, 
+        alertsSent: alerts.length 
+      }
+    });
 
     return new Response(
       JSON.stringify({ 
@@ -136,7 +160,8 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('❌ Error monitoring model health:', error);
+    const logger = new EdgeLogger('monitor-model-health', requestId, supabase, true);
+    logger.error('Error monitoring model health', error instanceof Error ? error : undefined);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
       JSON.stringify({ error: errorMessage }),

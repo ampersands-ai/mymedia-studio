@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -9,15 +9,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  const startTime = Date.now();
+  const requestId = crypto.randomUUID();
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('🔍 Starting webhook health monitoring check...');
-    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const logger = new EdgeLogger('monitor-webhook-health', requestId, supabase, true);
+
+    logger.info('Starting webhook health monitoring check');
 
     // Get alert settings
     const { data: settingsData, error: settingsError } = await supabase
@@ -31,14 +35,14 @@ serve(async (req) => {
     const settings = settingsData?.setting_value as any;
 
     if (!settings?.enabled) {
-      console.log('⏸️ Alerts are disabled, skipping check');
+      logger.info('Alerts are disabled, skipping check');
       return new Response(
         JSON.stringify({ message: 'Alerts disabled' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('⚙️ Alert settings:', settings);
+    logger.debug('Alert settings loaded', { metadata: settings });
 
     // Check time window (last hour)
     const timeWindow = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -57,7 +61,13 @@ serve(async (req) => {
     const failedCount = webhooks.filter(g => g.status === 'failed').length;
     const failureRate = totalWebhooks > 0 ? (failedCount / totalWebhooks) * 100 : 0;
 
-    console.log(`📊 Stats: ${totalWebhooks} total, ${failedCount} failed, ${failureRate.toFixed(1)}% failure rate`);
+    logger.info('Webhook statistics calculated', { 
+      metadata: { 
+        total: totalWebhooks, 
+        failed: failedCount, 
+        failureRate: failureRate.toFixed(1) 
+      } 
+    });
 
     // Count storage failures
     const storageFailures = webhooks.filter(g => {
@@ -67,13 +77,18 @@ serve(async (req) => {
       return errorMsg.includes('storage') || errorMsg.includes('upload') || errorMsg.includes('bucket');
     }).length;
 
-    console.log(`💾 Storage failures: ${storageFailures}`);
+    logger.debug('Storage failures counted', { metadata: { storageFailures } });
 
     const alerts = [];
 
     // Check failure rate threshold
     if (failureRate >= settings.failure_rate_threshold && totalWebhooks >= 10) {
-      console.log(`🚨 Failure rate alert triggered: ${failureRate.toFixed(1)}% >= ${settings.failure_rate_threshold}%`);
+      logger.warn('Failure rate alert triggered', { 
+        metadata: { 
+          failureRate: failureRate.toFixed(1), 
+          threshold: settings.failure_rate_threshold 
+        } 
+      });
       alerts.push({
         type: 'failure_rate',
         message: `Webhook failure rate has exceeded ${settings.failure_rate_threshold}%. Current rate: ${failureRate.toFixed(1)}%`,
@@ -89,7 +104,12 @@ serve(async (req) => {
 
     // Check storage failure threshold
     if (storageFailures >= settings.storage_failure_threshold) {
-      console.log(`⚠️ Storage failure alert triggered: ${storageFailures} >= ${settings.storage_failure_threshold}`);
+      logger.warn('Storage failure alert triggered', { 
+        metadata: { 
+          storageFailures, 
+          threshold: settings.storage_failure_threshold 
+        } 
+      });
       alerts.push({
         type: 'storage_spike',
         message: `Storage failures have spiked to ${storageFailures} in the last hour. Threshold: ${settings.storage_failure_threshold}`,
@@ -104,7 +124,7 @@ serve(async (req) => {
 
     // Send alerts if any
     if (alerts.length > 0) {
-      console.log(`📧 Sending ${alerts.length} alert(s)...`);
+      logger.info('Sending alerts', { metadata: { count: alerts.length } });
       
       for (const alert of alerts) {
         try {
@@ -113,17 +133,29 @@ serve(async (req) => {
           });
 
           if (alertError) {
-            console.error(`Failed to send ${alert.type} alert:`, alertError);
+            logger.error(`Failed to send ${alert.type} alert`, alertError instanceof Error ? alertError : undefined, { 
+              metadata: { alertType: alert.type } 
+            });
           } else {
-            console.log(`✅ ${alert.type} alert sent successfully`);
+            logger.info(`Alert sent successfully`, { metadata: { alertType: alert.type } });
           }
         } catch (err) {
-          console.error(`Error sending ${alert.type} alert:`, err);
+          logger.error(`Error sending ${alert.type} alert`, err instanceof Error ? err : undefined, { 
+            metadata: { alertType: alert.type } 
+          });
         }
       }
     } else {
-      console.log('✅ All thresholds within normal range');
+      logger.info('All thresholds within normal range');
     }
+
+    logger.logDuration('Webhook health monitoring complete', startTime, { 
+      metadata: { 
+        totalWebhooks, 
+        failureRate: Math.round(failureRate), 
+        alertsSent: alerts.length 
+      } 
+    });
 
     return new Response(
       JSON.stringify({
@@ -148,7 +180,8 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('❌ Error in monitor-webhook-health:', error);
+    const logger = new EdgeLogger('monitor-webhook-health', requestId, supabase, true);
+    logger.error('Error in monitor-webhook-health', error instanceof Error ? error : undefined);
     return new Response(
       JSON.stringify({ error: error.message }),
       {

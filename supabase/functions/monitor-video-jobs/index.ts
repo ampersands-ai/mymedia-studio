@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,6 +7,9 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const startTime = Date.now();
+  const requestId = crypto.randomUUID();
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -16,7 +20,9 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    console.log('Starting video job timeout monitoring...');
+    const logger = new EdgeLogger('monitor-video-jobs', requestId, supabase, true);
+
+    logger.info('Starting video job timeout monitoring');
 
     // Find jobs older than 4 hours that are still processing
     const cutoffTime = new Date(Date.now() - 4 * 60 * 60 * 1000); // 4 hours ago
@@ -36,12 +42,12 @@ Deno.serve(async (req) => {
       .lt('created_at', cutoffTime.toISOString());
 
     if (error) {
-      console.error('Error fetching stuck jobs:', error);
+      logger.error('Error fetching stuck jobs', error instanceof Error ? error : undefined);
       throw error;
     }
 
     if (!stuckJobs || stuckJobs.length === 0) {
-      console.log('No stuck video jobs found');
+      logger.info('No stuck video jobs found');
       return new Response(
         JSON.stringify({ 
           monitored: 0,
@@ -51,12 +57,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Found ${stuckJobs.length} stuck video jobs to process`);
+    logger.info('Found stuck video jobs', { 
+      metadata: { count: stuckJobs.length } 
+    });
 
     // Process each stuck job
     const refundedJobs = [];
     for (const job of stuckJobs) {
-      console.log(`Processing stuck job ${job.id} - Topic: ${job.topic}`);
+      logger.debug('Processing stuck job', { 
+        metadata: { jobId: job.id, topic: job.topic } 
+      });
       
       // Mark as failed
       const { error: updateError } = await supabase
@@ -74,7 +84,9 @@ Deno.serve(async (req) => {
         .eq('id', job.id);
 
       if (updateError) {
-        console.error(`Failed to update job ${job.id}:`, updateError);
+        logger.error('Failed to update job', updateError instanceof Error ? updateError : undefined, { 
+          metadata: { jobId: job.id } 
+        });
         continue;
       }
 
@@ -85,7 +97,9 @@ Deno.serve(async (req) => {
       });
 
       if (refundError) {
-        console.error(`Failed to refund credits for job ${job.id}:`, refundError);
+        logger.error('Failed to refund credits', refundError instanceof Error ? refundError : undefined, { 
+          metadata: { jobId: job.id } 
+        });
         continue;
       }
 
@@ -106,7 +120,9 @@ Deno.serve(async (req) => {
         });
 
       if (auditError) {
-        console.error(`Failed to create audit log for job ${job.id}:`, auditError);
+        logger.error('Failed to create audit log', auditError instanceof Error ? auditError : undefined, { 
+          metadata: { jobId: job.id } 
+        });
       }
 
       refundedJobs.push({
@@ -115,10 +131,17 @@ Deno.serve(async (req) => {
         tokens_refunded: job.cost_tokens
       });
 
-      console.log(`Successfully processed job ${job.id} - Refunded ${job.cost_tokens} credits`);
+      logger.info('Successfully processed stuck job', { 
+        metadata: { jobId: job.id, tokensRefunded: job.cost_tokens } 
+      });
     }
 
-    console.log(`Monitoring complete: ${refundedJobs.length}/${stuckJobs.length} jobs processed`);
+    logger.logDuration('Video job monitoring complete', startTime, { 
+      metadata: { 
+        totalStuck: stuckJobs.length, 
+        refunded: refundedJobs.length 
+      } 
+    });
 
     return new Response(
       JSON.stringify({ 
@@ -130,7 +153,8 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in monitor-video-jobs:', error);
+    const logger = new EdgeLogger('monitor-video-jobs', requestId, supabase, true);
+    logger.error('Error in monitor-video-jobs', error instanceof Error ? error : undefined);
     return new Response(
       JSON.stringify({ error: (error as Error).message || 'Unknown error' }),
       { 

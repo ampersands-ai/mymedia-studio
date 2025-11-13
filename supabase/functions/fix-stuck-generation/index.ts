@@ -1,35 +1,41 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  const startTime = Date.now();
+  const requestId = crypto.randomUUID();
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const logger = new EdgeLogger('fix-stuck-generation', requestId, supabase, true);
+
     // SECURITY: Authenticate admin user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      logger.error('Missing authorization header');
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
     // Verify user is authenticated and is admin
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
+      logger.error('Authentication failed', authError);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -45,6 +51,7 @@ serve(async (req) => {
       .maybeSingle();
 
     if (!adminRole) {
+      logger.warn('Non-admin user attempted access', { userId: user.id });
       return new Response(
         JSON.stringify({ error: 'Forbidden: Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -78,7 +85,10 @@ serve(async (req) => {
 
     // If action is 'fail' or forceTerminate, just mark as failed and refund
     if (action === 'fail' || forceTerminate || urls.length === 0) {
-      console.log('Terminating generation and refunding tokens:', genId);
+      logger.info('Terminating generation and refunding tokens', { 
+        userId: user.id,
+        metadata: { generationId: genId, action, forceTerminate } 
+      });
       
       const errorMessage = forceTerminate 
         ? 'Generation manually terminated by admin. Tokens have been refunded.'
@@ -106,7 +116,10 @@ serve(async (req) => {
         amount: generation.tokens_used
       });
 
-      console.log('Tokens refunded:', generation.tokens_used);
+      logger.info('Tokens refunded', { 
+        userId: user.id,
+        metadata: { tokens: generation.tokens_used } 
+      });
 
       // Log termination to audit
       if (forceTerminate) {
@@ -136,7 +149,10 @@ serve(async (req) => {
       );
     }
 
-    console.log('Processing', urls.length, 'output URL(s)');
+    logger.info('Processing output URLs', { 
+      userId: user.id,
+      metadata: { urlCount: urls.length, generationId: genId } 
+    });
 
     // Helper functions
     const determineFileExtension = (url: string, type: string): string => {
@@ -191,17 +207,26 @@ serve(async (req) => {
     let mainFileSize = 0;
 
     if (isMultiOutput) {
-      console.log('Multi-output generation - creating child records for all URLs');
+      logger.info('Multi-output generation detected', { 
+        userId: user.id,
+        metadata: { outputCount: urls.length, generationId: genId } 
+      });
       
       // Create child generations for each URL
       for (let i = 0; i < urls.length; i++) {
         try {
           const url = urls[i];
-          console.log(`[Output ${i + 1}/${urls.length}] Downloading from:`, url);
+          logger.debug(`Downloading output ${i + 1}/${urls.length}`, { 
+            userId: user.id,
+            metadata: { url, index: i } 
+          });
 
           const response = await fetch(url);
           if (!response.ok) {
-            console.error(`[Output ${i + 1}] Download failed:`, response.status);
+            logger.error(`Download failed for output ${i + 1}`, undefined, { 
+              userId: user.id,
+              metadata: { status: response.status, index: i } 
+            });
             continue;
           }
 
@@ -209,7 +234,10 @@ serve(async (req) => {
           const data = new Uint8Array(buffer);
           const ext = determineFileExtension(url, generation.type);
 
-          console.log(`[Output ${i + 1}] Downloaded ${data.length} bytes, extension: ${ext}`);
+          logger.debug(`Downloaded output ${i + 1}`, { 
+            userId: user.id,
+            metadata: { bytes: data.length, extension: ext } 
+          });
 
           // Create unique child ID
           const childId = crypto.randomUUID();
@@ -223,7 +251,10 @@ serve(async (req) => {
             generation.type
           );
 
-          console.log(`[Output ${i + 1}] Uploaded to:`, storagePath);
+          logger.debug(`Uploaded output ${i + 1}`, { 
+            userId: user.id,
+            metadata: { storagePath, index: i } 
+          });
 
           // Create child generation record
           const { error: insertError } = await supabase
@@ -251,12 +282,21 @@ serve(async (req) => {
             });
 
           if (insertError) {
-            console.error(`[Output ${i + 1}] Failed to create child:`, insertError);
+            logger.error(`Failed to create child output ${i + 1}`, insertError instanceof Error ? insertError : undefined, { 
+              userId: user.id,
+              metadata: { index: i } 
+            });
           } else {
-            console.log(`[Output ${i + 1}] Child generation created successfully`);
+            logger.debug(`Child generation created for output ${i + 1}`, { 
+              userId: user.id,
+              metadata: { childId, index: i } 
+            });
           }
         } catch (error: any) {
-          console.error(`[Output ${i + 1}] Error:`, error.message);
+          logger.error(`Error processing output ${i + 1}`, error instanceof Error ? error : undefined, { 
+            userId: user.id,
+            metadata: { index: i } 
+          });
         }
       }
 
@@ -274,6 +314,11 @@ serve(async (req) => {
         throw new Error(`Failed to update parent generation: ${updateError.message}`);
       }
 
+      logger.logDuration('Multi-output generation fixed', startTime, { 
+        userId: user.id,
+        metadata: { generationId: genId, outputCount: urls.length } 
+      });
+
       return new Response(
         JSON.stringify({ 
           success: true, 
@@ -285,7 +330,10 @@ serve(async (req) => {
     } else {
       // Single output - process as before
       const url = urls[0];
-      console.log('Single output - downloading from:', url);
+      logger.info('Processing single output', { 
+        userId: user.id,
+        metadata: { url, generationId: genId } 
+      });
 
       const response = await fetch(url);
       if (!response.ok) {
@@ -296,7 +344,10 @@ serve(async (req) => {
       const data = new Uint8Array(buffer);
       const ext = determineFileExtension(url, generation.type);
       
-      console.log('Downloaded. Size:', data.length, 'bytes, Extension:', ext);
+      logger.debug('Content downloaded', { 
+        userId: user.id,
+        metadata: { bytes: data.length, extension: ext } 
+      });
 
       // Upload to storage
       mainStoragePath = await uploadToStorage(
@@ -307,7 +358,10 @@ serve(async (req) => {
         generation.type
       );
 
-      console.log('Uploaded to storage:', mainStoragePath);
+      logger.info('Content uploaded to storage', { 
+        userId: user.id,
+        metadata: { storagePath: mainStoragePath } 
+      });
 
       // Update generation to completed
       const { error: updateError } = await supabase
@@ -323,6 +377,11 @@ serve(async (req) => {
         throw new Error(`Failed to update generation: ${updateError.message}`);
       }
 
+      logger.logDuration('Single output generation fixed', startTime, { 
+        userId: user.id,
+        metadata: { generationId: genId, storagePath: mainStoragePath } 
+      });
+
       return new Response(
         JSON.stringify({ 
           success: true, 
@@ -334,7 +393,8 @@ serve(async (req) => {
     }
 
   } catch (error: any) {
-    console.error('Fix generation error:', error);
+    const logger = new EdgeLogger('fix-stuck-generation', requestId, supabase, true);
+    logger.error('Fix generation error', error instanceof Error ? error : undefined);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

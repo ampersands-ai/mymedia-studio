@@ -10,16 +10,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Card, CardContent } from "@/components/ui/card";
 import { VoiceSelector } from "./VoiceSelector";
 import { useState } from "react";
+import type {
+  JsonSchemaProperty,
+  ModelJsonSchema,
+  ModelParameters,
+  ModelParameterValue
+} from "@/types/model-schema";
+import { toModelParameterValue } from "@/types/model-schema";
 
 interface SchemaInputProps {
   name: string;
-  schema: any;
-  value: any;
-  onChange: (value: any) => void;
+  schema: JsonSchemaProperty;
+  value: ModelParameterValue;
+  onChange: (value: ModelParameterValue) => void;
   required?: boolean;
-  filteredEnum?: any[];
-  allValues?: Record<string, any>;
-  modelSchema?: any;
+  filteredEnum?: unknown[];
+  allValues?: ModelParameters;
+  modelSchema?: ModelJsonSchema | null;
   rows?: number;
   modelId?: string;
   provider?: string;
@@ -99,7 +106,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
       
       // If this is an array of image objects, store as [{ inputImage: "base64" }]
       if (isArrayOfImages) {
-        onChange([{ inputImage: base64String }]);
+        onChange([{ inputImage: base64String }] as unknown as ModelParameterValue);
       } else {
         onChange(base64String);
       }
@@ -115,7 +122,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
   // Build array of field texts for detection
   const fieldTexts = [name, schema?.title, schema?.description]
     .filter(Boolean)
-    .map((s: any) => String(s).toLowerCase());
+    .map((s: unknown) => String(s).toLowerCase());
 
   // Robust negative field detector - checks name pattern AND keywords
   const isNegativeField = 
@@ -147,8 +154,9 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
 
   // Elegant, large textarea for primary text
   if (isLikelyPrimaryText) {
-    const charCount = (value || '').length;
-    const maxChars = schema.maxLength || 5000;
+    const stringValue = typeof value === 'string' ? value : (value || '');
+    const charCount = String(stringValue).length;
+    const maxChars = typeof schema.maxLength === 'number' ? schema.maxLength : 5000;
     
     return (
       <Card className="border-2 border-primary/20 shadow-sm hover:border-primary/30 transition-colors">
@@ -164,9 +172,9 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
             <p className="text-sm text-muted-foreground">{schema.description}</p>
           )}
           <Textarea
-            value={value ?? schema.default ?? ""}
+            value={typeof stringValue === 'string' ? stringValue : String(stringValue)}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={schema.description || "Enter your text here..."}
+            placeholder={String(schema.description || "Enter your text here...")}
             rows={10}
             className="min-h-[280px] md:min-h-[340px] resize-y text-base leading-relaxed focus-visible:ring-2 focus-visible:ring-primary"
             maxLength={maxChars}
@@ -183,8 +191,9 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
 
   // Compact textarea for secondary text fields (negative prompt, etc.)
   if (isSecondaryTextField) {
-    const charCount = (value || '').length;
-    const maxChars = schema.maxLength || 500;
+    const stringValue = typeof value === 'string' ? value : String(value || '');
+    const charCount = stringValue.length;
+    const maxChars = typeof schema.maxLength === 'number' ? schema.maxLength : 500;
     
     return (
       <Card className="border border-border shadow-sm">
@@ -200,9 +209,9 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
             <p className="text-xs text-muted-foreground">{schema.description}</p>
           )}
           <Textarea
-            value={value ?? schema.default ?? ""}
+            value={stringValue || String(schema.default || "")}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={schema.description || `Enter ${displayName.toLowerCase()}...`}
+            placeholder={String(schema.description || `Enter ${displayName.toLowerCase()}...`)}
             rows={3}
             className="min-h-[90px] max-h-[140px] resize-y text-sm leading-relaxed"
             maxLength={maxChars}
@@ -219,7 +228,17 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
 
   // Handle array of image objects (e.g., frameImages for Seedance)
   if (isArrayOfImages) {
-    const imageUrl = Array.isArray(value) && value.length > 0 ? value[0].inputImage : null;
+    let imageUrl: string | null = null;
+    
+    if (Array.isArray(value) && value.length > 0) {
+      const firstItem = value[0];
+      if (firstItem !== null && firstItem !== undefined && typeof firstItem === 'object' && 'inputImage' in firstItem) {
+        const inputImageValue = (firstItem as Record<string, unknown>).inputImage;
+        if (inputImageValue) {
+          imageUrl = String(inputImageValue);
+        }
+      }
+    }
     
     return (
       <div className="space-y-2">
@@ -391,7 +410,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
           <DialogTrigger asChild>
             <Button variant="outline" className="w-full justify-start">
               <Volume2 className="w-4 h-4 mr-2" />
-              {value || schema.default || 'Select voice'}
+              {String(value || schema.default || 'Select voice')}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-5xl max-h-[85vh] p-6">
@@ -399,7 +418,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
               <DialogTitle>Choose a Voice</DialogTitle>
             </DialogHeader>
             <VoiceSelector 
-              selectedValue={value || schema.default || 'nPczCjzI2devNBz1zQrb'}
+              selectedValue={String(value || schema.default || 'nPczCjzI2devNBz1zQrb')}
               onSelectVoice={(voiceId, voiceName) => onChange(voiceName)}
             />
           </DialogContent>
@@ -423,8 +442,8 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
         {schema.description && (
           <p className="text-xs text-muted-foreground">{schema.description}</p>
         )}
-        <Select value={selected?.toString()} onValueChange={(val) => {
-          let newVal: any = val;
+        <Select value={selected?.toString() || ''} onValueChange={(val) => {
+          let newVal: ModelParameterValue = val;
           if (schema.type === "boolean") {
             newVal = val === "true";
           } else if (schema.type === "integer") {
@@ -440,9 +459,9 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
             <SelectValue placeholder={`Select ${displayName.toLowerCase()}`} />
           </SelectTrigger>
           <SelectContent>
-            {enumOptions.map((option: any) => (
-              <SelectItem key={option} value={option.toString()}>
-                {option.toString()}
+            {enumOptions.map((option: unknown) => (
+              <SelectItem key={String(option)} value={String(option)}>
+                {String(option)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -457,7 +476,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
       <div className="flex items-center space-x-2">
         <Checkbox
           id={name}
-          checked={value ?? schema.default ?? false}
+          checked={typeof value === 'boolean' ? value : (schema.default === true)}
           onCheckedChange={(checked) => onChange(!!checked)}
         />
         <Label htmlFor={name} className="cursor-pointer">
@@ -473,8 +492,9 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
 
   // Special handling for duration field - use increment/decrement buttons
   if (name === "duration" && (schema.type === "number" || schema.type === "integer")) {
+    const defaultVal = typeof schema.default === 'number' ? schema.default : (typeof schema.minimum === 'number' ? schema.minimum : 1);
     const numericValue = (value === "" || value === undefined || value === null) 
-      ? Math.round(schema.default ?? schema.minimum ?? 1)
+      ? Math.round(defaultVal)
       : Math.round(Number(value));
     
     const step = 1; // Always use integer step for duration
@@ -540,18 +560,19 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
 
   // Handle number types
   if (schema.type === "number" || schema.type === "integer") {
-    const hasMinMax = schema.minimum !== undefined && schema.maximum !== undefined;
+    const hasMinMax = typeof schema.minimum === 'number' && typeof schema.maximum === 'number';
     // Treat empty string as missing value and fallback to default
-    const numericValue = (value === "" || value === undefined || value === null) 
-      ? (schema.default ?? schema.minimum) 
-      : value;
+    const defaultValue = typeof schema.default === 'number' ? schema.default : (typeof schema.minimum === 'number' ? schema.minimum : 0);
+    const numericValue: number = (value === "" || value === undefined || value === null) 
+      ? defaultValue
+      : (typeof value === 'number' ? value : Number(value));
     
     // Smart step calculation based on range and type
     const calculateStep = () => {
       if (schema.type === "integer") return 1;
       
       // For ranges 0-1 or similar small fractional ranges, use 0.01
-      if (hasMinMax && schema.maximum - schema.minimum <= 1) {
+      if (hasMinMax && typeof schema.maximum === 'number' && typeof schema.minimum === 'number' && schema.maximum - schema.minimum <= 1) {
         return 0.01;
       }
       
@@ -559,8 +580,11 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
       return 0.1;
     };
     
+    const minVal = typeof schema.minimum === 'number' ? schema.minimum : 0;
+    const maxVal = typeof schema.maximum === 'number' ? schema.maximum : 100;
+    
     // Show slider for ranges <= 100 or small fractional ranges (e.g., 0-1)
-    if (hasMinMax && (schema.maximum - schema.minimum <= 100 || (schema.maximum - schema.minimum <= 1 && schema.minimum >= 0))) {
+    if (hasMinMax && (maxVal - minVal <= 100 || (maxVal - minVal <= 1 && minVal >= 0))) {
       // Use slider for small ranges
       return (
         <div className="space-y-2">
@@ -569,16 +593,16 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
               {displayName}
               {isRequired && <span className="text-destructive ml-1">*</span>}
             </Label>
-            <span className="text-sm text-muted-foreground">{numericValue ?? schema.minimum}</span>
+            <span className="text-sm text-muted-foreground">{numericValue}</span>
           </div>
           {schema.description && (
             <p className="text-xs text-muted-foreground">{schema.description}</p>
           )}
           <Slider
-            value={[numericValue ?? schema.minimum]}
+            value={[numericValue]}
             onValueChange={([val]) => onChange(val)}
-            min={schema.minimum}
-            max={schema.maximum}
+            min={minVal}
+            max={maxVal}
             step={calculateStep()}
             className="w-full"
           />
@@ -598,10 +622,10 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
         )}
         <Input
           type="number"
-          value={numericValue ?? ""}
+          value={numericValue !== null && numericValue !== undefined ? String(numericValue) : ""}
           onChange={(e) => onChange(schema.type === "integer" ? parseInt(e.target.value) : parseFloat(e.target.value))}
-          min={schema.minimum}
-          max={schema.maximum}
+          min={minVal}
+          max={maxVal}
           step={calculateStep()}
           placeholder={`Enter ${displayName.toLowerCase()}`}
         />
@@ -612,18 +636,20 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
   // Default to text input for strings and unknown types
   // Use Textarea if rows is specified (for longer text like prompts)
   if (rows) {
+    const stringValue = typeof value === 'string' ? value : String(value || schema.default || "");
     return (
       <div className="space-y-2">
         <Textarea
-          value={value ?? schema.default ?? ""}
+          value={stringValue}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={schema.description || `Enter ${displayName.toLowerCase()}`}
+          placeholder={String(schema.description || `Enter ${displayName.toLowerCase()}`)}
           rows={rows}
         />
       </div>
     );
   }
 
+  const stringValue = typeof value === 'string' ? value : String(value || schema.default || "");
   return (
     <div className="space-y-2">
       <Label>
@@ -635,7 +661,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
       )}
       <Input
         type="text"
-        value={value ?? schema.default ?? ""}
+        value={stringValue}
         onChange={(e) => onChange(e.target.value)}
         placeholder={`Enter ${displayName.toLowerCase()}`}
       />

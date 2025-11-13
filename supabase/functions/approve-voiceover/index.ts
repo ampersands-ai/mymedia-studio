@@ -193,26 +193,28 @@ Deno.serve(async (req) => {
     logger.info("Background media fetched", { metadata: { jobId: job_id } });
 
     // Step 4: Assemble video
-    await updateJobStatus(supabaseClient, job_id, 'assembling');
+    await updateJobStatus(supabaseClient, job_id, 'assembling', logger);
     
     // Use voiceover URL directly from database (already stored as full public URL)
     const voiceoverPublicUrl = job.voiceover_url;
-    console.log('Using voiceover URL from database:', voiceoverPublicUrl);
+    logger.info("Using voiceover URL from database", { metadata: { voiceoverPublicUrl } });
     
     // Validate voiceover URL is accessible
-    console.log('[4.1] Validating voiceover URL accessibility');
+    logger.debug("Validating voiceover URL accessibility");
     try {
       const headResponse = await fetch(voiceoverPublicUrl, { method: 'HEAD' });
       if (!headResponse.ok) {
-        console.error('Voiceover URL not accessible:', {
-          url: voiceoverPublicUrl,
-          status: headResponse.status
+        logger.error("Voiceover URL not accessible", undefined, {
+          metadata: {
+            url: voiceoverPublicUrl,
+            status: headResponse.status
+          }
         });
         throw new Error(`Voiceover not accessible: ${headResponse.status}`);
       }
-      console.log('✅ Voiceover URL validated successfully');
+      logger.info("Voiceover URL validated successfully");
     } catch (validateError) {
-      console.error('Voiceover validation failed:', validateError);
+      logger.error("Voiceover validation failed", validateError as Error);
       throw new Error('Failed to access voiceover file');
     }
     
@@ -229,20 +231,21 @@ Deno.serve(async (req) => {
       user.id,
       job.aspect_ratio || '4:5',
       job.caption_style,
-      backgroundMediaType
+      backgroundMediaType,
+      logger
     );
     await supabaseClient.from('video_jobs').update({ shotstack_render_id: renderId }).eq('id', job_id);
-    console.log(`Submitted to Shotstack: ${renderId}`);
+    logger.info("Submitted to Shotstack", { metadata: { renderId, jobId: job_id } });
 
     // Step 5: Poll for completion
-    await pollRenderStatus(supabaseClient, job_id, renderId, user.id);
+    await pollRenderStatus(supabaseClient, job_id, renderId, user.id, logger);
 
     return new Response(
       JSON.stringify({ success: true, job_id }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error in approve-voiceover:', error);
+    logger.error("Error in approve-voiceover", error, { metadata: { jobId: job_id } });
     
     // Revert job to awaiting_voice_approval so user can retry
     if (job_id) {
@@ -266,7 +269,7 @@ Deno.serve(async (req) => {
           })
           .eq('id', job_id);
       } catch (updateError) {
-        console.error('Failed to update job status:', updateError);
+        logger.error("Failed to update job status", updateError as Error, { metadata: { jobId: job_id } });
       }
     }
     
@@ -550,7 +553,8 @@ async function assembleVideo(
   userId: string,
   aspectRatio: string = '4:5',
   captionStyle?: any,
-  backgroundMediaType: 'video' | 'image' = 'video'
+  backgroundMediaType: 'video' | 'image' = 'video',
+  logger?: EdgeLogger
 ): Promise<string> {
   // Default caption style matching official Shotstack format
   const defaultStyle = {
@@ -876,7 +880,7 @@ async function assembleVideo(
   return result.response.id;
 }
 
-async function pollRenderStatus(supabase: any, jobId: string, renderId: string, userId: string) {
+async function pollRenderStatus(supabase: any, jobId: string, renderId: string, userId: string, logger?: EdgeLogger) {
   const maxAttempts = 120;
   let attempts = 0;
 

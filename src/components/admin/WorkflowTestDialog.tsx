@@ -15,6 +15,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { useAuth } from "@/contexts/AuthContext";
 import { logger, generateRequestId } from "@/lib/logger";
+import type { 
+  WorkflowTestInputs, 
+  WorkflowStepModels, 
+  FieldSchemaInfo,
+  WorkflowParameterValue 
+} from "@/types/workflow-parameters";
+import { jsonToSchema } from "@/types/schema";
 
 const testLogger = logger.child({ component: 'WorkflowTestDialog' });
 
@@ -26,12 +33,12 @@ interface WorkflowTestDialogProps {
 
 export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTestDialogProps) => {
   const { user } = useAuth();
-  const [inputs, setInputs] = useState<Record<string, any>>({});
+  const [inputs, setInputs] = useState<WorkflowTestInputs>({});
   const [result, setResult] = useState<{ url: string; credits: number } | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
-  const [stepModels, setStepModels] = useState<Record<number, any>>({});
+  const [stepModels, setStepModels] = useState<WorkflowStepModels>({});
   const { executeWorkflow, isExecuting, progress } = useWorkflowExecution();
 
   // Fetch model schemas for all workflow steps (mirrors Custom Creation)
@@ -39,7 +46,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
     if (!workflow?.workflow_steps || !open) return;
     
     const fetchModels = async () => {
-      const models: Record<number, any> = {};
+      const models: WorkflowStepModels = {};
       for (const step of workflow.workflow_steps) {
         const { data } = await supabase
           .from('ai_models')
@@ -48,7 +55,12 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
           .single();
         
         if (data) {
-          models[step.step_number] = data;
+          models[step.step_number] = {
+            input_schema: jsonToSchema(data.input_schema),
+            max_images: data.max_images,
+            content_type: data.content_type,
+            provider: data.provider
+          };
         }
       }
       setStepModels(models);
@@ -61,10 +73,10 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
   }, [workflow, open]);
 
   // Initialize default values from model schemas (mirrors Custom Creation lines 465-481)
-  const initializeDefaults = (models: Record<number, any>) => {
+  const initializeDefaults = (models: WorkflowStepModels) => {
     if (!workflow?.user_input_fields) return;
     
-    const defaults: Record<string, any> = {};
+    const defaults: WorkflowTestInputs = {};
     
     // For each user input field, find its corresponding model parameter
     for (const field of workflow.user_input_fields) {
@@ -85,8 +97,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
     }
   };
 
-  // Helper to determine field schema info (which model parameter, expected format, etc.)
-  const getFieldSchemaInfo = (userInputFieldName: string, models: Record<number, any> = stepModels) => {
+  const getFieldSchemaInfo = (userInputFieldName: string, models: WorkflowStepModels = stepModels): FieldSchemaInfo | null => {
     if (!workflow?.workflow_steps) return null;
     
     // Find which step maps this user input to a model parameter
@@ -98,12 +109,16 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
       for (const [modelParam, mapping] of Object.entries(step.input_mappings || {})) {
         if (mapping === `user.${userInputFieldName}`) {
           const paramSchema = modelData.input_schema?.properties?.[modelParam];
+          if (!paramSchema) continue;
+          
           return {
-            expectsArray: paramSchema?.type === 'array',
-            isRequired: modelData.input_schema?.required?.includes(modelParam),
-            modelParam: modelParam,
+            expectsArray: paramSchema.type === 'array',
+            isRequired: modelData.input_schema?.required?.includes(modelParam) || false,
+            modelParam,
             stepNumber: step.step_number,
-            maxImages: modelData.max_images || 0
+            paramSchema,
+            contentType: modelData.content_type,
+            maxImages: modelData.max_images
           };
         }
       }
@@ -312,11 +327,13 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
   };
 
   const renderInputField = (field: any) => {
+    const value = inputs[field.name];
+    
     switch (field.type) {
       case 'textarea':
         return (
           <Textarea
-            value={inputs[field.name] || ''}
+            value={typeof value === 'string' ? value : ''}
             onChange={(e) => handleInputChange(field.name, e.target.value)}
             placeholder={field.label}
           />
@@ -326,8 +343,8 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
         return (
           <Input
             type="number"
-            value={inputs[field.name] || ''}
-            onChange={(e) => handleInputChange(field.name, e.target.value)}
+            value={typeof value === 'number' ? value : (typeof value === 'string' ? value : '')}
+            onChange={(e) => handleInputChange(field.name, parseFloat(e.target.value) || 0)}
             placeholder={field.label}
           />
         );
@@ -335,7 +352,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
       case 'select':
         return (
           <Select
-            value={inputs[field.name] || ''}
+            value={typeof value === 'string' ? value : String(value || '')}
             onValueChange={(value) => handleInputChange(field.name, value)}
           >
             <SelectTrigger>
@@ -353,8 +370,8 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
         return (
           <div className="flex items-center space-x-2">
             <Checkbox
-              checked={inputs[field.name] || false}
-              onCheckedChange={(checked) => handleInputChange(field.name, checked)}
+              checked={value === true}
+              onCheckedChange={(checked) => handleInputChange(field.name, checked === true)}
             />
             <Label>{field.label}</Label>
           </div>
@@ -405,7 +422,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
                   id={`${field.name}-${opt}`}
                   name={field.name}
                   value={opt}
-                  checked={inputs[field.name] === opt}
+                  checked={value === opt}
                   onChange={(e) => handleInputChange(field.name, e.target.value)}
                   className="h-4 w-4"
                 />
@@ -418,7 +435,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
       default:
         return (
           <Input
-            value={inputs[field.name] || ''}
+            value={typeof value === 'string' ? value : String(value || '')}
             onChange={(e) => handleInputChange(field.name, e.target.value)}
             placeholder={field.label}
           />

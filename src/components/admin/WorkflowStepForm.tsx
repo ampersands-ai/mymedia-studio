@@ -12,6 +12,14 @@ import { Trash2 } from 'lucide-react';
 import { SchemaInput } from '@/components/generation/SchemaInput';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
+import type { 
+  ModelSchema, 
+  ParameterModes, 
+  MappingSource, 
+  WorkflowParameterValue
+} from '@/types/workflow-parameters';
+import { toModelSchema, toWorkflowParameterValue } from '@/types/workflow-parameters';
+import type { JsonSchemaProperty } from '@/types/schema';
 
 interface WorkflowStepFormProps {
   step: WorkflowStep;
@@ -33,10 +41,10 @@ export function WorkflowStepForm({
   previousSteps,
 }: WorkflowStepFormProps) {
   const [localStep, setLocalStep] = useState(step);
-  const [parameterModes, setParameterModes] = useState<Record<string, 'static' | 'mapped'>>({});
+  const [parameterModes, setParameterModes] = useState<ParameterModes>({});
 
   const selectedModel = availableModels.find(m => m.id === localStep.model_id);
-  const modelSchema = selectedModel?.input_schema as { properties?: Record<string, any>; required?: string[] } | null | undefined;
+  const modelSchema = toModelSchema(selectedModel?.input_schema);
   const hasPromptInSchema = modelSchema?.properties?.prompt !== undefined;
 
   const handleChange = (updates: Partial<WorkflowStep>) => {
@@ -55,7 +63,7 @@ export function WorkflowStepForm({
     }
   };
 
-  const handleParameterChange = (paramName: string, value: any) => {
+  const handleParameterChange = (paramName: string, value: WorkflowParameterValue) => {
     const newParameters = { ...localStep.parameters, [paramName]: value };
     handleChange({ parameters: newParameters });
   };
@@ -81,8 +89,8 @@ export function WorkflowStepForm({
     }
   };
 
-  const getAvailableMappingSources = () => {
-    const sources: { value: string; label: string }[] = [];
+  const getAvailableMappingSources = (): MappingSource[] => {
+    const sources: MappingSource[] = [];
     
     // Add user input fields
     userInputFields.forEach(field => {
@@ -103,7 +111,7 @@ export function WorkflowStepForm({
     return sources;
   };
 
-  const renderModelParameter = (paramName: string, paramSchema: any, isRequired: boolean) => {
+  const renderModelParameter = (paramName: string, paramSchema: JsonSchemaProperty, isRequired: boolean) => {
     const mode = parameterModes[paramName] || 
       (localStep.input_mappings?.[paramName] ? 'mapped' : 'static');
     const displayName = paramSchema.title || paramName.split('_').map((word: string) => 

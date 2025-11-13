@@ -27,7 +27,7 @@ interface WorkflowBuilderProps {
 }
 
 // Custom node component for workflow steps
-const StepNode = ({ data }: { data: any }) => (
+const StepNode = ({ data }: { data: { step: WorkflowStep; onEdit: (step: WorkflowStep) => void } }) => (
   <Card className="p-4 min-w-[200px] border-2 border-primary/20 hover:border-primary/40 transition-colors">
     <div className="flex items-center justify-between mb-2">
       <h4 className="font-semibold text-sm">Step {data.step.step_number}</h4>
@@ -50,7 +50,7 @@ const StepNode = ({ data }: { data: any }) => (
   </Card>
 );
 
-const UserInputNode = ({ data }: { data: any }) => (
+const UserInputNode = ({ data }: { data: { fields: UserInputField[] } }) => (
   <Card className="p-4 min-w-[200px] border-2 border-blue-500/40 bg-blue-500/5">
     <h4 className="font-semibold text-sm mb-2">User Inputs</h4>
     <div className="space-y-1">
@@ -63,7 +63,7 @@ const UserInputNode = ({ data }: { data: any }) => (
   </Card>
 );
 
-const OutputNode = ({ data }: { data: any }) => (
+const OutputNode = ({ data }: { data: { outputKey?: string } }) => (
   <Card className="p-4 min-w-[200px] border-2 border-green-500/40 bg-green-500/5">
     <h4 className="font-semibold text-sm mb-2">Final Output</h4>
     <p className="text-xs text-muted-foreground">

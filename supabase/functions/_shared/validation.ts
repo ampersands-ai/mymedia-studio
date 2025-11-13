@@ -112,6 +112,72 @@ export const CancelGenerationSchema = z.object({
 export type CancelGenerationRequest = z.infer<typeof CancelGenerationSchema>;
 
 /**
+ * Schema for approve-voiceover edge function
+ */
+export const ApproveVoiceoverSchema = z.object({
+  job_id: CommonSchemas.uuid,
+});
+
+export type ApproveVoiceoverRequest = z.infer<typeof ApproveVoiceoverSchema>;
+
+/**
+ * Schema for render-storyboard-video edge function
+ */
+export const RenderStoryboardVideoSchema = z.object({
+  storyboardId: CommonSchemas.uuid,
+  confirmRerender: z.boolean().optional(),
+});
+
+export type RenderStoryboardVideoRequest = z.infer<typeof RenderStoryboardVideoSchema>;
+
+/**
+ * Schema for poll-storyboard-status edge function
+ */
+export const PollStoryboardStatusSchema = z.object({
+  storyboardId: CommonSchemas.uuid,
+});
+
+export type PollStoryboardStatusRequest = z.infer<typeof PollStoryboardStatusSchema>;
+
+/**
+ * Schema for regenerate-storyboard-scene edge function
+ */
+export const RegenerateStoryboardSceneSchema = z.object({
+  storyboardId: CommonSchemas.uuid,
+  sceneId: CommonSchemas.uuid,
+  previousSceneText: z.string().optional(),
+  nextSceneText: z.string().optional(),
+});
+
+export type RegenerateStoryboardSceneRequest = z.infer<typeof RegenerateStoryboardSceneSchema>;
+
+/**
+ * Schema for delete-storyboard edge function
+ */
+export const DeleteStoryboardSchema = z.object({
+  storyboardId: CommonSchemas.uuid,
+});
+
+export type DeleteStoryboardRequest = z.infer<typeof DeleteStoryboardSchema>;
+
+/**
+ * Schema for approve-script edge function
+ */
+export const ApproveScriptSchema = z.object({
+  job_id: CommonSchemas.uuid,
+  edited_script: z.string().optional(),
+});
+
+export type ApproveScriptRequest = z.infer<typeof ApproveScriptSchema>;
+
+/**
+ * Schema for extend-session edge function
+ */
+export const ExtendSessionSchema = z.object({}).optional();
+
+export type ExtendSessionRequest = z.infer<typeof ExtendSessionSchema>;
+
+/**
  * Schema for approve-voiceover
  */
 export const ApproveVoiceoverSchema = z.object({

@@ -45,7 +45,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   const ModelCard = ({ model, isSelected }: { model: ModelRecord; isSelected: boolean }) => {
     const modelGroups = Array.isArray(model.groups) ? model.groups : 
       (model.groups && typeof model.groups === 'object' ? Object.keys(model.groups) : []);
-    const otherGroups = modelGroups.filter((g: string) => g !== selectedGroup);
+    const otherGroups = modelGroups.filter((g: string | number) => g !== selectedGroup);
 
     return (
       <div className={cn(
@@ -88,13 +88,13 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           {otherGroups.length > 0 && (
             <div className="flex items-center gap-1 mt-1 flex-wrap">
               <span className="text-xs text-muted-foreground">Also in:</span>
-              {otherGroups.map((group: string) => (
+              {otherGroups.map((group: string | number) => (
                 <Badge
                   key={group}
                   variant="secondary"
                   className="text-xs px-1.5 py-0 h-5"
                 >
-                  {group.replace(/_/g, " ")}
+                  {String(group).replace(/_/g, " ")}
                 </Badge>
               ))}
             </div>

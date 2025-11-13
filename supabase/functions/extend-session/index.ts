@@ -1,20 +1,28 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { 
+  corsHeaders, 
+  handleOptionsRequest, 
+  createJsonResponse, 
+  createErrorResponse 
+} from '../_shared/cors-headers.ts';
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleOptionsRequest();
   }
 
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
+  const logger = new EdgeLogger('extend-session', requestId);
+
   try {
+    logger.info("Session extension request received");
+
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('No authorization header');
+      logger.error('No authorization header');
+      return createErrorResponse('Unauthorized', 401);
     }
 
     const supabase = createClient(
@@ -28,28 +36,26 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     // Refresh the session
+    logger.info("Refreshing session");
     const { data, error } = await supabase.auth.refreshSession();
     
     if (error) {
-      throw error;
+      logger.error("Session refresh failed", error);
+      return createErrorResponse(error.message, 500);
     }
 
-    console.log("Session extended successfully");
+    logger.logDuration('extend-session', startTime);
+    logger.info("Session extended successfully");
 
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        message: "Session extended successfully",
-        session: data.session
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  } catch (error: any) {
-    console.error("Error extending session:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createJsonResponse({ 
+      success: true,
+      message: "Session extended successfully",
+      session: data.session
+    });
+  } catch (error) {
+    const err = error as Error;
+    logger.error("Error extending session", err);
+    return createErrorResponse(err.message, 500);
   }
 };
 

@@ -40,7 +40,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
    */
   const pollStatus = useCallback(async (generationId: string) => {
     try {
-      logger.debug('Polling generation status', { generationId } as any);
+      logger.debug('Polling generation status', { generationId });
       
       // Fetch parent generation with model info
       const { data: parentData, error } = await supabase
@@ -61,7 +61,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
         .single();
 
       if (error) {
-        logger.error('Failed to fetch generation', error, { generationId } as any);
+        logger.error('Failed to fetch generation', error, { generationId });
         throw error;
       }
 
@@ -106,7 +106,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
               .order('output_index', { ascending: true });
 
             // Extract provider from nested model data
-            const parentProvider = (parentData.ai_models as any)?.provider || null;
+            const parentProvider = (parentData.ai_models as { provider?: string })?.provider || null;
 
             // Build all outputs (parent + children)
             const allOutputs: GenerationOutput[] = [
@@ -114,17 +114,17 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
                 id: parentData.id,
                 storage_path: parentData.storage_path,
                 output_index: 0,
-                provider_task_id: parentData.provider_task_id,
-                model_id: parentData.model_id,
-                provider: parentProvider
+                provider_task_id: parentData.provider_task_id || undefined,
+                model_id: parentData.model_id || undefined,
+                provider: parentProvider || undefined
               },
-              ...(childrenData || []).map((child: any) => ({
-                id: child.id,
-                storage_path: child.storage_path,
-                output_index: child.output_index,
-                provider_task_id: child.provider_task_id,
-                model_id: child.model_id,
-                provider: child.ai_models?.provider || null
+              ...(childrenData || []).map((child: Record<string, unknown>): GenerationOutput => ({
+                id: child.id as string,
+                storage_path: child.storage_path as string,
+                output_index: child.output_index as number,
+                provider_task_id: (child.provider_task_id as string) || undefined,
+                model_id: (child.model_id as string) || undefined,
+                provider: ((child.ai_models as { provider?: string })?.provider) || undefined
               }))
             ];
 

@@ -5,6 +5,7 @@ import { RecentWebhook } from "@/hooks/admin/useWebhookMonitoring";
 import { formatDistanceToNow } from "date-fns";
 import { CheckCircle2, XCircle, Clock, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { ProviderResponse } from "@/types/admin/webhook-monitoring";
 
 interface LiveWebhookFeedProps {
   webhooks: RecentWebhook[];
@@ -91,15 +92,15 @@ export const LiveWebhookFeed = ({ webhooks, loading }: LiveWebhookFeedProps) => 
                         ✓ Storage
                       </span>
                     )}
-                    {webhook.status === 'failed' && webhook.provider_response?.error && (
+                    {webhook.status === 'failed' && webhook.provider_response && (
                       <span className="text-xs text-red-600 dark:text-red-400 truncate">
-                        {webhook.provider_response.error}
+                        {String((webhook.provider_response as ProviderResponse).error || 'Unknown error')}
                       </span>
                     )}
                   </div>
-                  {webhook.status === 'failed' && webhook.provider_response?.storage_error && (
+                  {webhook.status === 'failed' && webhook.provider_response && (webhook.provider_response as ProviderResponse).storage_error && (
                     <div className="mt-2 text-xs bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 p-2 rounded">
-                      Storage Error: {webhook.provider_response.storage_error}
+                      Storage Error: {String((webhook.provider_response as ProviderResponse).storage_error)}
                     </div>
                   )}
                 </div>

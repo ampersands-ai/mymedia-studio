@@ -3,55 +3,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
 import { logger } from '@/lib/logger';
+import type {
+  WebhookStats,
+  RecentWebhook,
+  StorageFailure,
+  ProviderStat,
+  StuckGeneration,
+  ProviderResponse,
+  extractErrorFromResponse,
+  extractStorageError
+} from '@/types/admin/webhook-monitoring';
 
-export interface WebhookStats {
-  successRate: number;
-  totalWebhooks: number;
-  completedCount: number;
-  failedCount: number;
-  processingCount: number;
-  storageFailures: number;
-  stuckGenerations: number;
-  averageLatency: number;
-}
-
-export interface RecentWebhook {
-  id: string;
-  created_at: string;
-  status: string;
-  model_id: string;
-  storage_path: string | null;
-  provider_response: any;
-  tokens_used: number;
-  provider_task_id: string;
-  user_id: string;
-}
-
-export interface StorageFailure {
-  id: string;
-  created_at: string;
-  model_id: string;
-  error_message: string;
-  storage_error: string;
-  user_id: string;
-}
-
-export interface ProviderStat {
-  model_id: string;
-  success_count: number;
-  fail_count: number;
-  failure_rate: number;
-}
-
-export interface StuckGeneration {
-  id: string;
-  created_at: string;
-  status: string;
-  model_id: string;
-  user_id: string;
-  provider_task_id: string;
-  tokens_used: number;
-}
+// Re-export types for backward compatibility
+export type {
+  WebhookStats,
+  RecentWebhook,
+  StorageFailure,
+  ProviderStat,
+  StuckGeneration
+};
 
 const fetchWebhookStats = async (): Promise<WebhookStats> => {
   const { data, error } = await supabase
@@ -104,7 +74,7 @@ const fetchRecentWebhooks = async (): Promise<RecentWebhook[]> => {
     .limit(50);
 
   if (error) throw error;
-  return data || [];
+  return (data || []) as RecentWebhook[];
 };
 
 const fetchStorageFailures = async (): Promise<StorageFailure[]> => {
@@ -119,13 +89,16 @@ const fetchStorageFailures = async (): Promise<StorageFailure[]> => {
   if (error) throw error;
 
   return (data || []).map(item => {
-    const response = item.provider_response as any;
+    const response = item.provider_response as Record<string, unknown> | null;
+    const errorMsg = response?.error as string | undefined;
+    const storageErr = response?.storage_error as string | undefined;
+    
     return {
       id: item.id,
       created_at: item.created_at,
       model_id: item.model_id,
-      error_message: response?.error || 'Unknown error',
-      storage_error: response?.storage_error || response?.error || '',
+      error_message: errorMsg || 'Unknown error',
+      storage_error: storageErr || errorMsg || '',
       user_id: item.user_id,
     };
   });

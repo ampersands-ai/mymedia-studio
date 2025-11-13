@@ -58,14 +58,15 @@ export const WebhookActionsPanel = ({ stuckGenerations, onRefresh }: WebhookActi
 
       toast.success(`Fixed ${stuckGenerations.length} stuck generation${stuckGenerations.length > 1 ? 's' : ''} and refunded tokens`);
       onRefresh();
-    } catch (error: any) {
-      logger.error('Stuck generations fix operation failed', error, {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Failed to fix stuck generations');
+      logger.error('Stuck generations fix operation failed', err, {
         component: 'WebhookActionsPanel',
         stuckCount: stuckGenerations.length,
         generationIds: stuckGenerations.map(g => g.id),
         operation: 'fixStuckGenerations'
       });
-      toast.error(`Failed to fix stuck generations: ${error.message}`);
+      toast.error(`Failed to fix stuck generations: ${err.message}`);
     } finally {
       setFixing(false);
     }

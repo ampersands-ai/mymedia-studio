@@ -57,7 +57,7 @@ async function logApiCall(
       additional_metadata: request.additionalMetadata,
     });
   } catch (error) {
-    console.error('Failed to log API call:', error);
+    // Failed to log API call - silent failure to prevent breaking main flow
   }
 }
 
@@ -393,7 +393,9 @@ async function getBackgroundImages(
     .map((hit: any) => hit.largeImageURL || hit.webformatURL)
     .filter(Boolean);
 
-  console.log(`Selected ${imageUrls.length} background images from Pixabay using permitted URLs`);
+  logger?.debug(`Selected background images from Pixabay`, { 
+    metadata: { count: imageUrls.length, usedPermittedUrls: true } 
+  });
   return imageUrls;
 }
 

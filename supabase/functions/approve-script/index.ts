@@ -99,12 +99,7 @@ async function fetchWithRetry(
       if (response.status === 429 || response.status >= 500) {
         if (attempt < maxRetries - 1) {
         const delay = Math.pow(2, attempt) * 1000; // 0s, 1s, 2s
-          console.log('Retrying request', {
-            attempt: attempt + 1,
-            maxRetries,
-            delayMs: delay,
-            status: response.status
-          });
+          // Note: Cannot use logger here as it's not in scope
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
@@ -117,12 +112,7 @@ async function fetchWithRetry(
       }
       if (attempt < maxRetries - 1) {
         const delay = Math.pow(2, attempt) * 1000;
-        console.log('Network error, retrying', {
-          attempt: attempt + 1,
-          maxRetries,
-          delayMs: delay,
-          errorName: error.name
-        });
+        // Note: Cannot use logger here as it's not in scope
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }

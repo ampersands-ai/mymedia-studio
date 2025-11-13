@@ -4,6 +4,42 @@ import { callRunware } from "./providers/runware.ts";
 import { calculateTokenCost } from "./utils/token-calculator.ts";
 import { uploadToStorage } from "./utils/storage.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+
+// Type definitions
+interface EdgeFunctionUser {
+  id: string;
+  email?: string;
+}
+
+interface Model {
+  id: string;
+  record_id: string;
+  provider: string;
+  content_type: string;
+  base_token_cost: number;
+  cost_multipliers?: Record<string, number>;
+  input_schema?: {
+    properties?: Record<string, unknown>;
+    required?: string[];
+  };
+}
+
+// Zod schema for sync generation requests
+const GenerateContentSyncRequestSchema = z.object({
+  model_id: z.string().optional(),
+  model_record_id: z.string().optional(),
+  prompt: z.string().optional(), // Can be in custom_parameters too
+  custom_parameters: z.record(z.unknown()).optional().default({}),
+  workflow_execution_id: z.string().uuid().optional(),
+  workflow_step_number: z.number().int().optional(),
+  user_id: z.string().uuid().optional(), // For service role
+}).refine(
+  (data) => data.model_id || data.model_record_id,
+  { message: "Either model_id or model_record_id must be provided" }
+);
+
+type GenerateContentSyncRequest = z.infer<typeof GenerateContentSyncRequestSchema>;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -40,7 +76,7 @@ Deno.serve(async (req) => {
     // Check if using service role key (for test-model edge function)
     const isServiceRole = token === supabaseKey;
     
-    let user: any;
+    let user: EdgeFunctionUser | null = null;
     if (isServiceRole) {
       logger.info('Service role authentication - test mode');
       user = null; // Will be set from request body
@@ -50,7 +86,24 @@ Deno.serve(async (req) => {
         logger.error('Authentication failed', authError);
         throw new Error('Unauthorized: Invalid user token');
       }
-      user = userData.user;
+      user = { id: userData.user.id, email: userData.user.email };
+    }
+
+    // Validate request body with Zod
+    const requestBody = await req.json();
+    let validatedRequest: GenerateContentSyncRequest;
+    
+    try {
+      validatedRequest = GenerateContentSyncRequestSchema.parse(requestBody);
+    } catch (zodError: unknown) {
+      logger.error('Request validation failed', zodError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid request parameters',
+          details: zodError instanceof Error ? zodError.message : 'Validation error'
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const { 
@@ -61,7 +114,7 @@ Deno.serve(async (req) => {
       workflow_execution_id,
       workflow_step_number,
       user_id, // For service role calls (test mode)
-    } = await req.json();
+    } = validatedRequest;
     
     // If service role, require user_id in body
     if (isServiceRole) {
@@ -92,7 +145,7 @@ Deno.serve(async (req) => {
     });
 
     // Load model configuration
-    let model: any;
+    let model: Model;
     
     if (model_record_id) {
       // Use record_id - guaranteed unique

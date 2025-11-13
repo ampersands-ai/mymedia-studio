@@ -4,23 +4,34 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useGeneration } from "./useGeneration";
 import { TOAST_IDS, DOWNLOAD_CONFIG } from "@/constants/generation";
-import type { GenerationState } from "./useGenerationState";
-import type { OnboardingProgress } from "./useOnboarding";
+import { handleError, StorageError } from "@/lib/errors";
+import { logger, generateRequestId } from '@/lib/logger';
 import { clientLogger } from "@/lib/logging/client-logger";
-import { logger } from '@/lib/logger';
+import {
+  GenerationState,
+  GenerationStateSchema,
+  OnboardingProgress,
+  OnboardingProgressSchema,
+  GenerationErrorCode,
+} from "@/types/generation";
+import { z } from "zod";
+
+const actionsLogger = logger.child({ component: 'useGenerationActions' });
 
 /**
- * Options for generation actions hook
+ * Options schema for generation actions hook
  */
-interface UseGenerationActionsOptions {
-  generationState: GenerationState;
-  updateGenerationState: (partial: Partial<GenerationState>) => void;
-  startPolling: (id: string) => void;
-  onboardingProgress?: OnboardingProgress | null;
-  updateOnboardingProgress?: (updates: Partial<OnboardingProgress['checklist']>) => void;
-  setFirstGeneration?: (id: string) => void;
-  setShowConfetti?: (show: boolean) => void;
-}
+const UseGenerationActionsOptionsSchema = z.object({
+  generationState: GenerationStateSchema,
+  updateGenerationState: z.function().args(z.custom<Partial<GenerationState>>()).returns(z.void()),
+  startPolling: z.function().args(z.string()).returns(z.void()),
+  onboardingProgress: OnboardingProgressSchema.nullable().optional(),
+  updateOnboardingProgress: z.function().args(z.custom<Partial<OnboardingProgress['checklist']>>()).returns(z.void()).optional(),
+  setFirstGeneration: z.function().args(z.string()).returns(z.void()).optional(),
+  setShowConfetti: z.function().args(z.boolean()).returns(z.void()).optional(),
+});
+
+type UseGenerationActionsOptions = z.infer<typeof UseGenerationActionsOptionsSchema>;
 
 /**
  * Hook to handle all generation-related actions
@@ -32,17 +43,23 @@ export const useGenerationActions = (options: UseGenerationActionsOptions) => {
   const { generate, isGenerating } = useGeneration();
 
   /**
-   * Handle generation request
+   * Handle generation request with validation and error handling
    */
   const handleGenerate = useCallback(async () => {
+    const requestId = generateRequestId();
+    const timer = actionsLogger.startTimer('handleGenerate', { requestId });
+    
     const { generationState, updateGenerationState, startPolling, onboardingProgress, updateOnboardingProgress, setFirstGeneration, setShowConfetti } = options;
 
+    // Validate inputs
     if (!generationState.prompt.trim()) {
+      actionsLogger.warn("Empty prompt provided", { requestId });
       toast.error("Please enter a prompt");
       return;
     }
 
     if (!generationState.selectedTemplate) {
+      actionsLogger.warn("No template selected", { requestId });
       toast.error("No template selected");
       return;
     }
@@ -57,7 +74,7 @@ export const useGenerationActions = (options: UseGenerationActionsOptions) => {
       });
       
       // Build custom parameters from template configuration
-      const customParameters: Record<string, any> = {};
+      const customParameters: Record<string, unknown> = {};
       
       if (generationState.selectedTemplate.hidden_field_defaults) {
         Object.assign(customParameters, generationState.selectedTemplate.hidden_field_defaults);

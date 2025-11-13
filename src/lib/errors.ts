@@ -30,14 +30,14 @@ export class NetworkError extends AppError {
 }
 
 export class StorageError extends AppError {
-  constructor(message: string, metadata?: Record<string, unknown>) {
-    super('STORAGE_ERROR', message, 'high', false, metadata);
+  constructor(code: string, message: string, metadata?: Record<string, unknown>) {
+    super(`STORAGE_${code}`, message, 'high', false, metadata);
   }
 }
 
 export class GenerationError extends AppError {
-  constructor(message: string, metadata?: Record<string, unknown>) {
-    super('GENERATION_ERROR', message, 'medium', true, metadata);
+  constructor(code: string, message: string, metadata?: Record<string, unknown>) {
+    super(`GENERATION_${code}`, message, 'medium', true, metadata);
   }
 }
 
@@ -59,10 +59,10 @@ export function handleError(error: unknown, context?: Record<string, unknown>): 
       return new ValidationError(error.message, context);
     }
     if (msg.includes('storage') || msg.includes('bucket')) {
-      return new StorageError(error.message, context);
+      return new StorageError('ERROR', error.message, context);
     }
     if (msg.includes('generation') || msg.includes('timeout')) {
-      return new GenerationError(error.message, context);
+      return new GenerationError('ERROR', error.message, context);
     }
     
     return new AppError('UNKNOWN_ERROR', error.message, 'medium', false, {

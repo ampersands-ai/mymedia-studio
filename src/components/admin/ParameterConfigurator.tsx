@@ -15,27 +15,19 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
-
-interface ParameterConfig {
-  name: string;
-  type: string;
-  description?: string;
-  required?: boolean;
-  enum?: string[];
-  default?: any;
-  userEditable: boolean;
-  defaultValue: any;
-}
+import type { ParameterConfiguration } from "@/types/workflow-parameters";
+import { toWorkflowParameterValue } from "@/types/workflow-parameters";
+import type { JsonSchema, ParameterValue } from "@/types/schema";
 
 interface ParameterConfiguratorProps {
-  inputSchema: any;
+  inputSchema: JsonSchema;
   userEditableFields: string[];
-  hiddenFieldDefaults: Record<string, any>;
-  presetValues: Record<string, any>;
+  hiddenFieldDefaults: Record<string, ParameterValue>;
+  presetValues: Record<string, ParameterValue>;
   onConfigChange: (config: {
     userEditableFields: string[];
-    hiddenFieldDefaults: Record<string, any>;
-    presetValues: Record<string, any>;
+    hiddenFieldDefaults: Record<string, ParameterValue>;
+    presetValues: Record<string, ParameterValue>;
   }) => void;
 }
 
@@ -46,7 +38,7 @@ export function ParameterConfigurator({
   presetValues,
   onConfigChange,
 }: ParameterConfiguratorProps) {
-  const [parameters, setParameters] = useState<ParameterConfig[]>([]);
+  const [parameters, setParameters] = useState<ParameterConfiguration[]>([]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   useEffect(() => {
@@ -58,17 +50,17 @@ export function ParameterConfigurator({
     const props = inputSchema.properties;
     const required = inputSchema.required || [];
 
-    const params: ParameterConfig[] = Object.entries(props).map(([name, schema]: [string, any]) => ({
+    const params: ParameterConfiguration[] = Object.entries(props).map(([name, schema]) => ({
       name,
       type: schema.type || "string",
       description: schema.description,
       required: required.includes(name),
-      enum: schema.enum,
+      enum: schema.enum?.map(String),
       default: schema.default,
       userEditable: userEditableFields.includes(name),
       defaultValue: userEditableFields.includes(name) 
-        ? presetValues[name] || ""
-        : hiddenFieldDefaults[name] || schema.default || "",
+        ? presetValues[name] ?? ""
+        : hiddenFieldDefaults[name] ?? schema.default ?? "",
     }));
 
     setParameters(params);
@@ -100,7 +92,7 @@ export function ParameterConfigurator({
     emitChanges(updatedParams);
   };
 
-  const handleDefaultValueChange = (paramName: string, value: any) => {
+  const handleDefaultValueChange = (paramName: string, value: ParameterValue) => {
     const updatedParams = parameters.map(p =>
       p.name === paramName ? { ...p, defaultValue: value } : p
     );
@@ -117,10 +109,10 @@ export function ParameterConfigurator({
     emitChanges(updatedParams);
   };
 
-  const emitChanges = (params: ParameterConfig[]) => {
+  const emitChanges = (params: ParameterConfiguration[]) => {
     const newUserEditable = params.filter(p => p.userEditable).map(p => p.name);
-    const newHiddenDefaults: Record<string, any> = {};
-    const newPresetValues: Record<string, any> = {};
+    const newHiddenDefaults: Record<string, ParameterValue> = {};
+    const newPresetValues: Record<string, ParameterValue> = {};
 
     params.forEach(p => {
       if (p.userEditable && p.defaultValue !== "" && p.defaultValue !== null && p.defaultValue !== undefined) {
@@ -137,7 +129,7 @@ export function ParameterConfigurator({
     });
   };
 
-  const renderValueInput = (param: ParameterConfig) => {
+  const renderValueInput = (param: ParameterConfiguration) => {
     if (param.enum) {
       return (
         <Select
@@ -176,11 +168,12 @@ export function ParameterConfigurator({
     }
 
     if (param.type === "number" || param.type === "integer") {
+      const numValue = typeof param.defaultValue === 'number' ? param.defaultValue : '';
       return (
         <Input
           type="number"
-          value={param.defaultValue || ""}
-          onChange={(e) => handleDefaultValueChange(param.name, e.target.value ? Number(e.target.value) : "")}
+          value={numValue}
+          onChange={(e) => handleDefaultValueChange(param.name, e.target.value ? Number(e.target.value) : null)}
           placeholder={param.userEditable ? "Preset value (optional)" : "Default value (required)"}
         />
       );
@@ -193,7 +186,7 @@ export function ParameterConfigurator({
           onChange={(e) => {
             try {
               const parsed = JSON.parse(e.target.value);
-              handleDefaultValueChange(param.name, parsed);
+              handleDefaultValueChange(param.name, parsed as ParameterValue);
             } catch {
               handleDefaultValueChange(param.name, e.target.value);
             }
@@ -208,8 +201,8 @@ export function ParameterConfigurator({
     return (
       <Input
         type="text"
-        value={param.defaultValue || ""}
-        onChange={(e) => handleDefaultValueChange(param.name, e.target.value)}
+        value={String(param.defaultValue || "")}
+        onChange={(e) => handleDefaultValueChange(param.name, e.target.value || null)}
         placeholder={param.userEditable ? "Preset value (optional)" : "Default value (required)"}
       />
     );

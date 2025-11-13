@@ -1,4 +1,7 @@
 import { useCallback } from "react";
+import type { Database } from "@/integrations/supabase/types";
+
+type AIModel = Database['public']['Tables']['ai_models']['Row'];
 
 /**
  * Schema parsing utilities for dynamic form generation
@@ -8,15 +11,15 @@ export const useSchemaHelpers = () => {
   /**
    * Get required fields from model schema
    */
-  const getSchemaRequiredFields = useCallback((model: { custom_parameters?: Record<string, { required?: boolean }> } | null): string[] => {
-    if (!model) return [];
-    return model?.input_schema?.required || [];
+  const getSchemaRequiredFields = useCallback((model: AIModel | null): string[] => {
+    if (!model?.input_schema || typeof model.input_schema !== 'object') return [];
+    return (model.input_schema as any)?.required || [];
   }, []);
 
   /**
    * Dynamically detect image field from schema
    */
-  const getImageFieldInfo = useCallback((model: { custom_parameters?: Record<string, { type?: string; accepts_image?: boolean }> } | null): { 
+  const getImageFieldInfo = useCallback((model: AIModel | null): { 
     fieldName: string | null; 
     isRequired: boolean; 
     isArray: boolean; 
@@ -26,12 +29,13 @@ export const useSchemaHelpers = () => {
       return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
     }
     
-    if (!model.input_schema?.properties) {
+    const schema = model.input_schema as any;
+    if (!schema?.properties) {
       return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
     }
     
-    const properties = model.input_schema.properties;
-    const required = model.input_schema.required || [];
+    const properties = schema.properties;
+    const required = schema.required || [];
     
     // Look for image-like fields
     const imageFieldNames = [
@@ -104,10 +108,10 @@ export const useSchemaHelpers = () => {
    */
   const findPrimaryVoiceKey = useCallback((
     properties: Record<string, any> | undefined, 
-    modelId?: string
+    model?: AIModel | null
   ): string | undefined => {
     if (!properties) return undefined;
-    if (!modelId || !modelId.toLowerCase().includes("elevenlabs")) return undefined;
+    if (!model?.provider || !model.provider.toLowerCase().includes("elevenlabs")) return undefined;
 
     const keywords = ["voice", "voice_id", "voice name"];  
     let bestKey: string | undefined;
@@ -139,7 +143,7 @@ export const useSchemaHelpers = () => {
   /**
    * Determine max prompt length based on model and customMode
    */
-  const getMaxPromptLength = useCallback((model: { custom_parameters?: Record<string, { maxLength?: number }> } | null, customMode?: boolean): number => {
+  const getMaxPromptLength = useCallback((model: AIModel | null, customMode?: boolean): number => {
     if (!model) return 5000;
     
     // Check if this is a Kie.ai audio model with customMode false

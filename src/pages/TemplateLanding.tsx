@@ -94,15 +94,15 @@ export default function TemplateLanding() {
           onTryTemplate={handleTryTemplate}
         />
 
-        <TemplateExampleGallery examples={template.example_images} />
+        <TemplateExampleGallery examples={(template.example_images as any) || []} />
 
         <TemplateHowItWorks
-          steps={template.steps}
+          steps={(template.steps as any) || []}
           demoVideoUrl={template.demo_video_url}
         />
 
         <TemplateUseCases
-          useCases={template.use_cases}
+          useCases={(template.use_cases as any) || []}
           targetAudience={template.target_audience}
         />
 
@@ -114,7 +114,7 @@ export default function TemplateLanding() {
           </section>
         )}
 
-        <TemplateFAQ faqs={template.faqs} />
+        <TemplateFAQ faqs={(template.faqs as any) || []} />
 
         <TemplateRelatedCards templates={relatedTemplates || []} />
 

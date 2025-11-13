@@ -4,11 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNativeCamera } from "@/hooks/useNativeCamera";
 import { IMAGE_UPLOAD_CONFIG } from "@/constants/custom-creation";
 import { getImageFieldInfo } from "@/lib/custom-creation-utils";
+import type { Database } from "@/integrations/supabase/types";
+
+type AIModel = Database['public']['Tables']['ai_models']['Row'];
 
 /**
  * Image upload management with validation and native camera support
  */
-export const useImageUpload = (currentModel: { record_id: string; content_type: string } | null) => {
+export const useImageUpload = (currentModel: AIModel | null) => {
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { pickImage, pickMultipleImages, isLoading: cameraLoading, isNative } = useNativeCamera();

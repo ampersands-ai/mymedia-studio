@@ -8,6 +8,10 @@ export interface GenerationOutput {
   id: string;
   storage_path: string;
   output_index: number;
+  provider_task_id?: string;
+  model_id?: string;
+  provider?: string;
+  type?: string;
 }
 
 /**

@@ -4,7 +4,13 @@ import { VideoFromAudioPreview } from "@/components/generation/VideoFromAudioPre
 import { VideoGenerationProgress } from "@/components/video/VideoGenerationProgress";
 
 interface VideoGenerationListProps {
-  videoGenerations: any[];
+  videoGenerations: Array<{ 
+    id: string; 
+    status: string; 
+    storage_path?: string; 
+    output_index: number;
+    type?: string;
+  }>;
   parentGenerationId: string | null;
   onRegenerate?: (outputIndex: number) => void;
   generatingVideoIndex: number | null;

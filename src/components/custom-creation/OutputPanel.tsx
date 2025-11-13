@@ -33,7 +33,13 @@ interface OutputPanelProps {
   onRegenerateCaption: () => Promise<void>;
   onCopyCaption: () => void;
   onCopyHashtags: () => void;
-  childVideoGenerations: any[];
+  childVideoGenerations: Array<{ 
+    id: string; 
+    status: string; 
+    storage_path?: string; 
+    output_index: number; 
+    type?: string;
+  }>;
   parentGenerationId: string | null;
   onDownloadSuccess: () => void;
   templateBeforeImage: string | null;

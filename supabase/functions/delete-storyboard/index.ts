@@ -1,15 +1,25 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { 
+  DeleteStoryboardSchema, 
+  validateRequest,
+  createValidationErrorResponse 
+} from '../_shared/validation.ts';
+import { 
+  corsHeaders, 
+  handleOptionsRequest, 
+  createJsonResponse, 
+  createErrorResponse 
+} from '../_shared/cors-headers.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleOptionsRequest();
   }
+
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
+  const logger = new EdgeLogger('delete-storyboard', requestId);
 
   try {
     const supabaseClient = createClient(
@@ -24,16 +34,24 @@ Deno.serve(async (req) => {
 
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
-      throw new Error('Unauthorized');
+      logger.error('Unauthorized access attempt');
+      return createErrorResponse('Unauthorized', 401);
     }
 
-    const { storyboardId } = await req.json();
-
-    if (!storyboardId) {
-      throw new Error('storyboardId is required');
+    const body = await req.json();
+    
+    // Validate request
+    const validation = validateRequest(DeleteStoryboardSchema, body, logger, 'delete-storyboard');
+    if (!validation.success) {
+      return createValidationErrorResponse(validation.formattedErrors);
     }
+    
+    const { storyboardId } = validation.data;
 
-    console.log('[delete-storyboard] Deleting storyboard:', storyboardId, 'for user:', user.id);
+    logger.info('Deleting storyboard', { 
+      userId: user.id, 
+      metadata: { storyboardId } 
+    });
 
     // Verify storyboard belongs to the user
     const { data: storyboard, error: verifyError } = await supabaseClient
@@ -44,7 +62,10 @@ Deno.serve(async (req) => {
       .single();
 
     if (verifyError || !storyboard) {
-      throw new Error('Storyboard not found or unauthorized');
+      logger.error('Storyboard not found or unauthorized', verifyError, { 
+        metadata: { storyboardId } 
+      });
+      return createErrorResponse('Storyboard not found or unauthorized', 404);
     }
 
     // Delete all scenes first (foreign key constraint)
@@ -54,8 +75,8 @@ Deno.serve(async (req) => {
       .eq('storyboard_id', storyboardId);
 
     if (scenesError) {
-      console.error('[delete-storyboard] Error deleting scenes:', scenesError);
-      throw new Error('Failed to delete storyboard scenes');
+      logger.error('Error deleting scenes', scenesError);
+      return createErrorResponse('Failed to delete storyboard scenes', 500);
     }
 
     // Delete the storyboard
@@ -65,23 +86,21 @@ Deno.serve(async (req) => {
       .eq('id', storyboardId);
 
     if (storyboardError) {
-      console.error('[delete-storyboard] Error deleting storyboard:', storyboardError);
-      throw new Error('Failed to delete storyboard');
+      logger.error('Error deleting storyboard', storyboardError);
+      return createErrorResponse('Failed to delete storyboard', 500);
     }
 
-    console.log('[delete-storyboard] Successfully deleted storyboard and scenes');
+    logger.logDuration('delete-storyboard', startTime, { 
+      userId: user.id, 
+      metadata: { storyboardId } 
+    });
+    logger.info('Successfully deleted storyboard and scenes');
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createJsonResponse({ success: true });
 
   } catch (error) {
-    console.error('[delete-storyboard] Error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    const err = error as Error;
+    logger.error('Delete storyboard failed', err);
+    return createErrorResponse(err.message, 500);
   }
 });

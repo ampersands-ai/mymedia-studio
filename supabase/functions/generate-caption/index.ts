@@ -145,8 +145,6 @@ IMPORTANT: Each hashtag MUST include the # symbol (e.g., #Fashion, #Style).`;
         hashtags_count: hashtags.length 
       }
     });
-      throw new Error('No tool call in AI response');
-    }
 
     // Ensure all hashtags have # symbol (Zod validates they start with #)
     const formattedHashtags = hashtags.map(tag => 

@@ -1,15 +1,20 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  const startTime = Date.now();
+  const requestId = crypto.randomUUID();
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const logger = new EdgeLogger('log-activity', requestId);
 
   try {
     const supabase = createClient(
@@ -46,16 +51,28 @@ serve(async (req) => {
       });
 
     if (insertError) {
-      console.error('Failed to insert activity log:', insertError);
+      logger.error('Failed to insert activity log', insertError, {
+        userId,
+        metadata: { activity_type: body.activity_type }
+      });
       throw insertError;
     }
+
+    logger.info('Activity logged', {
+      userId,
+      metadata: { activity_type: body.activity_type, route_path: body.route_path }
+    });
+
+    logger.logDuration('log_activity', startTime, { userId });
 
     return new Response(
       JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error in log-activity function:', error);
+    logger.error('Error in log-activity function', error);
+    logger.logDuration('log_activity', startTime, { status: 'error' });
+    
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

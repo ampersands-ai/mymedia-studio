@@ -25,6 +25,7 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const webhookStartTime = Date.now();
   const startTime = Date.now();
   let generationId: string | undefined;
   let taskId: string | undefined;
@@ -245,6 +246,24 @@ Deno.serve(async (req) => {
     } else {
       webhookLogger.error('Webhook processing failed', error, { provider: 'midjourney' });
     }
+
+    // Track webhook analytics for failure
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    
+    await supabase.from('webhook_analytics').insert({
+      provider: 'midjourney',
+      event_type: 'generation_complete',
+      status: 'failure',
+      duration_ms: Date.now() - webhookStartTime,
+      error_code: error.code || 'UNKNOWN_ERROR',
+      metadata: { generation_id: generationId, task_id: taskId, error: error.message }
+    }).then(({ error: analyticsError }) => {
+      if (analyticsError) webhookLogger.error('Failed to track analytics', analyticsError);
+    });
+
     return createSafeErrorResponse(error, 'midjourney-webhook', corsHeaders);
   }
 });

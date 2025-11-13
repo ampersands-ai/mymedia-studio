@@ -7,6 +7,8 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const webhookStartTime = Date.now();
+  
   // Phase 3: Add health check endpoint for webhook diagnostics
   if (req.method === 'GET') {
     console.log('[json2video-webhook] Health check requested');
@@ -155,6 +157,23 @@ Deno.serve(async (req) => {
     console.error('[json2video-webhook] Error:', {
       message: error instanceof Error ? error.message : 'Unknown',
       stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Track webhook analytics for failure
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    
+    await supabase.from('webhook_analytics').insert({
+      provider: 'json2video',
+      event_type: 'render_complete',
+      status: 'failure',
+      duration_ms: Date.now() - webhookStartTime,
+      error_code: 'WEBHOOK_ERROR',
+      metadata: { error: error instanceof Error ? error.message : 'Unknown error' }
+    }).then(({ error: analyticsError }) => {
+      if (analyticsError) console.error('[json2video-webhook] Failed to track analytics:', analyticsError);
     });
     
     return new Response(

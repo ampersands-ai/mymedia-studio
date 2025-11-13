@@ -1,7 +1,7 @@
 // Dodo Payments Webhook Handler - v2.0 - Fresh Deployment
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Webhook } from "https://esm.sh/svix@1";
+import { webhookLogger } from "../_shared/logger.ts";
 
 const WEBHOOK_VERSION = "2.0-fresh-deployment";
 
@@ -19,10 +19,12 @@ const PLAN_TOKENS = {
 };
 
 // Log deployment on boot
-console.log(`🚀 Dodo Webhook v${WEBHOOK_VERSION} DEPLOYED AND READY`);
-console.log(`📋 Supports both svix-* and webhook-* header formats`);
+webhookLogger.info('Dodo Webhook deployed', { 
+  version: WEBHOOK_VERSION,
+  features: ['svix-* headers', 'webhook-* headers']
+});
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }

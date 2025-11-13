@@ -275,16 +275,11 @@ async function handleWebhookEvent(supabase: any, event: any) {
     event_type: eventType,
     status: 'success',
     duration_ms: Date.now() - webhookStartTime,
-    metadata: { event_type: eventType, user_id: userId, product: productName }
+    metadata: { event_type: eventType, user_id: userId }
   }).then(({ error }) => {
     if (error) console.error('Failed to track analytics:', error);
   });
-
-  console.log(`✅ Webhook processed successfully in ${Date.now() - startTime}ms`);
-  return new Response(
-    JSON.stringify({ success: true, eventType }),
-    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
+}
 
 async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;

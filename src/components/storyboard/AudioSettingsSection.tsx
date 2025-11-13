@@ -12,10 +12,20 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import type { 
+  MusicSettings,
+  MusicSettingsUpdate
+} from '@/types/media-settings';
+import { 
+  getMusicSettings,
+  volumeToPercentage,
+  percentageToVolume,
+  normalizeFadeDuration
+} from '@/types/media-settings';
 
 interface AudioSettingsSectionProps {
-  musicSettings: any;
-  onUpdate: (settings: any) => void;
+  musicSettings: Partial<MusicSettings> | null | undefined;
+  onUpdate: (settings: MusicSettingsUpdate) => void;
   isRendering: boolean;
 }
 
@@ -23,10 +33,12 @@ interface AudioSettingsSectionProps {
  * Collapsible audio settings with volume, fade in/out controls
  */
 export const AudioSettingsSection = ({
-  musicSettings,
+  musicSettings: musicSettingsProp,
   onUpdate,
   isRendering,
 }: AudioSettingsSectionProps) => {
+  const musicSettings = getMusicSettings(musicSettingsProp);
+  
   return (
     <Collapsible className="space-y-3">
       <CollapsibleTrigger asChild>
@@ -37,14 +49,14 @@ export const AudioSettingsSection = ({
       </CollapsibleTrigger>
       <CollapsibleContent className="space-y-4 pl-4">
         <div className="space-y-2">
-          <Label className="text-xs">Music Volume: {Math.round((musicSettings?.volume || 0.05) * 100)}%</Label>
+          <Label className="text-xs">Music Volume: {volumeToPercentage(musicSettings.volume)}%</Label>
           <Slider
-            value={[(musicSettings?.volume || 0.05) * 100]}
+            value={[volumeToPercentage(musicSettings.volume)]}
             onValueChange={([value]) => {
               onUpdate({
                 music_settings: {
                   ...musicSettings,
-                  volume: value / 100,
+                  volume: percentageToVolume(value),
                 },
               });
             }}
@@ -58,14 +70,14 @@ export const AudioSettingsSection = ({
         
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
-            <Label className="text-xs">Fade In: {musicSettings?.fadeIn || 2}s</Label>
+            <Label className="text-xs">Fade In: {musicSettings.fadeIn}s</Label>
             <Slider
-              value={[musicSettings?.fadeIn || 2]}
+              value={[musicSettings.fadeIn]}
               onValueChange={([value]) => {
                 onUpdate({
                   music_settings: {
                     ...musicSettings,
-                    fadeIn: value,
+                    fadeIn: normalizeFadeDuration(value),
                   },
                 });
               }}
@@ -78,14 +90,14 @@ export const AudioSettingsSection = ({
           </div>
           
           <div className="space-y-2">
-            <Label className="text-xs">Fade Out: {musicSettings?.fadeOut || 2}s</Label>
+            <Label className="text-xs">Fade Out: {musicSettings.fadeOut}s</Label>
             <Slider
-              value={[musicSettings?.fadeOut || 2]}
+              value={[musicSettings.fadeOut]}
               onValueChange={([value]) => {
                 onUpdate({
                   music_settings: {
                     ...musicSettings,
-                    fadeOut: value,
+                    fadeOut: normalizeFadeDuration(value),
                   },
                 });
               }}

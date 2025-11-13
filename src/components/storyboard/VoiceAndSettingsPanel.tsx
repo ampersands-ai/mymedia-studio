@@ -20,6 +20,7 @@ import { SubtitleSettingsSection } from './SubtitleSettingsSection';
 import { AudioSettingsSection } from './AudioSettingsSection';
 import { ImageAnimationSection } from './ImageAnimationSection';
 import type { Storyboard } from '@/types/storyboard';
+import type { ImageAnimationSettings } from '@/types/media-settings';
 
 interface VoiceAndSettingsPanelProps {
   storyboard: Storyboard;
@@ -132,7 +133,7 @@ export const VoiceAndSettingsPanel = ({
 
           {/* Image Animation */}
           <ImageAnimationSection
-            animationSettings={storyboard?.image_animation_settings}
+            animationSettings={storyboard?.image_animation_settings as Partial<ImageAnimationSettings> | undefined}
             onUpdate={onUpdateSettings}
             isRendering={isRendering}
           />

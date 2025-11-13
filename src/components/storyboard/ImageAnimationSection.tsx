@@ -13,21 +13,35 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import type { 
+  ImageAnimationSettings,
+  ImageAnimationSettingsUpdate,
+  AnimationPosition
+} from '@/types/media-settings';
+import { getImageAnimationSettings, normalizeZoom } from '@/types/media-settings';
 
 interface ImageAnimationSectionProps {
-  animationSettings: any;
-  onUpdate: (settings: any) => void;
+  animationSettings: Partial<ImageAnimationSettings> | null | undefined;
+  onUpdate: (settings: ImageAnimationSettingsUpdate) => void;
   isRendering: boolean;
 }
+
+const ANIMATION_POSITIONS: { value: AnimationPosition; label: string }[] = [
+  { value: 'center-center', label: 'Center' },
+  { value: 'top-center', label: 'Top Center' },
+  { value: 'bottom-center', label: 'Bottom Center' },
+];
 
 /**
  * Collapsible image animation settings with zoom and position controls
  */
 export const ImageAnimationSection = ({
-  animationSettings,
+  animationSettings: animationSettingsProp,
   onUpdate,
   isRendering,
 }: ImageAnimationSectionProps) => {
+  const animationSettings = getImageAnimationSettings(animationSettingsProp);
+  
   return (
     <Collapsible className="space-y-3">
       <CollapsibleTrigger asChild>
@@ -38,14 +52,14 @@ export const ImageAnimationSection = ({
       </CollapsibleTrigger>
       <CollapsibleContent className="space-y-4 pl-4">
         <div className="space-y-2">
-          <Label className="text-xs">Zoom Level: {(animationSettings?.zoom || 2).toFixed(1)}x</Label>
+          <Label className="text-xs">Zoom Level: {animationSettings.zoom.toFixed(1)}x</Label>
           <Slider
-            value={[animationSettings?.zoom || 2]}
+            value={[animationSettings.zoom]}
             onValueChange={([value]) => {
               onUpdate({
                 image_animation_settings: {
                   ...animationSettings,
-                  zoom: value,
+                  zoom: normalizeZoom(value),
                 },
               });
             }}
@@ -60,8 +74,8 @@ export const ImageAnimationSection = ({
         <div className="space-y-2">
           <Label className="text-xs">Position</Label>
           <Select 
-            value={animationSettings?.position || 'center-center'}
-            onValueChange={(value) => {
+            value={animationSettings.position}
+            onValueChange={(value: AnimationPosition) => {
               onUpdate({
                 image_animation_settings: {
                   ...animationSettings,
@@ -75,9 +89,11 @@ export const ImageAnimationSection = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-background z-50">
-              <SelectItem value="center-center">Center</SelectItem>
-              <SelectItem value="top-center">Top Center</SelectItem>
-              <SelectItem value="bottom-center">Bottom Center</SelectItem>
+              {ANIMATION_POSITIONS.map(({ value, label }) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

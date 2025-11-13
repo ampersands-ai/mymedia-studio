@@ -1,5 +1,4 @@
-import { serve } from "std/http/server.ts";
-import { createClient } from "supabase";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,7 +9,7 @@ const corsHeaders = {
  * Auto-timeout generations stuck in processing for more than 10 minutes
  * This function should be called periodically (every 5 minutes via cron)
  */
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }

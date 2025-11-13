@@ -6,6 +6,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { renderUnknownValue } from "@/types/admin/model-health-execution";
 
 interface FlowStepTooltipProps {
   step: FlowStep;
@@ -18,12 +19,6 @@ export const FlowStepTooltip = ({ step, children }: FlowStepTooltipProps) => {
   if (!hasDetails) {
     return <>{children}</>;
   }
-
-  const renderValue = (value: any): string => {
-    if (value === null || value === undefined) return '—';
-    if (typeof value === 'object') return JSON.stringify(value, null, 2);
-    return String(value);
-  };
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -59,7 +54,7 @@ export const FlowStepTooltip = ({ step, children }: FlowStepTooltipProps) => {
                           {key.replace(/_/g, ' ')}
                         </div>
                         <div className="font-mono text-[11px] text-foreground bg-muted/50 rounded px-2 py-1.5 whitespace-pre-wrap break-all">
-                          {renderValue(value)}
+                          {renderUnknownValue(value)}
                         </div>
                       </div>
                     ))}
@@ -75,7 +70,7 @@ export const FlowStepTooltip = ({ step, children }: FlowStepTooltipProps) => {
                         {key.replace(/_/g, ' ')}
                       </div>
                       <div className="font-mono text-[11px] text-foreground bg-muted/50 rounded px-2 py-1.5 whitespace-pre-wrap break-all">
-                        {renderValue(value)}
+                        {renderUnknownValue(value)}
                       </div>
                     </div>
                   ))}

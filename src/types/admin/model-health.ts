@@ -1,6 +1,17 @@
+import type { 
+  FlowStepData, 
+  FlowStepDetails, 
+  ModelParameters, 
+  ApiPayload, 
+  ApiResponse, 
+  ProviderMetadata, 
+  StorageMetadata, 
+  StepMetadata 
+} from "./model-health-execution";
+
 export interface FlowStepHoverData {
   title: string;
-  details: Record<string, any>;
+  details: FlowStepDetails;
   preview_url?: string;
   actions?: Array<{ label: string; action: string }>;
 }
@@ -12,7 +23,7 @@ export interface FlowStep {
   completed_at: string | null;
   duration_ms: number | null;
   status: 'pending' | 'running' | 'completed' | 'failed';
-  data: Record<string, any>;
+  data: FlowStepData;
   error: string | null;
   substatus?: 'preparing' | 'executing' | 'completed' | 'failed';
   hover_data?: FlowStepHoverData;
@@ -26,7 +37,7 @@ export interface ModelTestResult {
   test_started_at: string;
   test_completed_at: string | null;
   test_prompt: string;
-  test_parameters: Record<string, any>;
+  test_parameters: ModelParameters;
   test_user_id: string | null;
   flow_steps: FlowStep[];
   status: 'running' | 'success' | 'failed' | 'timeout' | 'error';
@@ -48,19 +59,19 @@ export interface ModelTestResult {
   credits_refunded: boolean;
   created_at: string;
   updated_at: string;
-  api_request_payload?: Record<string, any>;
-  api_first_response?: Record<string, any>;
-  api_final_response?: Record<string, any>;
-  storage_metadata?: Record<string, any>;
+  api_request_payload?: ApiPayload;
+  api_first_response?: ApiResponse;
+  api_final_response?: ApiResponse;
+  storage_metadata?: StorageMetadata;
   media_preview_url?: string;
-  step_metadata?: Record<string, any>;
+  step_metadata?: StepMetadata;
 }
 
 export interface ModelTestConfig {
   id: string;
   model_record_id: string;
   prompt_template: string;
-  custom_parameters: Record<string, any>;
+  custom_parameters: ModelParameters;
   num_outputs: number;
   deduct_credits: boolean;
   test_user_id: string | null;

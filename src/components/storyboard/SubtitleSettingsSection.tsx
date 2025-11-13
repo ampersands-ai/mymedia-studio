@@ -14,10 +14,12 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { FONT_FAMILIES } from '@/config/subtitlePresets';
+import type { SubtitleSettings } from '@/types/subtitle';
+import { DEFAULT_SUBTITLE_SETTINGS } from '@/types/subtitle';
 
 interface SubtitleSettingsSectionProps {
-  subtitleSettings: any;
-  onUpdate: (settings: any) => void;
+  subtitleSettings: Partial<SubtitleSettings> | null | undefined;
+  onUpdate: (settings: { subtitle_settings: SubtitleSettings }) => void;
   isRendering: boolean;
   onOpenCustomizer: () => void;
 }
@@ -27,11 +29,16 @@ interface SubtitleSettingsSectionProps {
  * Includes button to open advanced customizer
  */
 export const SubtitleSettingsSection = ({
-  subtitleSettings,
+  subtitleSettings: subtitleSettingsProp,
   onUpdate,
   isRendering,
   onOpenCustomizer,
 }: SubtitleSettingsSectionProps) => {
+  const subtitleSettings: SubtitleSettings = {
+    ...DEFAULT_SUBTITLE_SETTINGS,
+    ...subtitleSettingsProp,
+  };
+  
   return (
     <Collapsible className="space-y-3">
       <CollapsibleTrigger asChild>
@@ -50,7 +57,7 @@ export const SubtitleSettingsSection = ({
           <div className="space-y-2">
             <Label className="text-xs">Font</Label>
             <Select 
-              value={subtitleSettings?.fontFamily || 'Oswald Bold'}
+              value={subtitleSettings.fontFamily}
               onValueChange={(value) => {
                 onUpdate({
                   subtitle_settings: {
@@ -75,9 +82,9 @@ export const SubtitleSettingsSection = ({
           </div>
           
           <div className="space-y-2">
-            <Label className="text-xs">Size: {subtitleSettings?.fontSize || 40}px</Label>
+            <Label className="text-xs">Size: {subtitleSettings.fontSize}px</Label>
             <Slider
-              value={[subtitleSettings?.fontSize || 40]}
+              value={[subtitleSettings.fontSize]}
               onValueChange={([value]) => {
                 onUpdate({
                   subtitle_settings: {

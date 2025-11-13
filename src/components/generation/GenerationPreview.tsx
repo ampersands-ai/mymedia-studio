@@ -11,10 +11,22 @@ import { useNativeDownload } from "@/hooks/useNativeDownload";
 import { triggerHaptic } from "@/utils/capacitor-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { logger } from "@/lib/logger";
+import type { 
+  PreviewDisplayProps,
+  ContentType,
+  PreviewLoggerMetadata
+} from "@/types/workflow-execution-display";
+import {
+  createPreviewLoggerMetadata,
+  generateDownloadFilename,
+  isFullHttpUrl,
+  getMimeTypeFromExtension,
+  getFileExtension
+} from "@/types/workflow-execution-display";
 
 interface GenerationPreviewProps {
   storagePath: string | null;
-  contentType: string;
+  contentType: ContentType;
   className?: string;
 }
 
@@ -29,7 +41,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
   }
 
   // Safety net: If storagePath is already a full HTTP URL, use it directly
-  const isFullUrl = storagePath.startsWith('http://') || storagePath.startsWith('https://');
+  const isFullUrl = isFullHttpUrl(storagePath);
   
   // Use content-type-specific hooks from new architecture (skip if already a full URL)
   const { url: imageUrl, isLoading: imageLoading, error: imageError } = useImageUrl(
@@ -83,22 +95,19 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
     try {
       await triggerHaptic('light');
       
-      // Derive extension from storagePath for correct file type
-      const ext = storagePath?.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1];
-      let filename: string;
-      
-      if (contentType === "video") {
-        filename = `video-${Date.now()}.${ext || 'mp4'}`;
-      } else if (contentType === "audio") {
-        filename = `audio-${Date.now()}.${ext || 'mp3'}`;
-      } else {
-        filename = `image-${Date.now()}.${ext || 'jpg'}`;
-      }
+      // Generate filename using type-safe utility
+      const filename = generateDownloadFilename(contentType, storagePath || undefined);
       
       await downloadFile(signedUrl, filename);
     } catch (error) {
       const file = storagePath?.split('/').pop() || 'unknown';
-      logger.error('Download failed', error as Error, { component: 'GenerationPreview', file } as any);
+      const metadata: PreviewLoggerMetadata = createPreviewLoggerMetadata({
+        component: 'GenerationPreview',
+        file,
+        operation: 'download',
+        storagePath: storagePath || undefined
+      });
+      logger.error('Download failed', error as Error, metadata);
       toast.error('Download failed');
     }
   };
@@ -295,9 +304,9 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
   }
 
   if (contentType === "video") {
-    // Infer file extension and MIME type
-    const ext = storagePath?.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1] ?? 'mp4';
-    const mime = ext === 'webm' ? 'video/webm' : 'video/mp4';
+    // Infer file extension and MIME type using type-safe utilities
+    const ext = storagePath ? getFileExtension(storagePath) : null;
+    const mime = ext ? getMimeTypeFromExtension(ext) : 'video/mp4';
     
     // Always use the signed URL for playback
     const videoSrc = signedUrl || "";

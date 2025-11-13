@@ -7,9 +7,10 @@ import { Loader2, Clock, Coins, Images, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { CreationGroup } from "@/constants/creation-groups";
+import type { ModelRecord } from "@/types/custom-creation";
 
 interface ModelSelectorProps {
-  models: any[];
+  models: ModelRecord[];
   selectedModel: string | null;
   onModelChange: (modelId: string) => void;
   selectedGroup: CreationGroup;
@@ -41,8 +42,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     );
   }
 
-  const ModelCard = ({ model, isSelected }: { model: any; isSelected: boolean }) => {
-    const modelGroups = (model.groups as string[]) || [];
+  const ModelCard = ({ model, isSelected }: { model: ModelRecord; isSelected: boolean }) => {
+    const modelGroups = Array.isArray(model.groups) ? model.groups : 
+      (model.groups && typeof model.groups === 'object' ? Object.keys(model.groups) : []);
     const otherGroups = modelGroups.filter((g: string) => g !== selectedGroup);
 
     return (
@@ -192,7 +194,8 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         </SelectTrigger>
         <SelectContent>
           {models.map((model) => {
-            const modelGroups = (model.groups as string[]) || [];
+            const modelGroups = Array.isArray(model.groups) ? model.groups : 
+              (model.groups && typeof model.groups === 'object' ? Object.keys(model.groups) : []);
             const otherGroups = modelGroups.filter((g: string) => g !== selectedGroup);
 
             return (

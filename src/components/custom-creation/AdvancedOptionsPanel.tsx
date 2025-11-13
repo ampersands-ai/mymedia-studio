@@ -3,13 +3,14 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ModelParameterForm } from "@/components/generation/ModelParameterForm";
+import type { ModelParameters, ModelJsonSchema } from "@/types/model-schema";
 
 interface AdvancedOptionsPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  modelSchema: any;
-  parameters: Record<string, any>;
-  onParametersChange: (params: Record<string, any>) => void;
+  modelSchema: ModelJsonSchema | null;
+  parameters: ModelParameters;
+  onParametersChange: (params: ModelParameters) => void;
   excludeFields: string[];
   modelId: string;
   provider: string;
@@ -28,12 +29,13 @@ export const AdvancedOptionsPanel: React.FC<AdvancedOptionsPanelProps> = ({
   modelId,
   provider,
 }) => {
+  // Type guard to check if modelSchema has properties
   if (!modelSchema?.properties) {
     return null;
   }
 
   // Check if there are any parameters to show after excluding fields
-  const availableProperties = Object.keys(modelSchema.properties || {}).filter(
+  const availableProperties = Object.keys(modelSchema.properties).filter(
     (key) => !excludeFields.includes(key)
   );
 

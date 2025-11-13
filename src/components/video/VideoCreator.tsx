@@ -20,6 +20,7 @@ import { BackgroundMediaSelector, SelectedMedia } from './BackgroundMediaSelecto
 import { captionPresets, aspectRatioConfig, textEffectPresets } from '@/config/captionStyles';
 import { logger } from '@/lib/logger';
 import { CaptionStyle } from '@/types/video';
+import type { VideoStyle } from '@/types/custom-creation';
 
 export function VideoCreator() {
   const [topic, setTopic] = useState('');
@@ -56,13 +57,14 @@ export function VideoCreator() {
       if (data.topic) {
         setTopic(data.topic);
       }
-    } catch (error: any) {
-      logger.error('Error generating topic', error instanceof Error ? error : new Error(String(error)), {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Error generating topic', err, {
         component: 'VideoCreator',
         operation: 'generateTopic',
-        errorMessage: error?.message
+        errorMessage: err.message
       });
-      toast.error(error.message || 'Failed to generate topic');
+      toast.error(err.message);
     } finally {
       setIsGeneratingTopic(false);
     }
@@ -82,7 +84,7 @@ export function VideoCreator() {
     createJob.mutate({
       topic: topic.trim(),
       duration,
-      style: style as any,
+      style,
       voice_id: voiceId,
       voice_name: voiceName,
       aspect_ratio: aspectRatio,

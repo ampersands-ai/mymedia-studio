@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
       }
 
       // Step 4: Process the event
-      await handleWebhookEvent(supabase, event);
+      await handleWebhookEvent(supabase, event, webhookStartTime);
       
       // Step 5: Record webhook event for idempotency
       await supabase.from('webhook_events').insert({
@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
   }
 });
 
-async function handleWebhookEvent(supabase: any, event: any) {
+async function handleWebhookEvent(supabase: any, event: any, webhookStartTime: number) {
   const eventType = event.type || event.event_type;
   const eventData = event.data || event;
 

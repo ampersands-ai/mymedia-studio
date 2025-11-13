@@ -17,9 +17,11 @@ export type JsonSchemaType =
 
 /**
  * JSON Schema property definition
+ * Compatible with src/types/schema.ts
  */
 export interface JsonSchemaProperty {
   type: JsonSchemaType | JsonSchemaType[];
+  title?: string;
   description?: string;
   default?: unknown;
   enum?: unknown[];
@@ -32,9 +34,9 @@ export interface JsonSchemaProperty {
   items?: JsonSchemaProperty;
   properties?: Record<string, JsonSchemaProperty>;
   required?: string[];
-  title?: string;
+  showToUser?: boolean;
+  isAdvanced?: boolean;
   examples?: unknown[];
-  [key: string]: unknown;
 }
 
 /**

@@ -1,45 +1,49 @@
 import { useEffect, useState } from "react";
 import { SchemaInput } from "./SchemaInput";
+import type {
+  ModelJsonSchema,
+  ModelParameters,
+  JsonSchemaProperty,
+  ModelParameterValue
+} from "@/types/model-schema";
+import {
+  toModelJsonSchema,
+  getSchemaProperty,
+  getFieldOrder,
+  initializeParameters,
+  getFilteredEnum
+} from "@/types/model-schema";
 
 interface ModelParameterFormProps {
-  modelSchema: any;
-  onChange: (params: Record<string, any>) => void;
-  currentValues?: Record<string, any>;
+  modelSchema: unknown;
+  onChange: (params: ModelParameters) => void;
+  currentValues?: ModelParameters;
   excludeFields?: string[];
   modelId?: string;
   provider?: string;
 }
 
-export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, excludeFields = [], modelId, provider }: ModelParameterFormProps) => {
+export const ModelParameterForm = ({ 
+  modelSchema: modelSchemaProp, 
+  onChange, 
+  currentValues = {}, 
+  excludeFields = [], 
+  modelId, 
+  provider 
+}: ModelParameterFormProps) => {
+  // Convert and validate schema
+  const modelSchema = toModelJsonSchema(modelSchemaProp);
+  
   // Initialize with defaults immediately to avoid timing issues
-  const [parameters, setParameters] = useState<Record<string, any>>(() => {
-    if (!modelSchema?.properties) return currentValues;
-    
-    const defaults: Record<string, any> = {};
-    Object.entries(modelSchema.properties).forEach(([key, schema]: [string, any]) => {
-      if (currentValues[key] !== undefined) {
-        defaults[key] = currentValues[key];
-      } else if (schema.default !== undefined) {
-        defaults[key] = schema.default;
-      }
-    });
-    
-    return defaults;
+  const [parameters, setParameters] = useState<ModelParameters>(() => {
+    return initializeParameters(modelSchema, currentValues);
   });
 
   // Update when model schema changes
   useEffect(() => {
-    if (!modelSchema?.properties) return;
-
-    const defaults: Record<string, any> = {};
-    Object.entries(modelSchema.properties).forEach(([key, schema]: [string, any]) => {
-      if (currentValues[key] !== undefined) {
-        defaults[key] = currentValues[key];
-      } else if (schema.default !== undefined) {
-        defaults[key] = schema.default;
-      }
-    });
-
+    if (!modelSchema) return;
+    
+    const defaults = initializeParameters(modelSchema, currentValues);
     setParameters(defaults);
     onChange(defaults);
   }, [modelSchema]);
@@ -48,12 +52,14 @@ export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, 
   useEffect(() => {
     if (!modelSchema?.properties) return;
     
-    const rehydrated: Record<string, any> = {};
-    Object.entries(modelSchema.properties).forEach(([key, schema]: [string, any]) => {
+    const rehydrated: ModelParameters = {};
+    Object.entries(modelSchema.properties).forEach(([key, schemaProp]) => {
+      if (!schemaProp) return;
+      const schema = schemaProp as JsonSchemaProperty;
       const val = currentValues[key];
       // If value is empty string, undefined, or null, use schema default
       if ((val === "" || val === undefined || val === null) && schema.default !== undefined) {
-        rehydrated[key] = schema.default;
+        rehydrated[key] = schema.default as ModelParameterValue;
       } else {
         rehydrated[key] = val;
       }
@@ -62,32 +68,18 @@ export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, 
     setParameters(rehydrated);
   }, [currentValues, modelSchema]);
 
-  // Get filtered enum based on field dependencies
-  const getFilteredEnum = (fieldName: string, schema: any): any[] | undefined => {
-    if (!modelSchema?.fieldDependencies || !schema.enum) return undefined;
-    
-    const dependencies = modelSchema.fieldDependencies[fieldName];
-    if (!dependencies) return undefined;
-    
-    // Check each dependency rule
-    for (const [dependentField, rules] of Object.entries(dependencies)) {
-      const currentValue = parameters[dependentField];
-      if (currentValue !== undefined && rules[currentValue]) {
-        return rules[currentValue];
-      }
-    }
-    
-    return undefined;
-  };
-
   // Auto-correct invalid combinations based on dependencies
-  const autoCorrectDependencies = (changedField: string, newValue: any, updatedParams: Record<string, any>) => {
+  const autoCorrectDependencies = (
+    _changedField: string, 
+    _newValue: ModelParameterValue, 
+    updatedParams: ModelParameters
+  ): ModelParameters => {
     // Only handle dependency-based corrections, not general enum validation
     // Let backend handle enum validation and defaults
     return updatedParams;
   };
 
-  const handleParameterChange = (key: string, value: any) => {
+  const handleParameterChange = (key: string, value: ModelParameterValue) => {
     let updated = { ...parameters, [key]: value };
     
     // Auto-correct dependent fields
@@ -105,9 +97,7 @@ export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, 
   const required = modelSchema.required || [];
 
   // Use x-order if available to maintain parameter order
-  const order = Array.isArray(modelSchema["x-order"]) 
-    ? modelSchema["x-order"] 
-    : Object.keys(properties);
+  const order = getFieldOrder(modelSchema);
   
   // Filter out excluded fields while preserving order
   const filteredKeys = order.filter(
@@ -117,16 +107,18 @@ export const ModelParameterForm = ({ modelSchema, onChange, currentValues = {}, 
   return (
     <div className="space-y-4">
       {filteredKeys.map((key: string) => {
-        const schema = properties[key];
+        const schemaProp = getSchemaProperty(modelSchema, key);
+        if (!schemaProp) return null;
+        
         return (
           <SchemaInput
             key={key}
             name={key}
-            schema={schema}
+            schema={schemaProp}
             value={parameters[key]}
             onChange={(value) => handleParameterChange(key, value)}
             required={required.includes(key)}
-            filteredEnum={getFilteredEnum(key, schema)}
+            filteredEnum={getFilteredEnum(modelSchema, key, schemaProp, parameters)}
             allValues={parameters}
             modelSchema={modelSchema}
             modelId={modelId}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { TemplatesDialogState } from '@/types/admin';
 import type { WorkflowTemplate } from '@/hooks/useWorkflowTemplates';
+import type { ContentTemplate } from '@/hooks/useTemplates';
 
 /**
  * Custom hook to manage all dialog and filter state for TemplatesManager
@@ -26,7 +27,7 @@ export function useTemplatesState() {
   /**
    * Open content template dialog for creating or editing
    */
-  const openContentDialog = (template: any | null) => {
+  const openContentDialog = (template: Partial<ContentTemplate> | null) => {
     setState(prev => ({
       ...prev,
       contentTemplateDialog: {

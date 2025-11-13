@@ -80,8 +80,8 @@ export const useCustomStoryboard = () => {
       toast.success('Custom storyboard created!', {
         description: 'Now customize voice and caption settings, then render your video.',
       });
-    } catch (error: any) {
-      logger.error('Custom storyboard creation failed', error, {
+    } catch (error) {
+      logger.error('Custom storyboard creation failed', error as Error, {
         component: 'useCustomStoryboard',
         operation: 'createCustomStoryboard',
         sceneCount: input.scenes.length,

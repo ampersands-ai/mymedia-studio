@@ -13,7 +13,7 @@ export interface ContentTemplate {
   description: string | null;
   thumbnail_url: string | null;
   model_id: string | null;
-  preset_parameters: any;
+  preset_parameters: Record<string, unknown>;
   user_editable_fields?: string[];
   hidden_field_defaults?: Record<string, any>;
   is_custom_model?: boolean;

@@ -8,7 +8,7 @@ import { getImageFieldInfo } from "@/lib/custom-creation-utils";
 /**
  * Image upload management with validation and native camera support
  */
-export const useImageUpload = (currentModel: any) => {
+export const useImageUpload = (currentModel: { record_id: string; content_type: string } | null) => {
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { pickImage, pickMultipleImages, isLoading: cameraLoading, isNative } = useNativeCamera();

@@ -42,15 +42,15 @@ export const useActiveGenerations = () => {
 
       if (error) throw error;
 
-      return (data || []).map((gen: any) => ({
-        id: gen.id,
-        model_id: gen.model_id,
-        model_name: gen.ai_models?.model_name || "Unknown",
-        content_type: gen.ai_models?.content_type || "unknown",
-        prompt: gen.prompt,
-        status: gen.status,
-        created_at: gen.created_at,
-        model_record_id: gen.model_record_id,
+      return (data || []).map((gen: Record<string, unknown>): ActiveGeneration => ({
+        id: gen.id as string,
+        model_id: gen.model_id as string,
+        model_name: ((gen.ai_models as { model_name?: string })?.model_name) || "Unknown",
+        content_type: ((gen.ai_models as { content_type?: string })?.content_type) || "unknown",
+        prompt: gen.prompt as string,
+        status: gen.status as string,
+        created_at: gen.created_at as string,
+        model_record_id: gen.model_record_id as string,
       }));
     },
     enabled: !!user?.id,

@@ -84,7 +84,7 @@ describe('useGeneration', () => {
         wrapper: createWrapper(),
       });
 
-      let response: any;
+      let response: Record<string, unknown>;
       await act(async () => {
         response = await result.current.generate({
           model_id: 'dall-e-3',

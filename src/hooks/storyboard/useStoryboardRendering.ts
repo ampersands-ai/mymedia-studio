@@ -47,7 +47,7 @@ export const useStoryboardRendering = (
         setEstimatedRenderTime(storyboard.duration * 2);
       }
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       logger.error('Render video start failed', error, {
         component: 'useStoryboardRendering',
         operation: 'renderVideoMutation',
@@ -73,7 +73,7 @@ export const useStoryboardRendering = (
       queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
       toast.success('Render canceled. Status updated to draft.');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       logger.error('Cancel render failed', error, {
         component: 'useStoryboardRendering',
         operation: 'cancelRenderMutation',
@@ -275,8 +275,8 @@ export const useStoryboardRendering = (
           status: data.status
         });
       }
-    } catch (error: any) {
-      logger.error('Video status check failed', error, {
+    } catch (error) {
+      logger.error('Video status check failed', error as Error, {
         component: 'useStoryboardRendering',
         operation: 'refreshStatus',
         storyboardId: currentStoryboardId

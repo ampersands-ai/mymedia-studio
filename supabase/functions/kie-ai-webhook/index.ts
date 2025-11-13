@@ -400,7 +400,17 @@ Deno.serve(async (req) => {
       }
 
       // === UPDATE PARENT ===
-      const updateData: any = {
+      interface GenerationUpdate {
+        status: string;
+        file_size_bytes: number;
+        provider_response: Record<string, unknown>;
+        output_index: number;
+        is_batch_output: boolean;
+        output_url?: string;
+        completed_at?: string;
+      }
+
+      const updateData: GenerationUpdate = {
         status: 'completed',
         file_size_bytes: fileSize,
         provider_response: {

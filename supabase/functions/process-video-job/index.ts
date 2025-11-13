@@ -334,7 +334,14 @@ async function generateVoiceover(script: string, voiceId: string): Promise<Blob>
     console.error('ElevenLabs API error:', response.status, errorText);
     
     // Try to parse error response
-    let errorDetails: any = {};
+    interface ElevenLabsErrorDetails {
+      message?: string;
+      detail?: {
+        message?: string;
+      };
+    }
+    
+    let errorDetails: ElevenLabsErrorDetails = {};
     try {
       errorDetails = JSON.parse(errorText);
     } catch {

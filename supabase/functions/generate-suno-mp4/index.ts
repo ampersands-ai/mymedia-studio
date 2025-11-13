@@ -220,7 +220,15 @@ Deno.serve(async (req) => {
 
     const callbackUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/kie-ai-webhook?token=${KIE_WEBHOOK_TOKEN}&verify=${webhookVerifyToken}`;
 
-    const kiePayload: any = {
+    interface KieAiVideoPayload {
+      taskId: string;
+      audioId: string;
+      callBackUrl: string;
+      author?: string;
+      domainName?: string;
+    }
+
+    const kiePayload: KieAiVideoPayload = {
       taskId,
       audioId,
       callBackUrl: callbackUrl,

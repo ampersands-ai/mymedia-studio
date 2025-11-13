@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { useAlertConfig, type AlertConfigInput } from "@/hooks/admin/useAlertConfig";
 import { AlertTriangle, Plus, Trash2, Save } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import type { AlertConfig } from "@/types/admin/webhook-monitoring";
 import {
   Select,
   SelectContent,
@@ -110,7 +111,7 @@ export const AlertConfigurationPanel = () => {
 };
 
 interface ConfigFormProps {
-  config?: any;
+  config?: AlertConfig;
   onSave: (input: AlertConfigInput) => void;
   onCancel: () => void;
   isEditing: boolean;

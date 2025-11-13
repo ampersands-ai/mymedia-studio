@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, Mail, Loader2, MessageSquare } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { AlertSettingsValue } from "@/types/admin/webhook-monitoring";
 
 interface AlertSettings {
   enabled: boolean;
@@ -64,10 +65,10 @@ export const AlertSettingsPanel = () => {
     mutationFn: async (newSettings: AlertSettings) => {
       const { error } = await supabase
         .from('app_settings')
-        .upsert({
+        .upsert([{
           setting_key: 'webhook_alerts',
-          setting_value: newSettings as any,
-        }, {
+          setting_value: JSON.parse(JSON.stringify(newSettings)),
+        }], {
           onConflict: 'setting_key',
         });
 
@@ -89,7 +90,7 @@ export const AlertSettingsPanel = () => {
     },
   });
 
-  const handleUpdateSetting = (key: keyof AlertSettings, value: any) => {
+  const handleUpdateSetting = (key: keyof AlertSettings, value: AlertSettingsValue) => {
     if (!settings) return;
     updateMutation.mutate({ ...settings, [key]: value });
   };

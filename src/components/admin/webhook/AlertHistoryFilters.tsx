@@ -3,16 +3,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import type { AlertHistoryFilters as AlertHistoryFiltersType } from "@/types/admin/webhook-monitoring";
 
 interface AlertHistoryFiltersProps {
-  filters: {
-    alertType?: string;
-    severity?: string;
-    isResolved?: boolean;
-    dateFrom?: string;
-    dateTo?: string;
-  };
-  onFilterChange: (filters: any) => void;
+  filters: AlertHistoryFiltersType;
+  onFilterChange: (filters: AlertHistoryFiltersType) => void;
 }
 
 export const AlertHistoryFilters = ({ filters, onFilterChange }: AlertHistoryFiltersProps) => {

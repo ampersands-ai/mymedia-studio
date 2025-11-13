@@ -8,7 +8,34 @@ import { CAPTION_GENERATION_COST } from "@/constants/custom-creation";
 import { trackEvent } from "@/lib/posthog";
 import type { CustomCreationState } from "@/types/custom-creation";
 import { executeGeneration } from "@/lib/generation/executeGeneration";
-import { logger } from '@/lib/logger';
+import { logger, generateRequestId } from '@/lib/logger';
+import { handleError } from "@/lib/errors";
+import { FilteredModel, UserTokens, OnboardingProgress } from "@/types/generation";
+import { z } from "zod";
+
+const customGenerationLogger = logger.child({ component: 'useCustomGeneration' });
+
+/**
+ * Options schema for custom generation hook
+ */
+const UseCustomGenerationOptionsSchema = z.object({
+  state: z.custom<CustomCreationState>(),
+  updateState: z.function().args(z.custom<Partial<CustomCreationState>>()).returns(z.void()),
+  startPolling: z.function().args(z.string()).returns(z.void()),
+  uploadedImages: z.array(z.instanceof(File)),
+  uploadImagesToStorage: z.function().args(z.string()).returns(z.promise(z.array(z.string()))),
+  imageFieldInfo: z.object({
+    fieldName: z.string().nullable(),
+    isRequired: z.boolean(),
+    isArray: z.boolean(),
+    maxImages: z.number(),
+  }),
+  filteredModels: z.array(z.custom<FilteredModel>()),
+  onboardingProgress: z.custom<OnboardingProgress>().nullable(),
+  updateProgress: z.function().args(z.custom<Partial<OnboardingProgress['checklist']>>()).returns(z.void()),
+  setFirstGeneration: z.function().args(z.string()).returns(z.void()),
+  userTokens: z.custom<UserTokens>().nullable(),
+});
 
 interface UseCustomGenerationOptions {
   state: CustomCreationState;
@@ -17,11 +44,11 @@ interface UseCustomGenerationOptions {
   uploadedImages: File[];
   uploadImagesToStorage: (userId: string) => Promise<string[]>;
   imageFieldInfo: { fieldName: string | null; isRequired: boolean; isArray: boolean; maxImages: number };
-  filteredModels: any[];
-  onboardingProgress: any;
-  updateProgress: (progress: any) => void;
+  filteredModels: FilteredModel[];
+  onboardingProgress: OnboardingProgress | null;
+  updateProgress: (progress: Partial<OnboardingProgress['checklist']>) => void;
   setFirstGeneration: (id: string) => void;
-  userTokens: any;
+  userTokens: UserTokens | null;
 }
 
 /**
@@ -67,7 +94,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       // Handle nested object (parameter-first structure)
       // Example: { "quality": { "Standard": 1, "HD": 1.5 } }
       if (typeof multiplierConfig === 'object' && !Array.isArray(multiplierConfig)) {
-        const multiplier = (multiplierConfig as Record<string, any>)[paramValue] ?? 1;
+        const multiplier = (multiplierConfig as Record<string, number>)[paramValue] ?? 1;
         if (typeof multiplier === 'number') {
           tokens *= multiplier;
         }
@@ -172,14 +199,16 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
         updateProgress({ completedFirstGeneration: true });
         setFirstGeneration(genId);
       }
-
-    } catch (error: any) {
-      logger.error('Custom generation failed', error, {
+    } catch (error) {
+      const handledError = handleError(error, {
+        requestId,
         component: 'useCustomGeneration',
         operation: 'handleGenerate',
         modelId: state.selectedModel,
         prompt: state.prompt.substring(0, 100)
       });
+      
+      customGenerationLogger.error('Custom generation failed', handledError, { requestId });
       // Errors are already toasted by executeGeneration
       updateState({ generationStartTime: null });
     } finally {
@@ -222,11 +251,13 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       
       toast.success(`${promptTypeLabels[state.selectedGroup]} prompt loaded!`);
     } catch (error) {
-      logger.error('Surprise me generation failed', error, {
+      const handledError = handleError(error, {
         component: 'useCustomGeneration',
         operation: 'handleSurpriseMe',
         group: state.selectedGroup
       });
+      
+      customGenerationLogger.error('Surprise me generation failed', handledError);
       toast.error("Failed to load prompt. Please try again.");
       updateState({ generatingSurprise: false });
     }

@@ -41,10 +41,10 @@ describe('Error Handling', () => {
     });
 
     it('should preserve existing AppError', () => {
-      const error = new StorageError('Storage failed');
+      const error = new StorageError('FAILED', 'Storage failed');
       const appError = handleError(error);
       expect(appError).toBe(error);
-      expect(appError.code).toBe('STORAGE_ERROR');
+      expect(appError.code).toBe('STORAGE_FAILED');
     });
 
     it('should attach context metadata', () => {
@@ -87,8 +87,8 @@ describe('Error Handling', () => {
     });
 
     it('should create GenerationError correctly', () => {
-      const error = new GenerationError('Generation timeout');
-      expect(error.code).toBe('GENERATION_ERROR');
+      const error = new GenerationError('TIMEOUT', 'Generation timeout');
+      expect(error.code).toBe('GENERATION_TIMEOUT');
       expect(error.recoverable).toBe(true);
     });
   });

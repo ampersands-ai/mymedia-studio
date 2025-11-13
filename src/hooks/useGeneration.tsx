@@ -2,29 +2,17 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/posthog";
 import { logger, generateRequestId } from "@/lib/logger";
+import { handleError, GenerationError } from "@/lib/errors";
+import {
+  GenerationParams,
+  GenerationResult,
+  GenerationParamsSchema,
+  GenerationResultSchema,
+  GenerationErrorCode,
+  type InsufficientCreditsError,
+} from "@/types/generation";
 
 const generationLogger = logger.child({ component: 'useGeneration' });
-
-interface GenerationParams {
-  template_id?: string;
-  model_id?: string;
-  model_record_id?: string;
-  prompt?: string;
-  custom_parameters?: Record<string, unknown>;
-  enhance_prompt?: boolean;
-}
-
-interface GenerationResult {
-  id: string;
-  generation_id?: string; // Alternative ID field
-  output_url?: string; // Optional for async generations
-  storage_path?: string; // Storage path for completed generations
-  tokens_used: number;
-  status: string;
-  content_type: string;
-  enhanced: boolean;
-  is_async?: boolean; // Flag to indicate async generation
-}
 
 export const useGeneration = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -40,14 +28,18 @@ export const useGeneration = () => {
     setError(null);
 
     try {
+      // Validate input parameters
+      const validatedParams = GenerationParamsSchema.parse(params);
       // STEP 1: Try to refresh the session to get a fresh token
       const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
 
       if (sessionError || !session) {
-        generationLogger.error("Session refresh failed", sessionError as Error, { 
+        const error = handleError(sessionError || new Error('Session expired'), {
           requestId,
-          reason: 'session_expired'
+          reason: 'session_expired',
+          component: 'useGeneration'
         });
+        generationLogger.error("Session refresh failed", error, { requestId });
         
         // Save the generation attempt data before forcing logout
         const draftKey = 'pending_generation';
@@ -59,7 +51,11 @@ export const useGeneration = () => {
         
         // Force logout and throw error to be caught by component
         await supabase.auth.signOut();
-        throw new Error("SESSION_EXPIRED");
+        throw new GenerationError(
+          GenerationErrorCode.SESSION_EXPIRED,
+          "Your session has expired. Please log in again.",
+          { recoverable: true }
+        );
       }
 
       // Always use async endpoint (unified flow for all providers)
@@ -71,17 +67,21 @@ export const useGeneration = () => {
       });
 
       // Client-side prompt validation (only if prompt is being sent)
-      if (params.prompt !== undefined) {
-        const effectivePromptClient = params.prompt.trim();
+      if (validatedParams.prompt !== undefined) {
+        const effectivePromptClient = validatedParams.prompt.trim();
         if (effectivePromptClient.length < 2) {
           const errorMessage = "Please enter a prompt at least 2 characters long.";
           setError(errorMessage);
-          throw new Error("Prompt is required");
+          throw new GenerationError(
+            GenerationErrorCode.PROMPT_TOO_SHORT,
+            errorMessage,
+            { recoverable: true }
+          );
         }
       }
 
       // STEP 2: Proceed with generation using appropriate endpoint
-      const bodyToSend = { ...params };
+      const bodyToSend = { ...validatedParams };
       
       // Dev-only: Log exact payload for test vs production comparison
       generationLogger.debug("Generation payload prepared", {
@@ -97,10 +97,12 @@ export const useGeneration = () => {
       });
 
       if (error) {
-        generationLogger.error("Edge function error", error as Error, { 
+        const handledError = handleError(error, {
           requestId,
-          errorMessage: error.message 
+          errorMessage: error.message,
+          component: 'useGeneration'
         });
+        generationLogger.error("Edge function error", handledError, { requestId });
         
         // Handle 401 specifically (shouldn't happen after refresh, but defensive)
         if (error.message?.includes("401") || error.message?.toLowerCase().includes("unauthorized")) {
@@ -111,12 +113,16 @@ export const useGeneration = () => {
             reason: 'unauthorized'
           }));
           await supabase.auth.signOut();
-          throw new Error("SESSION_EXPIRED");
+          throw new GenerationError(
+            GenerationErrorCode.UNAUTHORIZED,
+            "Authentication required. Please log in again.",
+            { recoverable: true }
+          );
         }
         
         // Enhanced 402 handling with structured error
         if (error.message?.includes("402") || error.message?.toLowerCase().includes("insufficient")) {
-          let creditDetails: { required?: number; available?: number } = {};
+          const creditDetails: { required?: number; available?: number } = {};
           try {
             // Try to parse error context from edge function response
             const errorMatch = error.message.match(/required[:\s]+(\d+)[,\s]+available[:\s]+(\d+)/i);
@@ -126,17 +132,24 @@ export const useGeneration = () => {
             }
           } catch (e) {
             // If parsing fails, continue with basic error
+            generationLogger.warn("Failed to parse credit details", { requestId });
           }
           
-          throw new Error(JSON.stringify({
-            type: "INSUFFICIENT_CREDITS",
+          const creditsError: InsufficientCreditsError = {
+            type: 'INSUFFICIENT_CREDITS',
             message: "Insufficient credits",
             ...creditDetails
-          }));
+          };
+          
+          throw new Error(JSON.stringify(creditsError));
         }
         
         if (error.message?.includes("429")) {
-          throw new Error("Rate limited");
+          throw new GenerationError(
+            GenerationErrorCode.RATE_LIMITED,
+            "Rate limit exceeded. Please try again later.",
+            { recoverable: true }
+          );
         }
         
         if (error.message?.includes("400")) {
@@ -144,17 +157,29 @@ export const useGeneration = () => {
           try {
             const errorMatch = error.message.match(/error['":\s]+([^"'}]+)/i);
             const specificError = errorMatch ? errorMatch[1] : error.message;
-            throw new Error(specificError);
-          } catch {
-            throw new Error(error.message || "Invalid request");
+            throw new GenerationError(
+              GenerationErrorCode.INVALID_REQUEST,
+              specificError,
+              { recoverable: true }
+            );
+          } catch (parseError) {
+            throw new GenerationError(
+              GenerationErrorCode.INVALID_REQUEST,
+              error.message || "Invalid request",
+              { recoverable: true }
+            );
           }
         }
         
-        throw error;
+        throw handledError;
       }
 
       if (data.error) {
-        throw new Error(data.error);
+        throw new GenerationError(
+          GenerationErrorCode.INVALID_REQUEST,
+          data.error,
+          { recoverable: true }
+        );
       }
 
       // Normalize the response: ensure 'id' is always present
@@ -162,36 +187,44 @@ export const useGeneration = () => {
         data.id = data.generation_id;
       }
 
+      // Validate response data
+      const validatedResult = GenerationResultSchema.parse(data);
+
       // Track generation created
       const duration = timer.end({ 
-        generation_id: data.id,
-        tokens_used: data.tokens_used 
+        generation_id: validatedResult.id,
+        tokens_used: validatedResult.tokens_used 
       });
       
       trackEvent('generation_created', {
-        generation_id: data.id,
-        model_id: params.model_id,
-        template_id: params.template_id,
-        tokens_used: data.tokens_used,
-        content_type: data.content_type,
+        generation_id: validatedResult.id,
+        model_id: validatedParams.model_id,
+        template_id: validatedParams.template_id,
+        tokens_used: validatedResult.tokens_used,
+        content_type: validatedResult.content_type,
         duration,
       });
 
       generationLogger.info('Generation completed', {
         requestId,
-        generation_id: data.id,
-        status: data.status,
+        generation_id: validatedResult.id,
+        status: validatedResult.status,
         duration,
       });
 
-      setResult(data);
+      setResult(validatedResult);
       // Don't show success toast immediately for async generations
       // Components will handle their own success messages
-      return data;
+      return validatedResult;
     } catch (error) {
-      const err = error as Error;
-      generationLogger.error("Generation failed", err, { requestId });
-      const errorMessage = err.message || "Failed to generate content";
+      const handledError = handleError(error, { 
+        requestId,
+        component: 'useGeneration',
+        operation: 'generate'
+      });
+      
+      generationLogger.error("Generation failed", handledError, { requestId });
+      const errorMessage = handledError.message || "Failed to generate content";
       setError(errorMessage);
       throw error;
     } finally {

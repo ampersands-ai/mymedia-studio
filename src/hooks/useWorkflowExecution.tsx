@@ -2,28 +2,21 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logger, generateRequestId } from "@/lib/logger";
+import { handleError, GenerationError } from "@/lib/errors";
+import {
+  WorkflowExecutionParams,
+  WorkflowExecutionResult,
+  WorkflowExecutionParamsSchema,
+  WorkflowExecutionResultSchema,
+  WorkflowExecutionStateSchema,
+  WorkflowProgress,
+} from "@/types/workflow";
 
 const workflowLogger = logger.child({ component: 'useWorkflowExecution' });
 
-interface WorkflowExecutionParams {
-  workflow_template_id: string;
-  user_inputs: Record<string, unknown>;
-}
-
-interface WorkflowExecutionResult {
-  execution_id: string;
-  status: string;
-  final_output_url: string | null;
-  tokens_used: number;
-}
-
 export const useWorkflowExecution = () => {
   const [isExecuting, setIsExecuting] = useState(false);
-  const [progress, setProgress] = useState<{
-    currentStep: number;
-    totalSteps: number;
-    stepName?: string;
-  } | null>(null);
+  const [progress, setProgress] = useState<WorkflowProgress | null>(null);
 
   const executeWorkflow = async (
     params: WorkflowExecutionParams,
@@ -39,18 +32,27 @@ export const useWorkflowExecution = () => {
     setProgress(null);
 
     try {
+      // Validate input parameters
+      const validatedParams = WorkflowExecutionParamsSchema.parse(params);
       // Start the workflow (kickoff only)
       const { data, error } = await supabase.functions.invoke('workflow-executor', {
-        body: params,
+        body: validatedParams,
       });
 
-      if (error) throw error;
+      if (error) {
+        const handledError = handleError(error, {
+          requestId,
+          component: 'useWorkflowExecution',
+          operation: 'executeWorkflow'
+        });
+        throw handledError;
+      }
 
       const executionId = data?.execution_id;
       
       if (!executionId) {
         workflowLogger.error('No execution ID returned from workflow executor', undefined, { requestId });
-        throw new Error('No execution ID returned');
+        throw new GenerationError('NO_EXECUTION_ID', 'No execution ID returned from workflow');
       }
 
       workflowLogger.info('Workflow execution started', { 
@@ -72,22 +74,25 @@ export const useWorkflowExecution = () => {
               filter: `id=eq.${executionId}`,
             },
             (payload) => {
-              const execution = payload.new as Record<string, unknown>;
-              workflowLogger.info('Realtime workflow update received', {
-                requestId,
-                executionId,
-                status: execution.status,
-                current_step: execution.current_step,
-                total_steps: execution.total_steps,
-              });
-
-              // Update progress
-              if (execution.current_step && execution.total_steps) {
-                setProgress({
-                  currentStep: execution.current_step as number,
-                  totalSteps: execution.total_steps as number,
+              try {
+                // Validate execution state
+                const execution = WorkflowExecutionStateSchema.parse(payload.new);
+                
+                workflowLogger.info('Realtime workflow update received', {
+                  requestId,
+                  executionId,
+                  status: execution.status,
+                  current_step: execution.current_step,
+                  total_steps: execution.total_steps,
                 });
-              }
+
+                // Update progress
+                if (execution.current_step && execution.total_steps) {
+                  setProgress({
+                    currentStep: execution.current_step,
+                    totalSteps: execution.total_steps,
+                  });
+                }
 
               // Check for completion
               if (execution.status === 'completed' && execution.final_output_url) {

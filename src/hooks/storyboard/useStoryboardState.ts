@@ -44,13 +44,13 @@ interface Storyboard {
     fontFamily?: string;
     fontSize?: number;
     position?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   music_settings?: {
     volume?: number;
     fadeIn?: number;
     fadeOut?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   image_animation_settings?: {
     zoom?: number;

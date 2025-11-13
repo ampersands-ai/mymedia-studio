@@ -126,7 +126,7 @@ export const useGenerationActions = (options: UseGenerationActionsOptions) => {
           setShowConfetti(true);
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       // Handle SESSION_EXPIRED error
       if (error.message === "SESSION_EXPIRED") {
         toast.error("Session expired", {

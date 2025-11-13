@@ -31,8 +31,8 @@ export const usePromptEnhancement = () => {
       toast.success('Prompt enhanced successfully!');
       return data.enhanced_prompt;
 
-    } catch (error: any) {
-      logger.error('Prompt enhancement failed', error, {
+    } catch (error) {
+      logger.error('Prompt enhancement failed', error as Error, {
         component: 'usePromptEnhancement',
         operation: 'enhancePrompt',
         category,

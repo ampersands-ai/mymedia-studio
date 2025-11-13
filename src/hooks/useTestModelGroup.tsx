@@ -139,7 +139,7 @@ export const useTestModelGroup = () => {
               output_url: pollResult.outputs[0]?.storage_path,
             });
           }
-        } catch (error: any) {
+        } catch (error) {
           const latency = Date.now() - startTime;
           testResults.push({
             model_id: model.id,

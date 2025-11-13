@@ -8,7 +8,7 @@ export const useSchemaHelpers = () => {
   /**
    * Get required fields from model schema
    */
-  const getSchemaRequiredFields = useCallback((model: any): string[] => {
+  const getSchemaRequiredFields = useCallback((model: { custom_parameters?: Record<string, { required?: boolean }> } | null): string[] => {
     if (!model) return [];
     return model?.input_schema?.required || [];
   }, []);
@@ -16,7 +16,7 @@ export const useSchemaHelpers = () => {
   /**
    * Dynamically detect image field from schema
    */
-  const getImageFieldInfo = useCallback((model: any): { 
+  const getImageFieldInfo = useCallback((model: { custom_parameters?: Record<string, { type?: string; accepts_image?: boolean }> } | null): { 
     fieldName: string | null; 
     isRequired: boolean; 
     isArray: boolean; 
@@ -139,7 +139,7 @@ export const useSchemaHelpers = () => {
   /**
    * Determine max prompt length based on model and customMode
    */
-  const getMaxPromptLength = useCallback((model: any, customMode?: boolean): number => {
+  const getMaxPromptLength = useCallback((model: { custom_parameters?: Record<string, { maxLength?: number }> } | null, customMode?: boolean): number => {
     if (!model) return 5000;
     
     // Check if this is a Kie.ai audio model with customMode false

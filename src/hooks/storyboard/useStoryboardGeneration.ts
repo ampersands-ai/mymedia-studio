@@ -116,7 +116,7 @@ export const useStoryboardGeneration = (
       queryClient.invalidateQueries({ queryKey: ['storyboard', newStoryboardId] });
       queryClient.invalidateQueries({ queryKey: ['storyboard-scenes', newStoryboardId] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       logger.error('Storyboard generation failed', error, {
         component: 'useStoryboardGeneration',
         operation: 'generateMutation'
@@ -140,8 +140,8 @@ export const useStoryboardGeneration = (
       toast.loading('Generating storyboard...', { id: 'generate-storyboard' });
       await generateMutation.mutateAsync(input);
       toast.success('Storyboard generated successfully!', { id: 'generate-storyboard' });
-    } catch (error: any) {
-      logger.error('Storyboard generation error', error, {
+    } catch (error) {
+      logger.error('Storyboard generation error', error as Error, {
         component: 'useStoryboardGeneration',
         operation: 'generateStoryboard',
         topic: input.topic,

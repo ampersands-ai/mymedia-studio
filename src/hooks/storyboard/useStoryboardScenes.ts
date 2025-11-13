@@ -118,7 +118,7 @@ export const useStoryboardScenes = (
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['storyboard-scenes', currentStoryboardId] });
     },
-    onError: (error: any, variables) => {
+    onError: (error: Error, variables) => {
       logger.error('Regenerate scene failed', error, {
         component: 'useStoryboardScenes',
         operation: 'regenerateSceneMutation',
@@ -325,8 +325,8 @@ export const useStoryboardScenes = (
           url: outputUrl
         });
 
-      } catch (error: any) {
-        logger.error('Scene generation failed', error, {
+      } catch (error) {
+        logger.error('Scene generation failed', error as Error, {
           component: 'useStoryboardScenes',
           operation: 'generateAllScenePreviews',
           sceneNumber: scene.sceneNumber,
@@ -343,8 +343,8 @@ export const useStoryboardScenes = (
     onProgress?.(scenesToGenerate.length, scenesToGenerate.length);
 
     // Summary
-    const successCount = results.filter((r: any) => r.success).length;
-    const failCount = results.filter((r: any) => !r.success).length;
+    const successCount = results.filter((r: { success: boolean }) => r.success).length;
+    const failCount = results.filter((r: { success: boolean }) => !r.success).length;
     
     if (failCount > 0) {
       logger.warn('Bulk generation completed with failures', {

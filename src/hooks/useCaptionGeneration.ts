@@ -12,7 +12,13 @@ export const useCaptionGeneration = (
   generatedOutputs: GenerationOutput[],
   prompt: string,
   selectedModel: string | null,
-  filteredModels: any[]
+  filteredModels: Array<{ 
+    id: string; 
+    model_name: string; 
+    record_id: string;
+    content_type?: string;
+    capabilities?: string[] 
+  }>
 ) => {
   const [captionData, setCaptionData] = useState<CaptionData | null>(null);
   const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);

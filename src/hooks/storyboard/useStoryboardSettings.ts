@@ -3,6 +3,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import type { Database } from '@/integrations/supabase/types';
+
+type Json = Database['public']['Tables']['storyboards']['Row']['subtitle_settings'];
 
 export const useStoryboardSettings = (currentStoryboardId: string | null) => {
   const queryClient = useQueryClient();
@@ -13,9 +16,9 @@ export const useStoryboardSettings = (currentStoryboardId: string | null) => {
       voice_id?: string;
       voice_name?: string;
       video_quality?: string;
-      subtitle_settings?: any;
-      music_settings?: any;
-      image_animation_settings?: any;
+      subtitle_settings?: Json;
+      music_settings?: Json;
+      image_animation_settings?: Json;
     }) => {
       if (!currentStoryboardId) throw new Error('No storyboard selected');
       
@@ -46,7 +49,7 @@ export const useStoryboardSettings = (currentStoryboardId: string | null) => {
         });
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       logger.error('Update render settings failed', error, {
         component: 'useStoryboardSettings',
         operation: 'updateRenderSettingsMutation',
@@ -60,9 +63,9 @@ export const useStoryboardSettings = (currentStoryboardId: string | null) => {
     voice_id?: string;
     voice_name?: string;
     video_quality?: string;
-    subtitle_settings?: any;
-    music_settings?: any;
-    image_animation_settings?: any;
+    subtitle_settings?: Json;
+    music_settings?: Json;
+    image_animation_settings?: Json;
   }) => {
     updateRenderSettingsMutation.mutate(settings);
   }, [updateRenderSettingsMutation]);

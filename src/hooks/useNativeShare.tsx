@@ -33,8 +33,8 @@ export const useNativeShare = (): UseNativeShareResult => {
           dialogTitle: 'Share via',
         });
         await triggerHaptic('light');
-      } catch (error: any) {
-        if (error.message !== 'Share canceled') {
+      } catch (error) {
+        if ((error as Error).message !== 'Share canceled') {
           componentLogger.error('Native share URL failed', error, {
             operation: 'shareUrl',
             url,
@@ -54,8 +54,8 @@ export const useNativeShare = (): UseNativeShareResult => {
           text: text || '',
           url,
         });
-      } catch (error: any) {
-        if (error.name !== 'AbortError') {
+      } catch (error) {
+        if ((error as { name?: string }).name !== 'AbortError') {
           componentLogger.warn('Web share failed, falling back to clipboard', {
             operation: 'shareUrl',
             url,
@@ -83,8 +83,8 @@ export const useNativeShare = (): UseNativeShareResult => {
           dialogTitle: 'Share via',
         });
         await triggerHaptic('light');
-      } catch (error: any) {
-        if (error.message !== 'Share canceled') {
+      } catch (error) {
+        if ((error as Error).message !== 'Share canceled') {
           componentLogger.error('Native share file failed', error, {
             operation: 'shareFile',
             url,

@@ -184,7 +184,7 @@ export function useVideoJobs() {
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
       queryClient.invalidateQueries({ queryKey: ['user-tokens'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to create video job');
       // Refetch to restore accurate state after error
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });

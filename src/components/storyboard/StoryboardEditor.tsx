@@ -17,6 +17,9 @@ import { useStoryboardKeyboardNav } from '@/hooks/storyboard/useStoryboardKeyboa
 import { useStoryboardAutoCollapse } from '@/hooks/storyboard/useStoryboardAutoCollapse';
 import { validateScenesComplete, hasInsufficientCredits } from '@/lib/storyboard-validation';
 import { logger } from '@/lib/logger';
+import type { Database } from '@/integrations/supabase/types';
+
+type Json = Database['public']['Tables']['storyboards']['Row']['subtitle_settings'];
 import { RenderStatusAlert } from './RenderStatusAlert';
 import { StuckVideoAlert } from './StuckVideoAlert';
 import { StoryboardHeader } from './StoryboardHeader';
@@ -272,7 +275,7 @@ export const StoryboardEditor = () => {
         onOpenChange={setShowSubtitleCustomizer}
         initialSettings={storyboard.subtitle_settings as Partial<SubtitleSettings>}
         onSave={(settings) => {
-          updateRenderSettings({ subtitle_settings: settings });
+          updateRenderSettings({ subtitle_settings: settings as unknown as Json });
           setShowSubtitleCustomizer(false);
           toast.success('Subtitle settings saved');
         }}

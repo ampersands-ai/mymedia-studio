@@ -34,7 +34,7 @@ export const useVideoGeneration = (parentGenerationId: string | null) => {
     refetchInterval: (query) => {
       // Poll every 5 seconds if any videos are pending/processing
       const data = query.state.data || [];
-      const hasProcessing = data.some((v: any) => 
+      const hasProcessing = data.some((v: { status: string }) => 
         v.status === 'pending' || v.status === 'processing'
       );
       return hasProcessing ? 5000 : false;

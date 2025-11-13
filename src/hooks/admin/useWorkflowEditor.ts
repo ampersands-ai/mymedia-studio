@@ -6,7 +6,7 @@ interface UseWorkflowEditorProps {
   workflow: Partial<WorkflowTemplate> | null;
   open: boolean;
   isNew: boolean;
-  models: any[];
+  models: Array<{ id: string; model_name: string; record_id: string }>;
 }
 
 /**

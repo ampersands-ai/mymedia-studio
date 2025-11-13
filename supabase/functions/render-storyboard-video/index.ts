@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,27 +29,38 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  const requestId = crypto.randomUUID();
+
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) {
+    const logger = new EdgeLogger('render-storyboard-video', requestId, supabaseClient, true);
+
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Missing authorization header');
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: userData, error: authError } = await supabaseClient.auth.getUser(token);
+    if (authError || !userData.user) {
+      logger.error('Authentication failed', authError);
       throw new Error('Unauthorized');
     }
+    const user = userData.user;
 
     const { storyboardId, confirmRerender } = await req.json();
 
     // Generate unique render job ID for this request
     const uniqueRenderJobId = generateUniqueRenderJobId();
-    console.log(`[render-storyboard-video] Generated unique render job ID: ${uniqueRenderJobId}`);
+    logger.info('Generated unique render job ID', {
+      userId: user.id,
+      metadata: { storyboardId, renderJobId: uniqueRenderJobId }
+    });
 
     // Fetch storyboard first to calculate cost and get initial estimate
     const { data: storyboard, error: storyboardError } = await supabaseClient
@@ -64,7 +76,10 @@ Deno.serve(async (req) => {
 
     // Check if this is a re-render request that needs confirmation
     if (storyboard.status === 'complete' && storyboard.video_url && !confirmRerender) {
-      console.log('[render-storyboard-video] Storyboard already rendered, requiring confirmation');
+      logger.info('Storyboard already rendered, requiring confirmation', {
+        userId: user.id,
+        metadata: { storyboardId }
+      });
       
       // Fetch scenes to calculate cost
       const { data: scenes } = await supabaseClient
@@ -109,7 +124,10 @@ Deno.serve(async (req) => {
 
     // If this is a confirmed re-render, reset the storyboard status
     if (confirmRerender && storyboard.status === 'complete') {
-      console.log('[render-storyboard-video] Resetting storyboard status for re-render');
+      logger.info('Resetting storyboard status for re-render', {
+        userId: user.id,
+        metadata: { storyboardId }
+      });
       
       const { error: resetError } = await supabaseClient
         .from('storyboards')
@@ -122,7 +140,10 @@ Deno.serve(async (req) => {
         .eq('id', storyboardId);
       
       if (resetError) {
-        console.error('[render-storyboard-video] Failed to reset storyboard:', resetError);
+        logger.error('Failed to reset storyboard', resetError instanceof Error ? resetError : undefined, {
+          userId: user.id,
+          metadata: { storyboardId }
+        });
       }
     }
 
@@ -180,10 +201,17 @@ Deno.serve(async (req) => {
       console.log(`[render-storyboard-video] Using mixed template`);
     }
 
-    console.log(`[render-storyboard-video] Template selection:
-  - Template: ${templateId} (${templateType})
-  - Intro: ${hasIntroVideo ? 'Video' : hasIntroPreview ? 'Image' : 'AI prompt'}
-  - Scenes: ${scenesWithVideo.length} videos, ${scenesWithPreview.length} images, ${scenes.length - scenesWithVideo.length - scenesWithPreview.length} prompts`);
+    logger.info('Template selected', {
+      userId: user.id,
+      metadata: {
+        templateId,
+        templateType,
+        intro: hasIntroVideo ? 'video' : hasIntroPreview ? 'image' : 'prompt',
+        videos: scenesWithVideo.length,
+        images: scenesWithPreview.length,
+        prompts: scenes.length - scenesWithVideo.length - scenesWithPreview.length
+      }
+    });
 
     // Calculate estimated duration based on voice-over text (for logging purposes)
     // Note: Actual pricing is now based on character count changes
@@ -196,7 +224,10 @@ Deno.serve(async (req) => {
     // Estimate duration in seconds (2.5 words per second)
     const estimatedDuration = Math.ceil(totalWords / 2.5);
     
-    console.log(`[render-storyboard-video] Estimated duration: ${estimatedDuration}s (${totalWords} words)`);
+    logger.info('Duration estimated', {
+      userId: user.id,
+      metadata: { estimatedDuration, totalWords }
+    });
 
     // Get initial estimate and check user credit balance
     const initialEstimate = storyboard.estimated_render_cost || (storyboard.duration * 0.25);
@@ -226,7 +257,14 @@ Deno.serve(async (req) => {
     // Calculate character difference
     const charDifference = currentTotalChars - originalChars;
     
-    console.log(`[render-storyboard-video] Character count - Original: ${originalChars}, Current: ${currentTotalChars}, Difference: ${charDifference}`);
+    logger.info('Character count analyzed', {
+      userId: user.id,
+      metadata: { 
+        original: originalChars, 
+        current: currentTotalChars, 
+        difference: charDifference 
+      }
+    });
     
     // Calculate actual cost based on character changes
     let actualCost = initialEstimate;
@@ -235,19 +273,33 @@ Deno.serve(async (req) => {
       // Script increased: add 0.25 credits per 100 chars
       const additionalChunks = Math.floor(charDifference / 100);
       actualCost += additionalChunks * 0.25;
-      console.log(`[render-storyboard-video] Script increased by ${charDifference} chars (${additionalChunks} chunks), adding ${(additionalChunks * 0.25).toFixed(2)} credits`);
+      logger.info('Script increased, adding credits', {
+        userId: user.id,
+        metadata: { 
+          charDifference, 
+          chunks: additionalChunks, 
+          additionalCredits: (additionalChunks * 0.25).toFixed(2) 
+        }
+      });
     } else if (charDifference <= -100) {
       // Script decreased: reduce cost proportionally
       const reducedChunks = Math.floor(Math.abs(charDifference) / 100);
       actualCost -= reducedChunks * 0.25;
       actualCost = Math.max(0, actualCost);
-      console.log(`[render-storyboard-video] Script decreased by ${Math.abs(charDifference)} chars (${reducedChunks} chunks), reducing ${(reducedChunks * 0.25).toFixed(2)} credits`);
+      logger.info('Script decreased, reducing credits', {
+        userId: user.id,
+        metadata: { 
+          charDifference: Math.abs(charDifference), 
+          chunks: reducedChunks, 
+          reducedCredits: (reducedChunks * 0.25).toFixed(2) 
+        }
+      });
     }
     
-    console.log(`[render-storyboard-video] Initial estimate: ${initialEstimate} credits, Actual cost: ${actualCost.toFixed(2)} credits`);
-    
-    // Charge the full actual cost at render time
-    console.log(`[render-storyboard-video] Charging ${actualCost.toFixed(2)} credits for video render`);
+    logger.info('Cost calculated', {
+      userId: user.id,
+      metadata: { initialEstimate, actualCost: actualCost.toFixed(2) }
+    });
     
     // Check if user has enough credits
     if (subscription.tokens_remaining < actualCost) {
@@ -265,9 +317,16 @@ Deno.serve(async (req) => {
     });
     
     if (chargeError) {
-      console.error('[render-storyboard-video] Failed to charge credits:', chargeError);
+      logger.error('Failed to charge credits', chargeError instanceof Error ? chargeError : undefined, {
+        userId: user.id
+      });
       throw new Error('Failed to charge credits');
     }
+    
+    logger.info('Credits charged', {
+      userId: user.id,
+      metadata: { charged: actualCost.toFixed(2) }
+    });
     
     // Update the actual cost in the storyboard
     const { error: updateCostError } = await supabaseClient
@@ -277,7 +336,10 @@ Deno.serve(async (req) => {
 
 
     if (updateCostError) {
-      console.error('[render-storyboard-video] Failed to update actual cost:', updateCostError);
+      logger.warn('Failed to update actual cost', {
+        userId: user.id,
+        metadata: { error: updateCostError.message }
+      });
     }
 
     // Build JSON2Video payload
@@ -360,7 +422,10 @@ Deno.serve(async (req) => {
       return sceneData;
     });
 
-    console.log(`[render-storyboard-video] Built variables with keys: ${Object.keys(variables).join(', ')}`);
+    logger.debug('Built variables', {
+      userId: user.id,
+      metadata: { variable_keys: Object.keys(variables) }
+    });
 
     const renderPayload = {
       template: templateId,

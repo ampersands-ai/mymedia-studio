@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,9 +18,10 @@ function sanitizeData(data: any): any {
   return sanitized;
 }
 
-// Inlined helper: log API call
+// Inlined helper: log API call with EdgeLogger integration
 async function logApiCall(
   supabase: any,
+  logger: any,
   request: {
     videoJobId: string;
     userId: string;
@@ -55,8 +57,22 @@ async function logApiCall(
       error_message: response.errorMessage,
       additional_metadata: request.additionalMetadata,
     });
+    
+    if (response.isError) {
+      logger.error(`API call failed: ${request.serviceName}`, undefined, {
+        metadata: { 
+          step: request.stepName,
+          status: response.statusCode,
+          error: response.errorMessage 
+        }
+      });
+    } else {
+      logger.debug(`API call succeeded: ${request.serviceName}`, {
+        metadata: { step: request.stepName, status: response.statusCode }
+      });
+    }
   } catch (error) {
-    console.error('Failed to log API call:', error);
+    logger.warn('Failed to log API call', { metadata: { error: error.message } });
   }
 }
 
@@ -65,6 +81,8 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  const requestId = crypto.randomUUID();
   let job_id: string | undefined;
 
   try {
@@ -79,6 +97,8 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+    
+    const logger = new EdgeLogger('process-video-job', requestId, supabaseClient, true);
 
     // Validate Shotstack API key
     const shotstackApiKey = Deno.env.get('SHOTSTACK_API_KEY');
@@ -97,7 +117,10 @@ Deno.serve(async (req) => {
       throw new Error('Job not found');
     }
 
-    console.log(`[${job_id}] Current status: ${job.status}, topic: ${job.topic}`);
+    logger.info('Processing video job', {
+      userId: job.user_id,
+      metadata: { job_id, status: job.status, topic: job.topic }
+    });
 
     // Idempotency: Resume from current status
     if (job.status === 'completed') {

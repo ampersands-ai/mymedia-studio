@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 
 const corsHeaders = {
@@ -11,21 +12,29 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  const requestId = crypto.randomUUID();
+
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) {
+    const logger = new EdgeLogger('generate-storyboard', requestId, supabaseClient, true);
+
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Missing authorization header');
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: userData, error: authError } = await supabaseClient.auth.getUser(token);
+    if (authError || !userData.user) {
+      logger.error('Authentication failed', authError);
       throw new Error('Unauthorized');
     }
+    const user = userData.user;
 
     const { 
       topic, 
@@ -144,7 +153,10 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    console.log('[generate-storyboard] Calling Lovable AI Gateway...');
+    logger.info('Calling Lovable AI Gateway', { 
+      userId: user.id,
+      metadata: { topic, duration, style, mediaType, sceneCount }
+    });
     
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -164,7 +176,10 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('[generate-storyboard] AI API error:', aiResponse.status, errorText);
+      logger.error('AI API error', undefined, {
+        userId: user.id,
+        metadata: { status: aiResponse.status, error: errorText.substring(0, 200) }
+      });
       
       if (aiResponse.status === 429) {
         throw new Error('Rate limit exceeded. Please try again later.');
@@ -178,23 +193,27 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     const aiData = await aiResponse.json();
     let content = aiData.choices[0].message.content;
     
-    console.log('[generate-storyboard] Raw AI response content:', content);
+    logger.debug('Raw AI response received', { userId: user.id });
     
     // Strip markdown code blocks if present
     content = content.trim();
     if (content.startsWith('```')) {
-      // Remove opening ```json or ``` and closing ```
       content = content.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
-      console.log('[generate-storyboard] Stripped markdown code blocks from response');
+      logger.debug('Stripped markdown code blocks', { userId: user.id });
     }
     
     let parsedContent;
     try {
       parsedContent = JSON.parse(content);
-      console.log('[generate-storyboard] Parsed AI response structure:', JSON.stringify(Object.keys(parsedContent), null, 2));
+      logger.debug('Parsed AI response', { 
+        userId: user.id,
+        metadata: { keys: Object.keys(parsedContent) }
+      });
     } catch (parseError) {
-      console.error('[generate-storyboard] JSON parse error:', parseError);
-      console.error('[generate-storyboard] Content after cleanup:', content.substring(0, 200));
+      logger.error('JSON parse error', parseError instanceof Error ? parseError : undefined, {
+        userId: user.id,
+        metadata: { content_preview: content.substring(0, 200) }
+      });
       throw new Error(`Failed to parse AI response as JSON: ${parseError instanceof Error ? parseError.message : 'Unknown parse error'}`);
     }
     
@@ -203,11 +222,11 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     
     if (parsedContent.variables?.scenes) {
       // Format 1: Expected format with nested variables
-      console.log('[generate-storyboard] Using nested variables format');
+      logger.debug('Using nested variables format', { userId: user.id });
       ({ introImagePrompt, introVoiceoverText, scenes } = parsedContent.variables);
     } else if (parsedContent.scenes) {
       // Format 2: Scenes at root level
-      console.log('[generate-storyboard] Using root level scenes format');
+      logger.debug('Using root level scenes format', { userId: user.id });
       scenes = parsedContent.scenes;
       
       // Check variables first (AI sometimes puts scenes at root but intro under variables)
@@ -219,28 +238,39 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
         || parsedContent.intro_voiceover_text;
       
       if (!introImagePrompt || !introVoiceoverText) {
-        console.warn('[generate-storyboard] Missing intro fields. Variables:', 
-          JSON.stringify(parsedContent.variables));
+        logger.warn('Missing intro fields', {
+          userId: user.id,
+          metadata: { variables: parsedContent.variables }
+        });
       }
     } else if (parsedContent.data?.scenes) {
       // Format 3: Nested under data
-      console.log('[generate-storyboard] Using data.scenes format');
+      logger.debug('Using data.scenes format', { userId: user.id });
       scenes = parsedContent.data.scenes;
       introImagePrompt = parsedContent.data.introImagePrompt || parsedContent.data.intro_image_prompt;
       introVoiceoverText = parsedContent.data.introVoiceoverText || parsedContent.data.intro_voiceover_text;
     } else {
-      console.error('[generate-storyboard] Unknown response structure:', JSON.stringify(parsedContent, null, 2));
+      logger.error('Unknown response structure', undefined, {
+        userId: user.id,
+        metadata: { keys: Object.keys(parsedContent) }
+      });
       throw new Error(`Invalid AI response format. Expected 'scenes' array but got: ${JSON.stringify(Object.keys(parsedContent))}`);
     }
     
     // Validate scenes array
     if (!Array.isArray(scenes) || scenes.length === 0) {
-      console.error('[generate-storyboard] Invalid scenes array:', scenes);
+      logger.error('Invalid scenes array', undefined, {
+        userId: user.id,
+        metadata: { scenes_length: scenes?.length }
+      });
       throw new Error(`Invalid scenes array. Expected array with ${sceneCount} scenes, got: ${scenes ? scenes.length : 'null'}`);
     }
     
     if (scenes.length !== sceneCount) {
-      console.warn(`[generate-storyboard] Scene count mismatch. Expected ${sceneCount}, got ${scenes.length}`);
+      logger.warn('Scene count mismatch', {
+        userId: user.id,
+        metadata: { expected: sceneCount, got: scenes.length }
+      });
     }
     
     // Validate required scene properties
@@ -251,7 +281,10 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
         : (scene.imagePrompt || scene.image_prompt);
       
       if (!hasVoiceOver || !hasMedia) {
-        console.error(`[generate-storyboard] Scene ${index + 1} missing required fields:`, scene);
+        logger.error('Scene missing required fields', undefined, {
+          userId: user.id,
+          metadata: { scene_index: index + 1, scene }
+        });
         return true;
       }
       return false;
@@ -261,7 +294,10 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
       throw new Error(`${invalidScenes.length} scenes missing required fields (voiceOverText and ${mediaType === 'video' ? 'videoSearchQuery' : 'imagePrompt'})`);
     }
     
-    console.log('[generate-storyboard] Successfully validated AI response with', scenes.length, 'scenes');
+    logger.info('Successfully validated AI response', {
+      userId: user.id,
+      metadata: { scene_count: scenes.length }
+    });
 
     // Calculate original character count for pricing
     const countChars = (text: string) => text?.trim().length || 0;
@@ -272,7 +308,10 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     }, 0);
     const originalCharacterCount = introChars + sceneChars;
     
-    console.log('[generate-storyboard] Original character count:', originalCharacterCount, '(intro:', introChars, ', scenes:', sceneChars, ')');
+    logger.info('Character count calculated', {
+      userId: user.id,
+      metadata: { total: originalCharacterCount, intro: introChars, scenes: sceneChars }
+    });
 
     // Create storyboard record (no credit deduction - charged at render time)
     const { data: storyboard, error: storyboardError } = await supabaseClient
@@ -333,7 +372,9 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
       .single();
 
     if (storyboardError) {
-      console.error('Storyboard creation error:', storyboardError);
+      logger.error('Storyboard creation error', storyboardError instanceof Error ? storyboardError : undefined, {
+        userId: user.id
+      });
       throw new Error('Failed to create storyboard');
     }
 
@@ -353,9 +394,20 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
       .select();
 
     if (scenesError) {
-      console.error('Scenes creation error:', scenesError);
+      logger.error('Scenes creation error', scenesError instanceof Error ? scenesError : undefined, {
+        userId: user.id
+      });
       throw new Error('Failed to create scenes');
     }
+
+    logger.logDuration('Storyboard generation completed', startTime, {
+      userId: user.id,
+      metadata: {
+        storyboard_id: storyboard.id,
+        scene_count: createdScenes.length,
+        tokens_cost: tokenCost
+      }
+    });
 
     return new Response(
       JSON.stringify({

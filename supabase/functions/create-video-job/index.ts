@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,11 +11,17 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  const requestId = crypto.randomUUID();
+  let job_id: string | undefined;
+
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    const logger = new EdgeLogger('create-video-job', requestId, supabaseClient, true);
 
     // Authenticate user
     const authHeader = req.headers.get('Authorization')!;
@@ -22,6 +29,7 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
 
     if (authError || !user) {
+      logger.error('Authentication failed', authError);
       throw new Error('Unauthorized');
     }
 
@@ -72,7 +80,7 @@ Deno.serve(async (req) => {
       .eq('tokens_remaining', subscription.tokens_remaining);
 
     if (deductError) {
-      console.error('Credit deduction error:', deductError);
+      logger.error('Credit deduction error', deductError, { userId: user.id, metadata: { costTokens } });
       throw new Error('Failed to deduct credits. Please try again.');
     }
 
@@ -96,7 +104,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (jobError) {
-      console.error('Job creation error:', jobError);
+      logger.error('Job creation error', jobError instanceof Error ? jobError : undefined, { userId: user.id });
       // Refund credits on failure
       await supabaseClient
         .from('user_subscriptions')
@@ -105,18 +113,22 @@ Deno.serve(async (req) => {
       throw new Error('Failed to create video job');
     }
 
-    console.log(`Created video job ${job.id} for user ${user.id}`);
+    job_id = job.id;
+    logger.info('Video job created', { userId: user.id, metadata: { job_id, topic, duration, costTokens } });
 
     // Trigger async processing using waitUntil for reliable background execution
     const processJob = async () => {
       try {
-        console.log(`Triggering processing for job ${job.id}`);
+        logger.debug('Triggering processing for job', { userId: user.id, metadata: { job_id } });
         const { data, error } = await supabaseClient.functions.invoke('process-video-job', {
           body: { job_id: job.id },
         });
         
         if (error) {
-          console.error('Failed to invoke process-video-job:', error);
+          logger.error('Failed to invoke process-video-job', error instanceof Error ? error : undefined, { 
+            userId: user.id, 
+            metadata: { job_id } 
+          });
           // Mark job as failed if we can't even start processing
           await supabaseClient
             .from('video_jobs')
@@ -126,15 +138,23 @@ Deno.serve(async (req) => {
             })
             .eq('id', job.id);
         } else {
-          console.log(`Successfully triggered processing for job ${job.id}`);
+          logger.info('Successfully triggered processing', { userId: user.id, metadata: { job_id } });
         }
       } catch (err) {
-        console.error('Error triggering processing:', err);
+        logger.error('Error triggering processing', err instanceof Error ? err : undefined, { 
+          userId: user.id, 
+          metadata: { job_id } 
+        });
       }
     };
 
     // Start background processing (don't await)
     processJob();
+
+    logger.logDuration('Video job creation completed', startTime, { 
+      userId: user.id, 
+      metadata: { job_id, duration: costTokens } 
+    });
 
     return new Response(
       JSON.stringify({ success: true, job }),
@@ -144,7 +164,13 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error: any) {
-    console.error('Error in create-video-job:', error);
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    const logger = new EdgeLogger('create-video-job', requestId, supabaseClient, true);
+    
+    logger.error('Error in create-video-job', error, { metadata: { job_id } });
     
     const status = error.message === 'Unauthorized' ? 401 : 400;
     

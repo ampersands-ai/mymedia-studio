@@ -8,8 +8,8 @@ export type GenerationUpdate = Database['public']['Tables']['generations']['Upda
 export type Model = Database['public']['Tables']['ai_models']['Row'];
 export type ModelInsert = Database['public']['Tables']['ai_models']['Insert'];
 
-export type Template = Database['public']['Tables']['templates']['Row'];
-export type TemplateInsert = Database['public']['Tables']['templates']['Insert'];
+export type WorkflowTemplate = Database['public']['Tables']['workflow_templates']['Row'];
+export type WorkflowTemplateInsert = Database['public']['Tables']['workflow_templates']['Insert'];
 
 export type VideoJob = Database['public']['Tables']['video_jobs']['Row'];
 export type VideoJobInsert = Database['public']['Tables']['video_jobs']['Insert'];
@@ -17,7 +17,7 @@ export type VideoJobInsert = Database['public']['Tables']['video_jobs']['Insert'
 export type WorkflowExecution = Database['public']['Tables']['workflow_executions']['Row'];
 export type WorkflowExecutionInsert = Database['public']['Tables']['workflow_executions']['Insert'];
 
-export type VoiceOption = Database['public']['Tables']['voice_options']['Row'];
+export type AzureVoice = Database['public']['Tables']['azure_voices']['Row'];
 export type Storyboard = Database['public']['Tables']['storyboards']['Row'];
 export type StoryboardInsert = Database['public']['Tables']['storyboards']['Insert'];
 
@@ -38,8 +38,8 @@ export interface ModelListResponse {
   count: number;
 }
 
-export interface TemplateResponse {
-  template: Template;
+export interface WorkflowTemplateResponse {
+  template: WorkflowTemplate;
   model?: Model;
 }
 

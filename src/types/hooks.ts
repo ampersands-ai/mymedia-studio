@@ -2,10 +2,10 @@ import type { UseMutationResult } from '@tanstack/react-query';
 import type { 
   Generation, 
   Model, 
-  Template, 
+  WorkflowTemplate, 
   VideoJob, 
   WorkflowExecution,
-  VoiceOption,
+  AzureVoice,
   Storyboard,
   CustomParameters
 } from './api-responses';
@@ -35,11 +35,11 @@ export interface UseModelsReturn {
   refetch: () => Promise<void>;
 }
 
-export interface UseTemplatesReturn {
-  templates: Template[];
+export interface UseWorkflowTemplatesReturn {
+  templates: WorkflowTemplate[];
   isLoading: boolean;
   error: Error | null;
-  getTemplateById: (id: string) => Template | undefined;
+  getTemplateById: (id: string) => WorkflowTemplate | undefined;
 }
 
 export interface UsePollingReturn {
@@ -75,11 +75,11 @@ export interface WorkflowExecutionParams {
   userInput: Record<string, unknown>;
 }
 
-export interface UseVoiceOptionsReturn {
-  voices: VoiceOption[];
+export interface UseVoicesReturn {
+  voices: AzureVoice[];
   isLoading: boolean;
   error: Error | null;
-  getVoiceById: (id: string) => VoiceOption | undefined;
+  getVoiceById: (id: string) => AzureVoice | undefined;
 }
 
 export interface UseStoryboardReturn {

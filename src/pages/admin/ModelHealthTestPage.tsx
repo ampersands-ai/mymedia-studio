@@ -204,7 +204,7 @@ export default function ModelHealthTestPage() {
     onboardingProgress: null,
     updateProgress: () => {},
     setFirstGeneration: () => {},
-    userTokens: 999999, // Bypass token check for testing
+    userTokens: { tokens_remaining: 999999 }, // Bypass token check for testing
   });
 
   // Wrap generation with test tracking

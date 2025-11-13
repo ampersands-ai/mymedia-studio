@@ -136,6 +136,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
    * Handle generation - now uses shared executeGeneration pipeline
    */
   const handleGenerate = useCallback(async () => {
+    const requestId = generateRequestId();
     const currentModel = filteredModels.find(m => m.record_id === state.selectedModel);
     
     if (!currentModel) {

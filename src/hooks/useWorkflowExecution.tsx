@@ -157,6 +157,12 @@ export const useWorkflowExecution = () => {
                 setIsExecuting(false);
                 reject(new Error('Workflow execution cancelled'));
               }
+              } catch (error) {
+                workflowLogger.error('Error processing realtime update', error as Error, {
+                  requestId,
+                  executionId,
+                });
+              }
             }
           )
           .subscribe(async (status) => {

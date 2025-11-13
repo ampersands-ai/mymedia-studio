@@ -21,8 +21,19 @@ const mutationsLogger = logger.child({ component: 'useWorkflowMutations' });
  * Options schema for workflow mutations hook
  */
 const UseWorkflowMutationsOptionsSchema = z.object({
-  onEditContentTemplate: z.function().args(z.custom<ContentTemplateDialogState>()).returns(z.void()),
-  onEditWorkflow: z.function().args(z.custom<WorkflowDialogState>()).returns(z.void()),
+  onEditContentTemplate: z.function().args(
+    z.object({
+      open: z.boolean(),
+      template: z.any().nullable(),
+    })
+  ).returns(z.void()),
+  onEditWorkflow: z.function().args(
+    z.object({
+      open: z.boolean(),
+      workflow: z.any().nullable(),
+      isNew: z.boolean(),
+    })
+  ).returns(z.void()),
 });
 
 interface UseWorkflowMutationsOptions {
@@ -153,14 +164,14 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
         category: item.category!,
         description: item.description || null,
         model_id: item.model_id || null,
-        preset_parameters: item.preset_parameters || {},
+        preset_parameters: item.preset_parameters as any || {},
         enhancement_instruction: item.enhancement_instruction || null,
         thumbnail_url: item.thumbnail_url || null,
         is_active: false,
         display_order: item.display_order || 0,
         estimated_time_seconds: item.estimated_time_seconds || null,
-        user_editable_fields: (item.user_editable_fields as Record<string, unknown>[]) || [],
-        hidden_field_defaults: (item.hidden_field_defaults as Record<string, unknown>) || {},
+        user_editable_fields: item.user_editable_fields as any || [],
+        hidden_field_defaults: item.hidden_field_defaults as any || {},
         is_custom_model: item.is_custom_model || false,
         model_record_id: ('model_record_id' in item ? item.model_record_id as string : null) || null,
         before_image_url: item.before_image_url || null,
@@ -179,7 +190,7 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
       toast.success("Template duplicated - now editing copy");
       queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
       
-      options.onEditContentTemplate({ open: true, template: newTemplate });
+      options.onEditContentTemplate({ open: true, template: newTemplate as any });
     } else {
       if (!item.category || !item.name) {
         toast.error("Cannot duplicate: missing required fields");
@@ -197,8 +208,8 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
         is_active: false,
         display_order: item.display_order || 0,
         estimated_time_seconds: item.estimated_time_seconds || null,
-        workflow_steps: (item.workflow_steps as WorkflowStep[]) || [],
-        user_input_fields: (item.user_input_fields as UserInputField[]) || [],
+        workflow_steps: item.workflow_steps as any || [],
+        user_input_fields: item.user_input_fields as any || [],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -217,7 +228,7 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
       
       options.onEditWorkflow({ 
         open: true, 
-        workflow: newWorkflow as WorkflowTemplate, 
+        workflow: newWorkflow as any, 
         isNew: false 
       });
     }

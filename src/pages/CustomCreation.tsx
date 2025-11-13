@@ -188,7 +188,7 @@ const CustomCreation = () => {
     onboardingProgress: progress,
     updateProgress,
     setFirstGeneration,
-    userTokens: userTokens?.tokens_remaining || 0,
+    userTokens: userTokens || null,
   });
 
   // Surprise Me handler - wrapped in useCallback for stable reference

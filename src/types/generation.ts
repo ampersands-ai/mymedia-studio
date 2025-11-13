@@ -78,10 +78,7 @@ export type OnboardingProgress = z.infer<typeof OnboardingProgressSchema>;
 export const FilteredModelSchema = z.object({
   record_id: z.string(),
   base_token_cost: z.number(),
-  cost_multipliers: z.record(z.union([
-    z.number(),
-    z.record(z.number())
-  ])).optional(),
+  cost_multipliers: z.record(z.unknown()).optional(),
 });
 
 export type FilteredModel = z.infer<typeof FilteredModelSchema>;

@@ -1,48 +1,63 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { 
+  CancelGenerationSchema,
+  validateRequest,
+  createValidationErrorResponse 
+} from "../_shared/validation.ts";
+import {
+  handleOptionsRequest,
+  createJsonResponse,
+  createErrorResponse,
+  corsHeaders
+} from "../_shared/cors-headers.ts";
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleOptionsRequest();
   }
 
+  const startTime = Date.now();
+  const requestId = crypto.randomUUID();
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const logger = new EdgeLogger('cancel-generation', requestId, supabase, true);
+
   try {
+    logger.info('Cancel generation request received', { requestId });
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      logger.warn('Missing authorization header', { requestId });
+      return createErrorResponse('Missing authorization header', 401);
     }
-
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Verify user is authenticated
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      logger.error('Authentication failed', authError, { requestId });
+      return createErrorResponse('Unauthorized', 401);
     }
 
-    const { generation_id } = await req.json();
-    
-    if (!generation_id) {
-      return new Response(
-        JSON.stringify({ error: 'Missing generation_id' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    logger.info('User authenticated', { userId: user.id, requestId });
+
+    // Validate request body
+    const body = await req.json();
+    const validation = validateRequest(
+      CancelGenerationSchema,
+      body,
+      logger,
+      'cancel-generation-request'
+    );
+
+    if (!validation.success) {
+      return createValidationErrorResponse(validation.formattedErrors, corsHeaders);
     }
+
+    const { generation_id } = validation.data;
 
     // Get generation details and verify ownership
     const { data: generation, error: getError } = await supabase
@@ -53,21 +68,33 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (getError || !generation) {
-      return new Response(
-        JSON.stringify({ error: 'Generation not found or access denied' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      logger.warn('Generation not found or access denied', {
+        userId: user.id,
+        generationId: generation_id,
+        requestId
+      });
+      return createErrorResponse('Generation not found or access denied', 404);
     }
 
     // Only allow canceling if still processing
     if (generation.status !== 'processing') {
-      return new Response(
-        JSON.stringify({ error: `Cannot cancel generation with status: ${generation.status}` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      logger.warn('Cannot cancel generation with current status', {
+        userId: user.id,
+        generationId: generation_id,
+        currentStatus: generation.status,
+        requestId
+      });
+      return createErrorResponse(
+        `Cannot cancel generation with status: ${generation.status}`,
+        400
       );
     }
 
-    console.log(`User ${user.id} canceling generation ${generation_id}`);
+    logger.info('Canceling generation', {
+      userId: user.id,
+      generationId: generation_id,
+      requestId
+    });
       
     // Mark as failed with user cancellation message
     const { error: updateError } = await supabase
@@ -92,22 +119,23 @@ Deno.serve(async (req) => {
       amount: generation.tokens_used
     });
 
-    console.log(`Tokens refunded: ${generation.tokens_used} to user ${user.id}`);
+    logger.info('Tokens refunded', {
+      userId: user.id,
+      tokensRefunded: generation.tokens_used,
+      requestId
+    });
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Generation canceled and tokens refunded',
-        tokens_refunded: generation.tokens_used
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    logger.logDuration('cancel-generation', startTime, { userId: user.id, requestId });
 
-  } catch (error: any) {
-    console.error('Cancel generation error:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createJsonResponse({
+      success: true,
+      message: 'Generation canceled and tokens refunded',
+      tokens_refunded: generation.tokens_used
+    });
+
+  } catch (error) {
+    const err = error as Error;
+    logger.error('Cancel generation error', err, { requestId });
+    return createErrorResponse(err.message, 500);
   }
 });

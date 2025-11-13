@@ -127,7 +127,7 @@ export async function duplicateTemplate(
       category: template.category!,
       description: template.description || null,
       model_id: template.model_id || null,
-      preset_parameters: template.preset_parameters || {},
+      preset_parameters: (template.preset_parameters || {}) as any,
       enhancement_instruction: template.enhancement_instruction || null,
       thumbnail_url: template.thumbnail_url || null,
       is_active: false,

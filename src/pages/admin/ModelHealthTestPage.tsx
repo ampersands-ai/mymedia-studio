@@ -60,7 +60,7 @@ export default function ModelHealthTestPage() {
 
   // Schema helpers
   const schemaHelpers = useSchemaHelpers();
-  const imageFieldInfo = schemaHelpers.getImageFieldInfo(currentModel);
+  const imageFieldInfo = schemaHelpers.getImageFieldInfo(currentModel as any);
 
   // Generation polling (same as Custom Creation)
   const { startPolling, stopPolling, isPolling } = useGenerationPolling({
@@ -166,7 +166,7 @@ export default function ModelHealthTestPage() {
     handleNativeCameraPick,
     cameraLoading,
     isNative
-  } = useImageUpload(currentModel);
+  } = useImageUpload(currentModel as any);
 
   // Caption generation (same as Custom Creation)
   const {
@@ -409,10 +409,10 @@ export default function ModelHealthTestPage() {
     required?: string[] 
   } | null | undefined;
   const textKey = schemaHelpers.findPrimaryTextKey(modelSchema?.properties);
-  const voiceKey = schemaHelpers.findPrimaryVoiceKey(modelSchema?.properties, state.selectedModel || undefined);
+  const voiceKey = schemaHelpers.findPrimaryVoiceKey(modelSchema?.properties, currentModel as any);
   const hasPromptField = !!(modelSchema?.properties?.prompt);
   const isPromptRequired = (modelSchema?.required || []).includes('prompt');
-  const maxPromptLength = schemaHelpers.getMaxPromptLength(currentModel, state.modelParameters.customMode);
+  const maxPromptLength = schemaHelpers.getMaxPromptLength(currentModel as any, state.modelParameters.customMode);
   const hasDuration = !!(modelSchema?.properties?.duration);
   const hasIncrement = !!(modelSchema?.properties?.increment || modelSchema?.properties?.incrementBySeconds);
   

@@ -65,7 +65,7 @@ const CustomCreation = () => {
 
   // Schema helpers
   const schemaHelpers = useSchemaHelpers();
-  const imageFieldInfo = schemaHelpers.getImageFieldInfo(currentModel);
+  const imageFieldInfo = schemaHelpers.getImageFieldInfo(currentModel as any);
 
   // Generation polling
   const { startPolling, stopPolling, isPolling } = useGenerationPolling({
@@ -146,7 +146,7 @@ const CustomCreation = () => {
     handleNativeCameraPick,
     cameraLoading,
     isNative
-  } = useImageUpload(currentModel);
+  } = useImageUpload(currentModel as any);
 
   // Caption generation
   const {
@@ -295,10 +295,10 @@ const CustomCreation = () => {
     required?: string[] 
   } | null | undefined;
   const textKey = schemaHelpers.findPrimaryTextKey(modelSchema?.properties);
-  const voiceKey = schemaHelpers.findPrimaryVoiceKey(modelSchema?.properties, state.selectedModel || undefined);
+  const voiceKey = schemaHelpers.findPrimaryVoiceKey(modelSchema?.properties, currentModel as any);
   const hasPromptField = !!(modelSchema?.properties?.prompt);
   const isPromptRequired = (modelSchema?.required || []).includes('prompt');
-  const maxPromptLength = schemaHelpers.getMaxPromptLength(currentModel, state.modelParameters.customMode);
+  const maxPromptLength = schemaHelpers.getMaxPromptLength(currentModel as any, state.modelParameters.customMode);
   const hasDuration = !!(modelSchema?.properties?.duration);
   const hasIncrement = !!(modelSchema?.properties?.increment || modelSchema?.properties?.incrementBySeconds);
   

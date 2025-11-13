@@ -27,12 +27,36 @@ Deno.serve(async (req) => {
   const logger = new EdgeLogger('get-webhook-analytics', crypto.randomUUID());
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      logger.error('Missing required environment variables', {
+        hasUrl: !!supabaseUrl,
+        hasServiceKey: !!supabaseServiceKey
+      });
+      throw new Error('Server configuration error');
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get parameters from request body
-    const { timeRange = '24h', provider = null, customStart, customEnd } = await req.json();
+    // Get parameters from request body with validation
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (parseError) {
+      logger.error('Failed to parse request body', { error: parseError });
+      throw new Error('Invalid request body format');
+    }
+
+    const { timeRange = '24h', provider = null, customStart, customEnd } = requestBody;
+
+    // Validate timeRange
+    const validTimeRanges = ['1h', '24h', '7d', '30d', 'custom'];
+    if (!validTimeRanges.includes(timeRange)) {
+      logger.warn('Invalid time range provided', { timeRange });
+      throw new Error(`Invalid time range: ${timeRange}`);
+    }
 
     logger.info('Fetching webhook analytics', {
       metadata: { timeRange, provider, customStart, customEnd }
@@ -83,7 +107,31 @@ Deno.serve(async (req) => {
     const { data: events, error: eventsError } = await query;
 
     if (eventsError) {
-      throw eventsError;
+      logger.error('Database query failed', { 
+        error: eventsError,
+        metadata: { timeRange, provider, startDate, endDate }
+      });
+      throw new Error(`Database query failed: ${eventsError.message}`);
+    }
+
+    if (!events) {
+      logger.warn('No events returned from database', {
+        metadata: { timeRange, provider, startDate, endDate }
+      });
+      // Return empty analytics instead of erroring
+      return new Response(JSON.stringify({
+        summary: {
+          totalEvents: 0,
+          successRate: 0,
+          avgDuration: 0,
+          p95Duration: 0,
+        },
+        timeSeries: [],
+        byProvider: [],
+        errorAnalysis: [],
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Calculate summary metrics

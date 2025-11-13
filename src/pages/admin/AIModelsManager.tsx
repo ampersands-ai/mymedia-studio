@@ -17,6 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ModelFormDialog } from "@/components/admin/ModelFormDialog";
+import type { ModelConfiguration } from "@/types/schema";
+import { jsonToSchema } from "@/types/schema";
+import type { Json } from "@/integrations/supabase/types";
 import {
   Select,
   SelectContent,
@@ -33,26 +36,7 @@ const CREATION_GROUPS = [
   { id: "prompt_to_audio", label: "Prompt to Audio" },
 ];
 
-interface AIModel {
-  record_id: string;
-  id: string;
-  provider: string;
-  model_name: string;
-  content_type: string;
-  base_token_cost: number;
-  cost_multipliers: any;
-  input_schema: any;
-  api_endpoint: string | null;
-  is_active: boolean;
-  groups?: any; // Json type from Supabase
-  payload_structure?: string;
-  max_images?: number | null;
-  estimated_time_seconds?: number | null;
-  default_outputs?: number | null;
-  model_family?: string | null;
-  variant_name?: string | null;
-  display_order_in_family?: number | null;
-}
+type AIModel = ModelConfiguration;
 
 export default function AIModelsManager() {
   const [models, setModels] = useState<AIModel[]>([]);
@@ -100,7 +84,22 @@ export default function AIModelsManager() {
         return;
       }
       
-      setModels(data || []);
+      // Convert Supabase Json types to our typed structures
+      const typedModels: AIModel[] = (data || []).map(model => ({
+        ...model,
+        input_schema: jsonToSchema(model.input_schema),
+        cost_multipliers: typeof model.cost_multipliers === 'object' && model.cost_multipliers !== null 
+          ? model.cost_multipliers as Record<string, number>
+          : null,
+        payload_structure: (model.payload_structure === 'direct' || model.payload_structure === 'wrapper')
+          ? model.payload_structure
+          : 'wrapper',
+        groups: Array.isArray(model.groups) 
+          ? model.groups.filter((g): g is string => typeof g === 'string')
+          : undefined
+      }));
+      
+      setModels(typedModels);
     } catch (error) {
       logger.error("Failed to fetch AI models", error as Error, { 
         component: 'AIModelsManager',
@@ -472,7 +471,7 @@ export default function AIModelsManager() {
                       <SelectItem value="all">All Structures</SelectItem>
                       {uniqueStructures.map(structure => (
                         <SelectItem key={structure} value={structure}>
-                          {structure === 'flat' ? 'Flat' : 'Wrapper'}
+                          {structure === 'direct' ? 'Direct' : 'Wrapper'}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -1,11 +1,13 @@
+import type { JsonSchema, JsonSchemaProperty, JsonSchemaType, ParameterValue } from "@/types/schema";
+
 export interface Parameter {
   name: string;
   label: string;
   description: string;
-  type: 'string' | 'number' | 'integer' | 'boolean' | 'array';
+  type: JsonSchemaType;
   required: boolean;
-  default?: any;
-  enum?: any[];
+  default?: ParameterValue;
+  enum?: Array<string | number>;
   minimum?: number;
   maximum?: number;
   minLength?: number;
@@ -20,7 +22,7 @@ export interface Parameter {
  * Parse JSON Schema -> Parameter[]
  * This ensures existing models load correctly
  */
-export function parseSchema(schema: Record<string, any>): Parameter[] {
+export function parseSchema(schema: JsonSchema): Parameter[] {
   const parameters: Parameter[] = [];
   const required = schema.required || [];
   const properties = schema.properties || {};
@@ -59,16 +61,11 @@ export function parseSchema(schema: Record<string, any>): Parameter[] {
  * Generate JSON Schema from Parameter[]
  * This ensures we save in the correct format
  */
-export function generateSchema(parameters: Parameter[]): Record<string, any> {
-  const schema: any = {
-    type: "object",
-    required: parameters.filter(p => p.required).map(p => p.name),
-    properties: {},
-    "x-order": parameters.map(p => p.name) // Explicit order preservation
-  };
+export function generateSchema(parameters: Parameter[]): JsonSchema {
+  const properties: Record<string, JsonSchemaProperty> = {};
 
   parameters.forEach(param => {
-    const property: any = {
+    const property: JsonSchemaProperty = {
       type: param.type,
     };
 
@@ -101,7 +98,10 @@ export function generateSchema(parameters: Parameter[]): Record<string, any> {
     }
 
     if (param.type === 'array' && param.items) {
-      property.items = param.items;
+      property.items = {
+        type: param.items.type as JsonSchemaType,
+        format: param.items.format
+      };
     }
 
     // Save showToUser flag (only if explicitly set to false, to keep backward compatibility)
@@ -114,10 +114,15 @@ export function generateSchema(parameters: Parameter[]): Record<string, any> {
       property.isAdvanced = true;
     }
 
-    schema.properties[param.name] = property;
+    properties[param.name] = property;
   });
 
-  return schema;
+  return {
+    type: "object",
+    required: parameters.filter(p => p.required).map(p => p.name),
+    properties,
+    "x-order": parameters.map(p => p.name)
+  };
 }
 
 /**

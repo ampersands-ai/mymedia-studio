@@ -9,6 +9,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { MediaProvider } from "./contexts/MediaContext";
 import { Analytics } from "./components/Analytics";
 import { App as CapacitorApp } from '@capacitor/app';
+import type { PluginListenerHandle } from '@capacitor/core';
 import { setStatusBarStyle, isNativePlatform } from "@/utils/capacitor-utils";
 import { initPostHog } from "@/lib/posthog";
 import { usePostHog } from "@/hooks/usePostHog";
@@ -100,7 +101,7 @@ const AppContent = () => {
     setStatusBarStyle(isDark ? 'dark' : 'light');
 
     // Listen for app state changes
-    let appStateListener: any;
+    let appStateListener: PluginListenerHandle | undefined;
     CapacitorApp.addListener('appStateChange', ({ isActive }) => {
       logger.debug('Capacitor app state changed', {
         component: 'App',

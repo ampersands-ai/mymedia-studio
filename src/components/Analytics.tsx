@@ -1,5 +1,13 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import type { 
+  GTagFunction, 
+  GTagEventParams, 
+  WindowWithAnalytics,
+  hasGTag,
+  DataLayerEntry 
+} from '@/types/analytics';
+import { hasGTag as checkGTag } from '@/types/analytics';
 
 // Google Analytics tracking ID - Replace with your actual GA4 measurement ID
 const GA_MEASUREMENT_ID = 'G-XXXXXXXXXX';
@@ -18,17 +26,20 @@ export const Analytics = () => {
         document.head.appendChild(script);
 
         // Initialize dataLayer
-        window.dataLayer = window.dataLayer || [];
-        function gtag(...args: any[]) {
-          window.dataLayer.push(args);
-        }
+        const win = window as unknown as WindowWithAnalytics;
+        win.dataLayer = win.dataLayer || [];
+        
+        const gtag: GTagFunction = function(command, ...args) {
+          win.dataLayer.push([command, ...args] as DataLayerEntry);
+        };
+        
         gtag('js', new Date());
         gtag('config', GA_MEASUREMENT_ID, {
           send_page_view: false // We'll send page views manually
         });
 
         // Store gtag in window for later use
-        (window as any).gtag = gtag;
+        win.gtag = gtag;
       };
 
       // Use requestIdleCallback or setTimeout to defer loading until browser is idle
@@ -42,8 +53,8 @@ export const Analytics = () => {
 
   useEffect(() => {
     // Track page views on route change
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'page_view', {
+    if (typeof window !== 'undefined' && checkGTag(window)) {
+      window.gtag('event', 'page_view', {
         page_path: location.pathname + location.search,
         page_title: document.title,
       });
@@ -54,16 +65,8 @@ export const Analytics = () => {
 };
 
 // Custom event tracking helper
-export const trackEvent = (eventName: string, eventParams?: Record<string, any>) => {
-  if (typeof window !== 'undefined' && (window as any).gtag) {
-    (window as any).gtag('event', eventName, eventParams);
+export const trackEvent = (eventName: string, eventParams?: GTagEventParams) => {
+  if (typeof window !== 'undefined' && checkGTag(window)) {
+    window.gtag('event', eventName, eventParams);
   }
 };
-
-// Extend Window interface for TypeScript
-declare global {
-  interface Window {
-    dataLayer: any[];
-    gtag: (...args: any[]) => void;
-  }
-}

@@ -81,7 +81,15 @@ Deno.serve(async (req) => {
     console.log('[json2video-webhook] Found storyboard:', storyboard.id);
 
     // Update storyboard based on status
-    const updates: any = {
+    interface StoryboardUpdate {
+      updated_at: string;
+      status?: string;
+      video_url?: string;
+      completed_at?: string;
+      error_message?: string;
+    }
+
+    const updates: StoryboardUpdate = {
       updated_at: new Date().toISOString()
     };
 

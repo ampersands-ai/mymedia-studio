@@ -182,7 +182,13 @@ Deno.serve(async (req) => {
     const newAttemptCount = rateLimit.attempt_count + 1;
     const isBlocked = newAttemptCount >= config.maxAttempts;
 
-    const updateData: any = {
+    interface RateLimitUpdate {
+      attempt_count: number;
+      last_attempt_at: string;
+      blocked_until?: string;
+    }
+
+    const updateData: RateLimitUpdate = {
       attempt_count: newAttemptCount,
       last_attempt_at: now.toISOString(),
     };

@@ -9,13 +9,13 @@ export class CircuitBreaker {
   private readonly timeout: number;
 
   /**
-   * @param threshold - Number of failures before opening circuit
-   * @param timeout - Time in ms before attempting to close circuit
+   * @param threshold - Number of failures before opening circuit (default: 5)
+   * @param timeout - Time in ms before attempting to close circuit (default: 60000)
    */
-  constructor(threshold: number = 5, timeout: number = 60000) {
-    this.threshold = threshold;
-    this.timeout = timeout;
-  }
+  constructor(
+    public readonly threshold: number = 5,
+    public readonly timeout: number = 60000
+  ) {}
 
   /**
    * Check if circuit breaker is open (blocking requests)

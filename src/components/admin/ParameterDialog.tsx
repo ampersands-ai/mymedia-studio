@@ -308,7 +308,7 @@ export function ParameterDialog({
                 id="default"
                 type={formData.type === 'number' || formData.type === 'integer' ? 'number' : 'text'}
                 step={formData.type === 'number' || formData.type === 'integer' ? 0.01 : undefined}
-                value={formData.default !== undefined && formData.default !== null ? formData.default : ''}
+                value={formData.default !== undefined && formData.default !== null ? String(formData.default) : ''}
                 onChange={(e) => {
                   let value: any = e.target.value;
                   if (formData.type === 'number') value = parseFloat(value);

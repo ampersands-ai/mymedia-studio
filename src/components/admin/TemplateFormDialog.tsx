@@ -29,30 +29,15 @@ import { toast } from "sonner";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ParameterConfigurator } from "./ParameterConfigurator";
+import type { TemplateConfiguration, JsonSchema } from "@/types/schema";
+import { jsonToSchema } from "@/types/schema";
 
-interface ContentTemplate {
-  id: string;
-  category: string;
-  name: string;
-  description: string | null;
-  model_id: string | null;
-  preset_parameters: Record<string, any>;
-  user_editable_fields?: string[];
-  hidden_field_defaults?: Record<string, any>;
-  is_custom_model?: boolean;
-  enhancement_instruction: string | null;
-  thumbnail_url: string | null;
-  before_image_url: string | null;
-  after_image_url: string | null;
-  is_active: boolean;
-  display_order: number;
-  estimated_time_seconds?: number | null;
-}
+type ContentTemplate = TemplateConfiguration;
 
 interface AIModel {
   id: string;
   model_name: string;
-  input_schema: any;
+  input_schema: JsonSchema;
   record_id: string;
 }
 
@@ -90,8 +75,8 @@ export function TemplateFormDialog({
   const [models, setModels] = useState<AIModel[]>([]);
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [userEditableFields, setUserEditableFields] = useState<string[]>([]);
-  const [hiddenFieldDefaults, setHiddenFieldDefaults] = useState<Record<string, any>>({});
-  const [presetValues, setPresetValues] = useState<Record<string, any>>({});
+  const [hiddenFieldDefaults, setHiddenFieldDefaults] = useState<Record<string, string | number | boolean | null>>({});
+  const [presetValues, setPresetValues] = useState<Record<string, string | number | boolean | null>>({});
   const [saving, setSaving] = useState(false);
   const [basicInfoOpen, setBasicInfoOpen] = useState(true);
   const [paramConfigOpen, setParamConfigOpen] = useState(false);
@@ -118,7 +103,7 @@ export function TemplateFormDialog({
         before_image_url: template.before_image_url || "",
         after_image_url: template.after_image_url || "",
         display_order: template.display_order.toString(),
-        estimated_time_seconds: (template as any).estimated_time_seconds?.toString() || "",
+        estimated_time_seconds: template.estimated_time_seconds?.toString() || "",
         is_custom_model: isCustom,
         custom_model_id: isCustom ? template.model_id || "" : "",
         custom_input_schema: "{}",
@@ -165,7 +150,10 @@ export function TemplateFormDialog({
         .order("model_name");
 
       if (error) throw error;
-      setModels(data || []);
+      setModels((data || []).map(m => ({
+        ...m,
+        input_schema: jsonToSchema(m.input_schema)
+      })));
     } catch (error) {
       logger.error('Template models fetch failed', error as Error, {
         component: 'TemplateFormDialog',
@@ -184,7 +172,7 @@ export function TemplateFormDialog({
         .single();
 
       if (error) throw error;
-      setSelectedModel(data);
+      setSelectedModel(data ? { ...data, input_schema: jsonToSchema(data.input_schema) } : null);
     } catch (error) {
       logger.error('Model details fetch failed', error as Error, {
         component: 'TemplateFormDialog',

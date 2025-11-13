@@ -23,6 +23,8 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SchemaBuilder } from "./SchemaBuilder";
 import { ImageUploader } from "./template-landing/ImageUploader";
+import type { JsonSchema, ModelConfiguration } from "@/types/schema";
+import { schemaToJson, jsonToSchema } from "@/types/schema";
 
 const AVAILABLE_GROUPS = [
   { id: "image_editing", label: "Image Editing" },
@@ -47,24 +49,7 @@ const AVAILABLE_GROUPS = [
  * - In admin model list
  */
 
-interface AIModel {
-  record_id: string;
-  id: string;
-  provider: string;
-  model_name: string;
-  content_type: string;
-  base_token_cost: number;
-  cost_multipliers: Record<string, number> | null;
-  input_schema: Record<string, any>;
-  api_endpoint: string | null;
-  is_active: boolean;
-  groups?: string[];
-  estimated_time_seconds?: number | null;
-  payload_structure?: string;
-  max_images?: number | null;
-  logo_url?: string | null;
-  default_outputs?: number | null;
-}
+type AIModel = ModelConfiguration;
 
 interface ModelFormDialogProps {
   open: boolean;
@@ -108,7 +93,7 @@ export function ModelFormDialog({
         model_name: model.model_name,
         content_type: model.content_type,
         base_token_cost: model.base_token_cost.toString(),
-        payload_structure: (model as any).payload_structure || "wrapper",
+        payload_structure: model.payload_structure || "wrapper",
         cost_multipliers: JSON.stringify(model.cost_multipliers || {}, null, 2),
         input_schema: JSON.stringify(model.input_schema, null, 2),
         api_endpoint: model.api_endpoint || "",
@@ -116,9 +101,9 @@ export function ModelFormDialog({
         max_images: model.max_images?.toString() || "",
         logo_url: model.logo_url || "",
         default_outputs: model.default_outputs?.toString() || "1",
-        model_family: (model as any).model_family || "",
-        variant_name: (model as any).variant_name || "",
-        display_order_in_family: (model as any).display_order_in_family?.toString() || "0",
+        model_family: model.model_family || "",
+        variant_name: model.variant_name || "",
+        display_order_in_family: model.display_order_in_family?.toString() || "0",
       });
       setSelectedGroups(model.groups || []);
     } else {
@@ -144,13 +129,13 @@ export function ModelFormDialog({
     }
   }, [model]);
 
-  const handleSchemaSave = async (newSchema: Record<string, any>) => {
+  const handleSchemaSave = async (newSchema: JsonSchema) => {
     if (!model?.record_id) return;
     
     try {
       const { error } = await supabase
         .from("ai_models")
-        .update({ input_schema: newSchema })
+        .update({ input_schema: schemaToJson(newSchema) })
         .eq("record_id", model.record_id);
 
       if (error) throw error;

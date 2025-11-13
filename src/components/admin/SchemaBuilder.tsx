@@ -7,12 +7,13 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ParameterDialog } from "./ParameterDialog";
 import { parseSchema, generateSchema, type Parameter } from "@/lib/schema-utils";
 import { logger } from "@/lib/logger";
+import type { JsonSchema } from "@/types/schema";
 
 interface SchemaBuilderProps {
-  schema: Record<string, any>;
-  onChange: (schema: Record<string, any>) => void;
+  schema: JsonSchema;
+  onChange: (schema: JsonSchema) => void;
   modelRecordId?: string;
-  onSave?: (schema: Record<string, any>) => Promise<void>;
+  onSave?: (schema: JsonSchema) => Promise<void>;
 }
 
 export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: SchemaBuilderProps) {

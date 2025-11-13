@@ -232,10 +232,13 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     
     if (Array.isArray(value) && value.length > 0) {
       const firstItem = value[0];
-      if (firstItem !== null && firstItem !== undefined && typeof firstItem === 'object' && 'inputImage' in firstItem) {
-        const inputImageValue = (firstItem as Record<string, unknown>).inputImage;
-        if (inputImageValue) {
-          imageUrl = String(inputImageValue);
+      if (firstItem && typeof firstItem === 'object' && !Array.isArray(firstItem)) {
+        const itemAsRecord = firstItem as Record<string, unknown>;
+        if ('inputImage' in itemAsRecord) {
+          const inputImageValue = itemAsRecord.inputImage;
+          if (inputImageValue) {
+            imageUrl = String(inputImageValue);
+          }
         }
       }
     }

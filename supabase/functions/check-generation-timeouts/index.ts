@@ -1,5 +1,5 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,6 +7,10 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('check-generation-timeouts', requestId);
+  const startTime = Date.now();
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -17,7 +21,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Checking for generation timeouts...');
+    logger.info('Starting generation timeout check');
 
     // Find generations that have been processing for more than 5 minutes
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
@@ -40,12 +44,15 @@ Deno.serve(async (req) => {
       .lt('created_at', fiveMinutesAgo);
 
     if (queryError) {
+      logger.error('Failed to query stuck generations', queryError);
       throw queryError;
     }
 
-    console.log(`Found ${stuckGenerations?.length || 0} stuck generations`);
+    const stuckCount = stuckGenerations?.length || 0;
+    logger.info(`Found ${stuckCount} stuck generation(s)`, { metadata: { stuckCount } });
 
     if (!stuckGenerations || stuckGenerations.length === 0) {
+      logger.logDuration('Timeout check completed', startTime);
       return new Response(
         JSON.stringify({ message: 'No stuck generations found', count: 0 }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -84,7 +91,13 @@ Deno.serve(async (req) => {
           (Date.now() - new Date(gen.created_at).getTime()) / (60 * 1000)
         );
 
-        console.log(`Sending alert for generation ${gen.id} (${elapsedMinutes} minutes)`);
+        logger.info(`Sending timeout alert for generation`, {
+          metadata: { 
+            generationId: gen.id, 
+            elapsedMinutes,
+            userId: gen.user_id 
+          }
+        });
 
         return supabase.functions.invoke('send-generation-timeout-alert', {
           body: {
@@ -104,7 +117,11 @@ Deno.serve(async (req) => {
     const successCount = results.filter(r => r.status === 'fulfilled').length;
     const failureCount = results.filter(r => r.status === 'rejected').length;
 
-    console.log(`Alerts sent: ${successCount} success, ${failureCount} failures`);
+    logger.info('Alert sending completed', {
+      metadata: { successCount, failureCount, totalChecked: stuckCount }
+    });
+
+    logger.logDuration('Timeout check completed', startTime);
 
     return new Response(
       JSON.stringify({ 
@@ -116,7 +133,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error in check-generation-timeouts function:', error);
+    logger.error('Fatal error in timeout check', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

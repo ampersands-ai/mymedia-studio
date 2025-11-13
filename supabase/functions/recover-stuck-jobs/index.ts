@@ -1,12 +1,16 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('recover-stuck-jobs', requestId);
+  const startTime = Date.now();
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -22,7 +26,7 @@ serve(async (req) => {
     const forceJobId = url.searchParams.get('job_id');
 
     if (forceJobId) {
-      console.log(`[Force Sync] Processing specific job: ${forceJobId}`);
+      logger.info('Force sync requested', { metadata: { jobId: forceJobId } });
       
       const { data: job, error: jobError } = await supabaseClient
         .from('video_jobs')
@@ -31,6 +35,7 @@ serve(async (req) => {
         .single();
 
       if (jobError || !job) {
+        logger.error('Job not found for force sync', jobError, { metadata: { jobId: forceJobId } });
         return new Response(
           JSON.stringify({ error: 'Job not found' }),
           { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -40,13 +45,20 @@ serve(async (req) => {
       const stuckJobs = [job];
       const recoveredJobs = [];
 
-      // Process the single job (copy logic from below)
+      // Process the single job
       for (const job of stuckJobs) {
-        console.log(`Recovering job ${job.id} (status: ${job.status})`);
+        logger.info('Starting recovery for job', { 
+          metadata: { jobId: job.id, status: job.status }
+        });
 
         try {
           if (job.status === 'assembling' && job.shotstack_render_id) {
-            console.log(`Job ${job.id}: Checking Shotstack status for render ${job.shotstack_render_id}`);
+            logger.info('Checking Shotstack render status', { 
+              metadata: { 
+                jobId: job.id, 
+                renderId: job.shotstack_render_id 
+              }
+            });
             
             try {
               const shotstackResponse = await fetch(
@@ -58,10 +70,17 @@ serve(async (req) => {
                 const shotstackResult = await shotstackResponse.json();
                 const renderStatus = shotstackResult?.response?.status;
                 
-                console.log(`Shotstack render ${job.shotstack_render_id} status: ${renderStatus}`);
+                logger.info('Shotstack render status retrieved', { 
+                  metadata: { 
+                    jobId: job.id, 
+                    renderStatus 
+                  }
+                });
                 
                 if (renderStatus === 'done' && shotstackResult.response.url) {
-                  console.log(`Job ${job.id}: Render complete, downloading video with streaming`);
+                  logger.info('Render complete, downloading video', { 
+                    metadata: { jobId: job.id }
+                  });
                   const videoUrl = shotstackResult.response.url;
                   
                   const videoResponse = await fetch(videoUrl);
@@ -78,7 +97,9 @@ serve(async (req) => {
                     });
                   
                   if (uploadError) {
-                    console.error(`Job ${job.id}: Upload error:`, uploadError);
+                    logger.error('Video upload failed', uploadError, { 
+                      metadata: { jobId: job.id }
+                    });
                     throw uploadError;
                   }
                   
@@ -105,6 +126,9 @@ serve(async (req) => {
                     updated_at: new Date().toISOString()
                   }).eq('id', job.id);
                   
+                  logger.info('Job recovered from Shotstack', { 
+                    metadata: { jobId: job.id }
+                  });
                   recoveredJobs.push({ id: job.id, action: 'completed_from_shotstack' });
                   continue;
                 } else if (renderStatus === 'failed') {
@@ -113,17 +137,24 @@ serve(async (req) => {
                     error_message: 'Shotstack rendering failed',
                     updated_at: new Date().toISOString()
                   }).eq('id', job.id);
+                  logger.warn('Shotstack render failed', { 
+                    metadata: { jobId: job.id }
+                  });
                   recoveredJobs.push({ id: job.id, action: 'marked_failed_shotstack' });
                   continue;
                 }
               }
             } catch (shotstackError: any) {
-              console.error(`Job ${job.id}: Shotstack check failed:`, shotstackError);
+              logger.error('Shotstack check failed', shotstackError, { 
+                metadata: { jobId: job.id }
+              });
             }
           }
           
           if (job.status === 'generating_voice' && job.script && job.voiceover_url) {
-            console.log(`Job ${job.id}: Moving to awaiting_approval`);
+            logger.info('Moving job to awaiting approval', { 
+              metadata: { jobId: job.id }
+            });
             await supabaseClient
               .from('video_jobs')
               .update({ 
@@ -134,21 +165,27 @@ serve(async (req) => {
             recoveredJobs.push({ id: job.id, action: 'moved_to_approval' });
           } 
           else if (job.status === 'generating_script' && job.script) {
-            console.log(`Job ${job.id}: Script exists, retrying from voiceover`);
+            logger.info('Retrying job from voiceover step', { 
+              metadata: { jobId: job.id }
+            });
             await supabaseClient.functions.invoke('process-video-job', {
               body: { job_id: job.id }
             });
             recoveredJobs.push({ id: job.id, action: 'retried_processing' });
           }
           else if (['pending', 'generating_script', 'generating_voice'].includes(job.status)) {
-            console.log(`Job ${job.id}: Retrying from beginning`);
+            logger.info('Retrying job from beginning', { 
+              metadata: { jobId: job.id }
+            });
             await supabaseClient.functions.invoke('process-video-job', {
               body: { job_id: job.id }
             });
             recoveredJobs.push({ id: job.id, action: 'retried_processing' });
           }
           else if (job.status !== 'assembling') {
-            console.log(`Job ${job.id}: Cannot recover, marking as failed`);
+            logger.warn('Job cannot be recovered, marking as failed', { 
+              metadata: { jobId: job.id, status: job.status }
+            });
             await supabaseClient
               .from('video_jobs')
               .update({ 
@@ -160,12 +197,17 @@ serve(async (req) => {
             recoveredJobs.push({ id: job.id, action: 'marked_failed' });
           }
         } catch (err: any) {
-          console.error(`Failed to recover job ${job.id}:`, err);
+          logger.error('Job recovery failed', err, { 
+            metadata: { jobId: job.id }
+          });
           recoveredJobs.push({ id: job.id, action: 'recovery_failed', error: err.message || 'Unknown error' });
         }
       }
 
-      console.log('Recovery complete:', recoveredJobs);
+      logger.info('Force sync recovery complete', { 
+        metadata: { recoveredCount: recoveredJobs.length }
+      });
+      logger.logDuration('Force sync completed', startTime);
 
       return new Response(
         JSON.stringify({ 
@@ -177,7 +219,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('Scanning for stuck video jobs...');
+    logger.info('Scanning for stuck video jobs');
 
     // Find jobs stuck in intermediate states for > 5 minutes
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
@@ -190,11 +232,13 @@ serve(async (req) => {
       .order('updated_at', { ascending: true });
 
     if (fetchError) {
+      logger.error('Failed to fetch stuck jobs', fetchError);
       throw fetchError;
     }
 
     if (!stuckJobs || stuckJobs.length === 0) {
-      console.log('No stuck jobs found');
+      logger.info('No stuck jobs found');
+      logger.logDuration('Recovery scan completed', startTime);
       return new Response(
         JSON.stringify({ 
           success: true, 
@@ -205,21 +249,29 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Found ${stuckJobs.length} stuck jobs:`, stuckJobs.map(j => ({
-      id: j.id,
-      status: j.status,
-      updated_at: j.updated_at
-    })));
+    logger.info(`Found ${stuckJobs.length} stuck job(s)`, { 
+      metadata: { 
+        jobIds: stuckJobs.map(j => j.id),
+        statuses: stuckJobs.map(j => ({ id: j.id, status: j.status }))
+      }
+    });
 
     const recoveredJobs = [];
 
     for (const job of stuckJobs) {
-      console.log(`Recovering job ${job.id} (status: ${job.status})`);
+      logger.info('Starting recovery for job', { 
+        metadata: { jobId: job.id, status: job.status }
+      });
 
       try {
         // Special handling for jobs stuck in assembling - check Shotstack status
         if (job.status === 'assembling' && job.shotstack_render_id) {
-          console.log(`Job ${job.id}: Checking Shotstack status for render ${job.shotstack_render_id}`);
+          logger.info('Checking Shotstack render status', { 
+            metadata: { 
+              jobId: job.id, 
+              renderId: job.shotstack_render_id 
+            }
+          });
           
           try {
             const shotstackResponse = await fetch(
@@ -231,11 +283,18 @@ serve(async (req) => {
               const shotstackResult = await shotstackResponse.json();
               const renderStatus = shotstackResult?.response?.status;
               
-              console.log(`Shotstack render ${job.shotstack_render_id} status: ${renderStatus}`);
+              logger.info('Shotstack render status retrieved', { 
+                metadata: { 
+                  jobId: job.id, 
+                  renderStatus 
+                }
+              });
               
               if (renderStatus === 'done' && shotstackResult.response.url) {
                 // Render is done, download and upload with streaming
-                console.log(`Job ${job.id}: Render complete, downloading video with streaming`);
+                logger.info('Render complete, downloading video', { 
+                  metadata: { jobId: job.id }
+                });
                 const videoUrl = shotstackResult.response.url;
                 
                 const videoResponse = await fetch(videoUrl);
@@ -253,7 +312,9 @@ serve(async (req) => {
                   });
                 
                 if (uploadError) {
-                  console.error(`Job ${job.id}: Upload error:`, uploadError);
+                  logger.error('Video upload failed', uploadError, { 
+                    metadata: { jobId: job.id }
+                  });
                   throw uploadError;
                 }
                 
@@ -282,6 +343,9 @@ serve(async (req) => {
                   updated_at: new Date().toISOString()
                 }).eq('id', job.id);
                 
+                logger.info('Job recovered from Shotstack', { 
+                  metadata: { jobId: job.id }
+                });
                 recoveredJobs.push({ id: job.id, action: 'completed_from_shotstack' });
                 continue;
               } else if (renderStatus === 'failed') {
@@ -291,19 +355,26 @@ serve(async (req) => {
                   error_message: 'Shotstack rendering failed',
                   updated_at: new Date().toISOString()
                 }).eq('id', job.id);
+                logger.warn('Shotstack render failed', { 
+                  metadata: { jobId: job.id }
+                });
                 recoveredJobs.push({ id: job.id, action: 'marked_failed_shotstack' });
                 continue;
               }
               // If still rendering, leave it alone
             }
           } catch (shotstackError: any) {
-            console.error(`Job ${job.id}: Shotstack check failed:`, shotstackError);
+            logger.error('Shotstack check failed', shotstackError, { 
+              metadata: { jobId: job.id }
+            });
           }
         }
         
         // Other recovery logic
         if (job.status === 'generating_voice' && job.script && job.voiceover_url) {
-          console.log(`Job ${job.id}: Moving to awaiting_approval`);
+          logger.info('Moving job to awaiting approval', { 
+            metadata: { jobId: job.id }
+          });
           await supabaseClient
             .from('video_jobs')
             .update({ 
@@ -314,14 +385,18 @@ serve(async (req) => {
           recoveredJobs.push({ id: job.id, action: 'moved_to_approval' });
         } 
         else if (job.status === 'generating_script' && job.script) {
-          console.log(`Job ${job.id}: Script exists, retrying from voiceover`);
+          logger.info('Retrying job from voiceover step', { 
+            metadata: { jobId: job.id }
+          });
           await supabaseClient.functions.invoke('process-video-job', {
             body: { job_id: job.id }
           });
           recoveredJobs.push({ id: job.id, action: 'retried_processing' });
         }
         else if (['pending', 'generating_script', 'generating_voice'].includes(job.status)) {
-          console.log(`Job ${job.id}: Retrying from beginning`);
+          logger.info('Retrying job from beginning', { 
+            metadata: { jobId: job.id }
+          });
           await supabaseClient.functions.invoke('process-video-job', {
             body: { job_id: job.id }
           });
@@ -329,7 +404,9 @@ serve(async (req) => {
         }
         else if (job.status !== 'assembling') {
           // Unknown state (not assembling which we handled above)
-          console.log(`Job ${job.id}: Cannot recover, marking as failed`);
+          logger.warn('Job cannot be recovered, marking as failed', { 
+            metadata: { jobId: job.id, status: job.status }
+          });
           await supabaseClient
             .from('video_jobs')
             .update({ 
@@ -341,12 +418,20 @@ serve(async (req) => {
           recoveredJobs.push({ id: job.id, action: 'marked_failed' });
         }
       } catch (err: any) {
-        console.error(`Failed to recover job ${job.id}:`, err);
+        logger.error('Job recovery failed', err, { 
+          metadata: { jobId: job.id }
+        });
         recoveredJobs.push({ id: job.id, action: 'recovery_failed', error: err.message || 'Unknown error' });
       }
     }
 
-    console.log('Recovery complete:', recoveredJobs);
+    logger.info('Recovery complete', { 
+      metadata: { 
+        totalScanned: stuckJobs.length,
+        recoveredCount: recoveredJobs.length 
+      }
+    });
+    logger.logDuration('Recovery scan completed', startTime);
 
     return new Response(
       JSON.stringify({ 
@@ -357,7 +442,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error in recover-stuck-jobs:', error);
+    logger.error('Fatal error in recovery', error);
     
     return new Response(
       JSON.stringify({ error: error.message }),

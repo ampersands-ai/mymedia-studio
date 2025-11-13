@@ -1,7 +1,7 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { generateEmailHTML } from "../_shared/email-templates.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -10,7 +10,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('send-error-alert', requestId);
+  const startTime = Date.now();
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -23,6 +27,14 @@ serve(async (req) => {
 
     const body = await req.json();
     
+    logger.info('Processing error alert', { 
+      metadata: { 
+        errorId: body.error_id, 
+        severity: body.severity,
+        route: body.route_name 
+      }
+    });
+
     // Get admin notification settings
     const { data: settings } = await supabase
       .from('app_settings')
@@ -31,6 +43,7 @@ serve(async (req) => {
       .single();
 
     if (!settings?.setting_value?.error_alerts?.enabled) {
+      logger.info('Error alerts are disabled');
       return new Response(
         JSON.stringify({ message: 'Error alerts disabled' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -50,7 +63,9 @@ serve(async (req) => {
       .limit(1);
 
     if (recentAlerts && recentAlerts.length > 0) {
-      console.log('Cooldown period active, skipping alert');
+      logger.info('Cooldown period active, skipping alert', { 
+        metadata: { cooldownMinutes }
+      });
       return new Response(
         JSON.stringify({ message: 'Cooldown active' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -67,6 +82,10 @@ serve(async (req) => {
 
     const emoji = severityEmoji[body.severity] || '⚠️';
     
+    logger.info('Generating email content', { 
+      metadata: { severity: body.severity, emoji }
+    });
+
     // Generate email HTML
     const emailHTML = generateEmailHTML({
       title: `[${body.severity.toUpperCase()}] Error on ${body.route_name}`,
@@ -115,6 +134,10 @@ ${body.error_stack ? `Stack Trace:\n${body.error_stack}` : 'No stack trace avail
       footer: 'Sent by Artifio Monitoring System'
     });
 
+    logger.info('Sending email alert', { 
+      metadata: { adminEmail }
+    });
+
     // Send email
     const { error: emailError } = await resend.emails.send({
       from: 'Artifio Alerts <alerts@artifio.ai>',
@@ -124,9 +147,11 @@ ${body.error_stack ? `Stack Trace:\n${body.error_stack}` : 'No stack trace avail
     });
 
     if (emailError) {
-      console.error('Failed to send email:', emailError);
+      logger.error('Failed to send email', emailError);
       throw emailError;
     }
+
+    logger.info('Email sent successfully');
 
     // Mark alert as sent
     await supabase
@@ -134,12 +159,14 @@ ${body.error_stack ? `Stack Trace:\n${body.error_stack}` : 'No stack trace avail
       .update({ alert_sent: true })
       .eq('id', body.error_id);
 
+    logger.logDuration('Alert sent', startTime);
+
     return new Response(
       JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error in send-error-alert function:', error);
+    logger.error('Fatal error in send-error-alert', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

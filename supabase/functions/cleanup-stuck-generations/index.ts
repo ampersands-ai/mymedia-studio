@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,6 +7,10 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('cleanup-stuck-generations', requestId);
+  const startTime = Date.now();
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -16,7 +21,7 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('[Cleanup] Starting stuck generations cleanup...');
+    logger.info('Starting stuck generations cleanup');
 
     // Find generations stuck in pending/processing for more than 30 minutes
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
@@ -28,12 +33,15 @@ Deno.serve(async (req) => {
       .lt('created_at', thirtyMinutesAgo);
 
     if (fetchError) {
-      console.error('[Cleanup] Error fetching stuck generations:', fetchError);
+      logger.error('Failed to fetch stuck generations', fetchError);
       throw fetchError;
     }
 
+    const stuckCount = stuckGenerations?.length || 0;
+
     if (!stuckGenerations || stuckGenerations.length === 0) {
-      console.log('[Cleanup] No stuck generations found');
+      logger.info('No stuck generations found');
+      logger.logDuration('Cleanup completed', startTime);
       return new Response(
         JSON.stringify({
           success: true,
@@ -44,7 +52,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[Cleanup] Found ${stuckGenerations.length} stuck generation(s)`);
+    logger.info(`Found ${stuckCount} stuck generation(s)`, { 
+      metadata: { stuckCount, generationIds: stuckGenerations.map(g => g.id) }
+    });
 
     // Mark all stuck generations as failed
     const { error: updateError } = await supabase
@@ -55,14 +65,22 @@ Deno.serve(async (req) => {
       .in('id', stuckGenerations.map(g => g.id));
 
     if (updateError) {
-      console.error('[Cleanup] Error updating stuck generations:', updateError);
+      logger.error('Failed to update stuck generations', updateError);
       throw updateError;
     }
+
+    logger.info('Marked generations as failed', { metadata: { count: stuckCount } });
 
     // Refund tokens for failed generations
     for (const generation of stuckGenerations) {
       if (generation.tokens_used && generation.tokens_used > 0) {
-        console.log(`[Cleanup] Refunding ${generation.tokens_used} tokens for generation ${generation.id}`);
+        logger.info('Refunding tokens', { 
+          metadata: { 
+            generationId: generation.id, 
+            userId: generation.user_id,
+            tokensUsed: generation.tokens_used 
+          }
+        });
         
         const { error: refundError } = await supabase.rpc('increment_tokens', {
           user_id_param: generation.user_id,
@@ -70,7 +88,9 @@ Deno.serve(async (req) => {
         });
 
         if (refundError) {
-          console.error(`[Cleanup] Error refunding tokens for generation ${generation.id}:`, refundError);
+          logger.error('Failed to refund tokens', refundError, { 
+            metadata: { generationId: generation.id }
+          });
         }
       }
     }
@@ -89,10 +109,11 @@ Deno.serve(async (req) => {
       });
 
     if (logError) {
-      console.error('[Cleanup] Error logging cleanup action:', logError);
+      logger.error('Failed to log cleanup action', logError);
     }
 
-    console.log(`[Cleanup] Successfully cleaned up ${stuckGenerations.length} stuck generation(s)`);
+    logger.info(`Successfully cleaned up ${stuckCount} stuck generation(s)`);
+    logger.logDuration('Cleanup completed', startTime);
 
     return new Response(
       JSON.stringify({
@@ -104,7 +125,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('[Cleanup] Fatal error:', error);
+    logger.error('Fatal error in cleanup', error as Error);
     return new Response(
       JSON.stringify({
         success: false,

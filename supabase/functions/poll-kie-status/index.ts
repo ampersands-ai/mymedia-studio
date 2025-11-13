@@ -1,12 +1,16 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('poll-kie-status', requestId);
+  const startTime = Date.now();
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -15,6 +19,7 @@ serve(async (req) => {
     const { generation_id, task_id } = await req.json();
     
     if (!generation_id && !task_id) {
+      logger.warn('Missing required parameters');
       return new Response(
         JSON.stringify({ error: 'Missing generation_id or task_id' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -31,6 +36,10 @@ serve(async (req) => {
     let taskIdToQuery = task_id;
 
     if (generation_id) {
+      logger.info('Fetching generation details', { 
+        metadata: { generationId: generation_id }
+      });
+
       const { data, error } = await supabase
         .from('generations')
         .select('*')
@@ -38,6 +47,9 @@ serve(async (req) => {
         .maybeSingle();
 
       if (error || !data) {
+        logger.error('Generation not found', error, { 
+          metadata: { generationId: generation_id }
+        });
         throw new Error('Generation not found');
       }
 
@@ -47,11 +59,16 @@ serve(async (req) => {
       if (data.provider_response?.task_id) {
         taskIdToQuery = data.provider_response.task_id;
       } else {
+        logger.error('No task_id found in generation', undefined, { 
+          metadata: { generationId: generation_id }
+        });
         throw new Error('No task_id found in generation');
       }
     }
 
-    console.log('Polling Kie.ai status for task:', taskIdToQuery);
+    logger.info('Polling Kie.ai task status', { 
+      metadata: { taskId: taskIdToQuery, generationId: generation_id }
+    });
 
     // Query Kie.ai task status
     const statusResponse = await fetch('https://api.kie.ai/api/v1/jobs/queryTask', {
@@ -65,15 +82,29 @@ serve(async (req) => {
 
     if (!statusResponse.ok) {
       const errorText = await statusResponse.text();
-      console.error('Kie.ai query error:', statusResponse.status, errorText);
+      logger.error('Kie.ai query failed', undefined, { 
+        metadata: { 
+          taskId: taskIdToQuery, 
+          status: statusResponse.status, 
+          error: errorText 
+        }
+      });
       throw new Error(`Kie.ai query failed: ${statusResponse.status}`);
     }
 
     const statusData = await statusResponse.json();
-    console.log('Kie.ai status response:', JSON.stringify(statusData, null, 2));
+    logger.info('Kie.ai status retrieved', { 
+      metadata: { 
+        taskId: taskIdToQuery, 
+        status: statusData.data?.status 
+      }
+    });
 
     // Check if task is completed
     if (statusData.code !== 200) {
+      logger.error('Kie.ai returned error', undefined, { 
+        metadata: { message: statusData.message }
+      });
       throw new Error(`Kie.ai returned error: ${statusData.message}`);
     }
 
@@ -81,11 +112,21 @@ serve(async (req) => {
     const resultUrls = statusData.data?.result_urls || statusData.data?.resultUrls || [];
 
     if (taskStatus === 'completed' && resultUrls.length > 0) {
-      console.log('Task completed! Found', resultUrls.length, 'results');
+      logger.info('Task completed', { 
+        metadata: { 
+          taskId: taskIdToQuery, 
+          resultCount: resultUrls.length 
+        }
+      });
       
       // If we have generation_id, trigger fix-stuck-generation with ALL URLs
       if (generation_id) {
-        console.log('Triggering fix-stuck-generation with', resultUrls.length, 'URLs');
+        logger.info('Triggering fix-stuck-generation', { 
+          metadata: { 
+            generationId: generation_id, 
+            urlCount: resultUrls.length 
+          }
+        });
 
         const fixResponse = await fetch(`${supabaseUrl}/functions/v1/fix-stuck-generation`, {
           method: 'POST',
@@ -101,11 +142,17 @@ serve(async (req) => {
 
         if (!fixResponse.ok) {
           const errorText = await fixResponse.text();
+          logger.error('Fix-stuck-generation failed', undefined, { 
+            metadata: { generationId: generation_id, error: errorText }
+          });
           throw new Error(`Fix failed: ${errorText}`);
         }
 
         const fixResult = await fixResponse.json();
-        console.log('Fix result:', fixResult);
+        logger.info('Generation recovered successfully', { 
+          metadata: { generationId: generation_id }
+        });
+        logger.logDuration('Poll and recovery completed', startTime);
 
         return new Response(
           JSON.stringify({
@@ -120,6 +167,7 @@ serve(async (req) => {
       }
 
       // Return status info if no generation_id
+      logger.logDuration('Poll completed', startTime);
       return new Response(
         JSON.stringify({
           success: true,
@@ -132,6 +180,11 @@ serve(async (req) => {
     }
 
     // Task not completed yet
+    logger.info('Task still in progress', { 
+      metadata: { taskId: taskIdToQuery, status: taskStatus }
+    });
+    logger.logDuration('Poll completed', startTime);
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -143,7 +196,7 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('Poll status error:', error);
+    logger.error('Fatal error in poll-kie-status', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

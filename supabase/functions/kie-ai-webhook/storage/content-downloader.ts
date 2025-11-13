@@ -2,6 +2,8 @@
  * Content download from provider URLs
  */
 
+import { webhookLogger } from "../../_shared/logger.ts";
+
 export interface DownloadResult {
   success: boolean;
   data?: Uint8Array;

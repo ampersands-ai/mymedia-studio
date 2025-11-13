@@ -3,6 +3,8 @@
  * Validates the static URL token to prevent unauthorized access
  */
 
+import { webhookLogger } from "../../_shared/logger.ts";
+
 export interface ValidationResult {
   success: boolean;
   error?: string;

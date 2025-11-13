@@ -3,6 +3,7 @@
  */
 
 import { isMidjourneyModel } from "./midjourney-handler.ts";
+import { webhookLogger } from "../../_shared/logger.ts";
 
 export function normalizeResultUrls(
   payload: any, 

@@ -3,7 +3,8 @@
  * Prevents duplicate webhook processing using event tracking
  */
 
-import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { webhookLogger } from "../../_shared/logger.ts";
 
 export interface IdempotencyResult {
   success: boolean;

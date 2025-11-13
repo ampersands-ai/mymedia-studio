@@ -2,7 +2,8 @@
  * Multi-step workflow orchestration
  */
 
-import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { webhookLogger } from "../../_shared/logger.ts";
 import {
   replaceTemplateVariables,
   resolveInputMappings,

@@ -2,7 +2,7 @@
  * Input mapping and parameter resolution for workflows
  */
 
-import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 export function replaceTemplateVariables(template: string, context: Record<string, any>): string {
   return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {

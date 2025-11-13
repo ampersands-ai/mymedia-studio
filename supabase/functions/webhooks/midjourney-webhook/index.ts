@@ -3,7 +3,7 @@
  * Dedicated webhook for Midjourney generations via KIE AI
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { webhookLogger } from "../../_shared/logger.ts";
 import { createSafeErrorResponse } from "../../_shared/error-handler.ts";
 import { validateUrlToken } from "../../kie-ai-webhook/security/url-token-validator.ts";

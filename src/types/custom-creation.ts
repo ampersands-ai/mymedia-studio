@@ -1,4 +1,41 @@
 import { CreationGroup } from "@/constants/creation-groups";
+import type { JsonSchemaProperty, ModelJsonSchema, ModelParameters } from './model-schema';
+import type { AIModel } from '@/hooks/useModels';
+
+/**
+ * Re-export AIModel as ModelRecord for backward compatibility
+ * AIModel is the canonical type from the database
+ */
+export type ModelRecord = AIModel;
+
+/**
+ * Schema value types for input fields
+ */
+export type SchemaValue = 
+  | string 
+  | number 
+  | boolean 
+  | string[] 
+  | number[] 
+  | Record<string, unknown>
+  | null 
+  | undefined;
+
+/**
+ * Schema change handler type
+ */
+export type SchemaChangeHandler = (value: SchemaValue) => void;
+
+/**
+ * Video style types for VideoCreator
+ */
+export type VideoStyle = 
+  | 'modern' 
+  | 'minimal' 
+  | 'bold' 
+  | 'elegant' 
+  | 'playful' 
+  | 'professional';
 
 /**
  * Single generation output structure
@@ -60,4 +97,48 @@ export interface CustomCreationState {
   // Template preview
   templateBeforeImage: string | null;
   templateAfterImage: string | null;
+}
+
+/**
+ * Type guard to check if a value is a valid SchemaValue
+ */
+export function isSchemaValue(value: unknown): value is SchemaValue {
+  return (
+    value === null ||
+    value === undefined ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    Array.isArray(value) ||
+    (typeof value === 'object' && value !== null)
+  );
+}
+
+/**
+ * Type guard to check if a model is valid
+ */
+export function isValidModelRecord(model: unknown): model is ModelRecord {
+  if (!model || typeof model !== 'object') return false;
+  const m = model as Partial<ModelRecord>;
+  return !!(
+    m.record_id &&
+    m.id &&
+    m.model_name &&
+    m.provider &&
+    m.content_type &&
+    typeof m.base_token_cost === 'number'
+  );
+}
+
+/**
+ * Type guard to check if value is a ModelJsonSchema with properties
+ */
+export function hasSchemaProperties(schema: unknown): schema is ModelJsonSchema {
+  return !!(
+    schema &&
+    typeof schema === 'object' &&
+    'properties' in schema &&
+    schema.properties &&
+    typeof schema.properties === 'object'
+  );
 }

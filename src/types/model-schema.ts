@@ -65,12 +65,15 @@ export interface FieldDependencies {
 
 /**
  * Model parameter value types
+ * Aligned with SchemaValue to support all schema input types
  */
 export type ModelParameterValue = 
   | string 
   | number 
   | boolean 
   | string[]
+  | number[]
+  | Record<string, unknown>
   | null
   | undefined;
 

@@ -14,8 +14,16 @@ export type JsonSchemaType = 'string' | 'number' | 'integer' | 'boolean' | 'arra
 
 /**
  * Supported parameter values
+ * Extended to support arrays and objects for complex schemas
  */
-export type ParameterValue = string | number | boolean | null;
+export type ParameterValue = 
+  | string 
+  | number 
+  | boolean 
+  | string[]
+  | number[]
+  | Record<string, unknown>
+  | null;
 
 /**
  * JSON Schema property definition

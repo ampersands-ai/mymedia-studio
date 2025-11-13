@@ -36,6 +36,40 @@ Continue frontend type safety hardening by eliminating `any` types in Generation
 
 ---
 
+## Session 5: Custom Creation Components ✅ COMPLETED
+
+**Target Components:**
+- InputPanel.tsx (13 any)
+- ModelSelector.tsx (2 any)
+- AdvancedOptionsPanel.tsx (2 any)
+- GenerationsInProgress.tsx (2 any)
+- VideoCreator.tsx (1 any)
+
+**Total: 20 any types eliminated**
+
+**Created:**
+- `src/types/custom-creation.ts`
+  - ModelRecord type (re-export of AIModel)
+  - SchemaValue and SchemaChangeHandler types
+  - VideoStyle type for video creation
+  - Type guards and utilities
+
+**Updated:**
+- `src/types/model-schema.ts` - Extended ModelParameterValue to support arrays/objects
+- `src/types/schema.ts` - Extended ParameterValue to support arrays/objects
+- `src/components/custom-creation/InputPanel.tsx` - Type-safe props with ModelRecord
+- `src/components/custom-creation/ModelSelector.tsx` - Type-safe model cards
+- `src/components/custom-creation/AdvancedOptionsPanel.tsx` - Type-safe schema handling
+- `src/components/custom-creation/GenerationsInProgress.tsx` - Proper error handling
+- `src/components/video/VideoCreator.tsx` - VideoStyle type
+
+**Status:** ✅ Complete
+- 0 breaking changes in target components
+- 61 total any types eliminated across all Week 6 sessions
+- Parent component type errors remain (require schema casting in callers)
+
+---
+
 ## Session 2: Workflow Visualization Components ✅ COMPLETED
 
 **Target Components:**

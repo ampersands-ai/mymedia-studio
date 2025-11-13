@@ -43,13 +43,14 @@ export const GenerationsInProgress = ({
       // Refresh the active generations list and user tokens
       queryClient.invalidateQueries({ queryKey: ['active-generations'] });
       queryClient.invalidateQueries({ queryKey: ['user-tokens'] });
-    } catch (error: any) {
-      logger.error('Generation cancellation failed', error, {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Failed to cancel generation');
+      logger.error('Generation cancellation failed', err, {
         component: 'GenerationsInProgress',
         generationId,
         operation: 'handleCancelGeneration'
       });
-      toast.error(error.message || 'Failed to cancel generation');
+      toast.error(err.message);
     } finally {
       setCancelingId(null);
     }
@@ -78,8 +79,9 @@ export const GenerationsInProgress = ({
       } else {
         toast.warning('Unable to recover generation');
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to check provider status');
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Failed to check provider status');
+      toast.error(err.message);
     } finally {
       setCancelingId(null);
     }

@@ -10,11 +10,17 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Sparkles, RotateCcw, Coins, Clock, ArrowUp } from "lucide-react";
 import type { CreationGroup } from "@/constants/creation-groups";
+import type { 
+  ModelRecord, 
+  SchemaValue, 
+  SchemaChangeHandler 
+} from "@/types/custom-creation";
+import type { JsonSchemaProperty, ModelJsonSchema, ModelParameters } from "@/types/model-schema";
 
 interface InputPanelProps {
   // Model selection
   selectedModel: string | null;
-  filteredModels: any[];
+  filteredModels: ModelRecord[];
   selectedGroup: CreationGroup;
   onModelChange: (modelId: string) => void;
   modelsLoading: boolean;
@@ -48,19 +54,19 @@ interface InputPanelProps {
 
   // Primary fields (text/voice)
   textKey: string | undefined;
-  textKeySchema: any;
-  textKeyValue: any;
-  onTextKeyChange: (value: any) => void;
+  textKeySchema: JsonSchemaProperty | null;
+  textKeyValue: SchemaValue;
+  onTextKeyChange: SchemaChangeHandler;
   voiceKey: string | undefined;
-  voiceKeySchema: any;
-  voiceKeyValue: any;
-  onVoiceKeyChange: (value: any) => void;
+  voiceKeySchema: JsonSchemaProperty | null;
+  voiceKeyValue: SchemaValue;
+  onVoiceKeyChange: SchemaChangeHandler;
 
   // Duration & Increment
   hasDuration: boolean;
-  durationValue: any;
-  onDurationChange: (value: any) => void;
-  durationSchema: any;
+  durationValue: SchemaValue;
+  onDurationChange: SchemaChangeHandler;
+  durationSchema: JsonSchemaProperty | null;
   hasIncrement: boolean;
   incrementValue: boolean;
   onIncrementChange: (value: boolean) => void;
@@ -68,9 +74,9 @@ interface InputPanelProps {
   // Advanced options
   advancedOpen: boolean;
   onAdvancedOpenChange: (open: boolean) => void;
-  modelSchema: any;
-  modelParameters: Record<string, any>;
-  onModelParametersChange: (params: Record<string, any>) => void;
+  modelSchema: ModelJsonSchema | null;
+  modelParameters: ModelParameters;
+  onModelParametersChange: (params: ModelParameters) => void;
   excludeFields: string[];
   modelId: string;
   provider: string;

@@ -51,22 +51,13 @@ export function useWebhookAnalytics() {
   const [customEnd, setCustomEnd] = useState<string | null>(null);
 
   const fetchAnalytics = async (): Promise<WebhookAnalytics> => {
-    const params = new URLSearchParams({
-      timeRange
-    });
-
-    if (provider) {
-      params.append('provider', provider);
-    }
-
-    if (timeRange === 'custom') {
-      if (customStart) params.append('customStart', customStart);
-      if (customEnd) params.append('customEnd', customEnd);
-    }
-
     const { data, error } = await supabase.functions.invoke('get-webhook-analytics', {
-      body: {},
-      method: 'GET',
+      body: {
+        timeRange,
+        provider: provider || undefined,
+        customStart: timeRange === 'custom' ? customStart : undefined,
+        customEnd: timeRange === 'custom' ? customEnd : undefined,
+      },
     });
 
     if (error) throw error;

@@ -31,12 +31,8 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get query parameters
-    const url = new URL(req.url);
-    const timeRange = url.searchParams.get('timeRange') || '24h';
-    const provider = url.searchParams.get('provider') || null;
-    const customStart = url.searchParams.get('customStart');
-    const customEnd = url.searchParams.get('customEnd');
+    // Get parameters from request body
+    const { timeRange = '24h', provider = null, customStart, customEnd } = await req.json();
 
     logger.info('Fetching webhook analytics', {
       metadata: { timeRange, provider, customStart, customEnd }

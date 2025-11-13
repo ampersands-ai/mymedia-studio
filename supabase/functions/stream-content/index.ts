@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders: HeadersInit = {
   "Access-Control-Allow-Origin": "*",
@@ -7,10 +8,13 @@ const corsHeaders: HeadersInit = {
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
 
   try {
     const url = new URL(req.url);
@@ -28,13 +32,16 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    const logger = new EdgeLogger('stream-content', requestId, supabase, false);
+    logger.debug('Stream request', { metadata: { bucket, path, hasRange: !!range } });
+
     // Create a short-lived signed URL to the file
     const { data, error } = await supabase.storage
       .from(bucket)
       .createSignedUrl(path, 60); // 1 minute is enough for proxied fetch
 
     if (error || !data?.signedUrl) {
-      console.error("Failed to create signed URL:", error);
+      logger.error("Failed to create signed URL", error, { metadata: { bucket, path } });
       return new Response(JSON.stringify({ error: "File not found or not accessible" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -113,9 +120,8 @@ serve(async (req) => {
     headers.set("connection", "keep-alive");
     headers.set("cross-origin-resource-policy", "cross-origin");
     
-    // Log cache status for monitoring
+    // Log cache status for monitoring (EdgeLogger added in main block)
     const cacheStatus = upstreamRes.headers.get("cf-cache-status") || "UNKNOWN";
-    console.log(`[Stream] ${path} - Cache: ${cacheStatus}, Range: ${range ? "Yes" : "No"}`);
 
     return new Response(upstreamRes.body, {
       status: upstreamRes.status,

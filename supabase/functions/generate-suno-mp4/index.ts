@@ -1,6 +1,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,6 +13,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
+
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -19,12 +23,13 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     );
 
+    const logger = new EdgeLogger('generate-suno-mp4', requestId, supabaseClient, true);
+
     // Explicitly extract and validate JWT token from Authorization header
     const authHeader = req.headers.get('Authorization') || '';
     const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
     
-    // Safe server-side logging without leaking token
-    console.log('🔐 Auth header received:', { hasAuth: !!authHeader, tokenLen: token.length });
+    logger.debug('Auth header received', { metadata: { hasAuth: !!authHeader, tokenLen: token.length } });
 
     if (!token) {
       return new Response(
@@ -39,7 +44,7 @@ Deno.serve(async (req) => {
     // Pass token explicitly to getUser to ensure proper authentication
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !user) {
-      console.error('❌ Authentication failed via token:', authError);
+      logger.error('Authentication failed via token', authError);
       return new Response(
         JSON.stringify({ 
           error: 'Authentication failed', 
@@ -49,19 +54,22 @@ Deno.serve(async (req) => {
       );
     }
     
-    console.log('✅ User authenticated:', user.id);
+    logger.info('User authenticated', { userId: user.id });
 
     const { generation_id, output_index = 0, author, domain_name } = await req.json();
 
     if (!generation_id) {
-      console.error('❌ Missing generation_id in request');
+      logger.error('Missing generation_id in request');
       return new Response(
         JSON.stringify({ error: 'generation_id is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`🎬 MP4 Generation Request:`, { generation_id, output_index, user_id: user.id });
+    logger.info('MP4 generation request', { 
+      userId: user.id,
+      metadata: { generation_id, output_index } 
+    });
 
     // Fetch the audio generation
     const { data: audioGen, error: fetchError } = await supabaseClient
@@ -71,7 +79,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (fetchError || !audioGen) {
-      console.error('❌ Generation not found:', { generation_id, fetchError });
+      logger.error('Generation not found', fetchError, { metadata: { generation_id } });
       return new Response(
         JSON.stringify({ error: 'Generation not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -80,7 +88,9 @@ Deno.serve(async (req) => {
 
     // Validate ownership
     if (audioGen.user_id !== user.id) {
-      console.error('❌ Unauthorized access attempt:', { generation_id, user_id: user.id, owner_id: audioGen.user_id });
+      logger.error('Unauthorized access attempt', undefined, { 
+        metadata: { generation_id, user_id: user.id, owner_id: audioGen.user_id } 
+      });
       return new Response(
         JSON.stringify({ error: 'Unauthorized - generation belongs to another user' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -89,7 +99,9 @@ Deno.serve(async (req) => {
 
     // Validate it's an audio generation
     if (audioGen.type !== 'audio') {
-      console.error('❌ Wrong generation type:', { generation_id, type: audioGen.type });
+      logger.error('Wrong generation type', undefined, { 
+        metadata: { generation_id, type: audioGen.type } 
+      });
       return new Response(
         JSON.stringify({ error: 'Generation must be of type "audio"' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -98,7 +110,9 @@ Deno.serve(async (req) => {
 
     // Validate generation is completed
     if (audioGen.status !== 'completed') {
-      console.error('❌ Audio not completed:', { generation_id, status: audioGen.status });
+      logger.error('Audio not completed', undefined, { 
+        metadata: { generation_id, status: audioGen.status } 
+      });
       return new Response(
         JSON.stringify({ error: `Audio generation must be completed (current status: ${audioGen.status})` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -112,17 +126,19 @@ Deno.serve(async (req) => {
     const taskId = providerResponse?.data?.task_id || providerResponse?.data?.taskId || providerResponse?.taskId;
     const items = providerResponse?.data?.data || providerResponse?.data?.items || [];
     
-    console.log(`🔍 Provider Response Structure:`, {
-      hasTaskId: !!providerResponse?.data?.task_id,
-      hasTaskIdCamel: !!providerResponse?.data?.taskId,
-      hasDataArray: !!providerResponse?.data?.data,
-      hasItemsArray: !!providerResponse?.data?.items,
-      itemsLength: items.length,
-      extractedTaskId: taskId
+    logger.debug('Provider Response Structure', {
+      metadata: {
+        hasTaskId: !!providerResponse?.data?.task_id,
+        hasTaskIdCamel: !!providerResponse?.data?.taskId,
+        hasDataArray: !!providerResponse?.data?.data,
+        hasItemsArray: !!providerResponse?.data?.items,
+        itemsLength: items.length,
+        extractedTaskId: taskId
+      }
     });
 
     if (!taskId) {
-      console.error('❌ Missing taskId:', { generation_id, providerResponse });
+      logger.error('Missing taskId', undefined, { metadata: { generation_id, providerResponse } });
       return new Response(
         JSON.stringify({ error: 'Missing taskId in audio generation response' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -130,7 +146,9 @@ Deno.serve(async (req) => {
     }
 
     if (!items || items.length === 0 || output_index >= items.length) {
-      console.error('❌ Invalid output_index:', { generation_id, output_index, itemsLength: items.length });
+      logger.error('Invalid output_index', undefined, { 
+        metadata: { generation_id, output_index, itemsLength: items.length } 
+      });
       return new Response(
         JSON.stringify({ error: `Invalid output_index ${output_index} (available: 0-${items.length - 1})` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -139,14 +157,16 @@ Deno.serve(async (req) => {
 
     const audioId = items[output_index]?.id;
     if (!audioId) {
-      console.error('❌ Missing audioId:', { generation_id, output_index, item: items[output_index] });
+      logger.error('Missing audioId', undefined, { 
+        metadata: { generation_id, output_index, item: items[output_index] } 
+      });
       return new Response(
         JSON.stringify({ error: `Missing audioId for output ${output_index}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`📋 Extracted Data:`, { taskId, audioId, output_index });
+    logger.debug('Extracted Data', { metadata: { taskId, audioId, output_index } });
 
     // Check token balance
     const MP4_TOKEN_COST = 1;
@@ -157,10 +177,12 @@ Deno.serve(async (req) => {
       .single();
 
     if (!subscription || subscription.tokens_remaining < MP4_TOKEN_COST) {
-      console.error('❌ Insufficient credits:', { 
-        user_id: user.id, 
-        available: subscription?.tokens_remaining || 0, 
-        required: MP4_TOKEN_COST 
+      logger.error('Insufficient credits', undefined, { 
+        metadata: { 
+          user_id: user.id, 
+          available: subscription?.tokens_remaining || 0, 
+          required: MP4_TOKEN_COST 
+        } 
       });
       return new Response(
         JSON.stringify({ error: 'Insufficient credits', required: MP4_TOKEN_COST }),
@@ -195,7 +217,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (createError) {
-      console.error('Failed to create video generation:', createError);
+      logger.error('Failed to create video generation', createError);
       return new Response(
         JSON.stringify({ error: 'Failed to create video generation record' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -208,7 +230,7 @@ Deno.serve(async (req) => {
       amount: -MP4_TOKEN_COST
     });
 
-    console.log(`✅ Video generation created:`, videoGen.id);
+    logger.info('Video generation created', { metadata: { generation_id: videoGen.id } });
 
     // Call Kie.ai MP4 generation API
     const KIE_API_KEY = Deno.env.get('KIE_AI_API_KEY');
@@ -237,7 +259,13 @@ Deno.serve(async (req) => {
     if (author) kiePayload.author = author;
     if (domain_name) kiePayload.domainName = domain_name;
 
-    console.log(`🚀 Calling Kie.ai MP4 API:`, { taskId, audioId, callbackUrl: callbackUrl.split('?')[0] });
+    logger.info('Calling Kie.ai MP4 API', { 
+      metadata: { 
+        taskId, 
+        audioId, 
+        callbackUrl: callbackUrl.split('?')[0] 
+      } 
+    });
 
     const kieResponse = await fetch('https://api.kie.ai/api/v1/mp4/generate', {
       method: 'POST',
@@ -250,21 +278,25 @@ Deno.serve(async (req) => {
 
     const kieData = await kieResponse.json();
 
-    console.log('📥 Kie.ai API Response:', JSON.stringify(kieData, null, 2));
-    console.log('📊 Response structure:', {
-      hasCode: 'code' in kieData,
-      hasData: 'data' in kieData,
-      hasTaskId: !!kieData.data?.taskId,
-      code: kieData.code,
-      msg: kieData.msg
+    logger.debug('Kie.ai API Response', { 
+      metadata: { 
+        response: kieData,
+        hasCode: 'code' in kieData,
+        hasData: 'data' in kieData,
+        hasTaskId: !!kieData.data?.taskId,
+        code: kieData.code,
+        msg: kieData.msg
+      }
     });
 
     if (!kieResponse.ok) {
-      console.error('❌ Kie.ai API error:', { 
-        status: kieResponse.status, 
-        statusText: kieResponse.statusText,
-        error: kieData,
-        payload: kiePayload
+      logger.error('Kie.ai API error', undefined, { 
+        metadata: { 
+          status: kieResponse.status, 
+          statusText: kieResponse.statusText,
+          error: kieData,
+          payload: kiePayload
+        } 
       });
       
       // Mark generation as failed and refund tokens
@@ -289,7 +321,7 @@ Deno.serve(async (req) => {
 
     // Validate response structure
     if (kieData.code !== 200 || !kieData.data?.taskId) {
-      console.error('❌ Invalid Kie.ai response:', JSON.stringify(kieData, null, 2));
+      logger.error('Invalid Kie.ai response', undefined, { metadata: { response: kieData } });
       
       // Fail generation and refund
       await supabaseClient
@@ -322,7 +354,8 @@ Deno.serve(async (req) => {
       })
       .eq('id', videoGen.id);
 
-    console.log(`🎉 MP4 generation started! Task ID: ${mp4TaskId}`);
+    logger.info('MP4 generation started', { metadata: { mp4TaskId } });
+    logger.logDuration('MP4 generation request completed', startTime);
 
     return new Response(
       JSON.stringify({ 

@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -19,15 +20,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
+
   try {
     const { generation_id, user_id, generation_duration_seconds }: GenerationCompleteRequest = await req.json();
     
-    console.log(`Processing generation completion for user ${user_id}, generation ${generation_id}`);
-
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    const logger = new EdgeLogger('notify-generation-complete', requestId, supabase, true);
+    logger.info('Processing generation completion', { 
+      userId: user_id,
+      metadata: { generation_id, duration: generation_duration_seconds } 
+    });
 
     // Get user notification preferences
     const { data: preferences, error: prefError } = await supabase
@@ -37,7 +45,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       .single();
 
     if (prefError || !preferences) {
-      console.log("No notification preferences found for user, skipping notification");
+      logger.info('No notification preferences found for user, skipping notification', { userId: user_id });
       return new Response(
         JSON.stringify({ success: true, message: "No preferences set" }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -46,7 +54,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Check if duration exceeds threshold
     if (generation_duration_seconds < preferences.notification_threshold_seconds) {
-      console.log(`Generation took ${generation_duration_seconds}s, below threshold of ${preferences.notification_threshold_seconds}s`);
+      logger.debug('Generation below notification threshold', { 
+        metadata: { 
+          duration: generation_duration_seconds, 
+          threshold: preferences.notification_threshold_seconds 
+        } 
+      });
       return new Response(
         JSON.stringify({ success: true, message: "Below threshold" }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -55,7 +68,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Check if email notification is enabled
     if (!preferences.email_on_completion) {
-      console.log("Email notifications disabled for this user");
+      logger.info('Email notifications disabled for this user', { userId: user_id });
       return new Response(
         JSON.stringify({ success: true, message: "Email disabled" }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -143,7 +156,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
       `
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    logger.info('Email sent successfully', { 
+      userId: user_id,
+      metadata: { 
+        generation_id,
+        email_id: (emailResponse as any).data?.id || (emailResponse as any).id 
+      } 
+    });
+    logger.logDuration('Notification sent', startTime);
 
     // Log to generation_notifications
     await supabase.from("generation_notifications").insert({
@@ -179,7 +199,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error sending notification:', error);
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+    const logger = new EdgeLogger('notify-generation-complete', requestId, supabase, true);
+    logger.error('Error sending notification', error as Error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       { 

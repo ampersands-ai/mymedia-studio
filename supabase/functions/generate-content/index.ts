@@ -4,6 +4,44 @@ import { callProvider } from "./providers/index.ts";
 import { calculateTokenCost } from "./utils/token-calculator.ts";
 import { uploadToStorage } from "./utils/storage.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
+import { 
+  GenerateContentRequestSchema,
+  type GenerateContentRequest 
+} from "../_shared/schemas.ts";
+
+// Type definitions
+interface EdgeFunctionUser {
+  id: string;
+  email?: string;
+}
+
+interface GenerationResult {
+  generationId: string;
+  outputUrl?: string;
+  status: string;
+}
+
+interface Model {
+  id: string;
+  record_id: string;
+  provider: string;
+  content_type: string;
+  base_token_cost: number;
+  cost_multipliers?: Record<string, number>;
+  input_schema?: {
+    properties?: Record<string, unknown>;
+    required?: string[];
+  };
+  api_endpoint?: string;
+  payload_structure?: string;
+}
+
+interface Template {
+  id: string;
+  preset_parameters?: Record<string, unknown>;
+  enhancement_instruction?: string;
+  ai_models: Model;
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,7 +51,7 @@ const corsHeaders = {
 // Phase 3: Request queuing and circuit breaker
 // Increased from 100 to 750 for better scalability under high load
 const CONCURRENT_LIMIT = 750;
-const activeRequests = new Map<string, Promise<any>>();
+const activeRequests = new Map<string, Promise<GenerationResult>>();
 
 const CIRCUIT_BREAKER = {
   failures: 0,
@@ -55,7 +93,7 @@ Deno.serve(async (req) => {
     // Check if using service role key (for test-model edge function)
     const isServiceRole = token === supabaseKey;
     
-    let user: any;
+    let user: EdgeFunctionUser | null = null;
     if (isServiceRole) {
       logger.info('Service role authentication - test mode');
       user = null; // Will be set from request body
@@ -65,9 +103,26 @@ Deno.serve(async (req) => {
         logger.error('Authentication failed', authError);
         throw new Error('Unauthorized: Invalid user token');
       }
-      user = userData.user;
+      user = { id: userData.user.id, email: userData.user.email };
     }
 
+    // Validate request body with Zod
+    const requestBody = await req.json();
+    let validatedRequest: GenerateContentRequest;
+    
+    try {
+      validatedRequest = GenerateContentRequestSchema.parse(requestBody);
+    } catch (zodError: unknown) {
+      logger.error('Request validation failed', zodError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid request parameters',
+          details: zodError instanceof Error ? zodError.message : 'Validation error'
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     const { 
       template_id, 
       model_id, 
@@ -80,7 +135,7 @@ Deno.serve(async (req) => {
       workflow_step_number,
       user_id, // For service role calls (test mode)
       test_mode = false, // Flag to skip billing for admin tests
-    } = await req.json();
+    } = validatedRequest;
     
     // If service role, require user_id in body
     if (isServiceRole) {
@@ -119,9 +174,9 @@ Deno.serve(async (req) => {
       throw new Error('Must provide either template_id or model_id/model_record_id, not both');
     }
 
-    let model: any;
-    let template: any = null;
-    let parameters: any = {};
+    let model: Model;
+    let template: Template | null = null;
+    let parameters: Record<string, unknown> = {};
     let enhancementInstruction: string | null = null;
 
     // Load configuration
@@ -496,7 +551,13 @@ Deno.serve(async (req) => {
     // This prevents race conditions where tokens are deducted but generation fails
     let tokensDeducted = false;
     let generationCreated = false;
-    let generation: any = null;
+    let generation: { 
+      id: string; 
+      user_id: string;
+      model_id: string;
+      status: string;
+      [key: string]: unknown;
+    } | null = null;
 
     try {
       // Step 1: Check and deduct tokens atomically (skip for test mode)

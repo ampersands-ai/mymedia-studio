@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { logger } from '@/lib/logger';
+import { hasMemoryInfo, getMemoryUsage } from '@/types/performance';
 
 interface PerformanceMetrics {
   fps: number;
@@ -39,12 +40,12 @@ export function DevPerformanceMonitor() {
 
     // Other metrics - check every second
     const interval = setInterval(async () => {
-      // Memory usage
-      if ('memory' in performance) {
-        const memory = (performance as any).memory;
+      // Memory usage (Chrome-specific API)
+      const memoryUsage = getMemoryUsage(performance);
+      if (memoryUsage !== null) {
         setMetrics(prev => ({
           ...prev,
-          memory: Math.round(memory.usedJSHeapSize / 1048576)
+          memory: memoryUsage
         }));
       }
 

@@ -1,5 +1,5 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,6 +7,10 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('generate-test-image', requestId);
+  const startTime = Date.now();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -19,7 +23,7 @@ Deno.serve(async (req) => {
       throw new Error("LOVABLE_API_KEY not configured");
     }
 
-    console.log("Generating test image with prompt:", prompt);
+    logger.info('Generating test image', { metadata: { prompt } });
 
     // Generate image using Lovable AI (Nano banana model)
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -42,7 +46,7 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       const error = await response.text();
-      console.error("Lovable AI error:", response.status, error);
+      logger.error('Lovable AI error', new Error(`Status ${response.status}: ${error}`));
       throw new Error(`Failed to generate image: ${response.status}`);
     }
 
@@ -73,7 +77,7 @@ Deno.serve(async (req) => {
       });
 
     if (uploadError) {
-      console.error("Storage upload error:", uploadError);
+      logger.error('Storage upload error', uploadError);
       throw uploadError;
     }
 
@@ -82,7 +86,8 @@ Deno.serve(async (req) => {
       .from('generated-content')
       .getPublicUrl(fileName);
 
-    console.log("Test image generated and uploaded:", publicUrl);
+    logger.info('Test image generated successfully', { metadata: { publicUrl, fileName } });
+    logger.logDuration('Image generation', startTime);
 
     return new Response(
       JSON.stringify({ 
@@ -97,7 +102,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("Error generating test image:", error);
+    logger.error('Test image generation failed', error as Error);
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : "Unknown error",

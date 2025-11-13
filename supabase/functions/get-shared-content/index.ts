@@ -1,5 +1,5 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,6 +7,10 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('get-shared-content', requestId);
+  const startTime = Date.now();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -16,8 +20,11 @@ Deno.serve(async (req) => {
     const token = url.searchParams.get('token');
 
     if (!token) {
+      logger.warn('Missing token parameter');
       throw new Error('Missing token parameter');
     }
+    
+    logger.info('Fetching shared content', { metadata: { token } });
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -61,8 +68,12 @@ Deno.serve(async (req) => {
       .createSignedUrl(shareToken.storage_path, 3600); // 1 hour
 
     if (signedError || !signedData) {
+      logger.error('Failed to generate signed URL', signedError || new Error('No signed data'));
       throw new Error('Failed to generate signed URL');
     }
+
+    logger.info('Shared content retrieved successfully');
+    logger.logDuration('Content retrieval', startTime);
 
     return new Response(
       JSON.stringify({ 
@@ -75,7 +86,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error fetching shared content:', error);
+    logger.error('Failed to fetch shared content', error as Error);
     const message = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
       JSON.stringify({ error: message }),

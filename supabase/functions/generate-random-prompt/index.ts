@@ -1,4 +1,5 @@
 
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,6 +7,10 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('generate-random-prompt', requestId);
+  const startTime = Date.now();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -27,7 +32,7 @@ Deno.serve(async (req) => {
 
     const systemPrompt = systemPrompts[contentType] || systemPrompts.image;
 
-    console.log('Generating random prompt for:', contentType);
+    logger.info('Generating random prompt', { metadata: { contentType } });
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -69,14 +74,15 @@ Deno.serve(async (req) => {
       throw new Error('No prompt generated');
     }
 
-    console.log('Generated prompt:', generatedPrompt);
+    logger.info('Prompt generated successfully', { metadata: { prompt: generatedPrompt } });
+    logger.logDuration('Prompt generation', startTime);
 
     return new Response(
       JSON.stringify({ prompt: generatedPrompt }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Generate prompt error:', error);
+    logger.error('Prompt generation failed', error as Error);
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Failed to generate prompt'

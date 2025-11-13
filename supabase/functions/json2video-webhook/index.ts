@@ -1,5 +1,5 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,10 +8,12 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   const webhookStartTime = Date.now();
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('json2video-webhook', requestId);
   
   // Phase 3: Add health check endpoint for webhook diagnostics
   if (req.method === 'GET') {
-    console.log('[json2video-webhook] Health check requested');
+    logger.info('Health check requested');
     return new Response(
       JSON.stringify({ 
         status: 'OK', 
@@ -28,11 +30,13 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Enhanced logging for webhook diagnostics
-    console.log('[json2video-webhook] === WEBHOOK REQUEST RECEIVED ===');
-    console.log('[json2video-webhook] Method:', req.method);
-    console.log('[json2video-webhook] Headers:', Object.fromEntries(req.headers.entries()));
-    console.log('[json2video-webhook] URL:', req.url);
+    logger.info('Webhook request received', {
+      metadata: {
+        method: req.method,
+        url: req.url,
+        headers: Object.fromEntries(req.headers.entries())
+      }
+    });
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -40,11 +44,12 @@ Deno.serve(async (req) => {
     );
 
     const payload = await req.json();
-    console.log('[json2video-webhook] === PAYLOAD RECEIVED ===');
-    console.log('[json2video-webhook] Full Payload:', JSON.stringify(payload, null, 2));
+    logger.info('Payload received', { metadata: { payload } });
 
     const { project, status, url, error, progress, id, success } = payload;
-    console.log('[json2video-webhook] Parsed Values:', { project, status, url, error, progress, id, success });
+    logger.debug('Parsed webhook values', { 
+      metadata: { project, status, url, error, progress, id, success } 
+    });
 
     // ✅ CRITICAL: JSON2Video sends both 'project' (the ID we saved) and 'id' (render task ID)
     // We must use 'project' to match our database render_job_id
@@ -54,14 +59,14 @@ Deno.serve(async (req) => {
     const isComplete = success === true || status === 'done' || status === 'success';
     
     if (!renderJobId) {
-      console.error('[json2video-webhook] Missing render job ID in payload');
+      logger.error('Missing render job ID in payload');
       return new Response(
         JSON.stringify({ error: 'Missing render job ID' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[json2video-webhook] Looking up storyboard by render_job_id:', renderJobId);
+    logger.info('Looking up storyboard', { metadata: { renderJobId } });
 
     // Find storyboard by render_job_id (which matches the JSON2Video project ID)
     const { data: storyboard, error: fetchError } = await supabaseClient
@@ -71,14 +76,16 @@ Deno.serve(async (req) => {
       .single();
 
     if (fetchError || !storyboard) {
-      console.error('[json2video-webhook] Storyboard not found:', fetchError);
+      logger.error('Storyboard not found', fetchError || new Error('Not found'), {
+        metadata: { renderJobId }
+      });
       return new Response(
         JSON.stringify({ error: 'Storyboard not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[json2video-webhook] Found storyboard:', storyboard.id);
+    logger.info('Storyboard found', { metadata: { storyboardId: storyboard.id } });
 
     // Update storyboard based on status
     interface StoryboardUpdate {
@@ -98,11 +105,10 @@ Deno.serve(async (req) => {
       updates.status = 'complete';
       updates.video_url = url;
       updates.completed_at = new Date().toISOString();
-      console.log('[json2video-webhook] ✅ Video rendering completed successfully!');
-      console.log('[json2video-webhook] Video URL stored:', url);
+      logger.info('Video rendering completed', { metadata: { url, storyboardId: storyboard.id } });
       
       // Invoke download function to store in Supabase Storage
-      console.log('[json2video-webhook] Triggering video download to Supabase Storage...');
+      logger.info('Triggering video download to Supabase Storage');
       const { error: downloadError } = await supabaseClient.functions.invoke(
         'download-storyboard-video',
         {
@@ -115,9 +121,9 @@ Deno.serve(async (req) => {
       );
       
       if (downloadError) {
-        console.error('[json2video-webhook] Failed to trigger download:', downloadError);
+        logger.error('Failed to trigger download', downloadError);
       } else {
-        console.log('[json2video-webhook] Download function invoked successfully');
+        logger.info('Download function invoked successfully');
       }
     } else if (status === 'error' || status === 'failed') {
       updates.status = 'failed';
@@ -130,15 +136,15 @@ Deno.serve(async (req) => {
       });
       
       if (refundError) {
-        console.error('[json2video-webhook] Credit refund failed:', refundError);
+        logger.error('Credit refund failed', refundError);
       } else {
-        console.log('[json2video-webhook] Refunded credits:', tokenCost);
+        logger.info('Credits refunded', { metadata: { tokenCost } });
       }
       
-      console.error('[json2video-webhook] Video rendering failed:', error);
+      logger.error('Video rendering failed', new Error(error || 'Unknown error'));
     } else if (status === 'rendering') {
       updates.status = 'rendering';
-      console.log('[json2video-webhook] Video rendering in progress:', progress);
+      logger.info('Video rendering in progress', { metadata: { progress } });
     }
 
     const { error: updateError } = await supabaseClient
@@ -147,14 +153,15 @@ Deno.serve(async (req) => {
       .eq('id', storyboard.id);
 
     if (updateError) {
-      console.error('[json2video-webhook] Failed to update storyboard:', updateError);
+      logger.error('Failed to update storyboard', updateError);
       return new Response(
         JSON.stringify({ error: 'Failed to update storyboard' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[json2video-webhook] Storyboard updated successfully');
+    logger.info('Storyboard updated successfully');
+    logger.logDuration('Webhook processing', webhookStartTime);
 
     return new Response(
       JSON.stringify({ success: true, storyboardId: storyboard.id }),
@@ -162,10 +169,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('[json2video-webhook] Error:', {
-      message: error instanceof Error ? error.message : 'Unknown',
-      stack: error instanceof Error ? error.stack : undefined
-    });
+    logger.error('Webhook processing failed', error as Error);
     
     // Track webhook analytics for failure
     const supabase = createClient(
@@ -181,7 +185,7 @@ Deno.serve(async (req) => {
       error_code: 'WEBHOOK_ERROR',
       metadata: { error: error instanceof Error ? error.message : 'Unknown error' }
     }).then(({ error: analyticsError }) => {
-      if (analyticsError) console.error('[json2video-webhook] Failed to track analytics:', analyticsError);
+      if (analyticsError) logger.error('Failed to track analytics', analyticsError);
     });
     
     return new Response(

@@ -1,7 +1,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
-import { webhookLogger } from "../_shared/logger.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 // Security validators
 import { validateUrlToken } from "./security/url-token-validator.ts";
@@ -28,6 +28,9 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('kie-ai-webhook', requestId);
+  const webhookStartTime = Date.now();
   
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -39,6 +42,7 @@ Deno.serve(async (req) => {
     // === LAYER 1: URL TOKEN VALIDATION ===
     const urlTokenResult = validateUrlToken(url);
     if (!urlTokenResult.success) {
+      logger.warn('URL token validation failed', { metadata: { url: url.toString() } });
       return new Response(urlTokenResult.shouldReturn404 ? 'Not Found' : 'Bad Request', { 
         status: urlTokenResult.shouldReturn404 ? 404 : 400,
         headers: corsHeaders
@@ -46,11 +50,11 @@ Deno.serve(async (req) => {
     }
     
     const payload = await req.json();
-    console.log('Webhook payload:', JSON.stringify(payload));
+    logger.info('Webhook payload received', { metadata: { payload } });
 
     const taskId = payload.data?.taskId || payload.data?.task_id;
     if (!taskId) {
-      console.error('Invalid payload: missing taskId/task_id');
+      logger.error('Invalid payload: missing taskId/task_id');
       return new Response(
         JSON.stringify({ error: 'Missing taskId in payload' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

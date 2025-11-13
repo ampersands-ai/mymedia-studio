@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { EdgeLogger } from '../_shared/edge-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,11 +12,17 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
+
   try {
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    const logger = new EdgeLogger('seed-azure-voices', requestId, supabaseAdmin, true);
+    logger.info('Starting Azure voices seed process');
 
     // Complete list of all 564 Azure voices from uploaded Excel file
     const voices = [
@@ -609,11 +616,12 @@ serve(async (req) => {
       );
 
     if (error) {
-      console.error('Error seeding voices:', error);
+      logger.error('Error seeding voices', error);
       throw error;
     }
 
-    console.log(`Successfully seeded ${voices.length} Azure voices`);
+    logger.info('Successfully seeded Azure voices', { metadata: { count: voices.length } });
+    logger.logDuration('Seed process completed', startTime);
 
     return new Response(
       JSON.stringify({ 
@@ -628,7 +636,12 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in seed-azure-voices function:', error);
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    const logger = new EdgeLogger('seed-azure-voices', requestId, supabase, true);
+    logger.error('Error in seed-azure-voices function', error as Error);
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Unknown error',

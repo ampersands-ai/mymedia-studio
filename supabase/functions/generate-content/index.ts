@@ -347,8 +347,8 @@ Deno.serve(async (req) => {
               appliedDefaults.push(`${key}=${JSON.stringify(schemaProperty.default)} (invalid: ${JSON.stringify(candidateValue)})`);
             } else {
               // No default - return clear 400 error
-              const error = `Invalid parameter '${key}'. Value '${candidateValue}' is not in allowed values: ${schemaProperty.enum.join(', ')}`;
-              console.error(error);
+            const error = `Invalid parameter '${key}'. Value '${candidateValue}' is not in allowed values: ${schemaProperty.enum.join(', ')}`;
+              logger.error('Invalid parameter value', undefined, { metadata: { key, value: candidateValue } });
               throw new Error(error);
             }
           } 
@@ -412,7 +412,7 @@ Deno.serve(async (req) => {
       prompt.trim().length > 0
     ) {
       parameters.text = prompt;
-      console.log('Applied prompt->text fallback for ElevenLabs model');
+      logger.debug('Applied prompt->text fallback for ElevenLabs model', { userId: user.id });
     }
 
     // Safety fallback for Runware models: map prompt to positivePrompt if positivePrompt is missing
@@ -423,7 +423,7 @@ Deno.serve(async (req) => {
       prompt.trim().length > 0
     ) {
       parameters.positivePrompt = prompt;
-      console.log('Applied prompt->positivePrompt fallback for Runware model');
+      logger.debug('Applied prompt->positivePrompt fallback for Runware model', { userId: user.id });
     }
 
     let validatedParameters = validateAndFilterParameters(

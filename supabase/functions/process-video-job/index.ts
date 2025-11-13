@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
 
     // Idempotency: Resume from current status
     if (job.status === 'completed') {
-      console.log(`[${job_id}] Already completed, skipping`);
+      logger.info('Job already completed, skipping', { userId: job.user_id, metadata: { job_id } });
       return new Response(
         JSON.stringify({ success: true, status: 'already_completed' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
     }
 
     if (job.status === 'failed') {
-      console.log(`[${job_id}] Already failed, skipping`);
+      logger.info('Job already failed, skipping', { userId: job.user_id, metadata: { job_id } });
       return new Response(
         JSON.stringify({ success: false, status: 'already_failed' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -140,7 +140,10 @@ Deno.serve(async (req) => {
     }
 
     if (job.status === 'awaiting_script_approval' || job.status === 'awaiting_voice_approval') {
-      console.log(`[${job_id}] Awaiting user approval (${job.status}), skipping auto-processing`);
+      logger.info('Awaiting user approval, skipping auto-processing', { 
+        userId: job.user_id, 
+        metadata: { job_id, status: job.status } 
+      });
       return new Response(
         JSON.stringify({ success: true, status: job.status }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -150,17 +153,17 @@ Deno.serve(async (req) => {
     // Step 1: Generate script (skip if already done)
     let script = job.script;
     if (!script) {
-      console.log(`[${job_id}] Generating script...`);
+      logger.info('Generating script', { userId: job.user_id, metadata: { job_id } });
       await updateJobStatus(supabaseClient, job_id, 'generating_script');
-      script = await generateScript(supabaseClient, job.topic, job.duration, job.style, job_id, job.user_id);
+      script = await generateScript(supabaseClient, logger, job.topic, job.duration, job.style, job_id, job.user_id);
       await supabaseClient.from('video_jobs').update({ script }).eq('id', job_id);
-      console.log(`[${job_id}] Script generated successfully`);
+      logger.info('Script generated successfully', { userId: job.user_id, metadata: { job_id } });
     } else {
-      console.log(`[${job_id}] Script already exists, skipping generation`);
+      logger.debug('Script already exists, skipping generation', { userId: job.user_id, metadata: { job_id } });
     }
 
     // Pause for user approval of script
-    console.log(`[${job_id}] Script ready for review`);
+    logger.info('Script ready for review', { userId: job.user_id, metadata: { job_id } });
     await updateJobStatus(supabaseClient, job_id, 'awaiting_script_approval');
 
     return new Response(
@@ -173,25 +176,19 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error in process-video-job:', error);
-    console.error('Error stack:', error.stack);
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    const logger = new EdgeLogger('process-video-job', requestId, supabaseClient, true);
     
     const errorMessage = error.message || 'Unknown error occurred';
     
-    console.error(`[${job_id || 'unknown'}] Fatal error during processing:`, {
-      message: errorMessage,
-      stack: error.stack,
-      name: error.name
-    });
+    logger.error('Fatal error during processing', error, { metadata: { job_id: job_id || 'unknown' } });
     
     // Update job as failed if we have a job_id
     if (job_id) {
       try {
-        const supabaseClient = createClient(
-          Deno.env.get('SUPABASE_URL') ?? '',
-          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-        );
-        
         await supabaseClient
           .from('video_jobs')
           .update({
@@ -205,7 +202,7 @@ Deno.serve(async (req) => {
           })
           .eq('id', job_id);
       } catch (updateError) {
-        console.error('Failed to update job status:', updateError);
+        logger.error('Failed to update job status', updateError instanceof Error ? updateError : undefined);
       }
     }
 
@@ -230,6 +227,7 @@ async function updateJobStatus(supabase: any, jobId: string, status: string) {
 
 async function generateScript(
   supabase: any,
+  logger: any,
   topic: string,
   duration: number,
   style: string,
@@ -278,6 +276,7 @@ Script:`
   // Log the API call
   logApiCall(
     supabase,
+    logger,
     {
       videoJobId,
       userId,
@@ -300,7 +299,7 @@ Script:`
       isError: !response.ok,
       errorMessage: response.ok ? undefined : `Anthropic returned ${response.status}`
     }
-  ).catch(e => console.error('Failed to log API call:', e));
+  ).catch(e => logger.error('Failed to log API call', e instanceof Error ? e : undefined));
 
   if (!response.ok) {
     const error = await response.text();

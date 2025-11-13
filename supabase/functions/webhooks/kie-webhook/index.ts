@@ -31,6 +31,7 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const webhookStartTime = Date.now();
   let taskId: string | undefined;
   let generationId: string | undefined;
 
@@ -503,6 +504,17 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Track webhook analytics
+      await supabase.from('webhook_analytics').insert({
+        provider: 'kie-ai',
+        event_type: 'generation_complete',
+        status: 'success',
+        duration_ms: Date.now() - webhookStartTime,
+        metadata: { generation_id: generationId, task_id: taskId, outputs: resultUrls.length }
+      }).then(({ error }) => {
+        if (error) webhookLogger.error('Failed to track analytics', error);
+      });
+
       return new Response(
         JSON.stringify({ 
           success: true, 
@@ -532,6 +544,23 @@ Deno.serve(async (req) => {
       provider: 'kie_ai',
       generationId,
       taskId
+    });
+
+    // Track webhook analytics for failure
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    
+    await supabase.from('webhook_analytics').insert({
+      provider: 'kie-ai',
+      event_type: 'generation_complete',
+      status: 'failure',
+      duration_ms: Date.now() - webhookStartTime,
+      error_code: error.code || 'UNKNOWN_ERROR',
+      metadata: { generation_id: generationId, task_id: taskId, error: error.message }
+    }).then(({ error: analyticsError }) => {
+      if (analyticsError) webhookLogger.error('Failed to track analytics', analyticsError);
     });
     
     return createSafeErrorResponse(error, 'kie-webhook', corsHeaders);

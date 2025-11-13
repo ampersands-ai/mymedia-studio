@@ -25,7 +25,10 @@ webhookLogger.info('Dodo Webhook deployed', {
 });
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  const webhookStartTime = Date.now();
+  const startTime = Date.now();
+  
+  try {
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -148,6 +151,19 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error processing webhook:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    
+    // Track webhook analytics for failure
+    await supabase.from('webhook_analytics').insert({
+      provider: 'dodo-payments',
+      event_type: 'payment_event',
+      status: 'failure',
+      duration_ms: Date.now() - webhookStartTime,
+      error_code: 'WEBHOOK_ERROR',
+      metadata: { error: errorMessage }
+    }).then(({ error: analyticsError }) => {
+      if (analyticsError) console.error('Failed to track analytics:', analyticsError);
+    });
+    
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -252,7 +268,23 @@ async function handleWebhookEvent(supabase: any, event: any) {
       metadata: { event: eventData },
     });
   }
-}
+  
+  // Track webhook analytics
+  await supabase.from('webhook_analytics').insert({
+    provider: 'dodo-payments',
+    event_type: eventType,
+    status: 'success',
+    duration_ms: Date.now() - webhookStartTime,
+    metadata: { event_type: eventType, user_id: userId, product: productName }
+  }).then(({ error }) => {
+    if (error) console.error('Failed to track analytics:', error);
+  });
+
+  console.log(`✅ Webhook processed successfully in ${Date.now() - startTime}ms`);
+  return new Response(
+    JSON.stringify({ success: true, eventType }),
+    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
 
 async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;

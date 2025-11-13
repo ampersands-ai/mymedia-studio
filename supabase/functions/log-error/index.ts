@@ -1,15 +1,20 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  const startTime = Date.now();
+  const requestId = crypto.randomUUID();
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const logger = new EdgeLogger('log-error', requestId);
 
   try {
     const supabase = createClient(
@@ -49,9 +54,22 @@ serve(async (req) => {
       .single();
 
     if (insertError) {
-      console.error('Failed to insert error log:', insertError);
+      logger.error('Failed to insert error log', insertError, {
+        userId: user?.id,
+        metadata: { error_type: body.error_type, severity: body.severity }
+      });
       throw insertError;
     }
+
+    logger.warn('Frontend error logged', {
+      userId: user?.id,
+      metadata: { 
+        error_id: errorRecord.id,
+        error_type: body.error_type,
+        severity: body.severity,
+        route: body.route_path
+      }
+    });
 
     // Check if should send email alert
     const { data: settings } = await supabase
@@ -77,16 +95,20 @@ serve(async (req) => {
             affected_scripts: affectedScripts,
             ...body,
           }
-        }).catch(err => console.error('Failed to send error alert:', err));
+        }).catch(err => logger.error('Failed to send error alert', err));
       }
     }
+
+    logger.logDuration('log_error', startTime, { userId: user?.id });
 
     return new Response(
       JSON.stringify({ success: true, error_id: errorRecord.id }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error in log-error function:', error);
+    logger.critical('Error in log-error function', error);
+    logger.logDuration('log_error', startTime, { status: 'error' });
+    
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

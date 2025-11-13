@@ -29,7 +29,7 @@ import { toast } from "sonner";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ParameterConfigurator } from "./ParameterConfigurator";
-import type { TemplateConfiguration, JsonSchema } from "@/types/schema";
+import type { TemplateConfiguration, JsonSchema, ParameterValue } from "@/types/schema";
 import { jsonToSchema } from "@/types/schema";
 
 type ContentTemplate = TemplateConfiguration;
@@ -75,8 +75,8 @@ export function TemplateFormDialog({
   const [models, setModels] = useState<AIModel[]>([]);
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [userEditableFields, setUserEditableFields] = useState<string[]>([]);
-  const [hiddenFieldDefaults, setHiddenFieldDefaults] = useState<Record<string, string | number | boolean | null>>({});
-  const [presetValues, setPresetValues] = useState<Record<string, string | number | boolean | null>>({});
+  const [hiddenFieldDefaults, setHiddenFieldDefaults] = useState<Record<string, ParameterValue>>({});
+  const [presetValues, setPresetValues] = useState<Record<string, ParameterValue>>({});
   const [saving, setSaving] = useState(false);
   const [basicInfoOpen, setBasicInfoOpen] = useState(true);
   const [paramConfigOpen, setParamConfigOpen] = useState(false);
@@ -237,9 +237,9 @@ export function TemplateFormDialog({
         name: formData.name,
         description: formData.description || null,
         model_id: formData.is_custom_model ? formData.custom_model_id : formData.model_id || null,
-        preset_parameters: presetValues,
-        user_editable_fields: userEditableFields,
-        hidden_field_defaults: hiddenFieldDefaults,
+        preset_parameters: presetValues as any,
+        user_editable_fields: userEditableFields as any,
+        hidden_field_defaults: hiddenFieldDefaults as any,
         is_custom_model: formData.is_custom_model,
         enhancement_instruction: formData.enhancement_instruction || null,
         thumbnail_url: formData.thumbnail_url || null,

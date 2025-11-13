@@ -28,14 +28,13 @@ export type SchemaChangeHandler = (value: SchemaValue) => void;
 
 /**
  * Video style types for VideoCreator
+ * Must match VideoJobInput.style from @/types/video
  */
 export type VideoStyle = 
   | 'modern' 
-  | 'minimal' 
-  | 'bold' 
-  | 'elegant' 
-  | 'playful' 
-  | 'professional';
+  | 'tech' 
+  | 'educational' 
+  | 'dramatic';
 
 /**
  * Single generation output structure

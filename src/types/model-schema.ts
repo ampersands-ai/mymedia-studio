@@ -17,10 +17,11 @@ export type JsonSchemaType =
 
 /**
  * JSON Schema property definition
+ * Type is optional to handle dynamic property extraction
  * Compatible with src/types/schema.ts
  */
 export interface JsonSchemaProperty {
-  type: JsonSchemaType | JsonSchemaType[];
+  type?: JsonSchemaType | JsonSchemaType[];
   title?: string;
   description?: string;
   default?: unknown;
@@ -41,10 +42,11 @@ export interface JsonSchemaProperty {
 
 /**
  * Complete JSON Schema structure for AI models
+ * Type is optional to handle partial schemas
  */
 export interface ModelJsonSchema {
-  type: 'object';
-  properties: Record<string, JsonSchemaProperty>;
+  type?: 'object';
+  properties?: Record<string, JsonSchemaProperty>;
   required?: string[];
   'x-order'?: string[];
   fieldDependencies?: FieldDependencies;

@@ -28,6 +28,7 @@ import { createSignedUrl, extractStoragePath } from "@/lib/storage-utils";
 import { downloadMultipleOutputs } from "@/lib/download-utils";
 import { getSurpriseMePrompt } from "@/data/surpriseMePrompts";
 import { toast } from "sonner";
+import type { JsonSchemaProperty, ModelJsonSchema } from "@/types/model-schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CustomCreation = () => {
@@ -394,23 +395,23 @@ const CustomCreation = () => {
             isNative={isNative}
             onNativeCameraPick={handleNativeCameraPick}
             textKey={textKey}
-            textKeySchema={textKey ? modelSchema?.properties?.[textKey] : undefined}
+            textKeySchema={(textKey && modelSchema?.properties?.[textKey]) as JsonSchemaProperty | null}
             textKeyValue={state.modelParameters[textKey || '']}
             onTextKeyChange={(value) => updateState({ modelParameters: { ...state.modelParameters, [textKey || '']: value } })}
             voiceKey={voiceKey}
-            voiceKeySchema={voiceKey ? modelSchema?.properties?.[voiceKey] : undefined}
+            voiceKeySchema={(voiceKey && modelSchema?.properties?.[voiceKey]) as JsonSchemaProperty | null}
             voiceKeyValue={state.modelParameters[voiceKey || '']}
             onVoiceKeyChange={(value) => updateState({ modelParameters: { ...state.modelParameters, [voiceKey || '']: value } })}
             hasDuration={hasDuration}
             durationValue={state.modelParameters.duration}
-            durationSchema={hasDuration ? modelSchema?.properties?.duration : undefined}
+            durationSchema={(hasDuration && modelSchema?.properties?.duration) as JsonSchemaProperty | null}
             onDurationChange={(value) => updateState({ modelParameters: { ...state.modelParameters, duration: value } })}
             hasIncrement={hasIncrement}
             incrementValue={state.modelParameters.increment || state.modelParameters.incrementBySeconds}
             onIncrementChange={(value) => updateState({ modelParameters: { ...state.modelParameters, increment: value, incrementBySeconds: value } })}
             modelParameters={state.modelParameters}
             onModelParametersChange={(params) => updateState({ modelParameters: params })}
-            modelSchema={modelSchema}
+            modelSchema={modelSchema as ModelJsonSchema | null}
             advancedOpen={state.advancedOpen}
             onAdvancedOpenChange={(open) => updateState({ advancedOpen: open })}
             onGenerate={handleGenerate}

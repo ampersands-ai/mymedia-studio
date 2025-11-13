@@ -21,6 +21,7 @@ import { captionPresets, aspectRatioConfig, textEffectPresets } from '@/config/c
 import { logger } from '@/lib/logger';
 import { CaptionStyle } from '@/types/video';
 import type { VideoStyle } from '@/types/custom-creation';
+import type { VideoJobInput } from '@/types/video';
 
 export function VideoCreator() {
   const [topic, setTopic] = useState('');
@@ -84,7 +85,7 @@ export function VideoCreator() {
     createJob.mutate({
       topic: topic.trim(),
       duration,
-      style,
+      style: style as VideoJobInput['style'],
       voice_id: voiceId,
       voice_name: voiceName,
       aspect_ratio: aspectRatio,

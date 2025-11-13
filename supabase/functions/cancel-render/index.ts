@@ -1,4 +1,4 @@
-import { createClient } from 'supabase';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createSafeErrorResponse } from '../_shared/error-handler.ts';
 
 const corsHeaders = {

@@ -7,9 +7,10 @@ import { WebhookActionsPanel } from "@/components/admin/webhook/WebhookActionsPa
 import { AlertSettingsPanel } from "@/components/admin/webhook/AlertSettingsPanel";
 import { AlertHistoryDashboard } from "@/components/admin/webhook/AlertHistoryDashboard";
 import { ActiveGenerationsList } from "@/components/admin/webhook/ActiveGenerationsList";
+import { WebhookAnalyticsDashboard } from "@/components/admin/webhook/WebhookAnalyticsDashboard";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Activity, History } from "lucide-react";
+import { Activity, History, BarChart3 } from "lucide-react";
 
 const WebhookMonitor = () => {
   const {
@@ -57,8 +58,12 @@ const WebhookMonitor = () => {
       />
 
       {/* Tabbed Content */}
-      <Tabs defaultValue="monitoring" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+      <Tabs defaultValue="analytics" className="space-y-6">
+        <TabsList className="grid w-full max-w-2xl grid-cols-3">
+          <TabsTrigger value="analytics" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Analytics
+          </TabsTrigger>
           <TabsTrigger value="monitoring" className="gap-2">
             <Activity className="h-4 w-4" />
             Live Monitoring
@@ -68,6 +73,10 @@ const WebhookMonitor = () => {
             Alert History
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="analytics">
+          <WebhookAnalyticsDashboard />
+        </TabsContent>
 
         <TabsContent value="monitoring" className="space-y-6">
           {/* Active Generations with Terminate Actions */}

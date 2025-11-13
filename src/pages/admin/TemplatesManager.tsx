@@ -105,8 +105,8 @@ export default function TemplatesManager() {
     handleEnableAll,
     handleDisableAll,
   } = useWorkflowMutations({
-    onEditContentTemplate: setContentTemplateDialog,
-    onEditWorkflow: setWorkflowDialog,
+    onEditContentTemplate: (state) => setContentTemplateDialog(state as any),
+    onEditWorkflow: (state) => setWorkflowDialog(state as any),
   });
   
   // Extract unique categories with counts

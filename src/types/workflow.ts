@@ -61,14 +61,30 @@ export const MergedTemplateSchema = z.object({
   category: z.string().nullable(),
   template_type: z.enum(['template', 'workflow']),
   is_active: z.boolean(),
+  // Common fields
+  description: z.string().optional(),
+  thumbnail_url: z.string().optional(),
+  before_image_url: z.string().optional(),
+  after_image_url: z.string().optional(),
+  display_order: z.number().optional(),
+  estimated_time_seconds: z.number().optional(),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
   // Content template fields
   model_id: z.string().optional(),
-  user_editable_fields: z.record(z.unknown()).optional(),
-  hidden_field_defaults: z.record(z.unknown()).optional(),
-  preset_parameters: z.record(z.unknown()).optional(),
+  user_editable_fields: z.unknown().optional(),
+  hidden_field_defaults: z.unknown().optional(),
+  preset_parameters: z.unknown().optional(),
+  enhancement_instruction: z.string().optional(),
+  is_custom_model: z.boolean().optional(),
+  ai_models: z.object({
+    id: z.string(),
+    name: z.string(),
+    base_token_cost: z.number(),
+  }).optional(),
   // Workflow template fields
-  workflow_steps: z.array(WorkflowStepSchema).optional(),
-  user_input_fields: z.array(UserInputFieldSchema).optional(),
+  workflow_steps: z.unknown().optional(),
+  user_input_fields: z.unknown().optional(),
 });
 
 export type MergedTemplate = z.infer<typeof MergedTemplateSchema>;
@@ -80,26 +96,13 @@ export type UserInputField = z.infer<typeof UserInputFieldSchema>;
  */
 export const ContentTemplateDialogStateSchema = z.object({
   open: z.boolean(),
-  template: z.object({
-    id: z.string(),
-    name: z.string(),
-    category: z.string(),
-    model_id: z.string().optional(),
-    user_editable_fields: z.record(z.unknown()),
-    hidden_field_defaults: z.record(z.unknown()),
-    preset_parameters: z.record(z.unknown()).optional(),
-  }).nullable(),
+  template: z.any().nullable(),
 });
 
 export const WorkflowDialogStateSchema = z.object({
   open: z.boolean(),
-  workflow: z.object({
-    id: z.string(),
-    name: z.string(),
-    category: z.string(),
-    workflow_steps: z.array(WorkflowStepSchema),
-    user_input_fields: z.array(UserInputFieldSchema),
-  }).nullable(),
+  workflow: z.any().nullable(),
+  isNew: z.boolean(),
 });
 
 export type ContentTemplateDialogState = z.infer<typeof ContentTemplateDialogStateSchema>;

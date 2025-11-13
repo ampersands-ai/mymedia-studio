@@ -3,20 +3,20 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Loader2, Download, CheckCircle2 } from "lucide-react";
 import { GenerationPreview } from "./GenerationPreview";
+import type { 
+  WorkflowExecutionProgress, 
+  WorkflowExecutionResult,
+  calculateProgressPercentage
+} from "@/types/workflow-execution-display";
+import { calculateProgressPercentage as calcProgress } from "@/types/workflow-execution-display";
 
 interface WorkflowExecutionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workflowName: string;
   isExecuting: boolean;
-  progress?: {
-    currentStep: number;
-    totalSteps: number;
-  } | null;
-  result?: {
-    url: string;
-    credits: number;
-  } | null;
+  progress?: WorkflowExecutionProgress | null;
+  result?: WorkflowExecutionResult | null;
   onDownload: () => void;
 }
 
@@ -49,9 +49,9 @@ export const WorkflowExecutionDialog = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm font-medium">
                   <span>Step {progress.currentStep} of {progress.totalSteps}</span>
-                  <span>{Math.round((progress.currentStep / progress.totalSteps) * 100)}%</span>
+                  <span>{calcProgress(progress)}%</span>
                 </div>
-                <Progress value={(progress.currentStep / progress.totalSteps) * 100} className="h-2" />
+                <Progress value={calcProgress(progress)} className="h-2" />
               </div>
               <p className="text-center text-sm text-muted-foreground">
                 Processing workflow steps...

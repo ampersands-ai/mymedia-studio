@@ -22,6 +22,7 @@ import type {
   WorkflowParameterValue 
 } from "@/types/workflow-parameters";
 import { jsonToSchema } from "@/types/schema";
+import type { ContentType } from "@/types/workflow-execution-display";
 
 const testLogger = logger.child({ component: 'WorkflowTestDialog' });
 
@@ -319,7 +320,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
   };
 
   // Determine content type from storage path
-  const getContentType = (path: string): string => {
+  const getContentType = (path: string): ContentType => {
     const ext = path.toLowerCase().split('.').pop();
     if (['mp4', 'webm', 'mov'].includes(ext || '')) return 'video';
     if (['mp3', 'wav', 'm4a'].includes(ext || '')) return 'audio';

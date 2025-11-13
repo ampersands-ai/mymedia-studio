@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -65,19 +66,26 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('approve-voiceover', requestId);
   let job_id: string | undefined;
   
   try {
+    logger.info("Approve voiceover request received");
     const body = await req.json();
     job_id = body.job_id;
 
     if (!job_id) {
+      logger.error("Missing job_id in request");
       throw new Error('job_id is required');
     }
+
+    logger.info("Processing job", { metadata: { jobId: job_id } });
 
     // Get auth user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      logger.error("Missing Authorization header");
       throw new Error('Missing Authorization header');
     }
 
@@ -90,44 +98,61 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     
     if (authError || !user) {
+      logger.error("Authentication failed", authError);
       throw new Error('Unauthorized');
     }
 
+    logger.info("User authenticated", { userId: user.id });
+
     // Get job and verify ownership
-    const { data: job, error: jobError } = await supabaseClient
+    const { data: job, error: jobError} = await supabaseClient
       .from('video_jobs')
       .select('user_id, script, voiceover_url, style, duration, aspect_ratio, caption_style, custom_background_video, status, topic, actual_audio_duration')
       .eq('id', job_id)
       .single();
 
     if (jobError || !job) {
+      logger.error("Job not found", jobError, { metadata: { jobId: job_id } });
       throw new Error('Job not found');
     }
 
     if (job.user_id !== user.id) {
+      logger.error("Unauthorized access attempt", undefined, { 
+        userId: user.id,
+        metadata: { jobUserId: job.user_id, jobId: job_id }
+      });
       throw new Error('Unauthorized: not your job');
     }
 
     if (job.status !== 'awaiting_voice_approval' && job.status !== 'failed') {
+      logger.error("Invalid job status for approval", undefined, { 
+        metadata: { jobId: job_id, status: job.status }
+      });
       throw new Error(`Job cannot be approved from status: ${job.status}`);
     }
 
     if (job.status === 'failed') {
-      console.log('Job is in failed state; resetting to awaiting_voice_approval for retry');
-      await updateJobStatus(supabaseClient, job_id, 'awaiting_voice_approval');
+      logger.info("Resetting failed job for retry", { metadata: { jobId: job_id } });
+      await updateJobStatus(supabaseClient, job_id, 'awaiting_voice_approval', logger);
     }
 
-    console.log(`Approving voiceover for job ${job_id}, continuing assembly...`);
+    logger.info("Starting video assembly", { userId: user.id, metadata: { jobId: job_id } });
 
     // Use actual audio duration if available, otherwise fall back to requested duration
     const videoDuration = job.actual_audio_duration || job.duration;
-    console.log(`Using video duration: ${videoDuration}s (actual_audio_duration: ${job.actual_audio_duration}, requested: ${job.duration})`);
+    logger.info("Video duration calculated", {
+      metadata: {
+        videoDuration,
+        actualAudioDuration: job.actual_audio_duration,
+        requestedDuration: job.duration
+      }
+    });
 
     const backgroundMediaType = (job as any).background_media_type || 'video';
-    console.log(`Using background media type: ${backgroundMediaType}`);
+    logger.info("Background media type determined", { metadata: { backgroundMediaType } });
 
     // Step 3: Fetch multiple background videos or images
-    await updateJobStatus(supabaseClient, job_id, 'fetching_video');
+    await updateJobStatus(supabaseClient, job_id, 'fetching_video', logger);
     
     let backgroundVideoUrls: string[] = [];
     let backgroundImageUrls: string[] = [];
@@ -141,9 +166,12 @@ Deno.serve(async (req) => {
         user.id,
         job.aspect_ratio || '4:5',
         job.custom_background_video,
-        job.topic
+        job.topic,
+        logger
       );
-      console.log(`Fetched ${backgroundImageUrls.length} background images from Pixabay`);
+      logger.info("Background images fetched", { 
+        metadata: { imageCount: backgroundImageUrls.length, jobId: job_id }
+      });
     } else {
       // For videos: Use existing logic
       backgroundVideoUrls = await getBackgroundVideos(
@@ -154,14 +182,15 @@ Deno.serve(async (req) => {
         user.id,
         job.aspect_ratio || '4:5',
         job.custom_background_video,
-        job.topic
+        job.topic,
+        logger
       );
     }
     
     await supabaseClient.from('video_jobs').update({ 
       background_video_url: backgroundVideoUrls[0] || backgroundImageUrls[0] // Store first URL for reference
     }).eq('id', job_id);
-    console.log(`Fetched background media for job ${job_id}`);
+    logger.info("Background media fetched", { metadata: { jobId: job_id } });
 
     // Step 4: Assemble video
     await updateJobStatus(supabaseClient, job_id, 'assembling');
@@ -252,8 +281,9 @@ Deno.serve(async (req) => {
 });
 
 // Helper functions
-async function updateJobStatus(supabase: any, jobId: string, status: string) {
+async function updateJobStatus(supabase: any, jobId: string, status: string, logger?: EdgeLogger) {
   await supabase.from('video_jobs').update({ status }).eq('id', jobId);
+  logger?.debug("Job status updated", { metadata: { jobId, status } });
 }
 
 function extractSearchTerms(topic: string): string {
@@ -278,11 +308,12 @@ async function getBackgroundImages(
   userId: string,
   aspectRatio: string = '4:5',
   customImageUrl?: string,
-  topic?: string
+  topic?: string,
+  logger?: EdgeLogger
 ): Promise<string[]> {
   // If user selected custom image, return it as single-item array
   if (customImageUrl) {
-    console.log('Using custom background image:', customImageUrl);
+    logger?.info("Using custom background image", { metadata: { customImageUrl } });
     return [customImageUrl];
   }
 
@@ -290,7 +321,7 @@ async function getBackgroundImages(
   let searchQuery: string;
   if (topic && topic.trim()) {
     searchQuery = extractSearchTerms(topic);
-    console.log(`Using topic-based image search: "${searchQuery}" (from topic: "${topic}")`);
+    logger?.info("Using topic-based image search", { metadata: { searchQuery, topic } });
   } else {
     const queries: Record<string, string> = {
       modern: 'abstract modern design',
@@ -299,7 +330,7 @@ async function getBackgroundImages(
       dramatic: 'dramatic cinematic'
     };
     searchQuery = queries[style] || 'abstract background';
-    console.log(`Using style-based image search: "${searchQuery}"`);
+    logger?.info("Using style-based image search", { metadata: { searchQuery, style } });
   }
 
   // Determine orientation based on aspect ratio
@@ -371,11 +402,12 @@ async function getBackgroundVideos(
   userId: string,
   aspectRatio: string = '4:5',
   customVideoUrl?: string,
-  topic?: string
+  topic?: string,
+  logger?: EdgeLogger
 ): Promise<string[]> {
   // If user selected custom video, return it as single-item array
   if (customVideoUrl) {
-    console.log('Using custom background video:', customVideoUrl);
+    logger?.info("Using custom background video", { metadata: { customVideoUrl } });
     return [customVideoUrl];
   }
 
@@ -384,7 +416,7 @@ async function getBackgroundVideos(
   if (topic && topic.trim()) {
     // Extract key terms from topic (remove filler words, limit length)
     searchQuery = extractSearchTerms(topic);
-    console.log(`Using topic-based search: "${searchQuery}" (from topic: "${topic}")`);
+    logger?.info("Using topic-based search", { metadata: { searchQuery, topic } });
   } else {
     // Fallback to style-based queries
     const queries: Record<string, string> = {
@@ -394,7 +426,7 @@ async function getBackgroundVideos(
       dramatic: 'cinematic nature dramatic'
     };
     searchQuery = queries[style] || 'abstract motion background';
-    console.log(`Using style-based search: "${searchQuery}"`);
+    logger?.info("Using style-based search", { metadata: { searchQuery, style } });
   }
 
   // Determine target orientation for filtering
@@ -501,7 +533,7 @@ async function getBackgroundVideos(
     }
   }
   
-  console.log(`Selected ${selectedVideos.length} unique background videos`);
+  logger?.info("Background videos selected", { metadata: { videoCount: selectedVideos.length } });
   return selectedVideos;
 }
 

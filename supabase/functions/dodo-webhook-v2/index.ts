@@ -25,12 +25,12 @@ webhookLogger.info('Dodo Webhook deployed', {
 });
 
 Deno.serve(async (req) => {
-  const webhookStartTime = Date.now();
-  const startTime = Date.now();
-  
-  try {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const webhookStartTime = Date.now();
+  const startTime = Date.now();
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;

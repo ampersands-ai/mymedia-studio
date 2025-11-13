@@ -3,6 +3,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { CheckCircle2, Circle, Loader2, XCircle, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import type { ModelParameters, ApiPayload, ProviderMetadata } from "@/types/admin/model-health-execution";
 
 type FlowStage = {
   id: string;
@@ -14,7 +15,7 @@ export interface StageData {
   input_validation?: {
     prompt?: string;
     prompt_length?: number;
-    custom_parameters?: Record<string, any>;
+    custom_parameters?: ModelParameters;
     model_record_id?: string;
     has_images?: boolean;
     image_count?: number;
@@ -34,7 +35,7 @@ export interface StageData {
     note?: string;
   };
   api_request_prepared?: {
-    payload?: any;
+    payload?: ApiPayload;
     endpoint?: string;
     provider?: string;
     content_type?: string;
@@ -62,7 +63,7 @@ export interface StageData {
     completion_status?: string;
     output_url?: string;
     storage_path?: string;
-    provider_metadata?: any;
+    provider_metadata?: ProviderMetadata;
     total_generation_time_ms?: number;
   };
   media_storage?: {

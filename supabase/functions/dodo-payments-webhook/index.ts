@@ -1,7 +1,8 @@
 // Dodo Payments Webhook Handler - v2.0 - Enhanced Diagnostics
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Webhook } from "https://esm.sh/svix@1";
+import { webhookLogger } from "../_shared/logger.ts";
+import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 
 const WEBHOOK_VERSION = "2.0-svix-dual-headers";
 
@@ -19,10 +20,12 @@ const PLAN_TOKENS = {
 };
 
 // Log deployment on boot
-console.log(`🚀 Dodo Payments Webhook ${WEBHOOK_VERSION} deployed and ready`);
-console.log(`📋 Supports both svix-* and webhook-* header formats`);
+webhookLogger.info('Dodo Payments Webhook deployed', { 
+  version: WEBHOOK_VERSION,
+  features: ['svix-* headers', 'webhook-* headers']
+});
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -36,7 +39,7 @@ serve(async (req) => {
 
     // SECURITY: Webhook secret is required
     if (!webhookSecret) {
-      console.error('CRITICAL SECURITY ERROR: DODO_WEBHOOK_KEY not configured');
+      webhookLogger.error('CRITICAL SECURITY ERROR: DODO_WEBHOOK_KEY not configured', new Error('Missing webhook secret'));
       return new Response(
         JSON.stringify({ error: 'Webhook secret not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -52,16 +55,24 @@ serve(async (req) => {
     const svixSignature = req.headers.get('svix-signature') || req.headers.get('webhook-signature');
     
     const headerSet = req.headers.get('svix-id') ? 'svix-*' : 'webhook-*';
-    console.log(`📨 Webhook v${WEBHOOK_VERSION} - Using header set: ${headerSet}`);
-    console.log(`   svix-id: ${svixId ? 'present' : 'missing'}`);
-    console.log(`   svix-timestamp: ${svixTimestamp ? 'present' : 'missing'}`);
-    console.log(`   svix-signature: ${svixSignature ? 'present' : 'missing'}`);
+    
+    webhookLogger.received('dodo-payments', svixId || 'unknown', {
+      version: WEBHOOK_VERSION,
+      headerSet,
+      headers: {
+        id: svixId ? 'present' : 'missing',
+        timestamp: svixTimestamp ? 'present' : 'missing',
+        signature: svixSignature ? 'present' : 'missing'
+      }
+    });
     
     if (!svixSignature || !svixId || !svixTimestamp) {
-      console.error('Security: Missing Svix webhook headers');
-      console.log('svix-id:', svixId);
-      console.log('svix-timestamp:', svixTimestamp);
-      console.log('svix-signature:', svixSignature ? 'present' : 'missing');
+      webhookLogger.security('svix_headers', false, {
+        headerSet,
+        svixId,
+        svixTimestamp,
+        svixSignature: svixSignature ? 'present' : 'missing'
+      });
       return new Response(
         JSON.stringify({ error: 'Missing webhook signature headers' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -76,7 +87,7 @@ serve(async (req) => {
       const MAX_TIMESTAMP_AGE = 5 * 60; // 5 minutes
       
       if (isNaN(timestamp) || Math.abs(now - timestamp) > MAX_TIMESTAMP_AGE) {
-        console.error('❌ Webhook timestamp validation failed:', { 
+        webhookLogger.security('timestamp', false, {
           timestamp, 
           now, 
           diff: now - timestamp,
@@ -99,7 +110,12 @@ serve(async (req) => {
       
       // Step 2: Verify the webhook payload using Svix library
       const event = wh.verify(bodyText, headersNormalized) as any;
-      console.log(`✅ Security: Valid webhook verified via Svix (${headerSet})`, event.type || event.event_type);
+      const eventType = event.type || event.event_type;
+      
+      webhookLogger.security('svix_signature', true, {
+        headerSet,
+        eventType
+      });
 
       // Step 3: Check for duplicate webhook using idempotency
       const eventData = event.data || event;
@@ -112,44 +128,52 @@ serve(async (req) => {
         .maybeSingle();
       
       if (existingEvent) {
-        console.log('⚠️ Duplicate webhook detected, ignoring:', idempotencyKey);
+        webhookLogger.security('idempotency', true, { 
+          idempotencyKey,
+          isDuplicate: true 
+        });
         return new Response(JSON.stringify({ received: true, duplicate: true }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+      
+      webhookLogger.security('idempotency', true, { 
+        idempotencyKey,
+        isDuplicate: false 
+      });
 
       // Step 4: Process the event
+      webhookLogger.processing(idempotencyKey, { eventType });
       await handleWebhookEvent(supabase, event);
       
       // Step 5: Record webhook event for idempotency
       await supabase.from('webhook_events').insert({
         idempotency_key: idempotencyKey,
-        event_type: event.type || event.event_type,
+        event_type: eventType,
         processed_at: new Date().toISOString()
       });
 
+      webhookLogger.success(idempotencyKey, { eventType });
+      
       return new Response(JSON.stringify({ received: true }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (verifyError) {
-      console.error(`❌ Svix verification failed (using ${headerSet} headers):`, verifyError);
-      console.error('Verification error details:', verifyError instanceof Error ? verifyError.message : String(verifyError));
-      console.error('Body length:', bodyText.length);
-      console.error('Timestamp:', svixTimestamp);
+      webhookLogger.error('Svix verification failed', verifyError instanceof Error ? verifyError : new Error(String(verifyError)), {
+        headerSet,
+        bodyLength: bodyText.length,
+        timestamp: svixTimestamp
+      });
       return new Response(
         JSON.stringify({ error: 'Invalid signature' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
   } catch (error) {
-    console.error('Error processing webhook:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    webhookLogger.error('Webhook processing failed', error instanceof Error ? error : new Error(String(error)));
+    return createSafeErrorResponse(error, 'dodo-payments-webhook', corsHeaders);
   }
 });
 
@@ -157,7 +181,7 @@ async function handleWebhookEvent(supabase: any, event: any) {
   const eventType = event.type || event.event_type;
   const eventData = event.data || event;
 
-  console.log(`Processing event: ${eventType}`);
+  webhookLogger.info('Processing webhook event', { eventType });
 
   // Extract metadata (user_id, plan, etc.)
   const metadata = eventData.metadata || {};
@@ -166,7 +190,9 @@ async function handleWebhookEvent(supabase: any, event: any) {
 
   // Fallback: If user_id is missing from metadata, try to find user by email
   if (!userId && eventData.customer?.email) {
-    console.log('metadata.user_id missing, attempting to find user by email:', eventData.customer.email);
+    webhookLogger.info('Attempting email fallback for user lookup', { 
+      email: eventData.customer.email 
+    });
     
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
@@ -176,15 +202,17 @@ async function handleWebhookEvent(supabase: any, event: any) {
     
     if (profile && !profileError) {
       userId = profile.id;
-      console.log('Found user by email fallback:', userId);
+      webhookLogger.info('Found user by email fallback', { userId });
     } else {
-      console.error('Could not find user by email:', profileError);
+      webhookLogger.error('Could not find user by email', profileError || new Error('User not found'), {
+        email: eventData.customer.email
+      });
       throw new Error(`User not found for email: ${eventData.customer.email}`);
     }
   }
 
   if (!userId) {
-    console.error('No user_id in metadata and no customer email to lookup');
+    webhookLogger.error('No user_id available', new Error('Missing user identification'));
     throw new Error('No user_id in metadata and no customer email to lookup');
   }
 
@@ -237,7 +265,7 @@ async function handleWebhookEvent(supabase: any, event: any) {
       break;
 
     default:
-      console.log(`Unhandled event type: ${eventType}`);
+      webhookLogger.info('Unhandled event type', { eventType });
   }
 
   // Log to audit trail
@@ -258,7 +286,7 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
   const planKey = planName.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
 
-  console.log(`Payment succeeded for user ${userId}, plan ${planName}`);
+  webhookLogger.info('Payment succeeded', { userId, planName, tokens });
 
   // Get current tokens
   const { data: currentSub } = await supabase
@@ -271,7 +299,11 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
   const newTokensRemaining = (currentSub?.tokens_remaining || 0) + tokens;
   const newTokensTotal = (currentSub?.tokens_total || 0) + tokens;
 
-  console.log(`Adding ${tokens} tokens. Current: ${currentSub?.tokens_remaining}, New: ${newTokensRemaining}`);
+  webhookLogger.info('Adding tokens', { 
+    tokens, 
+    currentRemaining: currentSub?.tokens_remaining,
+    newRemaining: newTokensRemaining 
+  });
 
   // Update subscription with added tokens
   const { error } = await supabase
@@ -289,7 +321,7 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
     .eq('user_id', userId);
 
   if (error) {
-    console.error('Error updating subscription:', error);
+    webhookLogger.error('Error updating subscription', error);
     throw error;
   }
 }
@@ -297,7 +329,7 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
 async function handlePaymentFailed(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   
-  console.log(`Payment failed for user ${userId}`);
+  webhookLogger.info('Payment failed', { userId });
 
   await supabase
     .from('user_subscriptions')
@@ -308,7 +340,7 @@ async function handlePaymentFailed(supabase: any, data: any, metadata: any) {
 async function handleSubscriptionActive(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   
-  console.log(`Subscription activated for user ${userId}`);
+  webhookLogger.info('Subscription activated', { userId });
 
   await supabase
     .from('user_subscriptions')
@@ -324,7 +356,7 @@ async function handleSubscriptionActive(supabase: any, data: any, metadata: any)
 async function handleSubscriptionCancelled(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   
-  console.log(`Subscription cancelled for user ${userId}`);
+  webhookLogger.info('Subscription cancelled', { userId });
 
   // Don't remove tokens immediately - let them use until period ends
   await supabase
@@ -336,7 +368,7 @@ async function handleSubscriptionCancelled(supabase: any, data: any, metadata: a
 async function handleSubscriptionExpired(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   
-  console.log(`Subscription expired for user ${userId}`);
+  webhookLogger.info('Subscription expired', { userId });
 
   // Downgrade to freemium
   await supabase
@@ -358,7 +390,7 @@ async function handleSubscriptionRenewed(supabase: any, data: any, metadata: any
   const planKey = planName.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
 
-  console.log(`Subscription renewed for user ${userId}`);
+  webhookLogger.info('Subscription renewed', { userId, tokens });
 
   // Get current subscription
   const { data: currentSub } = await supabase
@@ -385,7 +417,7 @@ async function handleSubscriptionPlanChanged(supabase: any, data: any, metadata:
   const planKey = newPlan.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
 
-  console.log(`Plan changed for user ${userId} to ${newPlan}`);
+  webhookLogger.info('Plan changed', { userId, newPlan, tokens });
 
   await supabase
     .from('user_subscriptions')
@@ -401,7 +433,7 @@ async function handleSubscriptionPlanChanged(supabase: any, data: any, metadata:
 async function handleSubscriptionOnHold(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   
-  console.log(`Subscription on hold for user ${userId}`);
+  webhookLogger.info('Subscription on hold', { userId });
 
   await supabase
     .from('user_subscriptions')
@@ -413,7 +445,7 @@ async function handleRefundSucceeded(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   const refundAmount = data.amount || 0;
   
-  console.log(`Refund processed for user ${userId}, amount: ${refundAmount}`);
+  webhookLogger.info('Refund processed', { userId, refundAmount });
 
   // Optionally deduct tokens proportionally
   await supabase

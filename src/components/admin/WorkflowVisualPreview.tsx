@@ -11,6 +11,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Card } from '@/components/ui/card';
 import { WorkflowStep, UserInputField } from '@/hooks/useWorkflowTemplates';
+import type { StepNodeData, UserInputNodeData, OutputNodeData } from '@/types/workflow-display';
 
 interface WorkflowVisualPreviewProps {
   userInputFields: UserInputField[];
@@ -18,7 +19,7 @@ interface WorkflowVisualPreviewProps {
 }
 
 // Simplified node components without edit functionality
-const StepNode = ({ data }: { data: any }) => (
+const StepNode = ({ data }: { data: StepNodeData }) => (
   <Card className="p-3 min-w-[180px] border-2 border-primary/20 bg-background">
     <div className="space-y-1">
       <h4 className="font-semibold text-xs">Step {data.step.step_number}</h4>
@@ -29,7 +30,7 @@ const StepNode = ({ data }: { data: any }) => (
   </Card>
 );
 
-const UserInputNode = ({ data }: { data: any }) => (
+const UserInputNode = ({ data }: { data: UserInputNodeData }) => (
   <Card className="p-3 min-w-[180px] border-2 border-blue-500/40 bg-blue-500/5">
     <h4 className="font-semibold text-xs mb-2">User Inputs</h4>
     <div className="space-y-1">

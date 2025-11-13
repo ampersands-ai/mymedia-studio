@@ -21,10 +21,20 @@ import { useWorkflowSurpriseMe } from "@/hooks/useWorkflowSurpriseMe";
 import { usePromptEnhancement } from "@/hooks/usePromptEnhancement";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { logger } from '@/lib/logger';
+import type { 
+  WorkflowInputs, 
+  WorkflowInputValue, 
+  WorkflowInputFieldConfig,
+  ModelInputSchema
+} from "@/types/workflow-display";
+import {
+  toModelInputSchema,
+  getSchemaProperty
+} from "@/types/workflow-display";
 
 interface WorkflowInputPanelProps {
   workflow: WorkflowTemplate;
-  onExecute: (inputs: Record<string, any>, shouldGenerateCaption?: boolean) => void;
+  onExecute: (inputs: WorkflowInputs, shouldGenerateCaption?: boolean) => void;
   onBack: () => void;
   isExecuting: boolean;
   onReset?: () => void;
@@ -34,7 +44,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
   const { user } = useAuth();
   const { pickImage, pickMultipleImages, isLoading: cameraLoading } = useNativeCamera();
   const { data: userTokens } = useUserTokens();
-  const [inputs, setInputs] = useState<Record<string, any>>({});
+  const [inputs, setInputs] = useState<WorkflowInputs>({});
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File[]>>({});
   const [isUploading, setIsUploading] = useState(false);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
@@ -55,7 +65,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
   const creditBalance = userTokens?.tokens_remaining || 0;
   const hasEnoughCredits = creditBalance >= estimatedTokens;
 
-  const handleInputChange = async (fieldName: string, value: any, shouldEnhance: boolean = false) => {
+  const handleInputChange = async (fieldName: string, value: WorkflowInputValue, shouldEnhance: boolean = false) => {
     // If prompt enhancement is enabled and this is a prompt field
     if (shouldEnhance && enhancePrompt && value && typeof value === 'string') {
       const enhanced = await enhancePromptFn(value, workflow?.name);
@@ -133,7 +143,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
 
       // Find which parameter this user input maps to across ALL workflow steps
     let targetParameterName: string | null = null;
-    let targetParameterSchema: any = null;
+    let targetParameterSchema: ReturnType<typeof getSchemaProperty> = null;
 
     // Check ALL workflow steps to find where this user input is mapped
     for (const step of workflow.workflow_steps || []) {
@@ -148,8 +158,8 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
             .eq('record_id', step.model_record_id)
             .single();
           
-          const schema = stepModelData?.input_schema as any;
-          targetParameterSchema = schema?.properties?.[paramKey];
+          const schema = toModelInputSchema(stepModelData?.input_schema);
+          targetParameterSchema = getSchemaProperty(schema, paramKey);
           break;
         }
       }
@@ -215,14 +225,14 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
     setGeneratingSurprise(false);
   };
 
-  const renderInputField = (field: any) => {
+  const renderInputField = (field: WorkflowInputFieldConfig) => {
     const isMultiple = field.max_files && field.max_files > 1;
 
     switch (field.type) {
       case 'textarea':
         return (
           <WorkflowPromptInput
-            value={inputs[field.name] || ''}
+            value={typeof inputs[field.name] === 'string' ? inputs[field.name] as string : ''}
             onChange={(value) => handleInputChange(field.name, value, true)}
             isRequired={field.required || false}
             maxLength={5000}
@@ -237,10 +247,11 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
         );
 
       case 'number':
+        const numValue = inputs[field.name];
         return (
           <Input
             type="number"
-            value={inputs[field.name] || ''}
+            value={typeof numValue === 'number' ? numValue : (typeof numValue === 'string' ? numValue : '')}
             onChange={(e) => handleInputChange(field.name, parseFloat(e.target.value))}
             placeholder={`Enter ${field.label.toLowerCase()}...`}
             disabled={isExecuting}
@@ -250,7 +261,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
       case 'select':
         return (
           <Select
-            value={inputs[field.name] || ''}
+            value={typeof inputs[field.name] === 'string' ? inputs[field.name] as string : ''}
             onValueChange={(value) => handleInputChange(field.name, value)}
             disabled={isExecuting}
           >
@@ -271,8 +282,8 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
         return (
           <div className="flex items-center space-x-2">
             <Checkbox
-              checked={inputs[field.name] || false}
-              onCheckedChange={(checked) => handleInputChange(field.name, checked)}
+              checked={typeof inputs[field.name] === 'boolean' ? inputs[field.name] as boolean : false}
+              onCheckedChange={(checked) => handleInputChange(field.name, checked === true)}
               disabled={isExecuting}
             />
             <Label className="text-sm cursor-pointer">{field.label}</Label>
@@ -339,7 +350,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
         return (
           <Input
             type="text"
-            value={inputs[field.name] || ''}
+            value={typeof inputs[field.name] === 'string' ? inputs[field.name] as string : ''}
             onChange={(e) => handleInputChange(field.name, e.target.value)}
             placeholder={`Enter ${field.label.toLowerCase()}...`}
             disabled={isExecuting}

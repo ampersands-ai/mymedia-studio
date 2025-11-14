@@ -345,14 +345,18 @@ Deno.serve(async (req) => {
         
         for (let i = 0; i < resultUrls.length; i++) {
           if (existingIndexes.has(i)) {
-            console.log(`⏭️ [Output ${i + 1}] Skipping - already exists`);
+            logger.info(`Output ${i + 1} already exists, skipping`, { 
+              metadata: { generationId: generation.id, outputIndex: i + 1 } 
+            });
             continue;
           }
           
           try {
             const downloadResult = await downloadContent(resultUrls[i]);
             if (!downloadResult.success || !downloadResult.data) {
-              console.error(`❌ [Output ${i + 1}] Download failed`);
+              logger.error(`Output ${i + 1} download failed`, downloadError as Error, { 
+                metadata: { generationId: generation.id, outputIndex: i + 1, url: resultUrl } 
+              });
               continue;
             }
             
@@ -368,7 +372,9 @@ Deno.serve(async (req) => {
             );
             
             if (!uploadResult.success) {
-              console.error(`❌ [Output ${i + 1}] Upload failed`);
+              logger.error(`Output ${i + 1} upload failed`, uploadError as Error, { 
+                metadata: { generationId: generation.id, outputIndex: i + 1 } 
+              });
               continue;
             }
             
@@ -396,9 +402,13 @@ Deno.serve(async (req) => {
               is_batch_output: true
             });
             
-            console.log(`✅ [Output ${i + 1}] Child created`);
+            logger.info(`Output ${i + 1} child generation created`, { 
+              metadata: { generationId: generation.id, childId: newChild.id, outputIndex: i + 1 } 
+            });
           } catch (error: any) {
-            console.error(`❌ [Output ${i + 1}] Error:`, error.message);
+            logger.error(`Output ${i + 1} child creation failed`, error, { 
+              metadata: { generationId: generation.id, outputIndex: i + 1 } 
+            });
           }
         }
       }
@@ -435,7 +445,15 @@ Deno.serve(async (req) => {
       }
       
       await supabase.from('generations').update(updateData).eq('id', generation.id);
-      console.log('✅ Parent generation marked as completed');
+      logger.info('Parent generation completed', { 
+        userId: generation.user_id,
+        metadata: { generationId: generation.id, childCount: resultUrls.length } 
+      });
+      
+      logger.logDuration('kie-ai-webhook-processing', webhookStartTime, { 
+        userId: generation.user_id,
+        metadata: { generationId: generation.id, taskId, callbackType } 
+      });
 
       // === WORKFLOW ORCHESTRATION ===
       await orchestrateWorkflow(generation, storagePath, isMultiOutput, supabase);
@@ -466,7 +484,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.warn('Unknown webhook state');
+    logger.warn('Unknown webhook state received', { 
+      metadata: { state, taskId, callbackType, generationId: generation.id } 
+    });
     return new Response(
       JSON.stringify({ success: true, message: 'Webhook received but state unknown' }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -17,13 +17,23 @@ interface UseGenerationPollingOptions {
  * Hook to poll generation status with progressive intervals
  * @param options - Callbacks for completion, error, and timeout
  * @returns Polling controls and state
+ *
+ * MEMORY LEAK FIX: Uses refs to store callbacks to prevent unnecessary re-renders
+ * and timer recreation when parent components re-render.
  */
 export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
   const [isPolling, setIsPolling] = useState(false);
   const [pollingId, setPollingId] = useState<string | null>(null);
-  
+
   const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
   const intervalsRef = useRef<NodeJS.Timeout[]>([]);
+
+  // Store callbacks in refs to prevent re-creation of pollStatus and startPolling
+  // This prevents memory leaks from unstable dependencies
+  const optionsRef = useRef(options);
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
 
   /**
    * Clear all timeouts and intervals
@@ -90,7 +100,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
         clearAllTimers();
         setIsPolling(false);
         setPollingId(null);
-        options.onError?.('Generation cancelled');
+        optionsRef.current.onError?.('Generation cancelled');
         return;
       }
 
@@ -198,7 +208,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
               parentStoragePath: parentData.storage_path,
               allOutputsCount: validOutputs.length
             } as any);
-            options.onError?.('Generation completed but outputs are not ready after retries.');
+            optionsRef.current.onError?.('Generation completed but outputs are not ready after retries.');
             return;
           }
 
@@ -216,19 +226,19 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
           } as any);
 
           // Call completion callback with parent ID
-          options.onComplete(uniqueOutputs, generationId);
+          optionsRef.current.onComplete(uniqueOutputs, generationId);
         } else {
           // Failed generation - extract detailed error
           const providerResponse = parentData.provider_response as any;
           const errorMessage = providerResponse?.error || 'Generation failed';
-          options.onError?.(errorMessage);
+          optionsRef.current.onError?.(errorMessage);
         }
       }
     } catch (error: any) {
       logger.error('Polling error', error, { generationId } as any);
-      options.onError?.(error.message || 'Failed to check generation status');
+      optionsRef.current.onError?.(error.message || 'Failed to check generation status');
     }
-  }, [options, clearAllTimers]);
+  }, [clearAllTimers]);
 
   /**
    * Start polling for a generation
@@ -299,7 +309,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
           clearAllTimers();
           setIsPolling(false);
           setPollingId(null);
-          options.onTimeout?.();
+          optionsRef.current.onTimeout?.();
           return;
         }
 
@@ -308,7 +318,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
       intervalsRef.current.push(slowInterval);
     }, POLLING_CONFIG.MEDIUM_DURATION);
     timeoutsRef.current.push(slowIntervalTimeout);
-  }, [isPolling, pollStatus, options, clearAllTimers]);
+  }, [isPolling, pollStatus, clearAllTimers]);
 
   /**
    * Stop polling manually
@@ -337,14 +347,14 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
           pollingId,
           duration: '30 minutes'
         } as any);
-        
+
         stopPolling();
-        options.onTimeout?.();
+        optionsRef.current.onTimeout?.();
       }, 30 * 60 * 1000);
-      
+
       return () => clearTimeout(timeout);
     }
-  }, [isPolling, pollingId, stopPolling, options]);
+  }, [isPolling, pollingId, stopPolling]);
 
   return {
     startPolling,

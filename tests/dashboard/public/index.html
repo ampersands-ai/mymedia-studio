@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Artifio.ai Test Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 1rem;
+    }
+
+    .controls {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    button {
+      padding: 1rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #e0e7ff;
+      color: #667eea;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #c7d2fe;
+    }
+
+    .status {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .status-badge {
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .status-running {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-failed {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .results {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 2rem;
+    }
+
+    .result-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .result-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .result-timestamp {
+      font-size: 0.75rem;
+      color: #999;
+    }
+
+    .result-output {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 1rem;
+      border-radius: 8px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .stat {
+      background: #f9fafb;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: #666;
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🧪 Artifio.ai Test Dashboard</h1>
+      <p class="subtitle">One-click test runner with real-time results</p>
+    </div>
+
+    <div class="controls">
+      <div class="button-grid">
+        <button id="runUnitBtn" class="btn-primary" onclick="runTests('unit')">
+          <span>▶</span> Run Unit Tests
+        </button>
+        <button id="runE2eBtn" class="btn-primary" onclick="runTests('e2e')">
+          <span>▶</span> Run E2E Tests
+        </button>
+        <button id="runLoadBtn" class="btn-primary" onclick="runTests('load')">
+          <span>▶</span> Run Load Tests
+        </button>
+        <button id="runAllBtn" class="btn-primary" onclick="runTests('all')">
+          <span>▶▶</span> Run All Tests
+        </button>
+      </div>
+      <div class="status" id="statusContainer"></div>
+    </div>
+
+    <div class="results">
+      <div class="result-card">
+        <div class="result-header">
+          <span class="result-title">Unit Tests</span>
+          <span class="result-timestamp" id="unitTimestamp">Not run</span>
+        </div>
+        <div id="unitStatus" class="stats"></div>
+        <div class="result-output" id="unitOutput">No results yet. Click "Run Unit Tests" to start.</div>
+      </div>
+
+      <div class="result-card">
+        <div class="result-header">
+          <span class="result-title">E2E Tests</span>
+          <span class="result-timestamp" id="e2eTimestamp">Not run</span>
+        </div>
+        <div id="e2eStatus" class="stats"></div>
+        <div class="result-output" id="e2eOutput">No results yet. Click "Run E2E Tests" to start.</div>
+      </div>
+
+      <div class="result-card">
+        <div class="result-header">
+          <span class="result-title">Load Tests</span>
+          <span class="result-timestamp" id="loadTimestamp">Not run</span>
+        </div>
+        <div id="loadStatus" class="stats"></div>
+        <div class="result-output" id="loadOutput">No results yet. Click "Run Load Tests" to start.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:3001/api';
+
+    // Run tests
+    async function runTests(type) {
+      const btn = document.getElementById(`run${type.charAt(0).toUpperCase() + type.slice(1)}Btn`);
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span> Running...';
+
+      try {
+        const response = await fetch(`${API_BASE}/run/${type}`, {
+          method: 'POST',
+        });
+        const data = await response.json();
+        console.log(data.message);
+
+        // Start polling for results
+        pollResults();
+      } catch (error) {
+        console.error('Failed to start tests:', error);
+      }
+    }
+
+    // Poll for results
+    let pollInterval = null;
+    function pollResults() {
+      if (pollInterval) clearInterval(pollInterval);
+
+      pollInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`${API_BASE}/results`);
+          const data = await response.json();
+          updateUI(data);
+        } catch (error) {
+          console.error('Failed to fetch results:', error);
+        }
+      }, 1000);
+    }
+
+    // Update UI with results
+    function updateUI(data) {
+      // Update buttons
+      updateButton('runUnitBtn', 'unit', data.running.unit);
+      updateButton('runE2eBtn', 'e2e', data.running.e2e);
+      updateButton('runLoadBtn', 'load', data.running.load);
+      updateButton('runAllBtn', 'all', data.running.unit || data.running.e2e || data.running.load);
+
+      // Update status badges
+      updateStatus(data.running);
+
+      // Update results
+      if (data.unit) updateResult('unit', data.unit);
+      if (data.e2e) updateResult('e2e', data.e2e);
+      if (data.load) updateResult('load', data.load);
+    }
+
+    function updateButton(btnId, type, isRunning) {
+      const btn = document.getElementById(btnId);
+      btn.disabled = isRunning;
+      if (isRunning) {
+        btn.innerHTML = '<span class="loading"></span> Running...';
+      } else {
+        const labels = {
+          unit: 'Run Unit Tests',
+          e2e: 'Run E2E Tests',
+          load: 'Run Load Tests',
+          all: 'Run All Tests',
+        };
+        btn.innerHTML = `<span>▶</span> ${labels[type]}`;
+      }
+    }
+
+    function updateStatus(running) {
+      const container = document.getElementById('statusContainer');
+      const statuses = [];
+
+      if (running.unit) {
+        statuses.push('<span class="status-badge status-running">Unit Tests Running</span>');
+      }
+      if (running.e2e) {
+        statuses.push('<span class="status-badge status-running">E2E Tests Running</span>');
+      }
+      if (running.load) {
+        statuses.push('<span class="status-badge status-running">Load Tests Running</span>');
+      }
+
+      container.innerHTML = statuses.join('');
+    }
+
+    function updateResult(type, result) {
+      const timestampEl = document.getElementById(`${type}Timestamp`);
+      const outputEl = document.getElementById(`${type}Output`);
+      const statusEl = document.getElementById(`${type}Status`);
+
+      // Update timestamp
+      timestampEl.textContent = new Date(result.timestamp).toLocaleString();
+
+      // Update output
+      outputEl.textContent = result.output;
+
+      // Update stats
+      const statusClass = result.success ? 'status-success' : 'status-failed';
+      const statusText = result.success ? '✅ Passed' : '❌ Failed';
+      statusEl.innerHTML = `<div class="status-badge ${statusClass}">${statusText}</div>`;
+    }
+
+    // Start polling on load
+    pollResults();
+  </script>
+</body>
+</html>

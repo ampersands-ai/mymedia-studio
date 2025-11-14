@@ -70,6 +70,13 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
   parentGenerationId,
   onDownloadSuccess,
 }) => {
+  console.log('📺 GenerationConsole render', {
+    hasOutputs: generationState.generatedOutputs.length > 0,
+    hasSingleOutput: !!generationState.generatedOutput,
+    outputs: generationState.generatedOutputs,
+    singleOutput: generationState.generatedOutput
+  });
+  
   return (
     <div className="space-y-4">
       <Card className="border-border bg-muted/50">

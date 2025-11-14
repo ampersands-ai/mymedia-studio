@@ -490,6 +490,8 @@ const CustomCreation = () => {
               }}
               templateBeforeImage={state.templateBeforeImage}
               templateAfterImage={state.templateAfterImage}
+              modelProvider={currentModel?.provider}
+              modelName={currentModel?.model_name}
             />
           </div>
         </div>

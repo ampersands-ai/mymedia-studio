@@ -260,6 +260,7 @@ export function validateRequest<T>(
         formattedErrors[key] = value;
       }
     }
+
     if (logger) {
       logger.warn('Request validation failed', {
         metadata: {
@@ -269,6 +270,7 @@ export function validateRequest<T>(
         }
       });
     }
+
     return {
       success: false,
       error: result.error,

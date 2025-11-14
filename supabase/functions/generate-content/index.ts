@@ -593,7 +593,7 @@ Deno.serve(async (req) => {
           .eq('tokens_remaining', subscription.tokens_remaining); // Optimistic locking
 
         if (deductError) {
-          console.error('Token deduction failed:', deductError);
+          logger.error('Token deduction failed', deductError);
           throw new Error('Failed to deduct tokens - possible concurrent update');
         }
 
@@ -640,7 +640,7 @@ Deno.serve(async (req) => {
         .single();
 
       if (genError || !gen) {
-        console.error('Generation creation failed:', genError);
+        logger.error('Generation creation failed', genError);
         throw new Error('Failed to create generation record');
       }
 
@@ -672,7 +672,7 @@ Deno.serve(async (req) => {
       }
 
     } catch (txError) {
-      console.error('Transaction error:', txError);
+      logger.error('Transaction error', txError);
       
       // If generation was created but validation failed, update status to failed
       if (generationCreated && generation) {
@@ -1116,7 +1116,7 @@ Keep the core intent, add key musical/audio details (genre, mood, instruments, t
   // Safety net: Force truncate if enhancement still exceeds limit for Kie.ai non-custom mode
   if (modelProvider === 'kie_ai' && contentType === 'audio' && customMode === false) {
     if (enhanced.length > 500) {
-      console.warn(`Enhanced prompt exceeded 500 chars (${enhanced.length}), truncating...`);
+      logger.warn('Enhanced prompt truncated', { metadata: { length: enhanced.length } });
       enhanced = enhanced.slice(0, 497) + '...';
     }
   }

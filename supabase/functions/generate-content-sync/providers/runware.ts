@@ -29,7 +29,7 @@ async function convertFrameImagesToRunwareFormat(frameImages: string[]): Promise
   const converted = [];
   
   for (const imageUrl of frameImages) {
-    console.log('[Runware Video] Fetching frame image:', imageUrl.substring(0, 80) + '...');
+    webhookLogger.info('[Runware Video] Fetching frame image', { url: imageUrl.substring(0, 80) });
     
     try {
       const response = await fetch(imageUrl);
@@ -43,11 +43,11 @@ async function convertFrameImagesToRunwareFormat(frameImages: string[]): Promise
       const contentType = response.headers.get('content-type') || 'image/png';
       const dataUri = `data:${contentType};base64,${base64}`;
       
-      console.log('[Runware Video] Converted frame image, size:', Math.round(dataUri.length / 1024), 'KB');
+      webhookLogger.info('[Runware Video] Frame converted', { sizeKB: Math.round(dataUri.length / 1024) });
       converted.push({ inputImage: dataUri });
       
     } catch (error: any) {
-      console.error('[Runware Video] Failed to convert frame image:', error.message);
+      webhookLogger.error('[Runware Video] Frame conversion failed', error.message, { error: error.message });
       throw new Error(`Failed to convert frame image: ${error.message}`);
     }
   }
@@ -62,7 +62,7 @@ async function pollForVideoResult(taskUUID: string, apiKey: string, apiUrl: stri
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     await new Promise(resolve => setTimeout(resolve, delays[attempt]));
     
-    console.log(`[Runware Poll] Attempt ${attempt + 1}/${maxAttempts} for taskUUID: ${taskUUID}`);
+    webhookLogger.info('[Runware Poll] Poll attempt', { attempt: attempt + 1, maxAttempts, taskUUID });
     
     const pollPayload = [
       { taskType: "authentication", apiKey },
@@ -76,12 +76,12 @@ async function pollForVideoResult(taskUUID: string, apiKey: string, apiUrl: stri
     });
     
     if (!response.ok) {
-      console.error(`[Runware Poll] HTTP ${response.status}`);
+      webhookLogger.error('[Runware Poll] HTTP error', `HTTP ${response.status}`, { status: response.status });
       continue;
     }
     
     const result = await response.json();
-    console.log(`[Runware Poll] Response:`, JSON.stringify(result));
+    webhookLogger.info('[Runware Poll] Response received', { result });
     
     if (result.data) {
       for (const item of result.data) {
@@ -94,13 +94,13 @@ async function pollForVideoResult(taskUUID: string, apiKey: string, apiUrl: stri
           
           // Check if complete with video URL
           if (item.status === "success" && item.videoURL) {
-            console.log(`[Runware Poll] Video ready: ${item.videoURL}`);
+            webhookLogger.info('[Runware Poll] Video ready', { videoURL: item.videoURL });
             return item;
           }
           
           // Still processing
           if (item.status === "processing") {
-            console.log(`[Runware Poll] Still processing...`);
+            webhookLogger.info('[Runware Poll] Still processing');
             break;
           }
         }
@@ -128,7 +128,7 @@ export async function callRunware(
   // Clean model ID
   const cleanModel = request.model.replace(/["'\s]+$/g, '');
   
-  console.log('[Runware] Calling API - Model:', cleanModel, 'TaskUUID:', taskUUID);
+  webhookLogger.info('[Runware] API call starting', { model: cleanModel, taskUUID });
 
   // Normalize numeric parameters
   const params = request.parameters || {};
@@ -149,13 +149,13 @@ export async function callRunware(
     throw new Error('Prompt must be less than 3000 characters.');
   }
   
-  console.log('[Runware] Using prompt:', effectivePrompt.substring(0, 100) + (effectivePrompt.length > 100 ? '...' : ''));
+  webhookLogger.info('[Runware] Prompt', { prompt: effectivePrompt.substring(0, 100), truncated: effectivePrompt.length > 100 });
   
   // Determine task type from parameters or infer from model/params
   const taskType = params.taskType || (params.frameImages ? "videoInference" : "imageInference");
   const isVideo = taskType === "videoInference";
   
-  console.log('[Runware] Task type:', taskType, 'Is video:', isVideo);
+  webhookLogger.info('[Runware] Task configuration', { taskType, isVideo });
   
   // For video tasks, generate presigned URL for direct upload by Runware
   let presignedUrl: string | null = null;
@@ -174,11 +174,11 @@ export async function callRunware(
       .createSignedUploadUrl(storagePath, { upsert: true });
     
     if (signedError || !signedData) {
-      console.error('[Runware Video] Failed to create presigned URL:', signedError);
+      webhookLogger.error('[Runware Video] Presigned URL creation failed', signedError.message, { error: signedError });
       // Continue without uploadEndpoint as fallback
     } else {
       presignedUrl = signedData.signedUrl;
-      console.log('[Runware Video] Generated presigned URL for path:', storagePath);
+      webhookLogger.info('[Runware Video] Presigned URL generated', { storagePath });
     }
   }
   
@@ -215,7 +215,7 @@ export async function callRunware(
     if (params.fps !== undefined) taskPayload.fps = Number(params.fps);
     if (params.duration !== undefined) taskPayload.duration = Math.round(Number(params.duration));
     if (params.frameImages !== undefined) {
-      console.log('[Runware Video] Converting', params.frameImages.length, 'frame images...');
+      webhookLogger.info('[Runware Video] Converting frames', { count: params.frameImages.length });
       taskPayload.frameImages = await convertFrameImagesToRunwareFormat(params.frameImages);
     }
     if (params.providerSettings !== undefined) taskPayload.providerSettings = params.providerSettings;
@@ -223,7 +223,7 @@ export async function callRunware(
     // Add uploadEndpoint for direct upload to storage
     if (presignedUrl) {
       taskPayload.uploadEndpoint = presignedUrl;
-      console.log('[Runware Video] Using uploadEndpoint for direct storage upload');
+      webhookLogger.info('[Runware Video] Using direct storage upload');
     }
   }
 
@@ -244,7 +244,7 @@ export async function callRunware(
     return task;
   });
   
-  console.log('[Runware] Request body:', JSON.stringify(logSafeRequestBody, null, 2));
+  webhookLogger.info('[Runware] Request body', { body: logSafeRequestBody });
 
   try {
     // Call Runware API (no Authorization header, auth is in body)
@@ -257,7 +257,7 @@ export async function callRunware(
     });
 
     const responseData = await response.json();
-    console.log('[Runware] Response received:', JSON.stringify(responseData, null, 2));
+    webhookLogger.info('[Runware] Response received', { data: responseData });
 
     // Check for errors in response
     if (responseData.errors && responseData.errors.length > 0) {
@@ -297,7 +297,7 @@ export async function callRunware(
     
     // If no immediate URL for video, poll for async result
     if (!contentUrl && isVideo) {
-      console.log("[Runware Video] No immediate URL, starting polling...");
+      webhookLogger.info('[Runware Video] Starting polling');
       const polledResult = await pollForVideoResult(taskUUID, RUNWARE_API_KEY, apiUrl);
       contentUrl = polledResult.videoURL;
       
@@ -308,7 +308,7 @@ export async function callRunware(
       throw new Error(`No ${isVideo ? 'video' : 'image'} URL in Runware response`);
     }
 
-    console.log(`[Runware] Generated ${isVideo ? 'video' : 'image'} URL:`, contentUrl);
+    webhookLogger.info('[Runware] Content URL generated', { isVideo, url: contentUrl });
 
     // Download the content
     const contentResponse = await fetch(contentUrl);
@@ -323,7 +323,7 @@ export async function callRunware(
     const outputFormat = params.outputFormat?.toLowerCase() || (isVideo ? 'mp4' : 'webp');
     const fileExtension = determineFileExtension(outputFormat, contentUrl, isVideo);
 
-    console.log(`[Runware] Downloaded: ${uint8Data.length} bytes, extension: ${fileExtension}`);
+    webhookLogger.info('[Runware] Download complete', { bytes: uint8Data.length, extension: fileExtension });
 
     // Build metadata
     const metadata: Record<string, any> = {
@@ -358,7 +358,7 @@ export async function callRunware(
     };
 
   } catch (error: any) {
-    console.error('[Runware] Error:', error);
+    webhookLogger.error('[Runware] Error', error.message, { error });
     throw new Error(`Runware provider failed: ${error.message}`);
   }
 }

@@ -28,7 +28,7 @@ export async function uploadToStorage(
     });
 
   if (uploadError) {
-    console.error('Storage upload error:', uploadError);
+    webhookLogger.error('Storage upload error', uploadError.message, { error: uploadError });
     throw new Error(`Failed to upload to storage: ${uploadError.message}`);
   }
 

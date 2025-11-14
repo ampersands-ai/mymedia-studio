@@ -316,7 +316,15 @@ const CustomCreation = () => {
   
   const advancedOptionsRef = useRef<HTMLDivElement>(null);
 
-  const contentType = currentModel?.content_type || 'image';
+  // Infer content type from first output's file extension if available
+  const contentType = (() => {
+    const firstPath = state.generatedOutputs[0]?.storage_path || null;
+    if (!firstPath) return currentModel?.content_type || 'image';
+    const ext = (firstPath.split('.').pop() || '').toLowerCase();
+    if (['mp4', 'webm', 'mov', 'm4v'].includes(ext)) return 'video';
+    if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) return 'audio';
+    return currentModel?.content_type || 'image';
+  })();
 
   // Determine if generation button should be disabled
   const isGenerateDisabled = 

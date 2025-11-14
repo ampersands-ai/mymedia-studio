@@ -260,17 +260,15 @@ export function validateRequest<T>(
         formattedErrors[key] = value;
       }
     }
-    
     if (logger) {
       logger.warn('Request validation failed', {
-        metadata: { 
+        metadata: {
           context: context || 'unknown',
           errors: formattedErrors,
           receivedData: typeof data === 'object' ? Object.keys(data as Record<string, unknown>) : typeof data
         }
       });
     }
-    
     return {
       success: false,
       error: result.error,

@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { EdgeLogger } from "../_shared/edge-logger?.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -71,21 +71,21 @@ Deno.serve(async (req) => {
   let job_id: string | undefined;
   
   try {
-    logger.info("Approve voiceover request received");
+    logger?.info("Approve voiceover request received");
     const body = await req.json();
     job_id = body.job_id;
 
     if (!job_id) {
-      logger.error("Missing job_id in request");
+      logger?.error("Missing job_id in request");
       throw new Error('job_id is required');
     }
 
-    logger.info("Processing job", { metadata: { jobId: job_id } });
+    logger?.info("Processing job", { metadata: { jobId: job_id } });
 
     // Get auth user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      logger.error("Missing Authorization header");
+      logger?.error("Missing Authorization header");
       throw new Error('Missing Authorization header');
     }
 
@@ -98,11 +98,11 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     
     if (authError || !user) {
-      logger.error("Authentication failed", authError || undefined);
+      logger?.error("Authentication failed", authError || undefined);
       throw new Error('Unauthorized');
     }
 
-    logger.info("User authenticated", { userId: user.id });
+    logger?.info("User authenticated", { userId: user.id });
 
     // Get job and verify ownership
     const { data: job, error: jobError} = await supabaseClient
@@ -112,12 +112,12 @@ Deno.serve(async (req) => {
       .single();
 
     if (jobError || !job) {
-      logger.error("Job not found", jobError, { metadata: { jobId: job_id } });
+      logger?.error("Job not found", jobError, { metadata: { jobId: job_id } });
       throw new Error('Job not found');
     }
 
     if (job.user_id !== user.id) {
-      logger.error("Unauthorized access attempt", undefined, { 
+      logger?.error("Unauthorized access attempt", undefined, { 
         userId: user.id,
         metadata: { jobUserId: job.user_id, jobId: job_id }
       });
@@ -125,22 +125,22 @@ Deno.serve(async (req) => {
     }
 
     if (job.status !== 'awaiting_voice_approval' && job.status !== 'failed') {
-      logger.error("Invalid job status for approval", undefined, { 
+      logger?.error("Invalid job status for approval", undefined, { 
         metadata: { jobId: job_id, status: job.status }
       });
       throw new Error(`Job cannot be approved from status: ${job.status}`);
     }
 
     if (job.status === 'failed') {
-      logger.info("Resetting failed job for retry", { metadata: { jobId: job_id } });
+      logger?.info("Resetting failed job for retry", { metadata: { jobId: job_id } });
       await updateJobStatus(supabaseClient, job_id, 'awaiting_voice_approval', logger);
     }
 
-    logger.info("Starting video assembly", { userId: user.id, metadata: { jobId: job_id } });
+    logger?.info("Starting video assembly", { userId: user.id, metadata: { jobId: job_id } });
 
     // Use actual audio duration if available, otherwise fall back to requested duration
     const videoDuration = job.actual_audio_duration || job.duration;
-    logger.info("Video duration calculated", {
+    logger?.info("Video duration calculated", {
       metadata: {
         videoDuration,
         actualAudioDuration: job.actual_audio_duration,
@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
     });
 
     const backgroundMediaType = (job as any).background_media_type || 'video';
-    logger.info("Background media type determined", { metadata: { backgroundMediaType } });
+    logger?.info("Background media type determined", { metadata: { backgroundMediaType } });
 
     // Step 3: Fetch multiple background videos or images
     await updateJobStatus(supabaseClient, job_id, 'fetching_video', logger);
@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
         job.topic,
         logger
       );
-      logger.info("Background images fetched", { 
+      logger?.info("Background images fetched", { 
         metadata: { imageCount: backgroundImageUrls.length, jobId: job_id }
       });
     } else {
@@ -190,21 +190,21 @@ Deno.serve(async (req) => {
     await supabaseClient.from('video_jobs').update({ 
       background_video_url: backgroundVideoUrls[0] || backgroundImageUrls[0] // Store first URL for reference
     }).eq('id', job_id);
-    logger.info("Background media fetched", { metadata: { jobId: job_id } });
+    logger?.info("Background media fetched", { metadata: { jobId: job_id } });
 
     // Step 4: Assemble video
     await updateJobStatus(supabaseClient, job_id, 'assembling', logger);
     
     // Use voiceover URL directly from database (already stored as full public URL)
     const voiceoverPublicUrl = job.voiceover_url;
-    logger.info("Using voiceover URL from database", { metadata: { voiceoverPublicUrl } });
+    logger?.info("Using voiceover URL from database", { metadata: { voiceoverPublicUrl } });
     
     // Validate voiceover URL is accessible
-    logger.debug("Validating voiceover URL accessibility");
+    logger?.debug("Validating voiceover URL accessibility");
     try {
       const headResponse = await fetch(voiceoverPublicUrl, { method: 'HEAD' });
       if (!headResponse.ok) {
-        logger.error("Voiceover URL not accessible", undefined, {
+        logger?.error("Voiceover URL not accessible", undefined, {
           metadata: {
             url: voiceoverPublicUrl,
             status: headResponse.status
@@ -212,9 +212,9 @@ Deno.serve(async (req) => {
         });
         throw new Error(`Voiceover not accessible: ${headResponse.status}`);
       }
-      logger.info("Voiceover URL validated successfully");
+      logger?.info("Voiceover URL validated successfully");
     } catch (validateError) {
-      logger.error("Voiceover validation failed", validateError as Error);
+      logger?.error("Voiceover validation failed", validateError as Error);
       throw new Error('Failed to access voiceover file');
     }
     
@@ -235,7 +235,7 @@ Deno.serve(async (req) => {
       logger
     );
     await supabaseClient.from('video_jobs').update({ shotstack_render_id: renderId }).eq('id', job_id);
-    logger.info("Submitted to Shotstack", { metadata: { renderId, jobId: job_id } });
+    logger?.info("Submitted to Shotstack", { metadata: { renderId, jobId: job_id } });
 
     // Step 5: Poll for completion
     await pollRenderStatus(supabaseClient, job_id, renderId, user.id, logger);
@@ -245,7 +245,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    logger.error("Error in approve-voiceover", error, { metadata: { jobId: job_id } });
+    logger?.error("Error in approve-voiceover", error, { metadata: { jobId: job_id } });
     
     // Revert job to awaiting_voice_approval so user can retry
     if (job_id) {
@@ -269,7 +269,7 @@ Deno.serve(async (req) => {
           })
           .eq('id', job_id);
       } catch (updateError) {
-        logger.error("Failed to update job status", updateError as Error, { metadata: { jobId: job_id } });
+        logger?.error("Failed to update job status", updateError as Error, { metadata: { jobId: job_id } });
       }
     }
     
@@ -377,7 +377,7 @@ async function getBackgroundImages(
       isError: !response.ok,
       errorMessage: response.ok ? undefined : `Pixabay returned ${response.status}`
     }
-  ).catch(e => logger.error('Failed to log API call', e as Error));
+  ).catch(e => logger?.error('Failed to log API call', e as Error));
 
   if (!response.ok) {
     throw new Error('Pixabay API error');
@@ -472,7 +472,7 @@ async function getBackgroundVideos(
       isError: !response.ok,
       errorMessage: response.ok ? undefined : `Pixabay returned ${response.status}`
     }
-  ).catch(e => logger.error('Failed to log API call', e as Error));
+  ).catch(e => logger?.error('Failed to log API call', e as Error));
 
   if (!response.ok) {
     throw new Error('Pixabay API error');
@@ -518,7 +518,7 @@ async function getBackgroundVideos(
   const averageClipDuration = 10;
   const numberOfClips = Math.min(5, Math.ceil(duration / averageClipDuration));
   
-  logger.info("Selecting background videos for duration", { 
+  logger?.info("Selecting background videos for duration", { 
     metadata: { numberOfClips, duration } 
   });
   
@@ -584,7 +584,7 @@ async function assembleVideo(
   };
   const config = dimensions[aspectRatio] || dimensions['4:5'];
 
-  logger.info("Assembling video with Shotstack", { 
+  logger?.info("Assembling video with Shotstack", { 
     metadata: { 
       width: config.width, 
       height: config.height, 
@@ -613,7 +613,7 @@ async function assembleVideo(
     edit.timeline.fonts = [{
       src: style.fontUrl
     }];
-    logger.info("Added custom font", { metadata: { fontUrl: style.fontUrl } });
+    logger?.info("Added custom font", { metadata: { fontUrl: style.fontUrl } });
   }
 
   // Track 0: Audio with alias (for caption sync)
@@ -664,7 +664,7 @@ async function assembleVideo(
     clips: [captionClip]
   });
 
-  logger.info("Using rich caption styling with custom font and alignment");
+  logger?.info("Using rich caption styling with custom font and alignment");
 
   // Track 2: Background media (bottom layer)
   if (backgroundMediaType === 'image' && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
@@ -681,7 +681,7 @@ async function assembleVideo(
       ...(index > 0 && { transition: { in: 'fade', out: 'fade' } })
     }));
     edit.timeline.tracks.push({ clips: imageClips });
-    logger.info("Added background image clips", { metadata: { clipCount: imageClips.length } });
+    logger?.info("Added background image clips", { metadata: { clipCount: imageClips.length } });
   } else {
     const clipDuration = Math.ceil(assets.duration / assets.backgroundVideoUrls.length);
     const videoClips = assets.backgroundVideoUrls.map((videoUrl, index) => ({
@@ -696,11 +696,11 @@ async function assembleVideo(
       ...(index > 0 && { transition: { in: 'fade', out: 'fade' } })
     }));
     edit.timeline.tracks.push({ clips: videoClips });
-    logger.info("Added background video clips", { metadata: { clipCount: videoClips.length } });
+    logger?.info("Added background video clips", { metadata: { clipCount: videoClips.length } });
   }
 
   // Debug: Log track order before submission
-  logger.debug("Track order and caption asset", { 
+  logger?.debug("Track order and caption asset", { 
     metadata: { 
       trackOrder: edit.timeline.tracks.map((t: any) => t.clips?.[0]?.asset?.type),
       captionAsset: edit.timeline.tracks[1]?.clips?.[0]?.asset
@@ -726,7 +726,7 @@ async function assembleVideo(
   try {
     result = responseText ? JSON.parse(responseText) : null;
   } catch (parseError) {
-    logger.error("Failed to parse Shotstack response", parseError as Error);
+    logger?.error("Failed to parse Shotstack response", parseError as Error);
   }
 
   // Log the API call
@@ -753,10 +753,10 @@ async function assembleVideo(
       isError: !response.ok,
       errorMessage: response.ok ? undefined : result?.message || result?.detail || `Shotstack API error ${response.status}`
     }
-  ).catch(e => logger.error('Failed to log API call', e as Error));
+  ).catch(e => logger?.error('Failed to log API call', e as Error));
 
   if (!response.ok) {
-    logger.error("Shotstack API Error", undefined, {
+    logger?.error("Shotstack API Error", undefined, {
       metadata: {
         status: response.status,
         response: result,
@@ -777,7 +777,7 @@ async function assembleVideo(
     const isCaptionValidation = (errorMessage || '').toLowerCase().includes('caption asset');
 
     if (isCaptionValidation) {
-      logger.info("Retrying with minimal caption asset and auto length...");
+      logger?.info("Retrying with minimal caption asset and auto length...");
       const fallbackEdit: any = JSON.parse(JSON.stringify(edit));
       try {
         // Dynamically find caption track instead of using hardcoded index
@@ -822,10 +822,10 @@ async function assembleVideo(
           isError: !retryRes.ok,
           errorMessage: retryRes.ok ? undefined : retryResult?.message || retryResult?.detail || `Shotstack API error ${retryRes.status}`
         }
-      ).catch(e => logger.error('Failed to log API call (retry minimal)', e as Error));
+      ).catch(e => logger?.error('Failed to log API call (retry minimal)', e as Error));
 
       if (!retryRes.ok) {
-        logger.error("Shotstack API Error (retry minimal captions)", undefined, {
+        logger?.error("Shotstack API Error (retry minimal captions)", undefined, {
           metadata: {
             status: retryRes.status,
             response: retryResult,
@@ -833,7 +833,7 @@ async function assembleVideo(
           }
         });
 
-        logger.info("Retrying with asset type 'captions'...");
+        logger?.info("Retrying with asset type 'captions'...");
         const fallbackEdit2: any = JSON.parse(JSON.stringify(fallbackEdit));
         try {
           // Dynamically find caption track for second retry
@@ -877,19 +877,19 @@ async function assembleVideo(
             isError: !retryRes2.ok,
             errorMessage: retryRes2.ok ? undefined : retryResult2?.message || retryResult2?.detail || `Shotstack API error ${retryRes2.status}`
           }
-        ).catch(e => logger.error('Failed to log API call (retry captions type)', e as Error));
+        ).catch(e => logger?.error('Failed to log API call (retry captions type)', e as Error));
 
         if (!retryRes2.ok) {
           let retryMsg = retryResult2?.response?.message || (retryResult2?.response?.errors ? retryResult2.response.errors.map((e: any) => e.message || e.code).join(', ') : '') || retryResult2?.message || errorMessage;
           throw new Error(`Shotstack error: ${retryMsg}`);
         }
-        logger.info('Shotstack render submitted successfully (captions type fallback)', { 
+        logger?.info('Shotstack render submitted successfully (captions type fallback)', { 
           metadata: { renderId: retryResult2.response.id } 
         });
         return retryResult2.response.id;
       }
 
-      logger.info("Shotstack render submitted successfully (minimal captions)", { 
+      logger?.info("Shotstack render submitted successfully (minimal captions)", { 
         metadata: { renderId: retryResult.response.id } 
       });
       return retryResult.response.id;
@@ -898,7 +898,7 @@ async function assembleVideo(
     throw new Error(`Shotstack error: ${errorMessage}`);
   }
 
-  logger.info("Shotstack render submitted successfully", { 
+  logger?.info("Shotstack render submitted successfully", { 
     metadata: { renderId: result.response.id } 
   });
   return result.response.id;
@@ -957,14 +957,14 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
       
       if (job) {
         try {
-          logger.info("Downloading video from Shotstack using streaming", { metadata: { jobId } });
+          logger?.info("Downloading video from Shotstack using streaming", { metadata: { jobId } });
           const videoResponse = await fetch(videoUrl);
           if (!videoResponse.ok || !videoResponse.body) {
             throw new Error(`Failed to download video from Shotstack: ${videoResponse.status}`);
           }
           
           const videoPath = `${job.user_id}/${new Date().toISOString().split('T')[0]}/${jobId}.mp4`;
-          logger.info("Uploading video to storage with streaming", { 
+          logger?.info("Uploading video to storage with streaming", { 
             metadata: { videoPath, jobId } 
           });
           
@@ -977,18 +977,18 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
             });
           
           if (uploadError) {
-            logger.error("Storage upload error", uploadError, { metadata: { videoPath, jobId } });
+            logger?.error("Storage upload error", uploadError, { metadata: { videoPath, jobId } });
             throw uploadError;
           }
           
-          logger.info("Video uploaded successfully using streaming", { metadata: { videoPath, jobId } });
+          logger?.info("Video uploaded successfully using streaming", { metadata: { videoPath, jobId } });
           
           // Generate direct public URL for the video
           const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
           const videoPublicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${videoPath}`;
-          logger.info("Video available", { metadata: { videoPublicUrl, jobId } });
+          logger?.info("Video available", { metadata: { videoPublicUrl, jobId } });
           
-          logger.info("Creating generation record", { metadata: { jobId, userId: job.user_id } });
+          logger?.info("Creating generation record", { metadata: { jobId, userId: job.user_id } });
           const { data: generation, error: genError } = await supabase.from('generations').insert({
             user_id: job.user_id,
             type: 'video',
@@ -1006,9 +1006,9 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
           }).select().single();
           
           if (genError) {
-            logger.error("Generation insert error", genError, { metadata: { jobId } });
+            logger?.error("Generation insert error", genError, { metadata: { jobId } });
           } else {
-            logger.info("Generation record created successfully", { 
+            logger?.info("Generation record created successfully", { 
               metadata: { generationId: generation.id, jobId } 
             });
             
@@ -1020,7 +1020,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
                 .eq('video_job_id', jobId)
                 .is('generation_id', null);
             } catch (error) {
-              logger.error("Failed to link API logs to generation", error as Error, { 
+              logger?.error("Failed to link API logs to generation", error as Error, { 
                 metadata: { jobId, generationId: generation.id } 
               });
             }
@@ -1036,7 +1036,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
           
           return; // Exit after successful completion
         } catch (uploadError: any) {
-          logger.error("Error during video download/upload", uploadError, { 
+          logger?.error("Error during video download/upload", uploadError, { 
             metadata: { jobId, renderId } 
           });
           
@@ -1069,7 +1069,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
         full_response: result
       };
       
-      logger.error("Shotstack render failed", undefined, { 
+      logger?.error("Shotstack render failed", undefined, { 
         metadata: errorDetails 
       });
       

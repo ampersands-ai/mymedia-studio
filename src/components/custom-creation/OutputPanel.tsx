@@ -86,12 +86,13 @@ export const OutputPanel = forwardRef<HTMLDivElement, OutputPanelProps>(
     ref
   ) => {
     const hasGeneration =
-      localGenerating || isGenerating || pollingGenerationId || 
+      localGenerating || isGenerating || isPolling || pollingGenerationId || 
       generationState.generatedOutput || 
       generationState.generatedOutputs.length > 0 ||
-      (childVideoGenerations && childVideoGenerations.length > 0);
+      (childVideoGenerations && childVideoGenerations.length > 0) ||
+      !!generationState.generationStartTime;
 
-    const showStatusBanner = (localGenerating || isGenerating || pollingGenerationId) && 
+    const showStatusBanner = (localGenerating || isGenerating || isPolling || pollingGenerationId) && 
       !generationState.generatedOutput && 
       generationState.generatedOutputs.length === 0;
 
@@ -114,19 +115,11 @@ export const OutputPanel = forwardRef<HTMLDivElement, OutputPanelProps>(
         {/* Status Banner */}
         {showStatusBanner && (
           <div className="border-b border-border/50 bg-primary/5 px-4 py-2 flex items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
               <Loader2 className="h-3 w-3 animate-spin flex-shrink-0 text-primary" />
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-muted-foreground truncate">
-                  ID: <span className="font-mono text-foreground">{pollingGenerationId ? `${pollingGenerationId.slice(0, 8)}...` : 'pending...'}</span>
-                </span>
-                {modelProvider && (
-                  <span className="text-muted-foreground truncate">
-                    Provider: <span className="text-foreground">{modelProvider}</span>
-                    {modelName && <span className="text-muted-foreground"> • {modelName}</span>}
-                  </span>
-                )}
-              </div>
+              <span className="text-muted-foreground">
+                Generating your content...
+              </span>
             </div>
             <Button
               variant="ghost"

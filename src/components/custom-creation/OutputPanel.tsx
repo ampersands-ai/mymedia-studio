@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, memo } from "react";
 import { Card } from "@/components/ui/card";
 import { ImageIcon, ExternalLink, Loader2 } from "lucide-react";
 import { GenerationConsole } from "./GenerationConsole";
@@ -52,7 +52,7 @@ interface OutputPanelProps {
 /**
  * Complete output panel with empty state or generation console
  */
-export const OutputPanel = forwardRef<HTMLDivElement, OutputPanelProps>(
+const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
   (
     {
       generationState,
@@ -95,19 +95,6 @@ export const OutputPanel = forwardRef<HTMLDivElement, OutputPanelProps>(
     const showStatusBanner = (localGenerating || isGenerating || isPolling || pollingGenerationId) && 
       !generationState.generatedOutput && 
       generationState.generatedOutputs.length === 0;
-
-    console.log('🎨 OutputPanel render', {
-      timestamp: Date.now(),
-      hasGeneration,
-      showStatusBanner,
-      outputsLength: generationState.generatedOutputs.length,
-      hasGeneratedOutput: !!generationState.generatedOutput,
-      localGenerating,
-      isGenerating,
-      isPolling,
-      pollingGenerationId,
-      generationStartTime: generationState.generationStartTime
-    });
 
     return (
       <Card ref={ref} className="h-full flex flex-col border-border/40 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
@@ -195,5 +182,36 @@ export const OutputPanel = forwardRef<HTMLDivElement, OutputPanelProps>(
     );
   }
 );
+
+OutputPanelComponent.displayName = "OutputPanel";
+
+// Memoize to prevent unnecessary re-renders
+export const OutputPanel = memo(OutputPanelComponent, (prevProps, nextProps) => {
+  // Only re-render if relevant props change
+  return (
+    prevProps.isPolling === nextProps.isPolling &&
+    prevProps.localGenerating === nextProps.localGenerating &&
+    prevProps.isGenerating === nextProps.isGenerating &&
+    prevProps.pollingGenerationId === nextProps.pollingGenerationId &&
+    prevProps.generatingVideoIndex === nextProps.generatingVideoIndex &&
+    prevProps.userTokensRemaining === nextProps.userTokensRemaining &&
+    prevProps.contentType === nextProps.contentType &&
+    prevProps.estimatedTimeSeconds === nextProps.estimatedTimeSeconds &&
+    prevProps.isGeneratingCaption === nextProps.isGeneratingCaption &&
+    prevProps.templateBeforeImage === nextProps.templateBeforeImage &&
+    prevProps.templateAfterImage === nextProps.templateAfterImage &&
+    prevProps.modelProvider === nextProps.modelProvider &&
+    prevProps.modelName === nextProps.modelName &&
+    prevProps.parentGenerationId === nextProps.parentGenerationId &&
+    prevProps.generationState.generatedOutputs.length === nextProps.generationState.generatedOutputs.length &&
+    prevProps.generationState.selectedOutputIndex === nextProps.generationState.selectedOutputIndex &&
+    prevProps.generationState.showLightbox === nextProps.generationState.showLightbox &&
+    prevProps.generationState.generationStartTime === nextProps.generationState.generationStartTime &&
+    prevProps.generationState.generationCompleteTime === nextProps.generationState.generationCompleteTime &&
+    prevProps.generationState.generatedOutput === nextProps.generationState.generatedOutput &&
+    prevProps.captionData === nextProps.captionData &&
+    prevProps.childVideoGenerations.length === nextProps.childVideoGenerations.length
+  );
+});
 
 OutputPanel.displayName = "OutputPanel";

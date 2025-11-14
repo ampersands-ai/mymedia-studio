@@ -9,8 +9,9 @@ import { useAllTemplates } from "@/hooks/useTemplates";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Package, Users, TrendingUp, Layers, Wand2, Coins, Shirt, Plane, Search, Image as ImageIcon, Video } from "lucide-react";
-import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
+import { OptimizedBeforeAfterSlider } from "@/components/OptimizedBeforeAfterSlider";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { LazyCarousel } from "@/components/LazyCarousel";
 import { TemplateSkeleton } from "@/components/ui/skeletons";
 import { LoadingTransition } from "@/components/ui/loading-transition";
 import { useImagePreloader } from "@/hooks/useImagePreloader";
@@ -330,13 +331,13 @@ const Templates = () => {
     return firstCategory.slice(0, 12).some(t => t.id === template.id);
   };
 
-  const renderCarousel = (categoryTemplates: any[], categoryName: string) => {
+  const renderCarousel = (categoryTemplates: any[], categoryName: string, isFirstCarousel: boolean = false) => {
     if (categoryTemplates.length === 0) return null;
 
     return (
       <div className="space-y-4 animate-fade-in">
         <h2 className="text-2xl md:text-3xl font-black">{categoryName}</h2>
-        <Carousel 
+        <Carousel
           className="w-full"
           opts={{
             align: "start",
@@ -349,12 +350,14 @@ const Templates = () => {
               {categoryTemplates.map((template) => {
                 const Icon = getTemplateIcon(template.category || '');
                 const contentType = getWorkflowContentType(template);
+                const isPriority = isFirstCarousel;
+
                 return (
                   <CarouselItem key={template.id} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
                     <Card className="group hover:shadow-brutal transition-all overflow-hidden border-2 border-black">
                       <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10">
                         {signedUrls[template.id]?.before && signedUrls[template.id]?.after ? (
-                          <BeforeAfterSlider
+                          <OptimizedBeforeAfterSlider
                             beforeImage={signedUrls[template.id].after!}
                             afterImage={signedUrls[template.id].before!}
                             beforeLabel=""
@@ -362,30 +365,28 @@ const Templates = () => {
                             defaultPosition={25}
                             showHint={true}
                             className="w-full h-full"
+                            isSupabaseImage={true}
+                            priority={isPriority}
                           />
                         ) : signedUrls[template.id]?.before || signedUrls[template.id]?.after ? (
-                          <img 
+                          <OptimizedImage
                             src={(signedUrls[template.id]?.after || signedUrls[template.id]?.before)!}
-                            alt={template.name || ''}
-                            className="w-full h-full object-cover"
-                            loading={isInFirstCarousel(template) ? undefined : "lazy"}
-                            decoding="async"
-                            onError={(e) => {
-                              // Fallback to thumbnail if signed URL fails
-                              if (template.thumbnail_url) {
-                                e.currentTarget.src = template.thumbnail_url;
-                              } else {
-                                e.currentTarget.style.display = 'none';
-                              }
-                            }}
-                          />
-                        ) : template.thumbnail_url ? (
-                          <OptimizedImage 
-                            src={template.thumbnail_url} 
                             alt={template.name || ''}
                             className="w-full h-full object-cover"
                             width={400}
                             height={400}
+                            priority={isPriority}
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                            isSupabaseImage={true}
+                          />
+                        ) : template.thumbnail_url ? (
+                          <OptimizedImage
+                            src={template.thumbnail_url}
+                            alt={template.name || ''}
+                            className="w-full h-full object-cover"
+                            width={400}
+                            height={400}
+                            priority={isPriority}
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                           />
                         ) : (
@@ -397,7 +398,7 @@ const Templates = () => {
                           {contentType}
                         </Badge>
                       </div>
-                      
+
                       <div className="p-2 space-y-2">
                         <div className="flex items-center justify-between">
                           <p className="text-xs font-medium line-clamp-1 flex-1">{template.name}</p>
@@ -408,8 +409,8 @@ const Templates = () => {
                             </Badge>
                           )}
                         </div>
-                        
-                        <Button 
+
+                        <Button
                           onClick={() => handleUseTemplate(template)}
                           className="w-full h-7 text-xs"
                           size="sm"
@@ -503,14 +504,46 @@ const Templates = () => {
             transition="fade"
           >
             <div className="max-w-7xl mx-auto space-y-12">
-              {productTemplates.length > 0 && renderCarousel(productTemplates, "Product")}
-              {marketingTemplates.length > 0 && renderCarousel(marketingTemplates, "Marketing")}
-              {fantasyTemplates.length > 0 && renderCarousel(fantasyTemplates, "Fantasy")}
-              {portraitsTemplates.length > 0 && renderCarousel(portraitsTemplates, "Portraits")}
-              {abstractTemplates.length > 0 && renderCarousel(abstractTemplates, "Abstract")}
-              {fashionTemplates.length > 0 && renderCarousel(fashionTemplates, "Fashion")}
-              {travelTemplates.length > 0 && renderCarousel(travelTemplates, "Travel")}
-              {babyMilestonesTemplates.length > 0 && renderCarousel(babyMilestonesTemplates, "Baby Milestones")}
+              {productTemplates.length > 0 && (
+                <LazyCarousel priority={true}>
+                  {renderCarousel(productTemplates, "Product", true)}
+                </LazyCarousel>
+              )}
+              {marketingTemplates.length > 0 && (
+                <LazyCarousel priority={productTemplates.length === 0}>
+                  {renderCarousel(marketingTemplates, "Marketing", productTemplates.length === 0)}
+                </LazyCarousel>
+              )}
+              {fantasyTemplates.length > 0 && (
+                <LazyCarousel>
+                  {renderCarousel(fantasyTemplates, "Fantasy")}
+                </LazyCarousel>
+              )}
+              {portraitsTemplates.length > 0 && (
+                <LazyCarousel>
+                  {renderCarousel(portraitsTemplates, "Portraits")}
+                </LazyCarousel>
+              )}
+              {abstractTemplates.length > 0 && (
+                <LazyCarousel>
+                  {renderCarousel(abstractTemplates, "Abstract")}
+                </LazyCarousel>
+              )}
+              {fashionTemplates.length > 0 && (
+                <LazyCarousel>
+                  {renderCarousel(fashionTemplates, "Fashion")}
+                </LazyCarousel>
+              )}
+              {travelTemplates.length > 0 && (
+                <LazyCarousel>
+                  {renderCarousel(travelTemplates, "Travel")}
+                </LazyCarousel>
+              )}
+              {babyMilestonesTemplates.length > 0 && (
+                <LazyCarousel>
+                  {renderCarousel(babyMilestonesTemplates, "Baby Milestones")}
+                </LazyCarousel>
+              )}
               
               {/* Empty State */}
               {filteredTemplates.length === 0 && (

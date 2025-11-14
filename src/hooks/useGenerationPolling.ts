@@ -40,6 +40,10 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
    */
   const pollStatus = useCallback(async (generationId: string) => {
     try {
+      console.log('🔍 Polling generation status', { 
+        generationId,
+        timestamp: new Date().toISOString() 
+      });
       logger.info('Polling generation status', { 
         generationId,
         timestamp: new Date().toISOString() 
@@ -68,6 +72,12 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
         throw error;
       }
 
+      console.log('📊 Generation status fetched', {
+        generationId,
+        status: parentData.status,
+        hasStoragePath: !!parentData.storage_path,
+        storagePath: parentData.storage_path?.substring(0, 50)
+      });
       logger.info('Generation status fetched', {
         generationId,
         status: parentData.status,
@@ -192,6 +202,12 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
             return;
           }
 
+          console.log('✅ Generation complete - calling onComplete', {
+            generationId,
+            outputCount: uniqueOutputs.length,
+            retriesUsed: retryCount,
+            firstOutputPath: uniqueOutputs[0]?.storage_path?.substring(0, 50)
+          });
           logger.info('✅ Generation complete - calling onComplete', {
             generationId,
             outputCount: uniqueOutputs.length,
@@ -219,6 +235,10 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
    */
   const startPolling = useCallback((generationId: string) => {
     if (isPolling) {
+      console.warn('⚠️  Already polling, stopping previous poll', { 
+        currentPollingId: pollingId,
+        newGenerationId: generationId
+      });
       logger.warn('Already polling, stopping previous poll', { 
         currentPollingId: pollingId,
         newGenerationId: generationId
@@ -226,6 +246,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
       stopPolling();
     }
 
+    console.log('🔄 Starting generation polling', { generationId });
     logger.info('Starting generation polling', { generationId } as any);
     setIsPolling(true);
     setPollingId(generationId);

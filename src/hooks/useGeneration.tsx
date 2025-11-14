@@ -7,7 +7,7 @@ import {
   GenerationParams,
   GenerationResult,
   GenerationParamsSchema,
-  GenerationResultSchema,
+  GenerationResponseSchema,
   GenerationErrorCode,
   type InsufficientCreditsError,
 } from "@/types/generation";
@@ -187,8 +187,11 @@ export const useGeneration = () => {
         data.id = data.generation_id;
       }
 
-      // Validate response data
-      const validatedResult = GenerationResultSchema.parse(data);
+      // Parse as union type (handles both acks and complete results)
+      const validatedResponse = GenerationResponseSchema.parse(data);
+      
+      // Normalize to GenerationResult for downstream code
+      const validatedResult: GenerationResult = validatedResponse as GenerationResult;
 
       // Track generation created
       const duration = timer.end({ 

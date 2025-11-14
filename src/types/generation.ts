@@ -14,6 +14,23 @@ export const GenerationParamsSchema = z.object({
 
 export type GenerationParams = z.infer<typeof GenerationParamsSchema>;
 
+/**
+ * Schema for async generation acknowledgments (202 responses)
+ */
+export const GenerationAckSchema = z.object({
+  id: z.string().uuid(),
+  generation_id: z.string().uuid().optional(),
+  status: z.enum(['processing', 'pending']),
+  tokens_used: z.number().nonnegative(),
+  content_type: z.string(),
+  enhanced: z.boolean(),
+  is_async: z.literal(true),
+  message: z.string().optional(),
+});
+
+/**
+ * Schema for completed generation results (200 responses)
+ */
 export const GenerationResultSchema = z.object({
   id: z.string().uuid(),
   generation_id: z.string().uuid().optional(),
@@ -26,7 +43,17 @@ export const GenerationResultSchema = z.object({
   is_async: z.boolean().optional(),
 });
 
+/**
+ * Union type for handling both acknowledgments and complete results
+ */
+export const GenerationResponseSchema = z.union([
+  GenerationResultSchema,
+  GenerationAckSchema,
+]);
+
+export type GenerationAck = z.infer<typeof GenerationAckSchema>;
 export type GenerationResult = z.infer<typeof GenerationResultSchema>;
+export type GenerationResponse = z.infer<typeof GenerationResponseSchema>;
 
 /**
  * Generation state schemas

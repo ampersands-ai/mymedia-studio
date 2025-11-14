@@ -1,0 +1,26 @@
+{
+  "name": "vite_react_shadcn_ts",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:dev": "vite build --mode development",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "deploy:migrations": "echo '⚠️  Run migrations before deployment: supabase db push'",
+    "deploy:types": "echo '⚠️  Regenerate types after migrations: supabase gen types typescript --linked > src/integrations/supabase/types.ts'",
+    "deploy:restore": "mv src/hooks/useErrorNotifications.tsx.disabled src/hooks/useErrorNotifications.tsx 2>/dev/null || true && mv src/pages/admin/APIHealthMonitor.tsx.disabled src/pages/admin/APIHealthMonitor.tsx 2>/dev/null || true && mv src/pages/admin/EnhancedErrorDashboard.tsx.disabled src/pages/admin/EnhancedErrorDashboard.tsx 2>/dev/null || true",
+    "deploy:check": "npm run deploy:migrations && npm run deploy:types && npm run deploy:restore && npm run build"
+  },
+  "lovable": {
+    "autoMigrate": true,
+    "migrationPath": "supabase/migrations",
+    "autoTypeGen": true,
+    "postDeploy": [
+      "Restore monitoring features from .disabled files",
+      "Run npm run deploy:restore to restore monitoring components"
+    ]
+  }
+}

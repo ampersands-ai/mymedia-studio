@@ -6,7 +6,8 @@ export async function uploadToStorage(
   generationId: string,
   fileData: Uint8Array,
   fileExtension: string,
-  contentType: string
+  contentType: string,
+  logger?: { info: (msg: string, ctx?: any) => void; error: (msg: string, err: any, ctx?: any) => void }
 ): Promise<string> {
   // Create folder structure: {user_id}/{YYYY-MM-DD}/{generation_id}.ext
   const date = new Date();
@@ -14,7 +15,15 @@ export async function uploadToStorage(
   const fileName = `${generationId}.${fileExtension}`;
   const storagePath = `${userId}/${dateFolder}/${fileName}`;
   
-  console.log('Uploading to storage:', storagePath, 'Size:', fileData.length);
+  if (logger) {
+    logger.info('Starting storage upload', { 
+      storagePath, 
+      size: fileData.length, 
+      userId, 
+      generationId,
+      fileExtension 
+    });
+  }
 
   // Determine MIME type
   const mimeType = getMimeType(fileExtension, contentType);
@@ -29,7 +38,14 @@ export async function uploadToStorage(
     });
 
   if (uploadError) {
-    console.error('Storage upload error:', uploadError);
+    if (logger) {
+      logger.error('Storage upload failed', uploadError, { 
+        storagePath, 
+        userId, 
+        generationId,
+        errorMessage: uploadError.message 
+      });
+    }
     throw new Error(`Failed to upload to storage: ${uploadError.message}`);
   }
 

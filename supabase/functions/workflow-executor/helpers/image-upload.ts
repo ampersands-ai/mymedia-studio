@@ -11,7 +11,8 @@ import { SupabaseClient } from "supabase";
 export async function uploadBase64Image(
   dataUrl: string,
   userId: string,
-  supabaseClient: SupabaseClient
+  supabaseClient: SupabaseClient,
+  logger?: { info: (msg: string, ctx?: any) => void; error: (msg: string, err: any, ctx?: any) => void }
 ): Promise<string> {
   const matches = dataUrl.match(/^data:(.+);base64,(.+)$/);
   if (!matches) {
@@ -59,18 +60,25 @@ export async function uploadBase64Image(
 export async function processImageUploads(
   inputs: Record<string, any>,
   userId: string,
-  supabaseClient: SupabaseClient
+  supabaseClient: SupabaseClient,
+  logger?: { info: (msg: string, ctx?: any) => void; error: (msg: string, err: any, ctx?: any) => void }
 ): Promise<Record<string, any>> {
   const processed = { ...inputs };
   
   for (const [key, value] of Object.entries(inputs)) {
     if (typeof value === 'string' && value.startsWith('data:image/')) {
       try {
-        console.log(`Processing image upload for field: ${key}`);
-        processed[key] = await uploadBase64Image(value, userId, supabaseClient);
-        console.log(`Signed URL generated for ${key}`);
+        if (logger) {
+          logger.info('Processing image upload', { field: key, userId });
+        }
+        processed[key] = await uploadBase64Image(value, userId, supabaseClient, logger);
+        if (logger) {
+          logger.info('Signed URL generated', { field: key, userId });
+        }
       } catch (error) {
-        console.error(`Error processing image for ${key}:`, error);
+        if (logger) {
+          logger.error('Image processing failed', error as Error, { field: key, userId });
+        }
         throw error;
       }
     }
@@ -78,7 +86,7 @@ export async function processImageUploads(
       const processedArray = [];
       for (const item of value) {
         if (typeof item === 'string' && item.startsWith('data:image/')) {
-          const temp = await processImageUploads({ temp: item }, userId, supabaseClient);
+          const temp = await processImageUploads({ temp: item }, userId, supabaseClient, logger);
           processedArray.push(temp.temp);
         } else {
           processedArray.push(item);
@@ -97,7 +105,8 @@ export async function processImageUploads(
 export async function sanitizeParametersForProviders(
   params: Record<string, any>,
   userId: string,
-  supabaseClient: SupabaseClient
+  supabaseClient: SupabaseClient,
+  logger?: { info: (msg: string, ctx?: any) => void; error: (msg: string, err: any, ctx?: any) => void }
 ): Promise<Record<string, any>> {
   const mediaKeys = ['image_url', 'image_urls', 'input_image', 'reference_image', 'mask_image', 'image', 'images', 'thumbnail', 'cover'];
   const processed = { ...params };
@@ -108,11 +117,13 @@ export async function sanitizeParametersForProviders(
     
     if (typeof value === 'string' && value.startsWith('data:image/')) {
       try {
-        const signedUrl = await uploadBase64Image(value, userId, supabaseClient);
+        const signedUrl = await uploadBase64Image(value, userId, supabaseClient, logger);
         processed[key] = signedUrl;
         convertedCount++;
       } catch (error) {
-        console.error(`Error processing image for ${key}:`, error);
+        if (logger) {
+          logger.error('Image processing failed', error as Error, { field: key, userId });
+        }
         throw error;
       }
     }
@@ -121,11 +132,13 @@ export async function sanitizeParametersForProviders(
       for (const item of value) {
         if (typeof item === 'string' && item.startsWith('data:image/')) {
           try {
-            const signedUrl = await uploadBase64Image(item, userId, supabaseClient);
+            const signedUrl = await uploadBase64Image(item, userId, supabaseClient, logger);
             processedArray.push(signedUrl);
             convertedCount++;
           } catch (error) {
-            console.error(`Error processing array image for ${key}:`, error);
+            if (logger) {
+              logger.error('Array image processing failed', error as Error, { field: key, userId });
+            }
             throw error;
           }
         } else if (typeof item === 'string' && (item.startsWith('http://') || item.startsWith('https://'))) {
@@ -138,8 +151,8 @@ export async function sanitizeParametersForProviders(
     }
   }
   
-  if (convertedCount > 0) {
-    console.log(`Sanitized parameters: converted ${convertedCount} base64 image(s) to signed URLs`);
+  if (convertedCount > 0 && logger) {
+    logger.info('Image sanitization complete', { convertedCount, userId });
   }
   
   return processed;

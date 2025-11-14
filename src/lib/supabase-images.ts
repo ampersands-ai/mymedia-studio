@@ -29,6 +29,9 @@ function cleanImagePath(bucketPath: string, bucket: string = 'generated-content'
   if (cleanPath.includes('/storage/v1/object/public/')) {
     const m = cleanPath.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)/);
     if (m) cleanPath = m[1];
+  } else if (cleanPath.includes('/storage/v1/object/sign/')) {
+    const m = cleanPath.match(/\/storage\/v1\/object\/sign\/[^/]+\/(.+)/);
+    if (m) cleanPath = m[1];
   } else if (cleanPath.includes('/storage/v1/render/image/')) {
     const m = cleanPath.match(/\/storage\/v1\/render\/image\/[^/]+\/(.+)/);
     if (m) cleanPath = m[1];
@@ -47,6 +50,24 @@ function cleanImagePath(bucketPath: string, bucket: string = 'generated-content'
 }
 
 /**
+ * Infer bucket from a full URL or path. Defaults to generated-content
+ */
+function inferBucket(bucketPath: string, fallback: string = 'generated-content'): string {
+  try {
+    const asUrl = new URL(bucketPath);
+    const p = asUrl.pathname;
+    let m = p.match(/\/storage\/v1\/(?:object\/(?:public|sign)|render\/image)\/([^/]+)\//);
+    if (m && m[1]) return m[1];
+  } catch {
+    // Not a URL; try to infer from leading segment like "bucket/path/to/file"
+    const leading = bucketPath.replace(/^\/+/, '').split('?')[0].split('#')[0].split('/')[0];
+    // Heuristic: if there is at least one more segment, treat as bucket
+    if (leading && bucketPath.replace(/^\/+/, '').includes('/')) return leading;
+  }
+  return fallback;
+}
+
+/**
  * Generate optimized image URL using Supabase Storage transformations
  */
 export function getOptimizedImageUrl(
@@ -61,8 +82,9 @@ export function getOptimizedImageUrl(
     resize = 'cover',
   } = options;
 
-  // Clean the path first
-  const cleanPath = cleanImagePath(bucketPath, 'generated-content');
+  // Clean the path and detect bucket first
+  const bucket = inferBucket(bucketPath, 'generated-content');
+  const cleanPath = cleanImagePath(bucketPath, bucket);
 
   // Build transformation URL
   const params = new URLSearchParams();
@@ -75,7 +97,6 @@ export function getOptimizedImageUrl(
 
   // Supabase Storage public URL pattern
   const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const bucket = 'generated-content'; // Using generated-content bucket for user creations
 
   const encodedPath = encodeURI(cleanPath);
   return `${baseUrl}/storage/v1/render/image/${bucket}/${encodedPath}?${params.toString()}`;
@@ -86,16 +107,18 @@ export function getPublicImageUrl(
   bucket: string = 'generated-content'
 ): string {
   const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const cleanPath = cleanImagePath(bucketPath, bucket);
+  const inferred = inferBucket(bucketPath, bucket);
+  const cleanPath = cleanImagePath(bucketPath, inferred);
   const encodedPath = encodeURI(cleanPath);
-  return `${baseUrl}/storage/v1/object/public/${bucket}/${encodedPath}`;
+  return `${baseUrl}/storage/v1/object/public/${inferred}/${encodedPath}`;
 }
 
 export function getStorageRelativePath(
   bucketPath: string,
   bucket: string = 'generated-content'
 ): string {
-  return cleanImagePath(bucketPath, bucket);
+  const inferred = inferBucket(bucketPath, bucket);
+  return cleanImagePath(bucketPath, inferred);
 }
 
 /**

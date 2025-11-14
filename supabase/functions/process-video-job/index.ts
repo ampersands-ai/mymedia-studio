@@ -632,11 +632,14 @@ async function assembleVideo(
   return result.response.id;
 }
 
-async function pollRenderStatus(supabase: any, jobId: string, renderId: string, userId: string) {
+async function pollRenderStatus(supabase: any, logger: any, jobId: string, renderId: string, userId: string) {
   const maxAttempts = 120; // 10 minutes max (5s interval)
   let attempts = 0;
 
-  console.log(`[${jobId}] Starting to poll render status for ${renderId}`);
+  logger.info('Starting render status polling', { 
+    userId,
+    metadata: { jobId, renderId, maxAttempts } 
+  });
 
   while (attempts < maxAttempts) {
     await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
@@ -645,7 +648,10 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
     const endpoint = `https://api.shotstack.io/v1/render/${renderId}`;
     const requestSentAt = new Date();
 
-    console.log(`[${jobId}] Polling render status (attempt ${attempts}/${maxAttempts})...`);
+    logger.debug('Polling render status', { 
+      userId,
+      metadata: { jobId, renderId, attempt: attempts, maxAttempts } 
+    });
 
     const response = await fetch(endpoint, {
       headers: { 'x-api-key': Deno.env.get('SHOTSTACK_API_KEY') ?? '' }
@@ -676,11 +682,17 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
       }
     );
 
-    console.log(`[${jobId}] Render status: ${status}`);
+    logger.info('Render status check', { 
+      userId,
+      metadata: { jobId, renderId, status, attempt: attempts } 
+    });
 
     if (status === 'done' && result.response.url) {
       const videoUrl = result.response.url;
-      console.log(`[${jobId}] Render complete! Video URL: ${videoUrl}`);
+      logger.info('Render completed successfully', { 
+        userId,
+        metadata: { jobId, renderId, videoUrl: videoUrl.substring(0, 100) } 
+      });
       
       // Get job details to create generation
       const { data: job } = await supabase
@@ -703,10 +715,16 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
             .single();
           
           if (existingGeneration) {
-            console.log(`[${jobId}] Generation record already exists: ${existingGeneration.id}, skipping creation`);
+            logger.info('Generation record already exists', { 
+              userId,
+              metadata: { jobId, generationId: existingGeneration.id } 
+            });
           } else {
             // Download video from Shotstack
-            console.log(`[${jobId}] Downloading video from Shotstack...`);
+            logger.info('Downloading video from Shotstack', { 
+              userId,
+              metadata: { jobId, videoUrl: videoUrl.substring(0, 100) } 
+            });
             const videoResponse = await fetch(videoUrl);
             if (!videoResponse.ok) {
               throw new Error('Failed to download video from Shotstack');
@@ -717,7 +735,10 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
             const videoData = new Uint8Array(videoBuffer);
             
             // Upload to generated-content bucket (using videoPath defined above)
-            console.log(`[${jobId}] Uploading video to storage: ${videoPath}`);
+            logger.info('Uploading video to storage', { 
+              userId,
+              metadata: { jobId, videoPath, sizeBytes: videoData.length } 
+            });
             
             const { error: uploadError } = await supabase.storage
               .from('generated-content')
@@ -727,12 +748,18 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
               });
             
             if (uploadError) {
-              console.error(`[${jobId}] Storage upload error:`, uploadError);
+              logger.error('Storage upload failed', uploadError as Error, { 
+                userId,
+                metadata: { jobId, videoPath } 
+              });
               throw uploadError;
             }
             
             // Generate signed URL from storage (valid for 7 days)
-            console.log(`[${jobId}] Generating signed URL from storage...`);
+            logger.debug('Generating signed URL from storage', { 
+              userId,
+              metadata: { jobId, videoPath } 
+            });
             const { data: signedUrlData, error: signedUrlError } = await supabase.storage
               .from('generated-content')
               .createSignedUrl(videoPath, 60 * 60 * 24 * 7);
@@ -740,13 +767,22 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
             // Update finalVideoUrl if we successfully got a signed URL
             if (!signedUrlError && signedUrlData?.signedUrl) {
               finalVideoUrl = signedUrlData.signedUrl;
-              console.log(`[${jobId}] Using signed storage URL`);
+              logger.info('Using signed storage URL', { 
+                userId,
+                metadata: { jobId } 
+              });
             } else {
-              console.warn(`[${jobId}] Could not generate signed URL, using Shotstack URL:`, signedUrlError);
+              logger.warn('Could not generate signed URL, using Shotstack URL', { 
+                userId,
+                metadata: { jobId, error: signedUrlError } 
+              });
             }
             
             // Create generation record with job's cost_tokens
-            console.log(`[${jobId}] Creating generation record with ${job.cost_tokens} credits...`);
+            logger.info('Creating generation record', { 
+              userId,
+              metadata: { jobId, costTokens: job.cost_tokens } 
+            });
             const { data: generation, error: genError } = await supabase.from('generations').insert({
               user_id: job.user_id,
               type: 'video',
@@ -765,9 +801,15 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
             }).select('id').single();
             
             if (genError) {
-              console.error(`[${jobId}] Generation insert error:`, genError);
+              logger.error('Generation insert failed', genError as Error, { 
+                userId,
+                metadata: { jobId } 
+              });
             } else {
-              console.log(`[${jobId}] Generation record created: ${generation.id}`);
+              logger.info('Generation record created', { 
+                userId,
+                metadata: { jobId, generationId: generation.id } 
+              });
               
               // Link all API logs to this generation
               try {
@@ -777,12 +819,18 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
                   .eq('video_job_id', jobId)
                   .is('generation_id', null);
               } catch (error) {
-                console.error('Failed to link API logs to generation:', error);
+                logger.error('Failed to link API logs to generation', error as Error, { 
+                  userId,
+                  metadata: { jobId, generationId: generation.id } 
+                });
               }
             }
           }
         } catch (error) {
-          console.error(`[${jobId}] Error creating generation record:`, error);
+          logger.error('Error creating generation record', error as Error, { 
+            userId,
+            metadata: { jobId } 
+          });
           // Don't fail the job if generation creation fails
         }
       }
@@ -794,7 +842,10 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
         completed_at: new Date().toISOString()
       }).eq('id', jobId);
       
-      console.log(`[${jobId}] Job completed successfully!`);
+      logger.info('Job completed successfully', { 
+        userId,
+        metadata: { jobId, finalVideoUrl: finalVideoUrl.substring(0, 100) } 
+      });
       return;
     }
 
@@ -807,13 +858,19 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
         full_response: result
       };
       
-      console.error(`[${jobId}] Shotstack render failed:`, JSON.stringify(errorDetails, null, 2));
+      logger.error('Shotstack render failed', new Error(errorDetails.shotstack_error || errorDetails.shotstack_message), { 
+        userId,
+        metadata: { jobId, renderId, errorDetails } 
+      });
       
       const errorMsg = errorDetails.shotstack_error || errorDetails.shotstack_message;
       throw new Error(`Shotstack rendering failed: ${errorMsg}`);
     }
   }
 
-  console.error(`[${jobId}] Render timeout after ${maxAttempts} attempts (10 minutes)`);
+  logger.error('Render timeout', new Error('Render timeout after 10 minutes'), { 
+    userId,
+    metadata: { jobId, renderId, maxAttempts, totalTime: '10 minutes' } 
+  });
   throw new Error('Render timeout after 10 minutes');
 }

@@ -56,12 +56,10 @@ export const SessionWarning = () => {
     const timer = sessionLogger.startTimer('extendSession');
     
     try {
-      const { error } = await supabase.functions.invoke('extend-session');
+      // Refresh the session directly (no edge function needed)
+      const { error } = await supabase.auth.refreshSession();
       
       if (error) throw error;
-      
-      // Refresh the session
-      await supabase.auth.refreshSession();
       
       timer.end({ success: true });
       sessionLogger.info('Session extended successfully');

@@ -3,19 +3,10 @@
  * Used by the "Surprise Me" feature to provide creative inspiration
  */
 
-// Image Generation Prompts (from cinematicPortraitPrompts)
-export const imagePrompts = [
-  "Cinematic close-up portrait of a 1940s hard-boiled detective, harsh single source lighting from above, fedora casting dramatic shadows across weathered face, cigarette smoke wisping through light beam, deep blacks and high contrast, shot on vintage Panavision 50mm, film noir aesthetic",
-  "Film noir portrait of a femme fatale in her 30s, venetian blind shadows striping across face, red lipstick and victory rolls hairstyle, mysterious expression, monochromatic with selective color, shot on Arri Alexa, 85mm lens, classic Hollywood noir lighting",
-  "Portrait of a mystical forest guardian with bioluminescent markings, ethereal mist swirling around, magical particles of light floating, ancient tree backdrop, fantasy atmosphere, shot with soft focus and dreamy bokeh, cinematic lighting",
-  "Cyberpunk portrait of a hacker in neon-lit room, holographic displays reflecting on face, futuristic tech aesthetic, electric blue and purple lighting, high-tech atmosphere, shot with shallow depth of field",
-  "Renaissance-style portrait of a noble woman, golden hour lighting through stained glass, ornate jewelry catching light, classical composition, rich colors and textures, museum-quality detail",
-  "Steampunk inventor in workshop, brass goggles and leather apron, vintage machinery in background, warm amber lighting, industrial Victorian aesthetic, intricate mechanical details visible",
-  "Ethereal portrait of a dancer mid-movement, flowing fabric frozen in time, dramatic backlighting creating silhouette, dust particles visible in light beams, artistic and graceful composition",
-  "Ancient warrior in ceremonial armor, dramatic sunset lighting, battle-worn but dignified, historically accurate details, epic cinematic framing, powerful and majestic presence",
-  "Minimalist portrait against solid background, perfect studio lighting, clean and modern aesthetic, focus on expression and emotion, professional fashion photography style",
-  "Surreal portrait with double exposure effect, blending human features with natural landscapes, dreamlike and artistic, soft color palette, creative composite imagery",
-];
+import { cinematicPortraitPrompts } from './cinematicPortraitPrompts';
+
+// Image Generation Prompts (250+ curated cinematic portrait prompts)
+export const imagePrompts = cinematicPortraitPrompts;
 
 // Image Editing Prompts
 export const imageEditingPrompts = [

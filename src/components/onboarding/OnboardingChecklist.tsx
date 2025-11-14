@@ -33,13 +33,13 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
   }
 
   return (
-    <Card className="fixed bottom-6 right-6 z-50 shadow-2xl border-2 border-primary-500/20 bg-white">
+    <Card className="fixed bottom-6 right-6 z-50 shadow-2xl border-2 border-primary/20 bg-card">
       {isExpanded ? (
         <div className="w-80">
-          <div className="p-4 border-b border-neutral-200 flex items-center justify-between bg-gradient-to-r from-primary-50 to-secondary-50">
+          <div className="p-4 border-b border-border flex items-center justify-between bg-gradient-to-r from-primary/5 to-secondary/5">
             <div className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-primary-500" />
-              <h3 className="font-bold text-lg">Getting Started</h3>
+              <Trophy className="h-5 w-5 text-primary" />
+              <h3 className="font-bold text-lg text-card-foreground">Getting Started</h3>
             </div>
             <div className="flex items-center gap-1">
               <Button
@@ -64,10 +64,10 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
           <div className="p-4 space-y-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-semibold text-neutral-700">
+                <span className="font-semibold text-muted-foreground">
                   {progress.completedCount} of {progress.totalCount} Complete
                 </span>
-                <span className="text-primary-500 font-bold">{Math.round(progressPercentage)}%</span>
+                <span className="text-primary font-bold">{Math.round(progressPercentage)}%</span>
               </div>
               <Progress value={progressPercentage} className="h-2" />
             </div>
@@ -85,16 +85,16 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
                     className={cn(
                       "flex items-center justify-center h-6 w-6 rounded-full border-2 flex-shrink-0 mt-0.5",
                       item.completed
-                        ? "bg-primary-500 border-primary-500 animate-in zoom-in-50 duration-300"
-                        : "border-neutral-300 bg-white"
+                        ? "bg-primary border-primary animate-in zoom-in-50 duration-300"
+                        : "border-border bg-background"
                     )}
                   >
-                    {item.completed && <Check className="h-4 w-4 text-white" />}
+                    {item.completed && <Check className="h-4 w-4 text-primary-foreground" />}
                   </div>
                   <span
                     className={cn(
-                      "text-sm flex-1",
-                      item.completed ? "font-semibold text-neutral-900" : "font-medium text-neutral-800"
+                      "text-sm flex-1 text-card-foreground",
+                      item.completed ? "font-semibold" : "font-medium"
                     )}
                   >
                     {item.label}
@@ -106,7 +106,7 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
             {allComplete && !progress.bonusAwarded && (
               <Button
                 onClick={onComplete}
-                className="w-full bg-primary-500 hover:bg-primary-600 text-neutral-900 font-bold animate-pulse"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold animate-pulse"
               >
                 <Trophy className="h-4 w-4 mr-2" />
                 Claim 2 Bonus Credits
@@ -114,7 +114,7 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
             )}
 
             {!allComplete && (
-              <p className="text-xs text-neutral-500 text-center">
+              <p className="text-xs text-muted-foreground text-center">
                 Complete all steps to earn 2 bonus credits!
               </p>
             )}
@@ -122,7 +122,7 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
         </div>
       ) : (
         <div 
-          className="p-4 cursor-pointer hover:bg-neutral-50 transition-colors"
+          className="p-4 cursor-pointer hover:bg-accent/50 transition-colors"
           onClick={() => setIsExpanded(true)}
         >
           <div className="flex items-center gap-3">
@@ -135,7 +135,7 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
                   stroke="currentColor"
                   strokeWidth="4"
                   fill="transparent"
-                  className="text-neutral-200"
+                  className="text-muted"
                 />
                 <circle
                   cx="24"
@@ -146,21 +146,21 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
                   fill="transparent"
                   strokeDasharray={`${2 * Math.PI * 20}`}
                   strokeDashoffset={`${2 * Math.PI * 20 * (1 - progressPercentage / 100)}`}
-                  className="text-primary-500 transition-all duration-500"
+                  className="text-primary transition-all duration-500"
                   strokeLinecap="round"
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-xs font-bold text-primary-500">
+                <span className="text-xs font-bold text-primary">
                   {progress.completedCount}/{progress.totalCount}
                 </span>
               </div>
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-sm">Getting Started</p>
-              <p className="text-xs text-neutral-500">{Math.round(progressPercentage)}% complete</p>
+              <p className="font-semibold text-sm text-card-foreground">Getting Started</p>
+              <p className="text-xs text-muted-foreground">{Math.round(progressPercentage)}% complete</p>
             </div>
-            <ChevronUp className="h-4 w-4 text-neutral-400" />
+            <ChevronUp className="h-4 w-4 text-muted-foreground" />
           </div>
         </div>
       )}

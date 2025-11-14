@@ -388,6 +388,7 @@ const Templates = () => {
                             height={400}
                             priority={isPriority}
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                            isSupabaseImage={true}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">

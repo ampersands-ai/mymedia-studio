@@ -102,7 +102,14 @@ All colors MUST be HSL.
   /* Tailwind dark mode colors */
   --background: 222 47% 11%;
   --foreground: 210 40% 98%;
-  
+
+  /* Light-Only Components - DO NOT CHANGE (ensures floating UI remains readable) */
+  --card-light: 0 0% 100%;
+  --card-light-foreground: 222 47% 11%;
+  --surface-light: 210 40% 98%;
+  --text-on-light: 222 47% 11%;
+  --text-on-light-muted: 215 19% 35%;
+
   --card: 217 33% 17%;
   --card-foreground: 210 40% 98%;
   
@@ -257,6 +264,13 @@ All colors MUST be HSL.
     --warning-bg: 48 95% 88%;
     --info: 221 83% 53%;
     --info-bg: 214 95% 93%;
+    
+    /* Light-Only Components (theme-independent, always light) */
+    --card-light: 0 0% 100%;
+    --card-light-foreground: 222 47% 11%;
+    --surface-light: 210 40% 98%;
+    --text-on-light: 222 47% 11%;
+    --text-on-light-muted: 215 19% 35%;
     
     /* Neon colors - Keep for backward compatibility */
     --neon-yellow: 38 92% 50%;
@@ -606,6 +620,15 @@ All colors MUST be HSL.
     contain: layout style paint;
   }
   
+  /* Light-enforced card variant for floating UI elements */
+  .brutal-card-light {
+    @apply border-4 border-black rounded-2xl;
+    background-color: hsl(var(--card-light));
+    color: hsl(var(--card-light-foreground));
+    box-shadow: var(--shadow-brutal-lg);
+    contain: layout style paint;
+  }
+  
   .brutal-card-sm {
     @apply bg-card border-3 border-black rounded-xl;
     box-shadow: var(--shadow-brutal);
@@ -675,6 +698,15 @@ All colors MUST be HSL.
   .text-neutral-700 { color: hsl(var(--neutral-700)); }
   .text-neutral-800 { color: hsl(var(--neutral-800)); }
   .text-neutral-900 { color: hsl(var(--neutral-900)); }
+
+  /* Text colors guaranteed readable on light backgrounds */
+  .text-on-light {
+    color: hsl(var(--text-on-light));
+  }
+  
+  .text-on-light-muted {
+    color: hsl(var(--text-on-light-muted));
+  }
   
   .border-neutral-200 { border-color: hsl(var(--neutral-200)); }
   .border-neutral-300 { border-color: hsl(var(--neutral-300)); }

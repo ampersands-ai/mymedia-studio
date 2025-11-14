@@ -618,10 +618,12 @@ async function assembleVideo(
   ).catch(e => logger.error('Failed to log API call', e instanceof Error ? e : new Error(String(e))));
 
   if (!response.ok) {
-    logger.error('Shotstack error details', undefined, { metadata: {
-      status: response.status,
-      response: result,
-      requestPayload: edit
+    logger.error('Shotstack error details', undefined, {
+      metadata: {
+        status: response.status,
+        response: result,
+        requestPayload: edit
+      }
     });
     throw new Error(`Shotstack error: ${result?.message || result?.detail || response.statusText || 'Bad Request'}`);
   }

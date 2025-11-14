@@ -99,6 +99,15 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        'card-light': {
+          DEFAULT: 'hsl(var(--card-light))',
+          foreground: 'hsl(var(--card-light-foreground))',
+        },
+        'surface-light': 'hsl(var(--surface-light))',
+        'on-light': {
+          DEFAULT: 'hsl(var(--text-on-light))',
+          muted: 'hsl(var(--text-on-light-muted))',
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

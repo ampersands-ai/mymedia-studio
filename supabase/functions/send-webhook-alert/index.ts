@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { generateSlackPayload, generateDiscordPayload } from "./_slack-discord.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -24,6 +25,10 @@ interface AlertPayload {
 }
 
 serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('send-webhook-alert', requestId);
+  const startTime = Date.now();
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -78,7 +83,7 @@ serve(async (req) => {
           .maybeSingle();
 
         if (recentAlert) {
-          console.log('Alert suppressed due to cooldown');
+          logger.info('Alert suppressed due to cooldown');
           return new Response(
             JSON.stringify({ message: 'Alert suppressed (cooldown period)' }),
             { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -152,14 +157,14 @@ serve(async (req) => {
 
           if (discordResponse.ok || discordResponse.status === 204) {
             results.discord.sent = 1;
-            console.log('💬 Discord: Alert sent successfully');
+            logger.info('Discord alert sent successfully');
           } else {
             results.discord.failed = 1;
-            console.error('Discord alert failed:', await discordResponse.text());
+            logger.error('Discord alert failed', new Error(await discordResponse.text()));
           }
         } catch (error) {
           results.discord.failed = 1;
-          console.error('Discord alert error:', error);
+          logger.error('Discord alert error', error as Error);
         }
       }
 

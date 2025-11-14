@@ -74,23 +74,27 @@ const OptimizedBeforeAfterSliderComponent = ({
     setPosition(defaultPosition);
   };
 
-  // Generate optimized URLs
-  const beforeImageOptimized = isSupabaseImage
+  // Detect if already a signed URL (contains /storage/v1/ or starts with http)
+  const beforeIsSignedUrl = beforeImage.includes('/storage/v1/') || beforeImage.startsWith('http');
+  const afterIsSignedUrl = afterImage.includes('/storage/v1/') || afterImage.startsWith('http');
+
+  // Generate optimized URLs only if not already signed URLs
+  const beforeImageOptimized = (isSupabaseImage && !beforeIsSignedUrl)
     ? getOptimizedImageUrl(beforeImage, { width: 800, quality: 85, format: 'webp' })
     : beforeImage;
-  const afterImageOptimized = isSupabaseImage
+  const afterImageOptimized = (isSupabaseImage && !afterIsSignedUrl)
     ? getOptimizedImageUrl(afterImage, { width: 800, quality: 85, format: 'webp' })
     : afterImage;
 
-  const beforeImageAvif = isSupabaseImage
+  const beforeImageAvif = (isSupabaseImage && !beforeIsSignedUrl)
     ? getOptimizedImageUrl(beforeImage, { width: 800, quality: 85, format: 'avif' })
     : null;
-  const afterImageAvif = isSupabaseImage
+  const afterImageAvif = (isSupabaseImage && !afterIsSignedUrl)
     ? getOptimizedImageUrl(afterImage, { width: 800, quality: 85, format: 'avif' })
     : null;
 
-  const beforePlaceholder = isSupabaseImage ? getBlurPlaceholder(beforeImage) : null;
-  const afterPlaceholder = isSupabaseImage ? getBlurPlaceholder(afterImage) : null;
+  const beforePlaceholder = (isSupabaseImage && !beforeIsSignedUrl) ? getBlurPlaceholder(beforeImage) : null;
+  const afterPlaceholder = (isSupabaseImage && !afterIsSignedUrl) ? getBlurPlaceholder(afterImage) : null;
 
   const shouldLoad = priority || isVisible;
 

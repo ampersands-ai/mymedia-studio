@@ -3138,9 +3138,11 @@ export type Database = {
         Row: {
           avg_duration_ms: number | null
           failure_count: number | null
+          first_event: string | null
           hour: string | null
+          last_event: string | null
+          max_duration_ms: number | null
           p95_duration_ms: number | null
-          p99_duration_ms: number | null
           provider: string | null
           success_count: number | null
           timeout_count: number | null

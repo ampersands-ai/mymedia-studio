@@ -337,20 +337,45 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Deduct tokens
-      const { error: deductError } = await supabase
+      // Deduct tokens with row count verification
+      const { data: updateResult, error: deductError } = await supabase
         .from('user_subscriptions')
         .update({ tokens_remaining: subscription.tokens_remaining - tokenCost })
         .eq('user_id', user.id)
-        .eq('tokens_remaining', subscription.tokens_remaining);
+        .eq('tokens_remaining', subscription.tokens_remaining)
+        .select('tokens_remaining');
 
       if (deductError) {
-        throw new Error('Failed to deduct tokens');
+        logger.error('Token deduction failed', deductError, { userId: user.id });
+        throw new Error('Failed to deduct tokens - database error');
       }
 
-      logger.info('Tokens deducted', {
+      if (!updateResult || updateResult.length === 0) {
+        logger.error('Optimistic lock failed - concurrent update', undefined, {
+          userId: user.id,
+          metadata: { expected_tokens: subscription.tokens_remaining, cost: tokenCost }
+        });
+        throw new Error('Failed to deduct tokens - concurrent update detected. Please retry.');
+      }
+
+      logger.info('Tokens deducted successfully', {
         userId: user.id,
-        metadata: { tokens_deducted: tokenCost }
+        metadata: { 
+          tokens_deducted: tokenCost,
+          new_balance: updateResult[0]?.tokens_remaining 
+        }
+      });
+
+      // Log to audit_logs
+      await supabase.from('audit_logs').insert({
+        user_id: user.id,
+        action: 'tokens_deducted',
+        metadata: {
+          tokens_deducted: tokenCost,
+          tokens_remaining: updateResult[0]?.tokens_remaining,
+          model_id: model.id,
+          operation: 'sync_generation'
+        }
       });
     }
 

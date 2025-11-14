@@ -15,6 +15,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const CAPTION_COST = 0.1; // 0.1 credits per caption generation
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -41,6 +43,76 @@ Deno.serve(async (req) => {
         video_job_id, 
         content_type,
         prompt_length: prompt.length 
+      }
+    });
+
+    // Get user from auth header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Missing authorization header');
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      throw new Error('Unauthorized');
+    }
+
+    // Check and deduct credits
+    const { data: subscription, error: subError } = await supabase
+      .from('user_subscriptions')
+      .select('tokens_remaining')
+      .eq('user_id', user.id)
+      .single();
+
+    if (subError || !subscription) {
+      throw new Error('Failed to fetch user subscription');
+    }
+
+    if (subscription.tokens_remaining < CAPTION_COST) {
+      throw new Error(`Insufficient credits. ${CAPTION_COST} credits required for caption generation.`);
+    }
+
+    // Deduct credits atomically with row count verification
+    const { data: updateResult, error: deductError } = await supabase
+      .from('user_subscriptions')
+      .update({ tokens_remaining: subscription.tokens_remaining - CAPTION_COST })
+      .eq('user_id', user.id)
+      .eq('tokens_remaining', subscription.tokens_remaining)
+      .select('tokens_remaining');
+
+    if (deductError) {
+      logger.error('Credit deduction failed', deductError, { userId: user.id });
+      throw new Error('Failed to deduct credits - database error');
+    }
+
+    if (!updateResult || updateResult.length === 0) {
+      logger.error('Optimistic lock failed - concurrent update', undefined, {
+        userId: user.id,
+        metadata: { expected_tokens: subscription.tokens_remaining, cost: CAPTION_COST }
+      });
+      throw new Error('Failed to deduct credits - concurrent update detected. Please retry.');
+    }
+
+    logger.info('Credits deducted for caption', {
+      userId: user.id,
+      metadata: { 
+        tokens_deducted: CAPTION_COST,
+        new_balance: updateResult[0]?.tokens_remaining 
+      }
+    });
+
+    // Log to audit_logs
+    await supabase.from('audit_logs').insert({
+      user_id: user.id,
+      action: 'tokens_deducted',
+      metadata: {
+        tokens_deducted: CAPTION_COST,
+        tokens_remaining: updateResult[0]?.tokens_remaining,
+        generation_id,
+        video_job_id,
+        operation: 'caption_generation'
       }
     });
 

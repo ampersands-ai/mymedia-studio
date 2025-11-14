@@ -331,7 +331,10 @@ async function generateVoiceover(script: string, voiceId: string): Promise<Blob>
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('ElevenLabs API error:', response.status, errorText);
+    logger.error('ElevenLabs API request failed', new Error(errorText), { 
+      userId: job.user_id,
+      metadata: { status: response.status, jobId: videoJobId, step: stepName } 
+    });
     
     // Try to parse error response
     interface ElevenLabsErrorDetails {
@@ -408,7 +411,10 @@ async function getBackgroundVideo(
   const endpoint = `https://pixabay.com/api/videos/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&per_page=20`;
   const requestSentAt = new Date();
 
-  console.log(`[${videoJobId}] Searching Pixabay for: ${searchQuery}`);
+  logger.info('Searching Pixabay', { 
+    userId: job.user_id,
+    metadata: { jobId: videoJobId, searchQuery } 
+  });
 
   const response = await fetch(endpoint);
 
@@ -434,7 +440,7 @@ async function getBackgroundVideo(
       isError: !response.ok,
       errorMessage: response.ok ? undefined : `Pixabay returned ${response.status}`
     }
-  ).catch(e => console.error('Failed to log API call:', e));
+  ).catch(e => logger.error('Failed to log Pixabay API call', e));
 
   if (!response.ok) {
     throw new Error(`Pixabay API error: ${response.status}`);
@@ -444,7 +450,10 @@ async function getBackgroundVideo(
     throw new Error('No background videos found');
   }
 
-  console.log(`[${videoJobId}] Found ${data.hits.length} videos from Pixabay`);
+  logger.info('Pixabay search results', { 
+    userId: job.user_id,
+    metadata: { jobId: videoJobId, hitCount: data.hits.length, searchQuery } 
+  });
 
   // Filter landscape videos (width > height) longer than required duration
   const landscapeVideos = data.hits.filter((v: any) => {
@@ -464,7 +473,10 @@ async function getBackgroundVideo(
     throw new Error('No video URL found');
   }
   
-  console.log(`[${videoJobId}] Selected video: ${video.id}`);
+  logger.info('Selected Pixabay video', { 
+    userId: job.user_id,
+    metadata: { jobId: videoJobId, videoId: video.id, duration: video.duration } 
+  });
   return videoUrl;
 }
 
@@ -548,8 +560,15 @@ async function assembleVideo(
   const endpoint = 'https://api.shotstack.io/v1/render';
   const requestSentAt = new Date();
 
-  console.log(`[${videoJobId}] Submitting render to Shotstack...`);
-  console.log(`[${videoJobId}] Video duration: ${assets.duration}s, Words: ${words.length}`);
+  logger.info('Submitting render to Shotstack', { 
+    userId: job.user_id,
+    metadata: { 
+      jobId: videoJobId, 
+      duration: assets.duration, 
+      wordCount: words.length,
+      videoUrl: assets.videoUrl 
+    } 
+  });
 
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -566,7 +585,10 @@ async function assembleVideo(
   try {
     result = responseText ? JSON.parse(responseText) : null;
   } catch (parseError) {
-    console.error('Failed to parse Shotstack response:', responseText);
+    logger.error('Failed to parse Shotstack response', new Error('JSON parse failed'), { 
+      userId,
+      metadata: { jobId: videoJobId, responseText: responseText.substring(0, 500) } 
+    });
   }
 
   // Log the API call with detailed error info

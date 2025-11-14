@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createSafeErrorResponse } from '../_shared/error-handler.ts';
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,6 +8,9 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('cancel-render', requestId);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -46,7 +50,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('[cancel-render] Canceling render for storyboard:', storyboardId);
+    logger.info("Canceling render for storyboard", { metadata: { storyboardId } });
 
     // Fetch storyboard to verify ownership and status
     const { data: storyboard, error: fetchError } = await supabaseClient
@@ -56,7 +60,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (fetchError || !storyboard) {
-      console.error('[cancel-render] Storyboard not found:', fetchError);
+      logger.error("Storyboard not found", fetchError);
       return new Response(
         JSON.stringify({ error: 'Storyboard not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -65,7 +69,10 @@ Deno.serve(async (req) => {
 
     // Verify ownership
     if (storyboard.user_id !== user.id) {
-      console.error('[cancel-render] User does not own this storyboard');
+      logger.error("User does not own this storyboard", undefined, { 
+        userId: user.id, 
+        metadata: { storyboardUserId: storyboard.user_id } 
+      });
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -74,7 +81,9 @@ Deno.serve(async (req) => {
 
     // Check if storyboard is in rendering status
     if (storyboard.status !== 'rendering') {
-      console.warn('[cancel-render] Storyboard is not in rendering status:', storyboard.status);
+      logger.warn("Storyboard is not in rendering status", { 
+        metadata: { storyboardId, status: storyboard.status } 
+      });
       return new Response(
         JSON.stringify({ error: `Cannot cancel: storyboard is in ${storyboard.status} status` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -84,7 +93,9 @@ Deno.serve(async (req) => {
     // NOTE: JSON2Video does not have a cancel/delete endpoint
     // The job will continue on their servers, but we'll update our database
     // to stop tracking it and allow the user to edit and re-render
-    console.log('[cancel-render] Note: JSON2Video job will continue but won\'t be saved');
+    logger.info("JSON2Video job will continue but won't be saved", { 
+      metadata: { storyboardId, renderJobId: storyboard.render_job_id } 
+    });
 
     // Update storyboard status to 'draft' and clear render_job_id
     // NO TOKEN REFUND - job already started
@@ -99,11 +110,11 @@ Deno.serve(async (req) => {
       .eq('user_id', user.id);
 
     if (updateError) {
-      console.error('[cancel-render] Failed to update storyboard:', updateError);
+      logger.error("Failed to update storyboard", updateError, { metadata: { storyboardId } });
       throw updateError;
     }
 
-    console.log('[cancel-render] Successfully canceled render tracking for storyboard:', storyboardId);
+    logger.info("Successfully canceled render tracking", { metadata: { storyboardId } });
 
     return new Response(
       JSON.stringify({
@@ -113,7 +124,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('[cancel-render] Error:', error);
+    logger.error("Error canceling render", error as Error);
     return createSafeErrorResponse(error, 'cancel-render', corsHeaders);
   }
 });

@@ -377,7 +377,7 @@ async function getBackgroundImages(
       isError: !response.ok,
       errorMessage: response.ok ? undefined : `Pixabay returned ${response.status}`
     }
-  ).catch(e => console.error('Failed to log API call:', e));
+  ).catch(e => logger.error('Failed to log API call', e as Error));
 
   if (!response.ok) {
     throw new Error('Pixabay API error');
@@ -472,7 +472,7 @@ async function getBackgroundVideos(
       isError: !response.ok,
       errorMessage: response.ok ? undefined : `Pixabay returned ${response.status}`
     }
-  ).catch(e => console.error('Failed to log API call:', e));
+  ).catch(e => logger.error('Failed to log API call', e as Error));
 
   if (!response.ok) {
     throw new Error('Pixabay API error');
@@ -518,7 +518,9 @@ async function getBackgroundVideos(
   const averageClipDuration = 10;
   const numberOfClips = Math.min(5, Math.ceil(duration / averageClipDuration));
   
-  console.log(`Selecting ${numberOfClips} background videos for ${duration}s duration`);
+  logger.info("Selecting background videos for duration", { 
+    metadata: { numberOfClips, duration } 
+  });
   
   // Randomly select different videos (no duplicates)
   const selectedVideos: string[] = [];
@@ -582,7 +584,13 @@ async function assembleVideo(
   };
   const config = dimensions[aspectRatio] || dimensions['4:5'];
 
-  console.log(`Assembling video with Shotstack - ${config.width}x${config.height} (${aspectRatio})`);
+  logger.info("Assembling video with Shotstack", { 
+    metadata: { 
+      width: config.width, 
+      height: config.height, 
+      aspectRatio 
+    } 
+  });
 
   // Build Shotstack JSON using official format
   const edit: any = {
@@ -605,7 +613,7 @@ async function assembleVideo(
     edit.timeline.fonts = [{
       src: style.fontUrl
     }];
-    console.log('Added custom font:', style.fontUrl);
+    logger.info("Added custom font", { metadata: { fontUrl: style.fontUrl } });
   }
 
   // Track 0: Audio with alias (for caption sync)
@@ -656,7 +664,7 @@ async function assembleVideo(
     clips: [captionClip]
   });
 
-  console.log('Using rich caption styling with custom font and alignment');
+  logger.info("Using rich caption styling with custom font and alignment");
 
   // Track 2: Background media (bottom layer)
   if (backgroundMediaType === 'image' && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
@@ -673,7 +681,7 @@ async function assembleVideo(
       ...(index > 0 && { transition: { in: 'fade', out: 'fade' } })
     }));
     edit.timeline.tracks.push({ clips: imageClips });
-    console.log(`Added ${imageClips.length} background image clips`);
+    logger.info("Added background image clips", { metadata: { clipCount: imageClips.length } });
   } else {
     const clipDuration = Math.ceil(assets.duration / assets.backgroundVideoUrls.length);
     const videoClips = assets.backgroundVideoUrls.map((videoUrl, index) => ({
@@ -688,12 +696,16 @@ async function assembleVideo(
       ...(index > 0 && { transition: { in: 'fade', out: 'fade' } })
     }));
     edit.timeline.tracks.push({ clips: videoClips });
-    console.log(`Added ${videoClips.length} background video clips`);
+    logger.info("Added background video clips", { metadata: { clipCount: videoClips.length } });
   }
 
   // Debug: Log track order before submission
-  console.log('Track order:', edit.timeline.tracks.map((t: any) => t.clips?.[0]?.asset?.type));
-  console.log('Caption asset:', edit.timeline.tracks[1]?.clips?.[0]?.asset);
+  logger.debug("Track order and caption asset", { 
+    metadata: { 
+      trackOrder: edit.timeline.tracks.map((t: any) => t.clips?.[0]?.asset?.type),
+      captionAsset: edit.timeline.tracks[1]?.clips?.[0]?.asset
+    } 
+  });
 
   // Submit to Shotstack API
   const endpoint = 'https://api.shotstack.io/v1/render';
@@ -714,7 +726,7 @@ async function assembleVideo(
   try {
     result = responseText ? JSON.parse(responseText) : null;
   } catch (parseError) {
-    console.error('Failed to parse Shotstack response:', responseText);
+    logger.error("Failed to parse Shotstack response", parseError as Error);
   }
 
   // Log the API call
@@ -741,13 +753,15 @@ async function assembleVideo(
       isError: !response.ok,
       errorMessage: response.ok ? undefined : result?.message || result?.detail || `Shotstack API error ${response.status}`
     }
-  ).catch(e => console.error('Failed to log API call:', e));
+  ).catch(e => logger.error('Failed to log API call', e as Error));
 
   if (!response.ok) {
-    console.error('Shotstack API Error:', {
-      status: response.status,
-      response: result,
-      requestPayload: edit
+    logger.error("Shotstack API Error", undefined, {
+      metadata: {
+        status: response.status,
+        response: result,
+        requestPayload: edit
+      }
     });
     
     // Extract detailed error message
@@ -763,7 +777,7 @@ async function assembleVideo(
     const isCaptionValidation = (errorMessage || '').toLowerCase().includes('caption asset');
 
     if (isCaptionValidation) {
-      console.log('Retrying with minimal caption asset and auto length...');
+      logger.info("Retrying with minimal caption asset and auto length...");
       const fallbackEdit: any = JSON.parse(JSON.stringify(edit));
       try {
         // Dynamically find caption track instead of using hardcoded index
@@ -808,16 +822,18 @@ async function assembleVideo(
           isError: !retryRes.ok,
           errorMessage: retryRes.ok ? undefined : retryResult?.message || retryResult?.detail || `Shotstack API error ${retryRes.status}`
         }
-      ).catch(e => console.error('Failed to log API call (retry minimal):', e));
+      ).catch(e => logger.error('Failed to log API call (retry minimal)', e as Error));
 
-      if (!retryRes.ok) {
-        console.error('Shotstack API Error (retry minimal captions):', {
-          status: retryRes.status,
-          response: retryResult,
-          requestPayload: fallbackEdit
+      if (!=retryRes.ok) {
+        logger.error("Shotstack API Error (retry minimal captions)", undefined, {
+          metadata: {
+            status: retryRes.status,
+            response: retryResult,
+            requestPayload: fallbackEdit
+          }
         });
 
-        console.log('Retrying with asset type "captions"...');
+        logger.info("Retrying with asset type 'captions'...");
         const fallbackEdit2: any = JSON.parse(JSON.stringify(fallbackEdit));
         try {
           // Dynamically find caption track for second retry
@@ -871,14 +887,18 @@ async function assembleVideo(
         return retryResult2.response.id;
       }
 
-      console.log('Shotstack render submitted successfully (minimal captions):', retryResult.response.id);
+      logger.info("Shotstack render submitted successfully (minimal captions)", { 
+        metadata: { renderId: retryResult.response.id } 
+      });
       return retryResult.response.id;
     }
     
     throw new Error(`Shotstack error: ${errorMessage}`);
   }
 
-  console.log('Shotstack render submitted successfully:', result.response.id);
+  logger.info("Shotstack render submitted successfully", { 
+    metadata: { renderId: result.response.id } 
+  });
   return result.response.id;
 }
 
@@ -935,14 +955,16 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
       
       if (job) {
         try {
-          console.log('Downloading video from Shotstack using streaming...');
+          logger.info("Downloading video from Shotstack using streaming", { metadata: { jobId } });
           const videoResponse = await fetch(videoUrl);
           if (!videoResponse.ok || !videoResponse.body) {
             throw new Error(`Failed to download video from Shotstack: ${videoResponse.status}`);
           }
           
           const videoPath = `${job.user_id}/${new Date().toISOString().split('T')[0]}/${jobId}.mp4`;
-          console.log('Uploading video to storage with streaming:', videoPath);
+          logger.info("Uploading video to storage with streaming", { 
+            metadata: { videoPath, jobId } 
+          });
           
           // Stream upload - no intermediate memory buffer
           const { error: uploadError } = await supabase.storage
@@ -953,18 +975,18 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
             });
           
           if (uploadError) {
-            console.error('Storage upload error:', uploadError);
+            logger.error("Storage upload error", uploadError, { metadata: { videoPath, jobId } });
             throw uploadError;
           }
           
-          console.log('Video uploaded successfully using streaming');
+          logger.info("Video uploaded successfully using streaming", { metadata: { videoPath, jobId } });
           
           // Generate direct public URL for the video
           const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
           const videoPublicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${videoPath}`;
-          console.log('Video available at:', videoPublicUrl);
+          logger.info("Video available", { metadata: { videoPublicUrl, jobId } });
           
-          console.log('Creating generation record...');
+          logger.info("Creating generation record", { metadata: { jobId, userId: job.user_id } });
           const { data: generation, error: genError } = await supabase.from('generations').insert({
             user_id: job.user_id,
             type: 'video',
@@ -982,9 +1004,11 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
           }).select().single();
           
           if (genError) {
-            console.error('Generation insert error:', genError);
+            logger.error("Generation insert error", genError, { metadata: { jobId } });
           } else {
-            console.log('Generation record created successfully');
+            logger.info("Generation record created successfully", { 
+              metadata: { generationId: generation.id, jobId } 
+            });
             
             // Link all API logs to this generation
             try {
@@ -994,7 +1018,9 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
                 .eq('video_job_id', jobId)
                 .is('generation_id', null);
             } catch (error) {
-              console.error('Failed to link API logs to generation:', error);
+              logger.error("Failed to link API logs to generation", error as Error, { 
+                metadata: { jobId, generationId: generation.id } 
+              });
             }
           }
           
@@ -1008,7 +1034,9 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
           
           return; // Exit after successful completion
         } catch (uploadError: any) {
-          console.error('Error during video download/upload:', uploadError);
+          logger.error("Error during video download/upload", uploadError, { 
+            metadata: { jobId, renderId } 
+          });
           
           // Update job status to failed with detailed error
           await supabase.from('video_jobs').update({
@@ -1039,7 +1067,9 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
         full_response: result
       };
       
-      console.error('Shotstack render failed:', JSON.stringify(errorDetails, null, 2));
+      logger.error("Shotstack render failed", undefined, { 
+        metadata: errorDetails 
+      });
       
       throw new Error(`Shotstack rendering failed: ${errorDetails.shotstack_error || errorDetails.shotstack_message}`);
     }

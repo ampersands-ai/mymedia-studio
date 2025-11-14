@@ -22,7 +22,6 @@ import type { GenerationOutput } from "@/hooks/useGenerationState";
 import { CreationGroupSelector } from "@/components/custom-creation/CreationGroupSelector";
 import { InputPanel } from "@/components/custom-creation/InputPanel";
 import { OutputPanel } from "@/components/custom-creation/OutputPanel";
-import { GenerationsInProgress } from "@/components/custom-creation/GenerationsInProgress";
 import { BestPracticesCard } from "@/components/custom-creation/BestPracticesCard";
 import { supabase } from "@/integrations/supabase/client";
 import { createSignedUrl, extractStoragePath } from "@/lib/storage-utils";
@@ -572,23 +571,6 @@ const CustomCreation = () => {
           onGroupChange={setStateSelectedGroup}
         />
 
-        {/* Generations in Progress */}
-        <GenerationsInProgress
-          onNavigateToGeneration={(modelRecordId) => {
-            // Find and select the model
-            const targetModel = allModels?.find(m => m.record_id === modelRecordId);
-            if (targetModel) {
-              // Switch to the model's group if needed
-              const modelGroups = (Array.isArray(targetModel.groups) ? targetModel.groups : []) as string[];
-              if (modelGroups.length > 0 && !modelGroups.includes(state.selectedGroup)) {
-                setStateSelectedGroup(modelGroups[0] as CreationGroup);
-              }
-              // Select the model
-              setStateSelectedModel(modelRecordId);
-            }
-          }}
-          currentModelRecordId={state.selectedModel}
-        />
 
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-2 gap-6 mb-20 md:mb-6">

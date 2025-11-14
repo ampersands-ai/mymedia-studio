@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { EdgeLogger } from '../_shared/edge-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,9 @@ interface SessionRequest {
 }
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('session-manager', requestId);
+  
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -71,7 +75,7 @@ Deno.serve(async (req) => {
           });
 
         if (insertError) {
-          console.error('Error creating session:', insertError);
+          logger.error('Error creating session', insertError, { userId: user.id });
           throw insertError;
         }
 
@@ -102,7 +106,7 @@ Deno.serve(async (req) => {
           .order('last_activity_at', { ascending: false });
 
         if (listError) {
-          console.error('Error listing sessions:', listError);
+          logger.error('Error listing sessions', listError, { userId: user.id });
           throw listError;
         }
 
@@ -128,7 +132,10 @@ Deno.serve(async (req) => {
           .eq('user_id', user.id);
 
         if (revokeError) {
-          console.error('Error revoking session:', revokeError);
+          logger.error('Error revoking session', revokeError, { 
+            userId: user.id, 
+            metadata: { session_id } 
+          });
           throw revokeError;
         }
 
@@ -166,7 +173,10 @@ Deno.serve(async (req) => {
           .eq('is_active', true);
 
         if (updateError) {
-          console.error('Error updating session activity:', updateError);
+          logger.error('Error updating session activity', updateError, { 
+            userId: user.id, 
+            metadata: { session_id } 
+          });
           throw updateError;
         }
 

@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { generateEmailHTML } from "../_shared/email-templates.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -11,11 +12,15 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('send-daily-error-summary', requestId);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    logger.info('Starting daily error summary generation');
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -130,9 +135,15 @@ serve(async (req) => {
     });
 
     if (emailError) {
-      console.error('Failed to send email:', emailError);
+      logger.error('Failed to send daily summary email', emailError, { 
+        metadata: { adminEmail, totalErrors, newUserCount } 
+      });
       throw emailError;
     }
+
+    logger.info('Daily summary email sent successfully', { 
+      metadata: { adminEmail, totalErrors, newUserCount, healthScore } 
+    });
 
     return new Response(
       JSON.stringify({ 
@@ -147,7 +158,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error in send-daily-error-summary function:', error);
+    logger.error('Error in daily summary', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

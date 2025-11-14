@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { generateEmailHTML } from "../_shared/email-templates.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -11,6 +12,9 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('send-generation-timeout-alert', requestId);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -101,9 +105,15 @@ Recommended Actions:
     });
 
     if (emailError) {
-      console.error('Failed to send email:', emailError);
+      logger.error('Failed to send timeout alert email', emailError, {
+        metadata: { generation_id, elapsed_minutes, provider, model_name }
+      });
       throw emailError;
     }
+    
+    logger.info('Timeout alert email sent successfully', {
+      metadata: { generation_id, elapsed_minutes, provider, model_name, adminEmail }
+    });
 
     // Log to audit_logs
     await supabase.from('audit_logs').insert({

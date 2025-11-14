@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -29,6 +30,9 @@ const TOP_VOICES = [
 ];
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('sync-voice-previews', requestId);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -43,7 +47,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Fetching voices from ElevenLabs...');
+    logger.info('Fetching voices from ElevenLabs');
     const voicesResponse = await fetch('https://api.elevenlabs.io/v1/voices', {
       headers: { 'xi-api-key': ELEVENLABS_API_KEY }
     });
@@ -57,7 +61,7 @@ Deno.serve(async (req) => {
 
     // Process top voices
     for (const topVoice of TOP_VOICES) {
-      console.log(`Processing voice: ${topVoice.name} (${topVoice.id})`);
+      logger.info('Processing voice', { metadata: { voiceName: topVoice.name, voiceId: topVoice.id } });
       
       try {
         // Find the voice in the ElevenLabs response
@@ -73,7 +77,7 @@ Deno.serve(async (req) => {
         }
 
         // Download the preview audio
-        console.log(`Downloading preview from: ${voiceData.preview_url}`);
+        logger.info('Downloading preview', { metadata: { voiceName: topVoice.name, url: voiceData.preview_url } });
         const audioResponse = await fetch(voiceData.preview_url);
         
         if (!audioResponse.ok) {
@@ -85,7 +89,7 @@ Deno.serve(async (req) => {
 
         // Upload to Supabase Storage
         const filePath = `${topVoice.id}.mp3`;
-        console.log(`Uploading to storage: ${filePath}`);
+        logger.info('Uploading to storage', { metadata: { voiceName: topVoice.name, filePath } });
         
         const { error: uploadError } = await supabase.storage
           .from('voice-previews')
@@ -105,9 +109,9 @@ Deno.serve(async (req) => {
           status: 'success'
         });
 
-        console.log(`✓ Successfully uploaded ${topVoice.name}`);
+        logger.info('Voice uploaded successfully', { metadata: { voiceName: topVoice.name } });
       } catch (error: any) {
-        console.error(`✗ Failed to process ${topVoice.name}:`, error);
+        logger.error('Failed to process voice', error, { metadata: { voiceName: topVoice.name } });
         results.push({
           voice_id: topVoice.id,
           name: topVoice.name,
@@ -120,7 +124,9 @@ Deno.serve(async (req) => {
     const successCount = results.filter(r => r.status === 'success').length;
     const failedCount = results.filter(r => r.status === 'failed').length;
 
-    console.log(`\nSync complete: ${successCount} successful, ${failedCount} failed`);
+    logger.info('Sync complete', { 
+      metadata: { total: results.length, successful: successCount, failed: failedCount } 
+    });
 
     return new Response(
       JSON.stringify({ 
@@ -135,7 +141,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error in sync-voice-previews:', error);
+    logger.error('Error in sync-voice-previews', error);
     return new Response(
       JSON.stringify({ 
         success: false,

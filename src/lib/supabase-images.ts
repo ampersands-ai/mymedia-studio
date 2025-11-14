@@ -33,7 +33,8 @@ function cleanImagePath(bucketPath: string, bucket: string = 'generated-content'
     const m = cleanPath.match(/\/storage\/v1\/object\/sign\/[^/]+\/(.+)/);
     if (m) cleanPath = m[1];
   } else if (cleanPath.includes('/storage/v1/render/image/')) {
-    const m = cleanPath.match(/\/storage\/v1\/render\/image\/[^/]+\/(.+)/);
+    // Supports /render/image/{bucket}/path and /render/image/{mode}/{bucket}/path
+    const m = cleanPath.match(/\/storage\/v1\/render\/image\/(?:(?:public|sign|authenticated)\/)?[^/]+\/(.+)/);
     if (m) cleanPath = m[1];
   } else if (cleanPath.includes(`/${bucket}/`)) {
     const part = cleanPath.split(`/${bucket}/`)[1];
@@ -56,7 +57,11 @@ function inferBucket(bucketPath: string, fallback: string = 'generated-content')
   try {
     const asUrl = new URL(bucketPath);
     const p = asUrl.pathname;
-    let m = p.match(/\/storage\/v1\/(?:object\/(?:public|sign)|render\/image)\/([^/]+)\//);
+    // render/image with optional mode segment
+    let m = p.match(/\/storage\/v1\/render\/image\/(?:(?:public|sign|authenticated)\/)?([^/]+)\//);
+    if (m && m[1]) return m[1];
+    // object public/sign
+    m = p.match(/\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\//);
     if (m && m[1]) return m[1];
   } catch {
     // Not a URL; try to infer from leading segment like "bucket/path/to/file"
@@ -98,8 +103,23 @@ export function getOptimizedImageUrl(
   // Supabase Storage public URL pattern
   const baseUrl = import.meta.env.VITE_SUPABASE_URL;
 
+  // Determine if original path was a signed URL and preserve token
+  let modeSegment = '';
+  try {
+    const original = new URL(bucketPath);
+    const p = original.pathname;
+    if (p.includes('/storage/v1/object/sign/') || p.includes('/storage/v1/render/image/sign/')) {
+      modeSegment = 'sign/';
+      const token = original.searchParams.get('token') || original.searchParams.get('t');
+      if (token) params.set('token', token);
+    }
+  } catch {
+    // not a full URL, assume public
+  }
+
   const encodedPath = encodeURI(cleanPath);
-  return `${baseUrl}/storage/v1/render/image/${bucket}/${encodedPath}?${params.toString()}`;
+  const mode = modeSegment; // '' for public, 'sign/' for private
+  return `${baseUrl}/storage/v1/render/image/${mode}${bucket}/${encodedPath}?${params.toString()}`;
 }
 
 export function getPublicImageUrl(

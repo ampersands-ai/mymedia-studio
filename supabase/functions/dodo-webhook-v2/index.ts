@@ -2,6 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Webhook } from "https://esm.sh/svix@1";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { webhookLogger } from "../_shared/logger.ts";
 
 const WEBHOOK_VERSION = "2.0-fresh-deployment";
 
@@ -110,7 +111,7 @@ Deno.serve(async (req) => {
       
       // Step 2: Verify the webhook payload using Svix library
       const event = wh.verify(bodyText, headersNormalized) as any;
-      console.log(`✅ Security: Valid webhook verified via Svix (${headerSet})`, event.type || event.event_type);
+      logger.info('Security: Valid webhook verified via Svix', { metadata: { headerSet, eventType: event.type || event.event_type } });
 
       // Step 3: Check for duplicate webhook using idempotency
       const eventData = event.data || event;
@@ -202,16 +203,15 @@ async function handleWebhookEvent(supabase: any, event: any, webhookStartTime: n
       .single();
     
     if (profile && !profileError) {
-      userId = profile.id;
-      console.log('Found user by email fallback:', userId);
+      webhookLogger.info('Found user by email fallback', { userId });
     } else {
-      console.error('Could not find user by email:', profileError);
+      webhookLogger.error('Could not find user by email', profileError);
       throw new Error(`User not found for email: ${eventData.customer.email}`);
     }
   }
 
   if (!userId) {
-    console.error('No user_id in metadata and no customer email to lookup');
+    webhookLogger.error('No user_id in metadata and no customer email to lookup');
     throw new Error('No user_id in metadata and no customer email to lookup');
   }
 
@@ -264,7 +264,7 @@ async function handleWebhookEvent(supabase: any, event: any, webhookStartTime: n
       break;
 
     default:
-      console.log(`Unhandled event type: ${eventType}`);
+      webhookLogger.info(`Unhandled event type: ${eventType}`);
   }
 
   // Log to audit trail
@@ -286,7 +286,7 @@ async function handleWebhookEvent(supabase: any, event: any, webhookStartTime: n
     duration_ms: Date.now() - webhookStartTime,
     metadata: { event_type: eventType, user_id: userId }
   }).then(({ error }) => {
-    if (error) console.error('Failed to track analytics:', error);
+    if (error) webhookLogger.error('Failed to track analytics', error);
   });
 }
 
@@ -296,7 +296,7 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
   const planKey = planName.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
 
-  console.log(`Payment succeeded for user ${userId}, plan ${planName}`);
+  webhookLogger.info(`Payment succeeded for user ${userId}, plan ${planName}`);
 
   // Track payment completed in PostHog
   try {
@@ -319,7 +319,7 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
       });
     }
   } catch (error) {
-    console.error("PostHog tracking failed:", error);
+    webhookLogger.error("PostHog tracking failed", error);
   }
 
   // Get current tokens
@@ -333,7 +333,7 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
   const newTokensRemaining = (currentSub?.tokens_remaining || 0) + tokens;
   const newTokensTotal = (currentSub?.tokens_total || 0) + tokens;
 
-  console.log(`Adding ${tokens} tokens. Current: ${currentSub?.tokens_remaining}, New: ${newTokensRemaining}`);
+  webhookLogger.info(`Adding ${tokens} tokens. Current: ${currentSub?.tokens_remaining}, New: ${newTokensRemaining}`);
 
   // Update subscription with added tokens
   const { error } = await supabase
@@ -351,7 +351,7 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
     .eq('user_id', userId);
 
   if (error) {
-    console.error('Error updating subscription:', error);
+    webhookLogger.error('Error updating subscription', error);
     throw error;
   }
 }
@@ -359,7 +359,7 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
 async function handlePaymentFailed(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   
-  console.log(`Payment failed for user ${userId}`);
+  webhookLogger.info(`Payment failed for user ${userId}`);
 
   await supabase
     .from('user_subscriptions')
@@ -370,7 +370,7 @@ async function handlePaymentFailed(supabase: any, data: any, metadata: any) {
 async function handleSubscriptionActive(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   
-  console.log(`Subscription activated for user ${userId}`);
+  webhookLogger.info(`Subscription activated for user ${userId}`);
 
   await supabase
     .from('user_subscriptions')
@@ -386,7 +386,7 @@ async function handleSubscriptionActive(supabase: any, data: any, metadata: any)
 async function handleSubscriptionCancelled(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   
-  console.log(`Subscription cancelled for user ${userId}`);
+  webhookLogger.info(`Subscription cancelled for user ${userId}`);
 
   // Don't remove tokens immediately - let them use until period ends
   await supabase
@@ -398,7 +398,7 @@ async function handleSubscriptionCancelled(supabase: any, data: any, metadata: a
 async function handleSubscriptionExpired(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   
-  console.log(`Subscription expired for user ${userId}`);
+  webhookLogger.info(`Subscription expired for user ${userId}`);
 
   // Downgrade to freemium
   await supabase
@@ -420,7 +420,7 @@ async function handleSubscriptionRenewed(supabase: any, data: any, metadata: any
   const planKey = planName.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
 
-  console.log(`Subscription renewed for user ${userId}`);
+  webhookLogger.info(`Subscription renewed for user ${userId}`);
 
   // Get current subscription
   const { data: currentSub } = await supabase
@@ -447,7 +447,7 @@ async function handleSubscriptionPlanChanged(supabase: any, data: any, metadata:
   const planKey = newPlan.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
 
-  console.log(`Plan changed for user ${userId} to ${newPlan}`);
+  webhookLogger.info(`Plan changed for user ${userId} to ${newPlan}`);
 
   await supabase
     .from('user_subscriptions')
@@ -463,7 +463,7 @@ async function handleSubscriptionPlanChanged(supabase: any, data: any, metadata:
 async function handleSubscriptionOnHold(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   
-  console.log(`Subscription on hold for user ${userId}`);
+  webhookLogger.info(`Subscription on hold for user ${userId}`);
 
   await supabase
     .from('user_subscriptions')
@@ -475,7 +475,7 @@ async function handleRefundSucceeded(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   const refundAmount = data.amount || 0;
   
-  console.log(`Refund processed for user ${userId}, amount: ${refundAmount}`);
+  webhookLogger.info(`Refund processed for user ${userId}, amount: ${refundAmount}`);
 
   // Optionally deduct tokens proportionally
   await supabase

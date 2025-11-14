@@ -1,5 +1,6 @@
 import { callRunware } from "./runware.ts";
 
+import { webhookLogger } from "../../_shared/logger.ts";
 export interface ProviderRequest {
   model: string;
   prompt: string;
@@ -19,7 +20,7 @@ export async function callProvider(
   provider: string,
   request: ProviderRequest
 ): Promise<ProviderResponse> {
-  console.log(`Calling provider: ${provider}`);
+  webhookLogger.info(`Calling provider: ${provider}`);
 
   switch (provider) {
     case 'runware':

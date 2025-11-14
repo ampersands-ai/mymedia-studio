@@ -1,4 +1,4 @@
-
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,13 +10,15 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
+  const logger = new EdgeLogger('generate-video-topic', requestId);
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    console.log('Generating video topic with AI...');
+    logger.info('Generating video topic with AI...');
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -50,7 +52,7 @@ Generate ONE creative topic now:`
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Lovable AI error:', response.status, errorText);
+      logger.error('Lovable AI error', new Error(String(errorText)), { metadata: { status: response.status } });
       
       if (response.status === 429) {
         return new Response(
@@ -76,14 +78,14 @@ Generate ONE creative topic now:`
       throw new Error('No topic generated');
     }
 
-    console.log('Generated topic:', topic);
+    logger.info('Generated topic', { metadata: { topic } });
 
     return new Response(
       JSON.stringify({ topic }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error generating video topic:', error);
+    logger.error('Error generating video topic:', error as any);
     return new Response(
       JSON.stringify({ error: error.message || 'Failed to generate topic' }),
       { 

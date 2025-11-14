@@ -208,10 +208,12 @@ Deno.serve(async (req) => {
 
       if (!dodoResponse.ok) {
         const errorText = await dodoResponse.text();
-        console.error('Dodo Payments API error:', {
-          status: dodoResponse.status,
-          statusText: dodoResponse.statusText,
-          body: errorText,
+        logger.error('Dodo Payments API error', new Error(errorText), {
+          metadata: {
+            status: dodoResponse.status,
+            statusText: dodoResponse.statusText,
+            body: errorText,
+          }
         });
         throw new Error(`Dodo Payments API returned ${dodoResponse.status}: ${errorText}`);
       }
@@ -222,7 +224,7 @@ Deno.serve(async (req) => {
       
       // Handle DNS errors specifically
       if (errorMessage === 'DNS_ERROR') {
-        console.error('DNS resolution failed after retries');
+        logger.error('DNS resolution failed after retries');
         return new Response(
           JSON.stringify({ 
             error: 'Payment service temporarily unavailable. Please retry in a few seconds.',
@@ -239,11 +241,13 @@ Deno.serve(async (req) => {
       throw error;
     }
 
-    console.log('Payment session created successfully:', {
-      user_id: user.id,
-      plan: planKey,
-      session_id: dodoData.session_id,
-      checkout_url: dodoData.checkout_url,
+    logger.info('Payment session created successfully', {
+      metadata: {
+        user_id: user.id,
+        plan: planKey,
+        session_id: dodoData.session_id,
+        checkout_url: dodoData.checkout_url,
+      }
     });
 
     // Log to audit trail
@@ -270,7 +274,7 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error creating payment session:', error);
+    logger.error('Error creating payment session', error as any);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
       JSON.stringify({ error: errorMessage }),

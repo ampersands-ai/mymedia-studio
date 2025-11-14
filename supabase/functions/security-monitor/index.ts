@@ -195,7 +195,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in security-monitor function:', error);
+    logger.error('Error in security-monitor function', error instanceof Error ? error : new Error(String(error)));
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

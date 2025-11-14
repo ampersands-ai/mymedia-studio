@@ -133,7 +133,7 @@ Recommended Actions:
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error in send-generation-timeout-alert function:', error);
+    logger.error('Error in send-generation-timeout-alert function', error instanceof Error ? error : new Error(String(error)));
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

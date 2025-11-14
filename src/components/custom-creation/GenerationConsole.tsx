@@ -21,6 +21,7 @@ interface GenerationConsoleProps {
   contentType: string;
   estimatedTimeSeconds: number | null;
   isPolling: boolean;
+  showProgress?: boolean;
   onNavigateLightbox: (direction: 'prev' | 'next') => void;
   onOpenLightbox: (index: number) => void;
   onCloseLightbox: () => void;
@@ -53,6 +54,7 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
   contentType,
   estimatedTimeSeconds,
   isPolling,
+  showProgress = true,
   onNavigateLightbox,
   onOpenLightbox,
   onCloseLightbox,
@@ -88,12 +90,14 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
             </p>
           </div>
 
-          <GenerationProgress
-            startTime={generationState.generationStartTime || Date.now()}
-            isComplete={!!generationState.generatedOutput || generationState.generatedOutputs.length > 0}
-            completedAt={generationState.generationCompleteTime || undefined}
-            estimatedTimeSeconds={estimatedTimeSeconds}
-          />
+          {showProgress && (
+            <GenerationProgress
+              startTime={generationState.generationStartTime || Date.now()}
+              isComplete={!!generationState.generatedOutput || generationState.generatedOutputs.length > 0}
+              completedAt={generationState.generationCompleteTime || undefined}
+              estimatedTimeSeconds={estimatedTimeSeconds}
+            />
+          )}
 
           {generationState.generatedOutputs.length > 0 ? (
             <div className="space-y-3 pt-2">

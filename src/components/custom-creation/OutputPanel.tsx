@@ -96,22 +96,24 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
       !generationState.generatedOutput && 
       generationState.generatedOutputs.length === 0;
 
-    return (
-      <Card ref={ref} className="h-full flex flex-col border-border/40 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
-        <div className="border-b border-border px-4 md:px-6 py-3 md:py-4 bg-muted/30 shrink-0">
-          <h2 className="text-base md:text-lg font-bold text-foreground">Output</h2>
-        </div>
+    const showProgress = showStatusBanner || !!generationState.generatedOutput || generationState.generatedOutputs.length > 0;
 
-        {/* Status Banner */}
-        {showStatusBanner && (
-          <div className="border-b border-border/50 bg-primary/5 px-4 py-2 flex items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-              <Loader2 className="h-3 w-3 animate-spin flex-shrink-0 text-primary" />
-              <span className="text-muted-foreground">
-                Generating your content...
-              </span>
-            </div>
-            <Button
+    return (
+        <Card ref={ref} className="h-full flex flex-col border-border/40 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
+          <div className="border-b border-border px-4 md:px-6 py-3 md:py-4 bg-muted/30 shrink-0">
+            <h2 className="text-base md:text-lg font-bold text-foreground">Output</h2>
+          </div>
+
+          {/* Status Banner */}
+          {showStatusBanner && (
+            <div className="border-b border-border/50 bg-primary/5 px-4 py-2 flex items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                <Loader2 className="h-3 w-3 animate-spin flex-shrink-0 text-primary" />
+                <span className="text-muted-foreground">
+                  Generating your content...
+                </span>
+              </div>
+              <Button
               variant="ghost"
               size="sm"
               onClick={onViewHistory}
@@ -130,6 +132,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
               contentType={contentType}
               estimatedTimeSeconds={estimatedTimeSeconds}
               isPolling={isPolling}
+              showProgress={showProgress}
               onNavigateLightbox={onNavigateLightbox}
               onOpenLightbox={onOpenLightbox}
               onCloseLightbox={onCloseLightbox}

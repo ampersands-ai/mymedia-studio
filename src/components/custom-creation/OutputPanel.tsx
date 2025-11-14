@@ -6,6 +6,7 @@ import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import type { GenerationOutput, CaptionData } from "@/types/custom-creation";
 import { Button } from "@/components/ui/button";
 import { useActiveGenerations } from "@/hooks/useActiveGenerations";
+import { useConcurrentGenerationLimit } from "@/hooks/useConcurrentGenerationLimit";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 
@@ -89,6 +90,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
     ref
   ) => {
     const { data: activeGenerations = [] } = useActiveGenerations();
+    const { data: maxConcurrent = 1 } = useConcurrentGenerationLimit();
     const navigate = useNavigate();
 
     const hasGeneration =
@@ -121,7 +123,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
                 >
                   <Loader2 className="h-3 w-3 animate-spin" />
                   <span className="text-xs font-medium">
-                    {activeGenerations.length}/{activeGenerations.length > 99 ? '99+' : activeGenerations.length}
+                    {activeGenerations.length}/{maxConcurrent}
                   </span>
                 </Badge>
               )}

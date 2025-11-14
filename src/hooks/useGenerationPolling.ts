@@ -40,7 +40,10 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
    */
   const pollStatus = useCallback(async (generationId: string) => {
     try {
-      logger.debug('Polling generation status', { generationId });
+      logger.info('Polling generation status', { 
+        generationId,
+        timestamp: new Date().toISOString() 
+      } as any);
       
       // Fetch parent generation with model info
       const { data: parentData, error } = await supabase
@@ -65,6 +68,13 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
         throw error;
       }
 
+      logger.info('Generation status fetched', {
+        generationId,
+        status: parentData.status,
+        hasStoragePath: !!parentData.storage_path,
+        storagePath: parentData.storage_path?.substring(0, 50)
+      } as any);
+
       // Treat 'cancelled' as terminal state
       if (parentData.status === 'cancelled') {
         clearAllTimers();
@@ -75,6 +85,11 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
       }
 
       if (parentData.status === 'completed' || parentData.status === 'failed') {
+        logger.info('Generation reached terminal state', {
+          generationId,
+          status: parentData.status
+        } as any);
+
         clearAllTimers();
         setIsPolling(false);
         setPollingId(null);
@@ -87,6 +102,11 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
           
           let validOutputs: GenerationOutput[] = [];
           
+          logger.info('Starting child generation fetch', { 
+            generationId,
+            maxRetries 
+          } as any);
+
           // Retry loop for fetching children
           while (retryCount <= maxRetries) {
             const { data: childrenData } = await supabase
@@ -131,6 +151,15 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
             // Filter valid outputs with storage_path
             validOutputs = allOutputs.filter(o => !!o.storage_path);
             
+            logger.info('Outputs fetched', {
+              generationId,
+              allOutputsCount: allOutputs.length,
+              validOutputsCount: validOutputs.length,
+              childrenCount: childrenData?.length || 0,
+              retryCount,
+              parentHasPath: !!parentData.storage_path
+            } as any);
+            
             // If we have outputs OR max retries reached, break
             if (validOutputs.length > 0 || retryCount === maxRetries) {
               break;
@@ -155,16 +184,19 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
           if (uniqueOutputs.length === 0) {
             logger.error('Generation completed but outputs not ready', undefined, {
               generationId,
-              retriesUsed: retryCount
+              retriesUsed: retryCount,
+              parentStoragePath: parentData.storage_path,
+              allOutputsCount: validOutputs.length
             } as any);
             options.onError?.('Generation completed but outputs are not ready after retries.');
             return;
           }
 
-          logger.info('Generation complete', {
+          logger.info('✅ Generation complete - calling onComplete', {
             generationId,
             outputCount: uniqueOutputs.length,
-            retriesUsed: retryCount
+            retriesUsed: retryCount,
+            firstOutputPath: uniqueOutputs[0]?.storage_path?.substring(0, 50)
           } as any);
 
           // Call completion callback with parent ID

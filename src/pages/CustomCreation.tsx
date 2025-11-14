@@ -519,7 +519,9 @@ const CustomCreation = () => {
     modelSchema?.properties?.positive_prompt ||
     textKey
   );
-  const isPromptRequired = (modelSchema?.required || []).includes('prompt');
+  const isPromptRequired = (modelSchema?.required || []).some((field: string) => 
+    ['prompt', 'positivePrompt', 'positive_prompt'].includes(field)
+  );
   const maxPromptLength = schemaHelpers.getMaxPromptLength(currentModel as any, state.modelParameters.customMode);
   const hasDuration = !!(modelSchema?.properties?.duration);
   const hasIncrement = !!(modelSchema?.properties?.increment || modelSchema?.properties?.incrementBySeconds);

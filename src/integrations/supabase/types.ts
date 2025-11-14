@@ -625,6 +625,78 @@ export type Database = {
         }
         Relationships: []
       }
+      error_events: {
+        Row: {
+          admin_notified: boolean | null
+          category: string
+          created_at: string | null
+          endpoint: string | null
+          error_code: string | null
+          fingerprint: string | null
+          function_name: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          notified_at: string | null
+          request_id: string | null
+          resolution_notes: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          stack_trace: string | null
+          user_facing: boolean | null
+          user_id: string | null
+          user_message: string | null
+        }
+        Insert: {
+          admin_notified?: boolean | null
+          category: string
+          created_at?: string | null
+          endpoint?: string | null
+          error_code?: string | null
+          fingerprint?: string | null
+          function_name?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          notified_at?: string | null
+          request_id?: string | null
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          stack_trace?: string | null
+          user_facing?: boolean | null
+          user_id?: string | null
+          user_message?: string | null
+        }
+        Update: {
+          admin_notified?: boolean | null
+          category?: string
+          created_at?: string | null
+          endpoint?: string | null
+          error_code?: string | null
+          fingerprint?: string | null
+          function_name?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          notified_at?: string | null
+          request_id?: string | null
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          stack_trace?: string | null
+          user_facing?: boolean | null
+          user_id?: string | null
+          user_message?: string | null
+        }
+        Relationships: []
+      }
       external_api_configs: {
         Row: {
           alert_email: string[] | null
@@ -2127,6 +2199,62 @@ export type Database = {
         }
         Relationships: []
       }
+      user_error_notifications: {
+        Row: {
+          action_label: string | null
+          action_url: string | null
+          created_at: string | null
+          dismissed: boolean | null
+          dismissed_at: string | null
+          error_event_id: string
+          expires_at: string | null
+          id: string
+          message: string
+          shown: boolean | null
+          shown_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          action_label?: string | null
+          action_url?: string | null
+          created_at?: string | null
+          dismissed?: boolean | null
+          dismissed_at?: string | null
+          error_event_id: string
+          expires_at?: string | null
+          id?: string
+          message: string
+          shown?: boolean | null
+          shown_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          action_label?: string | null
+          action_url?: string | null
+          created_at?: string | null
+          dismissed?: boolean | null
+          dismissed_at?: string | null
+          error_event_id?: string
+          expires_at?: string | null
+          id?: string
+          message?: string
+          shown?: boolean | null
+          shown_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_error_notifications_error_event_id_fkey"
+            columns: ["error_event_id"]
+            isOneToOne: false
+            referencedRelation: "error_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_log_summaries: {
         Row: {
           created_at: string | null
@@ -3061,6 +3189,10 @@ export type Database = {
       }
       increment_tokens: {
         Args: { amount: number; user_id_param: string }
+        Returns: undefined
+      }
+      resolve_error_event: {
+        Args: { p_error_id: string; p_resolution_notes?: string }
         Returns: undefined
       }
       sanitize_provider_data: { Args: { data: Json }; Returns: Json }

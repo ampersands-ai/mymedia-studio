@@ -88,11 +88,13 @@ Deno.serve(async (req) => {
       const MAX_TIMESTAMP_AGE = 5 * 60; // 5 minutes
       
       if (isNaN(timestamp) || Math.abs(now - timestamp) > MAX_TIMESTAMP_AGE) {
-        webhookLogger.security('timestamp', false, {
-          timestamp, 
-          now, 
-          diff: now - timestamp,
-          reason: isNaN(timestamp) ? 'invalid_timestamp' : 'timestamp_expired'
+        logger.warn('Timestamp validation failed', {
+          metadata: {
+            timestamp, 
+            now, 
+            diff: now - timestamp,
+            reason: isNaN(timestamp) ? 'invalid_timestamp' : 'timestamp_expired'
+          }
         });
         return new Response(
           JSON.stringify({ error: 'Webhook timestamp expired or invalid' }),
@@ -113,9 +115,8 @@ Deno.serve(async (req) => {
       const event = wh.verify(bodyText, headersNormalized) as any;
       const eventType = event.type || event.event_type;
       
-      webhookLogger.security('svix_signature', true, {
-        headerSet,
-        eventType
+      logger.info('Svix signature verified', {
+        metadata: { headerSet, eventType }
       });
 
       // Step 3: Check for duplicate webhook using idempotency
@@ -129,9 +130,8 @@ Deno.serve(async (req) => {
         .maybeSingle();
       
       if (existingEvent) {
-        webhookLogger.security('idempotency', true, { 
-          idempotencyKey,
-          isDuplicate: true 
+        logger.info('Duplicate webhook detected', { 
+          metadata: { idempotencyKey, isDuplicate: true }
         });
         return new Response(JSON.stringify({ received: true, duplicate: true }), {
           status: 200,
@@ -139,13 +139,12 @@ Deno.serve(async (req) => {
         });
       }
       
-      webhookLogger.security('idempotency', true, { 
-        idempotencyKey,
-        isDuplicate: false 
+      logger.info('Processing new webhook', { 
+        metadata: { idempotencyKey, isDuplicate: false }
       });
 
       // Step 4: Process the event
-      webhookLogger.processing(idempotencyKey, { eventType });
+      logger.info('Processing webhook event', { metadata: { idempotencyKey, eventType } });
       await handleWebhookEvent(supabase, event);
       
       // Step 5: Record webhook event for idempotency
@@ -155,17 +154,19 @@ Deno.serve(async (req) => {
         processed_at: new Date().toISOString()
       });
 
-      webhookLogger.success(idempotencyKey, { eventType });
+      logger.info('Webhook processed successfully', { metadata: { idempotencyKey, eventType } });
       
       return new Response(JSON.stringify({ received: true }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (verifyError) {
-      webhookLogger.error('Svix verification failed', verifyError instanceof Error ? verifyError : new Error(String(verifyError)), {
-        headerSet,
-        bodyLength: bodyText.length,
-        timestamp: svixTimestamp
+      logger.error('Svix verification failed', verifyError instanceof Error ? verifyError : new Error(String(verifyError)), {
+        metadata: {
+          headerSet,
+          bodyLength: bodyText.length,
+          timestamp: svixTimestamp
+        }
       });
       return new Response(
         JSON.stringify({ error: 'Invalid signature' }),
@@ -173,7 +174,7 @@ Deno.serve(async (req) => {
       );
     }
   } catch (error) {
-    webhookLogger.error('Webhook processing failed', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Webhook processing failed', error instanceof Error ? error : new Error(String(error)));
     return createSafeErrorResponse(error, 'dodo-payments-webhook', corsHeaders);
   }
 });
@@ -182,7 +183,7 @@ async function handleWebhookEvent(supabase: any, event: any) {
   const eventType = event.type || event.event_type;
   const eventData = event.data || event;
 
-  webhookLogger.info('Processing webhook event', { eventType });
+  logger.info('Processing webhook event', { metadata: { eventType } });
 
   // Extract metadata (user_id, plan, etc.)
   const metadata = eventData.metadata || {};

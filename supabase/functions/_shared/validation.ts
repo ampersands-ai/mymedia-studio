@@ -252,7 +252,14 @@ export function validateRequest<T>(
   const result = schema.safeParse(data);
   
   if (!result.success) {
-    const formattedErrors = result.error.flatten().fieldErrors;
+    const rawErrors = result.error.flatten().fieldErrors;
+    // Filter out undefined values to satisfy type constraints
+    const formattedErrors: Record<string, string[]> = {};
+    for (const [key, value] of Object.entries(rawErrors)) {
+      if (Array.isArray(value)) {
+        formattedErrors[key] = value;
+      }
+    }
     
     if (logger) {
       logger.warn('Request validation failed', {

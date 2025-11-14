@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useUserTokens } from "@/hooks/useUserTokens";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { toast } from "sonner";
 import { MobileMenu } from "@/components/MobileMenu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -21,6 +22,7 @@ export const GlobalHeader = () => {
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
   const { data: tokenData } = useUserTokens();
+  const { updateProgress } = useOnboarding();
   const creditBalance = tokenData?.tokens_remaining ?? null;
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -129,85 +131,18 @@ export const GlobalHeader = () => {
             )}
 
             {creditBalance !== null && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 flex items-center gap-2 hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md">
-                    <Coins className="h-5 w-5 text-primary-orange" />
-                    <span className="font-bold text-base">
-                      {creditBalance.toLocaleString()}
-                    </span>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent 
-                  className="w-80 bg-popover border-2 border-secondary-600 dark:border-secondary-500 shadow-lg p-4 animate-in fade-in-0 zoom-in-95 duration-200"
-                  align="end"
-                  sideOffset={8}
-                >
-                  <div className="space-y-4">
-                    {/* Credit Balance Header */}
-                    <div className="border-b-2 border-neutral-200 pb-3">
-                      <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
-                        Credit Balance
-                      </p>
-                      <p className="text-3xl font-black text-foreground mt-1">
-                        {creditBalance.toLocaleString()}
-                      </p>
-                    </div>
-
-                    {/* Conversion Estimates */}
-                    <div className="space-y-3">
-                      <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
-                        Approximate Creations
-                      </p>
-                      <div className="space-y-2">
-                        {(() => {
-                          const conversions = getCreditConversions(creditBalance);
-                          return (
-                            <>
-                              <div className="flex items-center justify-between py-2 px-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
-                                <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-                                  Videos
-                                </span>
-                                <span className="text-base font-black text-secondary-700">
-                                  ~{conversions.videos}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between py-2 px-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
-                                <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-                                  Images
-                                </span>
-                                <span className="text-base font-black text-secondary-700">
-                                  ~{conversions.images}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between py-2 px-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
-                                <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-                                  Audio
-                                </span>
-                                <span className="text-base font-black text-secondary-700">
-                                  ~{conversions.audio}
-                                </span>
-                              </div>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* Usage History Link */}
-                    <div className="pt-2 border-t-2 border-neutral-200">
-                      <Link 
-                        to="/dashboard/settings" 
-                        state={{ defaultTab: 'history' }}
-                        className="flex items-center justify-center gap-2 py-2 px-4 bg-secondary-600 hover:bg-secondary-700 text-white font-bold text-sm rounded-lg transition-colors duration-200"
-                      >
-                        <Clock className="h-4 w-4" />
-                        View Usage History
-                      </Link>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <button 
+                onClick={() => {
+                  updateProgress({ viewedTokenCost: true });
+                  navigate("/dashboard/settings", { state: { defaultTab: 'usage' } });
+                }}
+                className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 flex items-center gap-2 hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md"
+              >
+                <Coins className="h-5 w-5 text-primary-orange" />
+                <span className="font-bold text-base">
+                  {creditBalance.toLocaleString()}
+                </span>
+              </button>
             )}
 
             {isAdmin && (

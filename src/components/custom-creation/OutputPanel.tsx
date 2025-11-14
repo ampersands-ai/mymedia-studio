@@ -94,6 +94,16 @@ export const OutputPanel = forwardRef<HTMLDivElement, OutputPanelProps>(
       !generationState.generatedOutput && 
       generationState.generatedOutputs.length === 0;
 
+    console.log('🎨 OutputPanel render', {
+      hasGeneration,
+      showStatusBanner,
+      outputsLength: generationState.generatedOutputs.length,
+      hasGeneratedOutput: !!generationState.generatedOutput,
+      localGenerating,
+      isGenerating,
+      pollingGenerationId
+    });
+
     return (
       <Card ref={ref} className="h-full flex flex-col border-border/40 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
         <div className="border-b border-border px-4 md:px-6 py-3 md:py-4 bg-muted/30 shrink-0">

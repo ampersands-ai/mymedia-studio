@@ -70,6 +70,13 @@ const CustomCreation = () => {
   // Generation polling
   const { startPolling, stopPolling, isPolling } = useGenerationPolling({
     onComplete: (outputs, parentId) => {
+      console.log('🎬 VIDEO GENERATION COMPLETE', {
+        outputsCount: outputs?.length,
+        outputs: outputs,
+        firstStoragePath: outputs[0]?.storage_path,
+        parentId
+      });
+
       updateState({
         generatedOutputs: outputs,
         generatedOutput: outputs[0]?.storage_path || null,
@@ -78,6 +85,11 @@ const CustomCreation = () => {
         localGenerating: false,
         pollingGenerationId: null,
         parentGenerationId: parentId || null,
+      });
+
+      console.log('✅ State updated - checking current state', {
+        stateOutputs: state.generatedOutputs,
+        stateOutput: state.generatedOutput
       });
 
       // Update onboarding progress

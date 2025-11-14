@@ -840,6 +840,10 @@ Deno.serve(async (req) => {
               id: generation.id,
               generation_id: generation.id,
               status: 'processing',
+              tokens_used: tokenCost,
+              content_type: model.content_type,
+              enhanced: isPromptEnhanced,
+              is_async: true,
               message: 'Generation started. Check back soon for results.'
             }),
             { status: 202, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

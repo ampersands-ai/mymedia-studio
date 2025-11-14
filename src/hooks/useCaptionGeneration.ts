@@ -31,6 +31,15 @@ export const useCaptionGeneration = (
     const outputsToUse = outputs || generatedOutputs;
     if (outputsToUse.length === 0) return;
     
+    // Prevent concurrent calls
+    if (isGeneratingCaption) {
+      logger.warn('Caption generation already in progress', {
+        component: 'useCaptionGeneration',
+        operation: 'generateCaption'
+      });
+      return;
+    }
+    
     setIsGeneratingCaption(true);
     try {
       const selectedModelData = filteredModels.find(m => m.record_id === selectedModel);
@@ -50,26 +59,23 @@ export const useCaptionGeneration = (
         hashtags: captionResult.hashtags,
         generated_at: captionResult.generated_at
       });
-      
-      toast.success("Caption and hashtags generated!");
     } catch (err) {
       logger.error('Caption generation failed', err, {
         component: 'useCaptionGeneration',
         operation: 'generateCaption',
         generationId: outputsToUse[0]?.id
       });
-      toast.error("Failed to generate caption");
+      toast.error("Failed to generate caption. Please try again.");
     } finally {
       setIsGeneratingCaption(false);
     }
-  }, [generatedOutputs, prompt, selectedModel, filteredModels]);
+  }, [generatedOutputs, prompt, selectedModel, filteredModels, isGeneratingCaption]);
 
   /**
    * Regenerate caption
    */
   const regenerateCaption = useCallback(async () => {
     await generateCaption();
-    toast.success("Caption regenerated!");
   }, [generateCaption]);
 
   /**

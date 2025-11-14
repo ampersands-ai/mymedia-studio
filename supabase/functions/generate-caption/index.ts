@@ -121,95 +121,140 @@ Deno.serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    const systemPrompt = `You are a social media expert. Generate a captivating caption and 15 popular hashtags that describe the ${content_type === 'video' ? 'video' : 'image'} content.
+    const systemPrompt = `You are a social media expert. Generate a captivating caption and 15 popular hashtags.
 
-Content Type: ${content_type}
-What the ${content_type === 'video' ? 'video' : 'image'} shows: ${prompt}
+Content: ${prompt}
 
-Create a caption (150-280 characters, 2-3 complete sentences) that:
-- CRITICAL: Caption MUST end with proper punctuation (. ! or ?)
-- NO incomplete thoughts or cut-off sentences
-- Describes what's actually IN the ${content_type === 'video' ? 'video' : 'image'}
-- Is engaging and works well on Instagram, Twitter, TikTok, or other social media
-- Does NOT mention AI, models, or the generation process
-- Focuses on the visual content and subject matter
+CAPTION REQUIREMENTS (150-250 characters):
+- Write 2-3 complete sentences
+- MUST end with . or ! or ?
+- NO incomplete sentences or trailing words
+- Engaging for Instagram/Twitter/TikTok
+- Focus on the actual content, not the AI process
 
-Make the hashtags relevant to:
-- The actual subject matter in the ${content_type === 'video' ? 'video' : 'image'}
-- Popular related topics
-- Niche-specific content categories
-- Current trends related to the content
+Example good captions:
+"A stunning mountain landscape at sunset. The golden light illuminates the peaks beautifully!"
+"Delicious homemade pizza with fresh ingredients. Perfect comfort food for any occasion."
 
-IMPORTANT: Each hashtag MUST include the # symbol (e.g., #Fashion, #Style).`;
+HASHTAG REQUIREMENTS:
+- Exactly 15 hashtags
+- Each MUST start with # (e.g., #Fashion, #Style)
+- Mix popular and niche tags
+- Relevant to the content shown`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        max_completion_tokens: 250,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: 'Generate a captivating caption and exactly 15 popular hashtags for this content.' }
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "generate_caption_hashtags",
-              description: "Generate a social media caption and hashtags",
-              parameters: {
-                type: "object",
-                properties: {
-                  caption: { 
-                    type: "string",
-                    description: "2-3 sentence engaging caption"
+    // Attempt caption generation with retry logic
+    let caption: string;
+    let hashtags: string[];
+    let attemptCount = 0;
+    const maxAttempts = 2;
+
+    while (attemptCount < maxAttempts) {
+      attemptCount++;
+      
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          max_completion_tokens: 250,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { 
+              role: 'user', 
+              content: attemptCount === 1 
+                ? 'Generate a captivating caption and exactly 15 popular hashtags for this content.' 
+                : 'CRITICAL: The caption MUST end with . or ! or ? - Generate the caption again with PROPER ENDING PUNCTUATION.'
+            }
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "generate_caption_hashtags",
+                description: "Generate a social media caption and hashtags",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    caption: { 
+                      type: "string",
+                      description: "2-3 sentence engaging caption ENDING with . or ! or ?"
+                    },
+                    hashtags: {
+                      type: "array",
+                      items: { type: "string" },
+                      minItems: 15,
+                      maxItems: 15,
+                      description: "Exactly 15 hashtags WITH # symbol (e.g., #Fashion)"
+                    }
                   },
-                  hashtags: {
-                    type: "array",
-                    items: { type: "string" },
-                    minItems: 15,
-                    maxItems: 15,
-                    description: "Exactly 15 hashtags WITH # symbol (e.g., #Fashion)"
-                  }
-                },
-                required: ["caption", "hashtags"],
-                additionalProperties: false
+                  required: ["caption", "hashtags"],
+                  additionalProperties: false
+                }
               }
             }
-          }
-        ],
-        tool_choice: { type: "function", function: { name: "generate_caption_hashtags" } }
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      logger.error('Lovable AI request failed', undefined, {
-        metadata: { status: response.status, error: errorText }
+          ],
+          tool_choice: { type: "function", function: { name: "generate_caption_hashtags" } }
+        })
       });
-      throw new Error(`AI generation failed: ${response.status}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error('Lovable AI request failed', undefined, {
+          metadata: { status: response.status, error: errorText, attempt: attemptCount }
+        });
+        throw new Error(`AI generation failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      logger.debug('AI response received', { metadata: { has_tool_calls: Boolean(data.choices?.[0]?.message?.tool_calls), attempt: attemptCount } });
+
+      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+      if (!toolCall) {
+        logger.error('No tool call in AI response', undefined, { metadata: { response: JSON.stringify(data) } });
+        throw new Error('AI did not return expected tool call format');
+      }
+
+      const validatedToolCall = AIToolCallSchema.parse(toolCall);
+      const result = JSON.parse(validatedToolCall.function.arguments);
+
+      // Apply graceful fallback: add punctuation if missing
+      let captionText = result.caption?.trim() || '';
+      if (captionText && !captionText.match(/[.!?]$/)) {
+        logger.warn('Caption missing punctuation, applying fallback', { metadata: { original: captionText } });
+        captionText = captionText + '.';
+      }
+
+      // Now try to validate
+      try {
+        const validatedResult: CaptionResponse = CaptionResponseSchema.parse({
+          caption: captionText,
+          hashtags: result.hashtags
+        });
+        
+        caption = validatedResult.caption;
+        hashtags = validatedResult.hashtags;
+        
+        logger.info('Caption validation passed', {
+          metadata: { 
+            caption_length: caption.length,
+            hashtags_count: hashtags.length,
+            attempt: attemptCount
+          }
+        });
+        break; // Success, exit retry loop
+      } catch (validationError) {
+        if (attemptCount >= maxAttempts) {
+          logger.error('Caption validation failed after retries', validationError, {
+            metadata: { attempts: maxAttempts, caption: captionText }
+          });
+          throw validationError;
+        }
+        logger.warn('Caption validation failed, retrying', { metadata: { attempt: attemptCount, error: String(validationError) } });
+      }
     }
-
-    const data = await response.json();
-    logger.debug('AI response received', { metadata: { has_tool_calls: Boolean(data.choices?.[0]?.message?.tool_calls) } });
-
-    // Validate tool call structure
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
-      logger.error('No tool call in AI response', undefined, { metadata: { response: JSON.stringify(data) } });
-      throw new Error('AI did not return expected tool call format');
-    }
-
-    const validatedToolCall = AIToolCallSchema.parse(toolCall);
-    const result = JSON.parse(validatedToolCall.function.arguments);
-
-    // Validate caption and hashtags with Zod
-    const validatedResult: CaptionResponse = CaptionResponseSchema.parse(result);
-    const { caption, hashtags } = validatedResult;
 
     logger.info('Caption validation passed', {
       metadata: { 

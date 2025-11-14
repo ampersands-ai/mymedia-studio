@@ -103,7 +103,7 @@ const CustomCreation = () => {
 
       // Generate caption if enabled
       if (state.generateCaption && outputs.length > 0) {
-        generateCaption();
+        generateCaption(outputs);
       }
     },
     onError: (message?: string) => {
@@ -214,8 +214,8 @@ const CustomCreation = () => {
           }, 300);
 
           // Generate caption if enabled
-          if (state.generateCaption) {
-            generateCaption();
+          if (state.generateCaption && updatedOutputs.length > 0) {
+            generateCaption(updatedOutputs);
           }
         } else {
           console.warn('⚠️ Generation completed but no outputs found');
@@ -319,8 +319,8 @@ const CustomCreation = () => {
                 }, 300);
                 
                 // Generate caption if enabled
-                if (state.generateCaption) {
-                  generateCaption();
+                if (state.generateCaption && updatedOutputs.length > 0) {
+                  generateCaption(updatedOutputs);
                 }
               } else {
                 console.warn('⚠️ Generation completed but no outputs found');

@@ -25,16 +25,18 @@ export const useCaptionGeneration = (
 
   /**
    * Generate caption and hashtags
+   * @param outputs - Optional fresh outputs array to avoid stale state
    */
-  const generateCaption = useCallback(async () => {
-    if (generatedOutputs.length === 0) return;
+  const generateCaption = useCallback(async (outputs?: GenerationOutput[]) => {
+    const outputsToUse = outputs || generatedOutputs;
+    if (outputsToUse.length === 0) return;
     
     setIsGeneratingCaption(true);
     try {
       const selectedModelData = filteredModels.find(m => m.record_id === selectedModel);
       const { data: captionResult, error } = await supabase.functions.invoke('generate-caption', {
         body: {
-          generation_id: generatedOutputs[0].id,
+          generation_id: outputsToUse[0].id,
           prompt: prompt,
           content_type: selectedModelData?.content_type || 'image',
           model_name: selectedModelData?.model_name || 'AI Model'
@@ -54,7 +56,7 @@ export const useCaptionGeneration = (
       logger.error('Caption generation failed', err, {
         component: 'useCaptionGeneration',
         operation: 'generateCaption',
-        generationId: generatedOutputs[0]?.id
+        generationId: outputsToUse[0]?.id
       });
       toast.error("Failed to generate caption");
     } finally {

@@ -176,7 +176,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
     );
   } catch (error) {
-    console.error("Error sending test email:", error);
+    logger.error("Error sending test email", error instanceof Error ? error : new Error(String(error)));
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       {

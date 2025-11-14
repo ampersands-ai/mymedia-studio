@@ -121,7 +121,17 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("[Welcome Email] Sent successfully:", emailResponse);
+    const { error, data } = emailResponse;
+
+    if (error) {
+      logger.error("Email sending failed", error, { userId, metadata: { email } });
+      throw error;
+    }
+
+    logger.info("Welcome email sent successfully", { 
+      userId, 
+      metadata: { email, emailId: data?.id } 
+    });
 
     return new Response(JSON.stringify({ success: true, messageId: emailResponse.data?.id }), {
       status: 200,

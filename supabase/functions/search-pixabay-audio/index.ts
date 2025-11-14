@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,6 +7,9 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('search-pixabay-audio', requestId);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -22,7 +26,7 @@ serve(async (req) => {
       throw new Error('PIXABAY_API_KEY not configured');
     }
 
-    console.log('[search-pixabay-audio] Searching:', query);
+    logger.info('Searching Pixabay audio', { metadata: { query, per_page } });
 
     // Build Pixabay Audio API URL
     const url = new URL('https://pixabay.com/api/');
@@ -33,7 +37,9 @@ serve(async (req) => {
     const response = await fetch(url.toString());
     
     if (!response.ok) {
-      console.error('[search-pixabay-audio] API error:', response.status);
+      logger.error('Pixabay API error', new Error(`Status ${response.status}`), {
+        metadata: { query, status: response.status }
+      });
       throw new Error(`Pixabay API error: ${response.status}`);
     }
 
@@ -58,7 +64,7 @@ serve(async (req) => {
       };
     });
 
-    console.log('[search-pixabay-audio] Found:', items.length, 'tracks');
+    logger.info('Search completed', { metadata: { query, resultsCount: items.length } });
 
     return new Response(
       JSON.stringify({ items }),
@@ -66,7 +72,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('[search-pixabay-audio] Error:', error);
+    logger.error('Search failed', error instanceof Error ? error : new Error(String(error)));
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),

@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { EdgeLogger } from '../_shared/edge-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,6 +15,9 @@ const THRESHOLDS = {
 };
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('security-monitor', requestId);
+  
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -176,7 +180,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`Security monitoring completed. Found ${alerts.length} alerts.`);
+    logger.info('Security scan complete', { 
+      metadata: { alertCount: alerts.length, userId: user.id } 
+    });
 
     return new Response(
       JSON.stringify({

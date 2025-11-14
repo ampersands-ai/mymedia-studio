@@ -1,15 +1,18 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('migrate-storyboard-videos', requestId);
 
   try {
     const supabaseClient = createClient(
@@ -184,7 +187,7 @@ serve(async (req) => {
         : `Migration complete: ${processed} succeeded, ${failed} failed, ${expired} expired, ${skipped} skipped`,
     };
 
-    console.log('[migrate-storyboard-videos] Migration complete:', response);
+    logger.info('Migration complete', { metadata: response });
 
     return new Response(
       JSON.stringify(response),
@@ -192,7 +195,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('[migrate-storyboard-videos] Error:', error);
+    logger.error('Migration error', error instanceof Error ? error : new Error(String(error)));
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
     return new Response(

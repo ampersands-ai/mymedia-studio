@@ -309,7 +309,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("❌ Error sending alert email:", error);
+    logger.error("Error sending alert email", error instanceof Error ? error : new Error(String(error)));
     const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     return new Response(
       JSON.stringify({

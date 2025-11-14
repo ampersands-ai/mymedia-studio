@@ -971,12 +971,14 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({
             id: generation.id,
+            generation_id: generation.id,
             status: 'processing',
             tokens_used: tokenCost,
             content_type: model.content_type,
-            enhanced: enhance_prompt || !!enhancementInstruction
+            enhanced: enhance_prompt || !!enhancementInstruction,
+            is_async: true
           }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 202, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
 
       } catch (providerError: any) {

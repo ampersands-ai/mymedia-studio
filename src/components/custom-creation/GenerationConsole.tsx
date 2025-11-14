@@ -96,6 +96,7 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
               isComplete={!!generationState.generatedOutput || generationState.generatedOutputs.length > 0}
               completedAt={generationState.generationCompleteTime || undefined}
               estimatedTimeSeconds={estimatedTimeSeconds}
+              onViewHistory={onViewHistory}
             />
           )}
 

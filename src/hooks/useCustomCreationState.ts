@@ -201,29 +201,49 @@ export const useCustomCreationState = () => {
    * Convenience setter: Update selected model
    */
   const setSelectedModel = useCallback((selectedModel: string | null) => {
-    setState(prev => ({ 
-      ...prev, 
-      selectedModel,
-      // Clear outputs when model changes
-      generatedOutput: null,
-      generatedOutputs: [],
-      selectedOutputIndex: 0,
-    }));
+    setState(prev => {
+      // Only clear outputs if model is actually changing and not during active generation
+      const isChanging = selectedModel !== prev.selectedModel;
+      const isGenerating = prev.localGenerating || prev.pollingGenerationId;
+      
+      if (!isChanging || isGenerating) {
+        return { ...prev, selectedModel };
+      }
+      
+      return {
+        ...prev, 
+        selectedModel,
+        // Clear outputs only when model changes and not generating
+        generatedOutput: null,
+        generatedOutputs: [],
+        selectedOutputIndex: 0,
+      };
+    });
   }, []);
 
   /**
    * Convenience setter: Update selected group
    */
   const setSelectedGroup = useCallback((selectedGroup: CreationGroup) => {
-    setState(prev => ({ 
-      ...prev, 
-      selectedGroup, 
-      selectedModel: null,
-      // Clear outputs when group changes
-      generatedOutput: null,
-      generatedOutputs: [],
-      selectedOutputIndex: 0,
-    }));
+    setState(prev => {
+      // Only clear outputs if group is actually changing and not during active generation
+      const isChanging = selectedGroup !== prev.selectedGroup;
+      const isGenerating = prev.localGenerating || prev.pollingGenerationId;
+      
+      if (!isChanging || isGenerating) {
+        return { ...prev, selectedGroup };
+      }
+      
+      return {
+        ...prev, 
+        selectedGroup, 
+        selectedModel: null,
+        // Clear outputs only when group changes and not generating
+        generatedOutput: null,
+        generatedOutputs: [],
+        selectedOutputIndex: 0,
+      };
+    });
   }, []);
 
   return {

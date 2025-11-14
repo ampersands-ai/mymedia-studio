@@ -22,8 +22,9 @@ export async function validateTiming(
 
   const processingTime = Date.now() - new Date(generation.created_at).getTime();
 
-  console.log('⏱️ Timing analysis:', {
+  webhookLogger.info('Timing analysis', {
     taskId: generation.provider_task_id,
+    generationId: generation.id,
     model: generation.ai_models?.model_name,
     estimated_seconds: estimatedSeconds,
     actual_processing_seconds: Math.round(processingTime / 1000),
@@ -33,12 +34,13 @@ export async function validateTiming(
 
   // Reject impossibly fast webhooks (< 2.85s = replay/automation attack)
   if (processingTime < MIN_PROCESSING_TIME) {
-    console.error('🚨 SECURITY LAYER 3 FAILED: Webhook too fast - possible replay attack', {
+    webhookLogger.failure(generation.id, 'SECURITY LAYER 3 FAILED: Webhook too fast - possible replay attack', {
       taskId: generation.provider_task_id,
       generation_id: generation.id,
       processing_ms: processingTime,
       threshold_ms: MIN_PROCESSING_TIME,
-      model: generation.ai_models?.model_name
+      model: generation.ai_models?.model_name,
+      status: 'rejected_timing'
     });
     
     await supabase.from('audit_logs').insert({
@@ -65,12 +67,14 @@ export async function validateTiming(
   if (processingTime > MAX_PROCESSING_TIME) {
     const severityLevel = processingTime > (MAX_PROCESSING_TIME * 2) ? 'high' : 'medium';
     
-    console.warn(`⏰ Late webhook detected [${severityLevel} severity]`, {
+    webhookLogger.info(`Late webhook detected [${severityLevel} severity]`, {
       taskId: generation.provider_task_id,
       generation_id: generation.id,
       processing_seconds: Math.round(processingTime / 1000),
       max_threshold_seconds: Math.round(MAX_PROCESSING_TIME / 1000),
-      model: generation.ai_models?.model_name
+      model: generation.ai_models?.model_name,
+      severity: severityLevel,
+      status: 'late_arrival'
     });
     
     await supabase.from('audit_logs').insert({
@@ -88,6 +92,9 @@ export async function validateTiming(
     });
   }
   
-  console.log('✅ Layer 3 passed: Webhook timing validated');
+  webhookLogger.info('Layer 3 passed: Webhook timing validated', {
+    taskId: generation.provider_task_id,
+    generationId: generation.id
+  });
   return { success: true };
 }

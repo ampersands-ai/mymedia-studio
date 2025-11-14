@@ -16,9 +16,10 @@ export function validateUrlToken(url: URL): ValidationResult {
   const expectedToken = Deno.env.get('KIE_WEBHOOK_URL_TOKEN');
   
   if (!receivedToken || receivedToken !== expectedToken) {
-    console.error('🚨 SECURITY LAYER 1 FAILED: Invalid or missing URL token', {
+    webhookLogger.error('SECURITY LAYER 1 FAILED: Invalid or missing URL token', 'Invalid token', {
       has_token: !!receivedToken,
-      token_preview: receivedToken?.substring(0, 8) + '...'
+      token_preview: receivedToken?.substring(0, 8) + '...',
+      status: 'rejected_url_token'
     });
     return {
       success: false,
@@ -27,6 +28,6 @@ export function validateUrlToken(url: URL): ValidationResult {
     };
   }
   
-  console.log('✅ Layer 1 passed: URL token validated');
+  webhookLogger.info('Layer 1 passed: URL token validated', {});
   return { success: true };
 }

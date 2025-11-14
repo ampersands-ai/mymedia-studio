@@ -1,5 +1,6 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -10,13 +11,16 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('check-model-health', requestId);
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    console.log("🔍 Starting model health check...");
+    logger.info("Starting model health check");
 
     // Get all active alert configurations
     const { data: configs, error: configError } = await supabase
@@ -25,19 +29,21 @@ Deno.serve(async (req) => {
       .eq("email_enabled", true);
 
     if (configError) {
-      console.error("Error fetching alert configs:", configError);
+      logger.error("Error fetching alert configs", configError);
       throw configError;
     }
 
     if (!configs || configs.length === 0) {
-      console.log("No active alert configurations found");
+      logger.info("No active alert configurations found");
       return new Response(
         JSON.stringify({ message: "No active configurations", checked: 0 }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`Found ${configs.length} active alert configurations`);
+    logger.info("Found active alert configurations", { 
+      metadata: { configCount: configs.length } 
+    });
     const alerts: any[] = [];
 
     // Check each configuration
@@ -52,12 +58,16 @@ Deno.serve(async (req) => {
         .gte("created_at", windowStart.toISOString());
 
       if (genError) {
-        console.error(`Error fetching generations for model ${config.model_id}:`, genError);
+        logger.error("Error fetching generations for model", genError, { 
+          metadata: { modelId: config.model_id } 
+        });
         continue;
       }
 
       if (!generations || generations.length === 0) {
-        console.log(`No generations found for model ${config.model_id} in the time window`);
+        logger.info("No generations found for model in time window", { 
+          metadata: { modelId: config.model_id } 
+        });
         continue;
       }
 
@@ -65,11 +75,24 @@ Deno.serve(async (req) => {
       const failedCount = generations.filter(g => g.status === 'failed' || g.status === 'error').length;
       const failureRate = (failedCount / totalCount) * 100;
 
-      console.log(`Model ${config.model_id}: ${failedCount}/${totalCount} failed (${failureRate.toFixed(2)}%)`);
+      logger.info("Model health status", { 
+        metadata: { 
+          modelId: config.model_id, 
+          failedCount, 
+          totalCount, 
+          failureRate: failureRate.toFixed(2) 
+        } 
+      });
 
       // Check if failure rate exceeds threshold
       if (failureRate >= config.threshold_percentage) {
-        console.log(`⚠️ ALERT: Model ${config.model_id} exceeded threshold (${config.threshold_percentage}%)`);
+        logger.warn("Model exceeded failure threshold", { 
+          metadata: { 
+            modelId: config.model_id, 
+            failureRate: failureRate.toFixed(2),
+            threshold: config.threshold_percentage 
+          } 
+        });
         
         // Check if we already sent an alert for this time period (avoid spam)
         const { data: recentAlerts } = await supabase
@@ -80,7 +103,9 @@ Deno.serve(async (req) => {
           .limit(1);
 
         if (recentAlerts && recentAlerts.length > 0) {
-          console.log(`Skipping alert - already sent within last hour`);
+          logger.info("Skipping alert - already sent within last hour", { 
+            metadata: { configId: config.id } 
+          });
           continue;
         }
 
@@ -101,7 +126,9 @@ Deno.serve(async (req) => {
           .single();
 
         if (historyError) {
-          console.error("Error creating alert history:", historyError);
+          logger.error("Error creating alert history", historyError, { 
+            metadata: { configId: config.id } 
+          });
           continue;
         }
 
@@ -131,9 +158,13 @@ Deno.serve(async (req) => {
             });
 
             if (emailResponse.error) {
-              console.error("Error sending alert email:", emailResponse.error);
+              logger.error("Error sending alert email", emailResponse.error as Error, { 
+                metadata: { recipientEmail, modelId: config.model_id } 
+              });
             } else {
-              console.log(`✅ Alert email sent to ${recipientEmail}`);
+              logger.info("Alert email sent successfully", { 
+                metadata: { recipientEmail, modelId: config.model_id } 
+              });
               
               // Update history to mark email as sent
               await supabase
@@ -148,7 +179,9 @@ Deno.serve(async (req) => {
               });
             }
           } catch (emailError) {
-            console.error("Error invoking email function:", emailError);
+            logger.error("Error invoking email function", emailError as Error, { 
+              metadata: { recipientEmail, modelId: config.model_id } 
+            });
           }
         }
       }
@@ -167,7 +200,7 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("❌ Error in check-model-health:", error);
+    logger.error("Error in check-model-health", error as Error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     return new Response(
       JSON.stringify({ error: errorMessage }),

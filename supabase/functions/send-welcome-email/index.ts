@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -17,6 +18,9 @@ interface WelcomeEmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('send-welcome-email', requestId);
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -24,7 +28,10 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { userId, email, fullName }: WelcomeEmailRequest = await req.json();
 
-    console.log(`[Welcome Email] Sending to ${email} (userId: ${userId})`);
+    logger.info("Sending welcome email", { 
+      userId, 
+      metadata: { email, fullName } 
+    });
 
     const displayName = fullName || email.split('@')[0];
 

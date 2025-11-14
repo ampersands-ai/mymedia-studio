@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +11,9 @@ const corsHeaders = {
  * This function should be called periodically (every 5 minutes via cron)
  */
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('auto-timeout-stuck-generations', requestId);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -33,14 +37,16 @@ Deno.serve(async (req) => {
     }
 
     if (!stuckGenerations || stuckGenerations.length === 0) {
-      console.log('No stuck generations found');
+      logger.info("No stuck generations found");
       return new Response(
         JSON.stringify({ message: 'No stuck generations found', count: 0 }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Found ${stuckGenerations.length} stuck generation(s), auto-timing out...`);
+    logger.info("Found stuck generations, auto-timing out", { 
+      metadata: { stuckCount: stuckGenerations.length } 
+    });
 
     let successCount = 0;
     let errorCount = 0;
@@ -62,7 +68,9 @@ Deno.serve(async (req) => {
           .eq('id', gen.id);
 
         if (updateError) {
-          console.error(`Failed to update generation ${gen.id}:`, updateError);
+          logger.error("Failed to update generation", updateError, { 
+            metadata: { generationId: gen.id } 
+          });
           errorCount++;
           continue;
         }
@@ -73,11 +81,19 @@ Deno.serve(async (req) => {
           amount: gen.tokens_used
         });
 
-        console.log(`✓ Timed out generation ${gen.id}, refunded ${gen.tokens_used} tokens to user ${gen.user_id}`);
+        logger.info("Timed out generation and refunded tokens", { 
+          userId: gen.user_id,
+          metadata: { 
+            generationId: gen.id, 
+            tokensRefunded: gen.tokens_used 
+          } 
+        });
         successCount++;
 
       } catch (error: any) {
-        console.error(`Error processing generation ${gen.id}:`, error.message);
+        logger.error("Error processing generation", error, { 
+          metadata: { generationId: gen.id } 
+        });
         errorCount++;
       }
     }
@@ -93,7 +109,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('Auto-timeout error:', error);
+    logger.error("Auto-timeout error", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

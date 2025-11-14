@@ -1,5 +1,6 @@
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -9,6 +10,9 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req: Request): Promise<Response> => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('send-test-email', requestId);
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -36,7 +40,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       throw new Error("Admin email not found in admin_notifications settings");
     }
 
-    console.log(`Sending test email to admin: ${adminEmail}`);
+    logger.info("Sending test email to admin", { metadata: { adminEmail } });
 
     const emailResponse = await resend.emails.send({
       from: "Artifio System <noreply@artifio.ai>",

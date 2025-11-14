@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
         .eq('id', generation_id);
 
       if (updateError) {
-        console.error('Failed to update generation:', updateError);
+        logger.error('Failed to update generation', updateError);
       }
 
       // Refund credits
@@ -200,7 +200,7 @@ Deno.serve(async (req) => {
 
     } else {
       // Still processing
-      console.log('⏳ Task still processing');
+      logger.debug('Task still processing');
       return new Response(
         JSON.stringify({ 
           status: 'processing',
@@ -211,7 +211,7 @@ Deno.serve(async (req) => {
     }
 
   } catch (error: any) {
-    console.error('Error checking video status:', error);
+    logger.error('Error checking video status', error);
     return new Response(
       JSON.stringify({ error: error.message || 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

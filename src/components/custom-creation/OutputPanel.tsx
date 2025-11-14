@@ -88,7 +88,8 @@ export const OutputPanel = forwardRef<HTMLDivElement, OutputPanelProps>(
     const hasGeneration =
       localGenerating || isGenerating || pollingGenerationId || 
       generationState.generatedOutput || 
-      generationState.generatedOutputs.length > 0;
+      generationState.generatedOutputs.length > 0 ||
+      (childVideoGenerations && childVideoGenerations.length > 0);
 
     const showStatusBanner = (localGenerating || isGenerating || pollingGenerationId) && 
       !generationState.generatedOutput && 

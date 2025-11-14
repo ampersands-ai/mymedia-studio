@@ -108,15 +108,6 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
                 onDownloadSuccess={onDownloadSuccess}
               />
 
-              {/* Child video generations */}
-              {childVideoGenerations.filter(v => v.type === 'video').length > 0 && (
-                <VideoGenerationList
-                  videoGenerations={childVideoGenerations.filter(v => v.type === 'video')}
-                  parentGenerationId={parentGenerationId}
-                  onRegenerate={onGenerateVideo}
-                  generatingVideoIndex={generatingVideoIndex}
-                />
-              )}
 
               <OutputLightbox
                 outputs={generationState.generatedOutputs}
@@ -159,6 +150,16 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
               </Button>
             </div>
           ) : null}
+
+          {/* Generated videos (shown even if no primary outputs) */}
+          {childVideoGenerations.filter(v => v.type === 'video').length > 0 && (
+            <VideoGenerationList
+              videoGenerations={childVideoGenerations.filter(v => v.type === 'video')}
+              parentGenerationId={parentGenerationId}
+              onRegenerate={onGenerateVideo}
+              generatingVideoIndex={generatingVideoIndex}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

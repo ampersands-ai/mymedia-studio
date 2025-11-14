@@ -94,6 +94,8 @@ const PLAN_PRODUCT_IDS = {
   },
 };
 
+import { EdgeLogger } from "../_shared/edge-logger.ts";
+
 Deno.serve(async (req) => {
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('create-dodo-payment', requestId);

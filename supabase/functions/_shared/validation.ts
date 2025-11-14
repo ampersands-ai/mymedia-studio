@@ -112,15 +112,6 @@ export const CancelGenerationSchema = z.object({
 export type CancelGenerationRequest = z.infer<typeof CancelGenerationSchema>;
 
 /**
- * Schema for approve-voiceover edge function
- */
-export const ApproveVoiceoverSchema = z.object({
-  job_id: CommonSchemas.uuid,
-});
-
-export type ApproveVoiceoverRequest = z.infer<typeof ApproveVoiceoverSchema>;
-
-/**
  * Schema for render-storyboard-video edge function
  */
 export const RenderStoryboardVideoSchema = z.object({
@@ -261,11 +252,11 @@ export function validateRequest<T>(
   const result = schema.safeParse(data);
   
   if (!result.success) {
-    const flattenedErrors = result.error.flatten().fieldErrors;
-    // Filter out undefined values to match Record<string, string[]> type
+    const rawErrors = result.error.flatten().fieldErrors;
+    // Filter out undefined values to satisfy type constraints
     const formattedErrors: Record<string, string[]> = {};
-    for (const [key, value] of Object.entries(flattenedErrors)) {
-      if (value !== undefined) {
+    for (const [key, value] of Object.entries(rawErrors)) {
+      if (Array.isArray(value)) {
         formattedErrors[key] = value;
       }
     }

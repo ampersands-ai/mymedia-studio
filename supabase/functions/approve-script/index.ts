@@ -70,9 +70,10 @@ async function logApiCall(
       });
     }
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.warn('Failed to log API call', { 
       userId: request.userId,
-      metadata: { videoJobId: request.videoJobId, serviceName: request.serviceName, error: error.message }
+      metadata: { videoJobId: request.videoJobId, serviceName: request.serviceName, error: errorMessage }
     });
   }
 }
@@ -155,7 +156,7 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     
     if (authError || !user) {
-      logger.error('Authentication failed', authError);
+      logger.error('Authentication failed', authError || undefined);
       throw new Error('Unauthorized');
     }
 

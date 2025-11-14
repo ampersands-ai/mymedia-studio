@@ -19,7 +19,7 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
     { key: 'viewedTemplates', label: 'Explore creation options', completed: progress.checklist.viewedTemplates },
     { key: 'selectedTemplate', label: 'Choose how to create', completed: progress.checklist.selectedTemplate },
     { key: 'enteredPrompt', label: 'Describe what you want to create', completed: progress.checklist.enteredPrompt },
-    { key: 'viewedTokenCost', label: 'Check your credit balance', completed: progress.checklist.viewedTokenCost },
+    { key: 'viewedTokenCost', label: 'View your credit balance', completed: progress.checklist.viewedTokenCost },
     { key: 'completedFirstGeneration', label: 'Generate your first creation', completed: progress.checklist.completedFirstGeneration },
     { key: 'viewedResult', label: 'View the result', completed: progress.checklist.viewedResult },
     { key: 'downloadedResult', label: 'Download your creation', completed: progress.checklist.downloadedResult },
@@ -28,18 +28,18 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
   const progressPercentage = (progress.completedCount / progress.totalCount) * 100;
   const allComplete = progress.completedCount === progress.totalCount;
 
-  if (progress.isComplete && progress.bonusAwarded) {
-    return null; // Hide completely after completion
+  if ((progress.isComplete && progress.bonusAwarded) || progress.dismissed) {
+    return null; // Hide completely after completion or dismissal
   }
 
   return (
-    <Card className="fixed bottom-6 right-6 z-50 shadow-2xl border-2 border-primary-500/20 bg-white">
+    <Card variant="light" className="fixed bottom-6 right-6 z-50 shadow-2xl border-2 border-primary-500/20">
       {isExpanded ? (
         <div className="w-80">
           <div className="p-4 border-b border-neutral-200 flex items-center justify-between bg-gradient-to-r from-primary-50 to-secondary-50">
             <div className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-primary-600" />
-              <h3 className="font-bold text-lg text-neutral-900">Getting Started</h3>
+              <h3 className="font-bold text-lg text-on-light">Getting Started</h3>
             </div>
             <div className="flex items-center gap-1">
               <Button
@@ -64,7 +64,7 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
           <div className="p-4 space-y-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-semibold text-neutral-700">
+                <span className="font-semibold text-on-light-muted">
                   {progress.completedCount} of {progress.totalCount} Complete
                 </span>
                 <span className="text-primary-500 font-bold">{Math.round(progressPercentage)}%</span>
@@ -94,7 +94,7 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
                   <span
                     className={cn(
                       "text-sm flex-1",
-                      item.completed ? "font-semibold text-neutral-900" : "font-medium text-neutral-800"
+                      item.completed ? "font-semibold text-on-light" : "font-medium text-on-light-muted"
                     )}
                   >
                     {item.label}
@@ -114,7 +114,7 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
             )}
 
             {!allComplete && (
-              <p className="text-xs text-neutral-500 text-center">
+              <p className="text-xs text-on-light-muted text-center">
                 Complete all steps to earn 2 bonus credits!
               </p>
             )}
@@ -157,8 +157,8 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
               </div>
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-sm text-neutral-900">Getting Started</p>
-              <p className="text-xs text-neutral-600">{Math.round(progressPercentage)}% complete</p>
+              <p className="font-semibold text-sm text-on-light">Getting Started</p>
+              <p className="text-xs text-on-light-muted">{Math.round(progressPercentage)}% complete</p>
             </div>
             <ChevronUp className="h-4 w-4 text-neutral-400" />
           </div>

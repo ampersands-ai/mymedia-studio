@@ -748,7 +748,7 @@ Deno.serve(async (req) => {
     }
 
     // Track request in queue
-    const requestId = generation.id;
+    const generationId = generation.id;
     const requestPromise = (async () => {
       let providerRequest: any = null; // Declare outside try block for error handling access
       

@@ -1,9 +1,10 @@
 import { forwardRef } from "react";
 import { Card } from "@/components/ui/card";
-import { ImageIcon } from "lucide-react";
+import { ImageIcon, ExternalLink, Loader2 } from "lucide-react";
 import { GenerationConsole } from "./GenerationConsole";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import type { GenerationOutput, CaptionData } from "@/types/custom-creation";
+import { Button } from "@/components/ui/button";
 
 interface OutputPanelProps {
   generationState: {
@@ -44,6 +45,8 @@ interface OutputPanelProps {
   onDownloadSuccess: () => void;
   templateBeforeImage: string | null;
   templateAfterImage: string | null;
+  modelProvider?: string;
+  modelName?: string;
 }
 
 /**
@@ -77,18 +80,50 @@ export const OutputPanel = forwardRef<HTMLDivElement, OutputPanelProps>(
       onDownloadSuccess,
       templateBeforeImage,
       templateAfterImage,
+      modelProvider,
+      modelName,
     },
     ref
   ) => {
     const hasGeneration =
       localGenerating || isGenerating || pollingGenerationId || generationState.generatedOutput;
 
+    const showStatusBanner = (localGenerating || isGenerating || pollingGenerationId) && !generationState.generatedOutput;
 
     return (
       <Card ref={ref} className="h-full flex flex-col border-border/40 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
         <div className="border-b border-border px-4 md:px-6 py-3 md:py-4 bg-muted/30 shrink-0">
           <h2 className="text-base md:text-lg font-bold text-foreground">Output</h2>
         </div>
+
+        {/* Status Banner */}
+        {showStatusBanner && pollingGenerationId && (
+          <div className="border-b border-border/50 bg-primary/5 px-4 py-2 flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Loader2 className="h-3 w-3 animate-spin flex-shrink-0 text-primary" />
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-muted-foreground truncate">
+                  ID: <span className="font-mono text-foreground">{pollingGenerationId.slice(0, 8)}...</span>
+                </span>
+                {modelProvider && (
+                  <span className="text-muted-foreground truncate">
+                    Provider: <span className="text-foreground">{modelProvider}</span>
+                    {modelName && <span className="text-muted-foreground"> • {modelName}</span>}
+                  </span>
+                )}
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onViewHistory}
+              className="h-7 px-2 flex-shrink-0"
+            >
+              <ExternalLink className="h-3 w-3 mr-1" />
+              My Creations
+            </Button>
+          </div>
+        )}
 
         <div className="flex-1 p-4 md:p-6">
           {hasGeneration ? (

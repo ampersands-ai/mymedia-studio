@@ -1,4 +1,5 @@
 import { ProviderRequest, ProviderResponse } from "./index.ts";
+import { EdgeLogger } from "../../_shared/edge-logger.ts";
 
 // Default parameters for flat-structure models
   const FLAT_MODEL_DEFAULTS: Record<string, any> = {
@@ -13,6 +14,7 @@ export async function callKieAI(
   request: ProviderRequest,
   webhookToken: string
 ): Promise<ProviderResponse> {
+  const logger = new EdgeLogger('kie-ai-provider', crypto.randomUUID());
   const KIE_AI_API_KEY = Deno.env.get('KIE_AI_API_KEY');
   
   if (!KIE_AI_API_KEY) {
@@ -22,7 +24,13 @@ export async function callKieAI(
   const baseUrl = 'https://api.kie.ai';
   const createTaskEndpoint = request.api_endpoint || '/api/v1/jobs/createTask';
   
-  console.log('Calling Kie.ai API - Model:', request.model, 'Payload Structure:', request.payload_structure || 'wrapper', 'Endpoint:', createTaskEndpoint);
+  logger.info('Calling Kie.ai API', { 
+    metadata: { 
+      model: request.model, 
+      payloadStructure: request.payload_structure || 'wrapper', 
+      endpoint: createTaskEndpoint 
+    } 
+  });
 
   // Build request payload with callback URL including security tokens
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -35,7 +43,7 @@ export async function callKieAI(
   // Construct callback URL with both security tokens
   const callbackUrl = `${supabaseUrl}/functions/v1/kie-ai-webhook?token=${urlToken}&verify=${webhookToken}`;
   
-  console.log('Callback URL configured with security tokens (URL token + verify token)');
+  logger.debug('Callback URL configured with security tokens');
   
   const useFlatStructure = request.payload_structure === 'flat';
   let payload: any;
@@ -47,7 +55,7 @@ export async function callKieAI(
   
   if (useFlatStructure) {
     // Flat structure for veo3, sora-2-*, mj_txt2img, etc.
-    console.log('Using FLAT payload structure');
+    logger.debug('Using FLAT payload structure');
     const modelDefaults = FLAT_MODEL_DEFAULTS[request.model] || {};
     
     // Determine the correct field name: 'taskType' for Midjourney, 'model' for others
@@ -65,7 +73,7 @@ export async function callKieAI(
     }
   } else {
     // Standard nested input structure for other models
-    console.log('Using WRAPPER payload structure');
+    logger.debug('Using WRAPPER payload structure');
     
     // Strip "input." prefix from parameter keys if present
     const cleanedParameters: Record<string, any> = {};
@@ -85,12 +93,13 @@ export async function callKieAI(
     }
   }
   
-  console.log('Callback URL:', callbackUrl);
-  console.log('Full payload:', JSON.stringify(payload, null, 2));
+  logger.debug('Request configuration', { 
+    metadata: { callbackUrl, payload: JSON.stringify(payload).substring(0, 500) } 
+  });
 
   try {
     // Step 1: Create the task
-    console.log('Creating Kie.ai task:', JSON.stringify(payload));
+    logger.info('Creating Kie.ai task', { metadata: { model: request.model } });
     
     const createResponse = await fetch(`${baseUrl}${createTaskEndpoint}`, {
       method: 'POST',
@@ -103,12 +112,14 @@ export async function callKieAI(
 
     if (!createResponse.ok) {
       const errorText = await createResponse.text();
-      console.error('Kie.ai task creation error:', createResponse.status, errorText);
+      logger.error('Kie.ai task creation failed', undefined, { 
+        metadata: { status: createResponse.status, error: errorText } 
+      });
       throw new Error(`Kie.ai task creation failed: ${createResponse.status} - ${errorText}`);
     }
 
     const createData = await createResponse.json();
-    console.log('Task created:', createData);
+    logger.info('Kie.ai task created', { metadata: { response: createData } });
 
     // Check response structure
     if (createData.code !== 200 || !createData.data?.taskId) {
@@ -116,12 +127,11 @@ export async function callKieAI(
     }
 
     const taskId = createData.data.taskId;
-    console.log('Task ID:', taskId);
-    console.log('Task created successfully. Webhook URL:', callbackUrl);
+    logger.info('Task ID received', { metadata: { taskId, callbackUrl } });
 
     // Immediate status check to catch fast completions
     try {
-      console.log('Checking immediate task status...');
+      logger.debug('Checking immediate task status');
       const statusResponse = await fetch('https://api.kie.ai/api/v1/jobs/queryTask', {
         method: 'POST',
         headers: {
@@ -133,16 +143,22 @@ export async function callKieAI(
 
       if (statusResponse.ok) {
         const statusData = await statusResponse.json();
-        console.log('Immediate status:', statusData.data?.status);
+        logger.info('Immediate status check', { 
+          metadata: { status: statusData.data?.status, taskId } 
+        });
         
         // If already completed, we could process it here instead of waiting for webhook
         // But for now, we'll let the webhook handler deal with it
         if (statusData.data?.status === 'completed') {
-          console.log('⚠️ Task completed immediately! Webhook should arrive soon.');
+          logger.warn('Task completed immediately - webhook should arrive soon', { 
+            metadata: { taskId } 
+          });
         }
       }
     } catch (statusError) {
-      console.warn('Could not check immediate status (non-critical):', statusError);
+      logger.warn('Could not check immediate status (non-critical)', { 
+        metadata: { error: statusError instanceof Error ? statusError.message : String(statusError) } 
+      });
     }
 
     // Return immediately - webhook will handle the rest
@@ -160,7 +176,7 @@ export async function callKieAI(
     };
 
   } catch (error: any) {
-    console.error('Kie.ai provider error:', error);
+    logger.error('Kie.ai provider error', error, { metadata: { model: request.model } });
     throw new Error(`Kie.ai provider failed: ${error.message}`);
   }
 }

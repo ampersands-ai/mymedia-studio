@@ -842,7 +842,7 @@ Deno.serve(async (req) => {
               status: 'processing',
               tokens_used: tokenCost,
               content_type: model.content_type,
-              enhanced: isPromptEnhanced,
+              enhanced: !!(enhance_prompt || enhancementInstruction),
               is_async: true,
               message: 'Generation started. Check back soon for results.'
             }),
@@ -975,7 +975,7 @@ Deno.serve(async (req) => {
             status: 'processing',
             tokens_used: tokenCost,
             content_type: model.content_type,
-            enhanced: enhance_prompt || !!enhancementInstruction,
+            enhanced: !!(enhance_prompt || enhancementInstruction),
             is_async: true
           }),
           { status: 202, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

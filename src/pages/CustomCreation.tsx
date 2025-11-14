@@ -645,7 +645,7 @@ const CustomCreation = () => {
             provider={currentModel?.provider || ''}
             excludeFields={[
               // Image/file upload fields
-              'prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 
+              'prompt', 'positivePrompt', 'positive_prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 
               'filesUrl', 'fileUrls', 'reference_image_urls', 'frameImages',
               
               // Primary fields already shown

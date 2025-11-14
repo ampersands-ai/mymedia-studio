@@ -72,6 +72,7 @@ const CustomCreation = () => {
   // Generation polling
   const { startPolling, stopPolling, isPolling } = useGenerationPolling({
     onComplete: (outputs, parentId) => {
+      console.log('✅ Polling onComplete called', { outputCount: outputs.length, parentId });
       updateState({
         generatedOutputs: outputs,
         generatedOutput: outputs[0]?.storage_path || null,
@@ -136,6 +137,96 @@ const CustomCreation = () => {
       }
     }
   });
+
+  // Realtime subscription for instant updates when webhook completes
+  useEffect(() => {
+    if (!state.pollingGenerationId) return;
+
+    console.log('🔴 Setting up realtime subscription', { generationId: state.pollingGenerationId });
+
+    const channel = supabase
+      .channel(`generation-${state.pollingGenerationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'generations',
+          filter: `id=eq.${state.pollingGenerationId}`
+        },
+        async (payload) => {
+          console.log('🔴 Realtime update received', payload);
+          
+          const newStatus = payload.new.status;
+          
+          if (newStatus === 'completed') {
+            console.log('🎉 Generation completed via realtime!');
+            
+            // Stop polling
+            stopPolling();
+            
+            // Fetch the full generation data
+            const { data: generationData } = await supabase
+              .from('generations')
+              .select('id, storage_path, output_index, type')
+              .eq('id', state.pollingGenerationId)
+              .single();
+            
+            if (generationData?.storage_path) {
+              const outputs = [{
+                id: generationData.id,
+                storage_path: generationData.storage_path,
+                output_index: 0
+              }];
+              
+              console.log('🎉 Calling onComplete with realtime data', { outputs });
+              
+              // Update state immediately
+              updateState({
+                generatedOutputs: outputs,
+                generatedOutput: outputs[0]?.storage_path || null,
+                selectedOutputIndex: 0,
+                generationCompleteTime: Date.now(),
+                localGenerating: false,
+                pollingGenerationId: null,
+                parentGenerationId: generationData.id,
+              });
+              
+              // Update onboarding progress
+              if (progress && !progress.checklist.completedFirstGeneration) {
+                updateProgress({ completedFirstGeneration: true });
+                setFirstGeneration(generationData.id);
+              }
+              
+              // Auto-scroll to output on mobile
+              setTimeout(() => {
+                if (outputSectionRef.current && window.innerWidth < 1024) {
+                  outputSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }, 300);
+              
+              // Generate caption if enabled
+              if (state.generateCaption) {
+                generateCaption();
+              }
+            }
+          } else if (newStatus === 'failed') {
+            console.log('❌ Generation failed via realtime');
+            stopPolling();
+            updateState({ localGenerating: false, pollingGenerationId: null });
+            toast.error('Generation failed', {
+              description: 'Your credits have been refunded.'
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔴 Cleaning up realtime subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [state.pollingGenerationId, stopPolling, updateState, progress, updateProgress, setFirstGeneration, state.generateCaption]);
 
   // Image upload
   const {

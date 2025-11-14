@@ -112,15 +112,6 @@ export const CancelGenerationSchema = z.object({
 export type CancelGenerationRequest = z.infer<typeof CancelGenerationSchema>;
 
 /**
- * Schema for approve-voiceover edge function
- */
-export const ApproveVoiceoverSchema = z.object({
-  job_id: CommonSchemas.uuid,
-});
-
-export type ApproveVoiceoverRequest = z.infer<typeof ApproveVoiceoverSchema>;
-
-/**
  * Schema for render-storyboard-video edge function
  */
 export const RenderStoryboardVideoSchema = z.object({

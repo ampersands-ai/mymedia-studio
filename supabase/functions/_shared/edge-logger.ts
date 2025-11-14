@@ -85,7 +85,6 @@ export class EdgeLogger {
   critical(message: string, error?: Error, context?: Partial<LogContext>) {
     this.log('critical', message, {
       ...context,
-      severity: 'critical',
       errorName: error?.name,
       errorMessage: error?.message,
       stack: error?.stack,

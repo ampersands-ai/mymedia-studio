@@ -824,7 +824,7 @@ async function assembleVideo(
         }
       ).catch(e => logger.error('Failed to log API call (retry minimal)', e as Error));
 
-      if (!=retryRes.ok) {
+      if (!retryRes.ok) {
         logger.error("Shotstack API Error (retry minimal captions)", undefined, {
           metadata: {
             status: retryRes.status,

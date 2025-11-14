@@ -70,6 +70,12 @@ const CustomCreation = () => {
   // Generation polling
   const { startPolling, stopPolling, isPolling } = useGenerationPolling({
     onComplete: (outputs, parentId) => {
+      console.log('🎉 Generation complete - onComplete callback', { 
+        outputs, 
+        parentId,
+        firstOutput: outputs[0]?.storage_path 
+      });
+      
       updateState({
         generatedOutputs: outputs,
         generatedOutput: outputs[0]?.storage_path || null,
@@ -79,6 +85,8 @@ const CustomCreation = () => {
         pollingGenerationId: null,
         parentGenerationId: parentId || null,
       });
+
+      console.log('✅ State updated after generation');
 
       // Update onboarding progress
       if (progress && !progress.checklist.completedFirstGeneration) {

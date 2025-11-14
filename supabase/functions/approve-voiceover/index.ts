@@ -377,7 +377,7 @@ async function getBackgroundImages(
       isError: !response.ok,
       errorMessage: response.ok ? undefined : `Pixabay returned ${response.status}`
     }
-  ).catch(e => logger.error('Failed to log API call', e as Error));
+  ).catch(e => logger?.error('Failed to log API call', e as Error));
 
   if (!response.ok) {
     throw new Error('Pixabay API error');
@@ -472,7 +472,7 @@ async function getBackgroundVideos(
       isError: !response.ok,
       errorMessage: response.ok ? undefined : `Pixabay returned ${response.status}`
     }
-  ).catch(e => logger.error('Failed to log API call', e as Error));
+  ).catch(e => logger?.error('Failed to log API call', e as Error));
 
   if (!response.ok) {
     throw new Error('Pixabay API error');
@@ -517,9 +517,9 @@ async function getBackgroundVideos(
   // Calculate how many clips we need (aim for 8-12 second clips)
   const averageClipDuration = 10;
   const numberOfClips = Math.min(5, Math.ceil(duration / averageClipDuration));
-  
-  logger.info("Selecting background videos for duration", { 
-    metadata: { numberOfClips, duration } 
+
+  logger?.info("Selecting background videos for duration", {
+    metadata: { numberOfClips, duration }
   });
   
   // Randomly select different videos (no duplicates)
@@ -584,12 +584,12 @@ async function assembleVideo(
   };
   const config = dimensions[aspectRatio] || dimensions['4:5'];
 
-  logger.info("Assembling video with Shotstack", { 
-    metadata: { 
-      width: config.width, 
-      height: config.height, 
-      aspectRatio 
-    } 
+  logger?.info("Assembling video with Shotstack", {
+    metadata: {
+      width: config.width,
+      height: config.height,
+      aspectRatio
+    }
   });
 
   // Build Shotstack JSON using official format
@@ -613,7 +613,7 @@ async function assembleVideo(
     edit.timeline.fonts = [{
       src: style.fontUrl
     }];
-    logger.info("Added custom font", { metadata: { fontUrl: style.fontUrl } });
+    logger?.info("Added custom font", { metadata: { fontUrl: style.fontUrl } });
   }
 
   // Track 0: Audio with alias (for caption sync)
@@ -664,7 +664,7 @@ async function assembleVideo(
     clips: [captionClip]
   });
 
-  logger.info("Using rich caption styling with custom font and alignment");
+  logger?.info("Using rich caption styling with custom font and alignment");
 
   // Track 2: Background media (bottom layer)
   if (backgroundMediaType === 'image' && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
@@ -681,7 +681,7 @@ async function assembleVideo(
       ...(index > 0 && { transition: { in: 'fade', out: 'fade' } })
     }));
     edit.timeline.tracks.push({ clips: imageClips });
-    logger.info("Added background image clips", { metadata: { clipCount: imageClips.length } });
+    logger?.info("Added background image clips", { metadata: { clipCount: imageClips.length } });
   } else {
     const clipDuration = Math.ceil(assets.duration / assets.backgroundVideoUrls.length);
     const videoClips = assets.backgroundVideoUrls.map((videoUrl, index) => ({
@@ -696,12 +696,12 @@ async function assembleVideo(
       ...(index > 0 && { transition: { in: 'fade', out: 'fade' } })
     }));
     edit.timeline.tracks.push({ clips: videoClips });
-    logger.info("Added background video clips", { metadata: { clipCount: videoClips.length } });
+    logger?.info("Added background video clips", { metadata: { clipCount: videoClips.length } });
   }
 
   // Debug: Log track order before submission
-  logger.debug("Track order and caption asset", { 
-    metadata: { 
+  logger?.debug("Track order and caption asset", {
+    metadata: {
       trackOrder: edit.timeline.tracks.map((t: any) => t.clips?.[0]?.asset?.type),
       captionAsset: edit.timeline.tracks[1]?.clips?.[0]?.asset
     } 
@@ -753,7 +753,7 @@ async function assembleVideo(
       isError: !response.ok,
       errorMessage: response.ok ? undefined : result?.message || result?.detail || `Shotstack API error ${response.status}`
     }
-  ).catch(e => logger.error('Failed to log API call', e as Error));
+  ).catch(e => logger?.error('Failed to log API call', e as Error));
 
   if (!response.ok) {
     logger.error("Shotstack API Error", undefined, {

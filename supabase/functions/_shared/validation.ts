@@ -261,18 +261,25 @@ export function validateRequest<T>(
   const result = schema.safeParse(data);
   
   if (!result.success) {
-    const formattedErrors = result.error.flatten().fieldErrors;
-    
+    const flattenedErrors = result.error.flatten().fieldErrors;
+    // Filter out undefined values to match Record<string, string[]> type
+    const formattedErrors: Record<string, string[]> = {};
+    for (const [key, value] of Object.entries(flattenedErrors)) {
+      if (value !== undefined) {
+        formattedErrors[key] = value;
+      }
+    }
+
     if (logger) {
       logger.warn('Request validation failed', {
-        metadata: { 
+        metadata: {
           context: context || 'unknown',
           errors: formattedErrors,
           receivedData: typeof data === 'object' ? Object.keys(data as Record<string, unknown>) : typeof data
         }
       });
     }
-    
+
     return {
       success: false,
       error: result.error,

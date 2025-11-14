@@ -97,13 +97,16 @@ export const OutputPanel = forwardRef<HTMLDivElement, OutputPanelProps>(
       generationState.generatedOutputs.length === 0;
 
     console.log('🎨 OutputPanel render', {
+      timestamp: Date.now(),
       hasGeneration,
       showStatusBanner,
       outputsLength: generationState.generatedOutputs.length,
       hasGeneratedOutput: !!generationState.generatedOutput,
       localGenerating,
       isGenerating,
-      pollingGenerationId
+      isPolling,
+      pollingGenerationId,
+      generationStartTime: generationState.generationStartTime
     });
 
     return (

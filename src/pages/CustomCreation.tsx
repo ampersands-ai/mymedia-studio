@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { logger } from "@/lib/logger";
 import { useAuth } from "@/contexts/AuthContext";
 import { GenerationErrorBoundary } from "@/components/error/GenerationErrorBoundary";
@@ -53,12 +53,14 @@ const CustomCreation = () => {
   const { progress, updateProgress, setFirstGeneration, markComplete, dismiss } = useOnboarding();
 
   // Filter and sort models by selected group (default to cost sorting)
-  const filteredModels = allModels?.filter(model => {
-    const groups = (Array.isArray(model.groups) ? model.groups : []) as string[];
-    return groups.includes(state.selectedGroup);
-  }).sort((a, b) => {
-    return a.base_token_cost - b.base_token_cost;
-  }) || [];
+  const filteredModels = useMemo(() => {
+    return allModels?.filter(model => {
+      const groups = (Array.isArray(model.groups) ? model.groups : []) as string[];
+      return groups.includes(state.selectedGroup);
+    }).sort((a, b) => {
+      return a.base_token_cost - b.base_token_cost;
+    }) || [];
+  }, [allModels, state.selectedGroup]);
 
   // Get current model
   const currentModel = filteredModels.find(m => m.record_id === state.selectedModel);
@@ -266,7 +268,7 @@ const CustomCreation = () => {
     };
     
     loadTemplateImages();
-  }, [state.selectedModel, filteredModels]);
+  }, [state.selectedModel]);
 
   // Auto-select first model when filtered models change
   useEffect(() => {

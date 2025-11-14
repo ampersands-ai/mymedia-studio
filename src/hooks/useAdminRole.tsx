@@ -22,6 +22,7 @@ export const useAdminRole = () => {
   const { user, loading: authLoading } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [hasChecked, setHasChecked] = useState(false);
 
   useEffect(() => {
     const checkAdminRole = async () => {
@@ -30,9 +31,15 @@ export const useAdminRole = () => {
         return;
       }
 
+      // Prevent duplicate checks
+      if (hasChecked) {
+        return;
+      }
+
       if (!user) {
         setIsAdmin(false);
         setLoading(false);
+        setHasChecked(true);
         return;
       }
 
@@ -55,11 +62,12 @@ export const useAdminRole = () => {
         setIsAdmin(false);
       } finally {
         setLoading(false);
+        setHasChecked(true);
       }
     };
 
     checkAdminRole();
-  }, [user, authLoading]);
+  }, [user, authLoading, hasChecked]);
 
   return { isAdmin, loading };
 };

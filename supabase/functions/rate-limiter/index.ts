@@ -16,14 +16,19 @@ function sanitizeError(error: any): any {
   return error;
 }
 
-// Inline helper: log errors to console
-function logError(context: string, error: any, metadata?: any): void {
-  console.error(`[ERROR] ${context}:`, sanitizeError(error), metadata);
+// Inline helper: log errors using EdgeLogger
+function logError(context: string, error: any, metadata?: any, logger?: EdgeLogger): void {
+  const sanitized = sanitizeError(error);
+  if (logger) {
+    logger.error(context, new Error(JSON.stringify(sanitized)), { metadata });
+  } else {
+    console.error(`[ERROR] ${context}:`, sanitized, metadata);
+  }
 }
 
 // Inline helper: create standardized error response
-function createErrorResponse(error: any, headers: any, context: string, metadata?: any): Response {
-  logError(context, error, metadata);
+function createErrorResponse(error: any, headers: any, context: string, metadata?: any, logger?: EdgeLogger): Response {
+  logError(context, error, metadata, logger);
   const message = error?.message || 'An error occurred';
   const status = message.includes('Unauthorized') || message.includes('authorization') ? 401
     : message.includes('Forbidden') ? 403
@@ -145,7 +150,7 @@ Deno.serve(async (req) => {
         });
 
       if (insertError) {
-        console.error('[rate-limiter] Error creating rate limit:', insertError);
+        logger.error('Error creating rate limit', insertError);
         throw insertError;
       }
 
@@ -173,7 +178,7 @@ Deno.serve(async (req) => {
         .eq('action', action);
 
       if (resetError) {
-        console.error('[rate-limiter] Error resetting rate limit:', resetError);
+        logger.error('Error resetting rate limit', resetError);
         throw resetError;
       }
 

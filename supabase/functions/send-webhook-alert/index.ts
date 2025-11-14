@@ -119,7 +119,9 @@ serve(async (req) => {
         const emailResults = await Promise.allSettled(emailPromises);
         results.email.sent = emailResults.filter(r => r.status === 'fulfilled').length;
         results.email.failed = emailResults.filter(r => r.status === 'rejected').length;
-        console.log(`📧 Email: ${results.email.sent} sent, ${results.email.failed} failed`);
+        logger.info('Email alerts sent', { 
+          metadata: { sent: results.email.sent, failed: results.email.failed } 
+        });
       }
 
       // Send Slack alert
@@ -134,14 +136,17 @@ serve(async (req) => {
 
           if (slackResponse.ok) {
             results.slack.sent = 1;
-            console.log('💬 Slack: Alert sent successfully');
+            logger.info('Slack alert sent successfully');
           } else {
             results.slack.failed = 1;
-            console.error('Slack alert failed:', await slackResponse.text());
+            const errorText = await slackResponse.text();
+            logger.error('Slack alert failed', new Error(errorText), { 
+              metadata: { statusCode: slackResponse.status } 
+            });
           }
         } catch (error) {
           results.slack.failed = 1;
-          console.error('Slack alert error:', error);
+          logger.error('Slack alert error', error as Error);
         }
       }
 
@@ -252,7 +257,7 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('Error in send-webhook-alert:', error);
+    logger.error('Error in send-webhook-alert', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

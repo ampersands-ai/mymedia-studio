@@ -90,7 +90,7 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
 
           <GenerationProgress
             startTime={generationState.generationStartTime || Date.now()}
-            isComplete={!!generationState.generatedOutput}
+            isComplete={!!generationState.generatedOutput || generationState.generatedOutputs.length > 0}
             completedAt={generationState.generationCompleteTime || undefined}
             estimatedTimeSeconds={estimatedTimeSeconds}
           />

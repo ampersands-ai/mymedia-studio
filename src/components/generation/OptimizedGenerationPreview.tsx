@@ -33,13 +33,24 @@ export const OptimizedGenerationPreview = ({
   contentType, 
   className 
 }: OptimizedGenerationPreviewProps) => {
+  // Infer content type from file extension if storagePath exists
+  const inferredType = storagePath ? (() => {
+    const ext = (storagePath.split('.').pop() || '').toLowerCase();
+    if (['mp4', 'webm', 'mov', 'm4v'].includes(ext)) return 'video';
+    if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) return 'audio';
+    return 'image';
+  })() : 'image';
+  
+  // Use inferred type if contentType is missing or generic
+  const effectiveType = contentType || inferredType;
+
   // Handle null storage path
   if (!storagePath) {
     return (
       <div className={cn("flex items-center justify-center bg-muted rounded-lg min-h-[200px]", className)}>
-        {contentType === "video" ? (
+        {effectiveType === "video" ? (
           <Video className="h-8 w-8 text-muted-foreground" />
-        ) : contentType === "audio" ? (
+        ) : effectiveType === "audio" ? (
           <Music className="h-8 w-8 text-muted-foreground" />
         ) : (
           <div className="h-8 w-8 text-muted-foreground" />
@@ -58,23 +69,23 @@ export const OptimizedGenerationPreview = ({
 
   // Use direct public URLs for videos/audio (CDN-optimized, no signed URL delay)
   // Fallback to signed URL only if public URL fails
-  const videoUrl = contentType === "video" && storagePath 
+  const videoUrl = effectiveType === "video" && storagePath 
     ? getOptimizedVideoUrl(storagePath, 'generated-content')
     : null;
   
-  const audioUrl = contentType === "audio" && storagePath
+  const audioUrl = effectiveType === "audio" && storagePath
     ? getOptimizedAudioUrl(storagePath, 'generated-content')
     : null;
 
   // Smart video preloading based on connection speed
   const { ref: preloadRef, isPreloaded } = useVideoPreload({
     src: videoUrl || '',
-    enabled: contentType === "video" && !!videoUrl,
+    enabled: effectiveType === "video" && !!videoUrl,
   });
 
   // Use video URL hook for fallback with signed strategy
   const { url: fallbackSignedUrl } = useVideoUrl(
-    (contentType === "video" || contentType === "audio") && (videoError || audioError) ? storagePath : null,
+    (effectiveType === "video" || effectiveType === "audio") && (videoError || audioError) ? storagePath : null,
     { strategy: 'signed-short', bucket: 'generated-content' }
   );
 
@@ -86,7 +97,7 @@ export const OptimizedGenerationPreview = ({
 
   // Extract poster frame for videos (with caching)
   useEffect(() => {
-    if (contentType !== "video" || !videoUrl) {
+    if (effectiveType !== "video" || !videoUrl) {
       return;
     }
 
@@ -168,16 +179,16 @@ export const OptimizedGenerationPreview = ({
       const ext = storagePath?.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1];
       let filename: string;
       
-      if (contentType === "video") {
+      if (effectiveType === "video") {
         filename = `video-${Date.now()}.${ext || 'mp4'}`;
-      } else if (contentType === "audio") {
+      } else if (effectiveType === "audio") {
         filename = `audio-${Date.now()}.${ext || 'mp3'}`;
       } else {
         filename = `image-${Date.now()}.${ext || 'jpg'}`;
       }
       
       await downloadFile(downloadUrl, filename);
-      previewLogger.info('Content downloaded successfully', { contentType, filename });
+      previewLogger.info('Content downloaded successfully', { contentType: effectiveType, filename });
     } catch (error) {
       previewLogger.error('Download failed', error as Error, { contentType, storagePath });
       toast.error('Download failed');
@@ -185,7 +196,7 @@ export const OptimizedGenerationPreview = ({
   };
 
   // For images - use optimized component with direct public URLs
-  if (contentType === "image") {
+  if (effectiveType === "image") {
     return (
       <div className="relative group">
         <OptimizedGenerationImage
@@ -225,7 +236,7 @@ export const OptimizedGenerationPreview = ({
   }
 
   // For audio - show waveform visualization
-  if (contentType === "audio") {
+  if (effectiveType === "audio") {
     if (!audioUrl || !storagePath) {
       return (
         <div className={`${className} flex flex-col items-center justify-center bg-muted gap-3`}>
@@ -249,7 +260,7 @@ export const OptimizedGenerationPreview = ({
   }
 
   // For video - use direct public URL with CDN
-  if (contentType === "video") {
+  if (effectiveType === "video") {
     if (!videoUrl || !storagePath) {
       return (
         <div className={`${className} flex flex-col items-center justify-center bg-muted gap-3`}>

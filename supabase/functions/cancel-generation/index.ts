@@ -70,8 +70,8 @@ Deno.serve(async (req) => {
     if (getError || !generation) {
       logger.warn('Generation not found or access denied', {
         userId: user.id,
-        generationId: generation_id,
-        requestId
+        requestId,
+        metadata: { generationId: generation_id }
       });
       return createErrorResponse('Generation not found or access denied', 404);
     }
@@ -80,9 +80,11 @@ Deno.serve(async (req) => {
     if (generation.status !== 'processing') {
       logger.warn('Cannot cancel generation with current status', {
         userId: user.id,
-        generationId: generation_id,
-        currentStatus: generation.status,
-        requestId
+        requestId,
+        metadata: { 
+          generationId: generation_id,
+          currentStatus: generation.status
+        }
       });
       return createErrorResponse(
         `Cannot cancel generation with status: ${generation.status}`,
@@ -92,8 +94,8 @@ Deno.serve(async (req) => {
 
     logger.info('Canceling generation', {
       userId: user.id,
-      generationId: generation_id,
-      requestId
+      requestId,
+      metadata: { generationId: generation_id }
     });
       
     // Mark as failed with user cancellation message
@@ -121,8 +123,8 @@ Deno.serve(async (req) => {
 
     logger.info('Tokens refunded', {
       userId: user.id,
-      tokensRefunded: generation.tokens_used,
-      requestId
+      requestId,
+      metadata: { tokensRefunded: generation.tokens_used }
     });
 
     logger.logDuration('cancel-generation', startTime, { userId: user.id, requestId });

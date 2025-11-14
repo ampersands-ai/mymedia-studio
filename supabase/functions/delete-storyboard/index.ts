@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     // Validate request
     const validation = validateRequest(DeleteStoryboardSchema, body, logger, 'delete-storyboard');
     if (!validation.success) {
-      return createValidationErrorResponse(validation.formattedErrors);
+      return createValidationErrorResponse(validation.formattedErrors, corsHeaders);
     }
     
     const { storyboardId } = validation.data;

@@ -41,7 +41,7 @@ serve(async (req) => {
       }
     }
 
-    console.log('[poll-storyboard-status] storyboardId received:', storyboardId);
+    logger.info('storyboardId received', { metadata: { storyboardId } });
 
     if (!storyboardId) {
       throw new Error('Missing storyboardId parameter (checked both query params and body)');
@@ -66,7 +66,7 @@ serve(async (req) => {
     // If already complete or failed, return cached status
     if (status === 'complete' || status === 'failed') {
       progress = status === 'complete' ? 100 : 0;
-      console.log('[poll-storyboard-status] Storyboard already finalized:', status);
+      logger.info('Storyboard already finalized', { metadata: { status } });
       
       return new Response(
         JSON.stringify({
@@ -84,7 +84,7 @@ serve(async (req) => {
       const json2videoApiKey = Deno.env.get('JSON2VIDEO_API_KEY');
       
       if (!json2videoApiKey) {
-        console.warn('[poll-storyboard-status] JSON2VIDEO_API_KEY not configured, using webhook-only mode');
+        logger.warn('JSON2VIDEO_API_KEY not configured, using webhook-only mode');
         // Return current status, webhook will update when ready
         return new Response(
           JSON.stringify({

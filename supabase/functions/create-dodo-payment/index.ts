@@ -16,19 +16,16 @@ async function fetchWithRetry(url: string, options: RequestInit, maxAttempts = 3
   
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      console.log(`Attempt ${attempt + 1} of ${maxAttempts} to ${url}`);
+      // Silent retry - no logging for attempts
       const response = await fetch(url, options);
       return response;
     } catch (error) {
       const isLastAttempt = attempt === maxAttempts - 1;
       const errorMessage = error instanceof Error ? error.message : String(error);
       
-      console.error(`Attempt ${attempt + 1} failed: ${errorMessage}`);
-      
       // If it's a DNS error and not the last attempt, try IP fallback
       if ((errorMessage.includes('dns error') || errorMessage.includes('lookup address')) && isLastAttempt) {
-        console.log('DNS resolution failed, attempting IP fallback');
-        
+        // Silent DNS fallback attempt
         try {
           // Use Cloudflare DNS over HTTPS to resolve the domain
           const dnsResponse = await fetch(
@@ -42,11 +39,9 @@ async function fetchWithRetry(url: string, options: RequestInit, maxAttempts = 3
           
           if (dnsData.Answer && dnsData.Answer.length > 0) {
             const ipAddress = dnsData.Answer[0].data;
-            console.log(`Resolved ${hostname} to IP: ${ipAddress}`);
             
             // Replace hostname with IP in URL
             const ipUrl = url.replace(hostname, ipAddress);
-            console.log(`Attempting request with IP: ${ipUrl}`);
             
             // Add Host header to ensure correct virtual host routing
             const ipOptions = {
@@ -58,14 +53,11 @@ async function fetchWithRetry(url: string, options: RequestInit, maxAttempts = 3
             };
             
             const ipResponse = await fetch(ipUrl, ipOptions);
-            console.log('IP fallback successful');
             return ipResponse;
           } else {
-            console.error('No DNS records found');
             throw new Error('DNS_ERROR');
           }
         } catch (ipError) {
-          console.error('IP fallback also failed:', ipError);
           throw new Error('DNS_ERROR');
         }
       }
@@ -103,6 +95,10 @@ const PLAN_PRODUCT_IDS = {
 };
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('create-dodo-payment', requestId);
+  const startTime = Date.now();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -144,7 +140,7 @@ Deno.serve(async (req) => {
 
     // Check if product ID is configured
     if (productId.includes('PRODUCT_ID')) {
-      console.error('Product IDs not configured. Please create products in Dodo Payments dashboard.');
+      logger.error('Product IDs not configured', new Error('Please create products in Dodo Payments dashboard'));
       throw new Error('Payment system not fully configured. Please contact support.');
     }
     
@@ -160,13 +156,13 @@ Deno.serve(async (req) => {
     const successUrl = `${baseUrl}/dashboard/create?payment=success`;
     const cancelUrl = `${baseUrl}/pricing?payment=cancelled`;
 
-    console.log('Creating Dodo checkout for:', {
-      user_id: user.id,
-      plan: planKey,
-      billing_period: billingPeriod,
-      product_id: productId,
-      success_url: successUrl,
-      cancel_url: cancelUrl,
+    logger.info('Creating Dodo checkout', {
+      userId: user.id,
+      metadata: {
+        plan: planKey,
+        billing_period: billingPeriod,
+        product_id: productId
+      }
     });
 
     // Determine environment based on API key prefix
@@ -175,7 +171,9 @@ Deno.serve(async (req) => {
       ? 'https://test.dodopayments.com' 
       : 'https://live.dodopayments.com';
     
-    console.log(`Using Dodo Payments ${isTestMode ? 'test' : 'live'} environment: ${dodoBaseUrl}`);
+    logger.info(`Using Dodo Payments environment`, { 
+      metadata: { environment: isTestMode ? 'test' : 'live', baseUrl: dodoBaseUrl } 
+    });
     
     let dodoData;
     try {

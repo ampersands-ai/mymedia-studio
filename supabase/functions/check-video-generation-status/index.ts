@@ -7,6 +7,10 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('check-video-generation-status', requestId);
+  const startTime = Date.now();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -44,7 +48,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('🔍 Checking video generation status:', generation_id);
+    logger.info('Checking video generation status', { metadata: { generation_id } });
 
     // Fetch the generation
     const { data: generation, error: fetchError } = await supabase
@@ -63,7 +67,7 @@ Deno.serve(async (req) => {
 
     // If already completed or failed, return current status
     if (generation.status === 'completed' || generation.status === 'failed') {
-      console.log('✅ Generation already in final state:', generation.status);
+      logger.info('Generation already in final state', { metadata: { status: generation.status } });
       return new Response(
         JSON.stringify({ 
           status: generation.status,
@@ -76,14 +80,14 @@ Deno.serve(async (req) => {
 
     const kieTaskId = generation.provider_task_id;
     if (!kieTaskId) {
-      console.error('❌ No provider_task_id found');
+      logger.error('No provider_task_id found', new Error('Missing task ID'));
       return new Response(
         JSON.stringify({ error: 'No task ID found for this generation' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('📡 Querying Kie.ai for task:', kieTaskId);
+    logger.info('Querying Kie.ai for task', { metadata: { taskId: kieTaskId } });
 
     // Query Kie.ai API for task status
     const kieApiKey = Deno.env.get('KIE_AI_API_KEY');
@@ -102,14 +106,14 @@ Deno.serve(async (req) => {
     );
 
     const kieData = await kieResponse.json();
-    console.log('📊 Kie.ai response:', JSON.stringify(kieData));
+    logger.debug('Kie.ai response received', { metadata: { response: kieData } });
 
     // Check if task completed successfully
     const successFlag = kieData.data?.successFlag;
     const videoUrl = kieData.data?.response?.videoUrl;
 
     if (successFlag === 'SUCCESS' && videoUrl) {
-      console.log('✅ Task completed! Processing video:', videoUrl);
+      logger.info('Task completed, processing video', { metadata: { videoUrl } });
 
       // Download and store video
       const videoResponse = await fetch(videoUrl);
@@ -127,7 +131,7 @@ Deno.serve(async (req) => {
         });
 
       if (uploadError) {
-        console.error('Failed to upload video:', uploadError);
+        logger.error('Failed to upload video', uploadError);
         throw uploadError;
       }
 
@@ -143,11 +147,12 @@ Deno.serve(async (req) => {
         .eq('id', generation_id);
 
       if (updateError) {
-        console.error('Failed to update generation:', updateError);
+        logger.error('Failed to update generation', updateError);
         throw updateError;
       }
 
-      console.log('🎉 Video generation recovered successfully!');
+      logger.info('Video generation recovered successfully');
+      logger.logDuration('Video generation recovery', startTime);
 
       return new Response(
         JSON.stringify({ 
@@ -163,7 +168,8 @@ Deno.serve(async (req) => {
       successFlag === 'GENERATE_MP4_FAILED' ||
       kieData.data?.errorCode !== 0
     ) {
-      console.error('❌ Task failed on Kie.ai side');
+      logger.error('Task failed on Kie.ai side', new Error('Generation failed'));
+
 
       // Mark as failed and refund
       const { error: updateError } = await supabase

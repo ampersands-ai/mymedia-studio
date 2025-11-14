@@ -1,6 +1,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,9 +17,9 @@ function sanitizeError(error: any): any {
   return error;
 }
 
-// Inline helper: log errors to console
+// Inline helper: log errors (now uses EdgeLogger in main function)
 function logError(context: string, error: any, metadata?: any): void {
-  console.error(`[ERROR] ${context}:`, sanitizeError(error), metadata);
+  // Error logging now handled by EdgeLogger
 }
 
 // Inline helper: create standardized error response
@@ -42,6 +43,10 @@ const deductTokensSchema = z.object({
 });
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('deduct-tokens', requestId);
+  const startTime = Date.now();
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -94,7 +99,7 @@ Deno.serve(async (req) => {
           .single();
 
         if (fetchError) {
-          logError('deduct-tokens', fetchError, { user_id: user.id });
+          logger.error('Failed to fetch credit balance', fetchError, { userId: user.id });
           throw new Error('Failed to fetch credit balance');
         }
 

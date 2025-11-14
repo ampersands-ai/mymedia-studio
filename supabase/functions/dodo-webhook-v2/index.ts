@@ -85,11 +85,13 @@ Deno.serve(async (req) => {
       const MAX_TIMESTAMP_AGE = 5 * 60; // 5 minutes
       
       if (isNaN(timestamp) || Math.abs(now - timestamp) > MAX_TIMESTAMP_AGE) {
-        console.error('❌ Webhook timestamp validation failed:', { 
-          timestamp, 
-          now, 
-          diff: now - timestamp,
-          reason: isNaN(timestamp) ? 'invalid_timestamp' : 'timestamp_expired'
+        logger.warn('Webhook timestamp validation failed', { 
+          metadata: {
+            timestamp, 
+            now, 
+            diff: now - timestamp,
+            reason: isNaN(timestamp) ? 'invalid_timestamp' : 'timestamp_expired'
+          }
         });
         return new Response(
           JSON.stringify({ error: 'Webhook timestamp expired or invalid' }),
@@ -121,7 +123,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
       
       if (existingEvent) {
-        console.log('⚠️ Duplicate webhook detected, ignoring:', idempotencyKey);
+        logger.warn('Duplicate webhook detected, ignoring', { metadata: { idempotencyKey } });
         return new Response(JSON.stringify({ received: true, duplicate: true }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -143,17 +145,19 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (verifyError) {
-      console.error(`❌ Svix verification failed (using ${headerSet} headers):`, verifyError);
-      console.error('Verification error details:', verifyError instanceof Error ? verifyError.message : String(verifyError));
-      console.error('Body length:', bodyText.length);
-      console.error('Timestamp:', svixTimestamp);
+      logger.error(`Svix verification failed (using ${headerSet} headers)`, verifyError as Error, {
+        metadata: {
+          bodyLength: bodyText.length,
+          timestamp: svixTimestamp
+        }
+      });
       return new Response(
         JSON.stringify({ error: 'Invalid signature' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
   } catch (error) {
-    console.error('Error processing webhook:', error);
+    logger.error('Error processing webhook', error as Error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     
     // Track webhook analytics for failure
@@ -165,7 +169,7 @@ Deno.serve(async (req) => {
       error_code: 'WEBHOOK_ERROR',
       metadata: { error: errorMessage }
     }).then(({ error: analyticsError }) => {
-      if (analyticsError) console.error('Failed to track analytics:', analyticsError);
+      if (analyticsError) logger.error('Failed to track analytics', analyticsError);
     });
     
     return new Response(JSON.stringify({ error: errorMessage }), {
@@ -176,10 +180,11 @@ Deno.serve(async (req) => {
 });
 
 async function handleWebhookEvent(supabase: any, event: any, webhookStartTime: number) {
+  const logger = new EdgeLogger('dodo-webhook-handler', crypto.randomUUID());
   const eventType = event.type || event.event_type;
   const eventData = event.data || event;
 
-  console.log(`Processing event: ${eventType}`);
+  logger.info('Processing webhook event', { metadata: { eventType } });
 
   // Extract metadata (user_id, plan, etc.)
   const metadata = eventData.metadata || {};
@@ -188,7 +193,7 @@ async function handleWebhookEvent(supabase: any, event: any, webhookStartTime: n
 
   // Fallback: If user_id is missing from metadata, try to find user by email
   if (!userId && eventData.customer?.email) {
-    console.log('metadata.user_id missing, attempting to find user by email:', eventData.customer.email);
+    logger.info('Finding user by email', { metadata: { email: eventData.customer.email } });
     
     const { data: profile, error: profileError } = await supabase
       .from('profiles')

@@ -605,8 +605,6 @@ const CustomCreation = () => {
             maxPromptLength={maxPromptLength}
             onSurpriseMe={onSurpriseMe}
             generatingSurprise={state.generatingSurprise}
-            enhancePrompt={state.enhancePrompt}
-            onEnhancePromptChange={(enhance) => updateState({ enhancePrompt: enhance })}
             generateCaption={state.generateCaption}
             onGenerateCaptionChange={(generate) => updateState({ generateCaption: generate })}
             uploadedImages={uploadedImages}

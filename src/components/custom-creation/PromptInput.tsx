@@ -13,8 +13,6 @@ interface PromptInputProps {
   isRequired: boolean;
   maxLength: number;
   onSurpriseMe: () => void;
-  onEnhance: (enabled: boolean) => void;
-  enhanceEnabled: boolean;
   disabled: boolean;
   generateCaption: boolean;
   onGenerateCaptionChange: (enabled: boolean) => void;
@@ -30,8 +28,6 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   isRequired,
   maxLength,
   onSurpriseMe,
-  onEnhance,
-  enhanceEnabled,
   disabled,
   generateCaption,
   onGenerateCaptionChange,
@@ -94,22 +90,6 @@ export const PromptInput: React.FC<PromptInputProps> = ({
       )}
 
       <div className="flex flex-wrap gap-2 items-center justify-end">
-        <Button
-          variant={enhanceEnabled ? "secondary" : "outline"}
-          size="sm"
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onEnhance(!enhanceEnabled);
-          }}
-          disabled={disabled}
-          className="h-8 text-xs gap-1.5"
-        >
-          <Sparkles className="h-3 w-3" />
-          Enhance Prompt
-        </Button>
-
         <Button
           variant={generateCaption ? "secondary" : "outline"}
           size="sm"

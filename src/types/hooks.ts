@@ -25,7 +25,6 @@ export interface GenerationParams {
   prompt: string;
   customParameters?: CustomParameters;
   templateId?: string;
-  enhancePrompt?: boolean;
 }
 
 export interface UseModelsReturn {

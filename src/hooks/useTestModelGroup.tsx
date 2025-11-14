@@ -103,7 +103,6 @@ export const useTestModelGroup = () => {
             prompt: "", // Empty by default - will trigger validation errors same as production
             modelParameters: {}, // No default parameters - will trigger validation errors same as production
             uploadedImages: [],
-            enhancePrompt: false,
             userId: "test-user-id", // Test user ID (not used since no uploads)
             uploadImagesToStorage: noOpUploadImages,
             generate,

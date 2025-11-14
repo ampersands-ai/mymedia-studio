@@ -522,8 +522,6 @@ export default function ModelHealthTestPage() {
             setStatePrompt(surprise);
           }}
           generatingSurprise={false}
-          enhancePrompt={state.enhancePrompt}
-          onEnhancePromptChange={(enhance) => updateState({ enhancePrompt: enhance })}
           generateCaption={state.generateCaption}
           onGenerateCaptionChange={(generate) => updateState({ generateCaption: generate })}
           uploadedImages={uploadedImages}

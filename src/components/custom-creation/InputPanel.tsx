@@ -34,9 +34,7 @@ interface InputPanelProps {
   onSurpriseMe: () => void;
   generatingSurprise: boolean;
 
-  // Enhance & Caption
-  enhancePrompt: boolean;
-  onEnhancePromptChange: (enabled: boolean) => void;
+  // Caption
   generateCaption: boolean;
   onGenerateCaptionChange: (enabled: boolean) => void;
 
@@ -108,8 +106,6 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   maxPromptLength,
   onSurpriseMe,
   generatingSurprise,
-  enhancePrompt,
-  onEnhancePromptChange,
   generateCaption,
   onGenerateCaptionChange,
   uploadedImages,
@@ -210,8 +206,6 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             isRequired={isPromptRequired}
             maxLength={maxPromptLength}
             onSurpriseMe={onSurpriseMe}
-            onEnhance={onEnhancePromptChange}
-            enhanceEnabled={enhancePrompt}
             disabled={isDisabled}
             generateCaption={generateCaption}
             onGenerateCaptionChange={onGenerateCaptionChange}

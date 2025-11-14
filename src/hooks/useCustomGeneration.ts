@@ -184,7 +184,6 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
         prompt: state.prompt,
         modelParameters: state.modelParameters,
         uploadedImages,
-        enhancePrompt: state.enhancePrompt,
         userId: user.id,
         uploadImagesToStorage,
         generate,

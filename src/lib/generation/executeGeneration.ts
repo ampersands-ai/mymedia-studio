@@ -13,7 +13,6 @@ interface ExecuteGenerationParams {
   prompt: string;
   modelParameters: Record<string, any>;
   uploadedImages: File[];
-  enhancePrompt: boolean;
   userId: string;
   uploadImagesToStorage: (userId: string) => Promise<string[]>;
   generate: (params: any) => Promise<any>;
@@ -33,7 +32,6 @@ export async function executeGeneration({
   prompt,
   modelParameters,
   uploadedImages,
-  enhancePrompt,
   userId,
   uploadImagesToStorage,
   generate,
@@ -100,7 +98,7 @@ export async function executeGeneration({
     const generateParams: any = {
       model_record_id: model.record_id,
       custom_parameters: customParameters,
-      enhance_prompt: enhancePrompt,
+      enhance_prompt: false,
     };
     
     // Only include prompt if schema defines it
@@ -132,7 +130,6 @@ export async function executeGeneration({
         modelId: model?.id,
         userId,
         hasImages: uploadedImages.length > 0,
-        enhancePrompt,
         operation: 'executeGeneration'
       });
       throw error;

@@ -3,7 +3,7 @@
  */
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { webhookLogger } from "../../_shared/logger.ts";
+import { EdgeLogger } from "../../_shared/edge-logger.ts";
 import {
   replaceTemplateVariables,
   resolveInputMappings,
@@ -17,12 +17,18 @@ export async function orchestrateWorkflow(
   isMultiOutput: boolean,
   supabase: SupabaseClient
 ): Promise<void> {
+  const logger = new EdgeLogger('workflow-orchestrator', crypto.randomUUID());
+  
   if (!generation.workflow_execution_id || !generation.workflow_step_number) {
     return; // Not part of a workflow
   }
 
-  console.log('[orchestrator] Generation is part of workflow execution:', generation.workflow_execution_id);
-  console.log('[orchestrator] Completed step:', generation.workflow_step_number);
+  logger.info('Generation is part of workflow', { 
+    metadata: { 
+      workflowExecutionId: generation.workflow_execution_id, 
+      completedStep: generation.workflow_step_number 
+    } 
+  });
 
   try {
     // Fetch workflow execution and template
@@ -33,7 +39,7 @@ export async function orchestrateWorkflow(
       .single();
 
     if (execError || !workflowExecution) {
-      console.error('[orchestrator] Failed to fetch workflow execution:', execError);
+      logger.error('Failed to fetch workflow execution', execError as Error);
       return;
     }
 
@@ -43,7 +49,9 @@ export async function orchestrateWorkflow(
     const totalSteps = steps.length;
     const currentStep = steps.find((s: any) => s.step_number === currentStepNumber);
 
-    console.log('[orchestrator] Current step:', currentStepNumber, '/', totalSteps);
+    logger.info('Current step status', { 
+      metadata: { currentStep: currentStepNumber, totalSteps } 
+    });
 
     // Determine output storage path
     let stepOutputPath = storagePath || generation.storage_path;
@@ -55,7 +63,9 @@ export async function orchestrateWorkflow(
         .eq('output_index', 0)
         .maybeSingle();
       stepOutputPath = firstChild?.storage_path || firstChild?.output_url || null;
-      console.log('[orchestrator] Multi-output: using first child path:', stepOutputPath);
+      logger.debug('Multi-output: using first child path', { 
+        metadata: { stepOutputPath } 
+      });
     }
 
     // Update step_outputs
@@ -76,7 +86,9 @@ export async function orchestrateWorkflow(
       const nextStepNumber = currentStepNumber + 1;
       const nextStep = steps.find((s: any) => s.step_number === nextStepNumber);
       
-      console.log('[orchestrator] More steps remaining. Starting step:', nextStepNumber);
+      logger.info('Starting next step', { 
+        metadata: { nextStepNumber, totalSteps } 
+      });
 
       await supabase
         .from('workflow_executions')
@@ -110,7 +122,9 @@ export async function orchestrateWorkflow(
           }
         }
       } catch (e) {
-        console.warn('[orchestrator] Schema coercion skipped:', e);
+        logger.warn('Schema coercion skipped', { 
+          metadata: { error: e instanceof Error ? e.message : String(e) } 
+        });
       }
 
       const sanitizedParameters = await sanitizeParametersForProviders(
@@ -130,7 +144,9 @@ export async function orchestrateWorkflow(
         resolvedPrompt = replaceTemplateVariables(nextStep.prompt_template, context);
       }
 
-      console.log('[orchestrator] Resolved prompt for step', nextStepNumber, ':', resolvedPrompt);
+      logger.info('Resolved prompt for next step', { 
+        metadata: { nextStepNumber, prompt: resolvedPrompt.substring(0, 100) } 
+      });
 
       // Start next step
       const generateResponse = await supabase.functions.invoke('generate-content', {
@@ -145,7 +161,9 @@ export async function orchestrateWorkflow(
       });
 
       if (generateResponse.error) {
-        console.error('[orchestrator] Failed to start next step:', generateResponse.error);
+        logger.error('Failed to start next step', generateResponse.error, { 
+          metadata: { nextStepNumber } 
+        });
         await supabase
           .from('workflow_executions')
           .update({
@@ -154,18 +172,20 @@ export async function orchestrateWorkflow(
           })
           .eq('id', generation.workflow_execution_id);
       } else {
-        console.log('[orchestrator] Step', nextStepNumber, 'started successfully');
+        logger.info('Next step started successfully', { 
+          metadata: { nextStepNumber } 
+        });
       }
     } else {
       // All steps completed
-      console.log('[orchestrator] All steps completed. Finalizing workflow...');
+      logger.info('All steps completed - finalizing workflow');
 
       const finalOutput = updatedOutputs[`step${totalSteps}`];
       const finalOutputUrl = finalOutput
         ? finalOutput[Object.keys(finalOutput).find(k => k !== 'generation_id') || 'output']
         : null;
 
-      console.log('[orchestrator] Final output URL:', finalOutputUrl);
+      logger.info('Final output URL determined', { metadata: { finalOutputUrl } });
 
       await supabase
         .from('workflow_executions')
@@ -178,10 +198,12 @@ export async function orchestrateWorkflow(
         })
         .eq('id', generation.workflow_execution_id);
 
-      console.log('[orchestrator] Workflow execution completed:', generation.workflow_execution_id);
+      logger.info('Workflow execution completed', { 
+        metadata: { workflowExecutionId: generation.workflow_execution_id } 
+      });
     }
   } catch (orchestrationError: any) {
-    console.error('[orchestrator] Error in workflow orchestration:', orchestrationError);
+    logger.error('Error in workflow orchestration', orchestrationError);
     // Don't fail the entire webhook - the generation is complete
   }
 }

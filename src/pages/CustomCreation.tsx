@@ -416,7 +416,6 @@ const CustomCreation = () => {
     const surprisePrompt = getSurpriseMePrompt(state.selectedGroup);
     setStatePrompt(surprisePrompt);
     updateState({ generatingSurprise: false });
-    toast.success('Surprise!', { description: 'Try this creative prompt' });
   }, [state.selectedGroup, updateState, setStatePrompt]);
 
   // Download all outputs

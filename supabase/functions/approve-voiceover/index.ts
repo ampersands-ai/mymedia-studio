@@ -877,13 +877,15 @@ async function assembleVideo(
             isError: !retryRes2.ok,
             errorMessage: retryRes2.ok ? undefined : retryResult2?.message || retryResult2?.detail || `Shotstack API error ${retryRes2.status}`
           }
-        ).catch(e => console.error('Failed to log API call (retry captions type):', e));
+        ).catch(e => logger.error('Failed to log API call (retry captions type)', e as Error));
 
         if (!retryRes2.ok) {
           let retryMsg = retryResult2?.response?.message || (retryResult2?.response?.errors ? retryResult2.response.errors.map((e: any) => e.message || e.code).join(', ') : '') || retryResult2?.message || errorMessage;
           throw new Error(`Shotstack error: ${retryMsg}`);
         }
-        console.log('Shotstack render submitted successfully (captions type fallback):', retryResult2.response.id);
+        logger.info('Shotstack render submitted successfully (captions type fallback)', { 
+          metadata: { renderId: retryResult2.response.id } 
+        });
         return retryResult2.response.id;
       }
 
@@ -938,11 +940,11 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
         isError: !response.ok,
         errorMessage: response.ok ? undefined : `Shotstack status check returned ${response.status}`
       }
-    ).catch(e => console.error('Failed to log API call:', e));
+    ).catch(e => logger?.error('Failed to log API call', e as Error));
 
     const status = result?.response?.status;
     
-    console.log(`Job ${jobId} render status: ${status}`);
+    logger?.debug('Render status check', { metadata: { jobId, status } });
 
     if (status === 'done' && result.response.url) {
       const videoUrl = result.response.url;

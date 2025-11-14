@@ -1,4 +1,5 @@
 
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,6 +7,9 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('check-video-status', requestId);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -36,7 +40,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error checking video status:', error);
+    logger.error('Error checking video status', error);
     
     return new Response(
       JSON.stringify({ error: error.message }),

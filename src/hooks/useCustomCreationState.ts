@@ -159,6 +159,14 @@ export const useCustomCreationState = () => {
    * Update partial state
    */
   const updateState = useCallback((partial: Partial<CustomCreationState>) => {
+    // DEBUG: Log state updates that affect outputs
+    if ('generatedOutputs' in partial || 'generatedOutput' in partial) {
+      console.log('🔄 STATE UPDATE', {
+        generatedOutputs: partial.generatedOutputs?.length,
+        generatedOutput: partial.generatedOutput,
+        stack: new Error().stack?.split('\n').slice(2, 5).join('\n')
+      });
+    }
     setState(prev => ({ ...prev, ...partial }));
   }, []);
 
@@ -205,6 +213,15 @@ export const useCustomCreationState = () => {
       // Only clear outputs if model is actually changing and not during active generation
       const isChanging = selectedModel !== prev.selectedModel;
       const isGenerating = prev.localGenerating || prev.pollingGenerationId;
+      
+      console.log('🎯 setSelectedModel', {
+        from: prev.selectedModel,
+        to: selectedModel,
+        isChanging,
+        isGenerating,
+        willClear: isChanging && !isGenerating,
+        currentOutputs: prev.generatedOutputs.length
+      });
       
       if (!isChanging || isGenerating) {
         return { ...prev, selectedModel };

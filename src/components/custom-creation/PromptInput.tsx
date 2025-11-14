@@ -6,6 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Sparkles, Loader2 } from "lucide-react";
 import { CAPTION_GENERATION_COST } from "@/constants/custom-creation";
 import { logger } from "@/lib/logger";
+import { usePromptEnhancement } from "@/hooks/usePromptEnhancement";
+import { useUserTokens } from "@/hooks/useUserTokens";
+import { toast } from "sonner";
 
 interface PromptInputProps {
   value: string;
@@ -34,6 +37,27 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   generatingSurprise,
 }) => {
   const isOverLimit = value.length > maxLength;
+  const { enhancePrompt, isEnhancing } = usePromptEnhancement();
+  const { data: tokenData, refetch: refetchTokens } = useUserTokens();
+
+  const handleEnhancePrompt = async () => {
+    if (!value.trim()) {
+      toast.error('Enter a prompt first');
+      return;
+    }
+
+    const currentTokens = Number(tokenData?.tokens_remaining || 0);
+    if (currentTokens < 0.1) {
+      toast.error('Insufficient credits. You need 0.1 credits to enhance prompts.');
+      return;
+    }
+
+    const enhanced = await enhancePrompt(value, 'image');
+    if (enhanced) {
+      onChange(enhanced);
+      refetchTokens();
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -90,6 +114,25 @@ export const PromptInput: React.FC<PromptInputProps> = ({
       )}
 
       <div className="flex flex-wrap gap-2 items-center justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleEnhancePrompt();
+          }}
+          disabled={disabled || isEnhancing || !value.trim()}
+          className="h-8 text-xs gap-1.5"
+        >
+          {isEnhancing ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Sparkles className="h-3 w-3" />
+          )}
+          Enhance Prompt (0.1)
+        </Button>
         <Button
           variant={generateCaption ? "secondary" : "outline"}
           size="sm"

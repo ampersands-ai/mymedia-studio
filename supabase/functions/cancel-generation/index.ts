@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
-      logger.error('Authentication failed', authError, { requestId });
+      logger.error('Authentication failed', authError || undefined, { requestId });
       return createErrorResponse('Unauthorized', 401);
     }
 

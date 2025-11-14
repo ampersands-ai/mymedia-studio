@@ -142,8 +142,9 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('❌ Health check error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Health check failed';
     return new Response(
-      JSON.stringify({ error: error.message || 'Health check failed' }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },

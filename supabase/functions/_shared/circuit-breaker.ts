@@ -5,8 +5,6 @@
 export class CircuitBreaker {
   private failures = 0;
   private lastFailure = 0;
-  private readonly threshold: number;
-  private readonly timeout: number;
 
   /**
    * @param threshold - Number of failures before opening circuit (default: 5)

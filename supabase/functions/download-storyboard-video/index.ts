@@ -1,5 +1,6 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,11 +8,17 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const logger = new EdgeLogger('download-storyboard-video', requestId);
+  
   try {
+    logger.info('Starting storyboard video download');
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -23,7 +30,7 @@ Deno.serve(async (req) => {
       throw new Error('Missing required parameters: storyboardId, videoUrl, userId');
     }
 
-    console.log('[download-storyboard-video] Starting download for storyboard:', storyboardId);
+    logger.info('Processing download request', { metadata: { storyboardId, userId } });
 
     // Fetch storyboard details
     const { data: storyboard, error: storyboardError } = await supabaseClient
@@ -38,7 +45,7 @@ Deno.serve(async (req) => {
     }
 
     // Download video from JSON2Video with timeout
-    console.log('[download-storyboard-video] Downloading from:', videoUrl);
+    logger.info('Downloading video', { metadata: { videoUrl: videoUrl.substring(0, 100) } });
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
@@ -65,7 +72,7 @@ Deno.serve(async (req) => {
     const videoBlob = await videoResponse.arrayBuffer();
     const videoSize = videoBlob.byteLength;
 
-    console.log('[download-storyboard-video] Downloaded video size:', videoSize, 'bytes');
+    logger.info('Video downloaded successfully', { metadata: { videoSize } });
 
     // Generate storage path: storyboard-videos/{user_id}/{YYYY-MM-DD}/{storyboard_id}.mp4
     const now = new Date();
@@ -73,7 +80,7 @@ Deno.serve(async (req) => {
     const storagePath = `storyboard-videos/${userId}/${dateFolder}/${storyboardId}.mp4`;
 
     // Upload to Supabase Storage
-    console.log('[download-storyboard-video] Uploading to storage:', storagePath);
+    logger.info('Uploading to storage', { metadata: { storagePath } });
     
     const { error: uploadError } = await supabaseClient
       .storage
@@ -84,11 +91,11 @@ Deno.serve(async (req) => {
       });
 
     if (uploadError) {
-      console.error('[download-storyboard-video] Storage upload error:', uploadError);
+      logger.error('Storage upload failed', uploadError);
       throw new Error(`Storage upload failed: ${uploadError.message}`);
     }
 
-    console.log('[download-storyboard-video] Successfully uploaded to storage');
+    logger.info('Successfully uploaded to storage', { metadata: { storagePath } });
 
     // Update storyboards table with storage path
     const { error: updateError } = await supabaseClient
@@ -100,12 +107,12 @@ Deno.serve(async (req) => {
       .eq('id', storyboardId);
 
     if (updateError) {
-      console.error('[download-storyboard-video] Failed to update storyboard:', updateError);
+      logger.error('Failed to update storyboard', updateError);
       throw new Error(`Database update failed: ${updateError.message}`);
     }
 
     // Create generations record
-    console.log('[download-storyboard-video] Creating generations record');
+    logger.debug('Creating generations record');
     
     const { error: generationError } = await supabaseClient
       .from('generations')
@@ -127,11 +134,12 @@ Deno.serve(async (req) => {
       });
 
     if (generationError) {
-      console.warn('[download-storyboard-video] Failed to create generation record:', generationError);
+      logger.warn('Failed to create generation record', generationError);
       // Don't throw - video is still saved successfully
     }
 
-    console.log('[download-storyboard-video] Successfully completed for storyboard:', storyboardId);
+    logger.info('Download complete', { metadata: { storyboardId } });
+    logger.logDuration('Video download and upload', startTime);
 
     return new Response(
       JSON.stringify({
@@ -143,7 +151,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('[download-storyboard-video] Error:', error);
+    logger.error('Download failed', error as Error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
     return new Response(

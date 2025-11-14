@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,10 +43,15 @@ interface AuditLogRequest {
 }
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
+  
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const logger = new EdgeLogger('audit-log', requestId);
 
   try {
     // Get user from Authorization header
@@ -94,7 +100,9 @@ Deno.serve(async (req) => {
       validatedData = auditLogSchema.parse(requestBody);
     } catch (validationError) {
       if (validationError instanceof z.ZodError) {
-        console.error('Validation error:', validationError.errors);
+        logger.error('Validation error', validationError as Error, {
+          metadata: { errors: validationError.errors }
+        });
         return new Response(
           JSON.stringify({ 
             error: 'Invalid input', 
@@ -136,14 +144,17 @@ Deno.serve(async (req) => {
       });
 
     if (insertError) {
-      console.error('Database error in audit-log:', insertError.message);
+      logger.error('Database error in audit-log', insertError);
       return new Response(
         JSON.stringify({ error: 'Failed to create audit log' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`[AUDIT] ${validatedData.action} by user ${user.id}`);
+    logger.info('Audit log recorded', { 
+      metadata: { action: validatedData.action, userId: user.id }
+    });
+    logger.logDuration('Audit log', startTime);
 
     return new Response(
       JSON.stringify({ success: true }),

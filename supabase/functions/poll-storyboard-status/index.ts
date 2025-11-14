@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +11,9 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('poll-storyboard-status', requestId);
 
   try {
     const supabaseClient = createClient(
@@ -99,7 +103,7 @@ serve(async (req) => {
       }
 
       try {
-        console.log('[poll-storyboard-status] Checking JSON2Video status for:', storyboard.render_job_id);
+        logger.info('Checking JSON2Video status', { metadata: { renderJobId: storyboard.render_job_id } });
         
         const statusResponse = await fetch(
           `https://api.json2video.com/v2/movies?project=${storyboard.render_job_id}`,
@@ -112,7 +116,7 @@ serve(async (req) => {
 
         if (statusResponse.ok) {
           const statusData = await statusResponse.json();
-          console.log('[poll-storyboard-status] JSON2Video status:', statusData);
+          logger.info('JSON2Video status retrieved', { metadata: { status: statusData.movie?.status } });
 
           if (statusData.movie?.status === 'done' || statusData.movie?.status === 'success') {
             status = 'complete';
@@ -140,16 +144,15 @@ serve(async (req) => {
               }
             }).then(downloadResult => {
               if (downloadResult.error) {
-                console.error('[poll-storyboard-status] Storage upload failed:', downloadResult.error);
+                logger.error('Storage upload failed', new Error(downloadResult.error.message));
               } else {
-                console.log('[poll-storyboard-status] Video stored at:', downloadResult.data?.storagePath);
+                logger.info('Video stored', { metadata: { storagePath: downloadResult.data?.storagePath } });
               }
             }).catch(error => {
-              console.error('[poll-storyboard-status] Background storage upload error:', error);
+              logger.error('Background storage upload error', error);
             });
               
-            console.log('[poll-storyboard-status] Render complete, storage upload initiated');
-            console.log('[poll-storyboard-status] API quota remaining:', statusData.remaining_quota?.time);
+            logger.info('Render complete, storage upload initiated', { metadata: { quotaRemaining: statusData.remaining_quota?.time } });
             
           } else if (statusData.movie?.status === 'error' || statusData.movie?.status === 'failed') {
             status = 'failed';
@@ -171,20 +174,20 @@ serve(async (req) => {
               })
               .eq('id', storyboardId);
               
-            console.error('[poll-storyboard-status] Storyboard rendering failed');
+            logger.error('Storyboard rendering failed');
             
           } else if (statusData.movie?.status === 'rendering' || statusData.movie?.status === 'processing') {
             status = 'rendering';
             progress = statusData.movie.progress || 50;
-            console.log('[poll-storyboard-status] Rendering in progress:', progress);
+            logger.info('Rendering in progress', { metadata: { progress } });
           }
         } else {
-          console.warn('[poll-storyboard-status] JSON2Video API error:', statusResponse.status);
+          logger.warn('JSON2Video API error', { metadata: { status: statusResponse.status } });
           // Fall back to webhook-based updates
           progress = 50;
         }
       } catch (error) {
-        console.error('[poll-storyboard-status] Error checking JSON2Video status:', error);
+        logger.error('Error checking JSON2Video status', error instanceof Error ? error : new Error(String(error)));
         // Fall back to webhook-based updates
         progress = 50;
       }
@@ -205,7 +208,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error:', error);
+    logger.error('Poll storyboard status error', error instanceof Error ? error : new Error(String(error)));
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),

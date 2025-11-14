@@ -1,14 +1,18 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('retry-pending-midjourney', requestId);
 
   try {
     // SECURITY: Authenticate admin user
@@ -50,7 +54,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('🔍 Scanning for pending Midjourney generations...');
+    logger.info('Scanning for pending Midjourney generations');
 
     // Find all pending/processing Midjourney generations
     const { data: pendingGens, error: queryError } = await supabase
@@ -65,7 +69,7 @@ serve(async (req) => {
     }
 
     if (!pendingGens || pendingGens.length === 0) {
-      console.log('✅ No pending generations found');
+      logger.info('No pending generations found');
       return new Response(
         JSON.stringify({ 
           success: true, 
@@ -82,7 +86,7 @@ serve(async (req) => {
       return modelId && (modelId.startsWith('mj_') || modelId.includes('midjourney'));
     });
 
-    console.log(`📊 Found ${pendingGens.length} pending generations, ${midjourneyGens.length} are Midjourney`);
+    logger.info('Found pending generations', { metadata: { totalPending: pendingGens.length, midjourneyCount: midjourneyGens.length } });
 
     if (midjourneyGens.length === 0) {
       return new Response(
@@ -108,13 +112,17 @@ serve(async (req) => {
     // Process each Midjourney generation
     for (const gen of midjourneyGens) {
       try {
-        console.log(`\n🎨 [${gen.id}] Processing Midjourney generation...`);
-        console.log(`   Model: ${gen.model_id}`);
-        console.log(`   Task ID: ${gen.provider_task_id || 'missing'}`);
-        console.log(`   Created: ${gen.created_at}`);
+        logger.info('Processing Midjourney generation', { 
+          metadata: { 
+            generationId: gen.id,
+            modelId: gen.model_id,
+            taskId: gen.provider_task_id || 'missing',
+            createdAt: gen.created_at
+          }
+        });
 
         if (!gen.provider_task_id) {
-          console.warn(`⚠️  [${gen.id}] Skipping - no provider_task_id`);
+          logger.warn('Skipping generation - no provider_task_id', { metadata: { generationId: gen.id } });
           results.errors.push({
             generation_id: gen.id,
             error: 'No provider_task_id found'
@@ -139,14 +147,14 @@ serve(async (req) => {
 
         if (pollResult.success) {
           if (pollResult.status === 'completed' && pollResult.result_urls?.length > 0) {
-            console.log(`✅ [${gen.id}] Task completed! Found ${pollResult.result_urls.length} results`);
+            logger.info('Task completed', { metadata: { generationId: gen.id, resultCount: pollResult.result_urls.length } });
             results.completed++;
           } else {
-            console.log(`⏳ [${gen.id}] Task still ${pollResult.status}`);
+            logger.info('Task still processing', { metadata: { generationId: gen.id, status: pollResult.status } });
             results.still_processing++;
           }
         } else {
-          console.error(`❌ [${gen.id}] Poll failed:`, pollResult.error);
+          logger.error('Poll failed', new Error(pollResult.error), { metadata: { generationId: gen.id } });
           results.failed++;
           results.errors.push({
             generation_id: gen.id,
@@ -158,7 +166,7 @@ serve(async (req) => {
         await new Promise(resolve => setTimeout(resolve, 500));
 
       } catch (error: any) {
-        console.error(`❌ [${gen.id}] Error:`, error.message);
+        logger.error('Processing error', error, { metadata: { generationId: gen.id } });
         results.failed++;
         results.errors.push({
           generation_id: gen.id,
@@ -167,11 +175,14 @@ serve(async (req) => {
       }
     }
 
-    console.log('\n📊 Processing complete!');
-    console.log('   Total processed:', results.processed);
-    console.log('   Completed:', results.completed);
-    console.log('   Still processing:', results.still_processing);
-    console.log('   Failed:', results.failed);
+    logger.info('Processing complete', { 
+      metadata: { 
+        totalProcessed: results.processed,
+        completed: results.completed,
+        stillProcessing: results.still_processing,
+        failed: results.failed
+      }
+    });
 
     return new Response(
       JSON.stringify({ 
@@ -183,7 +194,7 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('Retry pending Midjourney error:', error);
+    logger.error('Retry pending Midjourney error', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

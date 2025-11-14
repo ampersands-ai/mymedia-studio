@@ -483,7 +483,7 @@ Deno.serve(async (req) => {
       return presetMap[ratio] || presetMap['full-hd']; // Default to Full HD
     }
 
-    console.log('[render-storyboard-video] Calling JSON2Video API with payload:', JSON.stringify(renderPayload, null, 2));
+    logger.info('Calling JSON2Video API', { metadata: { renderPayload: JSON.stringify(renderPayload) } });
 
     // Call JSON2Video API
     const json2videoResponse = await fetch('https://api.json2video.com/v2/movies', {
@@ -497,7 +497,7 @@ Deno.serve(async (req) => {
 
     if (!json2videoResponse.ok) {
       const errorText = await json2videoResponse.text();
-      console.error('[render-storyboard-video] JSON2Video API error:', json2videoResponse.status, errorText);
+      logger.error('JSON2Video API error', new Error(`Status: ${json2videoResponse.status}, ${errorText}`));
       
       // Refund the charged credits since render failed
       await supabaseClient.rpc('increment_tokens', {
@@ -515,13 +515,13 @@ Deno.serve(async (req) => {
     }
 
     const json2videoData = await json2videoResponse.json();
-    console.log('[render-storyboard-video] JSON2Video response:', json2videoData);
+    logger.info('JSON2Video response received', { metadata: { project: json2videoData.project } });
 
     // ✅ CRITICAL: Use JSON2Video's returned project ID, not our generated one!
     const json2videoProjectId = json2videoData.project;
 
     if (!json2videoProjectId) {
-      console.error('[render-storyboard-video] JSON2Video did not return a project ID!');
+      logger.error('JSON2Video did not return a project ID');
       
       // Refund the charged credits since we can't track the render
       await supabaseClient.rpc('increment_tokens', {
@@ -532,8 +532,12 @@ Deno.serve(async (req) => {
       throw new Error('JSON2Video API error: No project ID in response');
     }
 
-    console.log('[render-storyboard-video] JSON2Video assigned project ID:', json2videoProjectId);
-    console.log('[render-storyboard-video] Our generated ID was:', uniqueRenderJobId, '(will be replaced)');
+    logger.info('JSON2Video project ID assigned', { 
+      metadata: { 
+        json2videoProjectId,
+        generatedId: uniqueRenderJobId 
+      }
+    });
 
     // Update storyboard status with JSON2Video's project ID
     const { error: updateError } = await supabaseClient
@@ -546,7 +550,7 @@ Deno.serve(async (req) => {
       .eq('id', storyboardId);
 
     if (updateError) {
-      console.error('[render-storyboard-video] Status update error:', updateError);
+      logger.error('Status update error', updateError);
       // Refund initial estimate (actual cost may have been higher, but we limit refund to initial)
       await supabaseClient.rpc('increment_tokens', {
         user_id_param: user.id,
@@ -566,7 +570,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error:', error);
+    logger.error('Render storyboard video error', error instanceof Error ? error : new Error(String(error)));
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),

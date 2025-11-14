@@ -20,13 +20,13 @@ export function normalizeResultUrls(
       const parsed = JSON.parse(resultJson);
       if (Array.isArray(parsed.resultUrls)) {
         urls.push(...parsed.resultUrls);
-        console.log('📄 Normalized URLs from resultJson:', urls.length);
+        webhookLogger.info('Normalized URLs from resultJson', { metadata: { count: urls.length } });
       } else if (parsed.resultUrl) {
         urls.push(parsed.resultUrl);
-        console.log('📄 Normalized single URL from resultJson');
+        webhookLogger.info('Normalized single URL from resultJson');
       }
     } catch (e) {
-      console.error('Failed to parse resultJson:', e);
+      webhookLogger.error('Failed to parse resultJson', e instanceof Error ? e : new Error(String(e)));
     }
   }
   
@@ -34,7 +34,7 @@ export function normalizeResultUrls(
   if (urls.length === 0 && isMidjourney && payload.data?.resultUrls) {
     if (Array.isArray(payload.data.resultUrls)) {
       urls.push(...payload.data.resultUrls);
-      console.log('🎨 [MIDJOURNEY] Normalized URLs from data.resultUrls:', urls.length);
+      webhookLogger.info('[MIDJOURNEY] Normalized URLs from data.resultUrls', { metadata: { count: urls.length } });
     }
   }
   
@@ -46,25 +46,25 @@ export function normalizeResultUrls(
     const infoUrls = info.result_urls ?? info.resultUrls;
     if (Array.isArray(infoUrls) && infoUrls.length > 0) {
       urls.push(...infoUrls);
-      console.log('ℹ️ Normalized URLs from data.info (plural):', urls.length);
+      webhookLogger.info('Normalized URLs from data.info (plural)', { metadata: { count: urls.length } });
     } 
     // Try singular formats (FLUX Kontext, etc.)
     else {
       const singleUrl = info.resultImageUrl ?? info.result_image_url ?? info.resultUrl ?? info.result_url;
       if (singleUrl) {
         urls.push(singleUrl);
-        console.log('ℹ️ Normalized single URL from data.info');
+        webhookLogger.info('Normalized single URL from data.info');
       }
     }
   }
   
   // Fallback to old data.data format
   if (urls.length === 0 && Array.isArray(payload.data?.data)) {
-    console.log('📦 Using old data.data format');
+    webhookLogger.info('Using old data.data format');
     return []; // Return empty to signal we should use items format
   }
   
-  console.log(`✅ Normalized ${urls.length} URL(s) for type: ${generationType} (model: ${modelId || 'unknown'})`);
+  webhookLogger.info('URL normalization complete', { metadata: { count: urls.length, type: generationType, modelId: modelId || 'unknown' } });
   return urls;
 }
 

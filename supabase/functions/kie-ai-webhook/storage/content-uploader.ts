@@ -28,11 +28,15 @@ export async function uploadToStorage(
     const fileName = `${generationId}.${fileExtension}`;
     const storagePath = `${userId}/${dateFolder}/${fileName}`;
     
-    console.log('📤 Uploading to storage:', storagePath, 'Size:', fileData.length);
-
-    // Determine MIME type
     const mimeType = getMimeType(fileExtension, contentType);
-    console.log('📄 MIME type:', mimeType);
+    
+    webhookLogger.info('Starting storage upload', {
+      storagePath,
+      size: fileData.length,
+      mimeType,
+      generationId,
+      userId
+    });
     
     const { error: uploadError } = await supabase.storage
       .from('generated-content')
@@ -43,7 +47,11 @@ export async function uploadToStorage(
       });
 
     if (uploadError) {
-      console.error('❌ Storage upload error:', uploadError);
+      webhookLogger.upload(storagePath, false, {
+        error: uploadError.message,
+        generationId,
+        userId
+      });
       return {
         success: false,
         error: uploadError.message || 'Storage upload failed'
@@ -57,7 +65,13 @@ export async function uploadToStorage(
       .getPublicUrl(storagePath);
 
     const publicUrl = urlData?.publicUrl || null;
-    console.log('✅ Storage upload successful:', storagePath);
+    
+    webhookLogger.upload(storagePath, true, {
+      publicUrl,
+      size: fileData.length,
+      generationId,
+      userId
+    });
     
     return {
       success: true,
@@ -65,7 +79,11 @@ export async function uploadToStorage(
       publicUrl: publicUrl || undefined
     };
   } catch (error: any) {
-    console.error('❌ Upload failed:', error);
+    webhookLogger.upload('unknown', false, {
+      error: error.message || 'Unknown upload error',
+      generationId,
+      userId
+    });
     return {
       success: false,
       error: error.message || 'Unknown upload error'

@@ -13,10 +13,15 @@ export interface DownloadResult {
 
 export async function downloadContent(url: string): Promise<DownloadResult> {
   try {
-    console.log('⬇️ Downloading content from:', url);
+    webhookLogger.info('Starting content download', { url: url.substring(0, 100) });
 
     const response = await fetch(url);
     if (!response.ok) {
+      webhookLogger.error('Download failed - HTTP error', {
+        url: url.substring(0, 100),
+        statusCode: response.status,
+        statusText: response.statusText
+      });
       return {
         success: false,
         error: `HTTP ${response.status}: ${response.statusText}`
@@ -27,7 +32,10 @@ export async function downloadContent(url: string): Promise<DownloadResult> {
     const data = new Uint8Array(arrayBuffer);
     const contentType = response.headers.get('content-type') || '';
     
-    console.log('✅ Downloaded successfully. Size:', data.length, 'bytes');
+    webhookLogger.download(url, true, {
+      size: data.length,
+      contentType
+    });
     
     return {
       success: true,
@@ -35,7 +43,9 @@ export async function downloadContent(url: string): Promise<DownloadResult> {
       contentType
     };
   } catch (error: any) {
-    console.error('❌ Download failed:', error);
+    webhookLogger.download(url, false, {
+      error: error.message || 'Unknown download error'
+    });
     return {
       success: false,
       error: error.message || 'Unknown download error'

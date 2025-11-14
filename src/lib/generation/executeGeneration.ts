@@ -113,8 +113,12 @@ export async function executeGeneration({
       throw new Error("No generation ID returned");
     }
 
+    console.log('✅ Generation started, calling startPolling', { genId });
+    
     // Step 8: Start polling
     startPolling(genId);
+    
+    console.log('✅ startPolling called', { genId });
 
     return genId;
   } catch (error: any) {

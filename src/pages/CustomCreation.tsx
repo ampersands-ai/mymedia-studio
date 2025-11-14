@@ -213,9 +213,9 @@ const CustomCreation = () => {
             }
           }, 300);
 
-          // Generate caption if enabled
-          if (state.generateCaption && updatedOutputs.length > 0) {
-            generateCaption(updatedOutputs);
+      // Generate caption if enabled
+      if (state.generateCaption && outputs.length > 0) {
+        generateCaption(outputs);
           }
         } else {
           console.warn('⚠️ Generation completed but no outputs found');
@@ -318,9 +318,9 @@ const CustomCreation = () => {
                   }
                 }, 300);
                 
-                // Generate caption if enabled
-                if (state.generateCaption && updatedOutputs.length > 0) {
-                  generateCaption(updatedOutputs);
+      // Generate caption if enabled
+      if (state.generateCaption && outputs.length > 0) {
+        generateCaption(outputs);
                 }
               } else {
                 console.warn('⚠️ Generation completed but no outputs found');

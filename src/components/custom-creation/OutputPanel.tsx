@@ -5,6 +5,9 @@ import { GenerationConsole } from "./GenerationConsole";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import type { GenerationOutput, CaptionData } from "@/types/custom-creation";
 import { Button } from "@/components/ui/button";
+import { useActiveGenerations } from "@/hooks/useActiveGenerations";
+import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 interface OutputPanelProps {
   generationState: {
@@ -85,6 +88,9 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
     },
     ref
   ) => {
+    const { data: activeGenerations = [] } = useActiveGenerations();
+    const navigate = useNavigate();
+
     const hasGeneration =
       localGenerating || isGenerating || isPolling || pollingGenerationId || 
       generationState.generatedOutput || 
@@ -98,32 +104,30 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
 
     const showProgress = showStatusBanner;
 
+    const handleNavigateToHistory = () => {
+      navigate('/dashboard/my-creations?status=pending');
+    };
+
     return (
         <Card ref={ref} className="h-full flex flex-col border-border/40 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
           <div className="border-b border-border px-4 md:px-6 py-3 md:py-4 bg-muted/30 shrink-0">
-            <h2 className="text-base md:text-lg font-bold text-foreground">Output</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-base md:text-lg font-bold text-foreground">Output</h2>
+              {activeGenerations.length > 0 && (
+                <Badge 
+                  variant="secondary" 
+                  className="cursor-pointer hover:bg-primary/20 transition-colors gap-1.5"
+                  onClick={handleNavigateToHistory}
+                >
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <span className="text-xs font-medium">
+                    {activeGenerations.length}/{activeGenerations.length > 99 ? '99+' : activeGenerations.length}
+                  </span>
+                </Badge>
+              )}
+            </div>
           </div>
 
-          {/* Status Banner */}
-          {showStatusBanner && (
-            <div className="border-b border-border/50 bg-primary/5 px-4 py-2 flex items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                <Loader2 className="h-3 w-3 animate-spin flex-shrink-0 text-primary" />
-                <span className="text-muted-foreground">
-                  Generating your content...
-                </span>
-              </div>
-              <Button
-              variant="ghost"
-              size="sm"
-              onClick={onViewHistory}
-              className="h-7 px-2 flex-shrink-0"
-            >
-              <ExternalLink className="h-3 w-3 mr-1" />
-              My Creations
-            </Button>
-          </div>
-        )}
 
         <div className="flex-1 p-4 md:p-6">
           {hasGeneration ? (

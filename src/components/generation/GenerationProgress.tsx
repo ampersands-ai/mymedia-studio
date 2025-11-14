@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, CheckCircle2, Clock } from "lucide-react";
+import { Loader2, CheckCircle2, Clock, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface GenerationProgressProps {
   startTime: number;
@@ -9,6 +10,7 @@ interface GenerationProgressProps {
   completedAt?: number;
   className?: string;
   estimatedTimeSeconds?: number | null;
+  onViewHistory?: () => void;
 }
 
 export const GenerationProgress = ({ 
@@ -16,7 +18,8 @@ export const GenerationProgress = ({
   isComplete, 
   completedAt,
   className,
-  estimatedTimeSeconds
+  estimatedTimeSeconds,
+  onViewHistory
 }: GenerationProgressProps) => {
   const [progress, setProgress] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -64,9 +67,22 @@ export const GenerationProgress = ({
             {isComplete ? "Generation Complete" : "Generating..."}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <Clock className="h-4 w-4" />
-          <span>{elapsedTime.toFixed(1)}s</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            <span>{elapsedTime.toFixed(1)}s</span>
+          </div>
+          {!isComplete && onViewHistory && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onViewHistory}
+              className="h-7 px-2 ml-2"
+            >
+              <ExternalLink className="h-3 w-3 mr-1" />
+              My Creations
+            </Button>
+          )}
         </div>
       </div>
       

@@ -42,7 +42,7 @@ serve(async (req) => {
 
     const { limit = 10, dryRun = false, skipExisting = true } = await req.json();
 
-    console.log('[migrate-storyboard-videos] Starting migration', { limit, dryRun, skipExisting });
+    logger.info('Starting migration', { metadata: { limit, dryRun, skipExisting } });
 
     // Query storyboards needing migration
     let query = supabaseClient

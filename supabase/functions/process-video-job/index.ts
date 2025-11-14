@@ -395,7 +395,7 @@ async function getBackgroundVideo(
   if (topic && topic.trim()) {
     // Extract key terms from topic (remove filler words, limit length)
     searchQuery = extractSearchTerms(topic);
-    console.log(`[${videoJobId}] Using topic-based search: "${searchQuery}" (from topic: "${topic}")`);
+    logger.info('Using topic-based search', { metadata: { jobId: videoJobId, searchQuery, topic } });
   } else {
     // Fallback to style-based queries
     const queries: Record<string, string> = {
@@ -405,7 +405,7 @@ async function getBackgroundVideo(
       dramatic: 'cinematic nature dramatic'
     };
     searchQuery = queries[style] || 'abstract motion background';
-    console.log(`[${videoJobId}] Using style-based search: "${searchQuery}"`);
+    logger.info('Using style-based search', { metadata: { jobId: videoJobId, searchQuery, style } });
   }
   const pixabayApiKey = Deno.env.get('PIXABAY_API_KEY');
   const endpoint = `https://pixabay.com/api/videos/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&per_page=20`;
@@ -615,10 +615,10 @@ async function assembleVideo(
       isError: !response.ok,
       errorMessage: response.ok ? undefined : result?.message || result?.detail || `Shotstack returned ${response.status}`
     }
-  ).catch(e => console.error('Failed to log API call:', e));
+  ).catch(e => logger.error('Failed to log API call', e instanceof Error ? e : new Error(String(e))));
 
   if (!response.ok) {
-    console.error(`[${videoJobId}] Shotstack error details:`, {
+    logger.error('Shotstack error details', undefined, { metadata: {
       status: response.status,
       response: result,
       requestPayload: edit
@@ -626,7 +626,7 @@ async function assembleVideo(
     throw new Error(`Shotstack error: ${result?.message || result?.detail || response.statusText || 'Bad Request'}`);
   }
 
-  console.log(`[${videoJobId}] Render submitted: ${result.response.id}`);
+  logger.info('Render submitted', { metadata: { jobId: videoJobId, renderId: result.response.id } });
   return result.response.id;
 }
 

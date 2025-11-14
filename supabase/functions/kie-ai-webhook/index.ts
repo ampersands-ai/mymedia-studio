@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
       );
     }
     
-    console.log('🔒 All security layers passed - processing webhook');
+    logger.info('All security layers passed - processing webhook');
 
     // Parse items from payload
     let items: any[] = [];
@@ -114,27 +114,29 @@ Deno.serve(async (req) => {
       
       if (normalizedUrls.length > 0) {
         items = mapUrlsToItems(normalizedUrls, generation.type);
-        console.log(`✅ Mapped ${items.length} URLs to ${generation.type}-specific fields`);
+        logger.info('Mapped URLs to type-specific fields', { metadata: { itemCount: items.length, type: generation.type } });
       } else {
         items = payload.data?.data || [];
-        console.log(`📦 Using old data.data format with ${items.length} items`);
+        logger.info('Using old data.data format', { metadata: { itemCount: items.length } });
       }
     } catch (e) {
-      console.error('Failed to parse results:', e);
+      logger.error('Failed to parse results', e instanceof Error ? e : new Error(String(e)), { metadata: { error: e } });
       items = payload.data?.data || [];
     }
     
-    console.log('Callback type:', callbackType, 'Items count:', items.length);
+    logger.info('Processing callback', { metadata: { callbackType, itemCount: items.length } });
 
     const isSuccess = state === 'success' || payload.code === 200 || (payload.msg && payload.msg.toLowerCase().includes('success'));
     const isFailed = state === 'failed' || payload.status === 400 || payload.code === 400 || payload.code === 422 || (payload.msg && payload.msg.toLowerCase().includes('fail'));
 
     // === HANDLE FAILURE ===
     if (isFailed) {
-      console.error('KieAI generation failure:', {
-        task_id: taskId,
-        fail_msg: failMsg,
-        generation_id: generation.id
+      logger.error('KieAI generation failure', undefined, { 
+        metadata: { 
+          task_id: taskId,
+          fail_msg: failMsg,
+          generation_id: generation.id
+        } 
       });
       
       const sanitizedError = (failMsg || payload.msg || 'Generation failed').substring(0, 200);
@@ -159,7 +161,7 @@ Deno.serve(async (req) => {
         amount: generation.tokens_used
       });
 
-      console.log('Tokens refunded:', generation.tokens_used);
+      logger.info('Tokens refunded', { metadata: { amount: generation.tokens_used } });
 
       // Audit log
       await supabase.from('kie_credit_audits').insert({
@@ -185,9 +187,9 @@ Deno.serve(async (req) => {
     // === TYPE-SPECIFIC VALIDATION ===
     if (generation.type === 'image') {
       if (hasImageResults(items, payload, resultJson)) {
-        console.log('✅ Image has complete results');
+        logger.info('Image has complete results');
       } else if (callbackType && callbackType.toLowerCase() !== 'complete') {
-        console.log(`⏸️ Partial image callback (${callbackType})`);
+        logger.info('Partial image callback', { metadata: { callbackType } });
         await supabase.from('generations').update({ status: 'processing', provider_response: payload }).eq('id', generation.id);
         return new Response(
           JSON.stringify({ success: true, message: `Partial webhook acknowledged` }),
@@ -196,9 +198,9 @@ Deno.serve(async (req) => {
       }
     } else if (generation.type === 'audio') {
       if (hasAudioResults(items, payload, resultJson)) {
-        console.log(`✅ Audio has complete results (${items.length} URLs)`);
+        logger.info('Audio has complete results', { metadata: { urlCount: items.length } });
       } else if (callbackType && callbackType.toLowerCase() !== 'complete') {
-        console.log(`⏸️ Partial audio callback (${callbackType})`);
+        logger.info('Partial audio callback', { metadata: { callbackType } });
         await supabase.from('generations').update({ status: 'processing', provider_response: payload }).eq('id', generation.id);
         return new Response(
           JSON.stringify({ success: true, message: `Partial webhook acknowledged` }),
@@ -207,9 +209,9 @@ Deno.serve(async (req) => {
       }
     } else if (generation.type === 'video') {
       if (hasVideoResults(items, payload, resultJson)) {
-        console.log('✅ Video has complete results');
+        logger.info('Video has complete results');
       } else if (callbackType && callbackType.toLowerCase() !== 'complete') {
-        console.log(`⏸️ Partial video callback (${callbackType})`);
+        logger.info('Partial video callback', { metadata: { callbackType } });
         await supabase.from('generations').update({ status: 'processing', provider_response: payload }).eq('id', generation.id);
         return new Response(
           JSON.stringify({ success: true, message: `Partial webhook acknowledged` }),
@@ -222,20 +224,20 @@ Deno.serve(async (req) => {
     const hasMjResults = hasMidjourneyResults(payload, generation.ai_models?.id);
     
     if (isSuccess && (resultJson || payload.data?.info || hasMjResults || video_url || (Array.isArray(items) && items.length > 0))) {
-      console.log('🎯 Processing successful generation');
+      logger.info('Processing successful generation');
       
       // Extract result URLs - reuse normalized URLs if available
       let resultUrls: string[] = normalizedUrls.length > 0 ? normalizedUrls : [];
       
       // Only run old extraction if normalizedUrls is empty (fallback for legacy formats)
       if (resultUrls.length === 0) {
-        console.log('⚠️ normalizedUrls empty, using fallback extraction');
+        logger.warn('normalizedUrls empty, using fallback extraction');
         
         if (video_url) {
           resultUrls = [video_url];
         } else if (isMidjourneyModel(generation.ai_models?.id) && payload.data?.resultUrls) {
           resultUrls = extractMidjourneyUrls(payload);
-          console.log('🎨 [MIDJOURNEY] URLs found:', resultUrls.length);
+          logger.info('[MIDJOURNEY] URLs found', { metadata: { count: resultUrls.length } });
         } else if (resultJson) {
           const result = JSON.parse(resultJson);
           resultUrls = result.resultUrls || [result.resultUrl].filter(Boolean);
@@ -251,15 +253,15 @@ Deno.serve(async (req) => {
           }
         }
       } else {
-        console.log(`✅ Reusing ${resultUrls.length} normalized URL(s) - no re-extraction needed`);
+        logger.info('Reusing normalized URLs', { metadata: { count: resultUrls.length } });
       }
 
       if (resultUrls.length === 0) {
-        console.error('❌ No result URLs found');
+        logger.error('No result URLs found');
         throw new Error('No result URLs found in response');
       }
 
-      console.log(`✅ Found ${resultUrls.length} output(s) to process`);
+      logger.info('Found outputs to process', { metadata: { count: resultUrls.length } });
 
       const isMultiOutput = resultUrls.length > 1;
       let storagePath: string | null = null;

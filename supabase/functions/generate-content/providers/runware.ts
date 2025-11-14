@@ -128,13 +128,13 @@ export async function callRunware(
   // Clean model ID (remove any trailing quotes or whitespace)
   const cleanModel = request.model.replace(/["'\s]+$/g, '');
   
-  console.log('[Runware] Calling API - Model:', cleanModel, 'TaskUUID:', taskUUID);
+  logger.info('Calling Runware API', { metadata: { model: cleanModel, taskUUID, provider: 'runware' } });
 
   // Determine task type from parameters or infer from model/params
   const taskType = request.parameters?.taskType || (request.parameters?.frameImages ? "videoInference" : "imageInference");
   const isVideo = taskType === "videoInference";
   
-  console.log('[Runware] Task type:', taskType, 'Is video:', isVideo);
+  logger.info('Task type determined', { metadata: { taskType, isVideo, provider: 'runware' } });
 
   // uploadEndpoint is provided by main edge function if needed for video direct upload
 

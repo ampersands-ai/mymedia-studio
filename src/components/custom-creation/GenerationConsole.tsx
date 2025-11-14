@@ -4,6 +4,7 @@ import { Info, History } from "lucide-react";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
 import { OutputGrid } from "@/components/generation/OutputGrid";
 import { OutputLightbox } from "@/components/generation/OutputLightbox";
+import { OptimizedGenerationPreview } from "@/components/generation/OptimizedGenerationPreview";
 import { CaptionDisplay } from "./CaptionDisplay";
 import { VideoGenerationList } from "./VideoGenerationList";
 import type { GenerationOutput, CaptionData } from "@/types/custom-creation";
@@ -137,11 +138,17 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
             </div>
           ) : generationState.generatedOutput ? (
             // Single output fallback
-            <div className="text-center text-sm text-muted-foreground p-4">
-              <p>Generation complete. Check History for details.</p>
-              <Button onClick={onViewHistory} variant="outline" className="mt-2 gap-2">
+            <div className="space-y-3 pt-2">
+              <div className="relative bg-background rounded-lg overflow-hidden border">
+                <OptimizedGenerationPreview
+                  storagePath={generationState.generatedOutput}
+                  contentType={contentType}
+                  className="w-full"
+                />
+              </div>
+              <Button onClick={onViewHistory} variant="outline" className="w-full gap-2">
                 <History className="h-4 w-4" />
-                View History
+                View in History
               </Button>
             </div>
           ) : null}

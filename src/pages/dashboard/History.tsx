@@ -15,6 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { OptimizedGenerationImage } from "@/components/generation/OptimizedGenerationImage";
+import { OptimizedVideoPreview } from "@/components/generation/OptimizedVideoPreview";
+import { LazyGridItem } from "@/components/LazyGridItem";
 import { GallerySkeleton } from "@/components/ui/skeletons/GallerySkeleton";
 import { LoadingTransition } from "@/components/ui/loading-transition";
 import { useImagePreloader } from "@/hooks/useImagePreloader";
@@ -853,108 +855,116 @@ const History = () => {
           </Card>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-            {filteredGenerations.map((generation) => (
-              <Card
-              key={generation.id} 
-              className="overflow-hidden cursor-pointer hover-lift"
-              onClick={() => setPreviewGeneration(generation)}
-            >
-              <div className="aspect-square relative overflow-hidden bg-muted">
-                {generation.is_batch_output && generation.output_index !== undefined && (
-                  <div className="absolute top-1 right-1 z-10">
-                    <Badge className="text-[10px] px-1.5 py-0.5 bg-secondary text-secondary-foreground backdrop-blur-sm border border-secondary shadow-sm">
-                      #{generation.output_index + 1}
-                    </Badge>
-                  </div>
-                )}
-                {generation.status === "failed" ? (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-red-500/10">
-                    <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
-                    <span className="text-xs text-red-500 font-medium">Generation Failed</span>
-                  </div>
-                ) : ((generation.storage_path || (generation.is_video_job && generation.output_url)) && generation.status === "completed") ? (
-                  <>
-                    {generation.type === "video" ? (
-                      <VideoPreview 
-                        generation={generation}
-                        className="w-full h-full object-cover"
-                        playOnHover={true}
-                      />
-                    ) : generation.type === "image" ? (
-                      <ImageWithOptimizedLoading 
-                        generation={generation}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : generation.type === "audio" ? (
-                      <AudioWithSignedUrl 
-                        generation={generation}
-                        className="w-full h-full"
-                      />
+            {filteredGenerations.map((generation, index) => (
+              <LazyGridItem key={generation.id} priority={index < 6}>
+                <Card
+                  className="overflow-hidden cursor-pointer hover-lift"
+                  onClick={() => setPreviewGeneration(generation)}
+                >
+                  <div className="aspect-square relative overflow-hidden bg-muted">
+                    {generation.is_batch_output && generation.output_index !== undefined && (
+                      <div className="absolute top-1 right-1 z-10">
+                        <Badge className="text-[10px] px-1.5 py-0.5 bg-secondary text-secondary-foreground backdrop-blur-sm border border-secondary shadow-sm">
+                          #{generation.output_index + 1}
+                        </Badge>
+                      </div>
+                    )}
+                    {generation.status === "failed" ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-red-500/10">
+                        <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
+                        <span className="text-xs text-red-500 font-medium">Generation Failed</span>
+                      </div>
+                    ) : ((generation.storage_path || (generation.is_video_job && generation.output_url)) && generation.status === "completed") ? (
+                      <>
+                        {generation.type === "video" ? (
+                          <OptimizedVideoPreview
+                            storagePath={generation.storage_path}
+                            outputUrl={generation.output_url}
+                            className="w-full h-full object-cover"
+                            playOnHover={true}
+                            priority={index < 6}
+                            isExternalUrl={
+                              generation.is_video_job ||
+                              (generation.output_url !== null &&
+                                !/^(storyboard-videos|faceless-videos)\//.test(generation.output_url || ''))
+                            }
+                          />
+                        ) : generation.type === "image" ? (
+                          <ImageWithOptimizedLoading
+                            generation={generation}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : generation.type === "audio" ? (
+                          <AudioWithSignedUrl
+                            generation={generation}
+                            className="w-full h-full"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            {getTypeIcon(generation.type)}
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         {getTypeIcon(generation.type)}
                       </div>
                     )}
-                  </>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    {getTypeIcon(generation.type)}
                   </div>
-                )}
-              </div>
-              
-              <CardContent className="p-2 space-y-1">
-                <div className="flex items-center justify-between flex-wrap gap-1">
-                  <div className="flex items-center gap-1">
-                    {getTypeIcon(generation.type)}
-                    <span className="font-bold text-xs capitalize">{generation.type}</span>
-                    {generation.ai_caption && (
-                      <Sparkles className="h-3 w-3 text-primary" />
+
+                  <CardContent className="p-2 space-y-1">
+                    <div className="flex items-center justify-between flex-wrap gap-1">
+                      <div className="flex items-center gap-1">
+                        {getTypeIcon(generation.type)}
+                        <span className="font-bold text-xs capitalize">{generation.type}</span>
+                        {generation.ai_caption && (
+                          <Sparkles className="h-3 w-3 text-primary" />
+                        )}
+                      </div>
+                      {getStatusBadge(generation.status, generation.created_at)}
+                    </div>
+
+                    {!generation.workflow_execution_id && (
+                      <p className="text-xs text-foreground/80 line-clamp-1">
+                        {generation.enhanced_prompt || generation.prompt}
+                      </p>
                     )}
-                  </div>
-                  {getStatusBadge(generation.status, generation.created_at)}
-                </div>
+                    {generation.workflow_execution_id && (
+                      <p className="text-xs text-muted-foreground italic line-clamp-1">
+                        Template Generation
+                      </p>
+                    )}
 
-                {!generation.workflow_execution_id && (
-                  <p className="text-xs text-foreground/80 line-clamp-1">
-                    {generation.enhanced_prompt || generation.prompt}
-                  </p>
-                )}
-                {generation.workflow_execution_id && (
-                  <p className="text-xs text-muted-foreground italic line-clamp-1">
-                    Template Generation
-                  </p>
-                )}
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{format(new Date(generation.created_at), "MMM d")}</span>
+                      {generation.is_batch_output && generation.tokens_used === 0 ? (
+                        <span className="text-green-600 dark:text-green-400 font-medium">Batch output</span>
+                      ) : (
+                        <span>{Number(generation.tokens_used).toFixed(2)} credits</span>
+                      )}
+                    </div>
 
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{format(new Date(generation.created_at), "MMM d")}</span>
-                  {generation.is_batch_output && generation.tokens_used === 0 ? (
-                    <span className="text-green-600 dark:text-green-400 font-medium">Batch output</span>
-                  ) : (
-                    <span>{Number(generation.tokens_used).toFixed(2)} credits</span>
-                  )}
-                </div>
-
-                {/* Quick actions - Download without opening preview */}
-                {(generation.storage_path || generation.output_url) && generation.status === "completed" && (
-                  <div className="flex gap-1 pt-1 border-t mt-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownload(generation.storage_path, generation.type, generation.output_url);
-                      }}
-                      className="flex-1 h-7 text-xs"
-                    >
-                      <Download className="h-3 w-3 mr-1" />
-                      Download
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                    {/* Quick actions - Download without opening preview */}
+                    {(generation.storage_path || generation.output_url) && generation.status === "completed" && (
+                      <div className="flex gap-1 pt-1 border-t mt-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(generation.storage_path, generation.type, generation.output_url);
+                          }}
+                          className="flex-1 h-7 text-xs"
+                        >
+                          <Download className="h-3 w-3 mr-1" />
+                          Download
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </LazyGridItem>
+            ))}
         </div>
       )}
       </LoadingTransition>

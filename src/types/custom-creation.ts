@@ -66,7 +66,6 @@ export interface CustomCreationState {
   selectedModel: string | null;
   selectedGroup: CreationGroup;
   modelParameters: Record<string, any>;
-  enhancePrompt: boolean;
   generateCaption: boolean;
   resolution: "Native" | "HD";
   advancedOpen: boolean;

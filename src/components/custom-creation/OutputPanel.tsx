@@ -96,7 +96,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
       !generationState.generatedOutput && 
       generationState.generatedOutputs.length === 0;
 
-    const showProgress = showStatusBanner || !!generationState.generatedOutput || generationState.generatedOutputs.length > 0;
+    const showProgress = showStatusBanner;
 
     return (
         <Card ref={ref} className="h-full flex flex-col border-border/40 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">

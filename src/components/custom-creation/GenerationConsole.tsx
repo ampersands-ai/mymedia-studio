@@ -80,14 +80,12 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
             </p>
           </div>
 
-          {generationState.generationStartTime && (
-            <GenerationProgress
-              startTime={generationState.generationStartTime}
-              isComplete={!!generationState.generatedOutput}
-              completedAt={generationState.generationCompleteTime || undefined}
-              estimatedTimeSeconds={estimatedTimeSeconds}
-            />
-          )}
+          <GenerationProgress
+            startTime={generationState.generationStartTime || Date.now()}
+            isComplete={!!generationState.generatedOutput}
+            completedAt={generationState.generationCompleteTime || undefined}
+            estimatedTimeSeconds={estimatedTimeSeconds}
+          />
 
           {generationState.generatedOutputs.length > 0 ? (
             <div className="space-y-3 pt-2">

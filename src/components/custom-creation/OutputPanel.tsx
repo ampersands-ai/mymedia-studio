@@ -81,8 +81,8 @@ export const OutputPanel = forwardRef<HTMLDivElement, OutputPanelProps>(
     ref
   ) => {
     const hasGeneration =
-      (localGenerating || isGenerating || pollingGenerationId || generationState.generatedOutput) &&
-      generationState.generationStartTime;
+      localGenerating || isGenerating || pollingGenerationId || generationState.generatedOutput;
+
 
     return (
       <Card ref={ref} className="h-full flex flex-col border-border/40 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">

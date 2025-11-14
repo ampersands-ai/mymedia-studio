@@ -38,8 +38,8 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
         <div className="w-80">
           <div className="p-4 border-b border-neutral-200 flex items-center justify-between bg-gradient-to-r from-primary-50 to-secondary-50">
             <div className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-primary-500" />
-              <h3 className="font-bold text-lg">Getting Started</h3>
+              <Trophy className="h-5 w-5 text-primary-600" />
+              <h3 className="font-bold text-lg text-neutral-900">Getting Started</h3>
             </div>
             <div className="flex items-center gap-1">
               <Button
@@ -106,7 +106,7 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
             {allComplete && !progress.bonusAwarded && (
               <Button
                 onClick={onComplete}
-                className="w-full bg-primary-500 hover:bg-primary-600 text-neutral-900 font-bold animate-pulse"
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold animate-pulse shadow-lg"
               >
                 <Trophy className="h-4 w-4 mr-2" />
                 Claim 2 Bonus Credits
@@ -157,8 +157,8 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
               </div>
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-sm">Getting Started</p>
-              <p className="text-xs text-neutral-500">{Math.round(progressPercentage)}% complete</p>
+              <p className="font-semibold text-sm text-neutral-900">Getting Started</p>
+              <p className="text-xs text-neutral-600">{Math.round(progressPercentage)}% complete</p>
             </div>
             <ChevronUp className="h-4 w-4 text-neutral-400" />
           </div>

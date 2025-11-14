@@ -513,7 +513,12 @@ const CustomCreation = () => {
   } | null | undefined;
   const textKey = schemaHelpers.findPrimaryTextKey(modelSchema?.properties);
   const voiceKey = schemaHelpers.findPrimaryVoiceKey(modelSchema?.properties, currentModel as any);
-  const hasPromptField = !!(modelSchema?.properties?.prompt);
+  const hasPromptField = !!(
+    modelSchema?.properties?.prompt || 
+    modelSchema?.properties?.positivePrompt ||
+    modelSchema?.properties?.positive_prompt ||
+    textKey
+  );
   const isPromptRequired = (modelSchema?.required || []).includes('prompt');
   const maxPromptLength = schemaHelpers.getMaxPromptLength(currentModel as any, state.modelParameters.customMode);
   const hasDuration = !!(modelSchema?.properties?.duration);
@@ -582,7 +587,18 @@ const CustomCreation = () => {
             onModelChange={setStateSelectedModel}
             modelsLoading={modelsLoading}
             prompt={state.prompt}
-            onPromptChange={setStatePrompt}
+            onPromptChange={(value) => {
+              setStatePrompt(value);
+              // Sync with positivePrompt for Runware models
+              if (modelSchema?.properties?.positivePrompt) {
+                updateState({ 
+                  modelParameters: { 
+                    ...state.modelParameters, 
+                    positivePrompt: value 
+                  }
+                });
+              }
+            }}
             hasPromptField={hasPromptField}
             isPromptRequired={isPromptRequired}
             maxPromptLength={maxPromptLength}

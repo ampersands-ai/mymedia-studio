@@ -12,6 +12,8 @@ export interface VerifyTokenResult {
   statusCode?: number;
 }
 
+import { webhookLogger } from "../../_shared/logger.ts";
+
 export async function validateVerifyToken(
   url: URL,
   taskId: string,
@@ -19,7 +21,10 @@ export async function validateVerifyToken(
 ): Promise<VerifyTokenResult> {
   const verifyToken = url.searchParams.get('verify');
   if (!verifyToken) {
-    console.error('🚨 SECURITY LAYER 2 FAILED: Missing verify token');
+    webhookLogger.error('SECURITY LAYER 2 FAILED: Missing verify token', 'No verify token provided', {
+      taskId,
+      status: 'missing_verify_token'
+    });
     return {
       success: false,
       error: 'Missing verify token',
@@ -50,7 +55,11 @@ export async function validateVerifyToken(
     findError = error;
     
     if (retryCount < maxRetries) {
-      console.log(`⏳ Generation not found, retry ${retryCount + 1}/${maxRetries} after delay...`);
+      webhookLogger.info(`Generation not found, retry ${retryCount + 1}/${maxRetries} after delay`, {
+        taskId,
+        retryCount: retryCount + 1,
+        maxRetries
+      });
       await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
     }
     
@@ -58,7 +67,10 @@ export async function validateVerifyToken(
   }
 
   if (findError || !generation) {
-    console.error('Security: Rejected webhook for unknown task:', taskId, findError);
+    webhookLogger.error('Security: Rejected webhook for unknown task', findError?.message || 'Not found', {
+      taskId,
+      status: 'unknown_task'
+    });
     return {
       success: false,
       error: 'Invalid task ID',
@@ -69,11 +81,12 @@ export async function validateVerifyToken(
   // Validate verify token matches stored token
   const storedToken = generation.settings?._webhook_token;
   if (!storedToken || storedToken !== verifyToken) {
-    console.error('🚨 SECURITY LAYER 2 FAILED: Invalid verify token', {
+    webhookLogger.failure(generation.id, 'SECURITY LAYER 2 FAILED: Invalid verify token', {
       generation_id: generation.id,
       task_id: taskId,
       expected_preview: storedToken?.substring(0, 8) + '...',
-      received_preview: verifyToken.substring(0, 8) + '...'
+      received_preview: verifyToken.substring(0, 8) + '...',
+      status: 'invalid_verify_token'
     });
     
     await supabase.from('audit_logs').insert({
@@ -95,9 +108,10 @@ export async function validateVerifyToken(
   
   // Check if generation was cancelled
   if (generation.status === 'cancelled') {
-    console.log('⏹️ Generation was cancelled by user - ignoring webhook', {
+    webhookLogger.info('Generation was cancelled by user - ignoring webhook', {
       generation_id: generation.id,
-      task_id: taskId
+      task_id: taskId,
+      status: 'cancelled'
     });
     return {
       success: false,
@@ -108,7 +122,12 @@ export async function validateVerifyToken(
   
   // Check if already processed
   if (generation.status !== 'pending' && generation.status !== 'processing') {
-    console.error('Security: Rejected webhook for already processed task:', taskId, 'Status:', generation.status);
+    webhookLogger.error('Security: Rejected webhook for already processed task', `Status: ${generation.status}`, {
+      taskId,
+      generation_id: generation.id,
+      current_status: generation.status,
+      status: 'already_processed'
+    });
     return {
       success: false,
       error: 'Generation already processed',
@@ -116,6 +135,9 @@ export async function validateVerifyToken(
     };
   }
   
-  console.log('✅ Layer 2 passed: Verify token validated');
+  webhookLogger.info('Layer 2 passed: Verify token validated', {
+    generation_id: generation.id,
+    task_id: taskId
+  });
   return { success: true, generation };
 }

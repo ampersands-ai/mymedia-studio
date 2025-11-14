@@ -28,11 +28,12 @@ export async function validateIdempotency(
     .maybeSingle();
 
   if (existingEvent) {
-    console.warn('⚠️ SECURITY LAYER 4: Duplicate webhook detected (idempotency check)', {
+    webhookLogger.info('SECURITY LAYER 4: Duplicate webhook detected (idempotency check)', {
       taskId,
       callbackType,
       generation_id: generation.id,
-      previous_event_id: existingEvent.id
+      previous_event_id: existingEvent.id,
+      status: 'duplicate_blocked'
     });
     
     await supabase.from('audit_logs').insert({
@@ -62,10 +63,16 @@ export async function validateIdempotency(
     });
 
   if (eventInsertError) {
-    console.error('Failed to record webhook event:', eventInsertError);
+    webhookLogger.error('Failed to record webhook event', eventInsertError.message, {
+      taskId,
+      generation_id: generation.id
+    });
     // Continue processing - idempotency is nice-to-have, not critical
   }
   
-  console.log('✅ Layer 4 passed: Idempotency check completed');
+  webhookLogger.info('Layer 4 passed: Idempotency check completed', {
+    taskId,
+    generation_id: generation.id
+  });
   return { success: true, isDuplicate: false };
 }

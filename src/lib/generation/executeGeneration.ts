@@ -46,7 +46,9 @@ export async function executeGeneration({
   const imageFieldInfo = getImageFieldInfo(model);
   
   // Step 2: Validate inputs (same as Custom Creation)
-  const isPromptRequired = model.input_schema?.required?.includes('prompt') || false;
+  const isPromptRequired = (model.input_schema?.required || []).some((field: string) =>
+    ['prompt', 'positivePrompt', 'positive_prompt'].includes(field)
+  ) || false;
   const validation = validateGenerationInputs(
     model,
     prompt,

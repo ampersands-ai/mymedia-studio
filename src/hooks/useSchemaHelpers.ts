@@ -73,6 +73,9 @@ export const useSchemaHelpers = () => {
       const desc = (schema?.description || "").toLowerCase();
       const name = key.toLowerCase();
 
+      // Skip main prompt fields (handled by PromptInput component)
+      if (['prompt', 'positiveprompt', 'positive_prompt'].includes(name)) continue;
+
       // Ignore non-textual fields
       const isFileLike = ["image", "file", "url", "upload"].some(k => 
         name.includes(k) || title.includes(k) || desc.includes(k)

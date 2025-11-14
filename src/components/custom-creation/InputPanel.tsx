@@ -398,7 +398,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
         )}
 
         {/* Primary text field (script, lyrics, etc.) */}
-        {textKey && textKeySchema && !['prompt', 'input_text', 'text'].includes(textKey.toLowerCase()) && (
+        {textKey && textKeySchema && !['prompt', 'positiveprompt', 'positive_prompt', 'input_text', 'text'].includes(textKey.toLowerCase()) && (
           <SchemaInput
             name={textKey}
             schema={textKeySchema}

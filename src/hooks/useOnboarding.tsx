@@ -38,7 +38,7 @@ export const useOnboarding = () => {
         .from('user_onboarding_progress')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         logger.error('Error fetching onboarding progress', error instanceof Error ? error : new Error(String(error)), {
@@ -56,6 +56,28 @@ export const useOnboarding = () => {
         .eq('user_id', user.id);
 
       const isNewUser = (count || 0) === 0;
+
+      // If no onboarding record exists, return default state
+      if (!data) {
+        return {
+          isNewUser,
+          isComplete: false,
+          dismissed: false,
+          checklist: {
+            viewedTemplates: false,
+            selectedTemplate: false,
+            enteredPrompt: false,
+            viewedTokenCost: false,
+            completedFirstGeneration: false,
+            viewedResult: false,
+            downloadedResult: false,
+          },
+          completedCount: 0,
+          totalCount: 7,
+          bonusAwarded: false,
+          firstGenerationId: null,
+        } as OnboardingProgress;
+      }
 
       const checklist = {
         viewedTemplates: data.viewed_templates,

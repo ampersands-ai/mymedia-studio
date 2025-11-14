@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -66,11 +67,15 @@ const rateLimitSchema = z.object({
 });
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
+  
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const logger = new EdgeLogger('rate-limiter', requestId);
   let body: any;
 
   try {
@@ -105,7 +110,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (fetchError) {
-      console.error('[rate-limiter] Error fetching rate limit:', fetchError);
+      logger.error('Error fetching rate limit', fetchError);
       throw fetchError;
     }
 
@@ -205,7 +210,7 @@ Deno.serve(async (req) => {
       .eq('action', action);
 
     if (updateError) {
-      console.error('[rate-limiter] Error updating rate limit:', updateError);
+      logger.error('Error updating rate limit', updateError);
       throw updateError;
     }
 
@@ -229,11 +234,16 @@ Deno.serve(async (req) => {
         JSON.stringify({ 
           allowed: false, 
           error: `Too many attempts. Please try again later.`,
-          blockedUntil: updateData.blocked_until,
+      blockedUntil: updateData.blocked_until,
         }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    logger.debug('Rate limit checked', { 
+      metadata: { identifier, action, allowed: true }
+    });
+    logger.logDuration('Rate limit check', startTime);
 
     return new Response(
       JSON.stringify({ allowed: true, remainingAttempts: config.maxAttempts - newAttemptCount }),
@@ -241,6 +251,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
+    logger.error('Rate limiter error', error as Error);
     return createErrorResponse(error, corsHeaders, 'rate-limiter', {
       identifier: body?.identifier,
       action: body?.action,

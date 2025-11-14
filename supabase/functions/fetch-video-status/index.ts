@@ -1,5 +1,6 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,12 +8,16 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('fetch-video-status', requestId);
+  const startTime = Date.now();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('[fetch-video-status] Manual fetch initiated');
+    logger.info('Manual fetch initiated');
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -35,7 +40,7 @@ Deno.serve(async (req) => {
       throw new Error('Missing renderJobId parameter');
     }
 
-    console.log('[fetch-video-status] Fetching status for render job:', renderJobId);
+    logger.info('Fetching status for render job', { metadata: { renderJobId } });
 
     // Check JSON2Video API for status
     const json2videoApiKey = Deno.env.get('JSON2VIDEO_API_KEY');
@@ -58,7 +63,7 @@ Deno.serve(async (req) => {
     }
 
     const statusData = await statusResponse.json();
-    console.log('[fetch-video-status] JSON2Video response:', statusData);
+    logger.debug('JSON2Video response received', { metadata: { statusData } });
 
     // Find the storyboard
     const { data: storyboard, error: fetchError } = await supabaseClient
@@ -89,11 +94,15 @@ Deno.serve(async (req) => {
         throw updateError;
       }
 
-      console.log('[fetch-video-status] Video fetched successfully:', statusData.movie.url);
-      console.log('[fetch-video-status] API quota remaining:', statusData.remaining_quota?.time);
+      logger.info('Video fetched successfully', { 
+        metadata: { 
+          videoUrl: statusData.movie.url,
+          apiQuotaRemaining: statusData.remaining_quota?.time 
+        }
+      });
       
       // Invoke download function to store in Supabase Storage
-      console.log('[fetch-video-status] Triggering video download to Supabase Storage...');
+      logger.info('Triggering video download to Supabase Storage');
       const { error: downloadError } = await supabaseClient.functions.invoke(
         'download-storyboard-video',
         {
@@ -106,9 +115,9 @@ Deno.serve(async (req) => {
       );
       
       if (downloadError) {
-        console.error('[fetch-video-status] Failed to trigger download:', downloadError);
+        logger.error('Failed to trigger download', downloadError as Error);
       } else {
-        console.log('[fetch-video-status] Download function invoked successfully');
+        logger.info('Download function invoked successfully');
       }
 
       return new Response(
@@ -138,7 +147,7 @@ Deno.serve(async (req) => {
         })
         .eq('id', storyboard.id);
 
-      console.error('[fetch-video-status] Video rendering failed');
+      logger.error('Video rendering failed', new Error('Rendering failed'));
 
       return new Response(
         JSON.stringify({
@@ -151,7 +160,7 @@ Deno.serve(async (req) => {
 
     } else {
       // Still processing
-      console.log('[fetch-video-status] Video still processing:', statusData.movie?.status);
+      logger.debug('Video still processing', { metadata: { status: statusData.movie?.status } });
 
       return new Response(
         JSON.stringify({
@@ -165,7 +174,8 @@ Deno.serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('[fetch-video-status] Error:', error);
+    logger.error('Fetch video status error', error as Error);
+    logger.logDuration('Fetch video status', startTime);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage, success: false }),

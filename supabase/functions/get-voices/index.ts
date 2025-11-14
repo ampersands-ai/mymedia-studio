@@ -1,4 +1,4 @@
-
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,6 +6,10 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('get-voices', requestId);
+  const startTime = Date.now();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -13,11 +17,11 @@ Deno.serve(async (req) => {
   try {
     const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
     if (!ELEVENLABS_API_KEY) {
-      console.error('ELEVENLABS_API_KEY is not configured');
+      logger.critical('ELEVENLABS_API_KEY is not configured', new Error('Missing API key'));
       throw new Error('Voice service configuration error');
     }
 
-    console.log('Fetching voices from ElevenLabs...');
+    logger.info('Fetching voices from ElevenLabs');
 
     const response = await fetch('https://api.elevenlabs.io/v1/voices', {
       headers: {
@@ -27,7 +31,9 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('ElevenLabs API error:', response.status, errorText);
+      logger.error('ElevenLabs API error', new Error(errorText), {
+        metadata: { status: response.status }
+      });
       throw new Error(`ElevenLabs API returned ${response.status}`);
     }
 
@@ -35,16 +41,17 @@ Deno.serve(async (req) => {
     
     // Validate response structure
     if (!data || typeof data !== 'object') {
-      console.error('Invalid response structure:', data);
+      logger.error('Invalid response structure', new Error('Invalid data'));
       throw new Error('Invalid response from voice service');
     }
 
     if (!Array.isArray(data.voices)) {
-      console.error('Missing voices array in response:', data);
+      logger.error('Missing voices array in response', new Error('Invalid data structure'));
       throw new Error('Invalid voice data received');
     }
 
-    console.log(`Successfully fetched ${data.voices.length} voices`);
+    logger.info('Successfully fetched voices', { metadata: { count: data.voices.length } });
+    logger.logDuration('Fetch voices', startTime);
 
     // Only add Supabase Storage preview URLs for voices that originally have previews
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
@@ -68,7 +75,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error in get-voices function:', error);
+    logger.error('Error in get-voices function', error as Error);
     return new Response(
       JSON.stringify({ 
         error: error.message || 'Failed to fetch voices',

@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,6 +8,10 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('search-pixabay-content', requestId);
+  const startTime = Date.now();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -44,18 +49,19 @@ serve(async (req) => {
       params.append('image_type', 'photo');
     }
 
-    console.log(`Searching Pixabay ${type}s:`, query, orientation);
+    logger.info('Searching Pixabay', { metadata: { type, query, orientation } });
 
     const response = await fetch(`${apiUrl}?${params.toString()}`);
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Pixabay API error:', errorText);
+      logger.error('Pixabay API error', new Error(errorText));
       throw new Error(`Pixabay API error: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log(`Found ${data.total} ${type}s`);
+    logger.info('Pixabay search completed', { metadata: { total: data.total, type } });
+    logger.logDuration('Pixabay search', startTime);
 
     // Transform response to unified format
     const items = type === 'video' 
@@ -85,7 +91,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('Error in search-pixabay-content:', error);
+    logger.error('Error in search-pixabay-content', error as Error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

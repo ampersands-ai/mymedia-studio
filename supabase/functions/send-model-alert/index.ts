@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -20,6 +21,10 @@ interface AlertEmailRequest {
 }
 
 serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('send-model-alert', requestId);
+  const startTime = Date.now();
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -36,7 +41,7 @@ serve(async (req) => {
       timeWindow,
     }: AlertEmailRequest = await req.json();
 
-    console.log(`📧 Sending model alert email to ${to}...`);
+    logger.info('Sending model alert email', { metadata: { to, modelId, failureRate } });
 
     const emailResponse = await resend.emails.send({
       from: "Artifio Alerts <hello@artifio.ai>",
@@ -286,7 +291,8 @@ serve(async (req) => {
       `,
     });
 
-    console.log("✅ Alert email sent successfully:", emailResponse);
+    logger.info('Alert email sent successfully', { metadata: { emailResponse } });
+    logger.logDuration('Send model alert', startTime);
 
     return new Response(
       JSON.stringify({

@@ -173,6 +173,112 @@ export type Database = {
           },
         ]
       }
+      api_health_alerts: {
+        Row: {
+          admins_notified: boolean | null
+          api_config_id: string
+          consecutive_failures: number | null
+          created_at: string | null
+          failure_started_at: string | null
+          id: string
+          last_successful_check: string | null
+          message: string
+          notification_method: string | null
+          notified_at: string | null
+          resolution_notes: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+        }
+        Insert: {
+          admins_notified?: boolean | null
+          api_config_id: string
+          consecutive_failures?: number | null
+          created_at?: string | null
+          failure_started_at?: string | null
+          id?: string
+          last_successful_check?: string | null
+          message: string
+          notification_method?: string | null
+          notified_at?: string | null
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+        }
+        Update: {
+          admins_notified?: boolean | null
+          api_config_id?: string
+          consecutive_failures?: number | null
+          created_at?: string | null
+          failure_started_at?: string | null
+          id?: string
+          last_successful_check?: string | null
+          message?: string
+          notification_method?: string | null
+          notified_at?: string | null
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_health_alerts_api_config_id_fkey"
+            columns: ["api_config_id"]
+            isOneToOne: false
+            referencedRelation: "external_api_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_health_checks: {
+        Row: {
+          api_config_id: string
+          checked_at: string | null
+          error_message: string | null
+          id: string
+          response_body: string | null
+          response_headers: Json | null
+          response_time_ms: number | null
+          status: string
+          status_code: number | null
+        }
+        Insert: {
+          api_config_id: string
+          checked_at?: string | null
+          error_message?: string | null
+          id?: string
+          response_body?: string | null
+          response_headers?: Json | null
+          response_time_ms?: number | null
+          status: string
+          status_code?: number | null
+        }
+        Update: {
+          api_config_id?: string
+          checked_at?: string | null
+          error_message?: string | null
+          id?: string
+          response_body?: string | null
+          response_headers?: Json | null
+          response_time_ms?: number | null
+          status?: string
+          status_code?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_health_checks_api_config_id_fkey"
+            columns: ["api_config_id"]
+            isOneToOne: false
+            referencedRelation: "external_api_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           created_at: string
@@ -519,6 +625,69 @@ export type Database = {
         }
         Relationships: []
       }
+      external_api_configs: {
+        Row: {
+          alert_email: string[] | null
+          alert_threshold: number | null
+          alert_webhook_url: string | null
+          category: string
+          created_at: string | null
+          display_name: string
+          expected_response_time_ms: number | null
+          expected_status_code: number | null
+          health_check_interval_minutes: number | null
+          health_check_method: string | null
+          health_check_url: string
+          id: string
+          is_critical: boolean | null
+          is_enabled: boolean | null
+          metadata: Json | null
+          name: string
+          timeout_seconds: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          alert_email?: string[] | null
+          alert_threshold?: number | null
+          alert_webhook_url?: string | null
+          category: string
+          created_at?: string | null
+          display_name: string
+          expected_response_time_ms?: number | null
+          expected_status_code?: number | null
+          health_check_interval_minutes?: number | null
+          health_check_method?: string | null
+          health_check_url: string
+          id?: string
+          is_critical?: boolean | null
+          is_enabled?: boolean | null
+          metadata?: Json | null
+          name: string
+          timeout_seconds?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          alert_email?: string[] | null
+          alert_threshold?: number | null
+          alert_webhook_url?: string | null
+          category?: string
+          created_at?: string | null
+          display_name?: string
+          expected_response_time_ms?: number | null
+          expected_status_code?: number | null
+          health_check_interval_minutes?: number | null
+          health_check_method?: string | null
+          health_check_url?: string
+          id?: string
+          is_critical?: boolean | null
+          is_enabled?: boolean | null
+          metadata?: Json | null
+          name?: string
+          timeout_seconds?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       function_logs: {
         Row: {
           context: Json | null
@@ -560,6 +729,39 @@ export type Database = {
           log_level?: string
           message?: string
           request_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      function_performance_metrics: {
+        Row: {
+          created_at: string | null
+          duration_ms: number
+          function_name: string
+          id: string
+          metadata: Json | null
+          request_id: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          duration_ms: number
+          function_name: string
+          id?: string
+          metadata?: Json | null
+          request_id?: string | null
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          duration_ms?: number
+          function_name?: string
+          id?: string
+          metadata?: Json | null
+          request_id?: string | null
+          status?: string
           user_id?: string | null
         }
         Relationships: []
@@ -2295,6 +2497,42 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_alert_config: {
+        Row: {
+          alert_cooldown_minutes: number | null
+          created_at: string | null
+          enabled: boolean | null
+          failure_threshold: number | null
+          id: string
+          provider: string
+          success_rate_threshold: number | null
+          timeout_threshold_ms: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          alert_cooldown_minutes?: number | null
+          created_at?: string | null
+          enabled?: boolean | null
+          failure_threshold?: number | null
+          id?: string
+          provider: string
+          success_rate_threshold?: number | null
+          timeout_threshold_ms?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          alert_cooldown_minutes?: number | null
+          created_at?: string | null
+          enabled?: boolean | null
+          failure_threshold?: number | null
+          id?: string
+          provider?: string
+          success_rate_threshold?: number | null
+          timeout_threshold_ms?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       webhook_alert_history: {
         Row: {
           alert_type: string
@@ -2346,6 +2584,39 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_analytics: {
+        Row: {
+          created_at: string | null
+          duration_ms: number | null
+          error_code: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          provider: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          duration_ms?: number | null
+          error_code?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          provider: string
+          status: string
+        }
+        Update: {
+          created_at?: string | null
+          duration_ms?: number | null
+          error_code?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          provider?: string
+          status?: string
+        }
+        Relationships: []
+      }
       webhook_events: {
         Row: {
           created_at: string
@@ -2367,6 +2638,36 @@ export type Database = {
           id?: string
           idempotency_key?: string
           processed_at?: string
+        }
+        Relationships: []
+      }
+      webhook_health_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          provider: string
+          resolved_at: string | null
+          severity: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          provider: string
+          resolved_at?: string | null
+          severity: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          provider?: string
+          resolved_at?: string | null
+          severity?: string
         }
         Relationships: []
       }
@@ -2705,6 +3006,20 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_analytics_summary: {
+        Row: {
+          avg_duration_ms: number | null
+          failure_count: number | null
+          hour: string | null
+          p95_duration_ms: number | null
+          p99_duration_ms: number | null
+          provider: string | null
+          success_count: number | null
+          timeout_count: number | null
+          total_events: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_and_fail_stuck_jobs: { Args: never; Returns: undefined }
@@ -2716,6 +3031,19 @@ export type Database = {
       cleanup_old_function_logs: { Args: never; Returns: undefined }
       cleanup_old_webhook_events: { Args: never; Returns: undefined }
       cleanup_rate_limits: { Args: never; Returns: undefined }
+      get_api_health_summary: {
+        Args: never
+        Returns: {
+          api_name: string
+          category: string
+          current_status: string
+          display_name: string
+          is_critical: boolean
+          last_check: string
+          response_time_ms: number
+          uptime_percentage: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

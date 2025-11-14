@@ -129,6 +129,7 @@ export const OutputGrid = ({
                   storagePath={output.storage_path}
                   contentType={contentType}
                   className={isAudio ? "w-full" : "w-full h-full object-cover"}
+                  showActions={false}
                 />
               </div>
 

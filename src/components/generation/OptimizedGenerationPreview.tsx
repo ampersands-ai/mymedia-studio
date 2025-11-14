@@ -22,6 +22,7 @@ interface OptimizedGenerationPreviewProps {
   storagePath: string | null;
   contentType: string;
   className?: string;
+  showActions?: boolean;
 }
 
 /**
@@ -31,7 +32,8 @@ interface OptimizedGenerationPreviewProps {
 export const OptimizedGenerationPreview = ({ 
   storagePath, 
   contentType, 
-  className 
+  className,
+  showActions = true
 }: OptimizedGenerationPreviewProps) => {
   // Infer content type from file extension if storagePath exists
   const inferredType = storagePath ? (() => {
@@ -204,33 +206,35 @@ export const OptimizedGenerationPreview = ({
           alt="Generated content"
           className={cn(className, "animate-fade-in")}
         />
-        {/* Action buttons overlay */}
-        <div className="absolute top-2 right-2 flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity duration-200">
-          {canShare && (
+        {/* Action buttons overlay (only show if not in grid) */}
+        {showActions && (
+          <div className="absolute top-2 right-2 flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity duration-200">
+            {canShare && (
+              <Button
+                variant="secondary"
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleShare();
+                }}
+                className="h-8 w-8 backdrop-blur-sm"
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="secondary"
               size="icon"
               onClick={(e) => {
                 e.stopPropagation();
-                handleShare();
+                handleDownload();
               }}
               className="h-8 w-8 backdrop-blur-sm"
             >
-              <Share2 className="h-4 w-4" />
+              <Download className="h-4 w-4" />
             </Button>
-          )}
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDownload();
-            }}
-            className="h-8 w-8 backdrop-blur-sm"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-        </div>
+          </div>
+        )}
       </div>
     );
   }

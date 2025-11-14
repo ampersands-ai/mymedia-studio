@@ -163,10 +163,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     // Log full error server-side for debugging
-    console.error('Error in audit-log function:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
-    });
+    logger.error('Error in audit-log function', error as any);
     
     // Return generic error to client (no sensitive details)
     return new Response(

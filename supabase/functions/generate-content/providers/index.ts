@@ -1,6 +1,6 @@
 import { callKieAI } from "./kie-ai.ts";
 import { callRunware } from "./runware.ts";
-
+import { webhookLogger } from "../../_shared/logger.ts";
 export interface ProviderRequest {
   model: string;
   prompt: string;
@@ -23,7 +23,7 @@ export async function callProvider(
   request: ProviderRequest,
   webhookToken?: string
 ): Promise<ProviderResponse> {
-  console.log(`Calling provider: ${provider}`);
+  webhookLogger.info(`Calling provider: ${provider}`);
 
   switch (provider) {
     case 'kie_ai':

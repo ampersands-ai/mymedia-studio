@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
           if (retries === 0) {
             throw new Error('Credit deduction failed after retries - please try again');
           }
-          console.log(`[RETRY] Credit deduction retry ${3 - retries}/3 for user ${user.id}`);
+          logger.warn(`[RETRY] Credit deduction retry ${3 - retries}/3 for user ${user.id}`);
           await new Promise(resolve => setTimeout(resolve, 50)); // Small delay before retry
           continue;
         }
@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
       logError('deduct-tokens', logErrorObj, { context: 'audit_log_failed' });
     }
 
-    console.log(`[SUCCESS] Deducted ${tokens_to_deduct} credits for user ${user.id}`);
+    logger.info(`[SUCCESS] Deducted ${tokens_to_deduct} credits for user ${user.id}`);
 
     return new Response(
       JSON.stringify({ 

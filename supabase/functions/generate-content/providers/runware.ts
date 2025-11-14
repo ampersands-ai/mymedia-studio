@@ -12,7 +12,7 @@ async function convertFrameImagesToRunwareFormat(frameImages: string[]): Promise
   const converted = [];
   
   for (const imageUrl of frameImages) {
-    console.log('[Runware Video] Fetching frame image:', imageUrl.substring(0, 80) + '...');
+    webhookLogger.info('[Runware Video] Fetching frame image', { imageUrl: imageUrl.substring(0, 80) + '...' });
     
     try {
       const response = await fetch(imageUrl);
@@ -26,11 +26,11 @@ async function convertFrameImagesToRunwareFormat(frameImages: string[]): Promise
       const contentType = response.headers.get('content-type') || 'image/png';
       const dataUri = `data:${contentType};base64,${base64}`;
       
-      console.log('[Runware Video] Converted frame image, size:', Math.round(dataUri.length / 1024), 'KB');
+      webhookLogger.info('[Runware Video] Converted frame image', { size_kb: Math.round(dataUri.length / 1024) });
       converted.push({ inputImage: dataUri });
       
     } catch (error: any) {
-      console.error('[Runware Video] Failed to convert frame image:', error.message);
+      webhookLogger.error('[Runware Video] Failed to convert frame image', new Error(error.message));
       throw new Error(`Failed to convert frame image: ${error.message}`);
     }
   }
@@ -45,7 +45,7 @@ async function pollForVideoResult(taskUUID: string, apiKey: string, apiUrl: stri
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     await new Promise(resolve => setTimeout(resolve, delays[attempt]));
     
-    console.log(`[Runware Poll] Attempt ${attempt + 1}/${maxAttempts} for taskUUID: ${taskUUID}`);
+    webhookLogger.info(`[Runware Poll] Attempt ${attempt + 1}/${maxAttempts} for taskUUID: ${taskUUID}`);
     
     const pollPayload = [
       { taskType: "authentication", apiKey },
@@ -59,12 +59,12 @@ async function pollForVideoResult(taskUUID: string, apiKey: string, apiUrl: stri
     });
     
     if (!response.ok) {
-      console.error(`[Runware Poll] HTTP ${response.status}`);
+      webhookLogger.error(`[Runware Poll] HTTP ${response.status}`);
       continue;
     }
     
     const result = await response.json();
-    console.log(`[Runware Poll] Response:`, JSON.stringify(result));
+    webhookLogger.info(`[Runware Poll] Response: ${JSON.stringify(result)}`);
     
     if (result.data) {
       for (const item of result.data) {
@@ -77,13 +77,13 @@ async function pollForVideoResult(taskUUID: string, apiKey: string, apiUrl: stri
           
           // Check if complete with video URL
           if (item.status === "success" && item.videoURL) {
-            console.log(`[Runware Poll] Video ready: ${item.videoURL}`);
+            webhookLogger.info(`[Runware Poll] Video ready: ${item.videoURL}`);
             return item;
           }
           
           // Still processing
           if (item.status === "processing") {
-            console.log(`[Runware Poll] Still processing...`);
+            webhookLogger.info(`[Runware Poll] Still processing...`);
             break;
           }
         }

@@ -64,7 +64,7 @@ export async function executeGeneration({
   if (model.input_schema) {
     const requiredFields = model.input_schema.required || [];
     const schemaProperties = model.input_schema.properties || {};
-    const excludeFields = ['prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls', 'frameImages'];
+    const excludeFields = ['prompt', 'positivePrompt', 'positive_prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls', 'frameImages'];
 
     for (const field of requiredFields) {
       if (excludeFields.includes(field)) continue;
@@ -90,8 +90,12 @@ export async function executeGeneration({
     }
   }
 
-  // Step 6: Determine if schema has prompt field
-  const hasPromptField = !!(model.input_schema?.properties?.prompt);
+  // Step 6: Detect which prompt field the schema uses
+  const promptFieldName = 
+    model.input_schema?.properties?.prompt ? 'prompt' :
+    model.input_schema?.properties?.positivePrompt ? 'positivePrompt' :
+    model.input_schema?.properties?.positive_prompt ? 'positive_prompt' :
+    null;
 
   // Step 7: Call generation API
   try {
@@ -101,9 +105,9 @@ export async function executeGeneration({
       enhance_prompt: false,
     };
     
-    // Only include prompt if schema defines it
-    if (hasPromptField) {
-      generateParams.prompt = prompt.trim();
+    // Add prompt with the correct field name if it exists in schema
+    if (promptFieldName && prompt.trim()) {
+      generateParams.custom_parameters[promptFieldName] = prompt.trim();
     }
     
     const result = await generate(generateParams);

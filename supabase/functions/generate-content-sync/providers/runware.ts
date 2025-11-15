@@ -1,3 +1,5 @@
+import { webhookLogger } from "../../_shared/logger.ts";
+
 export interface ProviderRequest {
   model: string;
   prompt: string;

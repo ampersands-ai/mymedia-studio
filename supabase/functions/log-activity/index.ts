@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
       });
 
     if (insertError) {
-      logger.error('Failed to insert activity log', insertError, {
+      logger.error('Failed to insert activity log', insertError instanceof Error ? insertError : new Error(insertError?.message || 'Database error'), {
         userId,
         metadata: { activity_type: body.activity_type }
       });

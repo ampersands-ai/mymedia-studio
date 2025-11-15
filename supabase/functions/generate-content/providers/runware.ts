@@ -38,7 +38,7 @@ async function convertFrameImagesToRunwareFormat(
       converted.push({ inputImage: dataUri });
       
     } catch (error: any) {
-      logger.error('Failed to convert frame image', error);
+      logger.error('Failed to convert frame image', error instanceof Error ? error : new Error(String(error)));
       throw new Error(`Failed to convert frame image: ${error.message}`);
     }
   }

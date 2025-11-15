@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
       });
 
     if (uploadError) {
-      logger.error('Storage upload failed', uploadError);
+      logger.error('Storage upload failed', uploadError instanceof Error ? uploadError : new Error(uploadError?.message || 'Upload error'));
       throw new Error(`Storage upload failed: ${uploadError.message}`);
     }
 
@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
       .eq('id', storyboardId);
 
     if (updateError) {
-      logger.error('Failed to update storyboard', updateError);
+      logger.error('Failed to update storyboard', updateError instanceof Error ? updateError : new Error(updateError?.message || 'Database error'));
       throw new Error(`Database update failed: ${updateError.message}`);
     }
 

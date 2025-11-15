@@ -352,7 +352,7 @@ Deno.serve(async (req) => {
         .select('tokens_remaining');
 
       if (deductError) {
-        logger.error('Token deduction failed', deductError, { userId: user.id });
+        logger.error('Token deduction failed', deductError instanceof Error ? deductError : new Error(deductError?.message || 'Database error'), { userId: user.id });
         throw new Error('Failed to deduct tokens - database error');
       }
 

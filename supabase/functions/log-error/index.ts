@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (insertError) {
-      logger.error('Failed to insert error log', insertError, {
+      logger.error('Failed to insert error log', insertError instanceof Error ? insertError : new Error(insertError?.message || 'Database error'), {
         userId: user?.id,
         metadata: { error_type: body.error_type, severity: body.severity }
       });

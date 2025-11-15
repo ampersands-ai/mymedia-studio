@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (fetchError || !audioGen) {
-      logger.error('Generation not found', fetchError, { metadata: { generation_id } });
+      logger.error('Generation not found', fetchError instanceof Error ? fetchError : new Error(fetchError?.message || 'Database error'), { metadata: { generation_id } });
       return new Response(
         JSON.stringify({ error: 'Generation not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (createError) {
-      logger.error('Failed to create video generation', createError);
+      logger.error('Failed to create video generation', createError instanceof Error ? createError : new Error(createError?.message || 'Database error'));
       return new Response(
         JSON.stringify({ error: 'Failed to create video generation record' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

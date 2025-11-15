@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
       .select('tokens_remaining');
 
     if (deductError) {
-      logger.error('Credit deduction error', deductError, { userId: user.id, metadata: { costTokens } });
+      logger.error('Credit deduction error', deductError instanceof Error ? deductError : new Error(deductError?.message || 'Database error'), { userId: user.id, metadata: { costTokens } });
       throw new Error('Failed to deduct credits - database error');
     }
 

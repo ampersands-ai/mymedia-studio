@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (fetchError || !storyboard) {
-      logger.error("Storyboard not found", fetchError);
+      logger.error("Storyboard not found", fetchError instanceof Error ? fetchError : new Error(fetchError?.message || 'Database error'));
       return new Response(
         JSON.stringify({ error: 'Storyboard not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
       .eq('user_id', user.id);
 
     if (updateError) {
-      logger.error("Failed to update storyboard", updateError, { metadata: { storyboardId } });
+      logger.error("Failed to update storyboard", updateError instanceof Error ? updateError : new Error(updateError?.message || 'Database error'), { metadata: { storyboardId } });
       throw updateError;
     }
 

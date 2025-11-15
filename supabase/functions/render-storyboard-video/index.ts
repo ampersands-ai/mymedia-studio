@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     const { data: userData, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !userData.user) {
-      logger.error('Authentication failed', authError);
+      logger.error('Authentication failed', authError instanceof Error ? authError : new Error(authError?.message || 'Auth error'));
       throw new Error('Unauthorized');
     }
     const user = userData.user;
@@ -550,7 +550,7 @@ Deno.serve(async (req) => {
       .eq('id', storyboardId);
 
     if (updateError) {
-      logger.error('Status update error', updateError);
+      logger.error('Status update error', updateError instanceof Error ? updateError : new Error(updateError?.message || 'Database error'));
       // Refund initial estimate (actual cost may have been higher, but we limit refund to initial)
       await supabaseClient.rpc('increment_tokens', {
         user_id_param: user.id,

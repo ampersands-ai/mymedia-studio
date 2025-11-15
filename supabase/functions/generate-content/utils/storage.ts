@@ -39,11 +39,11 @@ export async function uploadToStorage(
 
   if (uploadError) {
     if (logger) {
-      logger.error('Storage upload failed', uploadError, { 
-        storagePath, 
-        userId, 
+      logger.error('Storage upload failed', uploadError instanceof Error ? uploadError : new Error(uploadError?.message || 'Upload error'), {
+        storagePath,
+        userId,
         generationId,
-        errorMessage: uploadError.message 
+        errorMessage: uploadError.message
       });
     }
     throw new Error(`Failed to upload to storage: ${uploadError.message}`);

@@ -605,7 +605,7 @@ Deno.serve(async (req) => {
           .select('tokens_remaining');
 
         if (deductError) {
-          logger.error('Token deduction failed', deductError);
+          logger.error('Token deduction failed', deductError instanceof Error ? deductError : new Error(deductError?.message || 'Database error'));
           throw new Error('Failed to deduct tokens - database error');
         }
 
@@ -872,7 +872,7 @@ Deno.serve(async (req) => {
             .eq('id', createdGeneration.id);
 
           if (updateError) {
-            logger.error('Failed to update generation with task ID', updateError, {
+            logger.error('Failed to update generation with task ID', updateError instanceof Error ? updateError : new Error(updateError?.message || 'Database error'), {
               userId: user.id,
               metadata: { generation_id: createdGeneration.id }
             });

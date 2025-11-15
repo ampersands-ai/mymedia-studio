@@ -39,6 +39,7 @@ export function VideoCreator() {
   const [selectedBackgroundMedia, setSelectedBackgroundMedia] = useState<SelectedMedia[]>([]);
   const [savePresetDialogOpen, setSavePresetDialogOpen] = useState(false);
   const [presetName, setPresetName] = useState('');
+  const [confirmGenerateOpen, setConfirmGenerateOpen] = useState(false);
   const { createJob, isCreating, jobs } = useVideoJobs();
   const { data: tokens } = useUserTokens();
   const { presets, savePreset, deletePreset } = useSavedCaptionPresets();
@@ -77,11 +78,17 @@ export function VideoCreator() {
     setVoiceDialogOpen(false);
   };
 
-  const handleCreate = async () => {
+  const handleStartGeneration = () => {
     if (!topic.trim()) {
+      toast.error('Please enter a topic for your video');
       return;
     }
+    setConfirmGenerateOpen(true);
+  };
 
+  const handleConfirmGenerate = async () => {
+    setConfirmGenerateOpen(false);
+    
     createJob.mutate({
       topic: topic.trim(),
       duration,
@@ -873,7 +880,7 @@ export function VideoCreator() {
         </div>
 
         <Button 
-          onClick={handleCreate} 
+          onClick={handleStartGeneration} 
           disabled={isDisabled || !topic.trim() || !canAfford}
           className="w-full h-11 md:h-12 text-base md:text-lg font-bold"
           size="lg"
@@ -896,6 +903,55 @@ export function VideoCreator() {
           <p>• You'll be notified when complete</p>
         </div>
       </CardContent>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmGenerateOpen} onOpenChange={setConfirmGenerateOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Confirm Video Generation</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Alert>
+              <Sparkles className="h-4 w-4" />
+              <AlertTitle>Ready to Generate</AlertTitle>
+              <AlertDescription className="space-y-2 mt-2">
+                <p className="font-medium">Topic: {topic}</p>
+                <p>Duration: {duration} seconds</p>
+                <p>Cost: {estimatedCost.toFixed(1)} credits</p>
+              </AlertDescription>
+            </Alert>
+            <p className="text-sm text-muted-foreground">
+              This will start the AI video generation process. It takes 3-5 minutes to complete.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmGenerateOpen(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmGenerate}
+              disabled={isCreating}
+              className="flex-1"
+            >
+              {isCreating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Generate Video
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -9,6 +10,16 @@ import { logger } from "@/lib/logger";
 import { usePromptEnhancement } from "@/hooks/usePromptEnhancement";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface PromptInputProps {
   value: string;
@@ -39,8 +50,11 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   const isOverLimit = value.length > maxLength;
   const { enhancePrompt, isEnhancing } = usePromptEnhancement();
   const { data: tokenData, refetch: refetchTokens } = useUserTokens();
+  const [showEnhanceDialog, setShowEnhanceDialog] = useState(false);
 
   const handleEnhancePrompt = async () => {
+    setShowEnhanceDialog(false);
+    
     if (!value.trim()) {
       toast.error('Enter a prompt first');
       return;
@@ -121,7 +135,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            handleEnhancePrompt();
+            setShowEnhanceDialog(true);
           }}
           disabled={disabled || isEnhancing || !value.trim()}
           className="h-8 text-xs gap-1.5"
@@ -150,6 +164,24 @@ export const PromptInput: React.FC<PromptInputProps> = ({
           <span className="text-muted-foreground ml-1">(+{CAPTION_GENERATION_COST})</span>
         </Button>
       </div>
+
+      <AlertDialog open={showEnhanceDialog} onOpenChange={setShowEnhanceDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Enhance Prompt?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will use AI to improve your prompt and replace your current text. 
+              This action costs 0.1 credits and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleEnhancePrompt}>
+              Enhance (0.1 credits)
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

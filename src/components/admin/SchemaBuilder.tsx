@@ -162,6 +162,12 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
                     {param.required && (
                       <Badge variant="destructive" className="text-xs">Required</Badge>
                     )}
+                    {param.showToUser === false && (
+                      <Badge variant="secondary" className="text-xs">Hidden from Users</Badge>
+                    )}
+                    {param.isAdvanced === true && (
+                      <Badge variant="default" className="text-xs">Advanced Options</Badge>
+                    )}
                   </div>
                   
                   {param.description && (

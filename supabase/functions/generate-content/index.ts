@@ -567,8 +567,15 @@ Deno.serve(async (req) => {
       [key: string]: unknown;
     } | null = null;
 
-    // Non-null reference after generation is created (excludes null from type)
-    let createdGeneration: NonNullable<typeof generation> = null as any;
+    // Non-null reference after generation is created
+    let createdGeneration: {
+      id: string;
+      user_id: string;
+      model_id: string;
+      status: string;
+      settings?: any;
+      [key: string]: unknown;
+    };
 
     try {
       // Step 1: Check and deduct tokens atomically (skip for test mode)
@@ -605,7 +612,7 @@ Deno.serve(async (req) => {
           .select('tokens_remaining');
 
         if (deductError) {
-          logger.error('Token deduction failed', deductError instanceof Error ? deductError : new Error(deductError?.message || 'Database error'));
+          logger.error('Token deduction failed', deductError instanceof Error ? deductError : new Error(String(deductError) || 'Database error'));
           throw new Error('Failed to deduct tokens - database error');
         }
 
@@ -872,7 +879,7 @@ Deno.serve(async (req) => {
             .eq('id', createdGeneration.id);
 
           if (updateError) {
-            logger.error('Failed to update generation with task ID', updateError instanceof Error ? updateError : new Error(updateError?.message || 'Database error'), {
+            logger.error('Failed to update generation with task ID', updateError instanceof Error ? updateError : new Error(String(updateError) || 'Database error'), {
               userId: user.id,
               metadata: { generation_id: createdGeneration.id }
             });

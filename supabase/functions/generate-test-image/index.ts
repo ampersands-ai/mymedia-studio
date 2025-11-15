@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
       });
 
     if (uploadError) {
-      logger.error('Storage upload error', uploadError instanceof Error ? uploadError : new Error(uploadError?.message || 'Upload error'));
+      logger.error('Storage upload error', uploadError instanceof Error ? uploadError : new Error(String(uploadError) || 'Upload error'));
       throw uploadError;
     }
 

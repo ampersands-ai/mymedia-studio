@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
       );
       
       if (downloadError) {
-        logger.error('Failed to trigger download', downloadError as Error);
+        logger.error('Failed to trigger download', new Error(downloadError.message || 'Download function invocation failed'));
       } else {
         logger.info('Download function invoked successfully');
       }

@@ -567,8 +567,8 @@ Deno.serve(async (req) => {
       [key: string]: unknown;
     } | null = null;
 
-    // Non-null assertion after generation is created
-    let createdGeneration: typeof generation = null;
+    // Non-null reference after generation is created (excludes null from type)
+    let createdGeneration: NonNullable<typeof generation> = null as any;
 
     try {
       // Step 1: Check and deduct tokens atomically (skip for test mode)
@@ -792,7 +792,7 @@ Deno.serve(async (req) => {
     }
 
     // Track request in queue
-    const generationId = createdGeneration!.id;
+    const generationId = createdGeneration.id;
     const requestPromise = (async () => {
       let providerRequest: any = null; // Declare outside try block for error handling access
       
@@ -818,7 +818,7 @@ Deno.serve(async (req) => {
           api_endpoint: model.api_endpoint,
           payload_structure: model.payload_structure || 'wrapper',
           userId: user.id,
-          generationId: createdGeneration!.id
+          generationId: createdGeneration.id
         };
         
         // Only include prompt if model has prompt field
@@ -830,13 +830,13 @@ Deno.serve(async (req) => {
           userId: user.id,
           metadata: {
             model_id: model.id,
-            generation_id: createdGeneration!.id,
+            generation_id: createdGeneration.id,
             has_prompt: !!providerRequest.prompt
           }
         });
         
         // Get webhookToken from generation settings for Kie.ai provider
-        const webhookToken = (createdGeneration!.settings as any)?._webhook_token;
+        const webhookToken = (createdGeneration.settings as any)?._webhook_token;
 
         const providerResponse: any = await Promise.race([
           callProvider(model.provider, providerRequest, webhookToken),
@@ -847,7 +847,7 @@ Deno.serve(async (req) => {
 
         logger.info('Provider response received', {
           userId: user.id,
-          metadata: { generation_id: createdGeneration!.id }
+          metadata: { generation_id: createdGeneration.id }
         });
 
         // Check if this is a webhook-based provider (Kie.ai)
@@ -858,7 +858,7 @@ Deno.serve(async (req) => {
           const taskId = providerResponse.metadata.task_id;
           logger.info('Webhook-based provider', {
             userId: user.id,
-            metadata: { task_id: taskId, generation_id: createdGeneration!.id }
+            metadata: { task_id: taskId, generation_id: createdGeneration.id }
           });
 
           const { error: updateError } = await supabase
@@ -869,20 +869,20 @@ Deno.serve(async (req) => {
               provider_request: providerRequest,
               provider_response: providerResponse.metadata
             })
-            .eq('id', createdGeneration!.id);
+            .eq('id', createdGeneration.id);
 
           if (updateError) {
             logger.error('Failed to update generation with task ID', updateError, {
               userId: user.id,
-              metadata: { generation_id: createdGeneration!.id }
+              metadata: { generation_id: createdGeneration.id }
             });
           }
 
           // Return immediately - webhook will complete the generation
           return new Response(
             JSON.stringify({
-              id: createdGeneration!.id,
-              generation_id: createdGeneration!.id,
+              id: createdGeneration.id,
+              generation_id: createdGeneration.id,
               status: 'processing',
               tokens_used: tokenCost,
               content_type: model.content_type,
@@ -895,7 +895,7 @@ Deno.serve(async (req) => {
         }
 
         // Phase 3: Process storage upload asynchronously (fire-and-forget with improved error handling)
-        const generationId = createdGeneration!.id;
+        const generationId = createdGeneration.id;
         
         // Upload and update in background (don't await, but with proper error handling)
         (async () => {
@@ -1005,7 +1005,7 @@ Deno.serve(async (req) => {
         logger.logDuration('Generation processing started', startTime, {
           userId: user.id,
           metadata: {
-            generation_id: createdGeneration!.id,
+            generation_id: createdGeneration.id,
             model_id: model.id,
             tokens_used: tokenCost,
             content_type: model.content_type
@@ -1014,8 +1014,8 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({
-            id: createdGeneration!.id,
-            generation_id: createdGeneration!.id,
+            id: createdGeneration.id,
+            generation_id: createdGeneration.id,
             status: 'processing',
             tokens_used: tokenCost,
             content_type: model.content_type,
@@ -1028,7 +1028,7 @@ Deno.serve(async (req) => {
       } catch (providerError: any) {
         logger.error('Provider error', providerError, {
           userId: user.id,
-          metadata: { generation_id: createdGeneration!.id }
+          metadata: { generation_id: createdGeneration.id }
         });
 
         // Increment circuit breaker on failure
@@ -1052,7 +1052,7 @@ Deno.serve(async (req) => {
               timestamp: new Date().toISOString()
             }
           })
-          .eq('id', createdGeneration!.id);
+          .eq('id', createdGeneration.id);
 
         // Refund tokens using RPC for atomicity (skip for test mode)
         if (!isTestMode) {
@@ -1075,7 +1075,7 @@ Deno.serve(async (req) => {
           user_id: user.id,
           action: 'generation_failed',
           resource_type: 'generation',
-          resource_id: createdGeneration!.id,
+          resource_id: createdGeneration.id,
           metadata: {
             error: providerError.message,
             model_id: model.id,
@@ -1089,7 +1089,7 @@ Deno.serve(async (req) => {
           userId: user.id,
           duration: Date.now() - startTime,
           metadata: {
-            generation_id: createdGeneration!.id,
+            generation_id: createdGeneration.id,
             model_id: model.id,
             circuit_breaker_failures: CIRCUIT_BREAKER.failures
           }

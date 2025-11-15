@@ -356,8 +356,8 @@ Deno.serve(async (req) => {
           try {
             const downloadResult = await downloadContent(resultUrls[i]);
             if (!downloadResult.success || !downloadResult.data) {
-              logger.error(`Output ${i + 1} download failed`, downloadError as Error, { 
-                metadata: { generationId: generation.id, outputIndex: i + 1, url: resultUrl } 
+              logger.error(`Output ${i + 1} download failed`, new Error(downloadResult.error || 'Download failed'), {
+                metadata: { generationId: generation.id, outputIndex: i + 1, url: resultUrl }
               });
               continue;
             }

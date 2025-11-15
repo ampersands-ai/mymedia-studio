@@ -158,6 +158,7 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
             </div>
           ) : (
             <video
+              key={job.id}
               src={videoSignedUrl || job.final_video_url}
               controls
               controlsList="nodownload"

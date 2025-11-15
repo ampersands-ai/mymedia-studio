@@ -457,8 +457,8 @@ export function useVideoJobs() {
       return data;
     },
     onSuccess: async () => {
-      // Force immediate refetch to update UI
-      await queryClient.refetchQueries({ queryKey: ['video-jobs'] });
+      // Invalidate instead of refetch to avoid aggressive refetching
+      queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
     },
     onError: (error: any) => {
       logger.error('Caption generation error', error as Error, {

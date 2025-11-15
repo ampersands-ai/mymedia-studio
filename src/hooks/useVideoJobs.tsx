@@ -49,7 +49,8 @@ export function useVideoJobs() {
       }
       
       const pinnedId = getPinnedJobId();
-      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+      const fourHoursCutoff = Date.now() - 4 * 60 * 60 * 1000;
       
       // If we have a pinned job, fetch it first (regardless of status)
       if (pinnedId) {
@@ -60,21 +61,33 @@ export function useVideoJobs() {
           .single();
         
         if (!pinnedError && pinnedData) {
-          return [pinnedData];
+          // Check if job is older than 4 hours
+          const jobTime = new Date(pinnedData.updated_at).getTime();
+          
+          if (jobTime >= fourHoursCutoff) {
+            // Job is fresh enough, return it
+            return [pinnedData];
+          } else {
+            // Job is too old, clear the pin and fall through to recent jobs
+            try {
+              localStorage.removeItem(PINNED_JOB_KEY);
+              setPinnedJobId(null);
+            } catch {}
+          }
+        } else {
+          // If pinned job doesn't exist, clear the pin silently and fall through
+          try {
+            localStorage.removeItem(PINNED_JOB_KEY);
+            setPinnedJobId(null);
+          } catch {}
         }
-        
-        // If pinned job doesn't exist, clear the pin silently and fall through
-        try {
-          localStorage.removeItem(PINNED_JOB_KEY);
-          setPinnedJobId(null);
-        } catch {}
       }
       
-      // Otherwise fetch the most recent job (within last 2 hours, any status)
+      // Otherwise fetch the most recent job (within last 4 hours, any status)
       const { data, error } = await supabase
         .from('video_jobs')
         .select('*')
-        .gte('updated_at', twoHoursAgo)
+        .gte('updated_at', fourHoursAgo)
         .order('updated_at', { ascending: false })
         .limit(1);
       

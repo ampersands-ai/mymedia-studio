@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     try {
       requestBody = await req.json();
     } catch (parseError) {
-      logger.error('Failed to parse request body', { error: parseError });
+      logger.error('Failed to parse request body', parseError instanceof Error ? parseError : new Error(String(parseError)));
       throw new Error('Invalid request body format');
     }
 

@@ -44,12 +44,12 @@ Deno.serve(async (req) => {
     // Pass token explicitly to getUser to ensure proper authentication
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !user) {
-      logger.error('Authentication failed via token', authError);
+      logger.error('Authentication failed via token', authError instanceof Error ? authError : new Error('Auth failed'));
       return new Response(
-        JSON.stringify({ 
-          error: 'Authentication failed', 
-          details: 'Invalid or expired token' 
-        }), 
+        JSON.stringify({
+          error: 'Authentication failed',
+          details: 'Invalid or expired token'
+        }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

@@ -143,8 +143,8 @@ HASHTAG REQUIREMENTS:
 - Relevant to the content shown`;
 
     // Attempt caption generation with retry logic
-    let caption: string;
-    let hashtags: string[];
+    let caption: string = '';
+    let hashtags: string[] = [];
     let attemptCount = 0;
     const maxAttempts = 2;
 
@@ -254,6 +254,11 @@ HASHTAG REQUIREMENTS:
         }
         logger.warn('Caption validation failed, retrying', { metadata: { attempt: attemptCount, error: String(validationError) } });
       }
+    }
+
+    // Ensure caption and hashtags were successfully generated
+    if (!caption || !hashtags || hashtags.length === 0) {
+      throw new Error('Failed to generate valid caption and hashtags after retries');
     }
 
     logger.info('Caption validation passed', {

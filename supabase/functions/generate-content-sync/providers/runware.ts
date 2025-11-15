@@ -1,5 +1,3 @@
-import { webhookLogger } from "../../_shared/logger.ts";
-
 export interface ProviderRequest {
   model: string;
   prompt: string;
@@ -31,25 +29,25 @@ async function convertFrameImagesToRunwareFormat(frameImages: string[]): Promise
   const converted = [];
   
   for (const imageUrl of frameImages) {
-    webhookLogger.info('[Runware Video] Fetching frame image', { url: imageUrl.substring(0, 80) });
-    
+    console.log('[Runware Video] Fetching frame image', { url: imageUrl.substring(0, 80) });
+
     try {
       const response = await fetch(imageUrl);
       if (!response.ok) {
         throw new Error(`Failed to fetch frame image: ${response.status} ${response.statusText}`);
       }
-      
+
       const imageBuffer = await response.arrayBuffer();
       const uint8Array = new Uint8Array(imageBuffer);
       const base64 = uint8ArrayToBase64(uint8Array);
       const contentType = response.headers.get('content-type') || 'image/png';
       const dataUri = `data:${contentType};base64,${base64}`;
-      
-      webhookLogger.info('[Runware Video] Frame converted', { sizeKB: Math.round(dataUri.length / 1024) });
+
+      console.log('[Runware Video] Frame converted', { sizeKB: Math.round(dataUri.length / 1024) });
       converted.push({ inputImage: dataUri });
-      
+
     } catch (error: any) {
-      webhookLogger.error('[Runware Video] Frame conversion failed', error.message, { error: error.message });
+      console.error('[Runware Video] Frame conversion failed', error.message, { error: error.message });
       throw new Error(`Failed to convert frame image: ${error.message}`);
     }
   }
@@ -63,8 +61,8 @@ async function pollForVideoResult(taskUUID: string, apiKey: string, apiUrl: stri
   
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     await new Promise(resolve => setTimeout(resolve, delays[attempt]));
-    
-    webhookLogger.info('[Runware Poll] Poll attempt', { attempt: attempt + 1, maxAttempts, taskUUID });
+
+    console.log('[Runware Poll] Poll attempt', { attempt: attempt + 1, maxAttempts, taskUUID });
     
     const pollPayload = [
       { taskType: "authentication", apiKey },
@@ -96,13 +94,13 @@ async function pollForVideoResult(taskUUID: string, apiKey: string, apiUrl: stri
           
           // Check if complete with video URL
           if (item.status === "success" && item.videoURL) {
-            webhookLogger.info('[Runware Poll] Video ready', { videoURL: item.videoURL });
+            console.log('[Runware Poll] Video ready', { videoURL: item.videoURL });
             return item;
           }
-          
+
           // Still processing
           if (item.status === "processing") {
-            webhookLogger.info('[Runware Poll] Still processing');
+            console.log('[Runware Poll] Still processing');
             break;
           }
         }
@@ -130,7 +128,7 @@ export async function callRunware(
   // Clean model ID
   const cleanModel = request.model.replace(/["'\s]+$/g, '');
   
-  webhookLogger.info('[Runware] API call starting', { model: cleanModel, taskUUID });
+  console.log('[Runware] API call starting', { model: cleanModel, taskUUID });
 
   // Normalize numeric parameters
   const params = request.parameters || {};
@@ -151,13 +149,13 @@ export async function callRunware(
     throw new Error('Prompt must be less than 3000 characters.');
   }
   
-  webhookLogger.info('[Runware] Prompt', { prompt: effectivePrompt.substring(0, 100), truncated: effectivePrompt.length > 100 });
+  console.log('[Runware] Prompt', { prompt: effectivePrompt.substring(0, 100), truncated: effectivePrompt.length > 100 });
   
   // Determine task type from parameters or infer from model/params
   const taskType = params.taskType || (params.frameImages ? "videoInference" : "imageInference");
   const isVideo = taskType === "videoInference";
   
-  webhookLogger.info('[Runware] Task configuration', { taskType, isVideo });
+  console.log('[Runware] Task configuration', { taskType, isVideo });
   
   // For video tasks, generate presigned URL for direct upload by Runware
   let presignedUrl: string | null = null;
@@ -176,11 +174,11 @@ export async function callRunware(
       .createSignedUploadUrl(storagePath, { upsert: true });
     
     if (signedError || !signedData) {
-      webhookLogger.error('[Runware Video] Presigned URL creation failed', signedError.message, { error: signedError });
+      console.error('[Runware Video] Presigned URL creation failed', signedError.message, { error: signedError });
       // Continue without uploadEndpoint as fallback
     } else {
       presignedUrl = signedData.signedUrl;
-      webhookLogger.info('[Runware Video] Presigned URL generated', { storagePath });
+      console.log('[Runware Video] Presigned URL generated', { storagePath });
     }
   }
   
@@ -217,7 +215,7 @@ export async function callRunware(
     if (params.fps !== undefined) taskPayload.fps = Number(params.fps);
     if (params.duration !== undefined) taskPayload.duration = Math.round(Number(params.duration));
     if (params.frameImages !== undefined) {
-      webhookLogger.info('[Runware Video] Converting frames', { count: params.frameImages.length });
+      console.log('[Runware Video] Converting frames', { count: params.frameImages.length });
       taskPayload.frameImages = await convertFrameImagesToRunwareFormat(params.frameImages);
     }
     if (params.providerSettings !== undefined) taskPayload.providerSettings = params.providerSettings;
@@ -225,7 +223,7 @@ export async function callRunware(
     // Add uploadEndpoint for direct upload to storage
     if (presignedUrl) {
       taskPayload.uploadEndpoint = presignedUrl;
-      webhookLogger.info('[Runware Video] Using direct storage upload');
+      console.log('[Runware Video] Using direct storage upload');
     }
   }
 
@@ -246,7 +244,7 @@ export async function callRunware(
     return task;
   });
   
-  webhookLogger.info('[Runware] Request body', { body: logSafeRequestBody });
+  console.log('[Runware] Request body', { body: logSafeRequestBody });
 
   try {
     // Call Runware API (no Authorization header, auth is in body)
@@ -259,7 +257,7 @@ export async function callRunware(
     });
 
     const responseData = await response.json();
-    webhookLogger.info('[Runware] Response received', { data: responseData });
+    console.log('[Runware] Response received', { data: responseData });
 
     // Check for errors in response
     if (responseData.errors && responseData.errors.length > 0) {
@@ -299,7 +297,7 @@ export async function callRunware(
     
     // If no immediate URL for video, poll for async result
     if (!contentUrl && isVideo) {
-      webhookLogger.info('[Runware Video] Starting polling');
+      console.log('[Runware Video] Starting polling');
       const polledResult = await pollForVideoResult(taskUUID, RUNWARE_API_KEY, apiUrl);
       contentUrl = polledResult.videoURL;
       
@@ -310,7 +308,7 @@ export async function callRunware(
       throw new Error(`No ${isVideo ? 'video' : 'image'} URL in Runware response`);
     }
 
-    webhookLogger.info('[Runware] Content URL generated', { isVideo, url: contentUrl });
+    console.log('[Runware] Content URL generated', { isVideo, url: contentUrl });
 
     // Download the content
     const contentResponse = await fetch(contentUrl);
@@ -325,7 +323,7 @@ export async function callRunware(
     const outputFormat = params.outputFormat?.toLowerCase() || (isVideo ? 'mp4' : 'webp');
     const fileExtension = determineFileExtension(outputFormat, contentUrl, isVideo);
 
-    webhookLogger.info('[Runware] Download complete', { bytes: uint8Data.length, extension: fileExtension });
+    console.log('[Runware] Download complete', { bytes: uint8Data.length, extension: fileExtension });
 
     // Build metadata
     const metadata: Record<string, any> = {
@@ -360,7 +358,7 @@ export async function callRunware(
     };
 
   } catch (error: any) {
-    webhookLogger.error('[Runware] Error', error.message, { error });
+    console.error('[Runware] Error', error.message, { error });
     throw new Error(`Runware provider failed: ${error.message}`);
   }
 }

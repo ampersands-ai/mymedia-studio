@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
       .lt('created_at', thirtyMinutesAgo);
 
     if (fetchError) {
-      logger.error('Failed to fetch stuck generations', fetchError instanceof Error ? fetchError : new Error(fetchError?.message || 'Database error'));
+      logger.error('Failed to fetch stuck generations', fetchError instanceof Error ? fetchError : new Error(String(fetchError) || 'Database error'));
       throw fetchError;
     }
 
@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
       .in('id', stuckGenerations.map(g => g.id));
 
     if (updateError) {
-      logger.error('Failed to update stuck generations', updateError instanceof Error ? updateError : new Error(updateError?.message || 'Database error'));
+      logger.error('Failed to update stuck generations', updateError instanceof Error ? updateError : new Error(String(updateError) || 'Database error'));
       throw updateError;
     }
 
@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
         });
 
         if (refundError) {
-          logger.error('Failed to refund tokens', refundError instanceof Error ? refundError : new Error(refundError?.message || 'Database error'), {
+          logger.error('Failed to refund tokens', refundError instanceof Error ? refundError : new Error(String(refundError) || 'Database error'), {
             metadata: { generationId: generation.id }
           });
         }

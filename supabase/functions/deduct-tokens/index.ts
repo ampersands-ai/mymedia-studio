@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
           .single();
 
         if (fetchError) {
-          logger.error('Failed to fetch credit balance', fetchError instanceof Error ? fetchError : new Error(fetchError?.message || 'Database error'), { userId: user.id });
+          logger.error('Failed to fetch credit balance', fetchError instanceof Error ? fetchError : new Error(String(fetchError) || 'Database error'), { userId: user.id });
           throw new Error('Failed to fetch credit balance');
         }
 

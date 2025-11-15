@@ -1,5 +1,6 @@
 import { callKieAI } from "./kie-ai.ts";
 import { callRunware } from "./runware.ts";
+import { callLovableAI } from "./lovable-ai.ts";
 import { webhookLogger } from "../../_shared/logger.ts";
 export interface ProviderRequest {
   model: string;
@@ -34,6 +35,9 @@ export async function callProvider(
     
     case 'runware':
       return await callRunware(request);
+    
+    case 'lovable_ai_sync':
+      return await callLovableAI(request);
     
     case 'json2video':
       throw new Error('JSON2Video provider not yet implemented. Please configure in providers/json2video.ts');

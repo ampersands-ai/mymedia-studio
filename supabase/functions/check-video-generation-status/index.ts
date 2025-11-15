@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
         });
 
       if (uploadError) {
-        logger.error('Failed to upload video', uploadError instanceof Error ? uploadError : new Error(uploadError?.message || 'Upload error'));
+        logger.error('Failed to upload video', uploadError instanceof Error ? uploadError : new Error(String(uploadError) || 'Upload error'));
         throw uploadError;
       }
 
@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
         .eq('id', generation_id);
 
       if (updateError) {
-        logger.error('Failed to update generation', updateError instanceof Error ? updateError : new Error(updateError?.message || 'Database error'));
+        logger.error('Failed to update generation', updateError instanceof Error ? updateError : new Error(String(updateError) || 'Database error'));
         throw updateError;
       }
 
@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
         .eq('id', generation_id);
 
       if (updateError) {
-        logger.error('Failed to update generation', updateError instanceof Error ? updateError : new Error(updateError?.message || 'Database error'));
+        logger.error('Failed to update generation', updateError instanceof Error ? updateError : new Error(String(updateError) || 'Database error'));
       }
 
       // Refund credits

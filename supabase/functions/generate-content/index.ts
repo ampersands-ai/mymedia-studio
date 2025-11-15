@@ -360,7 +360,7 @@ Deno.serve(async (req) => {
           enhancement_provider,
           model.content_type,
           model.provider,
-          parameters.customMode
+          Boolean(parameters.customMode)
         );
         finalPrompt = enhancementResult.enhanced;
         usedEnhancementProvider = enhancementResult.provider;
@@ -559,13 +559,16 @@ Deno.serve(async (req) => {
     // This prevents race conditions where tokens are deducted but generation fails
     let tokensDeducted = false;
     let generationCreated = false;
-    let generation: { 
-      id: string; 
+    let generation: {
+      id: string;
       user_id: string;
       model_id: string;
       status: string;
       [key: string]: unknown;
     } | null = null;
+
+    // Non-null assertion after generation is created
+    let createdGeneration: typeof generation = null;
 
     try {
       // Step 1: Check and deduct tokens atomically (skip for test mode)
@@ -678,9 +681,14 @@ Deno.serve(async (req) => {
 
       generation = gen;
       generationCreated = true;
-      
-      // Type assertion after confirming generation is created
-      const createdGeneration = generation; // Now guaranteed non-null
+
+      // Ensure generation is non-null before proceeding
+      if (!generation) {
+        throw new Error('Failed to create generation record');
+      }
+
+      // Assign to non-null reference after confirming generation is created
+      createdGeneration = generation; // Now guaranteed non-null
       
       logger.info('Generation record created', {
         userId: authenticatedUser.id,
@@ -708,7 +716,7 @@ Deno.serve(async (req) => {
       }
 
     } catch (txError) {
-      logger.error('Transaction error', txError);
+      logger.error('Transaction error', txError instanceof Error ? txError : new Error(String(txError)));
       
       // If generation was created but validation failed, update status to failed
       if (generationCreated && generation) {
@@ -784,7 +792,7 @@ Deno.serve(async (req) => {
     }
 
     // Track request in queue
-    const generationId = generation.id;
+    const generationId = createdGeneration!.id;
     const requestPromise = (async () => {
       let providerRequest: any = null; // Declare outside try block for error handling access
       
@@ -810,7 +818,7 @@ Deno.serve(async (req) => {
           api_endpoint: model.api_endpoint,
           payload_structure: model.payload_structure || 'wrapper',
           userId: user.id,
-          generationId: generation.id
+          generationId: createdGeneration!.id
         };
         
         // Only include prompt if model has prompt field
@@ -820,15 +828,15 @@ Deno.serve(async (req) => {
 
         logger.debug('Provider request prepared', {
           userId: user.id,
-          metadata: { 
+          metadata: {
             model_id: model.id,
-            generation_id: generation.id,
+            generation_id: createdGeneration!.id,
             has_prompt: !!providerRequest.prompt
           }
         });
         
         // Get webhookToken from generation settings for Kie.ai provider
-        const webhookToken = generation.settings?._webhook_token;
+        const webhookToken = (createdGeneration!.settings as any)?._webhook_token;
 
         const providerResponse: any = await Promise.race([
           callProvider(model.provider, providerRequest, webhookToken),
@@ -839,20 +847,20 @@ Deno.serve(async (req) => {
 
         logger.info('Provider response received', {
           userId: user.id,
-          metadata: { generation_id: generation.id }
+          metadata: { generation_id: createdGeneration!.id }
         });
 
         // Check if this is a webhook-based provider (Kie.ai)
         const isWebhookProvider = model.provider === 'kie_ai' && providerResponse.metadata?.task_id;
-        
+
         if (isWebhookProvider) {
           // For webhook providers, update with task_id and mark as processing
           const taskId = providerResponse.metadata.task_id;
           logger.info('Webhook-based provider', {
             userId: user.id,
-            metadata: { task_id: taskId, generation_id: generation.id }
+            metadata: { task_id: taskId, generation_id: createdGeneration!.id }
           });
-          
+
           const { error: updateError } = await supabase
             .from('generations')
             .update({
@@ -861,20 +869,20 @@ Deno.serve(async (req) => {
               provider_request: providerRequest,
               provider_response: providerResponse.metadata
             })
-            .eq('id', generation.id);
+            .eq('id', createdGeneration!.id);
 
           if (updateError) {
             logger.error('Failed to update generation with task ID', updateError, {
               userId: user.id,
-              metadata: { generation_id: generation.id }
+              metadata: { generation_id: createdGeneration!.id }
             });
           }
-          
+
           // Return immediately - webhook will complete the generation
           return new Response(
             JSON.stringify({
-              id: generation.id,
-              generation_id: generation.id,
+              id: createdGeneration!.id,
+              generation_id: createdGeneration!.id,
               status: 'processing',
               tokens_used: tokenCost,
               content_type: model.content_type,
@@ -887,7 +895,7 @@ Deno.serve(async (req) => {
         }
 
         // Phase 3: Process storage upload asynchronously (fire-and-forget with improved error handling)
-        const generationId = generation.id;
+        const generationId = createdGeneration!.id;
         
         // Upload and update in background (don't await, but with proper error handling)
         (async () => {
@@ -997,7 +1005,7 @@ Deno.serve(async (req) => {
         logger.logDuration('Generation processing started', startTime, {
           userId: user.id,
           metadata: {
-            generation_id: generation.id,
+            generation_id: createdGeneration!.id,
             model_id: model.id,
             tokens_used: tokenCost,
             content_type: model.content_type
@@ -1006,8 +1014,8 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({
-            id: generation.id,
-            generation_id: generation.id,
+            id: createdGeneration!.id,
+            generation_id: createdGeneration!.id,
             status: 'processing',
             tokens_used: tokenCost,
             content_type: model.content_type,
@@ -1020,7 +1028,7 @@ Deno.serve(async (req) => {
       } catch (providerError: any) {
         logger.error('Provider error', providerError, {
           userId: user.id,
-          metadata: { generation_id: generation.id }
+          metadata: { generation_id: createdGeneration!.id }
         });
 
         // Increment circuit breaker on failure
@@ -1038,13 +1046,13 @@ Deno.serve(async (req) => {
             status: 'failed',
             tokens_used: 0,
             provider_request: providerRequest,
-            provider_response: { 
+            provider_response: {
               error: sanitizedError,
               error_type: isTimeout ? 'timeout' : 'provider_error',
               timestamp: new Date().toISOString()
             }
           })
-          .eq('id', generation.id);
+          .eq('id', createdGeneration!.id);
 
         // Refund tokens using RPC for atomicity (skip for test mode)
         if (!isTestMode) {
@@ -1067,7 +1075,7 @@ Deno.serve(async (req) => {
           user_id: user.id,
           action: 'generation_failed',
           resource_type: 'generation',
-          resource_id: generation.id,
+          resource_id: createdGeneration!.id,
           metadata: {
             error: providerError.message,
             model_id: model.id,
@@ -1081,7 +1089,7 @@ Deno.serve(async (req) => {
           userId: user.id,
           duration: Date.now() - startTime,
           metadata: {
-            generation_id: generation.id,
+            generation_id: createdGeneration!.id,
             model_id: model.id,
             circuit_breaker_failures: CIRCUIT_BREAKER.failures
           }
@@ -1091,7 +1099,8 @@ Deno.serve(async (req) => {
       }
     })();
 
-    activeRequests.set(requestId, requestPromise);
+    // Cast to Promise<GenerationResult> for tracking (actual return type is Response)
+    activeRequests.set(requestId, requestPromise as unknown as Promise<GenerationResult>);
 
     try {
       return await requestPromise;
@@ -1158,7 +1167,7 @@ Keep the core intent, add key musical/audio details (genre, mood, instruments, t
   // Safety net: Force truncate if enhancement still exceeds limit for Kie.ai non-custom mode
   if (modelProvider === 'kie_ai' && contentType === 'audio' && customMode === false) {
     if (enhanced.length > 500) {
-      logger.warn('Enhanced prompt truncated', { metadata: { length: enhanced.length } });
+      console.warn('Enhanced prompt truncated', { length: enhanced.length });
       enhanced = enhanced.slice(0, 497) + '...';
     }
   }

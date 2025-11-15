@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     } else {
       const { data: userData, error: authError } = await supabase.auth.getUser(token);
       if (authError || !userData.user) {
-        logger.error('Authentication failed', authError);
+        logger.error('Authentication failed', authError || new Error('No user data'));
         throw new Error('Unauthorized: Invalid user token');
       }
       user = { id: userData.user.id, email: userData.user.email };
@@ -96,11 +96,12 @@ Deno.serve(async (req) => {
     try {
       validatedRequest = GenerateContentSyncRequestSchema.parse(requestBody);
     } catch (zodError: unknown) {
-      logger.error('Request validation failed', zodError);
+      const error = zodError instanceof Error ? zodError : new Error('Validation error');
+      logger.error('Request validation failed', error);
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: 'Invalid request parameters',
-          details: zodError instanceof Error ? zodError.message : 'Validation error'
+          details: error.message
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -123,6 +124,11 @@ Deno.serve(async (req) => {
       }
       user = { id: user_id };
       logger.info('Test mode - using user_id from request', { metadata: { user_id } });
+    }
+
+    // Ensure user is set at this point
+    if (!user) {
+      throw new Error('User authentication failed');
     }
 
     // Compute effective prompt with fallbacks and validate early

@@ -456,9 +456,19 @@ export function useVideoJobs() {
       if (error) throw error;
       return data;
     },
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       // Invalidate instead of refetch to avoid aggressive refetching
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
+      
+      // Fetch updated token balance to show in toast
+      const { data: tokenData } = await supabase
+        .from('user_subscriptions')
+        .select('tokens_remaining')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+      
+      const remainingCredits = tokenData?.tokens_remaining?.toFixed(2) || '0.00';
+      toast.success(`Caption generated! 0.1 credits used. Balance: ${remainingCredits} credits`);
     },
     onError: (error: any) => {
       logger.error('Caption generation error', error as Error, {

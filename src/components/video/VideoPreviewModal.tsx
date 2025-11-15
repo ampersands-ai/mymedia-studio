@@ -6,13 +6,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Download, Share2, Sparkles, Copy, Check, Loader2 } from 'lucide-react';
+import { Download, Share2, Sparkles, Copy, Check, Loader2, Coins } from 'lucide-react';
 import { toast } from 'sonner';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
+import { useUserTokens } from '@/hooks/useUserTokens';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useVideoUrl } from '@/hooks/media';
 import { logger } from '@/lib/logger';
@@ -40,8 +51,10 @@ const getStoragePathFromUrl = (url: string | null): string | null => {
 export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModalProps) {
   const isMobile = useIsMobile();
   const { generateCaption, isGeneratingCaption } = useVideoJobs();
+  const { data: userTokens } = useUserTokens();
   const [copiedCaption, setCopiedCaption] = useState(false);
   const [copiedHashtags, setCopiedHashtags] = useState(false);
+  const [showCaptionConfirm, setShowCaptionConfirm] = useState(false);
 
   // Extract storage path and fetch video URL using new architecture
   const videoStoragePath = getStoragePathFromUrl(job.final_video_url);
@@ -56,11 +69,22 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
       return;
     }
     
+    // Check if user has enough credits
+    if (userTokens && userTokens.tokens_remaining < 0.1) {
+      toast.error('Insufficient credits. You need at least 0.1 credits.');
+      return;
+    }
+    
+    setShowCaptionConfirm(true);
+  };
+
+  const confirmGenerateCaption = () => {
     generateCaption.mutate({
       jobId: job.id,
       topic: job.topic,
-      script: job.script
+      script: job.script || ''
     });
+    setShowCaptionConfirm(false);
   };
 
   const handleCopyCaption = async () => {
@@ -214,9 +238,31 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
             className="w-full"
           >
             <Sparkles className="w-4 h-4 mr-2" />
-            {isGeneratingCaption ? 'Generating...' : 'Generate Caption & Hashtags'}
+            {isGeneratingCaption ? 'Generating...' : 'Generate Caption & Hashtags (0.1 credits)'}
           </Button>
         )}
+
+        {/* Caption Generation Confirmation Dialog */}
+        <AlertDialog open={showCaptionConfirm} onOpenChange={setShowCaptionConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Generate Caption & Hashtags?</AlertDialogTitle>
+              <AlertDialogDescription className="space-y-2">
+                <p>This will cost <strong>0.1 credits</strong>.</p>
+                <div className="flex items-center gap-2 text-sm">
+                  <Coins className="w-4 h-4" />
+                  <span>Your current balance: <strong>{userTokens?.tokens_remaining.toFixed(2)} credits</strong></span>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmGenerateCaption}>
+                Generate (0.1 credits)
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {job.ai_caption && (

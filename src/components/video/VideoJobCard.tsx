@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Loader2, Download, Eye, Clock, AlertCircle, Play, XCircle, Volume2, Edit, Pause, RotateCcw, CheckCircle, Sparkles, Coins } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useState, useEffect, useRef } from 'react';
@@ -107,6 +108,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const [editedVoiceoverScript, setEditedVoiceoverScript] = useState(job.script || '');
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [showCaptionConfirm, setShowCaptionConfirm] = useState(false);
   const [timeoutCountdown, setTimeoutCountdown] = useState<number | null>(null);
   const [videoError, setVideoError] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -116,6 +118,30 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   // Calculate voiceover regeneration cost (144 credits per 1000 chars)
   const voiceoverRegenerationCost = Math.ceil((editedVoiceoverScript.length / 1000) * 144);
   const canAffordVoiceoverRegeneration = (tokens?.tokens_remaining ?? 0) >= voiceoverRegenerationCost;
+  
+  const handleGenerateCaption = () => {
+    if (!job.script) {
+      toast.error('Script is required to generate caption');
+      return;
+    }
+    
+    // Check if user has enough credits
+    if (tokens && tokens.tokens_remaining < 0.1) {
+      toast.error('Insufficient credits. You need at least 0.1 credits.');
+      return;
+    }
+    
+    setShowCaptionConfirm(true);
+  };
+
+  const confirmGenerateCaption = () => {
+    generateCaption.mutate({
+      jobId: job.id,
+      topic: job.topic,
+      script: job.script || ''
+    });
+    setShowCaptionConfirm(false);
+  };
   
   // Check if job is approaching 5-minute timeout
   const isApproachingTimeout = ['assembling', 'fetching_video'].includes(job.status);
@@ -909,22 +935,40 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => generateCaption.mutate({
-                  jobId: job.id,
-                  topic: job.topic,
-                  script: job.script || ''
-                })}
+                onClick={handleGenerateCaption}
                 disabled={isGeneratingCaption || !job.script}
                 className="w-full text-xs sm:text-sm"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
                 <span className="hidden sm:inline">
-                  {isGeneratingCaption ? 'Generating...' : 'Generate Caption & Hashtags'}
+                  {isGeneratingCaption ? 'Generating...' : 'Generate Caption & Hashtags (0.1 credits)'}
                 </span>
                 <span className="sm:hidden">
-                  {isGeneratingCaption ? 'Generating...' : 'Caption & Tags'}
+                  {isGeneratingCaption ? 'Generating...' : 'Caption & Tags (0.1)'}
                 </span>
               </Button>
+
+              {/* Caption Generation Confirmation Dialog */}
+              <AlertDialog open={showCaptionConfirm} onOpenChange={setShowCaptionConfirm}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Generate Caption & Hashtags?</AlertDialogTitle>
+                    <AlertDialogDescription className="space-y-2">
+                      <p>This will cost <strong>0.1 credits</strong>.</p>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Coins className="w-4 h-4" />
+                        <span>Your current balance: <strong>{tokens?.tokens_remaining.toFixed(2)} credits</strong></span>
+                      </div>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={confirmGenerateCaption}>
+                      Generate (0.1 credits)
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
 
             {/* Display AI Caption if available */}

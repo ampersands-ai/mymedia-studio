@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
       .createSignedUrl(path, 60); // 1 minute is enough for proxied fetch
 
     if (error || !data?.signedUrl) {
-      logger.error("Failed to create signed URL", error, { metadata: { bucket, path } });
+      logger.error("Failed to create signed URL", error ?? undefined, { metadata: { bucket, path } });
       return new Response(JSON.stringify({ error: "File not found or not accessible" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
         .single();
 
       if (jobError || !job) {
-        logger.error('Job not found for force sync', jobError instanceof Error ? jobError : new Error(jobError?.message || 'Not found'), { metadata: { jobId: forceJobId } });
+        logger.error('Job not found for force sync', jobError instanceof Error ? jobError : new Error(String(jobError) || 'Not found'), { metadata: { jobId: forceJobId } });
         return new Response(
           JSON.stringify({ error: 'Job not found' }),
           { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -34,6 +34,12 @@ export const PROVIDERS: Record<string, ProviderConfig> = {
     recovery: '/functions/v1/recovery/recover-kie-generation', // Uses KIE recovery
     supports: ['image'],
     requiresWebhook: true
+  },
+  'lovable_ai_sync': {
+    name: 'Lovable AI (Sync)',
+    webhook: '', // Not needed for sync
+    supports: ['image'],
+    requiresWebhook: false // Synchronous provider
   }
 };
 

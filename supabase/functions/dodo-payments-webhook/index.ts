@@ -280,7 +280,7 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
   const planKey = planName.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
 
-  webhookLogger.info('Payment succeeded', { userId, planName, tokens });
+  console.log(JSON.stringify({ event: 'payment_succeeded', userId, planName, tokens }));
 
   // Get current tokens
   const { data: currentSub } = await supabase
@@ -293,11 +293,12 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
   const newTokensRemaining = (currentSub?.tokens_remaining || 0) + tokens;
   const newTokensTotal = (currentSub?.tokens_total || 0) + tokens;
 
-  webhookLogger.info('Adding tokens', { 
+  console.log(JSON.stringify({ 
+    event: 'adding_tokens',
     tokens, 
     currentRemaining: currentSub?.tokens_remaining,
     newRemaining: newTokensRemaining 
-  });
+  }));
 
   // Update subscription with added tokens
   const { error } = await supabase
@@ -315,7 +316,7 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
     .eq('user_id', userId);
 
   if (error) {
-    webhookLogger.error('Error updating subscription', error);
+    console.error(JSON.stringify({ event: 'error_updating_subscription', error: String(error) }));
     throw error;
   }
 }
@@ -332,7 +333,7 @@ async function handlePaymentFailed(supabase: any, data: any, metadata: any) {
 async function handleSubscriptionActive(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   
-  webhookLogger.info('Subscription activated', { userId });
+  console.log(JSON.stringify({ event: 'subscription_activated', userId }));
 
   await supabase
     .from('user_subscriptions')
@@ -378,7 +379,7 @@ async function handleSubscriptionRenewed(supabase: any, data: any, metadata: any
   const planKey = planName.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
 
-  webhookLogger.info('Subscription renewed', { userId, tokens });
+  console.log(JSON.stringify({ event: 'subscription_renewed', userId, tokens }));
 
   // Get current subscription
   const { data: currentSub } = await supabase
@@ -405,7 +406,7 @@ async function handleSubscriptionPlanChanged(supabase: any, data: any, metadata:
   const planKey = newPlan.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
 
-  webhookLogger.info('Plan changed', { userId, newPlan, tokens });
+  console.log(JSON.stringify({ event: 'plan_changed', userId, newPlan, tokens }));
 
   await supabase
     .from('user_subscriptions')
@@ -431,7 +432,7 @@ async function handleRefundSucceeded(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   const refundAmount = data.amount || 0;
   
-  webhookLogger.info('Refund processed', { userId, refundAmount });
+  console.log(JSON.stringify({ event: 'refund_processed', userId, refundAmount }));
 
   // Optionally deduct tokens proportionally
   await supabase

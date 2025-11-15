@@ -80,20 +80,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are an expert AI prompt engineer. Your task is to enhance and improve prompts for AI content generation.
+    const systemPrompt = `You are an expert AI prompt engineer. Enhance the following prompt for AI image generation.
 
-When enhancing prompts:
+CRITICAL: Return ONLY the enhanced prompt text. Do NOT include any preamble, explanation, introduction, or meta-commentary like "Here's an enhanced version" or similar phrases.
+
+Enhancement rules:
 - Add specific visual details, lighting, and composition
 - Include style references and artistic techniques
 - Add quality markers (ultra detailed, professional, high resolution)
 - Maintain the core intent of the original prompt
-- Keep it under 500 words
+- Keep the enhanced prompt under 500 words
 - Make it more descriptive and visually rich
 ${category ? `- Consider this is for: ${category}` : ''}
 
-Original prompt: "${prompt}"
-
-Provide an enhanced version that will produce better AI-generated content.`;
+Original prompt: "${prompt}"`;
 
     // Use centralized HTTP client with retry and circuit breaker
     const httpClient = HttpClients.createLovableAIClient(logger);
@@ -105,7 +105,7 @@ Provide an enhanced version that will produce better AI-generated content.`;
         max_completion_tokens: 600,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: 'Enhance this prompt to produce the best possible AI generation.' }
+          { role: 'user', content: 'Provide the enhanced prompt now. Remember: output only the enhanced prompt text, nothing else.' }
         ],
       },
       {

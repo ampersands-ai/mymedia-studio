@@ -30,7 +30,8 @@ Deno.serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     const { data: userData, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !userData.user) {
-      logger.error('Authentication failed', authError instanceof Error ? authError : new Error(authError?.message || 'Auth error'));
+      const errorMsg = authError && typeof authError === 'object' && 'message' in authError ? authError.message : 'Auth error';
+      logger.error('Authentication failed', authError instanceof Error ? authError : new Error(String(errorMsg)));
       throw new Error('Unauthorized');
     }
     const user = userData.user;
@@ -219,8 +220,7 @@ Create a scene that bridges these naturally.`;
     );
 
   } catch (error) {
-    const logger = new EdgeLogger('regenerate-storyboard-scene', requestId, supabaseClient, true);
-    logger.error('Function error', error instanceof Error ? error : undefined);
+    console.error('[regenerate-storyboard-scene] Function error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),

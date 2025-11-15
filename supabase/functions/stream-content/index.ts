@@ -32,6 +32,9 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Forward Range header for proper streaming support
+    const range = req.headers.get("range");
+
     const logger = new EdgeLogger('stream-content', requestId, supabase, false);
     logger.debug('Stream request', { metadata: { bucket, path, hasRange: !!range } });
 
@@ -52,8 +55,7 @@ Deno.serve(async (req) => {
     const ifNoneMatch = req.headers.get("if-none-match");
     const ifModifiedSince = req.headers.get("if-modified-since");
 
-    // Forward Range header for proper streaming support
-    const range = req.headers.get("range");
+    // Build upstream headers
     const upstreamHeaders: HeadersInit = {};
     if (range) upstreamHeaders["Range"] = range;
     if (ifNoneMatch) upstreamHeaders["If-None-Match"] = ifNoneMatch;

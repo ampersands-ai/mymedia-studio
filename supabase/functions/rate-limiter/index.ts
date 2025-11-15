@@ -215,7 +215,8 @@ Deno.serve(async (req) => {
       .eq('action', action);
 
     if (updateError) {
-      logger.error('Error updating rate limit', updateError instanceof Error ? updateError : new Error(updateError?.message || 'Database error'));
+      const errorMsg = updateError && typeof updateError === 'object' && 'message' in updateError ? updateError.message : 'Database error';
+      logger.error('Error updating rate limit', updateError instanceof Error ? updateError : new Error(String(errorMsg)));
       throw updateError;
     }
 

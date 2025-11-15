@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     }
 
     logger.info(`Checking health for ${configs.length} providers`, {
-      providers: configs.map(c => c.provider)
+      metadata: { providers: configs.map(c => c.provider) }
     });
 
     const issues: HealthIssue[] = [];
@@ -86,9 +86,11 @@ Deno.serve(async (req) => {
     }
 
     logger.info('Health check completed', {
-      total_checks: checksPerformed,
-      issues_found: issues.length,
-      duration_ms: Date.now() - startTime
+      duration: Date.now() - startTime,
+      metadata: {
+        total_checks: checksPerformed,
+        issues_found: issues.length
+      }
     });
 
     // Send alerts for any issues found
@@ -97,8 +99,10 @@ Deno.serve(async (req) => {
     }
 
     logger.logDuration('health_check', startTime, {
-      checks_performed: checksPerformed,
-      issues_found: issues.length
+      metadata: {
+        checks_performed: checksPerformed,
+        issues_found: issues.length
+      }
     });
 
     return new Response(
@@ -113,11 +117,12 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    logger.error('Webhook health check failed', error as Error);
+    logger.error('Webhook health check failed', error instanceof Error ? error : new Error(String(error)));
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: 'Health check failed',
-        message: error.message 
+        message: errorMessage
       }),
       { 
         status: 500, 
@@ -137,7 +142,7 @@ async function checkProviderHealth(
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
   const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
 
-  logger.info(`Checking ${config.provider}`, { config });
+  logger.info(`Checking ${config.provider}`, { metadata: { config } });
 
   try {
     // Fetch recent webhook events for this provider
@@ -171,10 +176,12 @@ async function checkProviderHealth(
     const successRate = totalEvents > 0 ? successfulEvents / totalEvents : 0;
 
     logger.info(`${config.provider} metrics`, {
-      total: totalEvents,
-      successful: successfulEvents,
-      failed: failedEvents,
-      success_rate: successRate
+      metadata: {
+        total: totalEvents,
+        successful: successfulEvents,
+        failed: failedEvents,
+        success_rate: successRate
+      }
     });
 
     // CHECK 1: Consecutive failures

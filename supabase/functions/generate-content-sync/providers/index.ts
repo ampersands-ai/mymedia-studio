@@ -1,6 +1,5 @@
 import { callRunware } from "./runware.ts";
-
-import { webhookLogger } from "../../_shared/logger.ts";
+import { callLovableAI } from "./lovable-ai.ts";
 export interface ProviderRequest {
   model: string;
   prompt: string;
@@ -20,11 +19,14 @@ export async function callProvider(
   provider: string,
   request: ProviderRequest
 ): Promise<ProviderResponse> {
-  webhookLogger.info(`Calling provider: ${provider}`);
+  console.log(JSON.stringify({ event: 'calling_provider', provider }));
 
   switch (provider) {
     case 'runware':
       return await callRunware(request);
+    
+    case 'lovable_ai_sync':
+      return await callLovableAI(request);
     
     default:
       throw new Error(`Unknown provider: ${provider}`);

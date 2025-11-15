@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
     } else {
       const { data: userData, error: authError } = await supabase.auth.getUser(token);
       if (authError || !userData.user) {
-        logger.error('Authentication failed', authError);
+        logger.error('Authentication failed', authError || undefined);
         throw new Error('Unauthorized: Invalid user token');
       }
       user = { id: userData.user.id, email: userData.user.email };
@@ -113,11 +113,12 @@ Deno.serve(async (req) => {
     try {
       validatedRequest = GenerateContentRequestSchema.parse(requestBody);
     } catch (zodError: unknown) {
-      logger.error('Request validation failed', zodError);
+      const error = zodError instanceof Error ? zodError : new Error('Validation error');
+      logger.error('Request validation failed', error);
       return new Response(
         JSON.stringify({ 
           error: 'Invalid request parameters',
-          details: zodError instanceof Error ? zodError.message : 'Validation error'
+          details: error.message
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -146,26 +147,32 @@ Deno.serve(async (req) => {
       logger.info('Service role detected - using user_id from request', { metadata: { user_id } });
     }
 
+    // Type assertion for non-null user after authentication check
+    if (!user) {
+      throw new Error('User authentication required');
+    }
+    const authenticatedUser = user; // Now guaranteed non-null
+
     // Verify admin status for test_mode
     let isTestMode = false;
     if (test_mode && isServiceRole) {
       const { data: adminRole } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.id)
+        .eq('user_id', authenticatedUser.id)
         .eq('role', 'admin')
         .single();
       
       if (adminRole) {
         isTestMode = true;
-        logger.info('TEST_MODE: Non-billable test run for admin user', { userId: user.id });
+        logger.info('TEST_MODE: Non-billable test run for admin user', { userId: authenticatedUser.id });
       } else {
-        logger.warn('test_mode requested but user is not admin - ignoring flag', { userId: user.id });
+        logger.warn('test_mode requested but user is not admin - ignoring flag', { userId: authenticatedUser.id });
       }
     }
 
     logger.info('Async generation request', {
-      userId: user.id,
+      userId: authenticatedUser.id,
       metadata: { template_id, model_id, model_record_id, enhance_prompt }
     });
 
@@ -329,7 +336,8 @@ Deno.serve(async (req) => {
 
     // Validate required fields based on model's input schema
     const inputSchema = model.input_schema || {};
-    if (inputSchema.image_urls && inputSchema.image_urls.required) {
+    const imageUrlsSchema = inputSchema.properties?.image_urls as any;
+    if (imageUrlsSchema && imageUrlsSchema.required) {
       if (!parameters.image_urls || !Array.isArray(parameters.image_urls) || parameters.image_urls.length === 0) {
         return new Response(
           JSON.stringify({ error: 'image_urls is required for this model' }),
@@ -622,8 +630,8 @@ Deno.serve(async (req) => {
           metadata: {
             tokens_deducted: tokenCost,
             tokens_remaining: updateResult[0]?.tokens_remaining,
-            model_id: model.id,
-            model_name: model.model_name
+          model_id: model.id,
+          model_name: model.id // Use model.id as name
           }
         });
       } else {
@@ -664,15 +672,19 @@ Deno.serve(async (req) => {
         .single();
 
       if (genError || !gen) {
-        logger.error('Generation creation failed', genError);
+        logger.error('Generation creation failed', genError || undefined);
         throw new Error('Failed to create generation record');
       }
 
       generation = gen;
       generationCreated = true;
+      
+      // Type assertion after confirming generation is created
+      const createdGeneration = generation; // Now guaranteed non-null
+      
       logger.info('Generation record created', {
-        userId: user.id,
-        metadata: { generation_id: generation.id }
+        userId: authenticatedUser.id,
+        metadata: { generation_id: createdGeneration.id }
       });
 
       // Validate prompt only if model has prompt field

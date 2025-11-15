@@ -28,7 +28,7 @@ export const usePromptEnhancement = () => {
         throw new Error('No enhanced prompt received');
       }
 
-      toast.success('Prompt enhanced successfully!');
+      toast.success('Prompt enhanced successfully!', { duration: 2000 });
       return data.enhanced_prompt;
 
     } catch (error) {
@@ -38,7 +38,7 @@ export const usePromptEnhancement = () => {
         category,
         promptLength: prompt.length
       });
-      toast.error(error.message || 'Failed to enhance prompt');
+      toast.error(error.message || 'Failed to enhance prompt', { duration: 2000 });
       return null;
     } finally {
       setIsEnhancing(false);

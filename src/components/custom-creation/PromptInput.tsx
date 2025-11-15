@@ -56,13 +56,13 @@ export const PromptInput: React.FC<PromptInputProps> = ({
     setShowEnhanceDialog(false);
     
     if (!value.trim()) {
-      toast.error('Enter a prompt first');
+      toast.error('Enter a prompt first', { duration: 2000 });
       return;
     }
 
     const currentTokens = Number(tokenData?.tokens_remaining || 0);
     if (currentTokens < 0.1) {
-      toast.error('Insufficient credits. You need 0.1 credits to enhance prompts.');
+      toast.error('Insufficient credits. You need 0.1 credits to enhance prompts.', { duration: 2000 });
       return;
     }
 

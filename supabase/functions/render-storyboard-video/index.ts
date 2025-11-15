@@ -48,7 +48,8 @@ Deno.serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     const { data: userData, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !userData.user) {
-      logger.error('Authentication failed', authError instanceof Error ? authError : new Error(authError?.message || 'Auth error'));
+      const errorMsg = authError && typeof authError === 'object' && 'message' in authError ? authError.message : 'Auth error';
+      logger.error('Authentication failed', authError instanceof Error ? authError : new Error(String(errorMsg)));
       throw new Error('Unauthorized');
     }
     const user = userData.user;
@@ -550,7 +551,8 @@ Deno.serve(async (req) => {
       .eq('id', storyboardId);
 
     if (updateError) {
-      logger.error('Status update error', updateError instanceof Error ? updateError : new Error(updateError?.message || 'Database error'));
+      const errorMsg = updateError && typeof updateError === 'object' && 'message' in updateError ? updateError.message : 'Database error';
+      logger.error('Status update error', updateError instanceof Error ? updateError : new Error(String(errorMsg)));
       // Refund initial estimate (actual cost may have been higher, but we limit refund to initial)
       await supabaseClient.rpc('increment_tokens', {
         user_id_param: user.id,
@@ -570,7 +572,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    logger.error('Render storyboard video error', error instanceof Error ? error : new Error(String(error)));
+    console.error('[render-storyboard-video] Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),

@@ -75,7 +75,8 @@ Deno.serve(async (req) => {
           });
 
         if (insertError) {
-          logger.error('Error creating session', insertError instanceof Error ? insertError : new Error(insertError?.message || 'Database error'), { userId: user.id });
+          const errorMsg = insertError && typeof insertError === 'object' && 'message' in insertError ? insertError.message : 'Database error';
+          logger.error('Error creating session', insertError instanceof Error ? insertError : new Error(String(errorMsg)), { userId: user.id });
           throw insertError;
         }
 
@@ -173,7 +174,8 @@ Deno.serve(async (req) => {
           .eq('is_active', true);
 
         if (updateError) {
-          logger.error('Error updating session activity', updateError instanceof Error ? updateError : new Error(updateError?.message || 'Database error'), {
+          const errorMsg = updateError && typeof updateError === 'object' && 'message' in updateError ? updateError.message : 'Database error';
+          logger.error('Error updating session activity', updateError instanceof Error ? updateError : new Error(String(errorMsg)), {
             userId: user.id,
             metadata: { session_id }
           });

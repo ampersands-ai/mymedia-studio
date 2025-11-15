@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
         .single();
 
       if (jobError || !job) {
-        logger.error('Job not found for force sync', jobError, { metadata: { jobId: forceJobId } });
+        logger.error('Job not found for force sync', jobError instanceof Error ? jobError : new Error(jobError?.message || 'Not found'), { metadata: { jobId: forceJobId } });
         return new Response(
           JSON.stringify({ error: 'Job not found' }),
           { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -232,7 +232,8 @@ Deno.serve(async (req) => {
       .order('updated_at', { ascending: true });
 
     if (fetchError) {
-      logger.error('Failed to fetch stuck jobs', fetchError instanceof Error ? fetchError : new Error(fetchError?.message || 'Database error'));
+      const errorMsg = fetchError && typeof fetchError === 'object' && 'message' in fetchError ? fetchError.message : 'Database error';
+      logger.error('Failed to fetch stuck jobs', fetchError instanceof Error ? fetchError : new Error(String(errorMsg)));
       throw fetchError;
     }
 

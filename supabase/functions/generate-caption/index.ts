@@ -247,7 +247,7 @@ HASHTAG REQUIREMENTS:
         break; // Success, exit retry loop
       } catch (validationError) {
         if (attemptCount >= maxAttempts) {
-          logger.error('Caption validation failed after retries', validationError, {
+          logger.error('Caption validation failed after retries', validationError instanceof Error ? validationError : new Error(String(validationError)), {
             metadata: { attempts: maxAttempts, caption: captionText }
           });
           throw validationError;

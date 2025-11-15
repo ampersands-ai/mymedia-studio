@@ -183,7 +183,7 @@ async function handleWebhookEvent(supabase: any, event: any) {
   const eventType = event.type || event.event_type;
   const eventData = event.data || event;
 
-  logger.info('Processing webhook event', { metadata: { eventType } });
+  // Processing webhook event
 
   // Extract metadata (user_id, plan, etc.)
   const metadata = eventData.metadata || {};
@@ -192,10 +192,6 @@ async function handleWebhookEvent(supabase: any, event: any) {
 
   // Fallback: If user_id is missing from metadata, try to find user by email
   if (!userId && eventData.customer?.email) {
-    webhookLogger.info('Attempting email fallback for user lookup', { 
-      email: eventData.customer.email 
-    });
-    
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id')
@@ -204,17 +200,12 @@ async function handleWebhookEvent(supabase: any, event: any) {
     
     if (profile && !profileError) {
       userId = profile.id;
-      webhookLogger.info('Found user by email fallback', { userId });
     } else {
-      webhookLogger.error('Could not find user by email', profileError || new Error('User not found'), {
-        email: eventData.customer.email
-      });
       throw new Error(`User not found for email: ${eventData.customer.email}`);
     }
   }
 
   if (!userId) {
-    webhookLogger.error('No user_id available', new Error('Missing user identification'));
     throw new Error('No user_id in metadata and no customer email to lookup');
   }
 
@@ -267,7 +258,8 @@ async function handleWebhookEvent(supabase: any, event: any) {
       break;
 
     default:
-      webhookLogger.info('Unhandled event type', { eventType });
+      // Unhandled event type
+      break;
   }
 
   // Log to audit trail
@@ -330,8 +322,6 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
 
 async function handlePaymentFailed(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
-  
-  webhookLogger.info('Payment failed', { userId });
 
   await supabase
     .from('user_subscriptions')
@@ -357,8 +347,6 @@ async function handleSubscriptionActive(supabase: any, data: any, metadata: any)
 
 async function handleSubscriptionCancelled(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
-  
-  webhookLogger.info('Subscription cancelled', { userId });
 
   // Don't remove tokens immediately - let them use until period ends
   await supabase
@@ -369,8 +357,6 @@ async function handleSubscriptionCancelled(supabase: any, data: any, metadata: a
 
 async function handleSubscriptionExpired(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
-  
-  webhookLogger.info('Subscription expired', { userId });
 
   // Downgrade to freemium
   await supabase
@@ -434,8 +420,6 @@ async function handleSubscriptionPlanChanged(supabase: any, data: any, metadata:
 
 async function handleSubscriptionOnHold(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
-  
-  webhookLogger.info('Subscription on hold', { userId });
 
   await supabase
     .from('user_subscriptions')

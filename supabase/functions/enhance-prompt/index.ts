@@ -82,7 +82,13 @@ Deno.serve(async (req) => {
 
     const systemPrompt = `You are an expert AI prompt engineer. Enhance the following prompt for AI image generation.
 
-CRITICAL: Return ONLY the enhanced prompt text. Do NOT include any preamble, explanation, introduction, or meta-commentary like "Here's an enhanced version" or similar phrases.
+CRITICAL INSTRUCTIONS:
+- Return ONLY the enhanced prompt text itself
+- DO NOT include ANY labels like "Enhanced Prompt:", "Here's", etc.
+- DO NOT use markdown formatting (**bold**, *italic*)
+- DO NOT wrap the prompt in quotes
+- DO NOT add any preamble, explanation, or meta-commentary
+- Start directly with the enhanced prompt content
 
 Enhancement rules:
 - Add specific visual details, lighting, and composition
@@ -120,6 +126,36 @@ Original prompt: "${prompt}"`;
       throw new Error('No enhanced prompt returned from AI');
     }
 
+    // Clean up the AI response - strip common formatting artifacts
+    const cleanEnhancedPrompt = (text: string): string => {
+      let cleaned = text.trim();
+      
+      // Remove common label patterns at the start (case insensitive)
+      const labelPatterns = [
+        /^\*\*Enhanced Prompt:\*\*\s*/i,
+        /^\*Enhanced Prompt:\*\s*/i,
+        /^Enhanced Prompt:\s*/i,
+        /^Here's an enhanced version.*?:\s*/i,
+        /^Here is an enhanced.*?:\s*/i,
+        /^Here's the enhanced.*?:\s*/i,
+      ];
+      
+      for (const pattern of labelPatterns) {
+        cleaned = cleaned.replace(pattern, '');
+      }
+      
+      // Remove leading/trailing quotes (both single and double)
+      cleaned = cleaned.replace(/^["']|["']$/g, '');
+      
+      // Remove markdown bold markers
+      cleaned = cleaned.replace(/\*\*/g, '');
+      
+      // Final trim
+      return cleaned.trim();
+    };
+
+    const cleanedPrompt = cleanEnhancedPrompt(enhancedPrompt);
+
     // Deduct credits
     const { error: deductError } = await supabase
       .from('user_subscriptions')
@@ -139,13 +175,13 @@ Original prompt: "${prompt}"`;
       metadata: { 
         creditsDeducted: ENHANCEMENT_COST,
         originalLength: prompt.length,
-        enhancedLength: enhancedPrompt.length
+        enhancedLength: cleanedPrompt.length
       } 
     });
 
     return new Response(
       JSON.stringify({
-        enhanced_prompt: enhancedPrompt.trim()
+        enhanced_prompt: cleanedPrompt
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

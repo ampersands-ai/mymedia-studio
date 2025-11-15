@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
       .select('tokens_remaining');
 
     if (deductError) {
-      logger.error('Credit deduction failed', deductError, { userId: user.id });
+      logger.error('Credit deduction failed', deductError instanceof Error ? deductError : new Error(deductError?.message || 'Database error'), { userId: user.id });
       throw new Error('Failed to deduct credits - database error');
     }
 
@@ -300,7 +300,7 @@ HASHTAG REQUIREMENTS:
     }
 
     if (updateError) {
-      logger.error('Database update failed', updateError);
+      logger.error('Database update failed', updateError instanceof Error ? updateError : new Error(updateError?.message || 'Database error'));
       throw new Error('Failed to save caption to database');
     }
 

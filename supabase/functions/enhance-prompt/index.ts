@@ -130,7 +130,7 @@ Provide an enhanced version that will produce better AI-generated content.`;
       .eq('user_id', user.id);
 
     if (deductError) {
-      logger.error('Failed to deduct credits', deductError, { userId: user.id });
+      logger.error('Failed to deduct credits', deductError instanceof Error ? deductError : new Error(deductError?.message || 'Database error'), { userId: user.id });
       throw new Error('Failed to deduct credits');
     }
 

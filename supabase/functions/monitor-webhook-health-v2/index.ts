@@ -317,7 +317,7 @@ async function sendHealthAlerts(
         .single();
 
       if (insertError) {
-        logger.error('Failed to insert alert history', insertError);
+        logger.error('Failed to insert alert history', insertError instanceof Error ? insertError : new Error(insertError?.message || 'Database error'));
         continue;
       }
 

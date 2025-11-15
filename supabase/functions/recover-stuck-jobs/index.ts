@@ -232,7 +232,7 @@ Deno.serve(async (req) => {
       .order('updated_at', { ascending: true });
 
     if (fetchError) {
-      logger.error('Failed to fetch stuck jobs', fetchError);
+      logger.error('Failed to fetch stuck jobs', fetchError instanceof Error ? fetchError : new Error(fetchError?.message || 'Database error'));
       throw fetchError;
     }
 

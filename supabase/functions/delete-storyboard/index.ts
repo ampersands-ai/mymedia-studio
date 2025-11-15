@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
       .eq('storyboard_id', storyboardId);
 
     if (scenesError) {
-      logger.error('Error deleting scenes', scenesError);
+      logger.error('Error deleting scenes', scenesError instanceof Error ? scenesError : new Error(scenesError?.message || 'Database error'));
       return createErrorResponse('Failed to delete storyboard scenes', 500);
     }
 
@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
       .eq('id', storyboardId);
 
     if (storyboardError) {
-      logger.error('Error deleting storyboard', storyboardError);
+      logger.error('Error deleting storyboard', storyboardError instanceof Error ? storyboardError : new Error(storyboardError?.message || 'Database error'));
       return createErrorResponse('Failed to delete storyboard', 500);
     }
 

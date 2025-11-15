@@ -68,8 +68,8 @@ Deno.serve(async (req) => {
           .eq('id', gen.id);
 
         if (updateError) {
-          logger.error("Failed to update generation", updateError, { 
-            metadata: { generationId: gen.id } 
+          logger.error("Failed to update generation", updateError instanceof Error ? updateError : new Error(updateError?.message || 'Database error'), {
+            metadata: { generationId: gen.id }
           });
           errorCount++;
           continue;

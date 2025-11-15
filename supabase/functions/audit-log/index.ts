@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
       });
 
     if (insertError) {
-      logger.error('Database error in audit-log', insertError);
+      logger.error('Database error in audit-log', insertError instanceof Error ? insertError : new Error(insertError?.message || 'Database error'));
       return new Response(
         JSON.stringify({ error: 'Failed to create audit log' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

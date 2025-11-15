@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
       );
       
       if (downloadError) {
-        logger.error('Failed to trigger download', downloadError);
+        logger.error('Failed to trigger download', new Error(downloadError.message || 'Download function invocation failed'));
       } else {
         logger.info('Download function invoked successfully');
       }
@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
       });
       
       if (refundError) {
-        logger.error('Credit refund failed', refundError);
+        logger.error('Credit refund failed', refundError instanceof Error ? refundError : new Error(refundError?.message || 'Refund error'));
       } else {
         logger.info('Credits refunded', { metadata: { tokenCost } });
       }
@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
       .eq('id', storyboard.id);
 
     if (updateError) {
-      logger.error('Failed to update storyboard', updateError);
+      logger.error('Failed to update storyboard', updateError instanceof Error ? updateError : new Error(updateError?.message || 'Database error'));
       return new Response(
         JSON.stringify({ error: 'Failed to update storyboard' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
       error_code: 'WEBHOOK_ERROR',
       metadata: { error: error instanceof Error ? error.message : 'Unknown error' }
     }).then(({ error: analyticsError }) => {
-      if (analyticsError) logger.error('Failed to track analytics', analyticsError);
+      if (analyticsError) logger.error('Failed to track analytics', analyticsError instanceof Error ? analyticsError : new Error(analyticsError?.message || 'Analytics error'));
     });
     
     return new Response(

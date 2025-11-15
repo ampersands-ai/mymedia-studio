@@ -31,10 +31,8 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
     if (!supabaseUrl || !supabaseServiceKey) {
-      logger.error('Missing required environment variables', {
-        hasUrl: !!supabaseUrl,
-        hasServiceKey: !!supabaseServiceKey
-      });
+      console.error('Missing env vars', { hasUrl: !!supabaseUrl, hasServiceKey: !!supabaseServiceKey });
+      logger.error('Missing required environment variables', new Error('Configuration error'));
       throw new Error('Server configuration error');
     }
     
@@ -54,7 +52,7 @@ Deno.serve(async (req) => {
     // Validate timeRange
     const validTimeRanges = ['1h', '24h', '7d', '30d', 'custom'];
     if (!validTimeRanges.includes(timeRange)) {
-      logger.warn('Invalid time range provided', { timeRange });
+      logger.warn('Invalid time range provided', { metadata: { timeRange } });
       throw new Error(`Invalid time range: ${timeRange}`);
     }
 
@@ -107,9 +105,9 @@ Deno.serve(async (req) => {
     const { data: events, error: eventsError } = await query;
 
     if (eventsError) {
-      logger.error('Database query failed', { 
-        error: eventsError,
-        metadata: { timeRange, provider, startDate, endDate }
+      console.error('DB query failed', { error: eventsError, timeRange, provider });
+      logger.error('Database query failed', new Error(eventsError?.message || 'Unknown error'), {
+        metadata: { timeRange, provider, startDate: startDate.toISOString(), endDate: endDate.toISOString() }
       });
       throw new Error(`Database query failed: ${eventsError.message}`);
     }
@@ -153,11 +151,11 @@ Deno.serve(async (req) => {
       return acc;
     }, {} as Record<string, any[]>);
 
-    const byProvider = Object.entries(providerGroups).map(([provider, providerEvents]) => {
+    const byProvider = Object.entries(providerGroups).map(([provider, providerEvents]: [string, any[]]) => {
       const total = providerEvents.length;
-      const success = providerEvents.filter(e => e.status === 'success').length;
-      const failure = providerEvents.filter(e => e.status === 'failure').length;
-      const providerDurations = providerEvents.filter(e => e.duration_ms).map(e => e.duration_ms);
+      const success = providerEvents.filter((e: any) => e.status === 'success').length;
+      const failure = providerEvents.filter((e: any) => e.status === 'failure').length;
+      const providerDurations = providerEvents.filter((e: any) => e.duration_ms).map((e: any) => e.duration_ms);
       const avgDur = providerDurations.length > 0 ? providerDurations.reduce((a, b) => a + b, 0) / providerDurations.length : 0;
       const sorted = [...providerDurations].sort((a, b) => a - b);
       const p95 = sorted.length > 0 ? sorted[Math.floor(sorted.length * 0.95)] : 0;

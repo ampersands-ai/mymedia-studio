@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (fetchError) {
-      logger.error('Error fetching rate limit', fetchError instanceof Error ? fetchError : new Error(fetchError?.message || 'Database error'));
+      logger.error('Error fetching rate limit', fetchError instanceof Error ? fetchError : new Error(String(fetchError) || 'Database error'));
       throw fetchError;
     }
 
@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
         });
 
       if (insertError) {
-        logger.error('Error creating rate limit', insertError instanceof Error ? insertError : new Error(insertError?.message || 'Database error'));
+        logger.error('Error creating rate limit', insertError instanceof Error ? insertError : new Error(String(insertError) || 'Database error'));
         throw insertError;
       }
 

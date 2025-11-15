@@ -1,21 +1,24 @@
 import type { ProviderRequest, ProviderResponse } from "./index.ts";
 
-const LOVABLE_AI_GATEWAY = "https://api.lovable.app/v1/openai-gateway";
+const LOVABLE_AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 export async function callLovableAI(request: ProviderRequest): Promise<ProviderResponse> {
   console.log('[Lovable AI] Starting image generation', { model: request.model });
 
+  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+  if (!apiKey) {
+    throw new Error("LOVABLE_API_KEY is not configured");
+  }
+
   const payload = {
-    model: request.model || "google/gemini-2.5-flash-image-preview",
+    model: request.model || "google/gemini-2.5-flash-image",
     messages: [
       {
         role: "user",
         content: request.prompt
       }
     ],
-    response_format: {
-      type: "image_url"
-    },
+    modalities: ["image", "text"],
     ...request.parameters
   };
 
@@ -28,7 +31,8 @@ export async function callLovableAI(request: ProviderRequest): Promise<ProviderR
   const response = await fetch(LOVABLE_AI_GATEWAY, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
     },
     body: JSON.stringify(payload)
   });
@@ -56,24 +60,31 @@ export async function callLovableAI(request: ProviderRequest): Promise<ProviderR
     choicesCount: result.choices?.length 
   });
 
-  if (!result.choices?.[0]?.message?.content) {
-    throw new Error('No image URL in Lovable AI response');
+  // Extract base64 image from response
+  const images = result.choices?.[0]?.message?.images;
+  if (!images?.[0]?.image_url?.url) {
+    throw new Error('No image data in Lovable AI response');
   }
 
-  const imageUrl = result.choices[0].message.content;
-  console.log('[Lovable AI] Image URL received', { 
-    urlLength: imageUrl.length 
-  });
-
-  const imageResponse = await fetch(imageUrl);
-  if (!imageResponse.ok) {
-    throw new Error(`Failed to download image: ${imageResponse.status}`);
+  const base64Data = images[0].image_url.url;
+  if (!base64Data.startsWith('data:image/')) {
+    throw new Error('Invalid image data format');
   }
 
-  const arrayBuffer = await imageResponse.arrayBuffer();
-  const uint8Data = new Uint8Array(arrayBuffer);
+  // Extract base64 string (remove data:image/png;base64, prefix)
+  const base64String = base64Data.split(',')[1];
+  if (!base64String) {
+    throw new Error('Failed to extract base64 data');
+  }
 
-  console.log('[Lovable AI] Image downloaded', { 
+  // Decode base64 to binary
+  const binaryString = atob(base64String);
+  const uint8Data = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    uint8Data[i] = binaryString.charCodeAt(i);
+  }
+
+  console.log('[Lovable AI] Image decoded', { 
     size_bytes: uint8Data.length,
     size_kb: Math.round(uint8Data.length / 1024)
   });

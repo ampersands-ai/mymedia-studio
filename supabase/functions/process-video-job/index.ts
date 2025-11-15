@@ -72,7 +72,7 @@ async function logApiCall(
       });
     }
   } catch (error) {
-    logger.warn('Failed to log API call', { metadata: { error: error.message } });
+    logger.warn('Failed to log API call', { metadata: { error: error instanceof Error ? error.message : String(error) } });
   }
 }
 
@@ -331,9 +331,9 @@ async function generateVoiceover(script: string, voiceId: string): Promise<Blob>
 
   if (!response.ok) {
     const errorText = await response.text();
-    logger.error('ElevenLabs API request failed', new Error(errorText), { 
-      userId: job.user_id,
-      metadata: { status: response.status, jobId: videoJobId, step: stepName } 
+    console.error('ElevenLabs API request failed', { 
+      status: response.status,
+      error: errorText
     });
     
     // Try to parse error response
@@ -384,6 +384,7 @@ function extractSearchTerms(topic: string): string {
 
 async function getBackgroundVideo(
   supabase: any,
+  logger: any,
   style: string,
   duration: number,
   videoJobId: string,
@@ -395,7 +396,7 @@ async function getBackgroundVideo(
   if (topic && topic.trim()) {
     // Extract key terms from topic (remove filler words, limit length)
     searchQuery = extractSearchTerms(topic);
-    logger.info('Using topic-based search', { metadata: { jobId: videoJobId, searchQuery, topic } });
+    console.log('Using topic-based search', { jobId: videoJobId, searchQuery, topic });
   } else {
     // Fallback to style-based queries
     const queries: Record<string, string> = {
@@ -405,16 +406,13 @@ async function getBackgroundVideo(
       dramatic: 'cinematic nature dramatic'
     };
     searchQuery = queries[style] || 'abstract motion background';
-    logger.info('Using style-based search', { metadata: { jobId: videoJobId, searchQuery, style } });
+    console.log('Using style-based search', { jobId: videoJobId, searchQuery, style });
   }
   const pixabayApiKey = Deno.env.get('PIXABAY_API_KEY');
   const endpoint = `https://pixabay.com/api/videos/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&per_page=20`;
   const requestSentAt = new Date();
 
-  logger.info('Searching Pixabay', { 
-    userId: job.user_id,
-    metadata: { jobId: videoJobId, searchQuery } 
-  });
+  console.log('Searching Pixabay', { userId, jobId: videoJobId, searchQuery });
 
   const response = await fetch(endpoint);
 
@@ -423,6 +421,7 @@ async function getBackgroundVideo(
   // Log the API call
   logApiCall(
     supabase,
+    logger,
     {
       videoJobId,
       userId,
@@ -440,7 +439,7 @@ async function getBackgroundVideo(
       isError: !response.ok,
       errorMessage: response.ok ? undefined : `Pixabay returned ${response.status}`
     }
-  ).catch(e => logger.error('Failed to log Pixabay API call', e));
+  ).catch(e => console.error('Failed to log Pixabay API call', e));
 
   if (!response.ok) {
     throw new Error(`Pixabay API error: ${response.status}`);
@@ -450,10 +449,7 @@ async function getBackgroundVideo(
     throw new Error('No background videos found');
   }
 
-  logger.info('Pixabay search results', { 
-    userId: job.user_id,
-    metadata: { jobId: videoJobId, hitCount: data.hits.length, searchQuery } 
-  });
+  console.log('Pixabay search results', { userId, jobId: videoJobId, hitCount: data.hits.length, searchQuery });
 
   // Filter landscape videos (width > height) longer than required duration
   const landscapeVideos = data.hits.filter((v: any) => {
@@ -473,15 +469,13 @@ async function getBackgroundVideo(
     throw new Error('No video URL found');
   }
   
-  logger.info('Selected Pixabay video', { 
-    userId: job.user_id,
-    metadata: { jobId: videoJobId, videoId: video.id, duration: video.duration } 
-  });
+  console.log('Selected Pixabay video', { userId, jobId: videoJobId, videoId: video.id, duration: video.duration });
   return videoUrl;
 }
 
 async function assembleVideo(
   supabase: any,
+  logger: any,
   assets: {
     script: string;
     voiceoverUrl: string;
@@ -561,12 +555,12 @@ async function assembleVideo(
   const requestSentAt = new Date();
 
   logger.info('Submitting render to Shotstack', { 
-    userId: job.user_id,
+    userId,
     metadata: { 
       jobId: videoJobId, 
       duration: assets.duration, 
       wordCount: words.length,
-      videoUrl: assets.videoUrl 
+      videoUrl: assets.backgroundVideoUrl 
     } 
   });
 
@@ -594,6 +588,7 @@ async function assembleVideo(
   // Log the API call with detailed error info
   logApiCall(
     supabase,
+    logger,
     {
       videoJobId,
       userId,
@@ -663,6 +658,7 @@ async function pollRenderStatus(supabase: any, logger: any, jobId: string, rende
     // Log every status poll
     await logApiCall(
       supabase,
+      logger,
       {
         videoJobId: jobId,
         userId,

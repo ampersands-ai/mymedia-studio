@@ -43,6 +43,15 @@ export async function executeGeneration({
   // Step 1: Detect image field requirements
   const imageFieldInfo = getImageFieldInfo(model);
   
+  // For text-to-image models, images should be optional even if schema says required
+  const isTextToImage = 
+    model.model_name?.toLowerCase().includes('prompt to image') ||
+    model.model_name?.toLowerCase().includes('text to image') ||
+    model.model_name?.toLowerCase().includes('text2img') ||
+    model.id?.toLowerCase().includes('text-to-image');
+  
+  const imageRequired = imageFieldInfo.isRequired && !isTextToImage;
+  
   // Step 2: Validate inputs (same as Custom Creation)
   const isPromptRequired = (model.input_schema?.required || []).some((field: string) =>
     ['prompt', 'positivePrompt', 'positive_prompt'].includes(field)
@@ -52,7 +61,7 @@ export async function executeGeneration({
     prompt,
     uploadedImages,
     isPromptRequired,
-    imageFieldInfo.isRequired,
+    imageRequired,
     maxPromptLength
   );
   

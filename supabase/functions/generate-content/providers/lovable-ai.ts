@@ -10,8 +10,19 @@ export async function callLovableAI(request: ProviderRequest): Promise<ProviderR
     throw new Error("LOVABLE_API_KEY is not configured");
   }
 
+  const MODEL_MAP: Record<string, string> = {
+    "lovable-ai-gemini-flash-image": "google/gemini-2.5-flash-image",
+    "lovable-ai-gemini-flash": "google/gemini-2.5-flash",
+    "lovable-ai-gemini-pro": "google/gemini-2.5-pro",
+    "lovable-ai-gemini-flash-lite": "google/gemini-2.5-flash-lite"
+  };
+
+  const resolvedModel = (request.model && MODEL_MAP[request.model])
+    ? MODEL_MAP[request.model]
+    : (request.model || "google/gemini-2.5-flash-image");
+
   const payload = {
-    model: request.model || "google/gemini-2.5-flash-image",
+    model: resolvedModel,
     messages: [
       {
         role: "user",
@@ -21,7 +32,6 @@ export async function callLovableAI(request: ProviderRequest): Promise<ProviderR
     modalities: ["image", "text"],
     ...request.parameters
   };
-
   console.log('[Lovable AI] Request payload prepared', { 
     model: payload.model,
     promptLength: request.prompt.length,

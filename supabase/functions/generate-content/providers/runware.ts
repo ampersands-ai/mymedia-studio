@@ -100,6 +100,21 @@ async function pollForVideoResult(
   throw new Error("Video generation timed out after 60 seconds");
 }
 
+// Model-specific parameter restrictions
+const MODEL_RESTRICTIONS: Record<string, string[]> = {
+  'bytedance:': ['outputFormat', 'outputQuality'], // Seedance models
+  'runware:110': ['outputFormat'], // Background removal
+};
+
+function isParameterSupported(model: string, paramName: string): boolean {
+  for (const [modelPrefix, unsupportedParams] of Object.entries(MODEL_RESTRICTIONS)) {
+    if (model.startsWith(modelPrefix) && unsupportedParams.includes(paramName)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export async function callRunware(
   request: ProviderRequest
 ): Promise<ProviderResponse> {
@@ -116,7 +131,7 @@ export async function callRunware(
   
   // Clean model ID (remove any trailing quotes or whitespace)
   const cleanModel = request.model.replace(/["'\s]+$/g, '');
-
+  
   console.log('[Runware] Calling Runware API', { model: cleanModel, taskUUID, provider: 'runware' });
 
   // Determine task type from parameters or infer from model/params
@@ -125,20 +140,37 @@ export async function callRunware(
 
   console.log('[Runware] Task type determined', { taskType, isVideo, provider: 'runware' });
 
-  // uploadEndpoint is provided by main edge function if needed for video direct upload
-
-  // Build task payload with proper parameter mapping
+  // Build task payload with model-specific parameter filtering
+  const params = request.parameters || {};
   const taskPayload: any = {
     taskType,
     taskUUID,
     model: cleanModel,
-    ...request.parameters,
   };
 
-  // Ensure positivePrompt is set from prompt if not in parameters
-  if (request.prompt && !taskPayload.positivePrompt) {
-    taskPayload.positivePrompt = request.prompt;
+  // Add parameters with model-specific filtering
+  for (const [key, value] of Object.entries(params)) {
+    if (isParameterSupported(cleanModel, key)) {
+      taskPayload[key] = value;
+    }
   }
+
+  // Compute effective prompt with comprehensive fallbacks
+  const effectivePrompt = (
+    request.prompt?.trim() || 
+    params.positivePrompt?.trim() || 
+    params.prompt?.trim() || 
+    ''
+  );
+
+  // Strict validation
+  if (!effectivePrompt || effectivePrompt.length < 2) {
+    console.error('[Runware] Missing prompt', { hasRequestPrompt: !!request.prompt, hasParamsPrompt: !!params.positivePrompt });
+    throw new Error('Missing required parameter: positivePrompt');
+  }
+
+  // Ensure positivePrompt is set
+  taskPayload.positivePrompt = effectivePrompt;
   
   // Ensure duration is always an integer for video tasks
   if (isVideo && taskPayload.duration !== undefined) {
@@ -157,7 +189,13 @@ export async function callRunware(
     console.log('[Runware] Using uploadEndpoint for direct storage upload');
   }
 
-  console.log('[Runware] Task payload constructed', { payload: JSON.stringify(taskPayload).substring(0, 500) });
+  console.log('[Runware] Final task payload', { 
+    model: cleanModel,
+    taskUUID,
+    parameterKeys: Object.keys(taskPayload),
+    hasOutputFormat: !!taskPayload.outputFormat,
+    isVideo
+  });
 
   // Build request payload with authentication and task
   const requestBody = [
@@ -216,21 +254,23 @@ export async function callRunware(
       throw new Error('Invalid response from Runware API');
     }
 
-    // Find the result (imageInference, videoInference, or background removal tasks)
-    const result = responseData.data.find((item: any) => 
-      item.taskType === 'imageInference' || 
-      item.taskType === 'videoInference' ||
-      item.taskType === 'imageBackgroundRemoval' ||
-      item.taskType === 'videoBackgroundRemoval'
+    // Check for inference result in response
+    const inferenceResult = responseData.data?.find((item: any) => 
+      item.taskUUID === taskUUID && (item.imageURL || item.imageUUID || item.videoURL)
     );
     
-    if (!result) {
-      console.error('[Runware] No result in Runware response', {
-        availableTaskTypes: responseData.data.map((d: any) => d.taskType),
-        taskUUID
+    if (!inferenceResult) {
+      console.error('[Runware] No inference result', { 
+        responseData: JSON.stringify(responseData).substring(0, 500),
+        taskUUID 
       });
-      throw new Error('No result in Runware response');
+      throw new Error(
+        'No inference result in Runware response. ' +
+        'This may be a temporary API issue. Please try again.'
+      );
     }
+    
+    const result = inferenceResult;
 
     // Check for errors
     if (result.error) {

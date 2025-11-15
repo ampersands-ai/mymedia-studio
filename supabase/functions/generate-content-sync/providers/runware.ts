@@ -111,6 +111,21 @@ async function pollForVideoResult(taskUUID: string, apiKey: string, apiUrl: stri
   throw new Error("Video generation timed out after 60 seconds");
 }
 
+// Model-specific parameter restrictions
+const MODEL_RESTRICTIONS: Record<string, string[]> = {
+  'bytedance:': ['outputFormat', 'outputQuality'], // Seedance models
+  'runware:110': ['outputFormat'], // Background removal
+};
+
+function isParameterSupported(model: string, paramName: string): boolean {
+  for (const [modelPrefix, unsupportedParams] of Object.entries(MODEL_RESTRICTIONS)) {
+    if (model.startsWith(modelPrefix) && unsupportedParams.includes(paramName)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export async function callRunware(
   request: ProviderRequest
 ): Promise<ProviderResponse> {
@@ -133,17 +148,18 @@ export async function callRunware(
   // Normalize numeric parameters
   const params = request.parameters || {};
   
-  // Compute effective prompt with fallbacks
+  // Compute effective prompt with comprehensive fallbacks
   const effectivePrompt = (
-    request.prompt || 
-    params.positivePrompt || 
-    params.prompt || 
+    request.prompt?.trim() || 
+    params.positivePrompt?.trim() || 
+    params.prompt?.trim() || 
     ''
-  ).trim();
+  );
   
-  // Validate prompt length (Runware requires 2-3000 characters)
+  // Strict validation
   if (!effectivePrompt || effectivePrompt.length < 2) {
-    throw new Error('Prompt is required and must be at least 2 characters.');
+    console.error('[Runware] Missing prompt', { hasRequestPrompt: !!request.prompt, hasParamsPrompt: !!params.positivePrompt });
+    throw new Error('Missing required parameter: positivePrompt');
   }
   if (effectivePrompt.length > 3000) {
     throw new Error('Prompt must be less than 3000 characters.');
@@ -190,12 +206,16 @@ export async function callRunware(
     positivePrompt: effectivePrompt,
   };
 
-  // Common parameters
+  // Common parameters (with model-specific filtering)
   if (params.width !== undefined) taskPayload.width = Number(params.width);
   if (params.height !== undefined) taskPayload.height = Number(params.height);
   if (params.numberResults !== undefined) taskPayload.numberResults = Number(params.numberResults);
-  if (params.outputFormat !== undefined) taskPayload.outputFormat = params.outputFormat;
-  if (params.outputQuality !== undefined) taskPayload.outputQuality = Number(params.outputQuality);
+  if (params.outputFormat !== undefined && isParameterSupported(cleanModel, 'outputFormat')) {
+    taskPayload.outputFormat = params.outputFormat;
+  }
+  if (params.outputQuality !== undefined && isParameterSupported(cleanModel, 'outputQuality')) {
+    taskPayload.outputQuality = Number(params.outputQuality);
+  }
   taskPayload.includeCost = params.includeCost ?? true;
 
   // Image-specific parameters
@@ -244,7 +264,15 @@ export async function callRunware(
     return task;
   });
   
+  console.log('[Runware] Final task payload', { 
+    model: cleanModel,
+    taskUUID,
+    parameterKeys: Object.keys(taskPayload),
+    hasOutputFormat: !!taskPayload.outputFormat,
+    isVideo
+  });
   console.log('[Runware] Request body', { body: logSafeRequestBody });
+  console.log('[Runware] Calling Runware API', { apiUrl, taskUUID, model: cleanModel });
 
   try {
     // Call Runware API (no Authorization header, auth is in body)
@@ -274,14 +302,23 @@ export async function callRunware(
       throw new Error('Invalid response from Runware API');
     }
 
-    // Find the result (imageInference or videoInference)
-    const result = responseData.data.find((item: any) => 
-      item.taskType === 'imageInference' || item.taskType === 'videoInference'
+    // Check for inference result in response
+    const inferenceResult = responseData.data?.find((item: any) => 
+      item.taskUUID === taskUUID && (item.imageURL || item.imageUUID || item.videoURL)
     );
     
-    if (!result) {
-      throw new Error('No inference result in Runware response');
+    if (!inferenceResult) {
+      console.error('[Runware] No inference result', { 
+        responseData: JSON.stringify(responseData).substring(0, 500),
+        taskUUID 
+      });
+      throw new Error(
+        'No inference result in Runware response. ' +
+        'This may be a temporary API issue. Please try again.'
+      );
     }
+    
+    const result = inferenceResult;
 
     // Check for errors in result
     if (result.error) {

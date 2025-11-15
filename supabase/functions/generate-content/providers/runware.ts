@@ -1,5 +1,4 @@
 import { ProviderRequest, ProviderResponse } from "./index.ts";
-import { EdgeLogger } from "../../_shared/edge-logger.ts";
 
 function uint8ArrayToBase64(bytes: Uint8Array): string {
   let binary = '';
@@ -10,35 +9,30 @@ function uint8ArrayToBase64(bytes: Uint8Array): string {
 }
 
 async function convertFrameImagesToRunwareFormat(
-  frameImages: string[], 
-  logger: EdgeLogger
+  frameImages: string[]
 ): Promise<Array<{inputImage: string}>> {
   const converted = [];
   
   for (const imageUrl of frameImages) {
-    logger.info('Fetching frame image', { 
-      metadata: { imageUrl: imageUrl.substring(0, 80) + '...' } 
-    });
-    
+    console.log('[Runware] Fetching frame image', { imageUrl: imageUrl.substring(0, 80) + '...' });
+
     try {
       const response = await fetch(imageUrl);
       if (!response.ok) {
         throw new Error(`Failed to fetch frame image: ${response.status} ${response.statusText}`);
       }
-      
+
       const imageBuffer = await response.arrayBuffer();
       const uint8Array = new Uint8Array(imageBuffer);
       const base64 = uint8ArrayToBase64(uint8Array);
       const contentType = response.headers.get('content-type') || 'image/png';
       const dataUri = `data:${contentType};base64,${base64}`;
-      
-      logger.info('Converted frame image', { 
-        metadata: { size_kb: Math.round(dataUri.length / 1024) } 
-      });
+
+      console.log('[Runware] Converted frame image', { size_kb: Math.round(dataUri.length / 1024) });
       converted.push({ inputImage: dataUri });
-      
+
     } catch (error: any) {
-      logger.error('Failed to convert frame image', error instanceof Error ? error : new Error(String(error)));
+      console.error('[Runware] Failed to convert frame image', error instanceof Error ? error.message : String(error));
       throw new Error(`Failed to convert frame image: ${error.message}`);
     }
   }
@@ -47,41 +41,36 @@ async function convertFrameImagesToRunwareFormat(
 }
 
 async function pollForVideoResult(
-  taskUUID: string, 
-  apiKey: string, 
-  apiUrl: string, 
-  logger: EdgeLogger
+  taskUUID: string,
+  apiKey: string,
+  apiUrl: string
 ): Promise<any> {
   const maxAttempts = 8;
   const delays = [1500, 2500, 4000, 6000, 8000, 10000, 12000, 15000]; // ~60s total
   
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     await new Promise(resolve => setTimeout(resolve, delays[attempt]));
-    
-    logger.info('Polling for video result', { 
-      metadata: { attempt: attempt + 1, maxAttempts, taskUUID } 
-    });
-    
+
+    console.log('[Runware] Polling for video result', { attempt: attempt + 1, maxAttempts, taskUUID });
+
     const pollPayload = [
       { taskType: "authentication", apiKey },
       { taskType: "getResponse", taskUUID }
     ];
-    
+
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(pollPayload),
     });
-    
+
     if (!response.ok) {
-      logger.warn('Poll request failed', { 
-        metadata: { status: response.status, taskUUID } 
-      });
+      console.warn('[Runware] Poll request failed', { status: response.status, taskUUID });
       continue;
     }
-    
+
     const result = await response.json();
-    logger.debug('Poll response received', { metadata: { result } });
+    console.log('[Runware] Poll response received', { taskUUID });
     
     if (result.data) {
       for (const item of result.data) {
@@ -94,13 +83,13 @@ async function pollForVideoResult(
           
           // Check if complete with video URL
           if (item.status === "success" && item.videoURL) {
-            logger.info('Video ready', { metadata: { videoURL: item.videoURL, taskUUID } });
+            console.log('[Runware] Video ready', { videoURL: item.videoURL, taskUUID });
             return item;
           }
-          
+
           // Still processing
           if (item.status === "processing") {
-            logger.debug('Still processing', { metadata: { taskUUID } });
+            console.log('[Runware] Still processing', { taskUUID });
             break;
           }
         }
@@ -127,14 +116,14 @@ export async function callRunware(
   
   // Clean model ID (remove any trailing quotes or whitespace)
   const cleanModel = request.model.replace(/["'\s]+$/g, '');
-  
-  logger.info('Calling Runware API', { metadata: { model: cleanModel, taskUUID, provider: 'runware' } });
+
+  console.log('[Runware] Calling Runware API', { model: cleanModel, taskUUID, provider: 'runware' });
 
   // Determine task type from parameters or infer from model/params
   const taskType = request.parameters?.taskType || (request.parameters?.frameImages ? "videoInference" : "imageInference");
   const isVideo = taskType === "videoInference";
-  
-  logger.info('Task type determined', { metadata: { taskType, isVideo, provider: 'runware' } });
+
+  console.log('[Runware] Task type determined', { taskType, isVideo, provider: 'runware' });
 
   // uploadEndpoint is provided by main edge function if needed for video direct upload
 
@@ -158,21 +147,17 @@ export async function callRunware(
 
   // Convert frameImages to Runware format for video tasks
   if (isVideo && taskPayload.frameImages !== undefined) {
-    logger.info('Converting frame images', { 
-      metadata: { frameCount: taskPayload.frameImages.length } 
-    });
-    taskPayload.frameImages = await convertFrameImagesToRunwareFormat(taskPayload.frameImages, logger);
+    console.log('[Runware] Converting frame images', { frameCount: taskPayload.frameImages.length });
+    taskPayload.frameImages = await convertFrameImagesToRunwareFormat(taskPayload.frameImages);
   }
 
   // Add uploadEndpoint for direct upload to storage (if provided by caller)
   if (isVideo && request.uploadEndpoint) {
     taskPayload.uploadEndpoint = request.uploadEndpoint;
-    logger.debug('Using uploadEndpoint for direct storage upload');
+    console.log('[Runware] Using uploadEndpoint for direct storage upload');
   }
 
-  logger.debug('Task payload constructed', { 
-    metadata: { payload: JSON.stringify(taskPayload).substring(0, 500) } 
-  });
+  console.log('[Runware] Task payload constructed', { payload: JSON.stringify(taskPayload).substring(0, 500) });
 
   // Build request payload with authentication and task
   const requestBody = [
@@ -183,9 +168,7 @@ export async function callRunware(
     taskPayload
   ];
 
-  logger.debug('Calling Runware API', { 
-    metadata: { apiUrl, taskUUID, model: cleanModel } 
-  });
+  console.log('[Runware] Calling Runware API', { apiUrl, taskUUID, model: cleanModel });
 
   try {
     // Call Runware API (no Authorization header, auth is in body)
@@ -199,9 +182,7 @@ export async function callRunware(
 
     if (!response.ok) {
       const errorText = await response.text();
-      logger.error('Runware API error', undefined, { 
-        metadata: { status: response.status, error: errorText, taskUUID } 
-      });
+      console.error('[Runware] API error', { status: response.status, error: errorText, taskUUID });
       
       // Parse error for better user messaging
       let errorMessage = `Runware API failed: ${response.status}`;
@@ -218,7 +199,7 @@ export async function callRunware(
     }
 
     const responseData = await response.json();
-    logger.info('Runware response received', { metadata: { taskUUID } });
+    console.log('[Runware] Runware response received', { taskUUID });
 
     // Check for errors in response
     if (responseData.errors && responseData.errors.length > 0) {
@@ -244,11 +225,9 @@ export async function callRunware(
     );
     
     if (!result) {
-      logger.error('No result in Runware response', undefined, { 
-        metadata: { 
-          availableTaskTypes: responseData.data.map((d: any) => d.taskType), 
-          taskUUID 
-        } 
+      console.error('[Runware] No result in Runware response', {
+        availableTaskTypes: responseData.data.map((d: any) => d.taskType),
+        taskUUID
       });
       throw new Error('No result in Runware response');
     }
@@ -267,10 +246,10 @@ export async function callRunware(
     
     // If no immediate URL for video, poll for async result
     if (!contentUrl && isVideo) {
-      logger.info('No immediate video URL - starting polling', { metadata: { taskUUID } });
-      const polledResult = await pollForVideoResult(taskUUID, RUNWARE_API_KEY, apiUrl, logger);
+      console.log('[Runware] No immediate video URL - starting polling', { taskUUID });
+      const polledResult = await pollForVideoResult(taskUUID, RUNWARE_API_KEY, apiUrl);
       contentUrl = polledResult.videoURL;
-      
+
       if (!contentUrl) {
         throw new Error("No video URL after polling");
       }
@@ -278,9 +257,7 @@ export async function callRunware(
       throw new Error(`No ${isVideo ? 'video' : 'image'} URL in Runware response`);
     }
 
-    logger.info('Generated content URL received', { 
-      metadata: { contentType: isVideo ? 'video' : 'image', url: contentUrl.substring(0, 100), taskUUID } 
-    });
+    console.log('[Runware] Generated content URL received', { contentType: isVideo ? 'video' : 'image', url: contentUrl.substring(0, 100), taskUUID });
 
     // Download the content
     const contentResponse = await fetch(contentUrl);
@@ -295,9 +272,7 @@ export async function callRunware(
     const outputFormat = taskPayload.outputFormat?.toLowerCase() || (isVideo ? 'mp4' : 'webp');
     const fileExtension = determineFileExtension(outputFormat, contentUrl, isVideo);
 
-    logger.info('Content downloaded successfully', { 
-      metadata: { size_bytes: uint8Data.length, extension: fileExtension, taskUUID } 
-    });
+    console.log('[Runware] Content downloaded successfully', { size_bytes: uint8Data.length, extension: fileExtension, taskUUID });
 
     // Build metadata
     const metadata: Record<string, any> = {
@@ -332,7 +307,7 @@ export async function callRunware(
     };
 
   } catch (error: any) {
-    logger.error('Runware provider error', error, { metadata: { model: cleanModel, taskUUID } });
+    console.error('[Runware] Runware provider error', { error: error.message, model: cleanModel, taskUUID });
     throw new Error(`Runware provider failed: ${error.message}`);
   }
 }

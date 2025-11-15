@@ -162,6 +162,10 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     
     // Track webhook analytics for failure
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
     await supabase.from('webhook_analytics').insert({
       provider: 'dodo-payments',
       event_type: 'payment_event',
@@ -169,8 +173,8 @@ Deno.serve(async (req) => {
       duration_ms: Date.now() - webhookStartTime,
       error_code: 'WEBHOOK_ERROR',
       metadata: { error: errorMessage }
-    }).then(({ error: analyticsError }) => {
-      if (analyticsError) logger.error('Failed to track analytics', analyticsError);
+    }).then(({ error: analyticsError }: { error: any }) => {
+      if (analyticsError) logger.error('Failed to track analytics', analyticsError as Error);
     });
     
     return new Response(JSON.stringify({ error: errorMessage }), {
@@ -211,7 +215,7 @@ async function handleWebhookEvent(supabase: any, event: any, webhookStartTime: n
   }
 
   if (!userId) {
-    webhookLogger.error('No user_id in metadata and no customer email to lookup');
+    webhookLogger.error('No user_id in metadata and no customer email to lookup', new Error('Missing user identification'));
     throw new Error('No user_id in metadata and no customer email to lookup');
   }
 
@@ -285,8 +289,8 @@ async function handleWebhookEvent(supabase: any, event: any, webhookStartTime: n
     status: 'success',
     duration_ms: Date.now() - webhookStartTime,
     metadata: { event_type: eventType, user_id: userId }
-  }).then(({ error }) => {
-    if (error) webhookLogger.error('Failed to track analytics', error);
+  }).then(({ error }: { error: any }) => {
+    if (error) webhookLogger.error('Failed to track analytics', error as Error);
   });
 }
 

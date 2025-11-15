@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
-      logger.error('Authentication failed', authError);
+      logger.error('Authentication failed', authError || undefined);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -393,8 +393,11 @@ Deno.serve(async (req) => {
     }
 
   } catch (error: any) {
-    const logger = new EdgeLogger('fix-stuck-generation', requestId, supabase, true);
-    logger.error('Fix generation error', error instanceof Error ? error : undefined);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+    const errorLogger = new EdgeLogger('fix-stuck-generation', requestId, supabaseClient, true);
+    errorLogger.error('Fix generation error', error instanceof Error ? error : undefined);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

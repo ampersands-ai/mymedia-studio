@@ -29,8 +29,12 @@ function cleanImagePath(bucketPath: string, bucket: string = 'generated-content'
   if (cleanPath.includes('/storage/v1/object/public/')) {
     const m = cleanPath.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)/);
     if (m) cleanPath = m[1];
+  } else if (cleanPath.includes('/storage/v1/object/sign/')) {
+    const m = cleanPath.match(/\/storage\/v1\/object\/sign\/[^/]+\/(.+)/);
+    if (m) cleanPath = m[1];
   } else if (cleanPath.includes('/storage/v1/render/image/')) {
-    const m = cleanPath.match(/\/storage\/v1\/render\/image\/[^/]+\/(.+)/);
+    // Supports /render/image/{bucket}/path and /render/image/{mode}/{bucket}/path
+    const m = cleanPath.match(/\/storage\/v1\/render\/image\/(?:(?:public|sign|authenticated)\/)?[^/]+\/(.+)/);
     if (m) cleanPath = m[1];
   } else if (cleanPath.includes(`/${bucket}/`)) {
     const part = cleanPath.split(`/${bucket}/`)[1];
@@ -44,6 +48,28 @@ function cleanImagePath(bucketPath: string, bucket: string = 'generated-content'
   } catch {}
 
   return cleanPath;
+}
+
+/**
+ * Infer bucket from a full URL or path. Defaults to generated-content
+ */
+function inferBucket(bucketPath: string, fallback: string = 'generated-content'): string {
+  try {
+    const asUrl = new URL(bucketPath);
+    const p = asUrl.pathname;
+    // render/image with optional mode segment
+    let m = p.match(/\/storage\/v1\/render\/image\/(?:(?:public|sign|authenticated)\/)?([^/]+)\//);
+    if (m && m[1]) return m[1];
+    // object public/sign
+    m = p.match(/\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\//);
+    if (m && m[1]) return m[1];
+  } catch {
+    // Not a URL; try to infer from leading segment like "bucket/path/to/file"
+    const leading = bucketPath.replace(/^\/+/, '').split('?')[0].split('#')[0].split('/')[0];
+    // Heuristic: if there is at least one more segment, treat as bucket
+    if (leading && bucketPath.replace(/^\/+/, '').includes('/')) return leading;
+  }
+  return fallback;
 }
 
 /**
@@ -61,8 +87,9 @@ export function getOptimizedImageUrl(
     resize = 'cover',
   } = options;
 
-  // Clean the path first
-  const cleanPath = cleanImagePath(bucketPath, 'generated-content');
+  // Clean the path and detect bucket first
+  const bucket = inferBucket(bucketPath, 'generated-content');
+  const cleanPath = cleanImagePath(bucketPath, bucket);
 
   // Build transformation URL
   const params = new URLSearchParams();
@@ -75,10 +102,24 @@ export function getOptimizedImageUrl(
 
   // Supabase Storage public URL pattern
   const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const bucket = 'generated-content'; // Using generated-content bucket for user creations
+
+  // Determine if original path was a signed URL and preserve token
+  let modeSegment = '';
+  try {
+    const original = new URL(bucketPath);
+    const p = original.pathname;
+    if (p.includes('/storage/v1/object/sign/') || p.includes('/storage/v1/render/image/sign/')) {
+      modeSegment = 'sign/';
+      const token = original.searchParams.get('token') || original.searchParams.get('t');
+      if (token) params.set('token', token);
+    }
+  } catch {
+    // not a full URL, assume public
+  }
 
   const encodedPath = encodeURI(cleanPath);
-  return `${baseUrl}/storage/v1/render/image/${bucket}/${encodedPath}?${params.toString()}`;
+  const mode = modeSegment; // '' for public, 'sign/' for private
+  return `${baseUrl}/storage/v1/render/image/${mode}${bucket}/${encodedPath}?${params.toString()}`;
 }
 
 export function getPublicImageUrl(
@@ -86,16 +127,18 @@ export function getPublicImageUrl(
   bucket: string = 'generated-content'
 ): string {
   const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const cleanPath = cleanImagePath(bucketPath, bucket);
+  const inferred = inferBucket(bucketPath, bucket);
+  const cleanPath = cleanImagePath(bucketPath, inferred);
   const encodedPath = encodeURI(cleanPath);
-  return `${baseUrl}/storage/v1/object/public/${bucket}/${encodedPath}`;
+  return `${baseUrl}/storage/v1/object/public/${inferred}/${encodedPath}`;
 }
 
 export function getStorageRelativePath(
   bucketPath: string,
   bucket: string = 'generated-content'
 ): string {
-  return cleanImagePath(bucketPath, bucket);
+  const inferred = inferBucket(bucketPath, bucket);
+  return cleanImagePath(bucketPath, inferred);
 }
 
 /**

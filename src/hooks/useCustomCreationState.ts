@@ -90,7 +90,6 @@ const INITIAL_STATE: CustomCreationState = {
   selectedModel: null,
   selectedGroup: "prompt_to_image",
   modelParameters: {},
-  enhancePrompt: false,
   generateCaption: false,
   resolution: "Native",
   advancedOpen: false,

@@ -103,7 +103,7 @@ const CustomCreation = () => {
 
       // Generate caption if enabled
       if (state.generateCaption && outputs.length > 0) {
-        generateCaption();
+        generateCaption(outputs);
       }
     },
     onError: (message?: string) => {
@@ -213,9 +213,9 @@ const CustomCreation = () => {
             }
           }, 300);
 
-          // Generate caption if enabled
-          if (state.generateCaption) {
-            generateCaption();
+      // Generate caption if enabled
+      if (state.generateCaption && outputs.length > 0) {
+        generateCaption(outputs);
           }
         } else {
           console.warn('⚠️ Generation completed but no outputs found');
@@ -318,9 +318,9 @@ const CustomCreation = () => {
                   }
                 }, 300);
                 
-                // Generate caption if enabled
-                if (state.generateCaption) {
-                  generateCaption();
+      // Generate caption if enabled
+      if (state.generateCaption && outputs.length > 0) {
+        generateCaption(outputs);
                 }
               } else {
                 console.warn('⚠️ Generation completed but no outputs found');
@@ -416,7 +416,6 @@ const CustomCreation = () => {
     const surprisePrompt = getSurpriseMePrompt(state.selectedGroup);
     setStatePrompt(surprisePrompt);
     updateState({ generatingSurprise: false });
-    toast.success('Surprise!', { description: 'Try this creative prompt' });
   }, [state.selectedGroup, updateState, setStatePrompt]);
 
   // Download all outputs
@@ -606,8 +605,6 @@ const CustomCreation = () => {
             maxPromptLength={maxPromptLength}
             onSurpriseMe={onSurpriseMe}
             generatingSurprise={state.generatingSurprise}
-            enhancePrompt={state.enhancePrompt}
-            onEnhancePromptChange={(enhance) => updateState({ enhancePrompt: enhance })}
             generateCaption={state.generateCaption}
             onGenerateCaptionChange={(generate) => updateState({ generateCaption: generate })}
             uploadedImages={uploadedImages}

@@ -72,17 +72,47 @@ Deno.serve(async (req) => {
       throw new Error(`Insufficient credits. ${costTokens} credits required for ${duration}s video.`);
     }
 
-    // Deduct credits atomically
-    const { error: deductError } = await supabaseClient
+    // Deduct credits atomically with row count verification
+    const { data: updateResult, error: deductError } = await supabaseClient
       .from('user_subscriptions')
       .update({ tokens_remaining: subscription.tokens_remaining - costTokens })
       .eq('user_id', user.id)
-      .eq('tokens_remaining', subscription.tokens_remaining);
+      .eq('tokens_remaining', subscription.tokens_remaining)
+      .select('tokens_remaining');
 
     if (deductError) {
       logger.error('Credit deduction error', deductError, { userId: user.id, metadata: { costTokens } });
-      throw new Error('Failed to deduct credits. Please try again.');
+      throw new Error('Failed to deduct credits - database error');
     }
+
+    if (!updateResult || updateResult.length === 0) {
+      logger.error('Optimistic lock failed - concurrent update', undefined, {
+        userId: user.id,
+        metadata: { expected_tokens: subscription.tokens_remaining, cost: costTokens }
+      });
+      throw new Error('Failed to deduct credits - concurrent update detected. Please retry.');
+    }
+
+    logger.info('Credits deducted successfully', {
+      userId: user.id,
+      metadata: { 
+        tokens_deducted: costTokens,
+        new_balance: updateResult[0]?.tokens_remaining,
+        duration 
+      }
+    });
+
+    // Log to audit_logs
+    await supabaseClient.from('audit_logs').insert({
+      user_id: user.id,
+      action: 'tokens_deducted',
+      metadata: {
+        tokens_deducted: costTokens,
+        tokens_remaining: updateResult[0]?.tokens_remaining,
+        operation: 'video_job_creation',
+        duration
+      }
+    });
 
     // Create video job
     const { data: job, error: jobError } = await supabaseClient

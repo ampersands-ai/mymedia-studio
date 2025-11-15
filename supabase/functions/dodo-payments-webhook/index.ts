@@ -183,7 +183,7 @@ async function handleWebhookEvent(supabase: any, event: any) {
   const eventType = event.type || event.event_type;
   const eventData = event.data || event;
 
-  logger.info('Processing webhook event', { metadata: { eventType } });
+  // Processing webhook event
 
   // Extract metadata (user_id, plan, etc.)
   const metadata = eventData.metadata || {};
@@ -192,10 +192,6 @@ async function handleWebhookEvent(supabase: any, event: any) {
 
   // Fallback: If user_id is missing from metadata, try to find user by email
   if (!userId && eventData.customer?.email) {
-    logger.info('Attempting email fallback for user lookup', { 
-      email: eventData.customer.email 
-    });
-    
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id')
@@ -204,17 +200,12 @@ async function handleWebhookEvent(supabase: any, event: any) {
     
     if (profile && !profileError) {
       userId = profile.id;
-      logger.info('Found user by email fallback', { userId });
     } else {
-      logger.error('Could not find user by email', profileError || new Error('User not found'), {
-        email: eventData.customer.email
-      });
       throw new Error(`User not found for email: ${eventData.customer.email}`);
     }
   }
 
   if (!userId) {
-    logger.error('No user_id available', new Error('Missing user identification'));
     throw new Error('No user_id in metadata and no customer email to lookup');
   }
 
@@ -267,7 +258,8 @@ async function handleWebhookEvent(supabase: any, event: any) {
       break;
 
     default:
-      logger.info('Unhandled event type', { eventType });
+      // Unhandled event type
+      break;
   }
 
   // Log to audit trail
@@ -288,7 +280,7 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
   const planKey = planName.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
 
-  logger.info('Payment succeeded', { userId, planName, tokens });
+  webhookLogger.info('Payment succeeded', { userId, planName, tokens });
 
   // Get current tokens
   const { data: currentSub } = await supabase
@@ -301,7 +293,7 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
   const newTokensRemaining = (currentSub?.tokens_remaining || 0) + tokens;
   const newTokensTotal = (currentSub?.tokens_total || 0) + tokens;
 
-  logger.info('Adding tokens', { 
+  webhookLogger.info('Adding tokens', { 
     tokens, 
     currentRemaining: currentSub?.tokens_remaining,
     newRemaining: newTokensRemaining 
@@ -323,15 +315,13 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
     .eq('user_id', userId);
 
   if (error) {
-    logger.error('Error updating subscription', error);
+    webhookLogger.error('Error updating subscription', error);
     throw error;
   }
 }
 
 async function handlePaymentFailed(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
-  
-  logger.info('Payment failed', { userId });
 
   await supabase
     .from('user_subscriptions')
@@ -342,7 +332,7 @@ async function handlePaymentFailed(supabase: any, data: any, metadata: any) {
 async function handleSubscriptionActive(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   
-  logger.info('Subscription activated', { userId });
+  webhookLogger.info('Subscription activated', { userId });
 
   await supabase
     .from('user_subscriptions')
@@ -357,8 +347,6 @@ async function handleSubscriptionActive(supabase: any, data: any, metadata: any)
 
 async function handleSubscriptionCancelled(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
-  
-  logger.info('Subscription cancelled', { userId });
 
   // Don't remove tokens immediately - let them use until period ends
   await supabase
@@ -369,8 +357,6 @@ async function handleSubscriptionCancelled(supabase: any, data: any, metadata: a
 
 async function handleSubscriptionExpired(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
-  
-  logger.info('Subscription expired', { userId });
 
   // Downgrade to freemium
   await supabase
@@ -392,7 +378,7 @@ async function handleSubscriptionRenewed(supabase: any, data: any, metadata: any
   const planKey = planName.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
 
-  logger.info('Subscription renewed', { userId, tokens });
+  webhookLogger.info('Subscription renewed', { userId, tokens });
 
   // Get current subscription
   const { data: currentSub } = await supabase
@@ -419,7 +405,7 @@ async function handleSubscriptionPlanChanged(supabase: any, data: any, metadata:
   const planKey = newPlan.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
 
-  logger.info('Plan changed', { userId, newPlan, tokens });
+  webhookLogger.info('Plan changed', { userId, newPlan, tokens });
 
   await supabase
     .from('user_subscriptions')
@@ -434,8 +420,6 @@ async function handleSubscriptionPlanChanged(supabase: any, data: any, metadata:
 
 async function handleSubscriptionOnHold(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
-  
-  logger.info('Subscription on hold', { userId });
 
   await supabase
     .from('user_subscriptions')
@@ -447,7 +431,7 @@ async function handleRefundSucceeded(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   const refundAmount = data.amount || 0;
   
-  logger.info('Refund processed', { userId, refundAmount });
+  webhookLogger.info('Refund processed', { userId, refundAmount });
 
   // Optionally deduct tokens proportionally
   await supabase

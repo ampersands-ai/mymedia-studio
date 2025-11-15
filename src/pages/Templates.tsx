@@ -23,8 +23,8 @@ const Templates = () => {
   const { data: allTemplates, isLoading } = useAllTemplates();
   const navigate = useNavigate();
   
-  // State for signed URLs for before/after images
-  const [signedUrls, setSignedUrls] = useState<Record<string, { before: string | null, after: string | null }>>({});
+  // State for signed URLs for before/after images and thumbnails
+  const [signedUrls, setSignedUrls] = useState<Record<string, { before: string | null, after: string | null, thumbnail: string | null }>>({});
   
   // State for token costs
   const [tokenCosts, setTokenCosts] = useState<Record<string, number>>({});
@@ -133,24 +133,25 @@ const Templates = () => {
       
       // Process all templates in parallel
       const urlPromises = allTemplates
-        .filter(template => template.before_image_url || template.after_image_url)
+        .filter(template => template.before_image_url || template.after_image_url || template.thumbnail_url)
         .map(async (template) => {
-          const [beforeUrl, afterUrl] = await Promise.all([
+          const [beforeUrl, afterUrl, thumbnailUrl] = await Promise.all([
             getSignedUrl(template.before_image_url || null),
-            getSignedUrl(template.after_image_url || null)
+            getSignedUrl(template.after_image_url || null),
+            getSignedUrl(template.thumbnail_url || null)
           ]);
           
           return {
             id: template.id,
-            urls: { before: beforeUrl, after: afterUrl }
+            urls: { before: beforeUrl, after: afterUrl, thumbnail: thumbnailUrl }
           };
         });
       
       const results = await Promise.all(urlPromises);
       
-      const urlsMap: Record<string, { before: string | null, after: string | null }> = {};
+      const urlsMap: Record<string, { before: string | null, after: string | null, thumbnail: string | null }> = {};
       results.forEach(result => {
-        urlsMap[result.id] = result.urls;
+        urlsMap[result.id] = result.urls as { before: string | null, after: string | null, thumbnail: string | null };
       });
       
       setSignedUrls(urlsMap);
@@ -270,7 +271,11 @@ const Templates = () => {
     firstCarouselTemplates.forEach(template => {
       if (signedUrls[template.id]?.before) urls.push(signedUrls[template.id].before!);
       if (signedUrls[template.id]?.after) urls.push(signedUrls[template.id].after!);
-      if (template.thumbnail_url) urls.push(template.thumbnail_url);
+      if (signedUrls[template.id]?.thumbnail) {
+        urls.push(signedUrls[template.id].thumbnail!);
+      } else if (template.thumbnail_url) {
+        urls.push(template.thumbnail_url);
+      }
     });
     
     return urls;
@@ -381,13 +386,14 @@ const Templates = () => {
                           />
                         ) : template.thumbnail_url ? (
                           <OptimizedImage
-                            src={template.thumbnail_url}
+                            src={signedUrls[template.id]?.thumbnail || template.thumbnail_url}
                             alt={template.name || ''}
                             className="w-full h-full object-cover"
                             width={400}
                             height={400}
                             priority={isPriority}
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                            isSupabaseImage={true}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">

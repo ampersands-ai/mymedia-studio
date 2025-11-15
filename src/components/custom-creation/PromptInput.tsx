@@ -6,6 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Sparkles, Loader2 } from "lucide-react";
 import { CAPTION_GENERATION_COST } from "@/constants/custom-creation";
 import { logger } from "@/lib/logger";
+import { usePromptEnhancement } from "@/hooks/usePromptEnhancement";
+import { useUserTokens } from "@/hooks/useUserTokens";
+import { toast } from "sonner";
 
 interface PromptInputProps {
   value: string;
@@ -13,8 +16,6 @@ interface PromptInputProps {
   isRequired: boolean;
   maxLength: number;
   onSurpriseMe: () => void;
-  onEnhance: (enabled: boolean) => void;
-  enhanceEnabled: boolean;
   disabled: boolean;
   generateCaption: boolean;
   onGenerateCaptionChange: (enabled: boolean) => void;
@@ -30,14 +31,33 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   isRequired,
   maxLength,
   onSurpriseMe,
-  onEnhance,
-  enhanceEnabled,
   disabled,
   generateCaption,
   onGenerateCaptionChange,
   generatingSurprise,
 }) => {
   const isOverLimit = value.length > maxLength;
+  const { enhancePrompt, isEnhancing } = usePromptEnhancement();
+  const { data: tokenData, refetch: refetchTokens } = useUserTokens();
+
+  const handleEnhancePrompt = async () => {
+    if (!value.trim()) {
+      toast.error('Enter a prompt first');
+      return;
+    }
+
+    const currentTokens = Number(tokenData?.tokens_remaining || 0);
+    if (currentTokens < 0.1) {
+      toast.error('Insufficient credits. You need 0.1 credits to enhance prompts.');
+      return;
+    }
+
+    const enhanced = await enhancePrompt(value, 'image');
+    if (enhanced) {
+      onChange(enhanced);
+      refetchTokens();
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -95,21 +115,24 @@ export const PromptInput: React.FC<PromptInputProps> = ({
 
       <div className="flex flex-wrap gap-2 items-center justify-end">
         <Button
-          variant={enhanceEnabled ? "secondary" : "outline"}
-          size="sm"
           type="button"
+          variant="outline"
+          size="sm"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            onEnhance(!enhanceEnabled);
+            handleEnhancePrompt();
           }}
-          disabled={disabled}
+          disabled={disabled || isEnhancing || !value.trim()}
           className="h-8 text-xs gap-1.5"
         >
-          <Sparkles className="h-3 w-3" />
-          Enhance Prompt
+          {isEnhancing ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Sparkles className="h-3 w-3" />
+          )}
+          Enhance Prompt (0.1)
         </Button>
-
         <Button
           variant={generateCaption ? "secondary" : "outline"}
           size="sm"

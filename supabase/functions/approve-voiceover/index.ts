@@ -726,7 +726,7 @@ async function assembleVideo(
   try {
     result = responseText ? JSON.parse(responseText) : null;
   } catch (parseError) {
-    logger.error("Failed to parse Shotstack response", parseError as Error);
+    logger?.error("Failed to parse Shotstack response", parseError as Error);
   }
 
   // Log the API call
@@ -756,7 +756,7 @@ async function assembleVideo(
   ).catch(e => logger?.error('Failed to log API call', e as Error));
 
   if (!response.ok) {
-    logger.error("Shotstack API Error", undefined, {
+    logger?.error("Shotstack API Error", undefined, {
       metadata: {
         status: response.status,
         response: result,
@@ -777,7 +777,7 @@ async function assembleVideo(
     const isCaptionValidation = (errorMessage || '').toLowerCase().includes('caption asset');
 
     if (isCaptionValidation) {
-      logger.info("Retrying with minimal caption asset and auto length...");
+      logger?.info("Retrying with minimal caption asset and auto length...");
       const fallbackEdit: any = JSON.parse(JSON.stringify(edit));
       try {
         // Dynamically find caption track instead of using hardcoded index
@@ -822,10 +822,10 @@ async function assembleVideo(
           isError: !retryRes.ok,
           errorMessage: retryRes.ok ? undefined : retryResult?.message || retryResult?.detail || `Shotstack API error ${retryRes.status}`
         }
-      ).catch(e => logger.error('Failed to log API call (retry minimal)', e as Error));
+      ).catch(e => logger?.error('Failed to log API call (retry minimal)', e as Error));
 
       if (!retryRes.ok) {
-        logger.error("Shotstack API Error (retry minimal captions)", undefined, {
+        logger?.error("Shotstack API Error (retry minimal captions)", undefined, {
           metadata: {
             status: retryRes.status,
             response: retryResult,
@@ -833,7 +833,7 @@ async function assembleVideo(
           }
         });
 
-        logger.info("Retrying with asset type 'captions'...");
+        logger?.info("Retrying with asset type 'captions'...");
         const fallbackEdit2: any = JSON.parse(JSON.stringify(fallbackEdit));
         try {
           // Dynamically find caption track for second retry
@@ -877,19 +877,19 @@ async function assembleVideo(
             isError: !retryRes2.ok,
             errorMessage: retryRes2.ok ? undefined : retryResult2?.message || retryResult2?.detail || `Shotstack API error ${retryRes2.status}`
           }
-        ).catch(e => logger.error('Failed to log API call (retry captions type)', e as Error));
+        ).catch(e => logger?.error('Failed to log API call (retry captions type)', e as Error));
 
         if (!retryRes2.ok) {
           let retryMsg = retryResult2?.response?.message || (retryResult2?.response?.errors ? retryResult2.response.errors.map((e: any) => e.message || e.code).join(', ') : '') || retryResult2?.message || errorMessage;
           throw new Error(`Shotstack error: ${retryMsg}`);
         }
-        logger.info('Shotstack render submitted successfully (captions type fallback)', { 
+        logger?.info('Shotstack render submitted successfully (captions type fallback)', { 
           metadata: { renderId: retryResult2.response.id } 
         });
         return retryResult2.response.id;
       }
 
-      logger.info("Shotstack render submitted successfully (minimal captions)", { 
+      logger?.info("Shotstack render submitted successfully (minimal captions)", { 
         metadata: { renderId: retryResult.response.id } 
       });
       return retryResult.response.id;
@@ -898,7 +898,7 @@ async function assembleVideo(
     throw new Error(`Shotstack error: ${errorMessage}`);
   }
 
-  logger.info("Shotstack render submitted successfully", { 
+  logger?.info("Shotstack render submitted successfully", { 
     metadata: { renderId: result.response.id } 
   });
   return result.response.id;
@@ -957,14 +957,14 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
       
       if (job) {
         try {
-          logger.info("Downloading video from Shotstack using streaming", { metadata: { jobId } });
+          logger?.info("Downloading video from Shotstack using streaming", { metadata: { jobId } });
           const videoResponse = await fetch(videoUrl);
           if (!videoResponse.ok || !videoResponse.body) {
             throw new Error(`Failed to download video from Shotstack: ${videoResponse.status}`);
           }
           
           const videoPath = `${job.user_id}/${new Date().toISOString().split('T')[0]}/${jobId}.mp4`;
-          logger.info("Uploading video to storage with streaming", { 
+          logger?.info("Uploading video to storage with streaming", { 
             metadata: { videoPath, jobId } 
           });
           
@@ -977,18 +977,18 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
             });
           
           if (uploadError) {
-            logger.error("Storage upload error", uploadError, { metadata: { videoPath, jobId } });
+            logger?.error("Storage upload error", uploadError, { metadata: { videoPath, jobId } });
             throw uploadError;
           }
           
-          logger.info("Video uploaded successfully using streaming", { metadata: { videoPath, jobId } });
+          logger?.info("Video uploaded successfully using streaming", { metadata: { videoPath, jobId } });
           
           // Generate direct public URL for the video
           const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
           const videoPublicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${videoPath}`;
-          logger.info("Video available", { metadata: { videoPublicUrl, jobId } });
+          logger?.info("Video available", { metadata: { videoPublicUrl, jobId } });
           
-          logger.info("Creating generation record", { metadata: { jobId, userId: job.user_id } });
+          logger?.info("Creating generation record", { metadata: { jobId, userId: job.user_id } });
           const { data: generation, error: genError } = await supabase.from('generations').insert({
             user_id: job.user_id,
             type: 'video',
@@ -1006,9 +1006,9 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
           }).select().single();
           
           if (genError) {
-            logger.error("Generation insert error", genError, { metadata: { jobId } });
+            logger?.error("Generation insert error", genError, { metadata: { jobId } });
           } else {
-            logger.info("Generation record created successfully", { 
+            logger?.info("Generation record created successfully", { 
               metadata: { generationId: generation.id, jobId } 
             });
             
@@ -1020,7 +1020,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
                 .eq('video_job_id', jobId)
                 .is('generation_id', null);
             } catch (error) {
-              logger.error("Failed to link API logs to generation", error as Error, { 
+              logger?.error("Failed to link API logs to generation", error as Error, { 
                 metadata: { jobId, generationId: generation.id } 
               });
             }
@@ -1036,7 +1036,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
           
           return; // Exit after successful completion
         } catch (uploadError: any) {
-          logger.error("Error during video download/upload", uploadError, { 
+          logger?.error("Error during video download/upload", uploadError, { 
             metadata: { jobId, renderId } 
           });
           
@@ -1069,7 +1069,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
         full_response: result
       };
       
-      logger.error("Shotstack render failed", undefined, { 
+      logger?.error("Shotstack render failed", undefined, { 
         metadata: errorDetails 
       });
       

@@ -78,12 +78,12 @@ async function pollForVideoResult(taskUUID: string, apiKey: string, apiUrl: stri
     });
     
     if (!response.ok) {
-      webhookLogger.error('[Runware Poll] HTTP error', `HTTP ${response.status}`, { status: response.status });
+      console.error('[Runware Poll] HTTP error', `HTTP ${response.status}`, { status: response.status });
       continue;
     }
     
     const result = await response.json();
-    webhookLogger.info('[Runware Poll] Response received', { result });
+    console.log('[Runware Poll] Response received', { result });
     
     if (result.data) {
       for (const item of result.data) {

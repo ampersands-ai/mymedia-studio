@@ -25,16 +25,27 @@ export const useCaptionGeneration = (
 
   /**
    * Generate caption and hashtags
+   * @param outputs - Optional fresh outputs array to avoid stale state
    */
-  const generateCaption = useCallback(async () => {
-    if (generatedOutputs.length === 0) return;
+  const generateCaption = useCallback(async (outputs?: GenerationOutput[]) => {
+    const outputsToUse = outputs || generatedOutputs;
+    if (outputsToUse.length === 0) return;
+    
+    // Prevent concurrent calls
+    if (isGeneratingCaption) {
+      logger.warn('Caption generation already in progress', {
+        component: 'useCaptionGeneration',
+        operation: 'generateCaption'
+      });
+      return;
+    }
     
     setIsGeneratingCaption(true);
     try {
       const selectedModelData = filteredModels.find(m => m.record_id === selectedModel);
       const { data: captionResult, error } = await supabase.functions.invoke('generate-caption', {
         body: {
-          generation_id: generatedOutputs[0].id,
+          generation_id: outputsToUse[0].id,
           prompt: prompt,
           content_type: selectedModelData?.content_type || 'image',
           model_name: selectedModelData?.model_name || 'AI Model'
@@ -48,26 +59,23 @@ export const useCaptionGeneration = (
         hashtags: captionResult.hashtags,
         generated_at: captionResult.generated_at
       });
-      
-      toast.success("Caption and hashtags generated!");
     } catch (err) {
       logger.error('Caption generation failed', err, {
         component: 'useCaptionGeneration',
         operation: 'generateCaption',
-        generationId: generatedOutputs[0]?.id
+        generationId: outputsToUse[0]?.id
       });
-      toast.error("Failed to generate caption");
+      toast.error("Failed to generate caption. Please try again.");
     } finally {
       setIsGeneratingCaption(false);
     }
-  }, [generatedOutputs, prompt, selectedModel, filteredModels]);
+  }, [generatedOutputs, prompt, selectedModel, filteredModels, isGeneratingCaption]);
 
   /**
    * Regenerate caption
    */
   const regenerateCaption = useCallback(async () => {
     await generateCaption();
-    toast.success("Caption regenerated!");
   }, [generateCaption]);
 
   /**

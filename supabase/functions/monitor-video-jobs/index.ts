@@ -153,8 +153,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    const logger = new EdgeLogger('monitor-video-jobs', requestId, supabase, true);
-    logger.error('Error in monitor-video-jobs', error instanceof Error ? error : undefined);
+    console.error('Error in monitor-video-jobs', error instanceof Error ? error.message : String(error));
     return new Response(
       JSON.stringify({ error: (error as Error).message || 'Unknown error' }),
       { 

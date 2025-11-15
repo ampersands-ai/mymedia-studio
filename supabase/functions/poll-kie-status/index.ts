@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (error || !data) {
-        logger.error('Generation not found', error, { 
+        logger.error('Generation not found', error instanceof Error ? error : (error ? new Error(String(error)) : undefined), { 
           metadata: { generationId: generation_id }
         });
         throw new Error('Generation not found');

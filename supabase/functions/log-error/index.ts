@@ -107,7 +107,6 @@ Deno.serve(async (req) => {
     );
   } catch (error: any) {
     logger.critical('Error in log-error function', error);
-    logger.logDuration('log_error', startTime, { status: 'error' });
     
     return new Response(
       JSON.stringify({ error: error.message }),

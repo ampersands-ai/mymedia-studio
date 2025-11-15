@@ -12,6 +12,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BackgroundMediaSelector } from '../video/BackgroundMediaSelector';
 import type { SelectedMedia } from '../video/BackgroundMediaSelector';
 import { logger } from '@/lib/logger';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface CustomScene {
   voiceOverText: string;
@@ -39,9 +49,12 @@ export function CustomSceneCard({
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [showEnhanceDialog, setShowEnhanceDialog] = useState(false);
   const { data: tokenData, refetch: refetchTokens } = useUserTokens();
 
   const handleEnhancePrompt = async () => {
+    setShowEnhanceDialog(false);
+    
     if (!scene.imagePrompt.trim()) {
       toast.error('Enter an image prompt first');
       return;
@@ -199,7 +212,7 @@ export function CustomSceneCard({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={handleEnhancePrompt}
+              onClick={() => setShowEnhanceDialog(true)}
               disabled={disabled || isEnhancing || !scene.imagePrompt.trim()}
               className="h-7 text-xs"
             >
@@ -326,6 +339,24 @@ export function CustomSceneCard({
           </Dialog>
         </div>
       </CardContent>
+
+      <AlertDialog open={showEnhanceDialog} onOpenChange={setShowEnhanceDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Enhance Image Prompt?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will use AI to improve your image prompt and replace your current text. 
+              This action costs 0.1 credits and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleEnhancePrompt}>
+              Enhance (0.1 credits)
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

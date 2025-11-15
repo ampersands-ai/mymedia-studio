@@ -356,9 +356,9 @@ Deno.serve(async (req) => {
           try {
             const downloadResult = await downloadContent(resultUrls[i]);
             if (!downloadResult.success || !downloadResult.data) {
-              logger.error(`Output ${i + 1} download failed`, new Error(downloadResult.error || 'Download failed'), {
-                metadata: { generationId: generation.id, outputIndex: i + 1, url: resultUrl }
-              });
+            logger.error(`Output ${i + 1} download failed`, new Error(downloadResult.error || 'Download failed'), {
+              metadata: { generationId: generation.id, outputIndex: i + 1, url: resultUrls[i] }
+            });
               continue;
             }
             
@@ -374,7 +374,7 @@ Deno.serve(async (req) => {
             );
             
             if (!uploadResult.success) {
-              logger.error(`Output ${i + 1} upload failed`, uploadError as Error, { 
+              logger.error(`Output ${i + 1} upload failed`, new Error(uploadResult.error || 'Upload failed'), { 
                 metadata: { generationId: generation.id, outputIndex: i + 1 } 
               });
               continue;
@@ -405,7 +405,7 @@ Deno.serve(async (req) => {
             });
             
             logger.info(`Output ${i + 1} child generation created`, { 
-              metadata: { generationId: generation.id, childId: newChild.id, outputIndex: i + 1 } 
+              metadata: { generationId: generation.id, childId, outputIndex: i + 1 } 
             });
           } catch (error: any) {
             logger.error(`Output ${i + 1} child creation failed`, error, { 
@@ -418,10 +418,11 @@ Deno.serve(async (req) => {
       // === UPDATE PARENT ===
       interface GenerationUpdate {
         status: string;
-        file_size_bytes: number;
+        file_size_bytes: number | null;
         provider_response: Record<string, unknown>;
         output_index: number;
         is_batch_output: boolean;
+        storage_path?: string;
         output_url?: string;
         completed_at?: string;
       }
@@ -443,7 +444,7 @@ Deno.serve(async (req) => {
       
       if (!isMultiOutput && storagePath) {
         updateData.storage_path = storagePath;
-        updateData.output_url = publicUrl;
+        updateData.output_url = publicUrl || undefined;
       }
       
       await supabase.from('generations').update(updateData).eq('id', generation.id);

@@ -206,7 +206,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const logger = new EdgeLogger('notify-generation-complete', requestId, supabase, true);
     logger.error('Error sending notification', error as Error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: (error as any).message || 'Unknown error' }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

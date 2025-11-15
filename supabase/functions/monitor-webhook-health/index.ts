@@ -180,8 +180,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error: any) {
-    const logger = new EdgeLogger('monitor-webhook-health', requestId, supabase, true);
-    logger.error('Error in monitor-webhook-health', error instanceof Error ? error : undefined);
+    console.error('Error in monitor-webhook-health', error instanceof Error ? error.message : String(error));
     return new Response(
       JSON.stringify({ error: error.message }),
       {

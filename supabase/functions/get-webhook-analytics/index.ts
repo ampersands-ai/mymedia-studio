@@ -151,12 +151,13 @@ Deno.serve(async (req) => {
       return acc;
     }, {} as Record<string, any[]>);
 
-    const byProvider = Object.entries(providerGroups).map(([provider, providerEvents]: [string, any[]]) => {
-      const total = providerEvents.length;
-      const success = providerEvents.filter((e: any) => e.status === 'success').length;
-      const failure = providerEvents.filter((e: any) => e.status === 'failure').length;
-      const providerDurations = providerEvents.filter((e: any) => e.duration_ms).map((e: any) => e.duration_ms);
-      const avgDur = providerDurations.length > 0 ? providerDurations.reduce((a, b) => a + b, 0) / providerDurations.length : 0;
+    const byProvider = Object.entries(providerGroups).map(([provider, providerEvents]) => {
+      const events = providerEvents as any[];
+      const total = events.length;
+      const success = events.filter((e: any) => e.status === 'success').length;
+      const failure = events.filter((e: any) => e.status === 'failure').length;
+      const providerDurations = events.filter((e: any) => e.duration_ms).map((e: any) => e.duration_ms);
+      const avgDur = providerDurations.length > 0 ? providerDurations.reduce((a: number, b: number) => a + b, 0) / providerDurations.length : 0;
       const sorted = [...providerDurations].sort((a, b) => a - b);
       const p95 = sorted.length > 0 ? sorted[Math.floor(sorted.length * 0.95)] : 0;
 

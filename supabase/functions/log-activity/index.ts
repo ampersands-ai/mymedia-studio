@@ -53,24 +53,23 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       logger.error('Failed to insert activity log', insertError instanceof Error ? insertError : new Error(String(insertError) || 'Database error'), {
-        userId,
+        userId: userId || undefined,
         metadata: { activity_type: body.activity_type }
       });
       throw insertError;
     }
 
     logger.info('Activity logged', {
-      userId,
+      userId: userId || undefined,
       metadata: { activity_type: body.activity_type, route_path: body.route_path }
     });
 
-    logger.logDuration('log_activity', startTime, { userId, requestId });
+    logger.logDuration('log_activity', startTime, { userId: userId || undefined, requestId });
 
     return createJsonResponse({ success: true });
   } catch (error) {
     const err = error as Error;
     logger.error('Error in log-activity function', err, { requestId });
-    logger.logDuration('log_activity', startTime, { status: 'error', requestId });
     
     return createErrorResponse(err.message, 500);
   }

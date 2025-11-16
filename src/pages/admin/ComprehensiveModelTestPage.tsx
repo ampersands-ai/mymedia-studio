@@ -1,14 +1,19 @@
 import { useRef, useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useModels } from "@/hooks/useModels";
 import { useAllModels } from "@/hooks/useAllModels";
+import { ParametersInspector } from "@/components/admin/model-health/ParametersInspector";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { useCustomCreationState } from "@/hooks/useCustomCreationState";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
@@ -44,8 +49,11 @@ const ComprehensiveModelTestPage = () => {
   } = useCustomCreationState();
 
   // Inspection state (NEW - not in CustomCreation)
-  const [inspectionMode, setInspectionMode] = useState<'disabled' | 'enabled' | 'reviewing'>('enabled');
+  const [inspectionMode, setInspectionMode] = useState<'off' | 'reviewing' | 'executing'>('off');
   const [inspectionData, setInspectionData] = useState<Record<string, any>>({});
+  const [isGeneratingDocs, setIsGeneratingDocs] = useState(false);
+  const [docDialogOpen, setDocDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   // Models and user data - use ALL models for comprehensive testing
   const { data: allModelsUnfiltered, isLoading: modelsLoading } = useAllModels();
@@ -60,6 +68,21 @@ const ComprehensiveModelTestPage = () => {
   }, [allModelsUnfiltered]);
 
   const currentModel = filteredModels.find((m: any) => m.record_id === state.selectedModel);
+
+  // Query documentation for current model
+  const { data: docData } = useQuery({
+    queryKey: ['model-documentation', currentModel?.record_id],
+    queryFn: async () => {
+      if (!currentModel?.record_id) return null;
+      const { data } = await supabase
+        .from('model_documentation')
+        .select('*')
+        .eq('model_record_id', currentModel.record_id)
+        .single();
+      return data;
+    },
+    enabled: !!currentModel?.record_id,
+  });
 
   // Schema helpers
   const schemaHelpers = useSchemaHelpers();
@@ -351,7 +374,7 @@ const ComprehensiveModelTestPage = () => {
   }, [state, uploadedImages, estimatedTokens]);
 
   const handleGenerateWithInspection = useCallback(async () => {
-    if (inspectionMode === 'disabled' || inspectionMode === 'reviewing') {
+    if (inspectionMode === 'off' || inspectionMode === 'reviewing') {
       await handleGenerate();
       return;
     }
@@ -375,13 +398,114 @@ const ComprehensiveModelTestPage = () => {
     setInspectionMode('reviewing');
   }, [inspectionMode, handleGenerate, state, uploadedImages, currentModel, preparePayloadSnapshot]);
 
+  // Schema editing handlers
+  const handlePushParameterToSchema = useCallback(async (paramName: string, newValue: any) => {
+    if (!currentModel) return;
+
+    try {
+      const updatedSchema = JSON.parse(JSON.stringify(currentModel.input_schema));
+      updatedSchema.properties[paramName].default = newValue;
+
+      const { error } = await supabase
+        .from('ai_models')
+        .update({ input_schema: updatedSchema })
+        .eq('record_id', currentModel.record_id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      toast.success(`Updated default for ${paramName}`);
+    } catch (error) {
+      console.error('Schema update error:', error);
+      toast.error("Failed to update schema");
+    }
+  }, [currentModel, queryClient]);
+
+  const handleToggleAdvanced = useCallback(async (paramName: string, currentState: boolean) => {
+    if (!currentModel) return;
+
+    try {
+      const updatedSchema = JSON.parse(JSON.stringify(currentModel.input_schema));
+      updatedSchema.properties[paramName].isAdvanced = !currentState;
+
+      const { error } = await supabase
+        .from('ai_models')
+        .update({ input_schema: updatedSchema })
+        .eq('record_id', currentModel.record_id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      toast.success(`Moved ${paramName} to ${currentState ? 'basic' : 'advanced'} options`);
+    } catch (error) {
+      console.error('Schema update error:', error);
+      toast.error("Failed to update schema");
+    }
+  }, [currentModel, queryClient]);
+
+  const handlePushAllToSchema = useCallback(async () => {
+    if (!currentModel) return;
+
+    try {
+      const updatedSchema = JSON.parse(JSON.stringify(currentModel.input_schema));
+      let updateCount = 0;
+
+      Object.entries(state.modelParameters).forEach(([key, value]) => {
+        const schemaDefault = updatedSchema.properties[key]?.default;
+        if (JSON.stringify(value) !== JSON.stringify(schemaDefault)) {
+          updatedSchema.properties[key].default = value;
+          updateCount++;
+        }
+      });
+
+      if (updateCount === 0) {
+        toast.info("No modified parameters to push");
+        return;
+      }
+
+      const { error } = await supabase
+        .from('ai_models')
+        .update({ input_schema: updatedSchema })
+        .eq('record_id', currentModel.record_id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      toast.success(`Updated ${updateCount} parameter(s)`);
+    } catch (error) {
+      console.error('Batch schema update error:', error);
+      toast.error("Failed to update schema");
+    }
+  }, [currentModel, state.modelParameters, queryClient]);
+
+  const handleGenerateDocumentation = useCallback(async () => {
+    if (!currentModel) return;
+
+    setIsGeneratingDocs(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-model-docs', {
+        body: { model_record_id: currentModel.record_id },
+      });
+
+      if (error) throw error;
+
+      toast.success("Documentation generation started");
+      queryClient.invalidateQueries({ queryKey: ['model-documentation'] });
+    } catch (error) {
+      console.error('Doc generation error:', error);
+      toast.error("Failed to generate documentation");
+    } finally {
+      setIsGeneratingDocs(false);
+    }
+  }, [currentModel, queryClient]);
+
   const handleContinueTest = useCallback(async () => {
-    setInspectionMode('disabled');
+    setInspectionMode('off');
     await handleGenerate();
   }, [handleGenerate]);
 
   const handleCancelTest = useCallback(() => {
-    setInspectionMode('enabled');
+    setInspectionMode('off');
     setInspectionData({});
   }, []);
 
@@ -458,8 +582,75 @@ const ComprehensiveModelTestPage = () => {
                 </div>
               </div>
             )}
+
+            {/* Documentation Section */}
+            <div className="pt-4 border-t">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Documentation</span>
+                </div>
+                <div className="flex gap-2">
+                  {docData ? (
+                    <>
+                      <Badge variant="outline">
+                        Updated {formatDistanceToNow(new Date(docData.updated_at))} ago
+                      </Badge>
+                      <Dialog open={docDialogOpen} onOpenChange={setDocDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button size="sm" variant="outline">View Docs</Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
+                          <DialogHeader>
+                            <DialogTitle>Model Documentation</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="text-sm text-muted-foreground">
+                              Analyzed {docData.analyzed_generations_count || 0} generations
+                            </div>
+                            <pre className="bg-muted p-4 rounded text-xs overflow-auto">
+                              {JSON.stringify(docData.documentation_data, null, 2)}
+                            </pre>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </>
+                  ) : (
+                    <Badge variant="secondary">No documentation</Badge>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={handleGenerateDocumentation}
+                    disabled={isGeneratingDocs}
+                  >
+                    {isGeneratingDocs ? (
+                      <>
+                        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      'Generate Docs'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Parameter Inspector */}
+      {currentModel && (
+        <ParametersInspector
+          schema={currentModel.input_schema as any}
+          currentValues={state.modelParameters}
+          onValueChange={(name, value) => {
+            updateState({ modelParameters: { ...state.modelParameters, [name]: value } });
+          }}
+          onPushToSchema={handlePushParameterToSchema}
+          onToggleAdvanced={handleToggleAdvanced}
+          onPushAllToSchema={handlePushAllToSchema}
+        />
       )}
 
       {/* Inspection UI */}

@@ -1172,6 +1172,72 @@ export type Database = {
           },
         ]
       }
+      model_documentation: {
+        Row: {
+          analyzed_generations_count: number | null
+          content_type: string
+          created_at: string | null
+          documentation_data: Json
+          documentation_version: number | null
+          id: string
+          last_analyzed_at: string | null
+          last_successful_generation_id: string | null
+          model_family: string | null
+          model_id: string
+          model_name: string
+          model_record_id: string
+          provider: string
+          updated_at: string | null
+        }
+        Insert: {
+          analyzed_generations_count?: number | null
+          content_type: string
+          created_at?: string | null
+          documentation_data?: Json
+          documentation_version?: number | null
+          id?: string
+          last_analyzed_at?: string | null
+          last_successful_generation_id?: string | null
+          model_family?: string | null
+          model_id: string
+          model_name: string
+          model_record_id: string
+          provider: string
+          updated_at?: string | null
+        }
+        Update: {
+          analyzed_generations_count?: number | null
+          content_type?: string
+          created_at?: string | null
+          documentation_data?: Json
+          documentation_version?: number | null
+          id?: string
+          last_analyzed_at?: string | null
+          last_successful_generation_id?: string | null
+          model_family?: string | null
+          model_id?: string
+          model_name?: string
+          model_record_id?: string
+          provider?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_documentation_model_record_id_fkey"
+            columns: ["model_record_id"]
+            isOneToOne: true
+            referencedRelation: "ai_models"
+            referencedColumns: ["record_id"]
+          },
+          {
+            foreignKeyName: "model_documentation_model_record_id_fkey"
+            columns: ["model_record_id"]
+            isOneToOne: true
+            referencedRelation: "model_health_summary"
+            referencedColumns: ["record_id"]
+          },
+        ]
+      }
       model_test_configs: {
         Row: {
           created_at: string | null

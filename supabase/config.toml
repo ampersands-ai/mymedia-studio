@@ -146,3 +146,6 @@ verify_jwt = false  # Internal function called by check-model-health
 
 [functions.generate-test-image]
 verify_jwt = true  # Admin-only test image generation
+
+[functions.analyze-model-docs]
+verify_jwt = true  # Admin-only documentation generation

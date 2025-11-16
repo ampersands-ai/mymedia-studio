@@ -17,7 +17,7 @@ export const useSchemaHelpers = () => {
   }, []);
 
   /**
-   * Dynamically detect image field from schema
+   * Dynamically detect image field from schema using explicit imageInputField flag
    */
   const getImageFieldInfo = useCallback((model: AIModel | null): { 
     fieldName: string | null; 
@@ -25,36 +25,33 @@ export const useSchemaHelpers = () => {
     isArray: boolean; 
     maxImages: number 
   } => {
-    if (!model) {
+    if (!model?.input_schema) {
       return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
     }
     
-    const schema = model.input_schema as any;
-    if (!schema?.properties) {
+    const imageFieldName = (model.input_schema as any).imageInputField;
+    
+    // No image input field defined in schema
+    if (!imageFieldName) {
       return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
     }
     
-    const properties = schema.properties;
-    const required = schema.required || [];
+    const properties = (model.input_schema as any).properties || {};
+    const fieldSchema = properties[imageFieldName];
     
-    // Look for image-like fields
-    const imageFieldNames = [
-      'inputImage', 'image_urls', 'imageUrl', 'image_url', 
-      'image', 'images', 'filesUrl', 'filesURL', 'file_urls', 
-      'fileUrls', 'reference_image_urls', 'frameImages'
-    ];
-    
-    for (const fieldName of imageFieldNames) {
-      if (properties[fieldName]) {
-        const schema = properties[fieldName];
-        const isArray = schema.type === 'array';
-        const isRequired = required.includes(fieldName);
-        const maxImages = model.max_images ?? 0;
-        return { fieldName, isRequired, isArray, maxImages };
-      }
+    if (!fieldSchema) {
+      console.warn(`Image field '${imageFieldName}' declared in schema but not found in properties`);
+      return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
     }
     
-    return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
+    const required = (model.input_schema as any).required || [];
+    const isRequired = required.includes(imageFieldName);
+    const isArray = fieldSchema.type === 'array';
+    const maxImages = isArray 
+      ? (fieldSchema.maxItems || model.max_images || 10) 
+      : 1;
+    
+    return { fieldName: imageFieldName, isRequired, isArray, maxImages };
   }, []);
 
   /**

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit, Trash2, ChevronDown, ChevronUp, ArrowUp, ArrowDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ParameterDialog } from "./ParameterDialog";
@@ -108,6 +110,15 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
   };
 
   const generatedJson = JSON.stringify(generateSchema(parameters), null, 2);
+  const currentImageField = (schema as any).imageInputField || null;
+
+  const handleImageFieldChange = (value: string) => {
+    const updated = {
+      ...generateSchema(parameters),
+      imageInputField: value === "none" ? null : value
+    };
+    onChange(updated);
+  };
 
   return (
     <div className="space-y-4">
@@ -236,6 +247,33 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
           ))
         )}
       </div>
+
+      {/* Image Input Field Selector */}
+      <Card className="p-4 space-y-2 bg-primary/5 border-primary/20">
+        <Label htmlFor="image-input-field" className="text-sm font-medium">
+          Image Input Field (Optional)
+        </Label>
+        <Select
+          value={currentImageField || "none"}
+          onValueChange={handleImageFieldChange}
+        >
+          <SelectTrigger id="image-input-field">
+            <SelectValue placeholder="No image input" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">No image input (text-only model)</SelectItem>
+            {parameters.map(param => (
+              <SelectItem key={param.name} value={param.name}>
+                {param.name} ({param.type}{param.required ? ', required' : ''})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Select which parameter accepts image uploads. Leave as "No image input" for text-only models (e.g., Flux Schnell). 
+          Choose a parameter for image-to-image or upscale models (e.g., inputImage, image_url).
+        </p>
+      </Card>
 
       <Collapsible open={showJson} onOpenChange={setShowJson}>
         <CollapsibleTrigger asChild>

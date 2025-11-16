@@ -50,6 +50,7 @@ export interface ModelJsonSchema {
   required?: string[];
   'x-order'?: string[];
   fieldDependencies?: FieldDependencies;
+  imageInputField?: string | null; // Explicitly marks which field accepts image uploads
   [key: string]: unknown;
 }
 

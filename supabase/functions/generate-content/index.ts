@@ -159,6 +159,16 @@ Deno.serve(async (req) => {
       });
     }
     
+    // Also check for positive_prompt (snake_case alias)
+    if (!prompt && custom_parameters.positive_prompt) {
+      prompt = custom_parameters.positive_prompt as string;
+      delete custom_parameters.positive_prompt;
+      logger.debug('Extracted positive_prompt from parameters', { 
+        userId: user?.id, 
+        metadata: { prompt_length: prompt?.length } 
+      });
+    }
+    
     // If service role, require user_id in body
     if (isServiceRole) {
       if (!user_id) {
@@ -285,18 +295,21 @@ Deno.serve(async (req) => {
       metadata: { model_id: model.id, provider: model.provider }
     });
 
-    // Check if model has prompt field in schema (handle both 'prompt' and 'positivePrompt')
+    // Check if model has prompt field in schema (handle 'prompt', 'positivePrompt', 'positive_prompt')
     const hasPromptField = Boolean(
       model.input_schema?.properties?.prompt || 
-      model.input_schema?.properties?.positivePrompt
+      model.input_schema?.properties?.positivePrompt ||
+      model.input_schema?.properties?.positive_prompt
     );
     const promptFieldName = model.input_schema?.properties?.prompt ? 'prompt' : 
-                            model.input_schema?.properties?.positivePrompt ? 'positivePrompt' : 
+                            model.input_schema?.properties?.positivePrompt ? 'positivePrompt' :
+                            model.input_schema?.properties?.positive_prompt ? 'positive_prompt' :
                             null;
     const promptRequired = hasPromptField && 
       Array.isArray(model.input_schema?.required) && 
       (model.input_schema.required.includes('prompt') || 
-       model.input_schema.required.includes('positivePrompt'));
+       model.input_schema.required.includes('positivePrompt') ||
+       model.input_schema.required.includes('positive_prompt'));
 
     // Phase 4: Check generation rate limits (skip for test mode)
     if (!isTestMode) {
@@ -494,7 +507,7 @@ Deno.serve(async (req) => {
       }
     });
 
-    // Infer prompt from normalized parameters if still missing
+    // Infer prompt from normalized parameters if still missing (all aliases)
     if (!prompt && typeof parameters.prompt === 'string' && parameters.prompt.trim().length > 0) {
       prompt = parameters.prompt as string;
       logger.debug('Inferred prompt from parameters.prompt', {
@@ -505,6 +518,13 @@ Deno.serve(async (req) => {
     if (!prompt && typeof parameters.positivePrompt === 'string' && parameters.positivePrompt.trim().length > 0) {
       prompt = parameters.positivePrompt as string;
       logger.debug('Inferred prompt from parameters.positivePrompt', {
+        userId: user?.id,
+        metadata: { prompt_length: prompt.length }
+      });
+    }
+    if (!prompt && typeof parameters.positive_prompt === 'string' && parameters.positive_prompt.trim().length > 0) {
+      prompt = parameters.positive_prompt as string;
+      logger.debug('Inferred prompt from parameters.positive_prompt', {
         userId: user?.id,
         metadata: { prompt_length: prompt.length }
       });
@@ -660,25 +680,63 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Deduct tokens first with row count verification
-        const { data: updateResult, error: deductError } = await supabase
-          .from('user_subscriptions')
-          .update({ tokens_remaining: subscription.tokens_remaining - tokenCost })
-          .eq('user_id', user.id)
-          .eq('tokens_remaining', subscription.tokens_remaining)
-          .select('tokens_remaining');
+        // Deduct tokens with retry logic for optimistic locking
+        let updateResult: any = null;
+        let retryCount = 0;
+        const MAX_RETRIES = 3;
+        
+        while (retryCount < MAX_RETRIES) {
+          const { data: currentSub } = await supabase
+            .from('user_subscriptions')
+            .select('tokens_remaining')
+            .eq('user_id', user.id)
+            .single();
+          
+          if (!currentSub) {
+            throw new Error('Failed to deduct tokens - subscription not found');
+          }
+          
+          const { data, error: deductError } = await supabase
+            .from('user_subscriptions')
+            .update({ tokens_remaining: currentSub.tokens_remaining - tokenCost })
+            .eq('user_id', user.id)
+            .eq('tokens_remaining', currentSub.tokens_remaining)
+            .select('tokens_remaining');
 
-        if (deductError) {
-          logger.error('Token deduction failed', deductError instanceof Error ? deductError : new Error(String(deductError) || 'Database error'));
-          throw new Error('Failed to deduct tokens - database error');
+          if (deductError) {
+            logger.error('Token deduction failed', deductError instanceof Error ? deductError : new Error(String(deductError) || 'Database error'));
+            throw new Error('Failed to deduct tokens - database error');
+          }
+
+          if (data && data.length > 0) {
+            updateResult = data;
+            break; // Success
+          }
+          
+          // Optimistic lock failed - retry with jitter
+          retryCount++;
+          if (retryCount < MAX_RETRIES) {
+            const jitter = 50 + Math.random() * 150; // 50-200ms
+            logger.warn('Optimistic lock failed, retrying', {
+              userId: user.id,
+              metadata: { attempt: retryCount, jitter_ms: Math.round(jitter) }
+            });
+            await new Promise(resolve => setTimeout(resolve, jitter));
+          }
         }
-
+        
         if (!updateResult || updateResult.length === 0) {
-          logger.error('Optimistic lock failed - concurrent update', undefined, {
+          logger.error('Optimistic lock failed after retries', undefined, {
             userId: user.id,
-            metadata: { expected_tokens: subscription.tokens_remaining, cost: tokenCost }
+            metadata: { max_retries: MAX_RETRIES, cost: tokenCost }
           });
-          throw new Error('Failed to deduct tokens - concurrent update detected. Please retry.');
+          return new Response(
+            JSON.stringify({ 
+              error: 'Concurrent token update, please retry',
+              code: 'TOKEN_CONCURRENCY'
+            }),
+            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
 
         tokensDeducted = true;
@@ -769,10 +827,11 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Validate all required parameters from schema
+      // Validate all required parameters from schema (skip all prompt aliases)
       if (model.input_schema?.required) {
+        const promptAliases = ['prompt', 'positivePrompt', 'positive_prompt'];
         for (const requiredParam of model.input_schema.required) {
-          if (requiredParam === 'prompt') continue; // already handled above
+          if (promptAliases.includes(requiredParam)) continue; // already handled above
           if (validatedParameters[requiredParam] === undefined) {
             throw new Error(`Missing required parameter: ${requiredParam}`);
           }
@@ -885,14 +944,20 @@ Deno.serve(async (req) => {
           generationId: createdGeneration.id
         };
         
-        // Include prompt if model has prompt field
+        // Include prompt if model has prompt field (normalize to provider's expected format)
         if (hasPromptField && finalPrompt) {
-          // For Runware models that use 'positivePrompt' instead of 'prompt'
-          if (promptFieldName === 'positivePrompt') {
+          // For models that use 'positivePrompt' or 'positive_prompt' (normalize to positivePrompt)
+          if (promptFieldName === 'positivePrompt' || promptFieldName === 'positive_prompt') {
             providerRequest.parameters.positivePrompt = finalPrompt;
           } else {
+            // Standard 'prompt' field
             providerRequest.prompt = finalPrompt;
           }
+        }
+        
+        // Runware video default: uppercase MP4
+        if (model.provider === 'runware' && model.content_type === 'video' && !providerRequest.parameters.outputFormat) {
+          providerRequest.parameters.outputFormat = 'MP4';
         }
 
         logger.debug('Provider request prepared', {

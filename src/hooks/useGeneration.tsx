@@ -92,9 +92,20 @@ export const useGeneration = () => {
         enhance_prompt: bodyToSend.enhance_prompt,
       });
       
-      const { data, error } = await supabase.functions.invoke(functionName, {
+      let { data, error } = await supabase.functions.invoke(functionName, {
         body: bodyToSend,
       });
+      
+      // Retry logic for token concurrency errors (409)
+      if (error && (error.message?.includes("409") || error.message?.includes("TOKEN_CONCURRENCY"))) {
+        generationLogger.warn("Token concurrency detected, retrying once", { requestId });
+        await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 150)); // 100-250ms jitter
+        const retryResult = await supabase.functions.invoke(functionName, {
+          body: bodyToSend,
+        });
+        data = retryResult.data;
+        error = retryResult.error;
+      }
 
       if (error) {
         const handledError = handleError(error, {
@@ -153,13 +164,15 @@ export const useGeneration = () => {
         }
         
         if (error.message?.includes("400")) {
-          // Try to extract specific error from edge function response
+          // Try to extract specific error and details from edge function response
           try {
             const errorMatch = error.message.match(/error['":\s]+([^"'}]+)/i);
+            const detailsMatch = error.message.match(/details['":\s]+([^"'}]+)/i);
             const specificError = errorMatch ? errorMatch[1] : error.message;
+            const errorDetails = detailsMatch ? ` (${detailsMatch[1]})` : '';
             throw new GenerationError(
               GenerationErrorCode.INVALID_REQUEST,
-              specificError,
+              specificError + errorDetails,
               { recoverable: true }
             );
           } catch (parseError) {

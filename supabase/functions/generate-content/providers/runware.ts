@@ -151,7 +151,17 @@ export async function callRunware(
   // Add parameters with model-specific filtering
   for (const [key, value] of Object.entries(params)) {
     if (isParameterSupported(cleanModel, key)) {
-      taskPayload[key] = value;
+      // Special handling for providerSettings - extract provider name if it's an object
+      if (key === 'providerSettings' && typeof value === 'object' && value !== null) {
+        // If it's an object like { bytedance: {...} }, extract the key
+        const providerKeys = Object.keys(value);
+        if (providerKeys.length > 0) {
+          taskPayload[key] = providerKeys[0]; // Use the first key as the provider name
+          console.log('[Runware] Extracted provider from providerSettings', { provider: providerKeys[0] });
+        }
+      } else {
+        taskPayload[key] = value;
+      }
     }
   }
 
@@ -227,10 +237,13 @@ export async function callRunware(
       try {
         const errorData = JSON.parse(errorText);
         if (errorData.errors?.[0]?.message) {
-          errorMessage = errorData.errors[0].message;
+          errorMessage = `Runware error: ${errorData.errors[0].message}`;
+        } else if (errorData.errors?.[0]?.code) {
+          errorMessage = `Runware error: ${errorData.errors[0].code}`;
         }
       } catch {
         // Use status text if JSON parsing fails
+        errorMessage = `Runware API error: ${response.statusText || response.status}`;
       }
       
       throw new Error(errorMessage);
@@ -242,7 +255,8 @@ export async function callRunware(
     // Check for errors in response
     if (responseData.errors && responseData.errors.length > 0) {
       const error = responseData.errors[0];
-      throw new Error(error.message || `Runware API error: ${error.code}`);
+      console.error('[Runware] Runware provider error', { error: error.message || error.code, model: cleanModel, taskUUID });
+      throw new Error(`Runware provider failed: ${error.message || error.code}`);
     }
 
     if (!response.ok) {

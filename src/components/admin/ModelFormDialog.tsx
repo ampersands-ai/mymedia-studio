@@ -27,11 +27,11 @@ import type { JsonSchema, ModelConfiguration } from "@/types/schema";
 import { schemaToJson, jsonToSchema } from "@/types/schema";
 
 const AVAILABLE_GROUPS = [
-  { id: "image_editing", label: "Image Editing" },
-  { id: "prompt_to_image", label: "Prompt to Image" },
-  { id: "prompt_to_video", label: "Prompt to Video" },
+  { id: "image_editing", label: "Image Editing/Image to Image" },
+  { id: "prompt_to_image", label: "Text to Image" },
+  { id: "prompt_to_video", label: "Text to Video" },
   { id: "image_to_video", label: "Image to Video" },
-  { id: "prompt_to_audio", label: "Prompt to Audio" },
+  { id: "prompt_to_audio", label: "Audio Studio" },
 ];
 
 /**

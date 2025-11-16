@@ -26,12 +26,6 @@ export const NotificationPreferences = () => {
     notification_threshold_seconds: 60
   });
 
-  useEffect(() => {
-    if (user) {
-      fetchPreferences();
-    }
-  }, [user, fetchPreferences]);
-
   const fetchPreferences = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -62,6 +56,12 @@ export const NotificationPreferences = () => {
       setLoading(false);
     }
   }, [user?.id]);
+
+  useEffect(() => {
+    if (user) {
+      fetchPreferences();
+    }
+  }, [user, fetchPreferences]);
 
   const savePreferences = async () => {
     if (!user) return;

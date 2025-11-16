@@ -1,4 +1,4 @@
-import { CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Info, History } from "lucide-react";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
@@ -21,6 +21,7 @@ interface GenerationConsoleProps {
   contentType: string;
   estimatedTimeSeconds: number | null;
   showProgress?: boolean;
+  isPolling?: boolean;
   onNavigateLightbox: (direction: 'prev' | 'next') => void;
   onOpenLightbox: (index: number) => void;
   onCloseLightbox: () => void;

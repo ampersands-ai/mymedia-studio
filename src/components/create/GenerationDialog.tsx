@@ -22,7 +22,11 @@ interface GenerationDialogProps {
   userTokens: number;
   generationState: GenerationState;
   onDownload: (path: string) => Promise<void>;
+  onDownloadAll?: () => Promise<void>;
   onViewHistory: () => void;
+  onRetry?: () => void;
+  onboardingProgress?: any;
+  updateOnboardingProgress?: (updates: any) => void;
 }
 
 /**
@@ -41,7 +45,11 @@ export const GenerationDialog = ({
   userTokens,
   generationState,
   onDownload,
+  onDownloadAll,
   onViewHistory,
+  onRetry,
+  onboardingProgress,
+  updateOnboardingProgress,
 }: GenerationDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

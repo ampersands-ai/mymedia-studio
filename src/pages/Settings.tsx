@@ -39,13 +39,17 @@ const Settings = () => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [userCreatedAt, setUserCreatedAt] = useState<Date | null>(null);
   const confetti = useConfetti();
-  
-  const { 
-    currentMonth, 
-    isLoadingCurrent, 
-    allTime, 
-    isLoadingAllTime, 
-    refetchAllTime 
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [loadingAuditLogs, setLoadingAuditLogs] = useState(false);
+
+  const {
+    currentMonth,
+    isLoadingCurrent,
+    allTime,
+    isLoadingAllTime,
+    refetchAllTime
   } = useTokenUsage();
 
   useEffect(() => {

@@ -176,6 +176,8 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
   playOnHover?: boolean;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [videoError, setVideoError] = useState(false);
 
   // Build a source and get video URL using new architecture
   const sourceForSigning = generation.storage_path

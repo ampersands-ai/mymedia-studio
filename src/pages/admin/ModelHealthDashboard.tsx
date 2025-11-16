@@ -186,7 +186,7 @@ export default function ModelHealthDashboard() {
 
   const handleTestAll = () => {
     const activeModels = filteredAndSortedModels.filter(m => m.is_active);
-    handleBulkTest(activeModels.map(m => m.record_id));
+    handleBulkTest();
   };
 
   const getStatusBadge = (model: ModelHealthSummary) => {

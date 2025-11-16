@@ -393,6 +393,371 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_backlinks: {
+        Row: {
+          anchor_text: string
+          blog_post_id: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          position: number | null
+          rel_attribute: string | null
+          url: string
+        }
+        Insert: {
+          anchor_text: string
+          blog_post_id: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          position?: number | null
+          rel_attribute?: string | null
+          url: string
+        }
+        Update: {
+          anchor_text?: string
+          blog_post_id?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          position?: number | null
+          rel_attribute?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_backlinks_blog_post_id_fkey"
+            columns: ["blog_post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          meta_description: string | null
+          name: string
+          parent_id: string | null
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          meta_description?: string | null
+          name: string
+          parent_id?: string | null
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          meta_description?: string | null
+          name?: string
+          parent_id?: string | null
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "blog_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_email_distributions: {
+        Row: {
+          blog_post_id: string
+          click_count: number
+          created_at: string
+          email_service_id: string | null
+          id: string
+          open_count: number
+          recipient_count: number
+          sent_at: string
+          status: string
+        }
+        Insert: {
+          blog_post_id: string
+          click_count?: number
+          created_at?: string
+          email_service_id?: string | null
+          id?: string
+          open_count?: number
+          recipient_count?: number
+          sent_at?: string
+          status?: string
+        }
+        Update: {
+          blog_post_id?: string
+          click_count?: number
+          created_at?: string
+          email_service_id?: string | null
+          id?: string
+          open_count?: number
+          recipient_count?: number
+          sent_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_email_distributions_blog_post_id_fkey"
+            columns: ["blog_post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_images: {
+        Row: {
+          alt_text: string
+          blog_post_id: string
+          caption: string | null
+          created_at: string
+          generation_id: string | null
+          id: string
+          image_url: string
+          is_featured: boolean
+          model_id: string | null
+          position: number
+          prompt: string | null
+          title: string | null
+        }
+        Insert: {
+          alt_text: string
+          blog_post_id: string
+          caption?: string | null
+          created_at?: string
+          generation_id?: string | null
+          id?: string
+          image_url: string
+          is_featured?: boolean
+          model_id?: string | null
+          position?: number
+          prompt?: string | null
+          title?: string | null
+        }
+        Update: {
+          alt_text?: string
+          blog_post_id?: string
+          caption?: string | null
+          created_at?: string
+          generation_id?: string | null
+          id?: string
+          image_url?: string
+          is_featured?: boolean
+          model_id?: string | null
+          position?: number
+          prompt?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_images_blog_post_id_fkey"
+            columns: ["blog_post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_post_categories: {
+        Row: {
+          blog_post_id: string
+          category_id: string
+        }
+        Insert: {
+          blog_post_id: string
+          category_id: string
+        }
+        Update: {
+          blog_post_id?: string
+          category_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_post_categories_blog_post_id_fkey"
+            columns: ["blog_post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_post_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "blog_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_post_tags: {
+        Row: {
+          blog_post_id: string
+          tag_id: string
+        }
+        Insert: {
+          blog_post_id: string
+          tag_id: string
+        }
+        Update: {
+          blog_post_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_post_tags_blog_post_id_fkey"
+            columns: ["blog_post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_post_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "blog_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_posts: {
+        Row: {
+          ai_generated: boolean
+          author_id: string
+          canonical_url: string | null
+          content: string
+          created_at: string
+          excerpt: string | null
+          featured_image_url: string | null
+          generation_prompt: string | null
+          id: string
+          is_featured: boolean
+          meta_description: string | null
+          meta_keywords: string[] | null
+          meta_title: string | null
+          og_description: string | null
+          og_image_url: string | null
+          og_title: string | null
+          published_at: string | null
+          reading_time: number | null
+          scheduled_for: string | null
+          schema_data: Json | null
+          schema_type: string | null
+          share_count: number
+          slug: string
+          status: string
+          title: string
+          topic_prompt: string | null
+          twitter_card_type: string | null
+          twitter_description: string | null
+          twitter_image_url: string | null
+          twitter_title: string | null
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          ai_generated?: boolean
+          author_id: string
+          canonical_url?: string | null
+          content: string
+          created_at?: string
+          excerpt?: string | null
+          featured_image_url?: string | null
+          generation_prompt?: string | null
+          id?: string
+          is_featured?: boolean
+          meta_description?: string | null
+          meta_keywords?: string[] | null
+          meta_title?: string | null
+          og_description?: string | null
+          og_image_url?: string | null
+          og_title?: string | null
+          published_at?: string | null
+          reading_time?: number | null
+          scheduled_for?: string | null
+          schema_data?: Json | null
+          schema_type?: string | null
+          share_count?: number
+          slug: string
+          status?: string
+          title: string
+          topic_prompt?: string | null
+          twitter_card_type?: string | null
+          twitter_description?: string | null
+          twitter_image_url?: string | null
+          twitter_title?: string | null
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          ai_generated?: boolean
+          author_id?: string
+          canonical_url?: string | null
+          content?: string
+          created_at?: string
+          excerpt?: string | null
+          featured_image_url?: string | null
+          generation_prompt?: string | null
+          id?: string
+          is_featured?: boolean
+          meta_description?: string | null
+          meta_keywords?: string[] | null
+          meta_title?: string | null
+          og_description?: string | null
+          og_image_url?: string | null
+          og_title?: string | null
+          published_at?: string | null
+          reading_time?: number | null
+          scheduled_for?: string | null
+          schema_data?: Json | null
+          schema_type?: string | null
+          share_count?: number
+          slug?: string
+          status?: string
+          title?: string
+          topic_prompt?: string | null
+          twitter_card_type?: string | null
+          twitter_description?: string | null
+          twitter_image_url?: string | null
+          twitter_title?: string | null
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
+      blog_tags: {
+        Row: {
+          created_at: string
+          id: string
+          meta_description: string | null
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meta_description?: string | null
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meta_description?: string | null
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       cinematic_prompts: {
         Row: {
           category: string
@@ -3246,6 +3611,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_blog_share_count: {
+        Args: { post_id: string }
+        Returns: undefined
+      }
+      increment_blog_view_count: {
+        Args: { post_id: string }
+        Returns: undefined
       }
       increment_template_use_count: {
         Args: { template_id: string }

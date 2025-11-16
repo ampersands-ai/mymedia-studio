@@ -30,7 +30,9 @@ export const CreationGroupSelector: React.FC<CreationGroupSelectorProps> = ({
             <group.Icon className="h-7 w-7 md:h-9 md:w-9 transition-transform duration-300 group-hover:animate-[bounce_0.6s_ease-in-out]" />
             <div className="flex flex-col items-center gap-0">
               <span className="font-semibold text-xs md:text-sm">{group.label}</span>
-              {'subtitle' in group && <span className="text-[10px] font-medium opacity-80">{group.subtitle}</span>}
+              <span className="text-[10px] font-medium opacity-80">
+                {'subtitle' in group ? group.subtitle : '\u00A0'}
+              </span>
             </div>
           </button>
         ))}

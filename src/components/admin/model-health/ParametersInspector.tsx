@@ -12,6 +12,7 @@ interface ParametersInspectorProps {
   modifiedParameters?: string[];
   onPushParameterToSchema?: (paramName: string) => void;
   onPushAllToSchema?: () => void;
+  onToggleAdvanced?: (paramName: string) => void;
 }
 
 export const ParametersInspector = ({
@@ -21,6 +22,7 @@ export const ParametersInspector = ({
   modifiedParameters = [],
   onPushParameterToSchema,
   onPushAllToSchema,
+  onToggleAdvanced,
 }: ParametersInspectorProps) => {
   if (!schema?.properties) {
     return (
@@ -81,6 +83,7 @@ export const ParametersInspector = ({
             isAdvanced={properties[key].isAdvanced === true}
             isModified={modifiedParameters.includes(key)}
             onPushToSchema={onPushParameterToSchema ? () => onPushParameterToSchema(key) : undefined}
+            onToggleAdvanced={onToggleAdvanced ? () => onToggleAdvanced(key) : undefined}
           />
         ))}
       </div>

@@ -24,6 +24,7 @@ export default function ComprehensiveModelTestPage() {
   
   const [customParameters, setCustomParameters] = useState<Record<string, any>>({});
   const [originalDefaults, setOriginalDefaults] = useState<Record<string, any>>({});
+  const [originalAdvancedFlags, setOriginalAdvancedFlags] = useState<Record<string, boolean>>({});
   const [documentationStatus, setDocumentationStatus] = useState<any>(null);
   const [isGeneratingDocs, setIsGeneratingDocs] = useState(false);
   const [showDocumentation, setShowDocumentation] = useState(false);
@@ -67,15 +68,18 @@ export default function ComprehensiveModelTestPage() {
       );
       setCustomParameters(initialized);
       
-      // Store original defaults for comparison
+      // Store original defaults and advanced flags for comparison
       const defaults: Record<string, any> = {};
+      const advancedFlags: Record<string, boolean> = {};
       const schema = selectedModel.input_schema as any;
       if (schema?.properties) {
         Object.keys(schema.properties).forEach(key => {
           defaults[key] = schema.properties[key].default;
+          advancedFlags[key] = schema.properties[key].isAdvanced === true;
         });
       }
       setOriginalDefaults(defaults);
+      setOriginalAdvancedFlags(advancedFlags);
     } else {
       setCustomParameters({});
       setOriginalDefaults({});
@@ -158,12 +162,23 @@ export default function ComprehensiveModelTestPage() {
   };
 
   const getModifiedParameters = () => {
+    if (!selectedModel?.input_schema?.properties) return [];
+    
     const modified: string[] = [];
+    const properties = selectedModel.input_schema.properties as any;
+    
     Object.keys(customParameters).forEach(key => {
-      if (customParameters[key] !== originalDefaults[key]) {
+      const originalValue = originalDefaults[key];
+      const currentValue = customParameters[key];
+      const originalAdvanced = originalAdvancedFlags[key];
+      const currentAdvanced = properties[key]?.isAdvanced === true;
+      
+      // Check if value or advanced flag changed
+      if (JSON.stringify(originalValue) !== JSON.stringify(currentValue) || originalAdvanced !== currentAdvanced) {
         modified.push(key);
       }
     });
+    
     return modified;
   };
 
@@ -212,6 +227,37 @@ export default function ComprehensiveModelTestPage() {
     }
   };
 
+  const handleToggleAdvanced = async (paramName: string) => {
+    if (!selectedModel?.input_schema?.properties?.[paramName]) return;
+
+    try {
+      const schema = JSON.parse(JSON.stringify(selectedModel.input_schema));
+      const currentAdvanced = schema.properties[paramName].isAdvanced === true;
+      schema.properties[paramName].isAdvanced = !currentAdvanced;
+
+      const { error } = await supabase
+        .from("ai_models")
+        .update({ input_schema: schema })
+        .eq("record_id", selectedModel.record_id);
+
+      if (error) throw error;
+
+      toast.success(`Moved ${paramName} to ${!currentAdvanced ? "advanced" : "standard"} parameters`);
+      
+      // Update original advanced flags
+      setOriginalAdvancedFlags(prev => ({
+        ...prev,
+        [paramName]: !currentAdvanced,
+      }));
+      
+      // Refetch model data
+      refetchModel();
+    } catch (error: any) {
+      console.error("Error toggling advanced flag:", error);
+      toast.error(error.message || "Failed to update parameter");
+    }
+  };
+
   const handlePushAllToSchema = async () => {
     if (!selectedModel) return;
 
@@ -245,6 +291,14 @@ export default function ComprehensiveModelTestPage() {
         newDefaults[key] = customParameters[key];
       });
       setOriginalDefaults(newDefaults);
+      
+      // Update original advanced flags
+      const newAdvancedFlags = { ...originalAdvancedFlags };
+      const properties = selectedModel.input_schema.properties as any;
+      modified.forEach(key => {
+        newAdvancedFlags[key] = properties[key]?.isAdvanced === true;
+      });
+      setOriginalAdvancedFlags(newAdvancedFlags);
       
       // Refetch model data
       refetchModel();
@@ -467,6 +521,7 @@ export default function ComprehensiveModelTestPage() {
               modifiedParameters={getModifiedParameters()}
               onPushParameterToSchema={handlePushParameterToSchema}
               onPushAllToSchema={handlePushAllToSchema}
+              onToggleAdvanced={handleToggleAdvanced}
             />
           )}
         </>

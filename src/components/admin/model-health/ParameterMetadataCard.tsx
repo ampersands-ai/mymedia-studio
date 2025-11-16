@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Eye, EyeOff, Settings2, ArrowUpToLine } from "lucide-react";
+import { Eye, EyeOff, Settings2, ArrowUpToLine, ArrowUpDown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ParameterMetadataCardProps {
@@ -19,6 +19,7 @@ interface ParameterMetadataCardProps {
   isAdvanced: boolean;
   isModified?: boolean;
   onPushToSchema?: () => void;
+  onToggleAdvanced?: () => void;
 }
 
 export const ParameterMetadataCard = ({
@@ -31,6 +32,7 @@ export const ParameterMetadataCard = ({
   isAdvanced,
   isModified = false,
   onPushToSchema,
+  onToggleAdvanced,
 }: ParameterMetadataCardProps) => {
   const type = schema.type || 'string';
   const format = schema.format;
@@ -186,6 +188,26 @@ export const ParameterMetadataCard = ({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Push this parameter default to schema</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
+          {onToggleAdvanced && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onToggleAdvanced}
+                    className="h-7 px-2"
+                  >
+                    <ArrowUpDown className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isAdvanced ? "Move to standard parameters" : "Move to advanced parameters"}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

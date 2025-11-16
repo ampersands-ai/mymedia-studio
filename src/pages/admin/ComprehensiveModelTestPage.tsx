@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useModels } from "@/hooks/useModels";
@@ -397,6 +398,69 @@ const ComprehensiveModelTestPage = () => {
           </p>
         </div>
       </div>
+
+      {/* Model Summary Card */}
+      {currentModel && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>{currentModel.model_name}</CardTitle>
+                <CardDescription className="space-y-1 mt-2">
+                  <div className="flex gap-2 flex-wrap">
+                    <Badge>{currentModel.provider}</Badge>
+                    <Badge variant="outline">{currentModel.content_type}</Badge>
+                    {!currentModel.is_active && <Badge variant="destructive">Inactive</Badge>}
+                    {currentModel.model_family && (
+                      <Badge variant="secondary">{currentModel.model_family}</Badge>
+                    )}
+                  </div>
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Base Cost</p>
+                <p className="font-medium">{currentModel.base_token_cost} credits</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Est. Time</p>
+                <p className="font-medium">{currentModel.estimated_time_seconds || 'N/A'}s</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Max Images</p>
+                <p className="font-medium">{currentModel.max_images || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Default Outputs</p>
+                <p className="font-medium">{currentModel.default_outputs || 1}</p>
+              </div>
+            </div>
+
+            {currentModel.api_endpoint && (
+              <div className="pt-4 border-t">
+                <p className="text-sm text-muted-foreground mb-1">API Endpoint</p>
+                <code className="text-xs bg-muted px-2 py-1 rounded">{currentModel.api_endpoint}</code>
+              </div>
+            )}
+
+            {currentModel.cost_multipliers && Object.keys(currentModel.cost_multipliers as any).length > 0 && (
+              <div className="pt-4 border-t">
+                <p className="text-sm text-muted-foreground mb-2">Cost Multipliers</p>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(currentModel.cost_multipliers as any).map(([key, value]) => (
+                    <Badge key={key} variant="outline" className="text-xs">
+                      {key}: {String(value)}x
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Inspection UI */}
       {inspectionMode === 'reviewing' && (

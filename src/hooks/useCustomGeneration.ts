@@ -242,11 +242,11 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       updateState({ prompt: selectedPrompt, generatingSurprise: false });
       
       const promptTypeLabels = {
-        'image_editing': 'Image editing',
-        'prompt_to_image': 'Image generation',
-        'prompt_to_video': 'Video generation',
+        'image_editing': 'Image editing/image to image',
+        'prompt_to_image': 'Text to image',
+        'prompt_to_video': 'Text to video',
         'image_to_video': 'Image animation',
-        'prompt_to_audio': 'Audio generation'
+        'prompt_to_audio': 'Audio studio'
       };
       
       toast.success(`${promptTypeLabels[state.selectedGroup]} prompt loaded!`);

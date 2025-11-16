@@ -674,40 +674,19 @@ export default function ComprehensiveModelTestPage() {
           <Separator />
 
           {testStatus === 'idle' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Test Model</CardTitle>
-                <CardDescription>Enter parameters and run a test generation</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">Prompt</label>
-                    <textarea
-                      value={state.prompt}
-                      onChange={(e) => {
-                        setStatePrompt(e.target.value);
-                        updateState({ prompt: e.target.value });
-                      }}
-                      className="w-full min-h-[100px] p-3 rounded-md border bg-background"
-                      placeholder="Enter your prompt..."
-                    />
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={handleStartTest} 
-                  disabled={!state.prompt.trim() || isGenerating}
-                  size="lg"
-                  className="w-full"
-                >
-                  {isGenerating ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : null}
-                  Start Test
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="flex justify-center pt-4">
+              <Button 
+                onClick={handleStartTest} 
+                disabled={isGenerating}
+                size="lg"
+                className="min-w-[200px]"
+              >
+                {isGenerating ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : null}
+                Start Test
+              </Button>
+            </div>
           )}
 
           {testStatus !== 'idle' && (

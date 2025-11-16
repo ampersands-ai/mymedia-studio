@@ -37,8 +37,6 @@ const Terms = lazy(() => import("./pages/Terms"));
 const Community = lazy(() => import("./pages/Community"));
 const About = lazy(() => import("./pages/About"));
 const Blog = lazy(() => import("./pages/Blog"));
-const BlogList = lazy(() => import("./pages/BlogList"));
-const BlogPost = lazy(() => import("./pages/BlogPost"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const Features = lazy(() => import("./pages/Features"));
 const Templates = lazy(() => import("./pages/Templates"));
@@ -74,7 +72,6 @@ const UserLogs = lazy(() => import("./pages/admin/UserLogs"));
 const EmailSettings = lazy(() => import("./pages/admin/EmailSettings"));
 const EmailHistory = lazy(() => import("./pages/admin/EmailHistory").then(m => ({ default: m.EmailHistory })));
 const AdvancedAnalytics = lazy(() => import("./pages/admin/AdvancedAnalytics").then(m => ({ default: m.AdvancedAnalytics })));
-const CreateBlog = lazy(() => import("./pages/admin/CreateBlog"));
 const DebugPanel = lazy(() => import("./components/dev/DebugPanel").then(m => ({ default: m.DebugPanel })));
 const RouteErrorBoundary = lazy(() => import("./components/error/RouteErrorBoundary").then(m => ({ default: m.RouteErrorBoundary })));
 
@@ -176,15 +173,12 @@ const AppContent = () => {
               <Route path="email-settings" element={<RouteErrorBoundary routeName="Admin > Email Settings"><EmailSettings /></RouteErrorBoundary>} />
               <Route path="email-history" element={<RouteErrorBoundary routeName="Admin > Email History"><EmailHistory /></RouteErrorBoundary>} />
               <Route path="advanced-analytics" element={<RouteErrorBoundary routeName="Admin > Advanced Analytics"><AdvancedAnalytics /></RouteErrorBoundary>} />
-              <Route path="create-blog" element={<RouteErrorBoundary routeName="Admin > Create Blog"><CreateBlog /></RouteErrorBoundary>} />
             </Route>
             <Route path="/pricing" element={<RouteErrorBoundary routeName="Pricing"><Pricing /></RouteErrorBoundary>} />
             <Route path="/privacy" element={<RouteErrorBoundary routeName="Privacy"><Privacy /></RouteErrorBoundary>} />
             <Route path="/terms" element={<RouteErrorBoundary routeName="Terms"><Terms /></RouteErrorBoundary>} />
             <Route path="/community" element={<RouteErrorBoundary routeName="Community"><Community /></RouteErrorBoundary>} />
             <Route path="/about" element={<RouteErrorBoundary routeName="About"><About /></RouteErrorBoundary>} />
-            <Route path="/blog" element={<RouteErrorBoundary routeName="Blog List"><BlogList /></RouteErrorBoundary>} />
-            <Route path="/blog/:slug" element={<RouteErrorBoundary routeName="Blog Post"><BlogPost /></RouteErrorBoundary>} />
             <Route path="/faq" element={<RouteErrorBoundary routeName="FAQ"><FAQ /></RouteErrorBoundary>} />
             <Route path="/features" element={<RouteErrorBoundary routeName="Features"><Features /></RouteErrorBoundary>} />
             <Route path="/templates" element={<Navigate to="/dashboard/templates" replace />} />

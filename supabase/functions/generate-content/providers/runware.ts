@@ -102,8 +102,7 @@ async function pollForVideoResult(
 
 // Model-specific parameter restrictions
 const MODEL_RESTRICTIONS: Record<string, string[]> = {
-  'bytedance:': ['outputFormat', 'outputQuality'], // Seedance models - outputFormat and outputQuality not supported
-  'runware:110': ['outputFormat'], // Background removal
+  'runware:110': ['outputFormat'], // Background removal only
 };
 
 function isParameterSupported(model: string, paramName: string): boolean {
@@ -194,7 +193,12 @@ export async function callRunware(
     taskUUID,
     parameterKeys: Object.keys(taskPayload),
     hasOutputFormat: !!taskPayload.outputFormat,
-    isVideo
+    hasOutputQuality: !!taskPayload.outputQuality,
+    hasProviderSettings: !!taskPayload.providerSettings,
+    providerSettingsType: typeof taskPayload.providerSettings,
+    providerSettingsKeys: taskPayload.providerSettings ? Object.keys(taskPayload.providerSettings) : [],
+    isVideo,
+    fullPayload: JSON.stringify(taskPayload, null, 2)
   });
 
   // Build request payload with authentication and task

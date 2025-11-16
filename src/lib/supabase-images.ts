@@ -41,6 +41,14 @@ function cleanImagePath(bucketPath: string, bucket: string = 'generated-content'
     if (part) cleanPath = part;
   }
 
+  // Strip legacy /dashboard/{userId}/ prefix pattern if present
+  if (cleanPath.includes('/dashboard/')) {
+    const dashboardMatch = cleanPath.match(/^\/dashboard\/[^/]+\/(.+)/);
+    if (dashboardMatch) {
+      cleanPath = dashboardMatch[1];
+    }
+  }
+
   // Normalize and decode
   cleanPath = cleanPath.replace(/^\/+/, '');
   try {

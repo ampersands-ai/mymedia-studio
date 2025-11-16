@@ -37,8 +37,7 @@ export default function ComprehensiveModelTestPage() {
   const [selectedModelRecordId, setSelectedModelRecordId] = useState<string | null>(null);
   const { data: fullModel, isLoading: fullModelLoading } = useModelByRecordId(selectedModelRecordId);
 
-  // Custom parameters state
-  const [customParameters, setCustomParameters] = useState<Record<string, any>>({});
+  // Original defaults tracking (customParameters removed - now using state.modelParameters)
   const [originalDefaults, setOriginalDefaults] = useState<Record<string, any>>({});
   const [originalAdvancedFlags, setOriginalAdvancedFlags] = useState<Record<string, boolean>>({});
 
@@ -158,7 +157,7 @@ export default function ComprehensiveModelTestPage() {
         advancedFlags[key] = prop.isAdvanced || false;
       });
       
-      setCustomParameters(defaults);
+      updateState({ modelParameters: defaults });
       setOriginalDefaults(defaults);
       setOriginalAdvancedFlags(advancedFlags);
     }
@@ -187,14 +186,16 @@ export default function ComprehensiveModelTestPage() {
   }, [fullModel?.record_id]);
 
   const handleParameterChange = (key: string, value: any) => {
-    setCustomParameters(prev => ({
-      ...prev,
-      [key]: value,
-    }));
+    updateState({ 
+      modelParameters: { 
+        ...state.modelParameters, 
+        [key]: value 
+      } 
+    });
   };
 
   const handleResetToDefaults = () => {
-    setCustomParameters({ ...originalDefaults });
+    updateState({ modelParameters: { ...originalDefaults } });
     toast.success('Parameters reset to defaults');
   };
 
@@ -202,7 +203,7 @@ export default function ComprehensiveModelTestPage() {
     const config = {
       model_id: fullModel?.id,
       model_name: fullModel?.model_name,
-      parameters: customParameters,
+      parameters: state.modelParameters,
       timestamp: new Date().toISOString(),
     };
     
@@ -242,8 +243,8 @@ export default function ComprehensiveModelTestPage() {
   const getModifiedParameters = (): string[] => {
     const modified: string[] = [];
     
-    Object.keys(customParameters).forEach(key => {
-      if (customParameters[key] !== originalDefaults[key]) {
+    Object.keys(state.modelParameters).forEach(key => {
+      if (state.modelParameters[key] !== originalDefaults[key]) {
         modified.push(key);
       }
     });
@@ -266,7 +267,7 @@ export default function ComprehensiveModelTestPage() {
     setConfirmPushDialog({
       open: true,
       paramKey,
-      newValue: customParameters[paramKey],
+      newValue: state.modelParameters[paramKey],
     });
   };
 
@@ -355,8 +356,8 @@ export default function ComprehensiveModelTestPage() {
       const schema = { ...(fullModel.input_schema as any) };
       
       modified.forEach(key => {
-        if (customParameters[key] !== originalDefaults[key]) {
-          schema.properties[key].default = customParameters[key];
+        if (state.modelParameters[key] !== originalDefaults[key]) {
+          schema.properties[key].default = state.modelParameters[key];
         }
       });
       
@@ -367,7 +368,7 @@ export default function ComprehensiveModelTestPage() {
       
       if (error) throw error;
       
-      setOriginalDefaults({ ...customParameters });
+      setOriginalDefaults({ ...state.modelParameters });
       setOriginalAdvancedFlags(prev => {
         const updated = { ...prev };
         Object.keys(schema.properties).forEach(key => {
@@ -390,20 +391,20 @@ export default function ComprehensiveModelTestPage() {
       input_validation: {
         prompt: state.prompt,
         model: fullModel?.model_name,
-        customParameters,
+        modelParameters: state.modelParameters,
         uploadedImages: uploadedImages.length,
       },
     }));
 
     setCurrentStage('parameter_merge');
     const mergedParams = {
-      ...customParameters,
+      ...state.modelParameters,
       prompt: state.prompt,
     };
     setStageData(prev => ({
       ...prev,
       parameter_merge: {
-        userParams: customParameters,
+        userParams: state.modelParameters,
         backendParams: fullModel?.input_schema,
         merged: mergedParams,
       },
@@ -426,10 +427,10 @@ export default function ComprehensiveModelTestPage() {
     }));
 
     return payload;
-  }, [state.prompt, customParameters, uploadedImages, fullModel]);
+  }, [state.prompt, state.modelParameters, uploadedImages, fullModel]);
 
   const handleStartTest = async () => {
-    if (!customParameters.prompt || !customParameters.prompt.trim()) {
+    if (!state.prompt?.trim()) {
       toast.error('Please enter a prompt');
       return;
     }
@@ -472,7 +473,7 @@ export default function ComprehensiveModelTestPage() {
           modelId: fullModel?.id,
           modelRecordId: fullModel?.record_id,
           prompt: state.prompt,
-          parameters: customParameters,
+          parameters: state.modelParameters,
         }
       });
 
@@ -532,7 +533,7 @@ export default function ComprehensiveModelTestPage() {
       startTime: testStartTime,
       endTime: testEndTime,
       duration: testEndTime && testStartTime ? testEndTime - testStartTime : null,
-      parameters: customParameters,
+      parameters: state.modelParameters,
       stages: stageData,
       outputs: state.generatedOutputs,
       error: testError,
@@ -663,7 +664,7 @@ export default function ComprehensiveModelTestPage() {
 
           <ParametersInspector
             schema={fullModel.input_schema as any}
-            parameters={customParameters}
+            parameters={state.modelParameters}
             onParameterChange={handleParameterChange}
             modifiedParameters={modifiedParameters}
             onPushParameterToSchema={handlePushParameterToSchema}

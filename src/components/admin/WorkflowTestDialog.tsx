@@ -3,9 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
@@ -23,6 +20,8 @@ import type {
 } from "@/types/workflow-parameters";
 import { jsonToSchema } from "@/types/schema";
 import type { ContentType } from "@/types/workflow-execution-display";
+import { SchemaInput } from "@/components/generation/SchemaInput";
+import type { ModelParameterValue } from "@/types/model-schema";
 
 const testLogger = logger.child({ component: 'WorkflowTestDialog' });
 
@@ -327,121 +326,36 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
     return 'image';
   };
 
+  // Render input field using SchemaInput for consistency with Custom Creation
   const renderInputField = (field: any) => {
-    const value = inputs[field.name];
-    
-    switch (field.type) {
-      case 'textarea':
-        return (
-          <Textarea
-            value={typeof value === 'string' ? value : ''}
-            onChange={(e) => handleInputChange(field.name, e.target.value)}
-            placeholder={field.label}
-          />
-        );
-      
-      case 'number':
-        return (
-          <Input
-            type="number"
-            value={typeof value === 'number' ? value : (typeof value === 'string' ? value : '')}
-            onChange={(e) => handleInputChange(field.name, parseFloat(e.target.value) || 0)}
-            placeholder={field.label}
-          />
-        );
-      
-      case 'select':
-        return (
-          <Select
-            value={typeof value === 'string' ? value : String(value || '')}
-            onValueChange={(value) => handleInputChange(field.name, value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={`Select ${field.label}`} />
-            </SelectTrigger>
-            <SelectContent>
-              {field.options?.map((opt: string) => (
-                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        );
-      
-      case 'checkbox':
-        return (
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              checked={value === true}
-              onCheckedChange={(checked) => handleInputChange(field.name, checked === true)}
-            />
-            <Label>{field.label}</Label>
-          </div>
-        );
-      
-      case 'upload-image':
-        return (
-          <div className="space-y-2">
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleFileUpload(field.name, e.target.files?.[0])}
-            />
-            {previewUrls[field.name] && (
-              <div className="border rounded p-2 bg-muted/30">
-                <img 
-                  src={previewUrls[field.name]} 
-                  alt="Preview" 
-                  className="max-h-40 mx-auto rounded"
-                />
-              </div>
-            )}
-          </div>
-        );
-
-      case 'upload-file':
-        return (
-          <div className="space-y-2">
-            <Input
-              type="file"
-              onChange={(e) => handleFileUpload(field.name, e.target.files?.[0])}
-            />
-            {previewUrls[field.name] && (
-              <p className="text-sm text-muted-foreground">
-                File uploaded successfully
-              </p>
-            )}
-          </div>
-        );
-
-      case 'radio':
-        return (
-          <div className="space-y-2">
-            {field.options?.map((opt: string) => (
-              <div key={opt} className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id={`${field.name}-${opt}`}
-                  name={field.name}
-                  value={opt}
-                  checked={value === opt}
-                  onChange={(e) => handleInputChange(field.name, e.target.value)}
-                  className="h-4 w-4"
-                />
-                <Label htmlFor={`${field.name}-${opt}`}>{opt}</Label>
-              </div>
-            ))}
-          </div>
-        );
-      
-      default:
-        return (
-          <Input
-            value={typeof value === 'string' ? value : String(value || '')}
-            onChange={(e) => handleInputChange(field.name, e.target.value)}
-            placeholder={field.label}
-          />
-        );
+    const fieldInfo = getFieldSchemaInfo(field.name);
+    if (!fieldInfo) {
+      // Fallback for fields without schema info
+      const value = inputs[field.name];
+      const stringValue = typeof value === 'string' ? value : (value !== null && value !== undefined ? String(value) : '');
+      return (
+        <Input
+          value={stringValue}
+          onChange={(e) => handleInputChange(field.name, e.target.value)}
+          placeholder={field.label}
+        />
+      );
     }
+
+    const modelData = stepModels[fieldInfo.stepNumber];
+    const value = inputs[field.name] as ModelParameterValue;
+
+    return (
+      <SchemaInput
+        name={field.name}
+        schema={fieldInfo.paramSchema}
+        value={value}
+        onChange={(newValue) => handleInputChange(field.name, newValue)}
+        required={fieldInfo.isRequired}
+        modelId={modelData?.content_type}
+        provider={modelData?.provider}
+      />
+    );
   };
 
   return (

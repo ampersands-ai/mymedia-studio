@@ -831,14 +831,44 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Log schema analysis for debugging
+      logger.debug('Schema analysis', {
+        userId: user?.id,
+        metadata: {
+          model_id: model.id,
+          model_record_id: model.record_id,
+          schema_properties: Object.keys(model.input_schema?.properties || {}),
+          required_fields: model.input_schema?.required || [],
+          declared_image_field: (model.input_schema as any)?.imageInputField || null,
+          has_image_field_in_properties: (model.input_schema as any)?.imageInputField 
+            ? !!(model.input_schema?.properties as any)?.[(model.input_schema as any).imageInputField]
+            : false
+        }
+      });
+
       // Validate all required parameters from schema (skip all prompt aliases)
       if (model.input_schema?.required) {
         const promptAliases = ['prompt', 'positivePrompt', 'positive_prompt'];
+        const missingParams: string[] = [];
+        
         for (const requiredParam of model.input_schema.required) {
           if (promptAliases.includes(requiredParam)) continue; // already handled above
           if (validatedParameters[requiredParam] === undefined) {
-            throw new Error(`Missing required parameter: ${requiredParam}`);
+            missingParams.push(requiredParam);
           }
+        }
+        
+        if (missingParams.length > 0) {
+          const error = `Missing required parameters: ${missingParams.join(', ')}. Schema requires: ${JSON.stringify(model.input_schema.required)}`;
+          logger.error('Missing required parameters', new Error(error), {
+            metadata: {
+              missing: missingParams,
+              provided: Object.keys(validatedParameters),
+              schema_required: model.input_schema.required,
+              declared_image_field: (model.input_schema as any)?.imageInputField
+            }
+          });
+          throw new Error(error);
         }
       }
 

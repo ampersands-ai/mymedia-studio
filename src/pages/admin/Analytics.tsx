@@ -225,7 +225,7 @@ export default function Analytics() {
                 className="h-[300px]"
               >
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={dailyData}>
+                  <LineChart data={dailyData || []}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
                     <YAxis />
@@ -268,7 +268,7 @@ export default function Analytics() {
                 className="h-[300px]"
               >
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={topModels} layout="vertical">
+                  <BarChart data={topModels || []} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" />
                     <YAxis dataKey="model" type="category" width={150} />

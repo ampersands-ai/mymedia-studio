@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
       );
     }
     
-    const { 
+    let { 
       template_id, 
       model_id, 
       model_record_id,
@@ -137,6 +137,27 @@ Deno.serve(async (req) => {
       user_id, // For service role calls (test mode)
       test_mode = false, // Flag to skip billing for admin tests
     } = validatedRequest;
+    
+    // CRITICAL FIX: Extract prompt from parameters if not provided at top level
+    // Some UIs send prompt inside custom_parameters instead of as a separate field
+    if (!prompt && custom_parameters.prompt) {
+      prompt = custom_parameters.prompt as string;
+      delete custom_parameters.prompt; // Remove from parameters to avoid duplication
+      logger.debug('Extracted prompt from parameters', { 
+        userId: user?.id, 
+        metadata: { prompt_length: prompt?.length } 
+      });
+    }
+    
+    // Also check for positivePrompt (Runware models)
+    if (!prompt && custom_parameters.positivePrompt) {
+      prompt = custom_parameters.positivePrompt as string;
+      delete custom_parameters.positivePrompt;
+      logger.debug('Extracted positivePrompt from parameters', { 
+        userId: user?.id, 
+        metadata: { prompt_length: prompt?.length } 
+      });
+    }
     
     // If service role, require user_id in body
     if (isServiceRole) {

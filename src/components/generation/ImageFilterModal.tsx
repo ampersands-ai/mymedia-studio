@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -22,7 +22,7 @@ export function ImageFilterModal({
   const [filters, setFilters] = useState<FilterSettings>(defaultFilters);
   const [isApplying, setIsApplying] = useState(false);
 
-  const handleApplyFilters = async () => {
+  const handleApplyFilters = useCallback(async () => {
     try {
       setIsApplying(true);
       const { blob, url } = await applyFiltersToImage(imageUrl, filters);
@@ -38,7 +38,7 @@ export function ImageFilterModal({
     } finally {
       setIsApplying(false);
     }
-  };
+  }, [imageUrl, filters, onFilterComplete, onOpenChange]);
 
   const applyPreset = (presetName: string) => {
     if (presetName === 'reset') {
@@ -68,7 +68,7 @@ export function ImageFilterModal({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, filters]);
+  }, [open, filters, handleApplyFilters, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

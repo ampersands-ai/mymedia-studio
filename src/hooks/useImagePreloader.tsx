@@ -35,13 +35,12 @@ export function useImagePreloader(
     }
     
     setIsLoading(true);
-    
-    let timeoutId: NodeJS.Timeout;
+
     let isMounted = true;
     const images: HTMLImageElement[] = [];
-    
+
     // Set timeout fallback
-    timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       if (isMounted) {
         setHasTimedOut(true);
         setIsLoading(false);
@@ -49,7 +48,7 @@ export function useImagePreloader(
     }, timeout);
     
     // Preload all images
-    validUrls.forEach((url, index) => {
+    validUrls.forEach((url) => {
       const img = new Image();
       images.push(img);
       
@@ -88,6 +87,7 @@ export function useImagePreloader(
         img.src = '';
       });
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [validUrls.join(','), timeout, minLoadedPercentage, totalImages]);
   
   return {

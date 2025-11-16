@@ -37,7 +37,7 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
       });
       setParameters([]);
     }
-  }, [schema]);
+  }, [schema, modelRecordId]);
 
   const handleAddParameter = () => {
     setEditingParameter(null);

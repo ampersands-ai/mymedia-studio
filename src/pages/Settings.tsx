@@ -58,6 +58,7 @@ const Settings = () => {
       fetchAuditLogs();
       fetchUserCreatedDate();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchUserCreatedDate = async () => {
@@ -126,6 +127,7 @@ const Settings = () => {
         }, 500);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [savings]);
 
   const fetchProfile = async () => {
@@ -238,26 +240,6 @@ const Settings = () => {
       });
     } finally {
       setLoadingAuditLogs(false);
-    }
-  };
-
-  const handleRevokeSession = async (sessionId: string) => {
-    try {
-      const { error } = await supabase.functions.invoke('session-manager', {
-        body: { action: 'revoke', session_id: sessionId }
-      });
-
-      if (error) throw error;
-      toast.success("Session revoked successfully");
-      fetchSessions();
-    } catch (error: any) {
-      logger.error("Error revoking session", error instanceof Error ? error : new Error(String(error)), {
-        component: 'Settings',
-        operation: 'handleRevokeSession',
-        sessionId,
-        userId: user?.id
-      });
-      toast.error(error.message || "Failed to revoke session");
     }
   };
 
@@ -523,7 +505,7 @@ const Settings = () => {
                         onClick={async () => {
                           try {
                             await clearAllCaches();
-                          } catch (error) {
+                          } catch {
                             toast.error("Failed to clear caches");
                           }
                         }}

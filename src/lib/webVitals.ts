@@ -189,7 +189,7 @@ export function monitorPerformance() {
     });
     
     longTaskObserver.observe({ entryTypes: ['longtask'] });
-  } catch (e) {
+  } catch {
     // Browser doesn't support longtask
   }
 }

@@ -56,7 +56,7 @@ async function logApiCall(
       error_message: response.errorMessage,
       additional_metadata: request.additionalMetadata,
     });
-  } catch (error) {
+  } catch {
     // Failed to log API call - silent failure to prevent breaking main flow
   }
 }
@@ -788,7 +788,9 @@ async function assembleVideo(
           fallbackEdit.timeline.tracks[captionTrackIndex].clips[0].asset = { type: 'caption', src: 'alias://VOICEOVER' };
           fallbackEdit.timeline.tracks[captionTrackIndex].clips[0].length = 'auto';
         }
-      } catch (_) {}
+      } catch {
+        // Ignore errors when trying to modify caption track
+      }
 
       const retryRequestSentAt = new Date();
       const retryRes = await fetch(endpoint, {
@@ -801,7 +803,9 @@ async function assembleVideo(
       });
       const retryText = await retryRes.text();
       let retryResult = null;
-      try { retryResult = retryText ? JSON.parse(retryText) : null; } catch {}
+      try { retryResult = retryText ? JSON.parse(retryText) : null; } catch {
+        // Ignore JSON parse errors
+      }
 
       logApiCall(
         supabase,
@@ -843,7 +847,9 @@ async function assembleVideo(
           if (captionTrackIndex2 !== -1 && fallbackEdit2.timeline.tracks[captionTrackIndex2]?.clips?.[0]) {
             fallbackEdit2.timeline.tracks[captionTrackIndex2].clips[0].asset = { type: 'captions', src: 'alias://VOICEOVER' };
           }
-        } catch (_) {}
+        } catch {
+          // Ignore errors when trying to modify caption track
+        }
 
         const retryRequestSentAt2 = new Date();
         const retryRes2 = await fetch(endpoint, {
@@ -856,7 +862,9 @@ async function assembleVideo(
         });
         const retryText2 = await retryRes2.text();
         let retryResult2 = null;
-        try { retryResult2 = retryText2 ? JSON.parse(retryText2) : null; } catch {}
+        try { retryResult2 = retryText2 ? JSON.parse(retryText2) : null; } catch {
+          // Ignore JSON parse errors
+        }
 
         logApiCall(
           supabase,

@@ -36,7 +36,8 @@ export interface VideoMediaOptions extends BaseMediaOptions {
 }
 
 export interface AudioMediaOptions extends BaseMediaOptions {
-  // Audio-specific options can be added here
+  // Audio-specific options can be added here if needed
+  enableProxy?: boolean;
 }
 
 export interface MediaContextValue {

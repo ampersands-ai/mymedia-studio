@@ -10,6 +10,7 @@ const corsHeaders = {
 // Inline helper: sanitize errors before logging
 function sanitizeError(error: any): any {
   if (error && typeof error === 'object') {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { authorization, token, api_key, apiKey, secret, ...safe } = error;
     return safe;
   }

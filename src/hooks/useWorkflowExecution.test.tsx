@@ -79,9 +79,8 @@ describe('useWorkflowExecution', () => {
         wrapper: createWrapper(),
       });
 
-      let response: any;
       await act(async () => {
-        response = await result.current.executeWorkflow({
+        await result.current.executeWorkflow({
           workflow_template_id: 'template-123',
           user_inputs: {
             prompt: 'Generate an image',

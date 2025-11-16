@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -26,7 +26,7 @@ export function ImageEffectsModal({
   const [effects, setEffects] = useState<ImageEffects>(defaultEffects);
   const [isApplying, setIsApplying] = useState(false);
 
-  const handleApplyEffects = async () => {
+  const handleApplyEffects = useCallback(async () => {
     try {
       setIsApplying(true);
       const { blob, url } = await applyEffectsToImage(imageUrl, effects);
@@ -42,7 +42,7 @@ export function ImageEffectsModal({
     } finally {
       setIsApplying(false);
     }
-  };
+  }, [imageUrl, effects, onEffectsComplete, onOpenChange]);
 
   const applyPreset = (presetName: string) => {
     if (presetName === 'reset') {
@@ -66,7 +66,7 @@ export function ImageEffectsModal({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, effects]);
+  }, [open, effects, handleApplyEffects, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

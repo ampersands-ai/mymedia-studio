@@ -56,6 +56,7 @@ const Community = () => {
     
     checkCommunityEnabled();
     fetchCommunityCreations();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, sort]);
 
   const fetchCommunityCreations = async () => {

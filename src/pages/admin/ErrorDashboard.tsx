@@ -1,14 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, AlertTriangle, Info, Activity, CheckCircle2, RefreshCw, Filter } from "lucide-react";
+import { AlertCircle, AlertTriangle, Info, Activity } from "lucide-react";
 import { format } from "date-fns";
-import { toast } from "sonner";
-import { useState } from "react";
 
 interface ErrorLog {
   id: string;
@@ -72,13 +68,6 @@ export default function ErrorDashboard() {
     acc[key].push(error);
     return acc;
   }, {} as Record<string, ErrorLog[]>);
-
-  const groupedFunctionLogs = functionLogs?.reduce((acc, log) => {
-    const key = log.function_name;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(log);
-    return acc;
-  }, {} as Record<string, FunctionLog[]>);
 
   const totalErrors = (errors?.length || 0) + (functionLogs?.length || 0);
   const criticalErrors = (errors?.filter(e => e.severity === 'critical').length || 0) + 

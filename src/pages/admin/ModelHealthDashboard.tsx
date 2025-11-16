@@ -171,7 +171,7 @@ export default function ModelHealthDashboard() {
     navigate(`/admin/model-health/test/${modelRecordId}`);
   };
 
-  const handleBulkTest = async (modelRecordIds: string[]) => {
+  const handleBulkTest = async () => {
     setIsBulkTesting(true);
     setBulkProgress(0);
 

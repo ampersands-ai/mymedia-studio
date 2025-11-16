@@ -57,6 +57,7 @@ export function BackgroundMediaSelector({
     if (open && mediaItems.length === 0) {
       searchMedia(getDefaultQuery(style), mediaType);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const getDefaultQuery = (style: string): string => {

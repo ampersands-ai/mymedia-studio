@@ -120,9 +120,6 @@ Deno.serve(async (req) => {
     // Performance optimization headers
     headers.set("connection", "keep-alive");
     headers.set("cross-origin-resource-policy", "cross-origin");
-    
-    // Log cache status for monitoring (EdgeLogger added in main block)
-    const cacheStatus = upstreamRes.headers.get("cf-cache-status") || "UNKNOWN";
 
     return new Response(upstreamRes.body, {
       status: upstreamRes.status,

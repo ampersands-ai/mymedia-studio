@@ -139,7 +139,7 @@ export function CustomSceneCard({
       const fileExt = file.name.split('.').pop();
       const filePath = `${user.id}/uploads/${Date.now()}.${fileExt}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('generated-content')
         .upload(filePath, file);
 

@@ -41,11 +41,11 @@ export const ModelParameterForm = ({
   // Update when model schema changes
   useEffect(() => {
     if (!modelSchema) return;
-    
+
     const defaults = initializeParameters(modelSchema, currentValues);
     setParameters(defaults);
     onChange(defaults);
-  }, [modelSchema]);
+  }, [modelSchema, currentValues, onChange]);
 
   // Re-hydrate display when parent clears values (e.g., Reset)
   useEffect(() => {

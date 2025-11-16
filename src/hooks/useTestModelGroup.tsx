@@ -92,7 +92,7 @@ export const useTestModelGroup = () => {
         
         try {
           // NO-OP image upload for test (returns empty array)
-          const noOpUploadImages = async (_userId: string): Promise<string[]> => [];
+          const noOpUploadImages = async (): Promise<string[]> => [];
           
           // Get max prompt length for this model (SAME logic as production)
           const maxPromptLength = getMaxPromptLength(model, undefined);

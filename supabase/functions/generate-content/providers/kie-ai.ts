@@ -180,29 +180,3 @@ export async function callKieAI(
     throw new Error(`Kie.ai provider failed: ${error.message}`);
   }
 }
-
-function determineFileExtension(contentType: string, url: string): string {
-  // Try to get extension from URL first
-  if (url) {
-    const match = url.match(/\.([a-z0-9]+)(?:\?|$)/i);
-    if (match) return match[1];
-  }
-  
-  // Fallback to content type mapping
-  const mimeToExt: Record<string, string> = {
-    'image/png': 'png',
-    'image/jpeg': 'jpg',
-    'image/jpg': 'jpg',
-    'image/webp': 'webp',
-    'image/gif': 'gif',
-    'video/mp4': 'mp4',
-    'video/webm': 'webm',
-    'video/quicktime': 'mov',
-    'audio/mpeg': 'mp3',
-    'audio/wav': 'wav',
-    'audio/ogg': 'ogg',
-    'text/plain': 'txt'
-  };
-  
-  return mimeToExt[contentType.toLowerCase()] || 'png'; // Default to png for images
-}

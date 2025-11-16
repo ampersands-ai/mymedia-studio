@@ -75,7 +75,7 @@ export function BackgroundMusicSelector({
       }
       hasShownAutoplayWarning.current = false;
     };
-  }, [open]);
+  }, [open, audioItems.length, playingAudio]);
 
   // Update volume for playing audio when slider changes
   useEffect(() => {
@@ -85,7 +85,7 @@ export function BackgroundMusicSelector({
     if (selectedAudioRef.current) {
       selectedAudioRef.current.volume = volume / 100;
     }
-  }, [volume]);
+  }, [volume, playingAudio]);
 
   const searchMusic = async (query: string) => {
     setLoading(true);

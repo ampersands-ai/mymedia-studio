@@ -150,7 +150,7 @@ const Playground = () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       setGeneratedOutput("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=600&fit=crop");
       toast.success("Image generated successfully!");
-    } catch (_error) {
+    } catch {
       toast.error("Generation failed");
     } finally {
       setIsGenerating(false);
@@ -170,7 +170,7 @@ const Playground = () => {
       const enhanced = `${prompt}. Ultra high quality, professional lighting, cinematic composition, 8K resolution, highly detailed`;
       setPrompt(enhanced);
       toast.success("Prompt enhanced!");
-    } catch (_error) {
+    } catch {
       toast.error("Failed to enhance prompt");
     } finally {
       setIsEnhancing(false);
@@ -195,6 +195,7 @@ const Playground = () => {
 
   useEffect(() => {
     setEstimatedTokens(calculateTokens());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentType, resolution, uploadedImages, applyBrand]);
 
 

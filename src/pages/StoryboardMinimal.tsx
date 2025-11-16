@@ -111,7 +111,7 @@ export default function StoryboardMinimal() {
         setTopic('');
         setDuration(60);
         toast.success('Storyboard reset!');
-      } catch (_error) {
+      } catch {
         toast.error('Failed to reset storyboard');
       }
     }

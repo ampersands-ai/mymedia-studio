@@ -19,8 +19,8 @@ export async function validateIdempotency(
   supabase: SupabaseClient
 ): Promise<IdempotencyResult> {
   const idempotencyKey = `${taskId}-${callbackType}`;
-  
-  const { data: existingEvent, error: eventCheckError } = await supabase
+
+  const { data: existingEvent } = await supabase
     .from('webhook_events')
     .select('id')
     .eq('event_type', 'kie_ai_callback')

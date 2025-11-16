@@ -159,6 +159,7 @@ export const ScenePreviewGenerator = ({
         pollIntervalRef.current = null;
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingGenerationId, isAsyncGeneration]);
 
   // Timer effect for tracking elapsed time and enabling free regeneration
@@ -238,6 +239,7 @@ export const ScenePreviewGenerator = ({
       setPollStatus('pending');
       setPollOutputUrl(null);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pollStatus, pollOutputUrl, scene.id, onImageGenerated]);
 
   // Log errors to console instead of toasting
@@ -252,6 +254,7 @@ export const ScenePreviewGenerator = ({
       });
       toast.error(error);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [error]);
 
   // Filter to ONLY prompt-to-image and image-to-video models based on groups
@@ -294,6 +297,7 @@ export const ScenePreviewGenerator = ({
     if (availableModels.length > 0) {
       setSelectedModelId(availableModels[0].record_id);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generationMode]);
 
   const selectedModel = availableModels.find(m => m.record_id === selectedModelId);

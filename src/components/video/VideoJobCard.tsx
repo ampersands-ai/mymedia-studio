@@ -201,6 +201,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
         jobId: job.id
       } as any);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [job.status, job.voiceover_url, voiceoverSignedUrl, isLoadingVoiceUrl]);
 
   // Reset editing state when script changes

@@ -30,6 +30,43 @@ interface GenerationPreviewProps {
 }
 
 export const GenerationPreview = ({ storagePath, contentType, className }: GenerationPreviewProps) => {
+  // Safety net: If storagePath is already a full HTTP URL, use it directly
+  const isFullUrl = storagePath ? isFullHttpUrl(storagePath) : false;
+
+  // Use content-type-specific hooks from new architecture (skip if already a full URL)
+  const { url: imageUrl, isLoading: imageLoading, error: imageError } = useImageUrl(
+    contentType === 'image' && !isFullUrl && storagePath ? storagePath : null,
+    { strategy: 'public-cdn', bucket: 'generated-content' }
+  );
+
+  const { url: videoUrl, isLoading: videoLoading, error: videoError } = useVideoUrl(
+    contentType === 'video' && !isFullUrl && storagePath ? storagePath : null,
+    { strategy: 'public-direct', bucket: 'generated-content' }
+  );
+
+  const { url: audioUrl, isLoading: audioLoading, error: audioError } = useAudioUrl(
+    contentType === 'audio' && !isFullUrl && storagePath ? storagePath : null,
+    { strategy: 'public-direct', bucket: 'generated-content' }
+  );
+
+  // Combine states for backward compatibility, with fallback to storagePath if it's a full URL
+  const signedUrl = isFullUrl && storagePath ? storagePath : (contentType === 'image' ? imageUrl : contentType === 'video' ? videoUrl : audioUrl);
+  const isLoading = !isFullUrl && (imageLoading || videoLoading || audioLoading);
+  const error = !isFullUrl && (imageError || videoError || audioError);
+
+  const { shareFile, canShare } = useNativeShare();
+  const { downloadFile } = useNativeDownload();
+  const isMobile = useIsMobile();
+  const [videoPlaybackError, setVideoPlaybackError] = useState(false);
+  const [imageDisplayError, setImageDisplayError] = useState(false);
+  const [audioPlaybackError, setAudioPlaybackError] = useState(false);
+
+  // For video thumbnails using new architecture
+  const thumbPath = contentType === 'video' && storagePath ? storagePath.replace(/\.[^/.]+$/, '.jpg') : null;
+  const { url: thumbUrl } = useImageUrl(thumbPath, { strategy: 'public-direct' });
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [thumbnailGenerated, setThumbnailGenerated] = useState(false);
+
   // Handle null storage path
   if (!storagePath) {
     return (
@@ -38,43 +75,6 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
       </div>
     );
   }
-
-  // Safety net: If storagePath is already a full HTTP URL, use it directly
-  const isFullUrl = isFullHttpUrl(storagePath);
-  
-  // Use content-type-specific hooks from new architecture (skip if already a full URL)
-  const { url: imageUrl, isLoading: imageLoading, error: imageError } = useImageUrl(
-    contentType === 'image' && !isFullUrl ? storagePath : null,
-    { strategy: 'public-cdn', bucket: 'generated-content' }
-  );
-  
-  const { url: videoUrl, isLoading: videoLoading, error: videoError } = useVideoUrl(
-    contentType === 'video' && !isFullUrl ? storagePath : null,
-    { strategy: 'public-direct', bucket: 'generated-content' }
-  );
-  
-  const { url: audioUrl, isLoading: audioLoading, error: audioError } = useAudioUrl(
-    contentType === 'audio' && !isFullUrl ? storagePath : null,
-    { strategy: 'public-direct', bucket: 'generated-content' }
-  );
-  
-  // Combine states for backward compatibility, with fallback to storagePath if it's a full URL
-  const signedUrl = isFullUrl ? storagePath : (contentType === 'image' ? imageUrl : contentType === 'video' ? videoUrl : audioUrl);
-  const isLoading = !isFullUrl && (imageLoading || videoLoading || audioLoading);
-  const error = !isFullUrl && (imageError || videoError || audioError);
-  
-  const { shareFile, canShare } = useNativeShare();
-  const { downloadFile } = useNativeDownload();
-  const isMobile = useIsMobile();
-  const [videoPlaybackError, setVideoPlaybackError] = useState(false);
-  const [imageDisplayError, setImageDisplayError] = useState(false);
-  const [audioPlaybackError, setAudioPlaybackError] = useState(false);
-  
-  // For video thumbnails using new architecture
-  const thumbPath = contentType === 'video' && storagePath ? storagePath.replace(/\.[^/.]+$/, '.jpg') : null;
-  const { url: thumbUrl } = useImageUrl(thumbPath, { strategy: 'public-direct' });
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [thumbnailGenerated, setThumbnailGenerated] = useState(false);
 
   const handleShare = async () => {
     if (!signedUrl) return;

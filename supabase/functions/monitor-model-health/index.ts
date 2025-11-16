@@ -113,14 +113,14 @@ Deno.serve(async (req) => {
           }
         };
 
-        logger.warn('Sending alert for failing model', { 
-          metadata: { 
-            modelName: model?.model_name, 
-            failedTests: stats.failed 
-          } 
+        logger.warn('Sending alert for failing model', {
+          metadata: {
+            modelName: model?.model_name,
+            failedTests: stats.failed
+          }
         });
-        
-        const { data, error: alertError } = await supabase.functions.invoke('send-webhook-alert', {
+
+        const { error: alertError } = await supabase.functions.invoke('send-webhook-alert', {
           body: alertPayload
         });
 
@@ -160,7 +160,6 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    const errorRequestId = crypto.randomUUID();
     console.error('Error monitoring model health', error instanceof Error ? error.message : String(error));
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(

@@ -40,7 +40,6 @@ type AIModel = ModelConfiguration;
 
 export default function AIModelsManager() {
   const [models, setModels] = useState<AIModel[]>([]);
-  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingModel, setEditingModel] = useState<AIModel | null>(null);
   const [sortBy, setSortBy] = useState<string>("cost");
@@ -108,13 +107,11 @@ export default function AIModelsManager() {
       
       setModels(typedModels);
     } catch (error) {
-      logger.error("Failed to fetch AI models", error as Error, { 
+      logger.error("Failed to fetch AI models", error as Error, {
         component: 'AIModelsManager',
         operation: 'fetchModels'
       });
       toast.error("Failed to load AI models");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -392,10 +389,11 @@ export default function AIModelsManager() {
         return a.content_type.localeCompare(b.content_type);
       case "cost":
         return a.base_token_cost - b.base_token_cost;
-      case "duration":
+      case "duration": {
         const aDuration = a.estimated_time_seconds || 0;
         const bDuration = b.estimated_time_seconds || 0;
         return aDuration - bDuration;
+      }
       case "status":
         return (a.is_active === b.is_active) ? 0 : a.is_active ? -1 : 1;
       case "created_at":

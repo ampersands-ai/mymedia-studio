@@ -35,6 +35,7 @@ export const useIntroSceneSync = ({
       setIntroVoiceOverText(storyboard.intro_voiceover_text || '');
       setIntroImagePrompt(storyboard.intro_image_prompt || '');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storyboard?.intro_voiceover_text, storyboard?.intro_image_prompt]);
 
   // Debounced save for voiceover text (1s)
@@ -46,6 +47,7 @@ export const useIntroSceneSync = ({
     }, 1000);
     
     return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [introVoiceOverText, storyboard?.intro_voiceover_text, updateIntroScene]);
 
   // Debounced save for image prompt (1s)
@@ -57,6 +59,7 @@ export const useIntroSceneSync = ({
     }, 1000);
     
     return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [introImagePrompt, storyboard?.intro_image_prompt, updateIntroScene]);
 
   return {

@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNativeCamera } from "@/hooks/useNativeCamera";
-import { useUserTokens } from "@/hooks/useUserTokens";
 import { useWorkflowTokenCost } from "@/hooks/useWorkflowTokenCost";
 import { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { WorkflowPromptInput } from "./WorkflowPromptInput";
@@ -239,7 +238,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
           />
         );
 
-      case 'number':
+      case 'number': {
         const numValue = inputs[field.name];
         return (
           <Input
@@ -250,6 +249,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
             disabled={isExecuting}
           />
         );
+      }
 
       case 'select':
         return (

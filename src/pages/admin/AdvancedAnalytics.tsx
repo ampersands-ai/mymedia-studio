@@ -18,7 +18,7 @@ import {
   Area,
   AreaChart
 } from 'recharts';
-import { Loader2, TrendingUp, Users, Zap, Coins, Activity, Target } from 'lucide-react';
+import { Loader2, TrendingUp, Users, Coins, Activity, Target } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 
 const COLORS = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
@@ -32,6 +32,7 @@ export const AdvancedAnalytics = () => {
 
   useEffect(() => {
     fetchAllAnalytics();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchAllAnalytics = async () => {

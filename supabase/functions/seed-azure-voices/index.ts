@@ -595,7 +595,7 @@ serve(async (req) => {
     console.log(`Seeding ${voices.length} Azure voices...`);
 
     // Upsert all voices (insert or update on conflict)
-    const { data, error } = await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('azure_voices')
       .upsert(
         voices.map(voice => ({

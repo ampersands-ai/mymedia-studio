@@ -40,7 +40,7 @@ serve(async (req) => {
       try {
         const body = await req.json();
         storyboardId = body.storyboardId;
-      } catch (_e) {
+      } catch {
         // Body parsing failed, continue with null
       }
     }

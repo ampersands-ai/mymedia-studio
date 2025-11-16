@@ -112,6 +112,7 @@ export async function duplicateTemplate(
   const timestamp = Date.now();
   
   if (template.template_type === 'template') {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { workflow_steps, user_input_fields, template_type, ai_models, ...templateData } = template;
     
     // Ensure required fields are present

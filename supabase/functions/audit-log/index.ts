@@ -34,10 +34,6 @@ const auditLogSchema = z.object({
     .optional()
     .default({})
 });
-  resource_type?: string;
-  resource_id?: string;
-  metadata?: Record<string, any>;
-}
 
 Deno.serve(async (req) => {
   const requestId = crypto.randomUUID();
@@ -84,7 +80,7 @@ Deno.serve(async (req) => {
     let requestBody;
     try {
       requestBody = await req.json();
-    } catch (parseError) {
+    } catch {
       return new Response(
         JSON.stringify({ error: 'Invalid JSON in request body' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

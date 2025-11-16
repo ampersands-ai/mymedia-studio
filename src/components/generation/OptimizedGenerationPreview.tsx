@@ -45,34 +45,20 @@ export const OptimizedGenerationPreview = ({
   // Use inferred type if contentType is missing or generic
   const effectiveType = contentType || inferredType;
 
-  // Handle null storage path
-  if (!storagePath) {
-    return (
-      <div className={cn("flex items-center justify-center bg-muted rounded-lg min-h-[200px]", className)}>
-        {effectiveType === "video" ? (
-          <Video className="h-8 w-8 text-muted-foreground" />
-        ) : effectiveType === "audio" ? (
-          <Music className="h-8 w-8 text-muted-foreground" />
-        ) : (
-          <div className="h-8 w-8 text-muted-foreground" />
-        )}
-      </div>
-    );
-  }
-
+  // All hooks must be called before any conditional returns
   const { shareFile, canShare } = useNativeShare();
   const { downloadFile } = useNativeDownload();
   const [videoError, setVideoError] = useState(false);
-  const [audioError, setAudioError] = useState(false);
+  const [audioError] = useState(false);
   const [posterUrl, setPosterUrl] = useState<string | null>(null);
   const [connectionSpeed, setConnectionSpeed] = useState<'slow' | 'medium' | 'fast'>('medium');
 
   // Use direct public URLs for videos/audio (CDN-optimized, no signed URL delay)
   // Fallback to signed URL only if public URL fails
-  const videoUrl = effectiveType === "video" && storagePath 
+  const videoUrl = effectiveType === "video" && storagePath
     ? getOptimizedVideoUrl(storagePath, 'generated-content')
     : null;
-  
+
   const audioUrl = effectiveType === "audio" && storagePath
     ? getOptimizedAudioUrl(storagePath, 'generated-content')
     : null;
@@ -85,7 +71,7 @@ export const OptimizedGenerationPreview = ({
 
   // Use video URL hook for fallback with signed strategy
   const { url: fallbackSignedUrl } = useVideoUrl(
-    (effectiveType === "video" || effectiveType === "audio") && (videoError || audioError) ? storagePath : null,
+    (effectiveType === "video" || effectiveType === "audio") && (videoError || audioError) && storagePath ? storagePath : null,
     { strategy: 'signed-short', bucket: 'generated-content' }
   );
 
@@ -113,13 +99,28 @@ export const OptimizedGenerationPreview = ({
           previewLogger.debug('Poster frame extracted', { videoUrl: videoUrl.substring(0, 50) });
         }
       }).catch(error => {
-        previewLogger.warn('Failed to extract poster frame', { 
+        previewLogger.warn('Failed to extract poster frame', {
           error: (error as Error).message,
-          videoUrl: videoUrl.substring(0, 50) 
+          videoUrl: videoUrl.substring(0, 50)
         });
       });
     }
-  }, [videoUrl, contentType, connectionSpeed]);
+  }, [videoUrl, contentType, connectionSpeed, effectiveType]);
+
+  // Handle null storage path
+  if (!storagePath) {
+    return (
+      <div className={cn("flex items-center justify-center bg-muted rounded-lg min-h-[200px]", className)}>
+        {effectiveType === "video" ? (
+          <Video className="h-8 w-8 text-muted-foreground" />
+        ) : effectiveType === "audio" ? (
+          <Music className="h-8 w-8 text-muted-foreground" />
+        ) : (
+          <div className="h-8 w-8 text-muted-foreground" />
+        )}
+      </div>
+    );
+  }
 
   const handleShare = async () => {
     try {
@@ -287,7 +288,7 @@ export const OptimizedGenerationPreview = ({
           preload={connectionSpeed === 'slow' ? 'none' : 'metadata'}
           playsInline
           muted
-          onError={(e) => {
+          onError={() => {
             if (!videoError) {
               previewLogger.warn('Video load failed, trying fallback URL', { 
                 storagePath,

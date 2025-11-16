@@ -81,7 +81,6 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const startTime = Date.now();
   const requestId = crypto.randomUUID();
   let job_id: string | undefined;
 
@@ -309,65 +308,6 @@ Script:`
   return data.content[0].text.trim();
 }
 
-async function generateVoiceover(script: string, voiceId: string): Promise<Blob> {
-  const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-    method: 'POST',
-    headers: {
-      'Accept': 'audio/mpeg',
-      'Content-Type': 'application/json',
-      'xi-api-key': Deno.env.get('ELEVENLABS_API_KEY') ?? ''
-    },
-    body: JSON.stringify({
-      text: script,
-      model_id: 'eleven_turbo_v2_5',
-      voice_settings: {
-        stability: 0.5,
-        similarity_boost: 0.75,
-        style: 0.5,
-        use_speaker_boost: true
-      }
-    })
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('ElevenLabs API request failed', { 
-      status: response.status,
-      error: errorText
-    });
-    
-    // Try to parse error response
-    interface ElevenLabsErrorDetails {
-      message?: string;
-      detail?: {
-        message?: string;
-      };
-    }
-    
-    let errorDetails: ElevenLabsErrorDetails = {};
-    try {
-      errorDetails = JSON.parse(errorText);
-    } catch {
-      errorDetails = { message: errorText };
-    }
-
-    // Detect specific error types
-    const errorMessage = errorDetails.detail?.message || errorDetails.message || errorText;
-    
-    if (errorMessage.includes('detected_unusual_activity') || errorMessage.includes('Free Tier usage disabled')) {
-      throw new Error('ElevenLabs API key has been restricted due to unusual activity. Please upgrade to a paid plan or use a different API key.');
-    } else if (errorMessage.includes('quota') || errorMessage.includes('limit')) {
-      throw new Error('ElevenLabs API quota exceeded. Please check your account limits.');
-    } else if (errorMessage.includes('invalid') || errorMessage.includes('unauthorized')) {
-      throw new Error('Invalid ElevenLabs API key. Please check your configuration.');
-    }
-    
-    throw new Error(`ElevenLabs error: ${errorMessage}`);
-  }
-
-  return await response.blob();
-}
-
 function extractSearchTerms(topic: string): string {
   // Remove common filler words and limit to key terms
   const fillerWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'about', 'into', 'through', 'during', 'how', 'what', 'why', 'when', 'where', 'who', 'which', 'top', 'best', 'ways', 'tips', 'guide'];
@@ -382,7 +322,8 @@ function extractSearchTerms(topic: string): string {
   return words.join(' ') || 'abstract background';
 }
 
-async function getBackgroundVideo(
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function _getBackgroundVideo(
   supabase: any,
   logger: any,
   style: string,
@@ -473,7 +414,8 @@ async function getBackgroundVideo(
   return videoUrl;
 }
 
-async function assembleVideo(
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function _assembleVideo(
   supabase: any,
   logger: any,
   assets: {
@@ -578,7 +520,7 @@ async function assembleVideo(
   
   try {
     result = responseText ? JSON.parse(responseText) : null;
-  } catch (parseError) {
+  } catch {
     logger.error('Failed to parse Shotstack response', new Error('JSON parse failed'), { 
       userId,
       metadata: { jobId: videoJobId, responseText: responseText.substring(0, 500) } 
@@ -627,7 +569,8 @@ async function assembleVideo(
   return result.response.id;
 }
 
-async function pollRenderStatus(supabase: any, logger: any, jobId: string, renderId: string, userId: string) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function _pollRenderStatus(supabase: any, logger: any, jobId: string, renderId: string, userId: string) {
   const maxAttempts = 120; // 10 minutes max (5s interval)
   let attempts = 0;
 

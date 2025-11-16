@@ -7,20 +7,9 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-    const { authorization, token, api_key, apiKey, secret, ...safe } = error;
-    return safe;
-  }
-  return error;
-}
-
-// Inline helper: log errors (now uses EdgeLogger in main function)
-function logError(context: string, error: any, metadata?: any): void {
-  // Error logging now handled by EdgeLogger
-}
 
 // Inline helper: create standardized error response
-function createErrorResponse(error: any, headers: any, context: string, metadata?: any): Response {
-  logError(context, error, metadata);
+function createErrorResponse(error: any, headers: any): Response {
   const message = error?.message || 'An error occurred';
   const status = message.includes('Unauthorized') || message.includes('authorization') ? 401
     : message.includes('Forbidden') ? 403
@@ -41,8 +30,7 @@ const deductTokensSchema = z.object({
 Deno.serve(async (req) => {
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('deduct-tokens', requestId);
-  const startTime = Date.now();
-  
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -164,9 +152,6 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    return createErrorResponse(error, corsHeaders, 'deduct-tokens', { 
-      user_id: user?.id,
-      tokens_requested: body?.tokens_to_deduct,
-    });
+    return createErrorResponse(error, corsHeaders);
   }
 });

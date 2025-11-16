@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import {
   ReactFlow,
   Node,
@@ -61,7 +61,7 @@ const nodeTypes: NodeTypes = {
 };
 
 export function WorkflowVisualPreview({ userInputFields, steps }: WorkflowVisualPreviewProps) {
-  const createNodesAndEdges = () => {
+  const createNodesAndEdges = useCallback(() => {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
 
@@ -113,7 +113,7 @@ export function WorkflowVisualPreview({ userInputFields, steps }: WorkflowVisual
     }
 
     return { nodes, edges };
-  };
+  }, [userInputFields, steps]);
 
   const { nodes: initialNodes, edges: initialEdges } = createNodesAndEdges();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -124,7 +124,7 @@ export function WorkflowVisualPreview({ userInputFields, steps }: WorkflowVisual
     const { nodes: updatedNodes, edges: updatedEdges } = createNodesAndEdges();
     setNodes(updatedNodes);
     setEdges(updatedEdges);
-  }, [steps, userInputFields]);
+  }, [createNodesAndEdges, setNodes, setEdges]);
 
   return (
     <Card className="h-[600px] border bg-muted/20">

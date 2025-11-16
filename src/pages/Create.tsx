@@ -38,7 +38,7 @@ const Create = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   
   // Polling with callbacks
-  const { startPolling, stopPolling, isPolling, pollingId } = useGenerationPolling({
+  const { startPolling, isPolling, pollingId } = useGenerationPolling({
     onComplete: (outputs) => {
       clientLogger.activity({
         activityType: 'generation',
@@ -135,6 +135,7 @@ const Create = () => {
     if (onboardingFlow.progress && !onboardingFlow.progress.checklist.viewedTemplates) {
       onboardingFlow.updateProgress({ viewedTemplates: true });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onboardingFlow.progress, onboardingFlow.updateProgress]);
   
   // Handlers

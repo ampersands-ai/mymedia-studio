@@ -102,7 +102,7 @@ export const OutputLightbox = ({
     if (!open && history.length > 0) {
       clearHistory();
     }
-  }, [open, currentOutput, contentType, selectedIndex]);
+  }, [open, currentOutput, contentType, selectedIndex, addToHistory, clearHistory, history.length]);
 
   // Swipe to close gesture
   const minSwipeDistance = 50;
@@ -125,6 +125,84 @@ export const OutputLightbox = ({
       trackEvent('output_lightbox_swipe_close');
     }
   };
+
+  const handleDownload = useCallback(async () => {
+    try {
+      const currentEntry = getCurrentEntry();
+      let blob: Blob;
+      let filename: string;
+
+      if (currentEntry) {
+        // Download edited version from history
+        blob = currentEntry.blob;
+        filename = `artifio-edited-${currentOutput.output_index + 1}-${Date.now()}.png`;
+
+        trackEvent('edited_image_downloaded', {
+          generation_id: currentOutput.id,
+          edit_type: currentEntry.editType,
+          edit_count: currentIndex + 1
+        });
+      } else {
+        // Fallback: Download original from Supabase
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const originalUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
+
+        const response = await fetch(originalUrl);
+        if (!response.ok) throw new Error('Failed to fetch image');
+
+        blob = await response.blob();
+        filename = `artifio-${currentOutput.output_index + 1}-${Date.now()}.png`;
+
+        trackEvent('original_image_downloaded', {
+          generation_id: currentOutput.id
+        });
+      }
+
+      // Download blob
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Download started!');
+    } catch (error) {
+      logger.error('Output download failed', error as Error, {
+        component: 'OutputLightbox',
+        generationId: currentOutput.id,
+        contentType,
+        operation: 'handleDownload'
+      });
+      toast.error('Failed to download image');
+    }
+  }, [getCurrentEntry, currentOutput, currentIndex, contentType]);
+
+  const handleNavigate = useCallback((direction: 'prev' | 'next') => {
+    onNavigate(direction);
+    clearHistory();
+    trackEvent('output_navigation', {
+      generation_id: currentOutput.id,
+      direction
+    });
+  }, [onNavigate, clearHistory, currentOutput]);
+
+  const handleUndo = useCallback(() => {
+    const entry = undo();
+    if (entry) {
+      toast.success('Undone');
+      trackEvent('edit_undone', { generation_id: currentOutput.id });
+    }
+  }, [undo, currentOutput]);
+
+  const handleRedo = useCallback(() => {
+    const entry = redo();
+    if (entry) {
+      toast.success('Redone');
+      trackEvent('edit_redone', { generation_id: currentOutput.id });
+    }
+  }, [redo, currentOutput]);
 
   // Keyboard shortcuts (including undo/redo)
   useEffect(() => {
@@ -154,60 +232,7 @@ export const OutputLightbox = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, selectedIndex, outputs.length, canUndo, canRedo]);
-
-  const handleDownload = async () => {
-    try {
-      const currentEntry = getCurrentEntry();
-      let blob: Blob;
-      let filename: string;
-      
-      if (currentEntry) {
-        // Download edited version from history
-        blob = currentEntry.blob;
-        filename = `artifio-edited-${currentOutput.output_index + 1}-${Date.now()}.png`;
-        
-        trackEvent('edited_image_downloaded', {
-          generation_id: currentOutput.id,
-          edit_type: currentEntry.editType,
-          edit_count: currentIndex + 1
-        });
-      } else {
-        // Fallback: Download original from Supabase
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const originalUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
-        
-        const response = await fetch(originalUrl);
-        if (!response.ok) throw new Error('Failed to fetch image');
-        
-        blob = await response.blob();
-        filename = `artifio-${currentOutput.output_index + 1}-${Date.now()}.png`;
-        
-        trackEvent('original_image_downloaded', {
-          generation_id: currentOutput.id
-        });
-      }
-      
-      // Download blob
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      toast.success('Download started!');
-    } catch (error) {
-      logger.error('Output download failed', error as Error, {
-        component: 'OutputLightbox',
-        generationId: currentOutput.id,
-        contentType,
-        operation: 'handleDownload'
-      });
-      toast.error('Failed to download image');
-    }
-  };
+  }, [open, selectedIndex, outputs.length, canUndo, canRedo, handleDownload, handleNavigate, handleRedo, handleUndo, onOpenChange]);
 
   const handleShare = async () => {
     try {
@@ -243,15 +268,6 @@ export const OutputLightbox = ({
     trackEvent('output_save_toggled', {
       generation_id: currentOutput.id,
       is_saved: !isSaved
-    });
-  };
-
-  const handleNavigate = (direction: 'prev' | 'next') => {
-    onNavigate(direction);
-    clearHistory();
-    trackEvent('output_navigation', {
-      generation_id: currentOutput.id,
-      direction
     });
   };
 
@@ -345,7 +361,7 @@ export const OutputLightbox = ({
         cropArea.width = img.height * template.aspectRatio;
       }
 
-      const { blob: croppedBlob, url: croppedUrl } = await getCroppedImg(
+      const { url: croppedUrl } = await getCroppedImg(
         currentEntry.url,
         cropArea
       );
@@ -382,22 +398,6 @@ export const OutputLightbox = ({
       toast.error('Failed to apply template');
     }
   }, [getCurrentEntry, addToHistory, currentOutput]);
-
-  const handleUndo = useCallback(() => {
-    const entry = undo();
-    if (entry) {
-      toast.success('Undone');
-      trackEvent('edit_undone', { generation_id: currentOutput.id });
-    }
-  }, [undo, currentOutput]);
-
-  const handleRedo = useCallback(() => {
-    const entry = redo();
-    if (entry) {
-      toast.success('Redone');
-      trackEvent('edit_redone', { generation_id: currentOutput.id });
-    }
-  }, [redo, currentOutput]);
 
   const handleGoToHistoryEntry = useCallback((index: number) => {
     const entry = goToHistoryEntry(index);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,9 +30,9 @@ export const NotificationPreferences = () => {
     if (user) {
       fetchPreferences();
     }
-  }, [user]);
+  }, [user, fetchPreferences]);
 
-  const fetchPreferences = async () => {
+  const fetchPreferences = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('user_notification_preferences')
@@ -61,7 +61,7 @@ export const NotificationPreferences = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
   const savePreferences = async () => {
     if (!user) return;

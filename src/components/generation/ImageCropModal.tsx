@@ -36,7 +36,7 @@ export const ImageCropModal = ({
     []
   );
 
-  const handleApplyCrop = async () => {
+  const handleApplyCrop = useCallback(async () => {
     if (!croppedAreaPixels) {
       toast.error("Please adjust the crop area");
       return;
@@ -64,16 +64,16 @@ export const ImageCropModal = ({
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [croppedAreaPixels, imageUrl, rotation, zoom, aspectRatio, onCropComplete, onOpenChange]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     onOpenChange(false);
     // Reset to defaults
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     setRotation(0);
     setAspectRatio(1);
-  };
+  }, [onOpenChange]);
 
   const handleRotate = (degrees: number) => {
     setRotation((prev) => (prev + degrees) % 360);
@@ -99,7 +99,7 @@ export const ImageCropModal = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, isProcessing, croppedAreaPixels]);
+  }, [open, isProcessing, croppedAreaPixels, handleApplyCrop, handleCancel]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

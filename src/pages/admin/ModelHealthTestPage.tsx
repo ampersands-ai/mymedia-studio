@@ -397,7 +397,6 @@ export default function ModelHealthTestPage() {
 
   useEffect(() => {
     if (currentModel && !state.prompt) {
-      const contentType = currentModel.content_type;
       // No default prompts - test with empty prompt to match production behavior
       setStatePrompt("");
     }
@@ -420,13 +419,6 @@ export default function ModelHealthTestPage() {
   
   const advancedOptionsRef = useRef<HTMLDivElement>(null);
   const contentType = currentModel?.content_type || 'image';
-
-  const isGenerateDisabled = 
-    isGenerating || 
-    state.localGenerating || 
-    !state.selectedModel ||
-    (imageFieldInfo.isRequired && uploadedImages.length === 0) ||
-    testStatus === 'running';
 
   if (modelsLoading || fullModelLoading) {
     return (

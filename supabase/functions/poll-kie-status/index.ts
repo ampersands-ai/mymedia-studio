@@ -32,11 +32,10 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get generation details if generation_id provided
-    let generation: any;
     let taskIdToQuery = task_id;
 
     if (generation_id) {
-      logger.info('Fetching generation details', { 
+      logger.info('Fetching generation details', {
         metadata: { generationId: generation_id }
       });
 
@@ -47,13 +46,11 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (error || !data) {
-        logger.error('Generation not found', error instanceof Error ? error : (error ? new Error(String(error)) : undefined), { 
+        logger.error('Generation not found', error instanceof Error ? error : (error ? new Error(String(error)) : undefined), {
           metadata: { generationId: generation_id }
         });
         throw new Error('Generation not found');
       }
-
-      generation = data;
       
       // Extract task_id from provider_response
       if (data.provider_response?.task_id) {

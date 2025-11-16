@@ -7,15 +7,15 @@ import { validateIdempotency } from "../idempotency-validator.ts";
 
 // Mock Supabase client
 const createMockSupabase = (existingEvent: any = null, insertError: any = null) => ({
-  from: (table: string) => ({
-    select: (fields: string) => ({
-      eq: (field: string, value: any) => ({
-        eq: (field2: string, value2: any) => ({
+  from: () => ({
+    select: () => ({
+      eq: () => ({
+        eq: () => ({
           maybeSingle: async () => ({ data: existingEvent, error: null })
         })
       })
     }),
-    insert: async (data: any) => ({ data: null, error: insertError })
+    insert: async () => ({ data: null, error: insertError })
   })
 });
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -65,11 +65,7 @@ export function ParameterConfigurator({
     setParameters(params);
   }, [inputSchema, userEditableFields, hiddenFieldDefaults, presetValues]);
 
-  useEffect(() => {
-    validateConfiguration();
-  }, [parameters]);
-
-  const validateConfiguration = () => {
+  const validateConfiguration = useCallback(() => {
     const errors: string[] = [];
     const requiredParams = parameters.filter(p => p.required);
 
@@ -81,7 +77,11 @@ export function ParameterConfigurator({
     });
 
     setValidationErrors(errors);
-  };
+  }, [parameters]);
+
+  useEffect(() => {
+    validateConfiguration();
+  }, [parameters, validateConfiguration]);
 
   const handleToggleVisibility = (paramName: string, visible: boolean) => {
     const updatedParams = parameters.map(p =>

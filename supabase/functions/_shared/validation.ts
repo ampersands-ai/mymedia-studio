@@ -28,7 +28,7 @@ export const CommonSchemas = {
   
   // Model identifiers
   modelId: z.string()
-    .regex(/^[a-z0-9-\/]+$/, 'Invalid model ID format')
+    .regex(/^[a-z0-9-/]+$/, 'Invalid model ID format')
     .min(1, 'Model ID required'),
   
   // Numbers

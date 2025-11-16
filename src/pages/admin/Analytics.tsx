@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Loader2, TrendingUp, Users, Zap, DollarSign, Image } from "lucide-react";
+import { Loader2, TrendingUp, Users, Zap, Image } from "lucide-react";
 import { startOfDay, startOfWeek, startOfMonth, format, subDays } from "date-fns";
 
 export default function Analytics() {

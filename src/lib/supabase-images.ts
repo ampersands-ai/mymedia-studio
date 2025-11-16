@@ -45,7 +45,9 @@ function cleanImagePath(bucketPath: string, bucket: string = 'generated-content'
   cleanPath = cleanPath.replace(/^\/+/, '');
   try {
     cleanPath = decodeURI(cleanPath);
-  } catch {}
+  } catch {
+    // If decoding fails, use the original path
+  }
 
   return cleanPath;
 }

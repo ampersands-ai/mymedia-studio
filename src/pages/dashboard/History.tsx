@@ -5,11 +5,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Trash2, Clock, Sparkles, Image as ImageIcon, Video, Music, FileText, RefreshCw, X, AlertCircle, Flag, CheckCircle } from "lucide-react";
+import { Download, Trash2, Clock, Sparkles, Image as ImageIcon, Video, Music, FileText, RefreshCw, AlertCircle, Flag, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useImageUrl, useVideoUrl, useAudioUrl } from "@/hooks/media";
+import { useVideoUrl, useAudioUrl } from "@/hooks/media";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -84,7 +84,7 @@ const AudioWithSignedUrl = ({ generation, className, showControls = false }: {
                   document.body.removeChild(a);
                   toast.success('Download started successfully!', { id: 'audio-download' });
                 }
-              } catch (error) {
+              } catch {
                 toast.error('Failed to download', { id: 'audio-download' });
               }
             }
@@ -176,9 +176,7 @@ const VideoPreview = ({ generation, className, showControls = false, playOnHover
   playOnHover?: boolean;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [videoError, setVideoError] = useState(false);
-  
+
   // Build a source and get video URL using new architecture
   const sourceForSigning = generation.storage_path
     ? generation.storage_path
@@ -341,6 +339,7 @@ const History = () => {
     if (previewGeneration && progress && !progress.checklist.viewedResult) {
       updateProgress({ viewedResult: true });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previewGeneration, progress]);
 
   // Fetch total count for pagination
@@ -752,8 +751,6 @@ const History = () => {
 
   // Filtering now happens in the query, use generations directly
   const filteredGenerations = generations || [];
-
-  const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
 
   // No loading state - show empty state immediately or render data
   return (

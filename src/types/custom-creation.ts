@@ -1,5 +1,5 @@
 import { CreationGroup } from "@/constants/creation-groups";
-import type { JsonSchemaProperty, ModelJsonSchema, ModelParameters } from './model-schema';
+import type { ModelJsonSchema } from './model-schema';
 import type { AIModel } from '@/hooks/useModels';
 
 /**

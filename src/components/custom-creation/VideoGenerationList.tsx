@@ -23,7 +23,6 @@ export const VideoGenerationList: React.FC<VideoGenerationListProps> = ({
   videoGenerations,
   parentGenerationId,
   onRegenerate,
-  generatingVideoIndex,
 }) => {
   if (!videoGenerations || videoGenerations.length === 0) {
     return null;

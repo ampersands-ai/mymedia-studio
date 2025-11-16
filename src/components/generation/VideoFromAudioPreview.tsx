@@ -18,7 +18,7 @@ export function VideoFromAudioPreview({
   outputIndex,
   onRegenerate 
 }: VideoFromAudioPreviewProps) {
-  const { url: videoUrl, isLoading } = useVideoUrl(storagePath);
+  const { url: videoUrl } = useVideoUrl(storagePath);
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {

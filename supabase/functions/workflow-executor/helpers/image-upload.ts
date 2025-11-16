@@ -11,8 +11,7 @@ import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 export async function uploadBase64Image(
   dataUrl: string,
   userId: string,
-  supabaseClient: SupabaseClient,
-  logger?: { info: (msg: string, ctx?: any) => void; error: (msg: string, err: any, ctx?: any) => void }
+  supabaseClient: SupabaseClient
 ): Promise<string> {
   const matches = dataUrl.match(/^data:(.+);base64,(.+)$/);
   if (!matches) {

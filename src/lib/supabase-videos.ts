@@ -212,14 +212,9 @@ export async function isProgressiveMp4(videoUrl: string): Promise<boolean> {
 /**
  * Generate poster/thumbnail URL for video
  * Uses Supabase Storage image transformation on first frame
- * @param storagePath - Path to video file
- * @param bucket - Storage bucket name
  * @returns Thumbnail URL (or null if not supported)
  */
-export function getVideoThumbnail(
-  storagePath: string,
-  bucket: string = 'generated-content'
-): string | null {
+export function getVideoThumbnail(): string | null {
   // Note: Supabase doesn't support video thumbnail generation yet
   // This is a placeholder for future implementation
   // For now, return null and let video poster attribute handle it

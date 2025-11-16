@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { MergedTemplate } from "@/hooks/useTemplates";
-import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 
@@ -113,6 +112,7 @@ export async function duplicateTemplate(
   const timestamp = Date.now();
   
   if (template.template_type === 'template') {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { workflow_steps, user_input_fields, template_type, ai_models, ...templateData } = template;
     
     // Ensure required fields are present

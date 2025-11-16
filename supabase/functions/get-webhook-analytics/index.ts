@@ -6,18 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface TimeRange {
-  start: string;
-  end: string;
-}
-
-interface AnalyticsQuery {
-  timeRange: '1h' | '24h' | '7d' | '30d' | 'custom';
-  customStart?: string;
-  customEnd?: string;
-  provider?: string;
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });

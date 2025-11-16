@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
 
     // Get user from auth header
     const authHeader = req.headers.get('Authorization');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
+    const { data: { user } } = await supabase.auth.getUser(
       authHeader?.replace('Bearer ', '')
     );
 

@@ -222,7 +222,7 @@ export const handleGenerationError = (error: any, navigate: NavigateFunction): b
     let parsedError: any = {};
     try {
       parsedError = JSON.parse(error.message.replace("INSUFFICIENT_TOKENS: ", ""));
-    } catch (e) {
+    } catch {
       parsedError = { type: "INSUFFICIENT_TOKENS" };
     }
     

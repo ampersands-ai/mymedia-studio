@@ -193,8 +193,7 @@ async function handleWebhookEvent(supabase: any, event: any, webhookStartTime: n
 
   // Extract metadata (user_id, plan, etc.)
   const metadata = eventData.metadata || {};
-  let userId = metadata.user_id;
-  const planName = metadata.plan || 'freemium';
+  const userId = metadata.user_id;
 
   // Fallback: If user_id is missing from metadata, try to find user by email
   if (!userId && eventData.customer?.email) {

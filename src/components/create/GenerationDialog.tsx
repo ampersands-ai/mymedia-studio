@@ -6,7 +6,6 @@ import { TokenCostPreview } from "@/components/onboarding/TokenCostPreview";
 import { GenerationConsole } from "./GenerationConsole";
 import { formatEstimatedTime } from "@/lib/time-utils";
 import type { GenerationState } from "@/hooks/useGenerationState";
-import type { OnboardingProgress } from "@/hooks/useOnboarding";
 
 /**
  * Props for GenerationDialog component
@@ -21,13 +20,9 @@ interface GenerationDialogProps {
   isGenerating: boolean;
   isPolling: boolean;
   userTokens: number;
-  onboardingProgress?: OnboardingProgress | null;
-  updateOnboardingProgress?: (updates: Partial<OnboardingProgress['checklist']>) => void;
   generationState: GenerationState;
   onDownload: (path: string) => Promise<void>;
-  onDownloadAll: () => Promise<void>;
   onViewHistory: () => void;
-  onRetry: () => void;
 }
 
 /**
@@ -44,13 +39,9 @@ export const GenerationDialog = ({
   isGenerating,
   isPolling,
   userTokens,
-  onboardingProgress,
-  updateOnboardingProgress,
   generationState,
   onDownload,
-  onDownloadAll,
   onViewHistory,
-  onRetry,
 }: GenerationDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -133,9 +124,7 @@ export const GenerationDialog = ({
             contentType={selectedTemplate?.ai_models?.content_type || "image"}
             isPolling={isPolling}
             onDownload={onDownload}
-            onDownloadAll={onDownloadAll}
             onViewHistory={onViewHistory}
-            onRetry={onRetry}
           />
         </div>
       </DialogContent>

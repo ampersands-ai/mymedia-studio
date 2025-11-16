@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
     const processJob = async () => {
       try {
         logger.debug('Triggering processing for job', { userId: user.id, metadata: { job_id } });
-        const { data, error } = await supabaseClient.functions.invoke('process-video-job', {
+        const { error } = await supabaseClient.functions.invoke('process-video-job', {
           body: { job_id: job.id },
         });
         

@@ -36,13 +36,6 @@ interface Model {
   payload_structure?: string;
 }
 
-interface Template {
-  id: string;
-  preset_parameters?: Record<string, unknown>;
-  enhancement_instruction?: string;
-  ai_models: Model;
-}
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -124,11 +117,10 @@ Deno.serve(async (req) => {
       );
     }
     
-    let { 
-      template_id, 
-      model_id, 
+    const {
+      template_id,
+      model_id,
       model_record_id,
-      prompt, 
       custom_parameters = {},
       enhance_prompt = false,
       enhancement_provider = 'lovable_ai',
@@ -137,6 +129,8 @@ Deno.serve(async (req) => {
       user_id, // For service role calls (test mode)
       test_mode = false, // Flag to skip billing for admin tests
     } = validatedRequest;
+
+    let { prompt } = validatedRequest;
     
     // CRITICAL FIX: Extract prompt from parameters if not provided at top level
     // Some UIs send prompt inside custom_parameters instead of as a separate field
@@ -213,7 +207,6 @@ Deno.serve(async (req) => {
     }
 
     let model: Model;
-    let template: Template | null = null;
     let parameters: Record<string, unknown> = {};
     let enhancementInstruction: string | null = null;
 
@@ -231,7 +224,6 @@ Deno.serve(async (req) => {
         throw new Error('Template not found or inactive');
       }
 
-      template = templateData;
       model = templateData.ai_models;
       parameters = { ...templateData.preset_parameters, ...custom_parameters };
       enhancementInstruction = templateData.enhancement_instruction;
@@ -389,7 +381,7 @@ Deno.serve(async (req) => {
 
     // Enhance prompt if requested and model has prompt field
     let finalPrompt = prompt || "";
-    let originalPrompt = prompt || "";
+    const originalPrompt = prompt || "";
     let usedEnhancementProvider = null;
 
     if (hasPromptField && prompt && (enhance_prompt || enhancementInstruction)) {
@@ -949,7 +941,6 @@ Deno.serve(async (req) => {
     }
 
     // Track request in queue
-    const generationId = createdGeneration.id;
     const requestPromise = (async () => {
       let providerRequest: any = null; // Declare outside try block for error handling access
       

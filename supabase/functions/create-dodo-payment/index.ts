@@ -57,7 +57,7 @@ async function fetchWithRetry(url: string, options: RequestInit, maxAttempts = 3
           } else {
             throw new Error('DNS_ERROR');
           }
-        } catch (ipError) {
+        } catch {
           throw new Error('DNS_ERROR');
         }
       }
@@ -99,8 +99,7 @@ import { EdgeLogger } from "../_shared/edge-logger.ts";
 Deno.serve(async (req) => {
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('create-dodo-payment', requestId);
-  const startTime = Date.now();
-  
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }

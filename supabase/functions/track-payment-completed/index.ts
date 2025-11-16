@@ -1,4 +1,3 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 const POSTHOG_API_KEY = Deno.env.get("VITE_POSTHOG_KEY");

@@ -73,7 +73,7 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
             </div>
 
             <div className="space-y-2">
-              {checklistItems.map((item, index) => (
+              {checklistItems.map((item) => (
                 <div
                   key={item.key}
                   className={cn(

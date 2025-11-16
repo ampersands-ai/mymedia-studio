@@ -3,10 +3,9 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Loader2, Download, CheckCircle2 } from "lucide-react";
 import { GenerationPreview } from "./GenerationPreview";
-import type { 
-  WorkflowExecutionProgress, 
-  WorkflowExecutionResult,
-  calculateProgressPercentage
+import type {
+  WorkflowExecutionProgress,
+  WorkflowExecutionResult
 } from "@/types/workflow-execution-display";
 import { calculateProgressPercentage as calcProgress } from "@/types/workflow-execution-display";
 

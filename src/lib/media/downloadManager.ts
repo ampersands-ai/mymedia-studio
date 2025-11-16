@@ -1,4 +1,3 @@
-import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 
 /**

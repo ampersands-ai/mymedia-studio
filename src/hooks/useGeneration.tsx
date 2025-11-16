@@ -154,7 +154,7 @@ export const useGeneration = () => {
               creditDetails.required = parseInt(errorMatch[1]);
               creditDetails.available = parseInt(errorMatch[2]);
             }
-          } catch (e) {
+          } catch {
             // If parsing fails, continue with basic error
             generationLogger.warn("Failed to parse credit details", { requestId });
           }
@@ -188,7 +188,7 @@ export const useGeneration = () => {
               specificError + errorDetails,
               { recoverable: true }
             );
-          } catch (parseError) {
+          } catch {
             throw new GenerationError(
               GenerationErrorCode.INVALID_REQUEST,
               error.message || "Invalid request",

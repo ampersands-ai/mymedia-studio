@@ -90,7 +90,7 @@ test.describe('Authentication Flow', () => {
 
     // Get initial cookies
     const initialCookies = await context.cookies();
-    const initialSessionCookie = initialCookies.find(c => c.name.includes('session'));
+    initialCookies.find(c => c.name.includes('session'));
 
     // Wait for some time (simulate session near expiry)
     await page.waitForTimeout(2000);

@@ -23,7 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logger, generateRequestId, PerformanceTimer } from "@/lib/logger";
 import { handleError } from "@/lib/errors";
-import type { QueryHookResult, MutationHookResult } from "@/types";
+import type { QueryHookResult } from "@/types";
 
 // ============= Validation Schemas =============
 

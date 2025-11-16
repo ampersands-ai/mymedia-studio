@@ -320,22 +320,6 @@ const Templates = () => {
     }
   };
 
-  // Helper to check if template is in first carousel
-  const isInFirstCarousel = (template: any) => {
-    const firstCategory = 
-      productTemplates.length > 0 ? productTemplates :
-      marketingTemplates.length > 0 ? marketingTemplates :
-      fantasyTemplates.length > 0 ? fantasyTemplates :
-      portraitsTemplates.length > 0 ? portraitsTemplates :
-      abstractTemplates.length > 0 ? abstractTemplates :
-      fashionTemplates.length > 0 ? fashionTemplates :
-      travelTemplates.length > 0 ? travelTemplates :
-      babyMilestonesTemplates.length > 0 ? babyMilestonesTemplates :
-      [];
-    
-    return firstCategory.slice(0, 12).some(t => t.id === template.id);
-  };
-
   const renderCarousel = (categoryTemplates: any[], categoryName: string, isFirstCarousel: boolean = false) => {
     if (categoryTemplates.length === 0) return null;
 

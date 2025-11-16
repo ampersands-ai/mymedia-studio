@@ -57,6 +57,7 @@ export function BackgroundMediaSelector({
     if (open && mediaItems.length === 0) {
       searchMedia(getDefaultQuery(style), mediaType);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const getDefaultQuery = (style: string): string => {
@@ -121,7 +122,7 @@ export function BackgroundMediaSelector({
 
   const handleSelectMedia = (media: PixabayMedia) => {
     let mediaUrl: string;
-    let thumbnail: string = media.preview;
+    const thumbnail: string = media.preview;
 
     if (media.type === 'video') {
       mediaUrl = media.videoURL || '';

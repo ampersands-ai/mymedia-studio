@@ -81,8 +81,6 @@ export class RouteErrorBoundary extends Component<Props, State> {
 
   async logErrorToDatabase(error: Error, errorInfo: React.ErrorInfo, severity: string) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
       await supabase.functions.invoke('log-error', {
         body: {
           error_type: 'react_error',

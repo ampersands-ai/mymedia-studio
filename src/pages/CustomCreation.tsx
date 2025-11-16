@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import { useRef, useEffect, useCallback, useMemo } from "react";
 import { logger } from "@/lib/logger";
 import { useAuth } from "@/contexts/AuthContext";
 import { GenerationErrorBoundary } from "@/components/error/GenerationErrorBoundary";
@@ -8,9 +8,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { SuccessConfetti } from "@/components/onboarding/SuccessConfetti";
 import { useModels } from "@/hooks/useModels";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserTokens } from "@/hooks/useUserTokens";
-import { CREATION_GROUPS, type CreationGroup } from "@/constants/creation-groups";
 import { useCustomCreationState } from "@/hooks/useCustomCreationState";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
 import { useCustomGeneration } from "@/hooks/useCustomGeneration";
@@ -29,12 +27,10 @@ import { downloadMultipleOutputs } from "@/lib/download-utils";
 import { getSurpriseMePrompt } from "@/data/surpriseMePrompts";
 import { toast } from "sonner";
 import type { JsonSchemaProperty, ModelJsonSchema } from "@/types/model-schema";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CustomCreation = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const outputSectionRef = useRef<HTMLDivElement>(null);
 
   // State management
@@ -349,6 +345,7 @@ const CustomCreation = () => {
     };
 
     setupRealtimeAndCheckStatus();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.pollingGenerationId, stopPolling, updateState, progress, updateProgress, setFirstGeneration, state.generateCaption]);
 
 
@@ -385,13 +382,11 @@ const CustomCreation = () => {
     childVideoGenerations,
     generatingVideoIndex,
     handleGenerateVideo,
-    isGeneratingVideo,
   } = useVideoGeneration(state.parentGenerationId);
 
   // Custom generation logic
   const {
     handleGenerate,
-    handleSurpriseMe,
     handleCancelGeneration,
     estimatedTokens,
     isGenerating,
@@ -482,6 +477,7 @@ const CustomCreation = () => {
     };
     
     loadTemplateImages();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.selectedModel]);
 
   // Auto-select first model when filtered models change
@@ -536,13 +532,6 @@ const CustomCreation = () => {
     if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) return 'audio';
     return currentModel?.content_type || 'image';
   })();
-
-  // Determine if generation button should be disabled
-  const isGenerateDisabled = 
-    isGenerating || 
-    state.localGenerating || 
-    !state.selectedModel ||
-    (imageFieldInfo.isRequired && uploadedImages.length === 0);
 
   return (
     <GenerationErrorBoundary onReset={() => {

@@ -29,7 +29,6 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const startTime = Date.now();
   const requestId = crypto.randomUUID();
 
   try {

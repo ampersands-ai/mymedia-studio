@@ -73,9 +73,7 @@ export interface UserInputNodeData {
 /**
  * Data structure for output node visualization
  */
-export interface OutputNodeData {
-  // Empty for now, but typed for consistency
-}
+export type OutputNodeData = Record<string, never>;
 
 /**
  * Type guard to check if a value is a valid workflow input value

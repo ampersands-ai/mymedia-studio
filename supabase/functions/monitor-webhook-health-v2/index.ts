@@ -312,7 +312,7 @@ async function sendHealthAlerts(
       }
 
       // Insert alert history
-      const { data: alertRecord, error: insertError } = await supabase
+      const { error: insertError } = await supabase
         .from('webhook_health_alerts')
         .insert({
           provider: issue.provider,

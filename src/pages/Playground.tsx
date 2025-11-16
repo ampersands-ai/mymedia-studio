@@ -2,13 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ImageIcon, X, Upload, Coins, LogOut, Sparkles, Download, History, Play } from "lucide-react";
+import { ImageIcon, Upload, Coins, LogOut, Sparkles, Download, History, Play } from "lucide-react";
 
 import { SessionWarning } from "@/components/SessionWarning";
 import { logger } from "@/lib/logger";
@@ -151,7 +150,7 @@ const Playground = () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       setGeneratedOutput("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=600&fit=crop");
       toast.success("Image generated successfully!");
-    } catch (error) {
+    } catch {
       toast.error("Generation failed");
     } finally {
       setIsGenerating(false);
@@ -171,7 +170,7 @@ const Playground = () => {
       const enhanced = `${prompt}. Ultra high quality, professional lighting, cinematic composition, 8K resolution, highly detailed`;
       setPrompt(enhanced);
       toast.success("Prompt enhanced!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to enhance prompt");
     } finally {
       setIsEnhancing(false);
@@ -196,6 +195,7 @@ const Playground = () => {
 
   useEffect(() => {
     setEstimatedTokens(calculateTokens());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentType, resolution, uploadedImages, applyBrand]);
 
 

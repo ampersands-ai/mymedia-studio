@@ -119,7 +119,7 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
           text: shareText,
           url: shareUrl,
         });
-      } catch (error) {
+      } catch {
         // User cancelled share
       }
     } else {

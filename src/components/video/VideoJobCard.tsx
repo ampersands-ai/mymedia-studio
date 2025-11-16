@@ -147,7 +147,6 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const isApproachingTimeout = ['assembling', 'fetching_video'].includes(job.status);
   const elapsedMs = Date.now() - new Date(job.created_at).getTime();
   const timeoutMs = 5 * 60 * 1000; // 5 minutes
-  const remainingMs = Math.max(0, timeoutMs - elapsedMs);
   const isNearTimeout = isApproachingTimeout && elapsedMs > 4 * 60 * 1000; // After 4 minutes
 
   // Update countdown every second when near timeout
@@ -202,6 +201,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
         jobId: job.id
       } as any);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [job.status, job.voiceover_url, voiceoverSignedUrl, isLoadingVoiceUrl]);
 
   // Reset editing state when script changes
@@ -352,10 +352,9 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   };
 
   const handleApproveScript = () => {
-    const finalScript = isEditingScript ? editedScript : job.script;
-    approveScript.mutate({ 
-      jobId: job.id, 
-      editedScript: isEditingScript && editedScript !== job.script ? editedScript : undefined 
+    approveScript.mutate({
+      jobId: job.id,
+      editedScript: isEditingScript && editedScript !== job.script ? editedScript : undefined
     });
     setIsEditingScript(false);
   };

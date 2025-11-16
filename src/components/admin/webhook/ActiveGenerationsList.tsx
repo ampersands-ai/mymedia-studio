@@ -50,7 +50,7 @@ export const ActiveGenerationsList = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, generationId) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['active-generations'] });
       queryClient.invalidateQueries({ queryKey: ['webhook-stats'] });
       queryClient.invalidateQueries({ queryKey: ['recent-webhooks'] });

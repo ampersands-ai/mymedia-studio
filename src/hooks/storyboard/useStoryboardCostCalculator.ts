@@ -22,6 +22,7 @@ export const useStoryboardCostCalculator = (
   const initialEstimate = useMemo(() => {
     if (!storyboard) return 0;
     return getInitialEstimate(storyboard);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storyboard?.estimated_render_cost, storyboard?.duration]);
 
   // Calculate actual cost based on character changes

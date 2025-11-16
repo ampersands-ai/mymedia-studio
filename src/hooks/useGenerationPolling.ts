@@ -318,6 +318,7 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
       intervalsRef.current.push(slowInterval);
     }, POLLING_CONFIG.MEDIUM_DURATION);
     timeoutsRef.current.push(slowIntervalTimeout);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPolling, pollStatus, clearAllTimers]);
 
   /**

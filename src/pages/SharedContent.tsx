@@ -23,6 +23,7 @@ export default function SharedContent() {
     }
 
     fetchSharedContent();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const fetchSharedContent = async () => {
@@ -68,7 +69,7 @@ export default function SharedContent() {
       window.URL.revokeObjectURL(blobUrl);
       document.body.removeChild(a);
       toast.success('Download started!', { id: 'download' });
-    } catch (err) {
+    } catch {
       toast.error('Download failed', { id: 'download' });
     }
   };

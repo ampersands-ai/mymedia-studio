@@ -22,7 +22,7 @@ const CreateWorkflow = () => {
   const isMobile = useIsMobile();
   
   const { data: workflow, isLoading } = useWorkflowTemplate(workflowId || "");
-  const { executeWorkflow, isExecuting, progress } = useWorkflowExecution();
+  const { executeWorkflow, isExecuting } = useWorkflowExecution();
   const { downloadFile } = useNativeDownload();
   
   const [executionId, setExecutionId] = useState<string | null>(null);

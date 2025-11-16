@@ -27,7 +27,7 @@ const Create = () => {
   const navigate = useNavigate();
   
   // Data fetching
-  const { templatesByCategory, templates, isLoading } = useTemplatesByCategory();
+  const { templatesByCategory, isLoading } = useTemplatesByCategory();
   const { data: userTokenData } = useUserTokens();
   const userTokens = userTokenData?.tokens_remaining || 0;
   
@@ -38,7 +38,7 @@ const Create = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   
   // Polling with callbacks
-  const { startPolling, stopPolling, isPolling, pollingId } = useGenerationPolling({
+  const { startPolling, isPolling, pollingId } = useGenerationPolling({
     onComplete: (outputs) => {
       clientLogger.activity({
         activityType: 'generation',
@@ -135,6 +135,7 @@ const Create = () => {
     if (onboardingFlow.progress && !onboardingFlow.progress.checklist.viewedTemplates) {
       onboardingFlow.updateProgress({ viewedTemplates: true });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onboardingFlow.progress, onboardingFlow.updateProgress]);
   
   // Handlers

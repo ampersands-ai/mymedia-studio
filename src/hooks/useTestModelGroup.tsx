@@ -38,7 +38,7 @@ export const useTestModelGroup = () => {
 
   // Use EXACT SAME polling hook as CustomCreation.tsx (line 13, 83)
   const { startPolling } = useGenerationPolling({
-    onComplete: (outputs, parentId) => {
+    onComplete: (outputs) => {
       if (resolverRef.current) {
         resolverRef.current({ outputs });
         resolverRef.current = null;
@@ -92,7 +92,7 @@ export const useTestModelGroup = () => {
         
         try {
           // NO-OP image upload for test (returns empty array)
-          const noOpUploadImages = async (userId: string): Promise<string[]> => [];
+          const noOpUploadImages = async (): Promise<string[]> => [];
           
           // Get max prompt length for this model (SAME logic as production)
           const maxPromptLength = getMaxPromptLength(model, undefined);

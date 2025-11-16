@@ -7,7 +7,6 @@ import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { VideoJobCard } from './VideoJobCard';
 import { VideoPreviewModal } from './VideoPreviewModal';
 import { VideoJob } from '@/types/video';
-import { OptimizedGenerationPreview } from '@/components/generation/OptimizedGenerationPreview';
 import { useNavigate } from 'react-router-dom';
 
 export function VideoJobsList() {
@@ -18,7 +17,6 @@ export function VideoJobsList() {
   const currentJob = jobs && jobs.length > 0 ? jobs[0] : null;
   const isPinnedJob = currentJob && pinnedJobId === currentJob.id;
   const isJobFinished = currentJob && (currentJob.status === 'completed' || currentJob.status === 'failed');
-  const showCompletedVideo = isPinnedJob && currentJob?.status === 'completed' && currentJob.final_video_url;
 
   if (isLoading) {
     return (

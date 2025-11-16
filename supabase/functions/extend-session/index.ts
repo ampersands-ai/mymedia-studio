@@ -1,10 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
-import { 
-  corsHeaders, 
-  handleOptionsRequest, 
-  createJsonResponse, 
-  createErrorResponse 
+import {
+  handleOptionsRequest,
+  createJsonResponse,
+  createErrorResponse
 } from '../_shared/cors-headers.ts';
 
 const handler = async (req: Request): Promise<Response> => {

@@ -24,7 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SchemaBuilder } from "./SchemaBuilder";
 import { ImageUploader } from "./template-landing/ImageUploader";
 import type { JsonSchema, ModelConfiguration } from "@/types/schema";
-import { schemaToJson, jsonToSchema } from "@/types/schema";
+import { schemaToJson } from "@/types/schema";
 
 const AVAILABLE_GROUPS = [
   { id: "image_editing", label: "Image Editing" },

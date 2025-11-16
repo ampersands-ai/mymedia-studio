@@ -102,7 +102,7 @@ export const useNativeDownload = (): UseNativeDownloadResult => {
       const directory = isIOS() ? Directory.Documents : Directory.Documents;
 
       // Write file
-      const result = await Filesystem.writeFile({
+      await Filesystem.writeFile({
         path: name,
         data: base64Data,
         directory,

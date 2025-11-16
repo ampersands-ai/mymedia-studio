@@ -1,16 +1,13 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import type { ModelHealthSummary } from "@/types/admin/model-health";
 
 interface FlowTrackingDialogProps {
   model: ModelHealthSummary | null;
-  testResultId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export const FlowTrackingDialog = ({ model, testResultId, open, onOpenChange }: FlowTrackingDialogProps) => {
+export const FlowTrackingDialog = ({ model, open, onOpenChange }: FlowTrackingDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">

@@ -32,7 +32,9 @@ const setCleared = (value: boolean): void => {
     } else {
       localStorage.removeItem(CLEARED_FLAG_KEY);
     }
-  } catch {}
+  } catch {
+    // Silently ignore localStorage errors (e.g., in private browsing)
+  }
 };
 
 export function useVideoJobs() {
@@ -72,14 +74,18 @@ export function useVideoJobs() {
             try {
               localStorage.removeItem(PINNED_JOB_KEY);
               setPinnedJobId(null);
-            } catch {}
+            } catch {
+              // Silently ignore localStorage errors (e.g., in private browsing)
+            }
           }
         } else {
           // If pinned job doesn't exist, clear the pin silently and fall through
           try {
             localStorage.removeItem(PINNED_JOB_KEY);
             setPinnedJobId(null);
-          } catch {}
+          } catch {
+            // Silently ignore localStorage errors (e.g., in private browsing)
+          }
         }
       }
       
@@ -150,7 +156,9 @@ export function useVideoJobs() {
       setPinnedJobId(jobId);
       // Notify other hook instances in this document
       window.dispatchEvent(new CustomEvent('videojobs:pin-change'));
-    } catch {}
+    } catch {
+      // Silently ignore localStorage errors (e.g., in private browsing)
+    }
     queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
   };
 
@@ -161,7 +169,9 @@ export function useVideoJobs() {
       setPinnedJobId(null);
       // Notify other hook instances in this document
       window.dispatchEvent(new CustomEvent('videojobs:pin-change'));
-    } catch {}
+    } catch {
+      // Silently ignore localStorage errors (e.g., in private browsing)
+    }
     queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
   };
   // Create video job mutation
@@ -456,7 +466,7 @@ export function useVideoJobs() {
       if (error) throw error;
       return data;
     },
-    onSuccess: async (data) => {
+    onSuccess: async () => {
       // Invalidate instead of refetch to avoid aggressive refetching
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
       

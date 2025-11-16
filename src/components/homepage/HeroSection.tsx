@@ -1,29 +1,18 @@
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { GradientButton } from '@/components/ui/gradient-button';
-import { AnimatedBadge } from '@/components/ui/animated-badge';
-import { GlassCard } from '@/components/ui/glass-card';
-import { OptimizedVideo } from '@/components/ui/optimized-video';
 import { Link, useNavigate } from 'react-router-dom';
-import { useScrollY } from '@/hooks/useScrollY';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade } from 'swiper/modules';
-import { useState } from 'react';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 import { PartnerLogosCarousel } from './PartnerLogosCarousel';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { CreationGroup } from '@/constants/creation-groups';
-import { logger } from '@/lib/logger';
 
 export const HeroSection = () => {
-  const scrollY = useScrollY();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const [swiperInstance, setSwiperInstance] = useState<any>(null);
-  
-  // Disable parallax on mobile for better performance
-  const parallaxY = isMobile ? 0 : scrollY;
 
   // AI Model badges with their details
   const aiModels = [
@@ -155,7 +144,7 @@ export const HeroSection = () => {
           {/* AI Models */}
           <TooltipProvider>
             <div className="flex flex-wrap gap-2 sm:gap-3 justify-start">
-              {aiModels.map((model, index) => (
+              {aiModels.map((model) => (
                 <Tooltip key={model.name}>
                   <TooltipTrigger asChild>
                     <button

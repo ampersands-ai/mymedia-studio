@@ -22,7 +22,6 @@ const PLAN_TOKENS = {
 Deno.serve(async (req) => {
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('dodo-payments-webhook', requestId);
-  const webhookStartTime = Date.now();
   
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -188,7 +187,6 @@ async function handleWebhookEvent(supabase: any, event: any) {
   // Extract metadata (user_id, plan, etc.)
   const metadata = eventData.metadata || {};
   let userId = metadata.user_id;
-  const planName = metadata.plan || 'freemium';
 
   // Fallback: If user_id is missing from metadata, try to find user by email
   if (!userId && eventData.customer?.email) {

@@ -32,7 +32,7 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
 
   useEffect(() => {
     if (initialSettings) {
-      setSettings(prev => ({ ...DEFAULT_SUBTITLE_SETTINGS, ...initialSettings }));
+      setSettings(() => ({ ...DEFAULT_SUBTITLE_SETTINGS, ...initialSettings }));
     }
   }, [initialSettings]);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,13 +10,11 @@ import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
-import { useAuth } from "@/contexts/AuthContext";
 import { logger, generateRequestId } from "@/lib/logger";
-import type { 
-  WorkflowTestInputs, 
-  WorkflowStepModels, 
-  FieldSchemaInfo,
-  WorkflowParameterValue 
+import type {
+  WorkflowTestInputs,
+  WorkflowStepModels,
+  FieldSchemaInfo
 } from "@/types/workflow-parameters";
 import { jsonToSchema } from "@/types/schema";
 import type { ContentType } from "@/types/workflow-execution-display";
@@ -32,85 +30,27 @@ interface WorkflowTestDialogProps {
 }
 
 export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTestDialogProps) => {
-  const { user } = useAuth();
   const [inputs, setInputs] = useState<WorkflowTestInputs>({});
   const [result, setResult] = useState<{ url: string; credits: number } | null>(null);
-  const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
+  const [uploadingFiles] = useState<Set<string>>(new Set());
   const [statusMessage, setStatusMessage] = useState<string>('');
-  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
   const [stepModels, setStepModels] = useState<WorkflowStepModels>({});
   const { executeWorkflow, isExecuting, progress } = useWorkflowExecution();
 
-  // Fetch model schemas for all workflow steps (mirrors Custom Creation)
-  useEffect(() => {
-    if (!workflow?.workflow_steps || !open) return;
-    
-    const fetchModels = async () => {
-      const models: WorkflowStepModels = {};
-      for (const step of workflow.workflow_steps) {
-        const { data } = await supabase
-          .from('ai_models')
-          .select('input_schema, max_images, content_type, provider')
-          .eq('record_id', step.model_record_id)
-          .single();
-        
-        if (data) {
-          models[step.step_number] = {
-            input_schema: jsonToSchema(data.input_schema),
-            max_images: data.max_images,
-            content_type: data.content_type,
-            provider: data.provider
-          };
-        }
-      }
-      setStepModels(models);
-      
-      // Initialize defaults from model schemas
-      initializeDefaults(models);
-    };
-    
-    fetchModels();
-  }, [workflow, open]);
-
-  // Initialize default values from model schemas (mirrors Custom Creation lines 465-481)
-  const initializeDefaults = (models: WorkflowStepModels) => {
-    if (!workflow?.user_input_fields) return;
-    
-    const defaults: WorkflowTestInputs = {};
-    
-    // For each user input field, find its corresponding model parameter
-    for (const field of workflow.user_input_fields) {
-      const fieldInfo = getFieldSchemaInfo(field.name, models);
-      if (!fieldInfo) continue;
-      
-      const modelData = models[fieldInfo.stepNumber];
-      const paramSchema = modelData?.input_schema?.properties?.[fieldInfo.modelParam];
-      
-      // Set default value if defined and not already set
-      if (paramSchema?.default !== undefined && inputs[field.name] === undefined) {
-        defaults[field.name] = paramSchema.default;
-      }
-    }
-    
-    if (Object.keys(defaults).length > 0) {
-      setInputs(prev => ({ ...defaults, ...prev }));
-    }
-  };
-
-  const getFieldSchemaInfo = (userInputFieldName: string, models: WorkflowStepModels = stepModels): FieldSchemaInfo | null => {
+  const getFieldSchemaInfo = useCallback((userInputFieldName: string, models: WorkflowStepModels = stepModels): FieldSchemaInfo | null => {
     if (!workflow?.workflow_steps) return null;
-    
+
     // Find which step maps this user input to a model parameter
     for (const step of workflow.workflow_steps) {
       const modelData = models[step.step_number];
       if (!modelData) continue;
-      
+
       // Check input mappings to find which model parameter this maps to
       for (const [modelParam, mapping] of Object.entries(step.input_mappings || {})) {
         if (mapping === `user.${userInputFieldName}`) {
           const paramSchema = modelData.input_schema?.properties?.[modelParam];
           if (!paramSchema) continue;
-          
+
           return {
             expectsArray: paramSchema.type === 'array',
             isRequired: modelData.input_schema?.required?.includes(modelParam) || false,
@@ -124,96 +64,66 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
       }
     }
     return null;
-  };
+  }, [workflow?.workflow_steps, stepModels]);
+
+  // Initialize default values from model schemas (mirrors Custom Creation lines 465-481)
+  const initializeDefaults = useCallback((models: WorkflowStepModels) => {
+    if (!workflow?.user_input_fields) return;
+
+    const defaults: WorkflowTestInputs = {};
+
+    // For each user input field, find its corresponding model parameter
+    for (const field of workflow.user_input_fields) {
+      const fieldInfo = getFieldSchemaInfo(field.name, models);
+      if (!fieldInfo) continue;
+
+      const modelData = models[fieldInfo.stepNumber];
+      const paramSchema = modelData?.input_schema?.properties?.[fieldInfo.modelParam];
+
+      // Set default value if defined and not already set
+      if (paramSchema?.default !== undefined && inputs[field.name] === undefined) {
+        defaults[field.name] = paramSchema.default;
+      }
+    }
+
+    if (Object.keys(defaults).length > 0) {
+      setInputs(prev => ({ ...defaults, ...prev }));
+    }
+  }, [workflow?.user_input_fields, getFieldSchemaInfo, inputs]);
+
+  // Fetch model schemas for all workflow steps (mirrors Custom Creation)
+  useEffect(() => {
+    if (!workflow?.workflow_steps || !open) return;
+
+    const fetchModels = async () => {
+      const models: WorkflowStepModels = {};
+      for (const step of workflow.workflow_steps) {
+        const { data } = await supabase
+          .from('ai_models')
+          .select('input_schema, max_images, content_type, provider')
+          .eq('record_id', step.model_record_id)
+          .single();
+
+        if (data) {
+          models[step.step_number] = {
+            input_schema: jsonToSchema(data.input_schema),
+            max_images: data.max_images,
+            content_type: data.content_type,
+            provider: data.provider
+          };
+        }
+      }
+      setStepModels(models);
+
+      // Initialize defaults from model schemas
+      initializeDefaults(models);
+    };
+
+    fetchModels();
+  }, [workflow, open, initializeDefaults]);
 
   const handleInputChange = (fieldName: string, value: any) => {
     setInputs(prev => ({ ...prev, [fieldName]: value }));
-  };
-
-  // Handle file upload - mirrors Custom Creation lines 654-698
-  const handleFileUpload = async (fieldName: string, file: File | undefined) => {
-    if (!file) {
-      setInputs(prev => ({ ...prev, [fieldName]: null }));
-      setPreviewUrls(prev => {
-        const newUrls = { ...prev };
-        delete newUrls[fieldName];
-        return newUrls;
-      });
-      return;
-    }
-
-    if (!user?.id) {
-      toast.error("Please sign in to upload files");
-      return;
-    }
-
-    setUploadingFiles(prev => new Set(prev).add(fieldName));
-
-    try {
-      // Validate file
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-      if (!validTypes.includes(file.type)) {
-        toast.error(`Invalid file type. Only JPEG, PNG, and WebP allowed.`);
-        return;
-      }
-
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error(`File is too large (max 10MB)`);
-        return;
-      }
-
-      // Upload to storage using same pattern as Custom Creation
-      const fileExt = file.name.split('.').pop();
-      const timestamp = Date.now();
-      const filePath = `${user.id}/uploads/${timestamp}/${fieldName}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('generated-content')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) throw uploadError;
-
-      // Generate signed URL immediately (mirrors Custom Creation)
-      const { data: signedData, error: signedError } = await supabase.storage
-        .from('generated-content')
-        .createSignedUrl(filePath, 3600);
-
-      if (signedError || !signedData?.signedUrl) {
-        throw new Error('Failed to create signed URL');
-      }
-
-      // Determine the expected format from model schema
-      const fieldInfo = getFieldSchemaInfo(fieldName);
-      
-      // Store signed URL in correct format based on schema (mirrors Custom Creation lines 692-696)
-      if (fieldInfo?.expectsArray) {
-        // Model expects array of URLs
-        setInputs(prev => ({ ...prev, [fieldName]: [signedData.signedUrl] }));
-        testLogger.debug('File stored as array', { fieldName, format: 'array' });
-      } else {
-        // Model expects single URL string
-        setInputs(prev => ({ ...prev, [fieldName]: signedData.signedUrl }));
-        testLogger.debug('File stored as string', { fieldName, format: 'string' });
-      }
-      
-      // Store preview URL separately for UI display
-      setPreviewUrls(prev => ({ ...prev, [fieldName]: signedData.signedUrl }));
-
-      testLogger.info('File uploaded successfully', { fieldName, fileName: file.name });
-      toast.success('File uploaded successfully');
-    } catch (error) {
-      testLogger.error('File upload failed', error as Error, { fieldName, fileName: file?.name });
-      toast.error('Failed to upload file');
-    } finally {
-      setUploadingFiles(prev => {
-        const next = new Set(prev);
-        next.delete(fieldName);
-        return next;
-      });
-    }
   };
 
   // Validate workflow - mirrors Custom Creation validation (lines 549-590)
@@ -255,7 +165,6 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
     setResult(null);
     setStatusMessage('');
     setInputs({});
-    setPreviewUrls({});
     toast.info('Test reset');
   };
 

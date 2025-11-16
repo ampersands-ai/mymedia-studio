@@ -27,8 +27,7 @@ interface AlertPayload {
 serve(async (req) => {
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('send-webhook-alert', requestId);
-  const startTime = Date.now();
-  
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }

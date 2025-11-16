@@ -1,14 +1,12 @@
 import { FlowStep } from "@/types/admin/model-health";
 import { CheckCircle2, Circle, XCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { FlowStepTooltip } from "./FlowStepTooltip";
 
 interface TestFlowTimelineProps {
   flowSteps: FlowStep[];
-  status: 'running' | 'success' | 'failed' | 'timeout' | 'error';
 }
 
-export const TestFlowTimeline = ({ flowSteps, status }: TestFlowTimelineProps) => {
+export const TestFlowTimeline = ({ flowSteps }: TestFlowTimelineProps) => {
   const getStepIcon = (step: FlowStep) => {
     if (step.status === 'completed') {
       return <CheckCircle2 className="w-5 h-5 text-green-500" />;

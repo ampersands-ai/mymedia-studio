@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import {
   ReactFlow,
   Node,
@@ -11,7 +11,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Card } from '@/components/ui/card';
 import { WorkflowStep, UserInputField } from '@/hooks/useWorkflowTemplates';
-import type { StepNodeData, UserInputNodeData, OutputNodeData } from '@/types/workflow-display';
+import type { StepNodeData, UserInputNodeData } from '@/types/workflow-display';
 
 interface WorkflowVisualPreviewProps {
   userInputFields: UserInputField[];
@@ -61,7 +61,7 @@ const nodeTypes: NodeTypes = {
 };
 
 export function WorkflowVisualPreview({ userInputFields, steps }: WorkflowVisualPreviewProps) {
-  const createNodesAndEdges = () => {
+  const createNodesAndEdges = useCallback(() => {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
 
@@ -113,7 +113,7 @@ export function WorkflowVisualPreview({ userInputFields, steps }: WorkflowVisual
     }
 
     return { nodes, edges };
-  };
+  }, [userInputFields, steps]);
 
   const { nodes: initialNodes, edges: initialEdges } = createNodesAndEdges();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -124,7 +124,7 @@ export function WorkflowVisualPreview({ userInputFields, steps }: WorkflowVisual
     const { nodes: updatedNodes, edges: updatedEdges } = createNodesAndEdges();
     setNodes(updatedNodes);
     setEdges(updatedEdges);
-  }, [steps, userInputFields]);
+  }, [createNodesAndEdges, setNodes, setEdges]);
 
   return (
     <Card className="h-[600px] border bg-muted/20">

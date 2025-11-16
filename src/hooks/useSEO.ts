@@ -42,5 +42,6 @@ export const useSEO = (config: SEOConfig) => {
         }
       });
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.title, config.description]);
 };

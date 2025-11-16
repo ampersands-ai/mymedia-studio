@@ -145,7 +145,6 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   onGenerate,
   onReset,
   isGenerating,
-  isPolling,
   pollingGenerationId,
   localGenerating,
   estimatedTokens,

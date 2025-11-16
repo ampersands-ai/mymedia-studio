@@ -11,7 +11,6 @@ Deno.serve(async (req) => {
   }
 
   const requestId = crypto.randomUUID();
-  const startTime = Date.now();
   const logger = new EdgeLogger('generate-video-topic', requestId);
 
   try {

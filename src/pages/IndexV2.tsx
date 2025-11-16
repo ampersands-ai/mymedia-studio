@@ -1,13 +1,11 @@
 import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/Footer";
 import { StatCounter } from "@/components/homepage/StatCounter";
 import { ProblemCard } from "@/components/homepage/ProblemCard";
 import { useTemplates } from "@/hooks/useTemplates";
 import { lazy, Suspense, useState } from "react";
-import { Check, Frown, Clock, HelpCircle, DollarSign, Palette, Edit, Download } from "lucide-react";
-import { OptimizedImage } from "@/components/ui/optimized-image";
+import { Check, Frown, Clock, HelpCircle, DollarSign } from "lucide-react";
 import { GallerySkeleton, PricingSkeleton } from "@/components/ui/skeletons";
 import { usePrefetchOnHover } from "@/hooks/useRoutePreload";
 import { HeroSection } from "@/components/homepage/HeroSection";
@@ -25,9 +23,8 @@ const ComparisonTable = lazy(() => import("@/components/homepage/ComparisonTable
 // Partner logos removed - ready to add new ones
 
 const IndexV2 = () => {
-  const { user } = useAuth();
   const { data: templates } = useTemplates();
-  const [templateFilter, setTemplateFilter] = useState("all");
+  const [templateFilter] = useState("all");
 
   const filteredTemplates = templates?.filter((template) => {
     if (templateFilter === "all") return true;

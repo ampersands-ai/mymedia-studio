@@ -38,6 +38,7 @@ export const useDraftPersistence = (page: string) => {
     } catch {
       return null;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [STORAGE_KEY]);
 
   const clearDraft = useCallback(() => {

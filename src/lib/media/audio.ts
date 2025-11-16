@@ -4,7 +4,7 @@
  */
 
 import { getOptimizedAudioUrl as getSupabaseAudioUrl } from '@/lib/supabase-videos';
-import { type URLStrategy, type AudioMediaOptions } from './types';
+import { type AudioMediaOptions } from './types';
 import { MEDIA_CONFIG } from './config';
 
 /**

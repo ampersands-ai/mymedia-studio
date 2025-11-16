@@ -7,7 +7,6 @@ import {
   WorkflowExecutionParams,
   WorkflowExecutionResult,
   WorkflowExecutionParamsSchema,
-  WorkflowExecutionResultSchema,
   WorkflowExecutionStateSchema,
   WorkflowProgress,
 } from "@/types/workflow";

@@ -1,5 +1,4 @@
 import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
-import type { MergedTemplate } from "@/hooks/useTemplates";
 
 /**
  * Dialog state for content template editing

@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     // Validate request body with Zod
     const requestBody = await req.json();
     const validatedRequest: GenerateCaptionRequest = GenerateCaptionRequestSchema.parse(requestBody);
-    const { generation_id, video_job_id, prompt, content_type, model_name } = validatedRequest;
+    const { generation_id, video_job_id, prompt, content_type } = validatedRequest;
 
     logger.info('Caption generation started', {
       metadata: { 

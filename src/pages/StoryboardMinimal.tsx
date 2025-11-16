@@ -8,14 +8,13 @@ import { GlassSelect } from '@/components/glass/GlassSelect';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { useAzureVoices } from '@/hooks/useAzureVoices';
 import { toast } from 'sonner';
-import { 
-  Wand2, 
+import {
+  Wand2,
   Play,
   Download,
   RotateCcw,
   Image as ImageIcon,
   Video as VideoIcon,
-  Edit2,
   XCircle
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
@@ -23,10 +22,9 @@ import { OptimizedGenerationPreview } from '@/components/generation/OptimizedGen
 import { supabase } from '@/integrations/supabase/client';
 
 export default function StoryboardMinimal() {
-  const { 
-    storyboard, 
+  const {
+    storyboard,
     scenes,
-    isLoading,
     generateStoryboard,
     isGenerating,
     updateScene,
@@ -113,7 +111,7 @@ export default function StoryboardMinimal() {
         setTopic('');
         setDuration(60);
         toast.success('Storyboard reset!');
-      } catch (error) {
+      } catch {
         toast.error('Failed to reset storyboard');
       }
     }

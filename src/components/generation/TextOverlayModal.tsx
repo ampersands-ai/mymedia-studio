@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -83,7 +83,7 @@ export function TextOverlayModal({
     ));
   };
 
-  const handleApplyOverlay = async () => {
+  const handleApplyOverlay = useCallback(async () => {
     if (textLayers.length === 0) return;
 
     try {
@@ -101,7 +101,7 @@ export function TextOverlayModal({
     } finally {
       setIsApplying(false);
     }
-  };
+  }, [textLayers, imageUrl, onOverlayComplete, onOpenChange]);
 
   const getPreviewStyle = (layer: TextLayer) => {
     const shadows = [];
@@ -170,7 +170,7 @@ export function TextOverlayModal({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, textLayers]);
+  }, [open, textLayers, handleApplyOverlay, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

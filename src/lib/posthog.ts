@@ -34,7 +34,7 @@ export const initPostHog = () => {
     
     posthog.init(POSTHOG_KEY, {
       api_host: POSTHOG_HOST,
-      loaded: (posthog) => {
+      loaded: () => {
         if (import.meta.env.DEV) {
           logger.debug('PostHog analytics initialized', {
             utility: 'posthog',

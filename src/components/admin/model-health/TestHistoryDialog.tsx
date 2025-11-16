@@ -1,17 +1,10 @@
-import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { FlowTimeline } from "./FlowTimeline";
 import type { ModelHealthSummary } from "@/types/admin/model-health";
-import { format } from "date-fns";
-import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface TestHistoryDialogProps {
   model: ModelHealthSummary | null;

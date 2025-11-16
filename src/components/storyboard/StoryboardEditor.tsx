@@ -4,8 +4,9 @@
  */
 
 import { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
+import type { Json } from '@/integrations/supabase/types';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { useVideoUrl } from '@/hooks/media/useVideoUrl';
@@ -16,10 +17,6 @@ import { useIntroSceneSync } from '@/hooks/storyboard/useIntroSceneSync';
 import { useStoryboardKeyboardNav } from '@/hooks/storyboard/useStoryboardKeyboardNav';
 import { useStoryboardAutoCollapse } from '@/hooks/storyboard/useStoryboardAutoCollapse';
 import { validateScenesComplete, hasInsufficientCredits } from '@/lib/storyboard-validation';
-import { logger } from '@/lib/logger';
-import type { Database } from '@/integrations/supabase/types';
-
-type Json = Database['public']['Tables']['storyboards']['Row']['subtitle_settings'];
 import { RenderStatusAlert } from './RenderStatusAlert';
 import { StuckVideoAlert } from './StuckVideoAlert';
 import { StoryboardHeader } from './StoryboardHeader';
@@ -36,7 +33,6 @@ import { SubtitleCustomizer } from './SubtitleCustomizer';
 import type { SubtitleSettings } from '@/types/subtitle';
 
 export const StoryboardEditor = () => {
-  const navigate = useNavigate();
   
   // Main storyboard hook
   const {

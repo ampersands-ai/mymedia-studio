@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { Video as VideoIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -32,9 +32,7 @@ export const OptimizedVideoPreview = ({
   isExternalUrl = false,
 }: OptimizedVideoPreviewProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [videoError, setVideoError] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
 
   // Lazy load video unless priority
   const { ref, inView } = useInView({
@@ -61,7 +59,6 @@ export const OptimizedVideoPreview = ({
   const handleMouseEnter = () => {
     if (playOnHover && videoRef.current && !showControls) {
       videoRef.current.play().catch(() => {});
-      setIsPlaying(true);
     }
   };
 
@@ -69,7 +66,6 @@ export const OptimizedVideoPreview = ({
     if (playOnHover && videoRef.current && !showControls) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
-      setIsPlaying(false);
     }
   };
 
@@ -114,7 +110,6 @@ export const OptimizedVideoPreview = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onError={() => setVideoError(true)}
-      onLoadedMetadata={() => setHasLoaded(true)}
     />
   );
 };

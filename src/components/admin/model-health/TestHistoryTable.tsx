@@ -1,10 +1,6 @@
 import { Card } from "@/components/ui/card";
 
-interface TestHistoryTableProps {
-  modelRecordId?: string;
-}
-
-export const TestHistoryTable = ({ modelRecordId }: TestHistoryTableProps) => {
+export const TestHistoryTable = () => {
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between mb-4">

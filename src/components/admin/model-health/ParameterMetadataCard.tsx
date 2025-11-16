@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Eye, EyeOff, Settings2, ArrowUpToLine, ArrowUpDown } from "lucide-react";
+import { Eye, EyeOff, Settings2, ArrowUpToLine, ArrowUpDown, Image as ImageIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ImageUploadField } from "./ImageUploadField";
+import { useState } from "react";
 
 interface ParameterMetadataCardProps {
   name: string;
@@ -34,6 +36,7 @@ export const ParameterMetadataCard = ({
   onPushToSchema,
   onToggleAdvanced,
 }: ParameterMetadataCardProps) => {
+  const [isImageField, setIsImageField] = useState(false);
   const type = schema.type || 'string';
   const format = schema.format;
   const description = schema.description || schema.title || '';
@@ -43,6 +46,16 @@ export const ParameterMetadataCard = ({
   const defaultValue = schema.default;
 
   const renderInput = () => {
+    // If marked as image field, show image upload UI
+    if (isImageField) {
+      return (
+        <ImageUploadField
+          value={value}
+          onChange={(newValue) => onChange(name, newValue)}
+        />
+      );
+    }
+
     if (type === 'boolean') {
       return (
         <Switch
@@ -212,6 +225,25 @@ export const ParameterMetadataCard = ({
               </Tooltip>
             </TooltipProvider>
           )}
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant={isImageField ? "default" : "outline"}
+                  onClick={() => setIsImageField(!isImageField)}
+                  className="h-7 px-2 gap-1"
+                >
+                  <ImageIcon className="h-4 w-4" />
+                  {isImageField && <span className="text-xs">Image</span>}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{isImageField ? "Switch back to regular input" : "Use as image upload field"}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 

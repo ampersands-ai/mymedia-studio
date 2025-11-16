@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
         },
       });
     } catch (logErrorObj) {
-      logError('deduct-tokens', logErrorObj, { context: 'audit_log_failed' });
+      logger.error('Audit log failed', new Error('Failed to insert audit log'));
     }
 
     logger.info(`[SUCCESS] Deducted ${tokens_to_deduct} credits for user ${user.id}`);

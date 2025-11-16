@@ -683,7 +683,7 @@ Deno.serve(async (req) => {
         // Deduct tokens with retry logic for optimistic locking
         let updateResult: any = null;
         let retryCount = 0;
-        const MAX_RETRIES = 3;
+        const MAX_RETRIES = 8;
         
         while (retryCount < MAX_RETRIES) {
           const { data: currentSub } = await supabase
@@ -713,15 +713,19 @@ Deno.serve(async (req) => {
             break; // Success
           }
           
-          // Optimistic lock failed - retry with jitter
+          // Optimistic lock failed - retry with exponential backoff + jitter
           retryCount++;
           if (retryCount < MAX_RETRIES) {
-            const jitter = 50 + Math.random() * 150; // 50-200ms
+            const base = 80; // ms
+            const exp = Math.min(6, retryCount - 1); // cap exponent to avoid long waits
+            const backoff = base * Math.pow(2, exp);
+            const jitter = Math.random() * 120; // 0-120ms
+            const delay = Math.min(1000, Math.round(backoff + jitter)); // cap at 1s
             logger.warn('Optimistic lock failed, retrying', {
               userId: user.id,
-              metadata: { attempt: retryCount, jitter_ms: Math.round(jitter) }
+              metadata: { attempt: retryCount, backoff_ms: delay }
             });
-            await new Promise(resolve => setTimeout(resolve, jitter));
+            await new Promise(resolve => setTimeout(resolve, delay));
           }
         }
         

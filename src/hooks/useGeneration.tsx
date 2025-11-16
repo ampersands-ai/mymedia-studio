@@ -98,13 +98,26 @@ export const useGeneration = () => {
       
       // Retry logic for token concurrency errors (409)
       if (error && (error.message?.includes("409") || error.message?.includes("TOKEN_CONCURRENCY"))) {
-        generationLogger.warn("Token concurrency detected, retrying once", { requestId });
-        await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 150)); // 100-250ms jitter
-        const retryResult = await supabase.functions.invoke(functionName, {
-          body: bodyToSend,
-        });
-        data = retryResult.data;
-        error = retryResult.error;
+        const MAX_CLIENT_RETRIES = 3;
+        let attempt = 0;
+        generationLogger.warn("Token concurrency detected, applying client retries", { requestId, MAX_CLIENT_RETRIES });
+        while (
+          attempt < MAX_CLIENT_RETRIES &&
+          (error && (error.message?.includes("409") || error.message?.includes("TOKEN_CONCURRENCY")))
+        ) {
+          attempt++;
+          const base = 120; // ms
+          const exp = Math.min(5, attempt - 1);
+          const backoff = base * Math.pow(2, exp);
+          const jitter = Math.random() * 150; // 0-150ms
+          const delay = Math.min(800, Math.round(backoff + jitter));
+          await new Promise(resolve => setTimeout(resolve, delay));
+          const retryResult = await supabase.functions.invoke(functionName, {
+            body: bodyToSend,
+          });
+          data = retryResult.data;
+          error = retryResult.error;
+        }
       }
 
       if (error) {

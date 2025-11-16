@@ -524,23 +524,37 @@ Deno.serve(async (req) => {
 
     // Inject MP4/H.264 defaults for video jobs to maximize mobile compatibility
     if (model.content_type === 'video') {
-      const videoDefaults = {
-        output_format: 'mp4',
-        format: 'mp4',
-        container: 'mp4',
-        video_codec: 'h264',
-        audio_codec: 'aac'
-      };
-      
-      for (const [key, value] of Object.entries(videoDefaults)) {
-        if (validatedParameters[key] === undefined) {
-          validatedParameters[key] = value;
+      // Provider-specific defaults
+      if (model.provider === 'runware') {
+        // Runware uses camelCase and doesn't need codec params
+        const runwareDefaults = {
+          outputFormat: validatedParameters.outputFormat || 'mp4'
+        };
+        validatedParameters = { ...runwareDefaults, ...validatedParameters };
+        
+        logger.debug('Applied Runware video format defaults', {
+          metadata: { content_type: 'video', provider: 'runware' }
+        });
+      } else {
+        // Other providers use snake_case
+        const videoDefaults = {
+          output_format: 'mp4',
+          format: 'mp4',
+          container: 'mp4',
+          video_codec: 'h264',
+          audio_codec: 'aac'
+        };
+        
+        for (const [key, value] of Object.entries(videoDefaults)) {
+          if (validatedParameters[key] === undefined) {
+            validatedParameters[key] = value;
+          }
         }
+        
+        logger.debug('Applied standard video format defaults', {
+          metadata: { content_type: 'video', provider: model.provider }
+        });
       }
-      
-      logger.debug('Applied video format defaults for mobile compatibility', {
-        metadata: { content_type: 'video' }
-      });
     }
 
     // Calculate token cost with validated parameters

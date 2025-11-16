@@ -429,7 +429,7 @@ export default function ComprehensiveModelTestPage() {
   }, [state.prompt, customParameters, uploadedImages, fullModel]);
 
   const handleStartTest = async () => {
-    if (!state.prompt.trim()) {
+    if (!customParameters.prompt || !customParameters.prompt.trim()) {
       toast.error('Please enter a prompt');
       return;
     }

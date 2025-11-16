@@ -11,7 +11,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ParametersInspector } from "@/components/admin/model-health/ParametersInspector";
@@ -20,17 +19,14 @@ import { TestResultsCard } from "@/components/admin/model-health/TestResultsCard
 import { ExecutionFlowVisualizer } from "@/components/admin/model-health/ExecutionFlowVisualizer";
 import { PayloadReviewCard } from "@/components/admin/model-health/PayloadReviewCard";
 import { ExecutionControlPanel } from "@/components/admin/model-health/ExecutionControlPanel";
-import { ArrowLeft, Download, FileJson, Eye, BookOpen, ArrowUpToLine, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Download, Eye, BookOpen, ArrowUpToLine, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { createSignedUrl } from "@/lib/storage-utils";
 import { toast } from "sonner";
-import type { Database } from "@/integrations/supabase/types";
-
-type AIModel = Database['public']['Tables']['ai_models']['Row'];
 
 export default function ComprehensiveModelTestPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  useAuth();
   
   // Data fetching
   const { data: allModels, isLoading: modelsLoading } = useAllModels();
@@ -64,28 +60,24 @@ export default function ComprehensiveModelTestPage() {
   const [stageData, setStageData] = useState<any>({});
   const [preparedPayload, setPreparedPayload] = useState<any>(null);
   const [payloadEditable, setPayloadEditable] = useState(false);
-  const [outputUrl, setOutputUrl] = useState<string | null>(null);
 
   const outputSectionRef = useRef<HTMLDivElement>(null);
 
   // Custom Creation state
-  const { 
-    state, 
-    updateState, 
+  const {
+    state,
+    updateState,
     resetState,
-    setPrompt: setStatePrompt,
   } = useCustomCreationState();
 
-  const model = fullModel;
-
   // Schema helpers
-  const schemaHelpers = useSchemaHelpers();
+  useSchemaHelpers();
 
   // Image upload - simplified for test page
-  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+  useState<File[]>([]);
 
   // Generation polling
-  const { startPolling, stopPolling, isPolling } = useGenerationPolling({
+  const { startPolling, stopPolling } = useGenerationPolling({
     onComplete: async (outputs, parentId) => {
       setCurrentStage('media_delivered');
       updateState({
@@ -99,9 +91,8 @@ export default function ComprehensiveModelTestPage() {
       });
 
       if (outputs[0]?.storage_path) {
-        const signedUrl = await createSignedUrl('generated-content', outputs[0].storage_path);
-        setOutputUrl(signedUrl);
-        
+        await createSignedUrl('generated-content', outputs[0].storage_path);
+
         setCurrentStage('media_storage');
         setStageData(prev => ({
           ...prev,
@@ -161,7 +152,7 @@ export default function ComprehensiveModelTestPage() {
       setOriginalDefaults(defaults);
       setOriginalAdvancedFlags(advancedFlags);
     }
-  }, [fullModel]);
+  }, [fullModel, updateState]);
 
   // Check documentation status
   useEffect(() => {
@@ -186,17 +177,12 @@ export default function ComprehensiveModelTestPage() {
   }, [fullModel?.record_id]);
 
   const handleParameterChange = (key: string, value: any) => {
-    updateState({ 
-      modelParameters: { 
-        ...state.modelParameters, 
-        [key]: value 
-      } 
+    updateState({
+      modelParameters: {
+        ...state.modelParameters,
+        [key]: value
+      }
     });
-  };
-
-  const handleResetToDefaults = () => {
-    updateState({ modelParameters: { ...originalDefaults } });
-    toast.success('Parameters reset to defaults');
   };
 
   const handleExportConfiguration = () => {
@@ -392,7 +378,7 @@ export default function ComprehensiveModelTestPage() {
         prompt: state.prompt,
         model: fullModel?.model_name,
         modelParameters: state.modelParameters,
-        uploadedImages: uploadedImages.length,
+        uploadedImages: 0,
       },
     }));
 
@@ -418,7 +404,7 @@ export default function ComprehensiveModelTestPage() {
       endpoint: fullModel?.api_endpoint,
       method: 'POST',
       parameters: mergedParams,
-      uploadedImages: uploadedImages.map(img => img.name),
+      uploadedImages: [],
     };
     
     setStageData(prev => ({
@@ -427,7 +413,7 @@ export default function ComprehensiveModelTestPage() {
     }));
 
     return payload;
-  }, [state.prompt, state.modelParameters, uploadedImages, fullModel]);
+  }, [state.prompt, state.modelParameters, fullModel]);
 
   const handleStartTest = async () => {
     if (!state.prompt?.trim()) {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useModels, useModelByRecordId } from "@/hooks/useModels";
+import { useModelByRecordId } from "@/hooks/useModels";
+import { useAllModels } from "@/hooks/useAllModels";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCustomCreationState } from "@/hooks/useCustomCreationState";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
@@ -32,7 +33,7 @@ export default function ComprehensiveModelTestPage() {
   const { user } = useAuth();
   
   // Data fetching
-  const { data: allModels, isLoading: modelsLoading } = useModels();
+  const { data: allModels, isLoading: modelsLoading } = useAllModels();
   const [selectedModelRecordId, setSelectedModelRecordId] = useState<string | null>(null);
   const { data: fullModel, isLoading: fullModelLoading } = useModelByRecordId(selectedModelRecordId);
 

@@ -1,11 +1,12 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Info, Eye, EyeOff, Lock, Settings2 } from "lucide-react";
+import { Eye, EyeOff, Settings2, ArrowUpToLine } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ParameterMetadataCardProps {
@@ -16,6 +17,8 @@ interface ParameterMetadataCardProps {
   isRequired: boolean;
   showToUser: boolean;
   isAdvanced: boolean;
+  isModified?: boolean;
+  onPushToSchema?: () => void;
 }
 
 export const ParameterMetadataCard = ({
@@ -26,6 +29,8 @@ export const ParameterMetadataCard = ({
   isRequired,
   showToUser,
   isAdvanced,
+  isModified = false,
+  onPushToSchema,
 }: ParameterMetadataCardProps) => {
   const type = schema.type || 'string';
   const format = schema.format;
@@ -96,7 +101,7 @@ export const ParameterMetadataCard = ({
   };
 
   return (
-    <Card className="p-4 space-y-3">
+    <Card className={`p-4 space-y-3 ${isModified ? 'border-orange-500 border-2' : ''}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -106,7 +111,7 @@ export const ParameterMetadataCard = ({
             )}
           </div>
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
           {isRequired && (
             <TooltipProvider>
               <Tooltip>
@@ -117,6 +122,7 @@ export const ParameterMetadataCard = ({
               </Tooltip>
             </TooltipProvider>
           )}
+          
           {!showToUser && (
             <TooltipProvider>
               <Tooltip>
@@ -126,10 +132,11 @@ export const ParameterMetadataCard = ({
                     Hidden
                   </Badge>
                 </TooltipTrigger>
-                <TooltipContent>Hidden from users - backend only</TooltipContent>
+                <TooltipContent>Hidden from users in the UI</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}
+          
           {showToUser && !isAdvanced && (
             <TooltipProvider>
               <Tooltip>
@@ -139,10 +146,11 @@ export const ParameterMetadataCard = ({
                     Visible
                   </Badge>
                 </TooltipTrigger>
-                <TooltipContent>Shown to users</TooltipContent>
+                <TooltipContent>Visible to users in the UI</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}
+          
           {isAdvanced && (
             <TooltipProvider>
               <Tooltip>
@@ -152,7 +160,33 @@ export const ParameterMetadataCard = ({
                     Advanced
                   </Badge>
                 </TooltipTrigger>
-                <TooltipContent>Advanced parameter - shown in advanced options</TooltipContent>
+                <TooltipContent>Advanced parameter, shown in advanced settings</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
+          {isModified && (
+            <Badge variant="default" className="text-[10px] bg-orange-500 hover:bg-orange-600">
+              Modified
+            </Badge>
+          )}
+
+          {isModified && onPushToSchema && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onPushToSchema}
+                    className="h-7 px-2"
+                  >
+                    <ArrowUpToLine className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Push this parameter default to schema</p>
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}
@@ -165,36 +199,38 @@ export const ParameterMetadataCard = ({
 
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div>
-          <span className="text-muted-foreground">Type:</span>{' '}
-          <code className="bg-muted px-1 py-0.5 rounded">{type}</code>
+          <span className="text-muted-foreground">Type:</span>{" "}
+          <code className="px-1 py-0.5 bg-muted rounded">{type}</code>
         </div>
         {format && (
           <div>
-            <span className="text-muted-foreground">Format:</span>{' '}
-            <code className="bg-muted px-1 py-0.5 rounded">{format}</code>
+            <span className="text-muted-foreground">Format:</span>{" "}
+            <code className="px-1 py-0.5 bg-muted rounded">{format}</code>
           </div>
         )}
         {minimum !== undefined && (
           <div>
-            <span className="text-muted-foreground">Min:</span>{' '}
-            <code className="bg-muted px-1 py-0.5 rounded">{minimum}</code>
+            <span className="text-muted-foreground">Min:</span>{" "}
+            <code className="px-1 py-0.5 bg-muted rounded">{minimum}</code>
           </div>
         )}
         {maximum !== undefined && (
           <div>
-            <span className="text-muted-foreground">Max:</span>{' '}
-            <code className="bg-muted px-1 py-0.5 rounded">{maximum}</code>
+            <span className="text-muted-foreground">Max:</span>{" "}
+            <code className="px-1 py-0.5 bg-muted rounded">{maximum}</code>
           </div>
         )}
         {defaultValue !== undefined && (
           <div className="col-span-2">
-            <span className="text-muted-foreground">Default:</span>{' '}
-            <code className="bg-muted px-1 py-0.5 rounded">{String(defaultValue)}</code>
+            <span className="text-muted-foreground">Default:</span>{" "}
+            <code className="px-1 py-0.5 bg-muted rounded">
+              {JSON.stringify(defaultValue)}
+            </code>
           </div>
         )}
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <Label className="text-xs text-muted-foreground">Current Value</Label>
         {renderInput()}
       </div>

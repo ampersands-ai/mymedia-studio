@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ParameterMetadataCard } from "./ParameterMetadataCard";
 import { Eye, EyeOff, Settings2, List } from "lucide-react";
 
@@ -8,12 +9,18 @@ interface ParametersInspectorProps {
   schema: any;
   parameters: Record<string, any>;
   onParameterChange: (name: string, value: any) => void;
+  modifiedParameters?: string[];
+  onPushParameterToSchema?: (paramName: string) => void;
+  onPushAllToSchema?: () => void;
 }
 
 export const ParametersInspector = ({
   schema,
   parameters,
   onParameterChange,
+  modifiedParameters = [],
+  onPushParameterToSchema,
+  onPushAllToSchema,
 }: ParametersInspectorProps) => {
   if (!schema?.properties) {
     return (
@@ -72,6 +79,8 @@ export const ParametersInspector = ({
             isRequired={required.includes(key)}
             showToUser={properties[key].showToUser !== false}
             isAdvanced={properties[key].isAdvanced === true}
+            isModified={modifiedParameters.includes(key)}
+            onPushToSchema={onPushParameterToSchema ? () => onPushParameterToSchema(key) : undefined}
           />
         ))}
       </div>
@@ -93,7 +102,7 @@ export const ParametersInspector = ({
         <CardDescription>
           View and edit all model parameters with complete metadata
         </CardDescription>
-        <div className="flex gap-2 flex-wrap pt-2">
+        <div className="flex gap-2 flex-wrap pt-2 items-center">
           <Badge variant="outline" className="gap-1">
             <List className="h-3 w-3" />
             {stats.total} Total
@@ -113,6 +122,23 @@ export const ParametersInspector = ({
             <EyeOff className="h-3 w-3" />
             {stats.backendOnly} Backend Only
           </Badge>
+          {modifiedParameters.length > 0 && (
+            <>
+              <Badge variant="default" className="gap-1 bg-orange-500 hover:bg-orange-600">
+                {modifiedParameters.length} Modified
+              </Badge>
+              {onPushAllToSchema && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onPushAllToSchema}
+                  className="ml-auto"
+                >
+                  Push All to Schema
+                </Button>
+              )}
+            </>
+          )}
         </div>
       </CardHeader>
       <CardContent>

@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useModels, useModelByRecordId } from "@/hooks/useModels";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCustomCreationState } from "@/hooks/useCustomCreationState";
-import { useCustomGeneration } from "@/hooks/useCustomGeneration";
-import { useImageUpload } from "@/hooks/useImageUpload";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
 import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
 import { Button } from "@/components/ui/button";
@@ -12,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ParametersInspector } from "@/components/admin/model-health/ParametersInspector";
@@ -21,8 +19,6 @@ import { TestResultsCard } from "@/components/admin/model-health/TestResultsCard
 import { ExecutionFlowVisualizer } from "@/components/admin/model-health/ExecutionFlowVisualizer";
 import { PayloadReviewCard } from "@/components/admin/model-health/PayloadReviewCard";
 import { ExecutionControlPanel } from "@/components/admin/model-health/ExecutionControlPanel";
-import { InputPanel } from "@/components/custom-creation/InputPanel";
-import { OutputPanel } from "@/components/custom-creation/OutputPanel";
 import { ArrowLeft, Download, FileJson, Eye, BookOpen, ArrowUpToLine, Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { createSignedUrl } from "@/lib/storage-utils";
@@ -78,25 +74,15 @@ export default function ComprehensiveModelTestPage() {
     updateState, 
     resetState,
     setPrompt: setStatePrompt,
-    setSelectedModel: setStateSelectedModel,
   } = useCustomCreationState();
 
   const model = fullModel;
-  const currentModel = fullModel;
 
   // Schema helpers
   const schemaHelpers = useSchemaHelpers();
-  const imageFieldInfo = schemaHelpers.getImageFieldInfo(currentModel as any);
 
-  // Image upload
-  const {
-    uploadedImages,
-    isUploading,
-    uploadError,
-    handleImageSelect,
-    removeImage,
-    clearImages,
-  } = useImageUpload(imageFieldInfo.maxImages);
+  // Image upload - simplified for test page
+  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
 
   // Generation polling
   const { startPolling, stopPolling, isPolling } = useGenerationPolling({
@@ -152,18 +138,8 @@ export default function ComprehensiveModelTestPage() {
     },
   });
 
-  // Custom generation hook
-  const {
-    handleGenerate,
-    isGenerating,
-  } = useCustomGeneration({
-    state,
-    updateState,
-    uploadedImages,
-    startPolling,
-    setCurrentStage,
-    setStageData,
-  });
+  // Simplified generation for test page
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Initialize parameters when model changes
   useEffect(() => {
@@ -412,7 +388,7 @@ export default function ComprehensiveModelTestPage() {
       ...prev,
       input_validation: {
         prompt: state.prompt,
-        model: currentModel?.model_name,
+        model: fullModel?.model_name,
         customParameters,
         uploadedImages: uploadedImages.length,
       },
@@ -440,7 +416,7 @@ export default function ComprehensiveModelTestPage() {
       endpoint: fullModel?.api_endpoint,
       method: 'POST',
       parameters: mergedParams,
-      uploadedImages: uploadedImages.map(img => img.url),
+      uploadedImages: uploadedImages.map(img => img.name),
     };
     
     setStageData(prev => ({
@@ -449,7 +425,7 @@ export default function ComprehensiveModelTestPage() {
     }));
 
     return payload;
-  }, [state.prompt, customParameters, uploadedImages, fullModel, currentModel]);
+  }, [state.prompt, customParameters, uploadedImages, fullModel]);
 
   const handleStartTest = async () => {
     if (!state.prompt.trim()) {
@@ -477,6 +453,7 @@ export default function ComprehensiveModelTestPage() {
   const handleContinueTest = async () => {
     setTestPhase('executing');
     setCurrentStage('api_request');
+    setIsGenerating(true);
     
     try {
       setStageData(prev => ({
@@ -488,7 +465,29 @@ export default function ComprehensiveModelTestPage() {
         },
       }));
 
-      await handleGenerate();
+      // Call the generate-content edge function
+      const { data, error } = await supabase.functions.invoke('generate-content', {
+        body: {
+          modelId: fullModel?.id,
+          modelRecordId: fullModel?.record_id,
+          prompt: state.prompt,
+          parameters: customParameters,
+        }
+      });
+
+      if (error) throw error;
+
+      setCurrentStage('api_response');
+      setStageData(prev => ({
+        ...prev,
+        api_response: data,
+      }));
+
+      // Start polling for results
+      if (data.generationId) {
+        updateState({ pollingGenerationId: data.generationId });
+        startPolling(data.generationId);
+      }
       
     } catch (error) {
       console.error('Error executing test:', error);
@@ -496,6 +495,7 @@ export default function ComprehensiveModelTestPage() {
       setTestStatus('error');
       setTestPhase('error');
       setTestEndTime(Date.now());
+      setIsGenerating(false);
     }
   };
 
@@ -662,7 +662,7 @@ export default function ComprehensiveModelTestPage() {
 
           <ParametersInspector
             schema={fullModel.input_schema as any}
-            currentValues={customParameters}
+            parameters={customParameters}
             onParameterChange={handleParameterChange}
             modifiedParameters={modifiedParameters}
             onPushParameterToSchema={handlePushParameterToSchema}
@@ -679,23 +679,20 @@ export default function ComprehensiveModelTestPage() {
                 <CardDescription>Enter parameters and run a test generation</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <InputPanel
-                  prompt={state.prompt}
-                  onPromptChange={(value) => {
-                    setStatePrompt(value);
-                    updateState({ prompt: value });
-                  }}
-                  model={currentModel as any}
-                  uploadedImages={uploadedImages}
-                  onImageSelect={handleImageSelect}
-                  onRemoveImage={removeImage}
-                  isUploading={isUploading}
-                  imageFieldInfo={imageFieldInfo}
-                  modelParameters={customParameters}
-                  onParameterChange={handleParameterChange}
-                  advancedOpen={state.advancedOpen}
-                  onAdvancedToggle={() => updateState({ advancedOpen: !state.advancedOpen })}
-                />
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Prompt</label>
+                    <textarea
+                      value={state.prompt}
+                      onChange={(e) => {
+                        setStatePrompt(e.target.value);
+                        updateState({ prompt: e.target.value });
+                      }}
+                      className="w-full min-h-[100px] p-3 rounded-md border bg-background"
+                      placeholder="Enter your prompt..."
+                    />
+                  </div>
+                </div>
                 
                 <Button 
                   onClick={handleStartTest} 
@@ -761,22 +758,21 @@ export default function ComprehensiveModelTestPage() {
 
               {state.generatedOutputs.length > 0 && (
                 <div ref={outputSectionRef}>
-                  <OutputPanel
-                    generatedOutput={state.generatedOutput}
-                    generatedOutputs={state.generatedOutputs}
-                    selectedOutputIndex={state.selectedOutputIndex}
-                    onSelectOutput={(index) => updateState({ selectedOutputIndex: index })}
-                    contentType={fullModel.content_type}
-                    showLightbox={state.showLightbox}
-                    onToggleLightbox={() => updateState({ showLightbox: !state.showLightbox })}
-                    captionData={state.captionData}
-                    isGeneratingCaption={state.isGeneratingCaption}
-                    captionExpanded={state.captionExpanded}
-                    onToggleCaptionExpanded={() => updateState({ captionExpanded: !state.captionExpanded })}
-                    hashtagsExpanded={state.hashtagsExpanded}
-                    onToggleHashtagsExpanded={() => updateState({ hashtagsExpanded: !state.hashtagsExpanded })}
-                    generatingVideoIndex={state.generatingVideoIndex}
-                  />
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Generated Outputs</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-4">
+                        {state.generatedOutputs.map((output, index) => (
+                          <div key={output.id} className="border rounded p-2">
+                            <p className="text-sm text-muted-foreground">Output {index + 1}</p>
+                            <p className="text-xs font-mono break-all">{output.storage_path}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
             </>

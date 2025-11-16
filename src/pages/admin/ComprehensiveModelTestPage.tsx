@@ -46,23 +46,19 @@ const ComprehensiveModelTestPage = () => {
   const [inspectionMode, setInspectionMode] = useState<'disabled' | 'enabled' | 'reviewing'>('enabled');
   const [inspectionData, setInspectionData] = useState<Record<string, any>>({});
 
-  // Models and user data
-  const { data: allModels, isLoading: modelsLoading } = useModels();
-  const { data: allModelsUnfiltered } = useAllModels(); // NEW: for comprehensive model selector
+  // Models and user data - use ALL models for comprehensive testing
+  const { data: allModelsUnfiltered, isLoading: modelsLoading } = useAllModels();
   const { data: userTokens } = useUserTokens();
   const { progress, updateProgress, setFirstGeneration } = useOnboarding();
 
-  // Filter models by selected group
+  // For comprehensive testing, show ALL models (no group filtering)
   const filteredModels = useMemo(() => {
-    return allModels?.filter(model => {
-      const groups = (Array.isArray(model.groups) ? model.groups : []) as string[];
-      return groups.includes(state.selectedGroup);
-    }).sort((a, b) => {
+    return (allModelsUnfiltered as any)?.sort((a: any, b: any) => {
       return a.base_token_cost - b.base_token_cost;
     }) || [];
-  }, [allModels, state.selectedGroup]);
+  }, [allModelsUnfiltered]);
 
-  const currentModel = filteredModels.find(m => m.record_id === state.selectedModel);
+  const currentModel = filteredModels.find((m: any) => m.record_id === state.selectedModel);
 
   // Schema helpers
   const schemaHelpers = useSchemaHelpers();
@@ -368,7 +364,7 @@ const ComprehensiveModelTestPage = () => {
         selectedModel: state.selectedModel,
       },
       step2_backend_merge: {
-        schema_defaults: currentModel?.input_schema?.properties || {},
+        schema_defaults: (currentModel?.input_schema as any)?.properties || {},
         user_advanced: state.modelParameters,
       },
       step3_final_payload: preparePayloadSnapshot(),
@@ -402,33 +398,7 @@ const ComprehensiveModelTestPage = () => {
         </div>
       </div>
 
-      {/* Model Selector (NEW) */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Select Model to Test</CardTitle>
-          <CardDescription>Choose any model (active or inactive)</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Select
-            value={state.selectedModel || undefined}
-            onValueChange={(value) => setStateSelectedModel(value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a model..." />
-            </SelectTrigger>
-            <SelectContent>
-              {allModelsUnfiltered?.map((model) => (
-                <SelectItem key={model.record_id} value={model.record_id}>
-                  {model.provider} • {model.model_name}
-                  {!model.is_active && ' (Inactive)'}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
-
-      {/* Inspection UI (NEW) */}
+      {/* Inspection UI */}
       {inspectionMode === 'reviewing' && (
         <InspectionReviewCard
           inspectionData={inspectionData}
@@ -447,7 +417,7 @@ const ComprehensiveModelTestPage = () => {
       {/* EXACT InputPanel from CustomCreation */}
       <InputPanel
         selectedModel={state.selectedModel}
-        filteredModels={filteredModels}
+        filteredModels={filteredModels as any}
         selectedGroup={state.selectedGroup}
         onModelChange={handleModelChange}
         modelsLoading={modelsLoading}

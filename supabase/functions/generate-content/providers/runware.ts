@@ -102,7 +102,7 @@ async function pollForVideoResult(
 
 // Model-specific parameter restrictions
 const MODEL_RESTRICTIONS: Record<string, string[]> = {
-  'bytedance:': ['outputFormat', 'outputQuality'], // Seedance models
+  'bytedance:': ['outputFormat', 'outputQuality', 'providerSettings'], // Seedance models - remove providerSettings
   'runware:110': ['outputFormat'], // Background removal
 };
 
@@ -151,17 +151,7 @@ export async function callRunware(
   // Add parameters with model-specific filtering
   for (const [key, value] of Object.entries(params)) {
     if (isParameterSupported(cleanModel, key)) {
-      // Special handling for providerSettings - extract provider name if it's an object
-      if (key === 'providerSettings' && typeof value === 'object' && value !== null) {
-        // If it's an object like { bytedance: {...} }, extract the key
-        const providerKeys = Object.keys(value);
-        if (providerKeys.length > 0) {
-          taskPayload[key] = providerKeys[0]; // Use the first key as the provider name
-          console.log('[Runware] Extracted provider from providerSettings', { provider: providerKeys[0] });
-        }
-      } else {
-        taskPayload[key] = value;
-      }
+      taskPayload[key] = value;
     }
   }
 

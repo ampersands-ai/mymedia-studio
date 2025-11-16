@@ -9,6 +9,7 @@ import 'swiper/css/effect-fade';
 import { PartnerLogosCarousel } from './PartnerLogosCarousel';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { CreationGroup } from '@/constants/creation-groups';
+import { logger } from '@/lib/logger';
 
 export const HeroSection = () => {
   const isMobile = useIsMobile();
@@ -77,7 +78,6 @@ export const HeroSection = () => {
       <div className="absolute inset-0">
         <Swiper
           modules={[Autoplay, EffectFade]}
-          onSwiper={setSwiperInstance}
           onSlideChange={(swiper) => {
             // Pause all videos
             swiper.slides.forEach(slide => {

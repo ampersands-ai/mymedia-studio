@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown, PlayCircle } from "lucide-react";
+import { LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown, PlayCircle, Settings2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { ModelHealthSummary } from "@/types/admin/model-health";
 
@@ -253,13 +253,14 @@ export default function ModelHealthDashboard() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Model Health Dashboard</h1>
         <div className="flex gap-2">
-        <Button
-          onClick={() => navigate('/admin/model-health/comprehensive-test')}
-          className="gap-2"
-        >
-          <Settings2 className="h-4 w-4" />
-          Comprehensive Test
-        </Button>
+          <Button
+            onClick={() => navigate('/admin/model-health/comprehensive-test')}
+            className="gap-2"
+          >
+            <Settings2 className="h-4 w-4" />
+            Comprehensive Test
+          </Button>
+          <Button
             variant={viewMode === 'list' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setViewMode('list')}

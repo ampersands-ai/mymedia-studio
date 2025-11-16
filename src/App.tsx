@@ -65,7 +65,6 @@ const WebhookMonitor = lazy(() => import("./pages/admin/WebhookMonitor"));
 const ModelHealthDashboard = lazy(() => import("./pages/admin/ModelHealthDashboard"));
 const ComprehensiveModelTestPage = lazy(() => import("./pages/admin/ComprehensiveModelTestPage"));
 const ModelHealthTestPage = lazy(() => import("./pages/admin/ModelHealthTestPage"));
-const ComprehensiveModelTestPage = lazy(() => import("./pages/admin/ComprehensiveModelTestPage"));
 const ModelAlerts = lazy(() => import("./pages/admin/ModelAlerts"));
 const TestModelGroupPage = lazy(() => import("./pages/admin/TestModelGroupPage"));
 const SharedContent = lazy(() => import("./pages/SharedContent"));

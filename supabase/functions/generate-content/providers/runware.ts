@@ -102,7 +102,7 @@ async function pollForVideoResult(
 
 // Model-specific parameter restrictions
 const MODEL_RESTRICTIONS: Record<string, string[]> = {
-  'bytedance:': ['outputFormat', 'outputQuality', 'providerSettings'], // Seedance models - remove providerSettings
+  'bytedance:': ['outputFormat', 'outputQuality'], // Seedance models - outputFormat and outputQuality not supported
   'runware:110': ['outputFormat'], // Background removal
 };
 

@@ -4,34 +4,24 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useGeneration } from "./useGeneration";
 import { TOAST_IDS, DOWNLOAD_CONFIG } from "@/constants/generation";
-import { handleError, StorageError } from "@/lib/errors";
 import { logger, generateRequestId } from '@/lib/logger';
 import { clientLogger } from "@/lib/logging/client-logger";
 import {
   GenerationState,
-  GenerationStateSchema,
   OnboardingProgress,
-  OnboardingProgressSchema,
-  GenerationErrorCode,
 } from "@/types/generation";
-import { z } from "zod";
 
 const actionsLogger = logger.child({ component: 'useGenerationActions' });
 
-/**
- * Options schema for generation actions hook
- */
-const UseGenerationActionsOptionsSchema = z.object({
-  generationState: GenerationStateSchema,
-  updateGenerationState: z.function().args(z.custom<Partial<GenerationState>>()).returns(z.void()),
-  startPolling: z.function().args(z.string()).returns(z.void()),
-  onboardingProgress: OnboardingProgressSchema.nullable().optional(),
-  updateOnboardingProgress: z.function().args(z.custom<Partial<OnboardingProgress['checklist']>>()).returns(z.void()).optional(),
-  setFirstGeneration: z.function().args(z.string()).returns(z.void()).optional(),
-  setShowConfetti: z.function().args(z.boolean()).returns(z.void()).optional(),
-});
-
-type UseGenerationActionsOptions = z.infer<typeof UseGenerationActionsOptionsSchema>;
+interface UseGenerationActionsOptions {
+  generationState: GenerationState;
+  updateGenerationState: (partial: Partial<GenerationState>) => void;
+  startPolling: (id: string) => void;
+  onboardingProgress?: OnboardingProgress | null;
+  updateOnboardingProgress?: (progress: Partial<OnboardingProgress['checklist']>) => void;
+  setFirstGeneration?: (id: string) => void;
+  setShowConfetti?: (show: boolean) => void;
+}
 
 /**
  * Hook to handle all generation-related actions
@@ -47,8 +37,7 @@ export const useGenerationActions = (options: UseGenerationActionsOptions) => {
    */
   const handleGenerate = useCallback(async () => {
     const requestId = generateRequestId();
-    const timer = actionsLogger.startTimer('handleGenerate', { requestId });
-    
+
     const { generationState, updateGenerationState, startPolling, onboardingProgress, updateOnboardingProgress, setFirstGeneration, setShowConfetti } = options;
 
     // Validate inputs

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { Activity, CheckCircle2, Clock } from "lucide-react";
 import { WebhookAnalyticsSummary } from "@/hooks/admin/useWebhookAnalytics";
 
 interface Props {

@@ -57,7 +57,7 @@ async function fetchWithRetry(url: string, options: RequestInit, maxAttempts = 3
           } else {
             throw new Error('DNS_ERROR');
           }
-        } catch (ipError) {
+        } catch (_ipError) {
           throw new Error('DNS_ERROR');
         }
       }

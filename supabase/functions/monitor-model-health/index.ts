@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
 
     // Get model names for failing models
     const failingModelIds = Array.from(modelFailures.entries())
-      .filter(([_, stats]) => stats.failed >= failureThreshold)
+      .filter(([, stats]) => stats.failed >= failureThreshold)
       .map(([id]) => id);
 
     if (failingModelIds.length === 0) {

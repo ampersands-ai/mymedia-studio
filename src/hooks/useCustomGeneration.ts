@@ -3,39 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useGeneration } from "@/hooks/useGeneration";
 import { useAuth } from "@/contexts/AuthContext";
-import { findPrimaryTextKey, getMaxPromptLength } from "@/lib/custom-creation-utils";
+import { getMaxPromptLength } from "@/lib/custom-creation-utils";
 import { CAPTION_GENERATION_COST } from "@/constants/custom-creation";
-import { trackEvent } from "@/lib/posthog";
 import type { CustomCreationState } from "@/types/custom-creation";
 import { executeGeneration } from "@/lib/generation/executeGeneration";
 import { logger, generateRequestId } from '@/lib/logger';
 import { handleError } from "@/lib/errors";
 import { FilteredModel, UserTokens, OnboardingProgress } from "@/types/generation";
-import { z } from "zod";
 
 const customGenerationLogger = logger.child({ component: 'useCustomGeneration' });
-
-/**
- * Options schema for custom generation hook
- */
-const UseCustomGenerationOptionsSchema = z.object({
-  state: z.custom<CustomCreationState>(),
-  updateState: z.function().args(z.custom<Partial<CustomCreationState>>()).returns(z.void()),
-  startPolling: z.function().args(z.string()).returns(z.void()),
-  uploadedImages: z.array(z.instanceof(File)),
-  uploadImagesToStorage: z.function().args(z.string()).returns(z.promise(z.array(z.string()))),
-  imageFieldInfo: z.object({
-    fieldName: z.string().nullable(),
-    isRequired: z.boolean(),
-    isArray: z.boolean(),
-    maxImages: z.number(),
-  }),
-  filteredModels: z.array(z.custom<FilteredModel>()),
-  onboardingProgress: z.custom<OnboardingProgress>().nullable(),
-  updateProgress: z.function().args(z.custom<Partial<OnboardingProgress['checklist']>>()).returns(z.void()),
-  setFirstGeneration: z.function().args(z.string()).returns(z.void()),
-  userTokens: z.custom<UserTokens>().nullable(),
-});
 
 interface UseCustomGenerationOptions {
   state: CustomCreationState;
@@ -62,7 +38,6 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     startPolling,
     uploadedImages,
     uploadImagesToStorage,
-    imageFieldInfo,
     filteredModels,
     onboardingProgress,
     updateProgress,

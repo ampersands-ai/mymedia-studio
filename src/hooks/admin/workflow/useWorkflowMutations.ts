@@ -7,34 +7,11 @@ import { handleError } from "@/lib/errors";
 import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import {
   MergedTemplate,
-  MergedTemplateSchema,
   ContentTemplateDialogState,
   WorkflowDialogState,
-  WorkflowStep,
-  UserInputField,
 } from "@/types/workflow";
-import { z } from "zod";
 
 const mutationsLogger = logger.child({ component: 'useWorkflowMutations' });
-
-/**
- * Options schema for workflow mutations hook
- */
-const UseWorkflowMutationsOptionsSchema = z.object({
-  onEditContentTemplate: z.function().args(
-    z.object({
-      open: z.boolean(),
-      template: z.any().nullable(),
-    })
-  ).returns(z.void()),
-  onEditWorkflow: z.function().args(
-    z.object({
-      open: z.boolean(),
-      workflow: z.any().nullable(),
-      isNew: z.boolean(),
-    })
-  ).returns(z.void()),
-});
 
 interface UseWorkflowMutationsOptions {
   onEditContentTemplate: (state: ContentTemplateDialogState) => void;
@@ -111,7 +88,7 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
     });
 
     try {
-      const { error, data } = await supabase
+      const { error } = await supabase
         .from(table)
         .delete()
         .eq('id', item.id)
@@ -149,9 +126,8 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
    */
   const handleDuplicate = useCallback(async (item: MergedTemplate) => {
     const timestamp = Date.now();
-    
+
     if (item.template_type === 'template') {
-      const { workflow_steps, user_input_fields, template_type, ai_models, ...templateData } = item;
       
       if (!item.category || !item.name) {
         toast.error("Cannot duplicate: missing required fields");

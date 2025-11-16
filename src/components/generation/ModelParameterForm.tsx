@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { SchemaInput } from "./SchemaInput";
 import type {
-  ModelJsonSchema,
   ModelParameters,
   JsonSchemaProperty,
   ModelParameterValue

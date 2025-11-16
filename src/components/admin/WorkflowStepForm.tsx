@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { WorkflowStep, UserInputField } from '@/hooks/useWorkflowTemplates';
-import { AIModel } from '@/hooks/useTemplates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,14 +11,21 @@ import { Trash2 } from 'lucide-react';
 import { SchemaInput } from '@/components/generation/SchemaInput';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
-import type { 
-  ModelSchema, 
-  ParameterModes, 
-  MappingSource, 
+import type {
+  ParameterModes,
+  MappingSource,
   WorkflowParameterValue
 } from '@/types/workflow-parameters';
-import { toModelSchema, toWorkflowParameterValue } from '@/types/workflow-parameters';
+import { toModelSchema } from '@/types/workflow-parameters';
 import type { JsonSchemaProperty } from '@/types/schema';
+
+interface AIModel {
+  id: string;
+  record_id: string;
+  model_name: string;
+  content_type: string;
+  input_schema: any;
+}
 
 interface WorkflowStepFormProps {
   step: WorkflowStep;

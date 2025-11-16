@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     logger.info('Starting migration', { metadata: { limit, dryRun, skipExisting } });
 
     // Query storyboards needing migration
-    let query = supabaseClient
+    const query = supabaseClient
       .from('storyboards')
       .select('*')
       .eq('status', 'complete')

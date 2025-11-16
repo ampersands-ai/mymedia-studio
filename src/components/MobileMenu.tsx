@@ -10,8 +10,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Menu, Home, Wand2, Settings, LogOut, Coins, Shield,
+import {
+  Menu, Home, Wand2, Settings, LogOut, Shield,
   Sparkles, Layout, DollarSign, Info, BookOpen, HelpCircle, Users, History, Video
 } from "lucide-react";
 import { useState } from "react";
@@ -20,11 +20,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 
-interface MobileMenuProps {
-  creditBalance?: number;
-}
-
-export const MobileMenu = ({ creditBalance }: MobileMenuProps) => {
+export const MobileMenu = () => {
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
   const navigate = useNavigate();

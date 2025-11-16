@@ -49,7 +49,7 @@ export function ImageUploader({ value, onChange, label, bucket = "generated-cont
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const filePath = `template-assets/${fileName}`;
 
-      const { error: uploadError, data } = await (supabase as any).storage
+      const { error: uploadError } = await (supabase as any).storage
         .from(bucket)
         .upload(filePath, file, {
           cacheControl: "3600",

@@ -13,14 +13,13 @@ import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { useSavedCaptionPresets } from '@/hooks/useSavedCaptionPresets';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Coins, Sparkles, Volume2, Clock, ChevronDown, Minus, Plus, Save, Trash2 } from 'lucide-react';
+import { Loader2, Coins, Sparkles, Volume2, Clock, ChevronDown, Save, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { VoiceSelector } from '../generation/VoiceSelector';
 import { BackgroundMediaSelector, SelectedMedia } from './BackgroundMediaSelector';
 import { captionPresets, aspectRatioConfig, textEffectPresets } from '@/config/captionStyles';
 import { logger } from '@/lib/logger';
 import { CaptionStyle } from '@/types/video';
-import type { VideoStyle } from '@/types/custom-creation';
 import type { VideoJobInput } from '@/types/video';
 
 export function VideoCreator() {

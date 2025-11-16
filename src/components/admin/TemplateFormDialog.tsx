@@ -220,10 +220,9 @@ export function TemplateFormDialog({
     setSaving(true);
 
     try {
-      let customSchema = null;
       if (formData.is_custom_model) {
         try {
-          customSchema = JSON.parse(formData.custom_input_schema);
+          JSON.parse(formData.custom_input_schema);
         } catch {
           toast.error("Invalid JSON in Custom Input Schema");
           setSaving(false);

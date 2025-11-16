@@ -219,7 +219,7 @@ export const useStoryboardScenes = (
       // Regular scenes without previews
       ...scenes
         .filter(scene => !scene.image_preview_url && scene.image_prompt)
-        .map((scene, idx) => ({
+        .map((scene) => ({
           id: scene.id,
           imagePrompt: scene.image_prompt,
           sceneNumber: scenes.findIndex(s => s.id === scene.id) + 2,

@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { AIModel } from "@/hooks/useModels";
 import { CreationGroup } from "@/constants/creation-groups";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,18 @@ import { Coins, Image as ImageIcon, ChevronDown, ChevronRight, Check } from "luc
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+interface AIModel {
+  record_id: string;
+  model_name: string;
+  variant_name?: string;
+  model_family?: string;
+  display_order_in_family?: number;
+  base_token_cost: number;
+  default_outputs?: number;
+  logo_url?: string;
+  estimated_time_seconds?: number;
+}
+
 interface ModelFamilySelectorProps {
   models: AIModel[];
   selectedModel: string | null;
@@ -30,7 +41,6 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
   models,
   selectedModel,
   onModelChange,
-  selectedGroup,
   isLoading,
 }) => {
   const isMobile = useIsMobile();

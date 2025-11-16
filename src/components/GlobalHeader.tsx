@@ -1,24 +1,18 @@
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Sparkles, Coins, Shield, Clock, Layout } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Link, useNavigate } from "react-router-dom";
+import { Coins, Shield, Layout } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { useOnboarding } from "@/hooks/useOnboarding";
-import { toast } from "sonner";
 import { MobileMenu } from "@/components/MobileMenu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import logoImage from "@/assets/logo.png";
-import { logger } from "@/lib/logger";
 
 export const GlobalHeader = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
   const { data: tokenData } = useUserTokens();
@@ -33,31 +27,6 @@ export const GlobalHeader = () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      navigate("/");
-      toast.success("Signed out successfully");
-    } catch (error) {
-      logger.error('Sign out failed', error as Error, {
-        component: 'GlobalHeader',
-        operation: 'handleSignOut'
-      });
-      toast.error("Error signing out");
-    }
-  };
-
-  const getCreditConversions = (balance: number) => {
-    return {
-      videos: Math.floor(balance / 100),
-      images: Math.floor(balance / 25),
-      audio: Math.floor(balance / 50),
-    };
-  };
-
-  const isCustomCreation = location.pathname === "/dashboard/custom-creation";
-  const isSettingsPage = location.pathname === "/dashboard/settings";
 
   return (
     <header className={cn(

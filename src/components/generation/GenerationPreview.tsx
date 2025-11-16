@@ -11,8 +11,7 @@ import { useNativeDownload } from "@/hooks/useNativeDownload";
 import { triggerHaptic } from "@/utils/capacitor-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { logger } from "@/lib/logger";
-import type { 
-  PreviewDisplayProps,
+import type {
   ContentType,
   PreviewLoggerMetadata
 } from "@/types/workflow-execution-display";
@@ -65,7 +64,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
   const error = !isFullUrl && (imageError || videoError || audioError);
   
   const { shareFile, canShare } = useNativeShare();
-  const { downloadFile, isNative } = useNativeDownload();
+  const { downloadFile } = useNativeDownload();
   const isMobile = useIsMobile();
   const [videoPlaybackError, setVideoPlaybackError] = useState(false);
   const [imageDisplayError, setImageDisplayError] = useState(false);
@@ -76,12 +75,6 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
   const { url: thumbUrl } = useImageUrl(thumbPath, { strategy: 'public-direct' });
   const videoRef = useRef<HTMLVideoElement>(null);
   const [thumbnailGenerated, setThumbnailGenerated] = useState(false);
-  
-  // Detect iOS specifically
-  const isIOS = typeof navigator !== 'undefined' && (
-    /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-  );
 
   const handleShare = async () => {
     if (!signedUrl) return;
@@ -192,7 +185,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
                 document.body.removeChild(a);
                 toast.success('Download started!');
               }
-            } catch (error) {
+            } catch {
               toast.error('Failed to download');
             }
           }}
@@ -240,7 +233,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
                   document.body.removeChild(a);
                   toast.success('Download started!');
                 }
-              } catch (error) {
+              } catch {
                 toast.error('Failed to download');
               }
             }}

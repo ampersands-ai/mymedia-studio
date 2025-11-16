@@ -19,7 +19,6 @@ import { toast } from "sonner";
 import { ModelFormDialog } from "@/components/admin/ModelFormDialog";
 import type { ModelConfiguration } from "@/types/schema";
 import { jsonToSchema } from "@/types/schema";
-import type { Json } from "@/integrations/supabase/types";
 import {
   Select,
   SelectContent,

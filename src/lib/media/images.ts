@@ -10,7 +10,7 @@ import {
   getBlurPlaceholder as getSupabaseBlur,
   type ImageTransformOptions,
 } from '@/lib/supabase-images';
-import { type URLStrategy, type ImageMediaOptions } from './types';
+import { type ImageMediaOptions } from './types';
 import { MEDIA_CONFIG } from './config';
 
 /**

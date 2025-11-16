@@ -73,7 +73,7 @@ function cleanStaleGenerationStates() {
           cleaned++;
         }
       }
-    } catch (e) {
+    } catch {
       localStorage.removeItem(key);
       cleaned++;
     }

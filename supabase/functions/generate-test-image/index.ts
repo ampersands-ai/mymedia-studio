@@ -68,8 +68,8 @@ Deno.serve(async (req) => {
     );
 
     const fileName = `test-images/${crypto.randomUUID()}.png`;
-    
-    const { data: uploadData, error: uploadError } = await supabase.storage
+
+    const { error: uploadError } = await supabase.storage
       .from('generated-content')
       .upload(fileName, buffer, {
         contentType: 'image/png',

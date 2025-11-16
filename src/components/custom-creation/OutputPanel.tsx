@@ -1,10 +1,9 @@
 import { forwardRef, memo } from "react";
 import { Card } from "@/components/ui/card";
-import { ImageIcon, ExternalLink, Loader2 } from "lucide-react";
+import { ImageIcon, Loader2 } from "lucide-react";
 import { GenerationConsole } from "./GenerationConsole";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import type { GenerationOutput, CaptionData } from "@/types/custom-creation";
-import { Button } from "@/components/ui/button";
 import { useActiveGenerations } from "@/hooks/useActiveGenerations";
 import { useConcurrentGenerationLimit } from "@/hooks/useConcurrentGenerationLimit";
 import { useNavigate } from "react-router-dom";
@@ -84,8 +83,6 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
       onDownloadSuccess,
       templateBeforeImage,
       templateAfterImage,
-      modelProvider,
-      modelName,
     },
     ref
   ) => {

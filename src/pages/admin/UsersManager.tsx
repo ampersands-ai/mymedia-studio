@@ -95,7 +95,7 @@ export default function UsersManager() {
 
     try {
       // Use edge function for secure token management with audit trail
-      const { data, error } = await supabase.functions.invoke('manage-user-tokens', {
+      const { error } = await supabase.functions.invoke('manage-user-tokens', {
         body: {
           user_id: selectedUser.id,
           amount: amount,
@@ -123,7 +123,7 @@ export default function UsersManager() {
   const handleToggleAdmin = async (userId: string, currentlyAdmin: boolean) => {
     try {
       // Use edge function for secure role management with audit trail
-      const { data, error } = await supabase.functions.invoke('manage-user-role', {
+      const { error } = await supabase.functions.invoke('manage-user-role', {
         body: {
           user_id: userId,
           role: 'admin',

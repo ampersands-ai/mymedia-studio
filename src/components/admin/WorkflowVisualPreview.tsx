@@ -11,7 +11,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Card } from '@/components/ui/card';
 import { WorkflowStep, UserInputField } from '@/hooks/useWorkflowTemplates';
-import type { StepNodeData, UserInputNodeData, OutputNodeData } from '@/types/workflow-display';
+import type { StepNodeData, UserInputNodeData } from '@/types/workflow-display';
 
 interface WorkflowVisualPreviewProps {
   userInputFields: UserInputField[];

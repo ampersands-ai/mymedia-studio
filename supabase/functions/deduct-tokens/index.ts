@@ -7,10 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// Inline helper: sanitize errors before logging
-function sanitizeError(error: any): any {
-  if (error && typeof error === 'object') {
     const { authorization, token, api_key, apiKey, secret, ...safe } = error;
     return safe;
   }

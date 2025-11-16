@@ -880,7 +880,7 @@ async function assembleVideo(
         ).catch(e => logger?.error('Failed to log API call (retry captions type)', e as Error));
 
         if (!retryRes2.ok) {
-          let retryMsg = retryResult2?.response?.message || (retryResult2?.response?.errors ? retryResult2.response.errors.map((e: any) => e.message || e.code).join(', ') : '') || retryResult2?.message || errorMessage;
+          const retryMsg = retryResult2?.response?.message || (retryResult2?.response?.errors ? retryResult2.response.errors.map((e: any) => e.message || e.code).join(', ') : '') || retryResult2?.message || errorMessage;
           throw new Error(`Shotstack error: ${retryMsg}`);
         }
         logger?.info('Shotstack render submitted successfully (captions type fallback)', { 

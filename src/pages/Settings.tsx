@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, Download, Clock, CheckCircle, XCircle, AlertCircle, Coins, Sparkles, TrendingUp, Video, Image as ImageIcon, Music, FileText, DollarSign, TrendingDown, Trash2 } from "lucide-react";
+import { Loader2, Clock, CheckCircle, XCircle, AlertCircle, Coins, Sparkles, TrendingUp, Video, Image as ImageIcon, Music, FileText, DollarSign, TrendingDown, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { profileUpdateSchema } from "@/lib/validation-schemas";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,7 @@ import { TokenUsageHistoryModal } from "@/components/TokenUsageHistoryModal";
 import { useConfetti } from "@/hooks/useConfetti";
 import { Progress } from "@/components/ui/progress";
 import { differenceInMonths } from "date-fns";
-import { clearAllCaches, getCacheStats } from "@/utils/cacheManagement";
+import { clearAllCaches } from "@/utils/cacheManagement";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 import { logger } from "@/lib/logger";
 
@@ -36,10 +36,6 @@ const Settings = () => {
   const [generations, setGenerations] = useState<any[]>([]);
   const [loadingGenerations, setLoadingGenerations] = useState(true);
   const [subscription, setSubscription] = useState<any>(null);
-  const [sessions, setSessions] = useState<any[]>([]);
-  const [loadingSessions, setLoadingSessions] = useState(false);
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
-  const [loadingAuditLogs, setLoadingAuditLogs] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [userCreatedAt, setUserCreatedAt] = useState<Date | null>(null);
   const confetti = useConfetti();

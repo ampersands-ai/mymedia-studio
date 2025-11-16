@@ -1,11 +1,10 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import type { 
-  GTagFunction, 
-  GTagEventParams, 
+import type {
+  GTagFunction,
+  GTagEventParams,
   WindowWithAnalytics,
-  hasGTag,
-  DataLayerEntry 
+  DataLayerEntry
 } from '@/types/analytics';
 import { hasGTag as checkGTag } from '@/types/analytics';
 

@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { Outlet, useNavigate, Link, useLocation, Navigate } from "react-router-dom";
+import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sparkles, Database, FileText, Users, BarChart3, Loader2, Image, Flag, TrendingUp, AlertTriangle, Video, FolderTree, Activity, LayoutDashboard, HeartPulse, TestTube2, Mail } from "lucide-react";

@@ -124,7 +124,7 @@ export default function ModelHealthDashboard() {
   const filteredAndSortedModels = useMemo(() => {
     if (!healthData) return [];
 
-    let filtered = healthData.filter((model) => {
+    const filtered = healthData.filter((model) => {
       if (selectedProvider !== "all" && model.provider !== selectedProvider) return false;
       if (selectedContentType !== "all" && model.content_type !== selectedContentType) return false;
       

@@ -389,7 +389,7 @@ Deno.serve(async (req) => {
 
     // Enhance prompt if requested and model has prompt field
     let finalPrompt = prompt || "";
-    let originalPrompt = prompt || "";
+    const originalPrompt = prompt || "";
     let usedEnhancementProvider = null;
 
     if (hasPromptField && prompt && (enhance_prompt || enhancementInstruction)) {

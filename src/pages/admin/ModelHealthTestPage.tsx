@@ -30,7 +30,7 @@ export default function ModelHealthTestPage() {
   const { user } = useAuth();
   
   // Data fetching
-  const { data: allModels, isLoading: modelsLoading } = useModels();
+  const { isLoading: modelsLoading } = useModels();
   const { data: fullModel, isLoading: fullModelLoading } = useModelByRecordId(recordId);
   
   // Test-specific state

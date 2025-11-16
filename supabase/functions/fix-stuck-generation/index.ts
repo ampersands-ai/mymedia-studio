@@ -204,7 +204,6 @@ Deno.serve(async (req) => {
 
     const isMultiOutput = urls.length > 1;
     let mainStoragePath: string | null = null;
-    let mainFileSize = 0;
 
     if (isMultiOutput) {
       logger.info('Multi-output generation detected', { 

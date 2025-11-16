@@ -16,7 +16,6 @@ import type {
   ModelParameters,
   ModelParameterValue
 } from "@/types/model-schema";
-import { toModelParameterValue } from "@/types/model-schema";
 
 interface SchemaInputProps {
   name: string;
@@ -29,10 +28,9 @@ interface SchemaInputProps {
   modelSchema?: ModelJsonSchema | null;
   rows?: number;
   modelId?: string;
-  provider?: string;
 }
 
-export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema, rows, modelId, provider }: SchemaInputProps) => {
+export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema, rows, modelId }: SchemaInputProps) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   // Check if showToUser flag should hide this field

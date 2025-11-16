@@ -12,11 +12,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { useAuth } from "@/contexts/AuthContext";
 import { logger, generateRequestId } from "@/lib/logger";
-import type { 
-  WorkflowTestInputs, 
-  WorkflowStepModels, 
-  FieldSchemaInfo,
-  WorkflowParameterValue 
+import type {
+  WorkflowTestInputs,
+  WorkflowStepModels,
+  FieldSchemaInfo
 } from "@/types/workflow-parameters";
 import { jsonToSchema } from "@/types/schema";
 import type { ContentType } from "@/types/workflow-execution-display";

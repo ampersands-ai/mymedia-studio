@@ -14,7 +14,6 @@ interface BatchOutputCarouselProps {
   currentIndex: number;
   contentType: string; // Type of content: 'image', 'video', 'audio'
   onIndexChange: (index: number) => void;
-  onDownload?: (output: GenerationOutput) => void;
   className?: string;
 }
 
@@ -27,7 +26,6 @@ export const BatchOutputCarousel = ({
   currentIndex,
   contentType,
   onIndexChange,
-  onDownload,
   className,
 }: BatchOutputCarouselProps) => {
   const [isNavigating, setIsNavigating] = useState(false);

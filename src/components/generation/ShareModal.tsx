@@ -13,18 +13,16 @@ interface ShareModalProps {
   imageUrl: string;
   caption?: string;
   hashtags?: string[];
-  onDownload: () => void;
   generationId?: string;
 }
 
-export const ShareModal = ({ 
-  open, 
-  onOpenChange, 
-  imageUrl, 
-  caption, 
+export const ShareModal = ({
+  open,
+  onOpenChange,
+  imageUrl,
+  caption,
   hashtags,
-  onDownload,
-  generationId 
+  generationId
 }: ShareModalProps) => {
   const handleCopyLink = async () => {
     // Determine content type upfront

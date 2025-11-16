@@ -1,7 +1,5 @@
 import { Card } from "@/components/ui/card";
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
   PieChart,
@@ -11,7 +9,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
 import type { ModelHealthSummary } from "@/types/admin/model-health";

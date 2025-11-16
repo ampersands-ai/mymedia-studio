@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { OptimizedGenerationImage } from "./OptimizedGenerationImage";
 import { AudioWaveform } from "./AudioWaveform";
-import { Video, Music, Download, Share2, Loader2 } from "lucide-react";
+import { Video, Music, Download, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useNativeShare } from "@/hooks/useNativeShare";
 import { useNativeDownload } from "@/hooks/useNativeDownload";
 import { triggerHaptic } from "@/utils/capacitor-utils";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useVideoUrl } from "@/hooks/media";
 import { supabase } from "@/integrations/supabase/client";
 import { getOptimizedVideoUrl, getOptimizedAudioUrl, detectConnectionSpeed } from "@/lib/supabase-videos";
@@ -29,9 +28,9 @@ interface OptimizedGenerationPreviewProps {
  * Optimized preview component for images using direct public URLs
  * For videos and audio, uses existing logic with streaming/signed URLs
  */
-export const OptimizedGenerationPreview = ({ 
-  storagePath, 
-  contentType, 
+export const OptimizedGenerationPreview = ({
+  storagePath,
+  contentType,
   className,
   showActions = true
 }: OptimizedGenerationPreviewProps) => {
@@ -42,7 +41,7 @@ export const OptimizedGenerationPreview = ({
     if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) return 'audio';
     return 'image';
   })() : 'image';
-  
+
   // Use inferred type if contentType is missing or generic
   const effectiveType = contentType || inferredType;
 
@@ -63,7 +62,6 @@ export const OptimizedGenerationPreview = ({
 
   const { shareFile, canShare } = useNativeShare();
   const { downloadFile } = useNativeDownload();
-  const isMobile = useIsMobile();
   const [videoError, setVideoError] = useState(false);
   const [audioError, setAudioError] = useState(false);
   const [posterUrl, setPosterUrl] = useState<string | null>(null);

@@ -22,7 +22,6 @@ const PLAN_TOKENS = {
 Deno.serve(async (req) => {
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('dodo-payments-webhook', requestId);
-  const webhookStartTime = Date.now();
   
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });

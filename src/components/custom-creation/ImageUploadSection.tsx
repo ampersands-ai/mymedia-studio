@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Camera, ImageIcon, Upload, X, Loader2 } from "lucide-react";
-import { Card } from "@/components/ui/card";
 
 interface ImageUploadSectionProps {
   images: File[];

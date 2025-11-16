@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import { useRef, useEffect, useCallback, useMemo } from "react";
 import { logger } from "@/lib/logger";
 import { useAuth } from "@/contexts/AuthContext";
 import { GenerationErrorBoundary } from "@/components/error/GenerationErrorBoundary";
@@ -10,7 +10,7 @@ import { SuccessConfetti } from "@/components/onboarding/SuccessConfetti";
 import { useModels } from "@/hooks/useModels";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserTokens } from "@/hooks/useUserTokens";
-import { CREATION_GROUPS, type CreationGroup } from "@/constants/creation-groups";
+import type { CreationGroup } from "@/constants/creation-groups";
 import { useCustomCreationState } from "@/hooks/useCustomCreationState";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
 import { useCustomGeneration } from "@/hooks/useCustomGeneration";

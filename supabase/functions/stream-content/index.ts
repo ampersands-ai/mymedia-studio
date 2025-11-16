@@ -14,7 +14,6 @@ Deno.serve(async (req) => {
   }
 
   const requestId = crypto.randomUUID();
-  const startTime = Date.now();
 
   try {
     const url = new URL(req.url);

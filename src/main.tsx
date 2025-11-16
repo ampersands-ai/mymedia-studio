@@ -4,7 +4,8 @@ import "./index.css";
 import { registerServiceWorker, unregisterServiceWorker } from "./lib/serviceWorker";
 import { onCLS, onINP, onFCP, onLCP, onTTFB } from 'web-vitals';
 import { logger } from '@/lib/logger';
-import { env } from '@/lib/env'; // Validate environment on startup
+// Validate environment on startup
+import '@/lib/env';
 
 const vitalsLogger = logger.child({ component: 'web-vitals' });
 

@@ -3,7 +3,6 @@ import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useGeneration } from './useGeneration';
 import { supabase } from '@/integrations/supabase/client';
-import { logger } from '@/lib/logger';
 
 // Mock dependencies
 vi.mock('@/integrations/supabase/client', () => ({

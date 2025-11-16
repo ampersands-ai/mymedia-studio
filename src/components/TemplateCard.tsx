@@ -9,7 +9,6 @@ interface TemplateCardProps {
 }
 
 const TemplateCardComponent = ({ image, video, alt, className }: TemplateCardProps) => {
-  const [isHovering, setIsHovering] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout>();
@@ -24,8 +23,7 @@ const TemplateCardComponent = ({ image, video, alt, className }: TemplateCardPro
 
   const handleMouseEnter = () => {
     if (!video) return;
-    
-    setIsHovering(true);
+
     // Debounce: wait 300ms before loading video
     hoverTimeoutRef.current = setTimeout(() => {
       setShowVideo(true);
@@ -38,7 +36,6 @@ const TemplateCardComponent = ({ image, video, alt, className }: TemplateCardPro
   };
 
   const handleMouseLeave = () => {
-    setIsHovering(false);
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
     }

@@ -1,13 +1,12 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Upload, ArrowLeft, Loader2, Clock, Camera, Sparkles, Coins, ChevronDown } from "lucide-react";
+import { Upload, ArrowLeft, Loader2, Camera, Sparkles, Coins, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,17 +14,15 @@ import { useNativeCamera } from "@/hooks/useNativeCamera";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { useWorkflowTokenCost } from "@/hooks/useWorkflowTokenCost";
 import { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
-import { formatEstimatedTime } from "@/lib/time-utils";
 import { WorkflowPromptInput } from "./WorkflowPromptInput";
 import { useWorkflowSurpriseMe } from "@/hooks/useWorkflowSurpriseMe";
 import { usePromptEnhancement } from "@/hooks/usePromptEnhancement";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { logger } from '@/lib/logger';
-import type { 
-  WorkflowInputs, 
-  WorkflowInputValue, 
-  WorkflowInputFieldConfig,
-  ModelInputSchema
+import type {
+  WorkflowInputs,
+  WorkflowInputValue,
+  WorkflowInputFieldConfig
 } from "@/types/workflow-display";
 import {
   toModelInputSchema,
@@ -43,7 +40,6 @@ interface WorkflowInputPanelProps {
 export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, onReset }: WorkflowInputPanelProps) => {
   const { user } = useAuth();
   const { pickImage, pickMultipleImages, isLoading: cameraLoading } = useNativeCamera();
-  const { data: userTokens } = useUserTokens();
   const [inputs, setInputs] = useState<WorkflowInputs>({});
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File[]>>({});
   const [isUploading, setIsUploading] = useState(false);
@@ -60,10 +56,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
   const { getSurprisePrompt } = useWorkflowSurpriseMe(workflow.category);
 
   const requiredFields = workflow.user_input_fields?.filter(f => f.required) || [];
-  const { estimatedTokens, isCalculating } = useWorkflowTokenCost(workflow, inputs);
-  
-  const creditBalance = userTokens?.tokens_remaining || 0;
-  const hasEnoughCredits = creditBalance >= estimatedTokens;
+  const { estimatedTokens } = useWorkflowTokenCost(workflow, inputs);
 
   const handleInputChange = async (fieldName: string, value: WorkflowInputValue, shouldEnhance: boolean = false) => {
     // If prompt enhancement is enabled and this is a prompt field
@@ -84,7 +77,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
     }));
   };
 
-  const handleFileUpload = async (fieldName: string, files: FileList | null, isMultiple: boolean) => {
+  const handleFileUpload = async (fieldName: string, files: FileList | null) => {
     if (!files || files.length === 0) return;
 
     const fileArray = Array.from(files);
@@ -196,7 +189,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
     if (files.length > 0 && files[0]) {
       const fileList = new DataTransfer();
       files.forEach(f => f && fileList.items.add(f));
-      await handleFileUpload(fieldName, fileList.files, isMultiple);
+      await handleFileUpload(fieldName, fileList.files);
     }
   };
 
@@ -327,7 +320,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
               type="file"
               accept="image/*"
               multiple={isMultiple}
-              onChange={(e) => handleFileUpload(field.name, e.target.files, isMultiple)}
+              onChange={(e) => handleFileUpload(field.name, e.target.files)}
               className="hidden"
             />
             {uploadedFiles[field.name] && uploadedFiles[field.name].length > 0 && (

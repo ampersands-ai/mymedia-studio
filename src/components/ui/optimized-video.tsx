@@ -161,7 +161,7 @@ export function OptimizedVideo({
         preload={preloadStrategy}
         controls={controls}
         onLoadedData={() => setIsLoaded(true)}
-        onError={(e) => {
+        onError={() => {
           logger.error('Video load error', new Error('Failed to load video'), {
             component: 'OptimizedVideo',
             operation: 'videoElement',

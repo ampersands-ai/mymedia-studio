@@ -23,7 +23,6 @@ export function getVideoUrl(
   const {
     strategy = MEDIA_CONFIG.defaults.video,
     bucket = 'generated-content',
-    enableProxy = MEDIA_CONFIG.useProxiedVideos,
   } = options;
 
   // Route to correct function based on strategy

@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Info, History } from "lucide-react";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
@@ -20,7 +20,6 @@ interface GenerationConsoleProps {
   };
   contentType: string;
   estimatedTimeSeconds: number | null;
-  isPolling: boolean;
   showProgress?: boolean;
   onNavigateLightbox: (direction: 'prev' | 'next') => void;
   onOpenLightbox: (index: number) => void;
@@ -35,10 +34,10 @@ interface GenerationConsoleProps {
   onRegenerateCaption: () => Promise<void>;
   onCopyCaption: () => void;
   onCopyHashtags: () => void;
-  childVideoGenerations: Array<{ 
-    id: string; 
-    status: string; 
-    storage_path?: string; 
+  childVideoGenerations: Array<{
+    id: string;
+    status: string;
+    storage_path?: string;
     output_index: number;
     type?: string;
   }>;
@@ -53,7 +52,6 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
   generationState,
   contentType,
   estimatedTimeSeconds,
-  isPolling,
   showProgress = true,
   onNavigateLightbox,
   onOpenLightbox,

@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Download, ChevronLeft, ChevronRight, Image as ImageIcon, Share2, Heart, Scissors, Wand2, Type, RotateCcw, Sparkles, Clock, Layout, Maximize2, Minimize2 } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, Image as ImageIcon, Share2, Heart, Scissors, Wand2, Type, Sparkles, Clock, Layout, Maximize2, Minimize2 } from "lucide-react";
 import { OptimizedGenerationPreview } from "./OptimizedGenerationPreview";
 import { ShareModal } from "./ShareModal";
 import { ImageCropModal } from "./ImageCropModal";

@@ -17,7 +17,6 @@ interface UseWorkflowEditorProps {
 export function useWorkflowEditor({
   workflow,
   open,
-  isNew,
   models,
 }: UseWorkflowEditorProps) {
   const [localWorkflow, setLocalWorkflow] = useState<Partial<WorkflowTemplate>>(workflow || {});

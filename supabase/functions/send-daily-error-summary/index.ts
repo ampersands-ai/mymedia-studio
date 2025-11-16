@@ -66,7 +66,6 @@ serve(async (req) => {
     // Calculate statistics
     const totalErrors = errors?.length || 0;
     const criticalErrors = errors?.filter(e => e.severity === 'critical').length || 0;
-    const highErrors = errors?.filter(e => e.severity === 'high').length || 0;
     const resolvedErrors = errors?.filter(e => e.is_resolved).length || 0;
     const newUserCount = newUsers?.length || 0;
 

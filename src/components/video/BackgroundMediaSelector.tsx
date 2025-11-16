@@ -121,7 +121,7 @@ export function BackgroundMediaSelector({
 
   const handleSelectMedia = (media: PixabayMedia) => {
     let mediaUrl: string;
-    let thumbnail: string = media.preview;
+    const thumbnail: string = media.preview;
 
     if (media.type === 'video') {
       mediaUrl = media.videoURL || '';

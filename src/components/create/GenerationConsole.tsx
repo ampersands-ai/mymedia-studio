@@ -13,9 +13,7 @@ interface GenerationConsoleProps {
   contentType: string;
   isPolling: boolean;
   onDownload: (path: string) => Promise<void>;
-  onDownloadAll: () => Promise<void>;
   onViewHistory: () => void;
-  onRetry: () => void;
 }
 
 /**
@@ -27,7 +25,6 @@ export const GenerationConsole = ({
   contentType,
   isPolling,
   onDownload,
-  onDownloadAll,
   onViewHistory,
 }: GenerationConsoleProps) => {
   if (!isPolling && !generationState.currentOutput) {

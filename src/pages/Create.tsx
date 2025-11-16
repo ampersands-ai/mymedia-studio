@@ -27,7 +27,7 @@ const Create = () => {
   const navigate = useNavigate();
   
   // Data fetching
-  const { templatesByCategory, templates, isLoading } = useTemplatesByCategory();
+  const { templatesByCategory, isLoading } = useTemplatesByCategory();
   const { data: userTokenData } = useUserTokens();
   const userTokens = userTokenData?.tokens_remaining || 0;
   

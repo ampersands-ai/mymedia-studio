@@ -3,8 +3,7 @@ import { EdgeLogger } from "../_shared/edge-logger.ts";
 import {
   handleOptionsRequest,
   createJsonResponse,
-  createErrorResponse,
-  corsHeaders
+  createErrorResponse
 } from "../_shared/cors-headers.ts";
 
 Deno.serve(async (req) => {

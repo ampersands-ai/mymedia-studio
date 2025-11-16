@@ -1,9 +1,9 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { RefreshCw, Save, Check } from 'lucide-react';
+import { RefreshCw, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,

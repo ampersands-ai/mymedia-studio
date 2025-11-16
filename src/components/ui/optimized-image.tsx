@@ -2,7 +2,7 @@ import { ImgHTMLAttributes, useState, useRef } from "react";
 import { useInView } from 'react-intersection-observer';
 import { cn } from "@/lib/utils";
 import { Skeleton } from "./skeleton";
-import { getOptimizedImageUrl, getResponsiveSrcSet, getBlurPlaceholder, getBestFormat } from '@/lib/supabase-images';
+import { getOptimizedImageUrl, getResponsiveSrcSet, getBlurPlaceholder } from '@/lib/supabase-images';
 
 interface OptimizedImageProps extends ImgHTMLAttributes<HTMLImageElement> {
   src: string;

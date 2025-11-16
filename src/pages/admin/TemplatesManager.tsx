@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown, Copy, Play } from "lucide-react";
-import { toast } from "sonner";
 import { TemplateFormDialog } from "@/components/admin/TemplateFormDialog";
 import { WorkflowTestDialog } from "@/components/admin/WorkflowTestDialog";
 import {
@@ -41,7 +40,7 @@ export default function TemplatesManager() {
   const { data: models = [] } = useModels();
   
   // Fetch ALL templates for admin (not just active ones)
-  const { data: templates = [], isLoading } = useQuery({
+  const { data: templates = [] } = useQuery({
     queryKey: ["all-templates-admin"],
     queryFn: async () => {
       // Fetch content templates

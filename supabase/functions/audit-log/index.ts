@@ -34,9 +34,6 @@ const auditLogSchema = z.object({
     .optional()
     .default({})
 });
-
-interface AuditLogRequest {
-  action: string;
   resource_type?: string;
   resource_id?: string;
   metadata?: Record<string, any>;

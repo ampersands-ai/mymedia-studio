@@ -254,14 +254,6 @@ export default function ModelHealthDashboard() {
         <h1 className="text-3xl font-bold">Model Health Dashboard</h1>
         <div className="flex gap-2">
           <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/admin/model-health/comprehensive-test')}
-          >
-            <PlayCircle className="h-4 w-4 mr-2" />
-            Comprehensive Test
-          </Button>
-          <Button
             variant={viewMode === 'list' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setViewMode('list')}

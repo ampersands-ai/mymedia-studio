@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useModelByRecordId } from "@/hooks/useModels";
 import { useAllModels } from "@/hooks/useAllModels";
@@ -19,6 +19,7 @@ import { TestResultsCard } from "@/components/admin/model-health/TestResultsCard
 import { ExecutionFlowVisualizer } from "@/components/admin/model-health/ExecutionFlowVisualizer";
 import { PayloadReviewCard } from "@/components/admin/model-health/PayloadReviewCard";
 import { ExecutionControlPanel } from "@/components/admin/model-health/ExecutionControlPanel";
+import { PromptInput } from "@/components/custom-creation/PromptInput";
 import { ArrowLeft, Download, Eye, BookOpen, ArrowUpToLine, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { createSignedUrl } from "@/lib/storage-utils";
@@ -71,7 +72,28 @@ export default function ComprehensiveModelTestPage() {
   } = useCustomCreationState();
 
   // Schema helpers
-  useSchemaHelpers();
+  const schemaHelpers = useSchemaHelpers();
+  
+  // Check if model schema requires a prompt field (matches CustomCreation)
+  const hasPromptField = useMemo(() => {
+    if (!fullModel?.input_schema) return false;
+    const schema = fullModel.input_schema as any;
+    const props = schema.properties || {};
+    return !!(props.prompt || props.positivePrompt || props.positive_prompt);
+  }, [fullModel?.input_schema]);
+
+  // Check if prompt is required (matches CustomCreation)
+  const isPromptRequired = useMemo(() => {
+    if (!fullModel?.input_schema) return false;
+    const schema = fullModel.input_schema as any;
+    const required = schema.required || [];
+    return required.some((field: string) => 
+      ['prompt', 'positivePrompt', 'positive_prompt'].includes(field)
+    );
+  }, [fullModel?.input_schema]);
+
+  // Get max prompt length (matches CustomCreation)
+  const maxPromptLength = schemaHelpers.getMaxPromptLength(fullModel as any, undefined);
 
   // Image upload - simplified for test page
   useState<File[]>([]);
@@ -177,13 +199,27 @@ export default function ComprehensiveModelTestPage() {
   }, [fullModel?.record_id]);
 
   const handleParameterChange = (key: string, value: any) => {
-    updateState({
-      modelParameters: {
-        ...state.modelParameters,
-        [key]: value
-      }
+    // Prompt is handled separately via PromptInput, don't allow it in modelParameters (matches CustomCreation)
+    if (['prompt', 'positivePrompt', 'positive_prompt'].includes(key)) {
+      return;
+    }
+    
+    updateState({ 
+      modelParameters: { 
+        ...state.modelParameters, 
+        [key]: value 
+      } 
     });
   };
+  
+  // Filter parameters to exclude prompt (matches CustomCreation - prompt has its own dedicated input)
+  const filteredParameters = useMemo(() => {
+    const params = { ...state.modelParameters };
+    delete params.prompt;
+    delete params.positivePrompt;
+    delete params.positive_prompt;
+    return params;
+  }, [state.modelParameters]);
 
   const handleExportConfiguration = () => {
     const config = {
@@ -383,9 +419,10 @@ export default function ComprehensiveModelTestPage() {
     }));
 
     setCurrentStage('parameter_merge');
+    // Merge parameters, adding prompt separately from state.prompt (matches CustomCreation)
     const mergedParams = {
       ...state.modelParameters,
-      prompt: state.prompt,
+      ...(state.prompt?.trim() && { prompt: state.prompt.trim() })
     };
     setStageData(prev => ({
       ...prev,
@@ -416,7 +453,10 @@ export default function ComprehensiveModelTestPage() {
   }, [state.prompt, state.modelParameters, fullModel]);
 
   const handleStartTest = async () => {
-    if (!state.prompt?.trim()) {
+    if (!fullModel) return;
+
+    // Validate prompt if required by schema (matches CustomCreation - checks state.prompt directly)
+    if (isPromptRequired && (!state.prompt || !state.prompt.trim())) {
       toast.error('Please enter a prompt');
       return;
     }
@@ -648,9 +688,33 @@ export default function ComprehensiveModelTestPage() {
             </CardContent>
           </Card>
 
+          {/* Prompt Input - Separate from Parameters Inspector (matches CustomCreation) */}
+          {hasPromptField && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Prompt</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PromptInput
+                  value={state.prompt}
+                  onChange={(value) => updateState({ prompt: value })}
+                  isRequired={isPromptRequired}
+                  maxLength={maxPromptLength}
+                  onSurpriseMe={() => {
+                    updateState({ prompt: "A test prompt for model validation" });
+                  }}
+                  disabled={false}
+                  generateCaption={false}
+                  onGenerateCaptionChange={() => {}}
+                  generatingSurprise={false}
+                />
+              </CardContent>
+            </Card>
+          )}
+
           <ParametersInspector
             schema={fullModel.input_schema as any}
-            parameters={state.modelParameters}
+            parameters={filteredParameters}
             onParameterChange={handleParameterChange}
             modifiedParameters={modifiedParameters}
             onPushParameterToSchema={handlePushParameterToSchema}

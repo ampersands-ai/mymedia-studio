@@ -1,374 +1,592 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Download, RotateCcw, Play, FileText, Loader2 } from "lucide-react";
+import { useModels, useModelByRecordId } from "@/hooks/useModels";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCustomCreationState } from "@/hooks/useCustomCreationState";
+import { useCustomGeneration } from "@/hooks/useCustomGeneration";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import { useGenerationPolling } from "@/hooks/useGenerationPolling";
+import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useAllModels } from "@/hooks/useAllModels";
-import { useModelByRecordId } from "@/hooks/useModels";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ParametersInspector } from "@/components/admin/model-health/ParametersInspector";
-import { toast } from "sonner";
-import { initializeParameters } from "@/types/model-schema";
+import { TestStatusHeader } from "@/components/admin/model-health/TestStatusHeader";
+import { TestResultsCard } from "@/components/admin/model-health/TestResultsCard";
+import { ExecutionFlowVisualizer } from "@/components/admin/model-health/ExecutionFlowVisualizer";
+import { PayloadReviewCard } from "@/components/admin/model-health/PayloadReviewCard";
+import { ExecutionControlPanel } from "@/components/admin/model-health/ExecutionControlPanel";
+import { InputPanel } from "@/components/custom-creation/InputPanel";
+import { OutputPanel } from "@/components/custom-creation/OutputPanel";
+import { ArrowLeft, Download, FileJson, Eye, BookOpen, ArrowUpToLine, Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { createSignedUrl } from "@/lib/storage-utils";
+import { toast } from "sonner";
+import type { Database } from "@/integrations/supabase/types";
+
+type AIModel = Database['public']['Tables']['ai_models']['Row'];
 
 export default function ComprehensiveModelTestPage() {
   const navigate = useNavigate();
-  const { data: allModels, isLoading: isLoadingModels } = useAllModels();
+  const { user } = useAuth();
   
-  const [selectedRecordId, setSelectedRecordId] = useState<string>("");
-  const { data: selectedModel, refetch: refetchModel } = useModelByRecordId(selectedRecordId);
-  
+  // Data fetching
+  const { data: allModels, isLoading: modelsLoading } = useModels();
+  const [selectedModelRecordId, setSelectedModelRecordId] = useState<string | null>(null);
+  const { data: fullModel, isLoading: fullModelLoading } = useModelByRecordId(selectedModelRecordId);
+
+  // Custom parameters state
   const [customParameters, setCustomParameters] = useState<Record<string, any>>({});
   const [originalDefaults, setOriginalDefaults] = useState<Record<string, any>>({});
   const [originalAdvancedFlags, setOriginalAdvancedFlags] = useState<Record<string, boolean>>({});
-  const [documentationStatus, setDocumentationStatus] = useState<any>(null);
+
+  // Documentation state
+  const [documentationStatus, setDocumentationStatus] = useState<'unknown' | 'exists' | 'missing'>('unknown');
   const [isGeneratingDocs, setIsGeneratingDocs] = useState(false);
   const [showDocumentation, setShowDocumentation] = useState(false);
+  const [documentationData, setDocumentationData] = useState<any>(null);
+
+  // Schema push confirmation dialog
   const [confirmPushDialog, setConfirmPushDialog] = useState<{
-    show: boolean;
-    paramName?: string;
-    oldValue?: any;
-    newValue?: any;
-  }>({ show: false });
+    open: boolean;
+    paramKey: string | null;
+    newValue: any;
+  }>({ open: false, paramKey: null, newValue: null });
 
-  // Fetch documentation status when model changes
-  useEffect(() => {
-    if (!selectedRecordId) {
-      setDocumentationStatus(null);
-      return;
-    }
+  // Test execution state
+  const [testStatus, setTestStatus] = useState<'idle' | 'running' | 'completed' | 'error'>('idle');
+  const [testPhase, setTestPhase] = useState<'idle' | 'preparing' | 'review' | 'executing' | 'complete' | 'error'>('idle');
+  const [testStartTime, setTestStartTime] = useState<number | null>(null);
+  const [testEndTime, setTestEndTime] = useState<number | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
+  const [currentStage, setCurrentStage] = useState<string>('input_validation');
+  const [stageData, setStageData] = useState<any>({});
+  const [preparedPayload, setPreparedPayload] = useState<any>(null);
+  const [payloadEditable, setPayloadEditable] = useState(false);
+  const [outputUrl, setOutputUrl] = useState<string | null>(null);
 
-    const fetchDocumentation = async () => {
-      const { data, error } = await supabase
-        .from("model_documentation")
-        .select("*")
-        .eq("model_record_id", selectedRecordId)
-        .maybeSingle();
+  const outputSectionRef = useRef<HTMLDivElement>(null);
 
-      if (!error && data) {
-        setDocumentationStatus(data);
-      } else {
-        setDocumentationStatus(null);
+  // Custom Creation state
+  const { 
+    state, 
+    updateState, 
+    resetState,
+    setPrompt: setStatePrompt,
+    setSelectedModel: setStateSelectedModel,
+  } = useCustomCreationState();
+
+  const model = fullModel;
+  const currentModel = fullModel;
+
+  // Schema helpers
+  const schemaHelpers = useSchemaHelpers();
+  const imageFieldInfo = schemaHelpers.getImageFieldInfo(currentModel as any);
+
+  // Image upload
+  const {
+    uploadedImages,
+    isUploading,
+    uploadError,
+    handleImageSelect,
+    removeImage,
+    clearImages,
+  } = useImageUpload(imageFieldInfo.maxImages);
+
+  // Generation polling
+  const { startPolling, stopPolling, isPolling } = useGenerationPolling({
+    onComplete: async (outputs, parentId) => {
+      setCurrentStage('media_delivered');
+      updateState({
+        generatedOutputs: outputs,
+        generatedOutput: outputs[0]?.storage_path || null,
+        selectedOutputIndex: 0,
+        generationCompleteTime: Date.now(),
+        localGenerating: false,
+        pollingGenerationId: null,
+        parentGenerationId: parentId || null,
+      });
+
+      if (outputs[0]?.storage_path) {
+        const signedUrl = await createSignedUrl('generated-content', outputs[0].storage_path);
+        setOutputUrl(signedUrl);
+        
+        setCurrentStage('media_storage');
+        setStageData(prev => ({
+          ...prev,
+          media_storage: {
+            bucket: 'generated-content',
+            path: outputs[0].storage_path,
+            outputs_count: outputs.length,
+          },
+        }));
       }
-    };
 
-    fetchDocumentation();
-  }, [selectedRecordId]);
+      setTestStatus('completed');
+      setTestPhase('complete');
+      setTestEndTime(Date.now());
+      toast.success('Test completed successfully');
+      
+      outputSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+    },
+    onError: (error) => {
+      setTestError(error);
+      setTestStatus('error');
+      setTestPhase('error');
+      setTestEndTime(Date.now());
+      updateState({ localGenerating: false });
+      toast.error('Test failed: ' + error);
+    },
+    onTimeout: () => {
+      setTestError('Test timed out');
+      setTestStatus('error');
+      setTestPhase('error');
+      setTestEndTime(Date.now());
+      updateState({ localGenerating: false });
+      toast.error('Test timed out');
+    },
+  });
+
+  // Custom generation hook
+  const {
+    handleGenerate,
+    isGenerating,
+  } = useCustomGeneration({
+    state,
+    updateState,
+    uploadedImages,
+    startPolling,
+    setCurrentStage,
+    setStageData,
+  });
 
   // Initialize parameters when model changes
   useEffect(() => {
-    if (selectedModel?.input_schema) {
-      const initialized = initializeParameters(
-        selectedModel.input_schema as any,
-        {}
-      );
-      setCustomParameters(initialized);
+    if (fullModel?.input_schema) {
+      const schema = fullModel.input_schema as any;
+      const properties = schema.properties || {};
       
-      // Store original defaults and advanced flags for comparison
       const defaults: Record<string, any> = {};
       const advancedFlags: Record<string, boolean> = {};
-      const schema = selectedModel.input_schema as any;
-      if (schema?.properties) {
-        Object.keys(schema.properties).forEach(key => {
-          defaults[key] = schema.properties[key].default;
-          advancedFlags[key] = schema.properties[key].isAdvanced === true;
-        });
-      }
+      
+      Object.entries(properties).forEach(([key, prop]: [string, any]) => {
+        if (prop.default !== undefined) {
+          defaults[key] = prop.default;
+        }
+        advancedFlags[key] = prop.isAdvanced || false;
+      });
+      
+      setCustomParameters(defaults);
       setOriginalDefaults(defaults);
       setOriginalAdvancedFlags(advancedFlags);
-    } else {
-      setCustomParameters({});
-      setOriginalDefaults({});
     }
-  }, [selectedModel]);
+  }, [fullModel]);
 
-  const handleParameterChange = (name: string, value: any) => {
-    setCustomParameters((prev) => ({
+  // Check documentation status
+  useEffect(() => {
+    if (!fullModel?.record_id) return;
+    
+    const checkDocStatus = async () => {
+      const { data, error } = await supabase
+        .from('model_documentation')
+        .select('id')
+        .eq('model_record_id', fullModel.record_id)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error checking documentation:', error);
+        return;
+      }
+      
+      setDocumentationStatus(data ? 'exists' : 'missing');
+    };
+    
+    checkDocStatus();
+  }, [fullModel?.record_id]);
+
+  const handleParameterChange = (key: string, value: any) => {
+    setCustomParameters(prev => ({
       ...prev,
-      [name]: value,
+      [key]: value,
     }));
   };
 
   const handleResetToDefaults = () => {
-    if (selectedModel?.input_schema) {
-      const initialized = initializeParameters(
-        selectedModel.input_schema as any,
-        {}
-      );
-      setCustomParameters(initialized);
-      toast.success("Parameters reset to defaults");
-    }
+    setCustomParameters({ ...originalDefaults });
+    toast.success('Parameters reset to defaults');
   };
 
   const handleExportConfiguration = () => {
-    if (!selectedModel) return;
-
     const config = {
-      model: {
-        record_id: selectedModel.record_id,
-        id: selectedModel.id,
-        provider: selectedModel.provider,
-        model_name: selectedModel.model_name,
-        content_type: selectedModel.content_type,
-      },
+      model_id: fullModel?.id,
+      model_name: fullModel?.model_name,
       parameters: customParameters,
       timestamp: new Date().toISOString(),
     };
-
-    const blob = new Blob([JSON.stringify(config, null, 2)], {
-      type: "application/json",
-    });
+    
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
-    a.download = `model-config-${selectedModel.id}-${Date.now()}.json`;
+    a.download = `${fullModel?.model_name}-config-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-
-    toast.success("Configuration exported");
+    
+    toast.success('Configuration exported');
   };
 
   const handleGenerateDocumentation = async () => {
-    if (!selectedModel) return;
-
+    if (!fullModel?.record_id) return;
+    
     setIsGeneratingDocs(true);
     try {
-      const { error } = await supabase.functions.invoke("analyze-model-docs", {
-        body: { modelRecordId: selectedModel.record_id },
+      const { data, error } = await supabase.functions.invoke('analyze-model-docs', {
+        body: { modelRecordId: fullModel.record_id }
       });
-
-      if (error) throw error;
-
-      toast.success("Documentation generated successfully");
       
-      // Refetch documentation status
-      const { data } = await supabase
-        .from("model_documentation")
-        .select("*")
-        .eq("model_record_id", selectedRecordId)
-        .maybeSingle();
-
-      if (data) setDocumentationStatus(data);
-    } catch (error: any) {
-      console.error("Error generating documentation:", error);
-      toast.error(error.message || "Failed to generate documentation");
+      if (error) throw error;
+      
+      toast.success('Documentation generated successfully');
+      setDocumentationStatus('exists');
+      setDocumentationData(data);
+    } catch (error) {
+      console.error('Error generating documentation:', error);
+      toast.error('Failed to generate documentation');
     } finally {
       setIsGeneratingDocs(false);
     }
   };
 
-  const getModifiedParameters = () => {
-    if (!selectedModel?.input_schema?.properties) return [];
-    
+  const getModifiedParameters = (): string[] => {
     const modified: string[] = [];
-    const properties = selectedModel.input_schema.properties as any;
     
     Object.keys(customParameters).forEach(key => {
-      const originalValue = originalDefaults[key];
-      const currentValue = customParameters[key];
-      const originalAdvanced = originalAdvancedFlags[key];
-      const currentAdvanced = properties[key]?.isAdvanced === true;
-      
-      // Check if value or advanced flag changed
-      if (JSON.stringify(originalValue) !== JSON.stringify(currentValue) || originalAdvanced !== currentAdvanced) {
+      if (customParameters[key] !== originalDefaults[key]) {
         modified.push(key);
+      }
+    });
+    
+    const schema = fullModel?.input_schema as any;
+    const properties = schema?.properties || {};
+    Object.keys(properties).forEach(key => {
+      const currentAdvanced = properties[key].isAdvanced || false;
+      if (currentAdvanced !== originalAdvancedFlags[key]) {
+        if (!modified.includes(key)) {
+          modified.push(key);
+        }
       }
     });
     
     return modified;
   };
 
-  const handlePushParameterToSchema = (paramName: string) => {
+  const handlePushParameterToSchema = (paramKey: string) => {
     setConfirmPushDialog({
-      show: true,
-      paramName,
-      oldValue: originalDefaults[paramName],
-      newValue: customParameters[paramName],
+      open: true,
+      paramKey,
+      newValue: customParameters[paramKey],
     });
   };
 
   const handleConfirmPushToSchema = async () => {
-    if (!selectedModel || !confirmPushDialog.paramName) return;
-
+    const { paramKey, newValue } = confirmPushDialog;
+    if (!paramKey || !fullModel) return;
+    
     try {
-      const schema = JSON.parse(JSON.stringify(selectedModel.input_schema));
-      const paramName = confirmPushDialog.paramName;
+      const schema = { ...(fullModel.input_schema as any) };
+      schema.properties[paramKey].default = newValue;
       
-      if (schema?.properties?.[paramName]) {
-        schema.properties[paramName].default = customParameters[paramName];
-      }
-
       const { error } = await supabase
-        .from("ai_models")
+        .from('ai_models')
         .update({ input_schema: schema })
-        .eq("record_id", selectedModel.record_id);
-
+        .eq('record_id', fullModel.record_id);
+      
       if (error) throw error;
-
-      toast.success(`Updated default value for ${paramName}`);
       
-      // Update original defaults
-      setOriginalDefaults(prev => ({
-        ...prev,
-        [paramName]: customParameters[paramName],
-      }));
+      const { data: updatedModel } = await supabase
+        .from('ai_models')
+        .select()
+        .eq('record_id', fullModel.record_id)
+        .single();
       
-      // Refetch model data
-      refetchModel();
-    } catch (error: any) {
-      console.error("Error updating schema:", error);
-      toast.error(error.message || "Failed to update schema");
+      if (updatedModel) {
+        setOriginalDefaults(prev => ({
+          ...prev,
+          [paramKey]: newValue,
+        }));
+      }
+      
+      toast.success(`Updated default for ${paramKey}`);
+    } catch (error) {
+      console.error('Error updating schema:', error);
+      toast.error('Failed to update schema');
     } finally {
-      setConfirmPushDialog({ show: false });
+      setConfirmPushDialog({ open: false, paramKey: null, newValue: null });
     }
   };
 
-  const handleToggleAdvanced = async (paramName: string) => {
-    if (!selectedModel?.input_schema?.properties?.[paramName]) return;
-
+  const handleToggleAdvanced = async (paramKey: string) => {
+    if (!fullModel) return;
+    
     try {
-      const schema = JSON.parse(JSON.stringify(selectedModel.input_schema));
-      const currentAdvanced = schema.properties[paramName].isAdvanced === true;
-      schema.properties[paramName].isAdvanced = !currentAdvanced;
-
+      const schema = { ...(fullModel.input_schema as any) };
+      const currentAdvanced = schema.properties[paramKey].isAdvanced || false;
+      schema.properties[paramKey].isAdvanced = !currentAdvanced;
+      
       const { error } = await supabase
-        .from("ai_models")
+        .from('ai_models')
         .update({ input_schema: schema })
-        .eq("record_id", selectedModel.record_id);
-
+        .eq('record_id', fullModel.record_id);
+      
       if (error) throw error;
-
-      toast.success(`Moved ${paramName} to ${!currentAdvanced ? "advanced" : "standard"} parameters`);
       
-      // Update original advanced flags
-      setOriginalAdvancedFlags(prev => ({
-        ...prev,
-        [paramName]: !currentAdvanced,
-      }));
+      const { data: updatedModel } = await supabase
+        .from('ai_models')
+        .select()
+        .eq('record_id', fullModel.record_id)
+        .single();
       
-      // Refetch model data
-      refetchModel();
-    } catch (error: any) {
-      console.error("Error toggling advanced flag:", error);
-      toast.error(error.message || "Failed to update parameter");
+      if (updatedModel) {
+        setOriginalAdvancedFlags(prev => ({
+          ...prev,
+          [paramKey]: !currentAdvanced,
+        }));
+      }
+      
+      toast.success(`Moved ${paramKey} to ${!currentAdvanced ? 'advanced' : 'user-visible'} options`);
+    } catch (error) {
+      console.error('Error toggling advanced:', error);
+      toast.error('Failed to update parameter visibility');
     }
   };
 
   const handlePushAllToSchema = async () => {
-    if (!selectedModel) return;
-
+    if (!fullModel) return;
+    
     const modified = getModifiedParameters();
     if (modified.length === 0) {
-      toast.info("No modifications to push");
+      toast.info('No modified parameters to push');
       return;
     }
-
+    
     try {
-      const schema = JSON.parse(JSON.stringify(selectedModel.input_schema));
+      const schema = { ...(fullModel.input_schema as any) };
       
-      modified.forEach(paramName => {
-        if (schema?.properties?.[paramName]) {
-          schema.properties[paramName].default = customParameters[paramName];
+      modified.forEach(key => {
+        if (customParameters[key] !== originalDefaults[key]) {
+          schema.properties[key].default = customParameters[key];
         }
       });
-
+      
       const { error } = await supabase
-        .from("ai_models")
+        .from('ai_models')
         .update({ input_schema: schema })
-        .eq("record_id", selectedModel.record_id);
-
+        .eq('record_id', fullModel.record_id);
+      
       if (error) throw error;
-
-      toast.success(`Updated ${modified.length} parameter default(s)`);
       
-      // Update original defaults
-      const newDefaults = { ...originalDefaults };
-      modified.forEach(key => {
-        newDefaults[key] = customParameters[key];
+      setOriginalDefaults({ ...customParameters });
+      setOriginalAdvancedFlags(prev => {
+        const updated = { ...prev };
+        Object.keys(schema.properties).forEach(key => {
+          updated[key] = schema.properties[key].isAdvanced || false;
+        });
+        return updated;
       });
-      setOriginalDefaults(newDefaults);
       
-      // Update original advanced flags
-      const newAdvancedFlags = { ...originalAdvancedFlags };
-      const properties = selectedModel.input_schema.properties as any;
-      modified.forEach(key => {
-        newAdvancedFlags[key] = properties[key]?.isAdvanced === true;
-      });
-      setOriginalAdvancedFlags(newAdvancedFlags);
-      
-      // Refetch model data
-      refetchModel();
-    } catch (error: any) {
-      console.error("Error updating schema:", error);
-      toast.error(error.message || "Failed to update schema");
+      toast.success(`Updated ${modified.length} parameter defaults`);
+    } catch (error) {
+      console.error('Error pushing to schema:', error);
+      toast.error('Failed to update schema');
     }
   };
 
-  const handleRunTest = () => {
-    if (!selectedModel) {
-      toast.error("Please select a model first");
+  const prepareApiPayload = useCallback(async () => {
+    setCurrentStage('input_validation');
+    setStageData(prev => ({
+      ...prev,
+      input_validation: {
+        prompt: state.prompt,
+        model: currentModel?.model_name,
+        customParameters,
+        uploadedImages: uploadedImages.length,
+      },
+    }));
+
+    setCurrentStage('parameter_merge');
+    const mergedParams = {
+      ...customParameters,
+      prompt: state.prompt,
+    };
+    setStageData(prev => ({
+      ...prev,
+      parameter_merge: {
+        userParams: customParameters,
+        backendParams: fullModel?.input_schema,
+        merged: mergedParams,
+      },
+    }));
+
+    setCurrentStage('payload_preparation');
+    const payload = {
+      provider: fullModel?.provider,
+      modelId: fullModel?.id,
+      modelRecordId: fullModel?.record_id,
+      endpoint: fullModel?.api_endpoint,
+      method: 'POST',
+      parameters: mergedParams,
+      uploadedImages: uploadedImages.map(img => img.url),
+    };
+    
+    setStageData(prev => ({
+      ...prev,
+      payload_preparation: payload,
+    }));
+
+    return payload;
+  }, [state.prompt, customParameters, uploadedImages, fullModel, currentModel]);
+
+  const handleStartTest = async () => {
+    if (!state.prompt.trim()) {
+      toast.error('Please enter a prompt');
       return;
     }
 
-    // Navigate to the actual test page with pre-configured parameters
-    navigate(`/admin/model-health/test/${selectedModel.record_id}`);
-    toast.info("Opening test page with selected model");
+    setTestStatus('running');
+    setTestPhase('preparing');
+    setTestStartTime(Date.now());
+    setTestError(null);
+    
+    try {
+      const payload = await prepareApiPayload();
+      setPreparedPayload(payload);
+      setTestPhase('review');
+    } catch (error) {
+      console.error('Error preparing test:', error);
+      setTestError(error instanceof Error ? error.message : 'Failed to prepare test');
+      setTestStatus('error');
+      setTestPhase('error');
+    }
   };
 
+  const handleContinueTest = async () => {
+    setTestPhase('executing');
+    setCurrentStage('api_request');
+    
+    try {
+      setStageData(prev => ({
+        ...prev,
+        api_request: {
+          endpoint: preparedPayload.endpoint,
+          method: preparedPayload.method,
+          timestamp: new Date().toISOString(),
+        },
+      }));
+
+      await handleGenerate();
+      
+    } catch (error) {
+      console.error('Error executing test:', error);
+      setTestError(error instanceof Error ? error.message : 'Test execution failed');
+      setTestStatus('error');
+      setTestPhase('error');
+      setTestEndTime(Date.now());
+    }
+  };
+
+  const handleCancelTest = () => {
+    setTestStatus('idle');
+    setTestPhase('idle');
+    setPreparedPayload(null);
+    setPayloadEditable(false);
+    setTestError(null);
+    stopPolling();
+    updateState({ localGenerating: false });
+    toast.info('Test cancelled');
+  };
+
+  const handleRunNewTest = () => {
+    resetState();
+    setTestStatus('idle');
+    setTestPhase('idle');
+    setTestStartTime(null);
+    setTestEndTime(null);
+    setTestError(null);
+    setPreparedPayload(null);
+    setPayloadEditable(false);
+    setCurrentStage('input_validation');
+    setStageData({});
+    setOutputUrl(null);
+  };
+
+  const handleDownloadReport = () => {
+    const report = {
+      model: fullModel?.model_name,
+      status: testStatus,
+      startTime: testStartTime,
+      endTime: testEndTime,
+      duration: testEndTime && testStartTime ? testEndTime - testStartTime : null,
+      parameters: customParameters,
+      stages: stageData,
+      outputs: state.generatedOutputs,
+      error: testError,
+    };
+    
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `test-report-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const modifiedParameters = getModifiedParameters();
+
+  if (modelsLoading || fullModelLoading) {
+    return (
+      <div className="container mx-auto py-8 flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/admin/model-health")}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Model Health
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Comprehensive Model Testing</h1>
-            <p className="text-muted-foreground">
-              Test any model with complete parameter visibility and control
-            </p>
-          </div>
+    <div className="container mx-auto py-8 space-y-6">
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate('/admin/model-health')}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold">Comprehensive Model Testing</h1>
+          <p className="text-muted-foreground">Inspect, configure, and test AI models with full transparency</p>
         </div>
       </div>
 
-      {/* Model Selector */}
       <Card>
         <CardHeader>
           <CardTitle>Select Model</CardTitle>
-          <CardDescription>
-            Choose any model (active or inactive) to inspect and test
-          </CardDescription>
+          <CardDescription>Choose a model to inspect and test</CardDescription>
         </CardHeader>
         <CardContent>
-          <Select
-            value={selectedRecordId}
-            onValueChange={setSelectedRecordId}
-            disabled={isLoadingModels}
-          >
-            <SelectTrigger className="w-full">
+          <Select value={selectedModelRecordId || ''} onValueChange={setSelectedModelRecordId}>
+            <SelectTrigger>
               <SelectValue placeholder="Select a model..." />
             </SelectTrigger>
             <SelectContent>
-              {allModels?.map((model) => (
+              {allModels?.map(model => (
                 <SelectItem key={model.record_id} value={model.record_id}>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{model.provider}</span>
-                    <span className="text-muted-foreground">-</span>
-                    <span>{model.model_name}</span>
-                    <Badge variant={model.is_active ? "default" : "secondary"} className="ml-2">
-                      {model.is_active ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
+                  {model.model_name} - {model.provider}
+                  {!model.is_active && <Badge variant="outline" className="ml-2">Inactive</Badge>}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -376,227 +594,233 @@ export default function ComprehensiveModelTestPage() {
         </CardContent>
       </Card>
 
-      {/* Model Details */}
-      {selectedModel && (
+      {fullModel && (
         <>
           <Card>
             <CardHeader>
-              <div className="flex items-start justify-between">
+              <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Model Details</CardTitle>
-                  <CardDescription>
-                    Configuration and metadata for the selected model
+                  <CardTitle>{fullModel.model_name}</CardTitle>
+                  <CardDescription className="space-y-1 mt-2">
+                    <div className="flex gap-2">
+                      <Badge>{fullModel.provider}</Badge>
+                      <Badge variant="outline">{fullModel.content_type}</Badge>
+                      {!fullModel.is_active && <Badge variant="destructive">Inactive</Badge>}
+                    </div>
                   </CardDescription>
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                  <Badge variant="outline">
-                    {selectedModel.is_active ? "Active" : "Inactive"}
-                  </Badge>
-                  {documentationStatus && (
-                    <Badge variant="secondary" className="gap-1">
-                      <FileText className="h-3 w-3" />
-                      Documentation: Updated {new Date(documentationStatus.updated_at).toLocaleDateString()}
-                      {documentationStatus.analyzed_generations_count && 
-                        ` (${documentationStatus.analyzed_generations_count} generations)`
-                      }
-                    </Badge>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={handleExportConfiguration}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export Config
+                  </Button>
+                  {documentationStatus === 'exists' && (
+                    <Button variant="outline" size="sm" onClick={() => setShowDocumentation(true)}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Docs
+                    </Button>
                   )}
-                  {!documentationStatus && selectedModel && (
-                    <Badge variant="outline" className="gap-1 text-muted-foreground">
-                      <FileText className="h-3 w-3" />
-                      No Documentation
-                    </Badge>
+                  {documentationStatus === 'missing' && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleGenerateDocumentation}
+                      disabled={isGeneratingDocs}
+                    >
+                      {isGeneratingDocs ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <BookOpen className="h-4 w-4 mr-2" />
+                      )}
+                      Generate Docs
+                    </Button>
                   )}
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
-                  <div className="text-sm text-muted-foreground">Provider</div>
-                  <div className="font-medium">{selectedModel.provider}</div>
+                  <p className="text-muted-foreground">Base Cost</p>
+                  <p className="font-medium">{fullModel.base_token_cost} credits</p>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">Model Name</div>
-                  <div className="font-medium">{selectedModel.model_name}</div>
+                  <p className="text-muted-foreground">Est. Time</p>
+                  <p className="font-medium">{fullModel.estimated_time_seconds}s</p>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">Content Type</div>
-                  <div className="font-medium">{selectedModel.content_type}</div>
+                  <p className="text-muted-foreground">Max Images</p>
+                  <p className="font-medium">{fullModel.max_images || 'N/A'}</p>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">API Endpoint</div>
-                  <div className="font-mono text-xs truncate">
-                    {selectedModel.api_endpoint || "N/A"}
-                  </div>
+                  <p className="text-muted-foreground">Default Outputs</p>
+                  <p className="font-medium">{fullModel.default_outputs || 1}</p>
                 </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">Payload Structure</div>
-                  <div className="font-medium">{selectedModel.payload_structure}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">Estimated Time</div>
-                  <div className="font-medium">
-                    {selectedModel.estimated_time_seconds
-                      ? `${selectedModel.estimated_time_seconds}s`
-                      : "N/A"}
-                  </div>
-                </div>
-                {selectedModel.groups && (
-                  <div className="col-span-full">
-                    <div className="text-sm text-muted-foreground mb-1">Groups</div>
-                    <div className="flex gap-1 flex-wrap">
-                      {Object.entries(selectedModel.groups as Record<string, any>).map(
-                        ([key, value]) => (
-                          <Badge key={key} variant="outline">
-                            {key}: {String(value)}
-                          </Badge>
-                        )
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
 
+          <ParametersInspector
+            schema={fullModel.input_schema as any}
+            currentValues={customParameters}
+            onParameterChange={handleParameterChange}
+            modifiedParameters={modifiedParameters}
+            onPushParameterToSchema={handlePushParameterToSchema}
+            onPushAllToSchema={modifiedParameters.length > 0 ? handlePushAllToSchema : undefined}
+            onToggleAdvanced={handleToggleAdvanced}
+          />
+
           <Separator />
 
-          {/* Action Buttons */}
-          <div className="flex gap-2 flex-wrap justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleResetToDefaults}
-            >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Reset to Defaults
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportConfiguration}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export Configuration
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleGenerateDocumentation}
-              disabled={isGeneratingDocs}
-            >
-              {isGeneratingDocs ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <FileText className="h-4 w-4 mr-2" />
-              )}
-              Generate Documentation
-            </Button>
-            {documentationStatus && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDocumentation(true)}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                View Documentation
-              </Button>
-            )}
-            <Button
-              size="sm"
-              onClick={handleRunTest}
-            >
-              <Play className="h-4 w-4 mr-2" />
-              Test Model
-            </Button>
-          </div>
+          {testStatus === 'idle' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Test Model</CardTitle>
+                <CardDescription>Enter parameters and run a test generation</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <InputPanel
+                  prompt={state.prompt}
+                  onPromptChange={(value) => {
+                    setStatePrompt(value);
+                    updateState({ prompt: value });
+                  }}
+                  model={currentModel as any}
+                  uploadedImages={uploadedImages}
+                  onImageSelect={handleImageSelect}
+                  onRemoveImage={removeImage}
+                  isUploading={isUploading}
+                  imageFieldInfo={imageFieldInfo}
+                  modelParameters={customParameters}
+                  onParameterChange={handleParameterChange}
+                  advancedOpen={state.advancedOpen}
+                  onAdvancedToggle={() => updateState({ advancedOpen: !state.advancedOpen })}
+                />
+                
+                <Button 
+                  onClick={handleStartTest} 
+                  disabled={!state.prompt.trim() || isGenerating}
+                  size="lg"
+                  className="w-full"
+                >
+                  {isGenerating ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : null}
+                  Start Test
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
-          {/* Parameters Inspector */}
-          {selectedModel.input_schema && (
-            <ParametersInspector
-              schema={selectedModel.input_schema as any}
-              parameters={customParameters}
-              onParameterChange={handleParameterChange}
-              modifiedParameters={getModifiedParameters()}
-              onPushParameterToSchema={handlePushParameterToSchema}
-              onPushAllToSchema={handlePushAllToSchema}
-              onToggleAdvanced={handleToggleAdvanced}
-            />
+          {testStatus !== 'idle' && (
+            <>
+              <TestStatusHeader
+                modelName={fullModel.model_name}
+                status={testStatus}
+                startTime={testStartTime}
+                endTime={testEndTime}
+              />
+
+              <ExecutionControlPanel
+                phase={testPhase}
+                onContinue={handleContinueTest}
+                onCancel={handleCancelTest}
+                onToggleEdit={() => setPayloadEditable(!payloadEditable)}
+                isEditing={payloadEditable}
+                disabled={isGenerating}
+              />
+
+              {testPhase === 'review' && preparedPayload && (
+                <PayloadReviewCard
+                  payload={preparedPayload}
+                  onPayloadChange={setPreparedPayload}
+                  editable={payloadEditable}
+                  onToggleEdit={() => setPayloadEditable(!payloadEditable)}
+                />
+              )}
+
+              {(testPhase === 'executing' || testPhase === 'complete' || testPhase === 'error') && (
+                <ExecutionFlowVisualizer
+                  currentStage={currentStage}
+                  error={testError}
+                  stageData={stageData}
+                />
+              )}
+
+              {(testStatus === 'completed' || testStatus === 'error') && (
+                <TestResultsCard
+                  status={testStatus}
+                  error={testError}
+                  outputs={state.generatedOutputs}
+                  contentType={fullModel.content_type}
+                  onRunNewTest={handleRunNewTest}
+                  onDownloadReport={handleDownloadReport}
+                  generationId={state.pollingGenerationId}
+                />
+              )}
+
+              {state.generatedOutputs.length > 0 && (
+                <div ref={outputSectionRef}>
+                  <OutputPanel
+                    generatedOutput={state.generatedOutput}
+                    generatedOutputs={state.generatedOutputs}
+                    selectedOutputIndex={state.selectedOutputIndex}
+                    onSelectOutput={(index) => updateState({ selectedOutputIndex: index })}
+                    contentType={fullModel.content_type}
+                    showLightbox={state.showLightbox}
+                    onToggleLightbox={() => updateState({ showLightbox: !state.showLightbox })}
+                    captionData={state.captionData}
+                    isGeneratingCaption={state.isGeneratingCaption}
+                    captionExpanded={state.captionExpanded}
+                    onToggleCaptionExpanded={() => updateState({ captionExpanded: !state.captionExpanded })}
+                    hashtagsExpanded={state.hashtagsExpanded}
+                    onToggleHashtagsExpanded={() => updateState({ hashtagsExpanded: !state.hashtagsExpanded })}
+                    generatingVideoIndex={state.generatingVideoIndex}
+                  />
+                </div>
+              )}
+            </>
           )}
         </>
       )}
 
-      {/* Push to Schema Confirmation Dialog */}
-      <AlertDialog open={confirmPushDialog.show} onOpenChange={(open) => !open && setConfirmPushDialog({ show: false })}>
+      <AlertDialog open={confirmPushDialog.open} onOpenChange={(open) => !open && setConfirmPushDialog({ open: false, paramKey: null, newValue: null })}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Update Schema Default Value?</AlertDialogTitle>
+            <AlertDialogTitle>Update Parameter Default</AlertDialogTitle>
             <AlertDialogDescription>
-              This will update the default value for <strong>{confirmPushDialog.paramName}</strong> in the model's schema.
-              <div className="mt-4 space-y-2">
-                <div className="flex gap-2 items-center">
-                  <span className="text-muted-foreground">Old:</span>
-                  <code className="px-2 py-1 bg-muted rounded text-sm">
-                    {JSON.stringify(confirmPushDialog.oldValue)}
-                  </code>
-                </div>
-                <div className="flex gap-2 items-center">
-                  <span className="text-muted-foreground">New:</span>
-                  <code className="px-2 py-1 bg-muted rounded text-sm">
-                    {JSON.stringify(confirmPushDialog.newValue)}
-                  </code>
-                </div>
-              </div>
+              Are you sure you want to update the default value for "{confirmPushDialog.paramKey}" to:
+              <pre className="mt-2 p-2 bg-muted rounded text-xs">
+                {JSON.stringify(confirmPushDialog.newValue, null, 2)}
+              </pre>
+              This will modify the model's schema in the database.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmPushToSchema}>
+              <ArrowUpToLine className="h-4 w-4 mr-2" />
               Update Schema
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Documentation Viewer Dialog */}
       <Dialog open={showDocumentation} onOpenChange={setShowDocumentation}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
           <DialogHeader>
             <DialogTitle>Model Documentation</DialogTitle>
-            <DialogDescription>
-              Generated from {documentationStatus?.analyzed_generations_count || 0} successful generations
-            </DialogDescription>
+            <DialogDescription>Generated documentation for {fullModel?.model_name}</DialogDescription>
           </DialogHeader>
-          {documentationStatus && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Model:</span>{" "}
-                  <span className="font-medium">{documentationStatus.model_name}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Provider:</span>{" "}
-                  <span className="font-medium">{documentationStatus.provider}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Last Analyzed:</span>{" "}
-                  <span className="font-medium">
-                    {new Date(documentationStatus.last_analyzed_at).toLocaleString()}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Version:</span>{" "}
-                  <span className="font-medium">{documentationStatus.documentation_version}</span>
-                </div>
-              </div>
-              <div className="border-t pt-4">
-                <pre className="text-xs bg-muted p-4 rounded overflow-x-auto">
-                  {JSON.stringify(documentationStatus.documentation_data, null, 2)}
-                </pre>
-              </div>
-            </div>
-          )}
+          <div className="space-y-4">
+            {documentationData ? (
+              <pre className="bg-muted p-4 rounded text-xs overflow-auto">
+                {JSON.stringify(documentationData, null, 2)}
+              </pre>
+            ) : (
+              <p className="text-muted-foreground">Loading documentation...</p>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

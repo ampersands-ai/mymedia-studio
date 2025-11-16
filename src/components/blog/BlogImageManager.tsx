@@ -27,13 +27,11 @@ export const BlogImageManager = ({ images, onChange, blogPostId }: BlogImageMana
   const [caption, setCaption] = useState("");
 
   const { data: models } = useModels();
-  const { generateImage, isGenerating } = useGeneration();
+  const { generate, isGenerating } = useGeneration();
 
   // Filter to only image generation models
-  const imageModels = models?.filter(m =>
-    m.category === 'image' &&
-    m.status === 'active'
-  );
+  const imageModels = models
+    ?.filter(m => m.content_type === 'image' && m.is_active);
 
   const handleGenerateImage = async (index?: number) => {
     if (!generatePrompt || !selectedModelId) {
@@ -48,10 +46,10 @@ export const BlogImageManager = ({ images, onChange, blogPostId }: BlogImageMana
 
       toast.info("Generating image...");
 
-      const result = await generateImage({
+      const result = await generate({
         model_id: selectedModelId,
         prompt: generatePrompt,
-        parameters: {}
+        custom_parameters: {}
       });
 
       if (result.output_url) {
@@ -235,7 +233,7 @@ export const BlogImageManager = ({ images, onChange, blogPostId }: BlogImageMana
                 <SelectContent>
                   {imageModels?.map((model) => (
                     <SelectItem key={model.id} value={model.id}>
-                      {model.display_name || model.model_id}
+                      {model.model_name || model.id}
                     </SelectItem>
                   ))}
                 </SelectContent>

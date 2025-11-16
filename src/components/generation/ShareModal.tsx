@@ -14,6 +14,7 @@ interface ShareModalProps {
   caption?: string;
   hashtags?: string[];
   generationId?: string;
+  onDownload?: () => Promise<void>;
 }
 
 export const ShareModal = ({
@@ -22,7 +23,8 @@ export const ShareModal = ({
   imageUrl,
   caption,
   hashtags,
-  generationId
+  generationId,
+  onDownload
 }: ShareModalProps) => {
   const handleCopyLink = async () => {
     // Determine content type upfront

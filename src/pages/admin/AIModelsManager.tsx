@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown, Copy, Filter, X } from "lucide-react";
+import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown, Copy, Filter, X, FileText, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DocumentationViewer } from "@/components/admin/DocumentationViewer";
 
 const CREATION_GROUPS = [
   { id: "image_editing", label: "Image Editing" },
@@ -53,9 +54,16 @@ export default function AIModelsManager() {
     status: "all",
     group: "all"
   });
+  const [docStatus, setDocStatus] = useState<Record<string, { exists: boolean; last_updated: string; generation_count: number }>>({});
+  const [generatingDocs, setGeneratingDocs] = useState<string | null>(null);
+  const [bulkGenerating, setBulkGenerating] = useState(false);
+  const [docsProgress, setDocsProgress] = useState(0);
+  const [selectedDocumentation, setSelectedDocumentation] = useState<any>(null);
+  const [docViewerOpen, setDocViewerOpen] = useState(false);
 
   useEffect(() => {
     fetchModels();
+    fetchDocumentationStatus();
   }, []);
 
   const fetchModels = async () => {
@@ -226,6 +234,115 @@ export default function AIModelsManager() {
     }
   };
 
+  const fetchDocumentationStatus = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('model_documentation')
+        .select('model_record_id, last_analyzed_at, analyzed_generations_count');
+
+      if (error) throw error;
+
+      const statusMap: Record<string, { exists: boolean; last_updated: string; generation_count: number }> = {};
+      data?.forEach((doc) => {
+        statusMap[doc.model_record_id] = {
+          exists: true,
+          last_updated: doc.last_analyzed_at,
+          generation_count: doc.analyzed_generations_count
+        };
+      });
+      setDocStatus(statusMap);
+    } catch (error) {
+      logger.error("Failed to fetch documentation status", error as Error);
+    }
+  };
+
+  const handleGenerateDocumentation = async (modelRecordId: string) => {
+    setGeneratingDocs(modelRecordId);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-model-docs', {
+        body: { model_record_id: modelRecordId, regenerate: true }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast.success(data.message);
+        await fetchDocumentationStatus();
+      } else {
+        toast.error(data.message || 'Failed to generate documentation');
+      }
+    } catch (error) {
+      logger.error("Failed to generate documentation", error as Error);
+      toast.error("Failed to generate documentation");
+    } finally {
+      setGeneratingDocs(null);
+    }
+  };
+
+  const handleViewDocumentation = async (modelRecordId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('model_documentation')
+        .select('*')
+        .eq('model_record_id', modelRecordId)
+        .single();
+
+      if (error) throw error;
+
+      setSelectedDocumentation(data);
+      setDocViewerOpen(true);
+    } catch (error) {
+      logger.error("Failed to fetch documentation", error as Error);
+      toast.error("Failed to load documentation");
+    }
+  };
+
+  const handleGenerateAllActiveDocs = async () => {
+    const activeModels = sortedModels.filter(m => m.is_active);
+    const kieModels = activeModels.filter(m => m.provider === 'kie-ai');
+    const runwareModels = activeModels.filter(m => m.provider === 'runware');
+    const prioritizedModels = [...kieModels, ...runwareModels];
+
+    setBulkGenerating(true);
+    setDocsProgress(0);
+
+    for (let i = 0; i < prioritizedModels.length; i += 3) {
+      const batch = prioritizedModels.slice(i, i + 3);
+      await Promise.all(
+        batch.map(async (model) => {
+          try {
+            await supabase.functions.invoke('analyze-model-docs', {
+              body: { model_record_id: model.record_id }
+            });
+          } catch (error) {
+            logger.error(`Failed to generate docs for ${model.model_name}`, error as Error);
+          }
+        })
+      );
+      setDocsProgress(i + batch.length);
+    }
+
+    await fetchDocumentationStatus();
+    setBulkGenerating(false);
+    setDocsProgress(0);
+    toast.success(`Generated documentation for ${prioritizedModels.length} models`);
+  };
+
+  const getDocStatusBadge = (modelRecordId: string) => {
+    const status = docStatus[modelRecordId];
+    if (!status?.exists) return null;
+
+    const daysSinceUpdate = (Date.now() - new Date(status.last_updated).getTime()) / (1000 * 60 * 60 * 24);
+    
+    if (daysSinceUpdate < 7) {
+      return <Badge variant="outline" className="text-green-600 border-green-600">📄 Fresh</Badge>;
+    } else if (daysSinceUpdate < 30) {
+      return <Badge variant="outline" className="text-yellow-600 border-yellow-600">📄 Stale</Badge>;
+    } else {
+      return <Badge variant="outline" className="text-red-600 border-red-600">📄 Old</Badge>;
+    }
+  };
+
   // Filter models
   const filteredModels = models.filter((model) => {
     // Search filter (model ID, name, provider)
@@ -385,6 +502,25 @@ export default function AIModelsManager() {
               >
                 <PowerOff className="h-4 w-4 mr-2" />
                 Disable All
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleGenerateAllActiveDocs}
+                disabled={bulkGenerating}
+                className="border-2"
+              >
+                {bulkGenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generating {docsProgress}/{sortedModels.filter(m => m.is_active).length}
+                  </>
+                ) : (
+                  <>
+                    <FileText className="h-4 w-4 mr-2" />
+                    Generate All Docs
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -568,6 +704,7 @@ export default function AIModelsManager() {
                   <TableHead className="font-bold">Base Cost</TableHead>
                   <TableHead className="font-bold">Order</TableHead>
                   <TableHead className="font-bold">Status</TableHead>
+                  <TableHead className="font-bold text-center">Documentation</TableHead>
                   <TableHead className="font-bold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -627,6 +764,43 @@ export default function AIModelsManager() {
                       )}
                     </TableCell>
                     <TableCell>
+                      <div className="flex flex-col gap-1 items-center">
+                        {docStatus[model.record_id]?.exists ? (
+                          <>
+                            {getDocStatusBadge(model.record_id)}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleViewDocumentation(model.record_id)}
+                              className="h-7 text-xs"
+                            >
+                              View
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleGenerateDocumentation(model.record_id)}
+                            disabled={generatingDocs === model.record_id}
+                            className="h-7 text-xs"
+                          >
+                            {generatingDocs === model.record_id ? (
+                              <>
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
+                                <FileText className="h-3 w-3 mr-1" />
+                                Generate
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       <div className="flex gap-2">
                         <Button 
                           variant="outline" 
@@ -678,6 +852,14 @@ export default function AIModelsManager() {
         onOpenChange={setDialogOpen}
         model={editingModel}
         onSuccess={handleSuccess}
+      />
+
+      <DocumentationViewer
+        documentation={selectedDocumentation}
+        open={docViewerOpen}
+        onOpenChange={setDocViewerOpen}
+        onRegenerate={handleGenerateDocumentation}
+        isRegenerating={generatingDocs === selectedDocumentation?.model_record_id}
       />
     </div>
   );

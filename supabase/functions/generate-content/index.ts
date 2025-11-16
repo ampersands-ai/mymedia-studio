@@ -264,11 +264,18 @@ Deno.serve(async (req) => {
       metadata: { model_id: model.id, provider: model.provider }
     });
 
-    // Check if model has prompt field in schema
-    const hasPromptField = Boolean(model.input_schema?.properties?.prompt);
+    // Check if model has prompt field in schema (handle both 'prompt' and 'positivePrompt')
+    const hasPromptField = Boolean(
+      model.input_schema?.properties?.prompt || 
+      model.input_schema?.properties?.positivePrompt
+    );
+    const promptFieldName = model.input_schema?.properties?.prompt ? 'prompt' : 
+                            model.input_schema?.properties?.positivePrompt ? 'positivePrompt' : 
+                            null;
     const promptRequired = hasPromptField && 
       Array.isArray(model.input_schema?.required) && 
-      model.input_schema.required.includes('prompt');
+      (model.input_schema.required.includes('prompt') || 
+       model.input_schema.required.includes('positivePrompt'));
 
     // Phase 4: Check generation rate limits (skip for test mode)
     if (!isTestMode) {
@@ -842,9 +849,14 @@ Deno.serve(async (req) => {
           generationId: createdGeneration.id
         };
         
-        // Only include prompt if model has prompt field
+        // Include prompt if model has prompt field
         if (hasPromptField && finalPrompt) {
-          providerRequest.prompt = finalPrompt;
+          // For Runware models that use 'positivePrompt' instead of 'prompt'
+          if (promptFieldName === 'positivePrompt') {
+            providerRequest.parameters.positivePrompt = finalPrompt;
+          } else {
+            providerRequest.prompt = finalPrompt;
+          }
         }
 
         logger.debug('Provider request prepared', {

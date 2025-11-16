@@ -30,7 +30,7 @@ import {
 import { DocumentationViewer } from "@/components/admin/DocumentationViewer";
 
 const CREATION_GROUPS = [
-  { id: "image_editing", label: "Image Editing/Image to Image" },
+  { id: "image_editing", label: "Image Editing" },
   { id: "prompt_to_image", label: "Text to Image" },
   { id: "prompt_to_video", label: "Text to Video" },
   { id: "image_to_video", label: "Image to Video" },

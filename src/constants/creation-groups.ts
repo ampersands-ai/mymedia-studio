@@ -3,7 +3,8 @@ import { Palette, ImagePlus, Video, Film, Music } from "lucide-react";
 export const CREATION_GROUPS = [
   { 
     id: "image_editing" as const, 
-    label: "Image Editing/Image to Image", 
+    label: "Image Editing", 
+    subtitle: "(Image to Image)",
     Icon: Palette, 
     description: "Modify existing images" 
   },

@@ -200,7 +200,7 @@ export const AdvancedAnalytics = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {tokenData.reduce((sum, d) => sum + d.tokens, 0).toLocaleString()}
+              {(tokenData || []).reduce((sum, d) => sum + d.tokens, 0).toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">Last 30 days</p>
           </CardContent>
@@ -225,7 +225,7 @@ export const AdvancedAnalytics = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
-                <AreaChart data={activityData}>
+                <AreaChart data={activityData || []}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis />
@@ -250,7 +250,7 @@ export const AdvancedAnalytics = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={templateData}>
+                <BarChart data={templateData || []}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
@@ -273,7 +273,7 @@ export const AdvancedAnalytics = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={tokenData}>
+                <BarChart data={tokenData || []}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="model" />
                   <YAxis />
@@ -296,7 +296,7 @@ export const AdvancedAnalytics = () => {
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
-                      data={tokenData.map(d => ({ name: d.model, value: d.success }))}
+                      data={(tokenData || []).map(d => ({ name: d.model, value: d.success }))}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
@@ -305,7 +305,7 @@ export const AdvancedAnalytics = () => {
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {tokenData.map((entry, index) => (
+                      {(tokenData || []).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
@@ -321,7 +321,7 @@ export const AdvancedAnalytics = () => {
                 <CardDescription>Efficiency metrics by model</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {tokenData.map((d, index) => (
+                {(tokenData || []).map((d, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <span className="text-sm font-medium">{d.model}</span>
                     <span className="text-sm text-muted-foreground">

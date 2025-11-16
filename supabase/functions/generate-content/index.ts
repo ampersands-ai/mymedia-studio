@@ -494,7 +494,22 @@ Deno.serve(async (req) => {
       }
     });
 
-    // Safety fallback for ElevenLabs models: map prompt to text if text is missing
+    // Infer prompt from normalized parameters if still missing
+    if (!prompt && typeof parameters.prompt === 'string' && parameters.prompt.trim().length > 0) {
+      prompt = parameters.prompt as string;
+      logger.debug('Inferred prompt from parameters.prompt', {
+        userId: user?.id,
+        metadata: { prompt_length: prompt.length }
+      });
+    }
+    if (!prompt && typeof parameters.positivePrompt === 'string' && parameters.positivePrompt.trim().length > 0) {
+      prompt = parameters.positivePrompt as string;
+      logger.debug('Inferred prompt from parameters.positivePrompt', {
+        userId: user?.id,
+        metadata: { prompt_length: prompt.length }
+      });
+    }
+
     if (
       (model.id === 'elevenlabs/text-to-speech-multilingual-v2' ||
        model.id === 'elevenlabs/text-to-speech-turbo-2-5') &&

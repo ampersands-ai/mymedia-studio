@@ -537,8 +537,35 @@ const ComprehensiveModelTestPage = () => {
           content_type: currentModel?.content_type || 'Unknown',
           payload: {
             model: currentModel?.id,
-            prompt: promptValue,
-            parameters: state.modelParameters,
+            ...(() => {
+              // Filter parameters to only include schema-defined properties
+              if (currentModel?.input_schema?.properties) {
+                const allowedKeys = Object.keys(currentModel.input_schema.properties);
+                const filtered: Record<string, any> = {};
+                
+                // Only include prompt if it's in the schema
+                const promptKey = Object.keys(currentModel.input_schema.properties).find(
+                  key => ['prompt', 'positivePrompt', 'positive_prompt'].includes(key)
+                );
+                if (promptKey && promptValue) {
+                  filtered[promptKey] = promptValue;
+                }
+                
+                // Include other schema-allowed parameters
+                for (const key of allowedKeys) {
+                  if (state.modelParameters[key] !== undefined) {
+                    filtered[key] = state.modelParameters[key];
+                  }
+                }
+                
+                return filtered;
+              }
+              // Fallback if no schema
+              return {
+                prompt: promptValue,
+                parameters: state.modelParameters
+              };
+            })(),
             images: uploadedImages.length,
           },
           status: `Request prepared for ${currentModel?.provider || 'provider'} with ${parameterCount} parameters`,

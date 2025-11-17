@@ -59,7 +59,7 @@ export const CommonSchemas = {
 export const GenerateContentSchema = z.object({
   model_id: CommonSchemas.modelId,
   model_record_id: CommonSchemas.uuid,
-  prompt: CommonSchemas.promptText,
+  prompt: CommonSchemas.promptText.optional(), // Optional - validated against schema later
   custom_parameters: CommonSchemas.customParameters,
   template_id: CommonSchemas.uuid.optional(),
   enhance_prompt: z.boolean().default(false),

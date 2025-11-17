@@ -943,20 +943,63 @@ Deno.serve(async (req) => {
           metadata: { parameter_keys: Object.keys(validatedParameters) }
         });
         
+        // ========================================
+        // STRICT SCHEMA ENFORCEMENT
+        // Only allow parameters explicitly defined in input_schema
+        // ========================================
+        const schemaProperties = model.input_schema?.properties || {};
+        const allowedPropertyNames = Object.keys(schemaProperties);
+        
+        // Include prompt ONLY in parameters if model has prompt field
+        const parametersWithPrompt = { ...validatedParameters };
+        if (hasPromptField && finalPrompt && promptFieldName) {
+          parametersWithPrompt[promptFieldName] = finalPrompt;
+        }
+        
+        // Filter to only allowed parameters
+        const allowedParams: Record<string, any> = {};
+        const unknownKeys: string[] = [];
+        
+        for (const [key, value] of Object.entries(parametersWithPrompt)) {
+          if (allowedPropertyNames.includes(key)) {
+            allowedParams[key] = value;
+          } else {
+            unknownKeys.push(key);
+          }
+        }
+        
+        // Reject request if unknown parameters are present
+        if (unknownKeys.length > 0) {
+          logger.error('Unknown parameters detected', undefined, {
+            metadata: {
+              unknownKeys,
+              allowedPropertyNames,
+              receivedKeys: Object.keys(parametersWithPrompt)
+            }
+          });
+          
+          throw new Error(
+            `Unknown parameters not defined in model schema: ${unknownKeys.join(', ')}. ` +
+            `Allowed parameters: ${allowedPropertyNames.join(', ')}`
+          );
+        }
+
+        logger.info('Schema enforcement passed', {
+          metadata: {
+            allowedParams: Object.keys(allowedParams),
+            schemaProperties: allowedPropertyNames
+          }
+        });
+
       providerRequest = {
         model: model.id,
-        parameters: validatedParameters,
+        parameters: allowedParams, // Only schema-allowed parameters
         input_schema: model.input_schema,
         api_endpoint: model.api_endpoint,
         payload_structure: model.payload_structure || 'wrapper',
         userId: user.id,
         generationId: createdGeneration.id
       };
-        
-        // Include prompt ONLY in parameters if model has prompt field
-        if (hasPromptField && finalPrompt && promptFieldName) {
-          providerRequest.parameters[promptFieldName] = finalPrompt;
-        }
         
         // Runware video default: uppercase MP4
         if (model.provider === 'runware' && model.content_type === 'video' && !providerRequest.parameters.outputFormat) {

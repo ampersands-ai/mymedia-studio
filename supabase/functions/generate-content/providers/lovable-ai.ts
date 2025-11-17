@@ -21,8 +21,11 @@ export async function callLovableAI(request: ProviderRequest): Promise<ProviderR
     ? MODEL_MAP[request.model]
     : (request.model || "google/gemini-2.5-flash-image");
 
-  // Extract prompt from parameters (should be in prompt, positivePrompt, or positive_prompt)
-  const promptField = request.parameters.prompt || request.parameters.positivePrompt || request.parameters.positive_prompt || '';
+  // Extract prompt from parameters ONLY (never from top-level)
+  const promptField = request.parameters.prompt || 
+                     request.parameters.positivePrompt || 
+                     request.parameters.positive_prompt || 
+                     '';
   
   if (!promptField) {
     throw new Error('No prompt provided in parameters');

@@ -148,12 +148,24 @@ const ComprehensiveModelTestPage = () => {
         step11_outputs_displayed: { outputs, parentId }
       }));
     },
-    onError: () => {
+    onError: (error: string) => {
       updateState({
         localGenerating: false,
         generationStartTime: null,
         pollingGenerationId: null,
       });
+      
+      setExecutionError(error);
+      setExecutionStage('error');
+      setExecutionStageData(prev => ({
+        ...prev,
+        error: {
+          message: error,
+          code: 'GENERATION_FAILED',
+          timestamp: Date.now(),
+          details: 'The generation process failed. Check logs for more details.',
+        }
+      }));
     },
   });
 

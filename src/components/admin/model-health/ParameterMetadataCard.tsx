@@ -88,6 +88,15 @@ export const ParameterMetadataCard = ({
     toast.success(`Updated enum values for ${name}`);
   };
 
+  const handleRendererChange = (renderer: string) => {
+    const updatedSchema = { 
+      ...schema, 
+      renderer: renderer === 'default' ? null : renderer as JsonSchemaProperty['renderer']
+    };
+    onPushToSchema(name, updatedSchema);
+    toast.success(`Updated renderer for ${name}`);
+  };
+
   const renderInput = () => {
     if (schema.type === 'boolean') {
       return (
@@ -155,6 +164,16 @@ export const ParameterMetadataCard = ({
               {isHidden && <Badge variant="secondary" className="text-xs">Hidden</Badge>}
               {isAdvanced && <Badge className="text-xs bg-yellow-500">Advanced</Badge>}
               {isImageField && <Badge variant="outline" className="text-xs">Image Field</Badge>}
+              {schema.renderer && (
+                <Badge variant="secondary" className="text-xs">
+                  {schema.renderer === 'prompt' && '✍️ Prompt'}
+                  {schema.renderer === 'image' && '🖼️ Image'}
+                  {schema.renderer === 'voice' && '🎤 Voice'}
+                  {schema.renderer === 'duration' && '⏱️ Duration'}
+                  {schema.renderer === 'increment' && '➕ Increment'}
+                  {schema.renderer === 'output-format' && '📦 Format'}
+                </Badge>
+              )}
             </div>
             
             {/* Editable Title */}
@@ -345,6 +364,31 @@ export const ParameterMetadataCard = ({
               />
             </div>
           </div>
+        </div>
+
+        {/* Renderer Selection */}
+        <div className="space-y-2 pt-3 border-t">
+          <Label className="text-xs text-muted-foreground font-semibold">Specialized Renderer</Label>
+          <Select
+            value={schema.renderer || 'default'}
+            onValueChange={handleRendererChange}
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder="Default input" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">🔲 Default (Generic Input)</SelectItem>
+              <SelectItem value="prompt">✍️ Prompt Renderer</SelectItem>
+              <SelectItem value="image">🖼️ Image Uploader</SelectItem>
+              <SelectItem value="voice">🎤 Voice Selector</SelectItem>
+              <SelectItem value="duration">⏱️ Duration Input</SelectItem>
+              <SelectItem value="increment">➕ Increment Toggle</SelectItem>
+              <SelectItem value="output-format">📦 Output Format</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Select how this parameter should be rendered in the input form
+          </p>
         </div>
 
         {/* Push to Schema button below flags */}

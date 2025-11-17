@@ -38,6 +38,9 @@ export interface JsonSchemaProperty {
   showToUser?: boolean;
   isAdvanced?: boolean;
   examples?: unknown[];
+  
+  // Explicit renderer assignment (replaces heuristic detection)
+  renderer?: 'prompt' | 'image' | 'voice' | 'duration' | 'increment' | 'output-format' | null;
 }
 
 /**

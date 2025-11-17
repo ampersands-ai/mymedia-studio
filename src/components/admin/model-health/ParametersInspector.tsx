@@ -2,6 +2,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Download, Upload, RotateCcw } from "lucide-react";
 import { ParameterMetadataCard } from "./ParameterMetadataCard";
 import type { JsonSchema } from "@/types/schema";
@@ -180,7 +182,7 @@ export const ParametersInspector = ({
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="all">
               All ({allParams.length})
             </TabsTrigger>
@@ -192,6 +194,9 @@ export const ParametersInspector = ({
             </TabsTrigger>
             <TabsTrigger value="backend">
               Backend Only ({backendOnly.length})
+            </TabsTrigger>
+            <TabsTrigger value="renderers">
+              Renderers
             </TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="mt-4">
@@ -205,6 +210,114 @@ export const ParametersInspector = ({
           </TabsContent>
           <TabsContent value="backend" className="mt-4">
             {renderParameterList(backendOnly)}
+          </TabsContent>
+          <TabsContent value="renderers" className="mt-4">
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold">Renderer Configuration</h3>
+                <p className="text-sm text-muted-foreground">
+                  Control which fields use specialized renderers in the UI. Disabled renderers will fall back to generic schema inputs.
+                </p>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="prompt-renderer" className="text-sm font-medium">
+                      Prompt Renderer
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Use specialized prompt input with character count and "Surprise Me"
+                    </p>
+                  </div>
+                  <Switch
+                    id="prompt-renderer"
+                    checked={schema.usePromptRenderer ?? true}
+                    onCheckedChange={onTogglePromptRenderer}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="image-renderer" className="text-sm font-medium">
+                      Image Renderer
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Use specialized image upload UI with preview and camera support
+                    </p>
+                  </div>
+                  <Switch
+                    id="image-renderer"
+                    checked={schema.useImageRenderer ?? true}
+                    onCheckedChange={onToggleImageRenderer}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="voice-renderer" className="text-sm font-medium">
+                      Voice Renderer
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Use specialized voice selector for ElevenLabs models
+                    </p>
+                  </div>
+                  <Switch
+                    id="voice-renderer"
+                    checked={schema.useVoiceRenderer ?? false}
+                    onCheckedChange={onToggleVoiceRenderer}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="duration-renderer" className="text-sm font-medium">
+                      Duration Renderer
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Use specialized duration slider for audio/video length
+                    </p>
+                  </div>
+                  <Switch
+                    id="duration-renderer"
+                    checked={schema.useDurationRenderer ?? false}
+                    onCheckedChange={onToggleDurationRenderer}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="increment-renderer" className="text-sm font-medium">
+                      Increment Renderer
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Use specialized toggle for "Continue from previous" functionality
+                    </p>
+                  </div>
+                  <Switch
+                    id="increment-renderer"
+                    checked={schema.useIncrementRenderer ?? true}
+                    onCheckedChange={onToggleIncrementRenderer}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="output-format-renderer" className="text-sm font-medium">
+                      Output Format Renderer
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Use specialized selector for output format options
+                    </p>
+                  </div>
+                  <Switch
+                    id="output-format-renderer"
+                    checked={schema.useOutputFormatRenderer ?? false}
+                    onCheckedChange={onToggleOutputFormatRenderer}
+                  />
+                </div>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </CardContent>

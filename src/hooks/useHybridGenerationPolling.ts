@@ -119,7 +119,9 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
 
         optionsRef.current.onComplete(outputs, parentData.id);
       } else if (parentData.status === 'failed' || parentData.status === 'error') {
-        const errorMsg = (parentData.provider_response as any)?.error || `Generation ${parentData.status}`;
+        const pr: any = parentData.provider_response || {};
+        const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || (pr?.error && pr?.error?.message);
+        const errorMsg = detailed ? String(detailed) : `Generation ${parentData.status}`;
         optionsRef.current.onError?.(errorMsg);
       }
 

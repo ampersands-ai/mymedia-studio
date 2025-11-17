@@ -166,13 +166,65 @@ export const ExecutionFlowVisualizer = ({ currentStage, error, stageData = {} }:
 
   const renderStageData = (stageId: string) => {
     const data = stageData[stageId as keyof StageData];
-    if (!data || Object.keys(data).length === 0) return null;
+    if (!data || Object.keys(data).length === 0) {
+      return (
+        <div className="mt-2 text-xs text-muted-foreground italic">
+          No detailed data available for this stage
+        </div>
+      );
+    }
 
     return (
-      <div className="mt-2 p-3 bg-muted/50 rounded-md space-y-2">
-        <pre className="text-xs overflow-auto max-h-96 whitespace-pre-wrap break-words font-mono">
-          {JSON.stringify(data, null, 2)}
-        </pre>
+      <div className="mt-3 space-y-2 text-xs">
+        {Object.entries(data).map(([key, value]) => {
+          // Format key to be more readable
+          const formattedKey = key
+            .split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+
+          // Handle different value types
+          let displayValue: React.ReactNode;
+          if (typeof value === 'object' && value !== null) {
+            // Pretty print objects/arrays
+            displayValue = (
+              <pre className="mt-1 p-2 bg-muted/30 rounded text-[10px] overflow-x-auto">
+                {JSON.stringify(value, null, 2)}
+              </pre>
+            );
+          } else if (typeof value === 'boolean') {
+            displayValue = (
+              <span className={cn(
+                "font-semibold",
+                value ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+              )}>
+                {value ? "✓ Yes" : "✗ No"}
+              </span>
+            );
+          } else if (key === 'status' || key === 'details' || key === 'note') {
+            // Highlight status/details/notes with better formatting
+            displayValue = (
+              <div className="mt-1 text-foreground/90 font-medium whitespace-pre-wrap">
+                {String(value)}
+              </div>
+            );
+          } else {
+            displayValue = (
+              <span className="text-foreground/80 font-mono">
+                {String(value)}
+              </span>
+            );
+          }
+
+          return (
+            <div key={key} className="border-l-2 border-border/30 pl-3 py-1">
+              <div className="text-muted-foreground/80 font-medium mb-0.5">
+                {formattedKey}:
+              </div>
+              {displayValue}
+            </div>
+          );
+        })}
       </div>
     );
   };

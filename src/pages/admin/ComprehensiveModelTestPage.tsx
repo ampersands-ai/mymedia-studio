@@ -800,7 +800,6 @@ const ComprehensiveModelTestPage = () => {
         modelSchema={currentModel?.input_schema as ModelJsonSchema || null}
         modelParameters={state.modelParameters}
         onModelParametersChange={handleModelParametersChange}
-        excludeFields={[]}
         modelId={currentModel?.id || ''}
         provider={currentModel?.provider || ''}
         advancedOptionsRef={advancedOptionsRef}

@@ -652,18 +652,6 @@ const CustomCreation = () => {
             estimatedTokens={estimatedTokens}
             modelId={state.selectedModel || ''}
             provider={currentModel?.provider || ''}
-            excludeFields={[
-              // Only exclude fields that are rendered specially
-              'prompt',
-              'positivePrompt',
-              'positive_prompt',
-              imageFieldInfo.fieldName || '',
-              textKey || '',
-              voiceKey || '',
-              hasDuration ? 'duration' : '',
-              hasIncrement ? 'increment' : '',
-              hasIncrement ? 'incrementBySeconds' : '',
-            ].filter(Boolean) as string[]}
             onReset={() => {
               handleCancelGeneration(state.pollingGenerationId);
               stopPolling();

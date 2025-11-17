@@ -118,8 +118,8 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
         }
 
         optionsRef.current.onComplete(outputs, parentData.id);
-      } else if (parentData.status === 'failed') {
-        optionsRef.current.onError?.('Generation failed');
+      } else if (parentData.status === 'failed' || parentData.status === 'error') {
+        optionsRef.current.onError?.(`Generation ${parentData.status}`);
       }
 
       clearAllTimers();
@@ -156,7 +156,7 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
 
         if (error) throw error;
 
-        if (data?.status === 'completed' || data?.status === 'failed') {
+        if (data?.status === 'completed' || data?.status === 'failed' || data?.status === 'error') {
           await processCompletion(generationId);
           return;
         }
@@ -201,7 +201,7 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
           } as any);
 
           if (payload.new.id === generationId && 
-              (payload.new.status === 'completed' || payload.new.status === 'failed')) {
+              (payload.new.status === 'completed' || payload.new.status === 'failed' || payload.new.status === 'error')) {
             processCompletion(payload.new.id);
           }
         }

@@ -943,14 +943,15 @@ Deno.serve(async (req) => {
           metadata: { parameter_keys: Object.keys(validatedParameters) }
         });
         
-        providerRequest = {
-          model: model.id,
-          parameters: validatedParameters,
-          api_endpoint: model.api_endpoint,
-          payload_structure: model.payload_structure || 'wrapper',
-          userId: user.id,
-          generationId: createdGeneration.id
-        };
+      providerRequest = {
+        model: model.id,
+        parameters: validatedParameters,
+        input_schema: model.input_schema,
+        api_endpoint: model.api_endpoint,
+        payload_structure: model.payload_structure || 'wrapper',
+        userId: user.id,
+        generationId: createdGeneration.id
+      };
         
         // Include prompt if model has prompt field (normalize to provider's expected format)
         if (hasPromptField && finalPrompt) {

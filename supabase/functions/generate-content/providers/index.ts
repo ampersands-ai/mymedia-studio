@@ -9,6 +9,7 @@ export interface ProviderRequest {
   api_endpoint?: string;
   payload_structure?: string;
   uploadEndpoint?: string; // For video direct upload (presigned URL)
+  input_schema?: any; // Model's JSON schema for dynamic validation
 }
 
 export interface ProviderResponse {

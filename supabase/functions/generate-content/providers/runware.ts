@@ -100,19 +100,7 @@ async function pollForVideoResult(
   throw new Error("Video generation timed out after 60 seconds");
 }
 
-// Model-specific parameter restrictions
-const MODEL_RESTRICTIONS: Record<string, string[]> = {
-  'runware:110': ['outputFormat'], // Background removal only
-};
-
-function isParameterSupported(model: string, paramName: string): boolean {
-  for (const [modelPrefix, unsupportedParams] of Object.entries(MODEL_RESTRICTIONS)) {
-    if (model.startsWith(modelPrefix) && unsupportedParams.includes(paramName)) {
-      return false;
-    }
-  }
-  return true;
-}
+// Removed hardcoded MODEL_RESTRICTIONS - now using dynamic schema-based validation
 
 export async function callRunware(
   request: ProviderRequest
@@ -139,7 +127,11 @@ export async function callRunware(
 
   console.log('[Runware] Task type determined', { taskType, isVideo, provider: 'runware' });
 
-  // Build task payload with model-specific parameter filtering
+  // Get schema properties (what fields this model actually accepts)
+  const schemaProperties = request.input_schema?.properties || {};
+  const requiredFields = request.input_schema?.required || [];
+
+  // Build task payload dynamically from schema
   const params = request.parameters || {};
   const taskPayload: any = {
     taskType,
@@ -147,29 +139,44 @@ export async function callRunware(
     model: cleanModel,
   };
 
-  // Add parameters with model-specific filtering
+  // ONLY add parameters that exist in the schema
   for (const [key, value] of Object.entries(params)) {
-    if (isParameterSupported(cleanModel, key)) {
+    if (schemaProperties[key]) {
       taskPayload[key] = value;
     }
   }
 
-  // Compute effective prompt with comprehensive fallbacks
-  const effectivePrompt = (
-    request.prompt?.trim() || 
-    params.positivePrompt?.trim() || 
-    params.prompt?.trim() || 
-    ''
-  );
+  // Handle prompt fields dynamically (prompt, positivePrompt, positive_prompt)
+  const promptAliases = ['prompt', 'positivePrompt', 'positive_prompt'];
+  const promptField = promptAliases.find(alias => schemaProperties[alias]);
 
-  // Strict validation
-  if (!effectivePrompt || effectivePrompt.length < 2) {
-    console.error('[Runware] Missing prompt', { hasRequestPrompt: !!request.prompt, hasParamsPrompt: !!params.positivePrompt });
-    throw new Error('Missing required parameter: positivePrompt');
+  if (promptField) {
+    // Check if this model's schema requires a prompt
+    const isPromptRequired = requiredFields.includes(promptField);
+    
+    // Get effective prompt value
+    const effectivePrompt = (
+      request.prompt?.trim() || 
+      params[promptField]?.trim() || 
+      ''
+    );
+    
+    // Validate ONLY if schema says it's required
+    if (isPromptRequired && (!effectivePrompt || effectivePrompt.length < 2)) {
+      console.error('[Runware] Missing required prompt', { 
+        promptField, 
+        isRequired: isPromptRequired,
+        hasRequestPrompt: !!request.prompt,
+        hasParamsPrompt: !!params[promptField]
+      });
+      throw new Error(`Missing required parameter: ${promptField}`);
+    }
+    
+    // Set prompt if we have a value
+    if (effectivePrompt) {
+      taskPayload[promptField] = effectivePrompt;
+    }
   }
-
-  // Ensure positivePrompt is set
-  taskPayload.positivePrompt = effectivePrompt;
   
   // Ensure duration is always an integer for video tasks
   if (isVideo && taskPayload.duration !== undefined) {

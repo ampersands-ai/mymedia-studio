@@ -11,6 +11,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { useModels } from "@/hooks/useModels";
 import { useAllModels } from "@/hooks/useAllModels";
 import { ParametersInspector } from "@/components/admin/model-health/ParametersInspector";
+import { ExecutionFlowVisualizer } from "@/components/admin/model-health/ExecutionFlowVisualizer";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,6 +56,12 @@ const ComprehensiveModelTestPage = () => {
   const [isGeneratingDocs, setIsGeneratingDocs] = useState(false);
   const [docDialogOpen, setDocDialogOpen] = useState(false);
   const [originalSchema, setOriginalSchema] = useState<any>(null);
+  
+  // Execution flow tracking for ExecutionFlowVisualizer
+  const [executionStage, setExecutionStage] = useState<string>('idle');
+  const [executionStageData, setExecutionStageData] = useState<Record<string, any>>({});
+  const [executionError, setExecutionError] = useState<string | null>(null);
+  
   const queryClient = useQueryClient();
 
   // Models and user data - use ALL models for comprehensive testing
@@ -77,6 +84,20 @@ const ComprehensiveModelTestPage = () => {
       setOriginalSchema(JSON.parse(JSON.stringify(currentModel.input_schema)));
     }
   }, [currentModel?.record_id]);
+
+  // Monitor generation completion for execution flow
+  useEffect(() => {
+    if (executionStage === 'generation_polling' && state.generatedOutputs.length > 0) {
+      setExecutionStage('generation_complete');
+      setExecutionStageData(prev => ({
+        ...prev,
+        generation_complete: {
+          outputs_count: state.generatedOutputs.length,
+          storage_paths: state.generatedOutputs.map(o => o.storage_path),
+        }
+      }));
+    }
+  }, [executionStage, state.generatedOutputs]);
 
   // Initialize model parameters with schema defaults when model changes
   useEffect(() => {
@@ -421,7 +442,63 @@ const ComprehensiveModelTestPage = () => {
 
   const handleGenerateWithInspection = useCallback(async () => {
     if (inspectionMode === 'off' || inspectionMode === 'reviewing') {
-      await handleGenerate();
+      // Reset execution state
+      setExecutionStage('input_validation');
+      setExecutionStageData({});
+      setExecutionError(null);
+
+      try {
+        // Stage 1: Input Validation
+        setExecutionStageData(prev => ({
+          ...prev,
+          input_validation: {
+            prompt: state.prompt,
+            model: currentModel?.name,
+            parameters: state.modelParameters,
+            uploaded_images: uploadedImages.length,
+          }
+        }));
+        
+        // Stage 2: Credit Check
+        setExecutionStage('credit_check');
+        const creditBalance = userTokens?.tokens_remaining || 0;
+        setExecutionStageData(prev => ({
+          ...prev,
+          credit_check: {
+            estimated_cost: estimatedTokens,
+            current_balance: creditBalance,
+            sufficient: estimatedTokens <= creditBalance,
+          }
+        }));
+
+        // Stage 3: API Request Prepared
+        setExecutionStage('api_request_prepared');
+        setExecutionStageData(prev => ({
+          ...prev,
+          api_request_prepared: {
+            model_id: currentModel?.record_id,
+            parameters_count: Object.keys(state.modelParameters).length,
+          }
+        }));
+
+        // Stage 4: API Request Sent
+        setExecutionStage('api_request_sent');
+        await handleGenerate();
+
+        // Stage 5: Polling
+        setExecutionStage('generation_polling');
+        
+      } catch (error: any) {
+        setExecutionError(error.message || 'Generation failed');
+        setExecutionStage('error');
+        setExecutionStageData(prev => ({
+          ...prev,
+          error: {
+            message: error.message,
+            code: error.code,
+          }
+        }));
+      }
       return;
     }
 
@@ -442,7 +519,7 @@ const ComprehensiveModelTestPage = () => {
     
     setInspectionData(snapshot);
     setInspectionMode('reviewing');
-  }, [inspectionMode, handleGenerate, state, uploadedImages, currentModel, preparePayloadSnapshot]);
+  }, [inspectionMode, handleGenerate, state, uploadedImages, currentModel, preparePayloadSnapshot, estimatedTokens, userTokens]);
 
   // Schema editing handlers
   const handlePushParameterToSchema = useCallback(async (paramName: string, newValueOrSchema: any) => {
@@ -1002,6 +1079,15 @@ const ComprehensiveModelTestPage = () => {
           inspectionData={inspectionData}
           onContinue={handleContinueTest}
           onCancel={handleCancelTest}
+        />
+      )}
+
+      {/* Execution Flow Visualizer */}
+      {executionStage !== 'idle' && (
+        <ExecutionFlowVisualizer
+          currentStage={executionStage}
+          error={executionError}
+          stageData={executionStageData}
         />
       )}
 

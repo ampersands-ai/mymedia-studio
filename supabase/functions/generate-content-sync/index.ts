@@ -425,6 +425,7 @@ Deno.serve(async (req) => {
         model: model.id,
         prompt: effectivePrompt,
         parameters: parameters,
+        input_schema: model.input_schema,
       };
 
       logger.info('Calling Runware provider', {

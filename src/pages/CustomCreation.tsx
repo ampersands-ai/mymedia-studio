@@ -82,7 +82,7 @@ const CustomCreation = () => {
   const imageFieldInfo = schemaHelpers.getImageFieldInfo(currentModel as any);
 
   // Generation polling
-  const { startPolling, stopPolling, isPolling } = useGenerationPolling({
+  const { startPolling, stopPolling, isPolling, connectionTier, realtimeConnected } = useGenerationPolling({
     onComplete: (outputs, parentId) => {
       console.log('✅ Polling onComplete called', { outputCount: outputs.length, parentId });
       updateState({
@@ -762,6 +762,8 @@ const CustomCreation = () => {
               templateAfterImage={state.templateAfterImage}
               modelProvider={currentModel?.provider}
               modelName={currentModel?.model_name}
+              connectionTier={connectionTier}
+              realtimeConnected={realtimeConnected}
             />
           </div>
         </div>

@@ -117,9 +117,12 @@ export const ExecutionFlowVisualizer = ({ currentStage, error, stageData = {} }:
 
   // Update stage statuses based on current stage and temporal ordering
   const currentStageIndex = stages.findIndex(s => s.id === currentStage);
-  
+
   stages.forEach((stage, index) => {
-    if (stage.id === currentStage) {
+    if (currentStageIndex === -1) {
+      // Generation is complete (or unknown stage) - mark all stages with data as completed
+      stage.status = stageData[stage.id as keyof StageData] ? 'completed' : 'pending';
+    } else if (stage.id === currentStage) {
       // Current stage is always active
       stage.status = 'active';
     } else if (index < currentStageIndex) {

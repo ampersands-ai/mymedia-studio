@@ -672,67 +672,50 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Deduct tokens with retry logic for optimistic locking
-        let updateResult: any = null;
-        let retryCount = 0;
-        const MAX_RETRIES = 8;
-        
-        while (retryCount < MAX_RETRIES) {
-          const { data: currentSub } = await supabase
-            .from('user_subscriptions')
-            .select('tokens_remaining')
-            .eq('user_id', user.id)
-            .single();
-          
-          if (!currentSub) {
-            throw new Error('Failed to deduct tokens - subscription not found');
-          }
-          
-          const { data, error: deductError } = await supabase
-            .from('user_subscriptions')
-            .update({ tokens_remaining: currentSub.tokens_remaining - tokenCost })
-            .eq('user_id', user.id)
-            .eq('tokens_remaining', currentSub.tokens_remaining)
-            .select('tokens_remaining');
-
-          if (deductError) {
-            logger.error('Token deduction failed', deductError instanceof Error ? deductError : new Error(String(deductError) || 'Database error'));
-            throw new Error('Failed to deduct tokens - database error');
-          }
-
-          if (data && data.length > 0) {
-            updateResult = data;
-            break; // Success
-          }
-          
-          // Optimistic lock failed - retry with exponential backoff + jitter
-          retryCount++;
-          if (retryCount < MAX_RETRIES) {
-            const base = 80; // ms
-            const exp = Math.min(6, retryCount - 1); // cap exponent to avoid long waits
-            const backoff = base * Math.pow(2, exp);
-            const jitter = Math.random() * 120; // 0-120ms
-            const delay = Math.min(1000, Math.round(backoff + jitter)); // cap at 1s
-            logger.warn('Optimistic lock failed, retrying', {
-              userId: user.id,
-              metadata: { attempt: retryCount, backoff_ms: delay }
-            });
-            await new Promise(resolve => setTimeout(resolve, delay));
-          }
-        }
-        
-        if (!updateResult || updateResult.length === 0) {
-          logger.error('Optimistic lock failed after retries', undefined, {
-            userId: user.id,
-            metadata: { max_retries: MAX_RETRIES, cost: tokenCost }
+        // Deduct tokens using atomic database function with row-level locking
+        const { data: deductResult, error: deductError } = await supabase
+          .rpc('deduct_user_tokens', {
+            p_user_id: user.id,
+            p_cost: tokenCost
           });
-          return new Response(
-            JSON.stringify({ 
-              error: 'Concurrent token update, please retry',
-              code: 'TOKEN_CONCURRENCY'
-            }),
-            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+
+        if (deductError) {
+          logger.error('Token deduction failed', deductError instanceof Error ? deductError : new Error(String(deductError) || 'Database error'), {
+            userId: user.id,
+            metadata: { cost: tokenCost }
+          });
+          throw new Error('Failed to deduct tokens - database error');
+        }
+
+        if (!deductResult || deductResult.length === 0) {
+          logger.error('Token deduction returned no result', undefined, {
+            userId: user.id,
+            metadata: { cost: tokenCost }
+          });
+          throw new Error('Failed to deduct tokens - no result returned');
+        }
+
+        const result = deductResult[0];
+        
+        if (!result.success) {
+          if (result.error_message === 'Insufficient tokens') {
+            return new Response(
+              JSON.stringify({ 
+                error: 'Insufficient credits',
+                type: 'INSUFFICIENT_TOKENS',
+                required: tokenCost,
+                available: result.tokens_remaining || 0,
+                message: `You need ${tokenCost} credits but only have ${result.tokens_remaining || 0} credits available.`
+              }),
+              { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          
+          logger.error('Token deduction failed', undefined, {
+            userId: user.id,
+            metadata: { error: result.error_message, cost: tokenCost }
+          });
+          throw new Error(`Failed to deduct tokens: ${result.error_message}`);
         }
 
         tokensDeducted = true;
@@ -740,7 +723,7 @@ Deno.serve(async (req) => {
           userId: user.id,
           metadata: { 
             tokens_deducted: tokenCost,
-            new_balance: updateResult[0]?.tokens_remaining 
+            new_balance: result.tokens_remaining 
           }
         });
 
@@ -750,7 +733,7 @@ Deno.serve(async (req) => {
           action: 'tokens_deducted',
           metadata: {
             tokens_deducted: tokenCost,
-            tokens_remaining: updateResult[0]?.tokens_remaining,
+            tokens_remaining: result.tokens_remaining,
           model_id: model.id,
           model_name: model.id // Use model.id as name
           }

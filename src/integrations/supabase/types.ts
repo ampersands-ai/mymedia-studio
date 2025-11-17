@@ -3592,6 +3592,14 @@ export type Database = {
       cleanup_old_function_logs: { Args: never; Returns: undefined }
       cleanup_old_webhook_events: { Args: never; Returns: undefined }
       cleanup_rate_limits: { Args: never; Returns: undefined }
+      deduct_user_tokens: {
+        Args: { p_cost: number; p_user_id: string }
+        Returns: {
+          error_message: string
+          success: boolean
+          tokens_remaining: number
+        }[]
+      }
       get_api_health_summary: {
         Args: never
         Returns: {

@@ -121,7 +121,7 @@ const ComprehensiveModelTestPage = () => {
   const imageFieldInfo = schemaHelpers.getImageFieldInfo(currentModel as any);
 
   // Generation polling
-  const { startPolling, stopPolling, isPolling } = useGenerationPolling({
+  const { startPolling, stopPolling, isPolling, connectionTier, realtimeConnected } = useGenerationPolling({
     onComplete: (outputs, parentId) => {
       updateState({
         generatedOutputs: outputs,
@@ -1419,6 +1419,8 @@ const ComprehensiveModelTestPage = () => {
         templateAfterImage={state.templateAfterImage}
         modelProvider={currentModel?.provider}
         modelName={currentModel?.model_name}
+        connectionTier={connectionTier}
+        realtimeConnected={realtimeConnected}
       />
 
       <AlertDialog open={state.showResetDialog} onOpenChange={(open) => updateState({ showResetDialog: open })}>

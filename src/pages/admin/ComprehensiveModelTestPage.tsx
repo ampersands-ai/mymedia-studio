@@ -1,4 +1,4 @@
-import { useRef, useCallback, useMemo, useState } from "react";
+import { useRef, useCallback, useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileText, Loader2 } from "lucide-react";
@@ -53,6 +53,7 @@ const ComprehensiveModelTestPage = () => {
   const [inspectionData, setInspectionData] = useState<Record<string, any>>({});
   const [isGeneratingDocs, setIsGeneratingDocs] = useState(false);
   const [docDialogOpen, setDocDialogOpen] = useState(false);
+  const [originalSchema, setOriginalSchema] = useState<any>(null);
   const queryClient = useQueryClient();
 
   // Models and user data - use ALL models for comprehensive testing
@@ -68,6 +69,13 @@ const ComprehensiveModelTestPage = () => {
   }, [allModelsUnfiltered]);
 
   const currentModel = filteredModels.find((m: any) => m.record_id === state.selectedModel);
+
+  // Track original schema for revert functionality
+  useEffect(() => {
+    if (currentModel?.input_schema) {
+      setOriginalSchema(JSON.parse(JSON.stringify(currentModel.input_schema)));
+    }
+  }, [currentModel?.record_id]);
 
   // Query documentation for current model
   const { data: docData } = useQuery({
@@ -399,12 +407,21 @@ const ComprehensiveModelTestPage = () => {
   }, [inspectionMode, handleGenerate, state, uploadedImages, currentModel, preparePayloadSnapshot]);
 
   // Schema editing handlers
-  const handlePushParameterToSchema = useCallback(async (paramName: string, newValue: any) => {
+  const handlePushParameterToSchema = useCallback(async (paramName: string, newValueOrSchema: any) => {
     if (!currentModel) return;
 
     try {
       const updatedSchema = JSON.parse(JSON.stringify(currentModel.input_schema));
-      updatedSchema.properties[paramName].default = newValue;
+      
+      // Check if updating entire schema property (has type, title, enum) or just default value
+      if (newValueOrSchema && typeof newValueOrSchema === 'object' && 
+          ('type' in newValueOrSchema || 'title' in newValueOrSchema || 'enum' in newValueOrSchema)) {
+        // Updating the entire property schema
+        updatedSchema.properties[paramName] = newValueOrSchema;
+      } else {
+        // Just updating the default value
+        updatedSchema.properties[paramName].default = newValueOrSchema;
+      }
 
       const { error } = await supabase
         .from('ai_models')
@@ -414,7 +431,7 @@ const ComprehensiveModelTestPage = () => {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['all-models'] });
-      toast.success(`Updated default for ${paramName}`);
+      toast.success(`Updated ${paramName}`);
     } catch (error) {
       console.error('Schema update error:', error);
       toast.error("Failed to update schema");
@@ -477,6 +494,54 @@ const ComprehensiveModelTestPage = () => {
       toast.error("Failed to update schema");
     }
   }, [currentModel, state.modelParameters, queryClient]);
+
+  const handleToggleImageField = useCallback(async (paramName: string) => {
+    if (!currentModel) return;
+
+    try {
+      const updatedSchema = JSON.parse(JSON.stringify(currentModel.input_schema));
+      const currentField = updatedSchema.imageInputField || '';
+      const isCurrentlyImage = currentField === paramName;
+      
+      if (isCurrentlyImage) {
+        delete updatedSchema.imageInputField;
+      } else {
+        updatedSchema.imageInputField = paramName;
+      }
+
+      const { error } = await supabase
+        .from('ai_models')
+        .update({ input_schema: updatedSchema })
+        .eq('record_id', currentModel.record_id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      toast.success(`${isCurrentlyImage ? 'Removed' : 'Added'} image field for ${paramName}`);
+    } catch (error) {
+      console.error('Image field toggle error:', error);
+      toast.error("Failed to update image field");
+    }
+  }, [currentModel, queryClient]);
+
+  const handleRevertToDefault = useCallback(async () => {
+    if (!currentModel || !originalSchema) return;
+
+    try {
+      const { error } = await supabase
+        .from('ai_models')
+        .update({ input_schema: originalSchema })
+        .eq('record_id', currentModel.record_id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      toast.success("Reverted to original schema");
+    } catch (error) {
+      console.error('Revert error:', error);
+      toast.error("Failed to revert schema");
+    }
+  }, [currentModel, originalSchema, queryClient]);
 
   const handleGenerateDocumentation = useCallback(async () => {
     if (!currentModel) return;
@@ -700,16 +765,19 @@ const ComprehensiveModelTestPage = () => {
 
       {/* Parameter Inspector */}
       {currentModel && (
-        <ParametersInspector
-          schema={currentModel.input_schema as any}
-          currentValues={state.modelParameters}
-          onValueChange={(name, value) => {
-            updateState({ modelParameters: { ...state.modelParameters, [name]: value } });
-          }}
-          onPushToSchema={handlePushParameterToSchema}
-          onToggleAdvanced={handleToggleAdvanced}
-          onPushAllToSchema={handlePushAllToSchema}
-        />
+            <ParametersInspector
+              schema={currentModel.input_schema as any}
+              currentValues={state.modelParameters}
+              onValueChange={(name, value) => {
+                updateState({ modelParameters: { ...state.modelParameters, [name]: value } });
+              }}
+              onPushToSchema={handlePushParameterToSchema}
+              onToggleAdvanced={handleToggleAdvanced}
+              onPushAllToSchema={handlePushAllToSchema}
+              imageFields={currentModel.input_schema?.imageInputField ? [currentModel.input_schema.imageInputField] : []}
+              onToggleImageField={handleToggleImageField}
+              onRevertToDefault={handleRevertToDefault}
+            />
       )}
 
       {/* Inspection UI */}

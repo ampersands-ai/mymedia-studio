@@ -34,13 +34,16 @@ export const AdvancedOptionsPanel: React.FC<AdvancedOptionsPanelProps> = ({
     return null;
   }
 
-  // Check if there are any parameters to show after excluding fields
-  const availableProperties = Object.keys(modelSchema.properties).filter(
-    (key) => !excludeFields.includes(key)
+  // Check if there are any ADVANCED parameters specifically
+  const advancedProperties = Object.keys(modelSchema.properties).filter(
+    (key) => {
+      const prop = modelSchema.properties![key];
+      return prop.isAdvanced === true && !excludeFields.includes(key);
+    }
   );
 
-  // Only show Advanced Options if there are 3 or more parameters
-  if (availableProperties.length < 3) {
+  // Only show Advanced Options if there are advanced parameters
+  if (advancedProperties.length === 0) {
     return null;
   }
 

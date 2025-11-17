@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Upload, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { Upload, ArrowUpCircle, ArrowDownCircle, X } from "lucide-react";
 import type { JsonSchemaProperty } from "@/types/schema";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface ParameterMetadataCardProps {
   name: string;
@@ -37,6 +39,50 @@ export const ParameterMetadataCard = ({
 }: ParameterMetadataCardProps) => {
   const isAdvanced = schema.isAdvanced === true;
   const isHidden = schema.showToUser === false;
+  
+  // State for editing title
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(schema.title || '');
+  
+  // State for editing enums
+  const [isEditingEnums, setIsEditingEnums] = useState(false);
+  const [editedEnums, setEditedEnums] = useState<string[]>(
+    schema.enum ? schema.enum.map(String) : []
+  );
+
+  const handleSaveTitle = () => {
+    if (editedTitle !== schema.title) {
+      const updatedSchema = { ...schema, title: editedTitle };
+      onPushToSchema(name, updatedSchema);
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleAddEnumValue = () => {
+    setEditedEnums([...editedEnums, '']);
+  };
+
+  const handleRemoveEnumValue = (index: number) => {
+    setEditedEnums(editedEnums.filter((_, i) => i !== index));
+  };
+
+  const handleEnumValueChange = (index: number, value: string) => {
+    const updated = [...editedEnums];
+    updated[index] = value;
+    setEditedEnums(updated);
+  };
+
+  const handleSaveEnums = () => {
+    const cleanedEnums = editedEnums.filter(e => e.trim() !== '');
+    if (cleanedEnums.length === 0) {
+      toast.error("Must have at least one enum value");
+      return;
+    }
+    const updatedSchema = { ...schema, enum: cleanedEnums };
+    onPushToSchema(name, updatedSchema);
+    setIsEditingEnums(false);
+    toast.success(`Updated enum values for ${name}`);
+  };
 
   const renderInput = () => {
     if (schema.type === 'boolean') {
@@ -94,14 +140,44 @@ export const ParameterMetadataCard = ({
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <code className="text-sm font-mono font-semibold">{name}</code>
+              <div className="flex items-center gap-1">
+                <code className="text-sm font-mono font-semibold">{name}</code>
+                {schema.title && schema.title !== name && (
+                  <span className="text-xs text-muted-foreground">→ "{schema.title}"</span>
+                )}
+              </div>
               {isRequired && <Badge variant="destructive" className="text-xs">Required</Badge>}
               {!isRequired && <Badge variant="outline" className="text-xs">Optional</Badge>}
               {isHidden && <Badge variant="secondary" className="text-xs">Hidden</Badge>}
               {isAdvanced && <Badge className="text-xs bg-yellow-500">Advanced</Badge>}
               {isImageField && <Badge variant="outline" className="text-xs">Image Field</Badge>}
             </div>
-            {schema.title && <p className="text-sm font-medium text-muted-foreground">{schema.title}</p>}
+            
+            {/* Editable Title */}
+            {isEditingTitle ? (
+              <div className="flex gap-2 items-center mt-1">
+                <Input
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  className="text-sm h-8"
+                  placeholder="Display name for users"
+                />
+                <Button size="sm" onClick={handleSaveTitle} className="h-8">Save</Button>
+                <Button size="sm" variant="ghost" onClick={() => {
+                  setEditedTitle(schema.title || '');
+                  setIsEditingTitle(false);
+                }} className="h-8">Cancel</Button>
+              </div>
+            ) : (
+              <p 
+                className="text-sm font-medium text-muted-foreground cursor-pointer hover:underline mt-1"
+                onClick={() => setIsEditingTitle(true)}
+                title="Click to edit display name"
+              >
+                Display: {schema.title || 'Click to add display name'}
+              </p>
+            )}
+            
             {schema.description && <p className="text-xs text-muted-foreground mt-1">{schema.description}</p>}
           </div>
         </div>
@@ -131,6 +207,62 @@ export const ParameterMetadataCard = ({
             </div>
           )}
         </div>
+
+        {/* Enum Editor */}
+        {schema.enum && (
+          <div className="border-t pt-3">
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-xs text-muted-foreground font-semibold">Allowed Values (Enum)</Label>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  if (isEditingEnums) {
+                    setEditedEnums(schema.enum ? schema.enum.map(String) : []);
+                  }
+                  setIsEditingEnums(!isEditingEnums);
+                }}
+              >
+                {isEditingEnums ? 'Cancel' : 'Edit'}
+              </Button>
+            </div>
+            
+            {isEditingEnums ? (
+              <div className="space-y-2">
+                {editedEnums.map((enumVal, idx) => (
+                  <div key={idx} className="flex gap-2">
+                    <Input
+                      value={enumVal}
+                      onChange={(e) => handleEnumValueChange(idx, e.target.value)}
+                      placeholder="Enum value"
+                      className="text-xs flex-1"
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleRemoveEnumValue(idx)}
+                      disabled={editedEnums.length === 1}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleAddEnumValue}>+ Add Value</Button>
+                  <Button size="sm" variant="default" onClick={handleSaveEnums}>Save All</Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-1">
+                {schema.enum.map((opt, idx) => (
+                  <Badge key={idx} variant="outline" className="text-xs">
+                    {String(opt)}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Default Value */}
         <div>

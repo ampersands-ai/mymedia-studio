@@ -131,7 +131,10 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
   if (isLikelyPrimaryText) {
     const stringValue = typeof value === 'string' ? value : (value || '');
     const charCount = String(stringValue).length;
-    const maxChars = typeof schema.maxLength === 'number' ? schema.maxLength : 5000;
+    // For prompt fields, always enforce 5000 char limit regardless of schema
+    const maxChars = schema.renderer === 'prompt' 
+      ? 5000 
+      : (typeof schema.maxLength === 'number' ? schema.maxLength : 5000);
     
     return (
       <Card className="border-2 border-primary/20 shadow-sm hover:border-primary/30 transition-colors">

@@ -953,15 +953,9 @@ Deno.serve(async (req) => {
         generationId: createdGeneration.id
       };
         
-        // Include prompt if model has prompt field (normalize to provider's expected format)
-        if (hasPromptField && finalPrompt) {
-          // For models that use 'positivePrompt' or 'positive_prompt' (normalize to positivePrompt)
-          if (promptFieldName === 'positivePrompt' || promptFieldName === 'positive_prompt') {
-            providerRequest.parameters.positivePrompt = finalPrompt;
-          } else {
-            // Standard 'prompt' field
-            providerRequest.prompt = finalPrompt;
-          }
+        // Include prompt ONLY in parameters if model has prompt field
+        if (hasPromptField && finalPrompt && promptFieldName) {
+          providerRequest.parameters[promptFieldName] = finalPrompt;
         }
         
         // Runware video default: uppercase MP4
@@ -974,7 +968,7 @@ Deno.serve(async (req) => {
           metadata: {
             model_id: model.id,
             generation_id: createdGeneration.id,
-            has_prompt: !!providerRequest.prompt
+            has_prompt_in_params: hasPromptField
           }
         });
         

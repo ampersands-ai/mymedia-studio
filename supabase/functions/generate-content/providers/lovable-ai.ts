@@ -21,20 +21,26 @@ export async function callLovableAI(request: ProviderRequest): Promise<ProviderR
     ? MODEL_MAP[request.model]
     : (request.model || "google/gemini-2.5-flash-image");
 
+  // Extract prompt from parameters (should be in prompt, positivePrompt, or positive_prompt)
+  const promptField = request.parameters.prompt || request.parameters.positivePrompt || request.parameters.positive_prompt || '';
+  
+  if (!promptField) {
+    throw new Error('No prompt provided in parameters');
+  }
+
   const payload = {
     model: resolvedModel,
     messages: [
       {
         role: "user",
-        content: request.prompt
+        content: promptField
       }
     ],
-    modalities: ["image", "text"],
-    ...request.parameters
+    modalities: ["image", "text"]
   };
   console.log('[Lovable AI] Request payload prepared', { 
     model: payload.model,
-    promptLength: request.prompt.length,
+    promptLength: promptField.length,
     parameters: Object.keys(request.parameters)
   });
 

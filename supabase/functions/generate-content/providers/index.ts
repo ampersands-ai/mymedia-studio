@@ -4,7 +4,6 @@ import { callLovableAI } from "./lovable-ai.ts";
 import { webhookLogger } from "../../_shared/logger.ts";
 export interface ProviderRequest {
   model: string;
-  prompt: string;
   parameters: Record<string, any>;
   api_endpoint?: string;
   payload_structure?: string;

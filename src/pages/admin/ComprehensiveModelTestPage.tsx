@@ -441,7 +441,7 @@ const ComprehensiveModelTestPage = () => {
     if (!promptKey) return undefined;
     
     const promptProp = schema.properties[promptKey] as JsonSchemaProperty;
-    return promptProp?.maxLength;
+    return promptProp?.maxLength ?? 5000;
   }, [currentModel]);
 
   const durationValue = state.modelParameters['duration'];

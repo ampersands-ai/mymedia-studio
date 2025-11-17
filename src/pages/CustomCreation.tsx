@@ -342,14 +342,34 @@ const CustomCreation = () => {
                 });
                 toast.error('Generation completed but no outputs were found');
               }
-            } else if (newStatus === 'failed') {
-              console.log('❌ Generation failed via realtime');
-              stopPolling();
-              updateState({ localGenerating: false, pollingGenerationId: null });
-              toast.error('Generation failed', {
-                description: 'Your credits have been refunded.'
-              });
-            }
+              } else if (newStatus === 'failed' || newStatus === 'error') {
+                console.log('❌ Generation failed via realtime');
+                stopPolling();
+                updateState({ localGenerating: false, pollingGenerationId: null });
+
+                // Fetch latest provider details for a meaningful error message
+                try {
+                  const { data: gen } = await supabase
+                    .from('generations')
+                    .select('provider_response, status')
+                    .eq('id', state.pollingGenerationId!)
+                    .single();
+                  const pr: any = gen?.provider_response || {};
+                  const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || (pr?.error && pr?.error?.message);
+                  const msg = detailed ? String(detailed) : `Generation ${newStatus}`;
+
+                  toast.error(msg, {
+                    description: 'Your credits will be refunded automatically if nothing was produced.',
+                    action: { label: 'View History', onClick: () => navigate('/dashboard/history') }
+                  });
+                } catch (e) {
+                  console.warn('Failed to fetch provider details for error toast', e);
+                  toast.error('Generation failed', {
+                    description: 'Your credits will be refunded automatically if nothing was produced.',
+                    action: { label: 'View History', onClick: () => navigate('/dashboard/history') }
+                  });
+                }
+              }
           }
         )
         .subscribe();

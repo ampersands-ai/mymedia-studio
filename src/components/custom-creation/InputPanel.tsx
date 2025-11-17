@@ -526,6 +526,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                       schema={modelSchema.properties[key]}
                       value={modelParameters[key]}
                       onChange={(value) => onModelParametersChange({ ...modelParameters, [key]: value })}
+                      required={modelSchema.required?.includes(key)}
                       modelId={modelId}
                       provider={provider}
                     />

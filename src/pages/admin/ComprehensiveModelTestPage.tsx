@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useModels } from "@/hooks/useModels";
@@ -535,6 +536,39 @@ const ComprehensiveModelTestPage = () => {
   const handleReset = useCallback(() => {
     updateState({ showResetDialog: true });
   }, [updateState]);
+
+  const confirmReset = useCallback(() => {
+    // Stop any active polling
+    stopPolling();
+    
+    // Clear uploaded images
+    setUploadedImages([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    
+    // Reset inspection and execution state
+    setInspectionMode('off');
+    setInspectionData({});
+    setExecutionStage('idle');
+    setExecutionStageData({});
+    setExecutionError(null);
+    setOriginalSchema(null);
+    
+    // Reset core state
+    resetState();
+    
+    // Close dialog
+    updateState({ showResetDialog: false });
+    
+    toast.success('Reset complete');
+  }, [
+    resetState, 
+    stopPolling,
+    setUploadedImages,
+    fileInputRef,
+    updateState
+  ]);
 
   const handleNavigateLightbox = useCallback((direction: 'prev' | 'next') => {
     const newIndex = direction === 'prev' 
@@ -1386,6 +1420,21 @@ const ComprehensiveModelTestPage = () => {
         modelProvider={currentModel?.provider}
         modelName={currentModel?.model_name}
       />
+
+      <AlertDialog open={state.showResetDialog} onOpenChange={(open) => updateState({ showResetDialog: open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Test?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will clear all inputs, outputs, and test data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmReset}>Reset</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -2,7 +2,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Upload } from "lucide-react";
+import { Download, Upload, RotateCcw } from "lucide-react";
 import { ParameterMetadataCard } from "./ParameterMetadataCard";
 import type { JsonSchema } from "@/types/schema";
 import { useMemo, useState } from "react";
@@ -16,6 +16,7 @@ interface ParametersInspectorProps {
   onPushAllToSchema: () => void;
   imageFields?: string[];
   onToggleImageField?: (name: string) => void;
+  onRevertToDefault?: () => void;
 }
 
 export const ParametersInspector = ({
@@ -27,6 +28,7 @@ export const ParametersInspector = ({
   onPushAllToSchema,
   imageFields = [],
   onToggleImageField = () => {},
+  onRevertToDefault,
 }: ParametersInspectorProps) => {
   const [activeTab, setActiveTab] = useState('all');
 
@@ -132,6 +134,12 @@ export const ParametersInspector = ({
             {modifiedCount > 0 && (
               <>
                 <Badge variant="destructive">{modifiedCount} Modified</Badge>
+                {onRevertToDefault && (
+                  <Button size="sm" variant="outline" onClick={onRevertToDefault}>
+                    <RotateCcw className="h-3 w-3 mr-2" />
+                    Revert All
+                  </Button>
+                )}
                 <Button size="sm" onClick={onPushAllToSchema}>
                   <Upload className="h-3 w-3 mr-2" />
                   Push All to Schema

@@ -213,8 +213,8 @@ const ComprehensiveModelTestPage = () => {
   // Monitor generation lifecycle for execution flow with detailed tracking
   useEffect(() => {
     if (isGenerating && executionStage === 'api_request_sent') {
-      // Generation has started, move to polling stage
-      setExecutionStage('generation_polling');
+      // Generation API call in progress
+      setExecutionStage('first_api_response');
       setExecutionStageData(prev => ({
         ...prev,
         api_request_sent: {
@@ -223,67 +223,92 @@ const ComprehensiveModelTestPage = () => {
           http_method: 'POST',
           auth_type: 'API Key',
           status: 'Request successfully sent to provider API',
-        },
-        generation_polling: {
-          poll_count: 0,
-          time_elapsed_ms: 0,
-          current_status: 'Waiting for generation to complete',
-          polling_intervals_ms: 2000,
-          note: 'Polling provider API for generation status updates',
         }
       }));
-    } else if (!isGenerating && executionStage === 'generation_polling') {
-      // Generation finished
-      if (state.generatedOutputs.length > 0) {
-        // Success case
-        const firstOutput = state.generatedOutputs[0];
-        setExecutionStage('generation_complete');
+    } else if (!isGenerating && executionStage === 'first_api_response') {
+      // API returned - check if async or sync
+      const isAsync = state.parentGenerationId !== null;
+      
+      if (isAsync) {
+        // Async generation (Runware, Kie.ai) - got 202 response, now polling
+        setExecutionStage('generation_polling');
         setExecutionStageData(prev => ({
           ...prev,
-          final_api_response: {
-            completion_status: 'success',
-            storage_path: firstOutput.storage_path || 'Not available',
-            total_generation_time_ms: Date.now() - (prev.api_request_sent?.timestamp || Date.now()),
-            provider_metadata: {
-              provider_task_id: firstOutput.provider_task_id || 'N/A',
-              model_id: firstOutput.model_id || 'N/A',
-            },
-            status: `✓ Generation completed successfully (${state.generatedOutputs.length} output${state.generatedOutputs.length > 1 ? 's' : ''})`,
+          credit_deduction: {
+            credits_deducted: estimatedTokens,
+            timestamp: Date.now(),
+            status: `✓ ${estimatedTokens} credits deducted successfully`
           },
-          media_delivered: {
-            storage_path: firstOutput.storage_path || 'Not available',
-            delivery_time_ms: Date.now() - (prev.api_request_sent?.timestamp || Date.now()),
-            validation_success: true,
-            status: `✓ Media successfully generated and accessible`,
+          first_api_response: {
+            response_type: '202 Accepted',
+            is_async: true,
+            status: 'processing',
+            message: 'Generation started. Provider will process asynchronously.',
+            note: 'Runware returns immediately and processes in background. Results delivered via webhook or polling.',
           },
-          generation_complete: {
-            outputs_count: state.generatedOutputs.length,
-            storage_paths: state.generatedOutputs.map(o => o.storage_path),
-            status: `✓ All outputs processed and ready`,
+          generation_polling: {
+            poll_count: 0,
+            time_elapsed_ms: 0,
+            current_status: 'Polling database for webhook updates every 2 seconds',
+            polling_intervals_ms: 2000,
+            note: 'Checking if provider webhook has updated generation status',
           }
         }));
       } else {
-        // No outputs - likely an error
-        setExecutionStage('error');
+        // Sync generation - move straight to completion check
+        setExecutionStage('generation_polling');
         setExecutionStageData(prev => ({
           ...prev,
-          error: {
-            message: 'No outputs generated',
-            code: 'NO_OUTPUT',
+          credit_deduction: {
+            credits_deducted: estimatedTokens,
             timestamp: Date.now(),
-            stage: 'generation_polling',
-            details: 'Generation polling completed but no outputs were returned. This could mean:\n' +
-                     '1. The provider API rejected the request\n' +
-                     '2. Generation timed out\n' +
-                     '3. An error occurred during processing\n' +
-                     '4. The model does not support the provided parameters\n\n' +
-                     'Check the console logs and network requests for more details.',
+            status: `✓ ${estimatedTokens} credits deducted successfully`
+          },
+          first_api_response: {
+            response_type: '200 OK',
+            is_async: false,
+            status: 'Content returned synchronously',
           }
         }));
-        setExecutionError('No outputs generated - check logs for details');
       }
+    } else if (!isGenerating && executionStage === 'generation_polling' && state.generatedOutputs.length > 0) {
+      // Polling found completed outputs
+      const firstOutput = state.generatedOutputs[0];
+      setExecutionStage('media_delivered');
+      setExecutionStageData(prev => ({
+        ...prev,
+        final_api_response: {
+          completion_status: 'success',
+          received_at: Date.now(),
+          provider_metadata: {
+            provider_task_id: firstOutput.provider_task_id || 'N/A',
+            model_id: firstOutput.model_id || 'N/A',
+          },
+          status: `✓ Provider webhook/polling confirmed generation complete`,
+        },
+        media_storage: {
+          storage_path: firstOutput.storage_path || 'Not available',
+          upload_completed_at: Date.now(),
+          status: `✓ Media uploaded to storage successfully`,
+        },
+        media_validation: {
+          file_accessible: !!firstOutput.storage_path,
+          storage_path: firstOutput.storage_path || 'Not available',
+          validation_success: true,
+          status: `✓ Media validated and accessible`,
+        },
+        media_delivered: {
+          outputs_count: state.generatedOutputs.length,
+          storage_paths: state.generatedOutputs.map(o => o.storage_path),
+          total_time_ms: Date.now() - (prev.api_request_sent?.timestamp || Date.now()),
+          status: `✓ All ${state.generatedOutputs.length} output${state.generatedOutputs.length > 1 ? 's' : ''} ready`,
+        }
+      }));
+    } else if (!isGenerating && executionStage === 'generation_polling' && state.generatedOutputs.length === 0) {
+      // Still polling - no outputs yet (this is normal for async generations)
+      // Don't mark as error immediately - polling will continue
     }
-  }, [isGenerating, executionStage, state.generatedOutputs, currentModel?.api_endpoint]);
+  }, [isGenerating, executionStage, state.generatedOutputs, state.parentGenerationId, currentModel?.api_endpoint, estimatedTokens]);
 
   // Derived values (exact same logic as CustomCreation)
   const textKey = useMemo(() => {

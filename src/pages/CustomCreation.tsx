@@ -28,6 +28,7 @@ import { downloadMultipleOutputs } from "@/lib/download-utils";
 import { getSurpriseMePrompt } from "@/data/surpriseMePrompts";
 import { toast } from "sonner";
 import type { JsonSchemaProperty, ModelJsonSchema } from "@/types/model-schema";
+import { initializeParameters } from "@/types/model-schema";
 
 const CustomCreation = () => {
   const { user } = useAuth();
@@ -62,6 +63,19 @@ const CustomCreation = () => {
 
   // Get current model
   const currentModel = filteredModels.find(m => m.record_id === state.selectedModel);
+
+  // Initialize model parameters with schema defaults when model changes
+  useEffect(() => {
+    if (!currentModel?.input_schema) return;
+    
+    const schema = currentModel.input_schema as ModelJsonSchema;
+    const initialized = initializeParameters(schema, state.modelParameters);
+    
+    // Only update if defaults changed (avoid infinite loop)
+    if (JSON.stringify(initialized) !== JSON.stringify(state.modelParameters)) {
+      updateState({ modelParameters: initialized });
+    }
+  }, [currentModel?.record_id, currentModel?.input_schema]);
 
   // Schema helpers
   const schemaHelpers = useSchemaHelpers();

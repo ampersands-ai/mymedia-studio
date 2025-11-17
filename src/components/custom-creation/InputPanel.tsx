@@ -142,6 +142,70 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   // Get selected model details for duration display
   const selectedModelData = filteredModels.find(m => m.record_id === selectedModel);
 
+  // Read explicit renderer toggles from schema (with backward-compatible defaults)
+  const usePromptRenderer = modelSchema?.usePromptRenderer ?? true;
+  const useImageRenderer = modelSchema?.useImageRenderer ?? true;
+  const useVoiceRenderer = modelSchema?.useVoiceRenderer ?? false;
+  const useDurationRenderer = modelSchema?.useDurationRenderer ?? false;
+  const useIncrementRenderer = modelSchema?.useIncrementRenderer ?? true;
+  const useOutputFormatRenderer = modelSchema?.useOutputFormatRenderer ?? false;
+
+  // Build set of fields that use specialized renderers
+  const specializedFields = new Set<string>();
+
+  // Prompt renderer fields
+  if (usePromptRenderer && hasPromptField) {
+    if (modelSchema?.properties?.prompt) specializedFields.add('prompt');
+    if (modelSchema?.properties?.positivePrompt) specializedFields.add('positivePrompt');
+    if (modelSchema?.properties?.positive_prompt) specializedFields.add('positive_prompt');
+    if (textKey && ['prompt', 'positiveprompt', 'positive_prompt', 'input_text', 'text'].includes(textKey.toLowerCase())) {
+      specializedFields.add(textKey);
+    }
+  }
+
+  // Image renderer fields
+  if (useImageRenderer && imageFieldName) {
+    specializedFields.add(imageFieldName);
+  }
+
+  // Voice renderer fields
+  if (useVoiceRenderer && voiceKey) {
+    specializedFields.add(voiceKey);
+  }
+
+  // Duration renderer fields
+  if (useDurationRenderer && hasDuration) {
+    specializedFields.add('duration');
+  }
+
+  // Increment renderer fields
+  if (useIncrementRenderer && hasIncrement) {
+    if (modelSchema?.properties?.increment) specializedFields.add('increment');
+    if (modelSchema?.properties?.incrementBySeconds) specializedFields.add('incrementBySeconds');
+  }
+
+  // Output format renderer fields
+  if (useOutputFormatRenderer) {
+    if (modelSchema?.properties?.outputFormat) specializedFields.add('outputFormat');
+    if (modelSchema?.properties?.output_format) specializedFields.add('output_format');
+    if (modelSchema?.properties?.format) specializedFields.add('format');
+  }
+
+  // Also exclude hardcoded special fields that are always rendered specially
+  const alwaysSpecialFields = [
+    'num_images', 'max_images', 'numberOfImages', 'numImages', 'number_of_images',
+    'aspect_ratio', 'aspectRatio', 'image_size', 'imageSize', 
+    'image_resolution', 'imageResolution', 'resolution', 'size', 'dimensions'
+  ];
+  alwaysSpecialFields.forEach(f => {
+    if (modelSchema?.properties?.[f]) specializedFields.add(f);
+  });
+
+  // Add textKey if it's not a prompt-like field (it renders specially above)
+  if (textKey && !['prompt', 'positiveprompt', 'positive_prompt', 'input_text', 'text'].includes(textKey.toLowerCase())) {
+    specializedFields.add(textKey);
+  }
+
   const [showScrollTop, setShowScrollTop] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -430,12 +494,24 @@ export const InputPanel: React.FC<InputPanelProps> = ({
           
           const basicParams = availableProperties.filter(key => {
             const prop = modelSchema.properties[key];
-            return prop?.isAdvanced !== true && prop?.showToUser !== false;
+            // Skip if hidden
+            if (prop?.showToUser === false) return false;
+            // Skip if advanced
+            if (prop?.isAdvanced === true) return false;
+            // Skip if using specialized renderer
+            if (specializedFields.has(key)) return false;
+            return true;
           });
           
           const advancedParams = availableProperties.filter(key => {
             const prop = modelSchema.properties[key];
-            return prop?.isAdvanced === true && prop?.showToUser !== false;
+            // Skip if hidden
+            if (prop?.showToUser === false) return false;
+            // Only include advanced
+            if (prop?.isAdvanced !== true) return false;
+            // Skip if using specialized renderer
+            if (specializedFields.has(key)) return false;
+            return true;
           });
           
           return (

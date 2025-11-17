@@ -646,6 +646,9 @@ const CustomCreation = () => {
               'aspect_ratio', 'aspectRatio', 'image_size', 'imageSize', 'image_resolution', 
               'imageResolution', 'resolution', 'size', 'dimensions',
               
+              // Output format field (move outside advanced)
+              'outputFormat', 'output_format', 'format',
+              
               // NOTE: negative_prompt is NOT here - it stays in Advanced Options
             ].filter(Boolean) as string[]}
             onReset={() => {

@@ -110,127 +110,69 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
           status: parentData.status
         } as any);
 
-        clearAllTimers();
-        setIsPolling(false);
-        setPollingId(null);
-
         if (parentData.status === 'completed') {
-          // Retry logic for child generations
-          let retryCount = 0;
-          const maxRetries = 3;
-          const retryDelay = 2000; // 2 seconds
+          // Fetch children dynamically
+          const { data: childrenData } = await supabase
+            .from('generations')
+            .select(`id, storage_path, output_index, provider_task_id, model_id, ai_models!inner(provider)`)
+            .eq('parent_generation_id', generationId)
+            .order('output_index', { ascending: true });
+
+          const parentProvider = (parentData.ai_models as { provider?: string })?.provider || null;
           
-          let validOutputs: GenerationOutput[] = [];
-          
-          logger.info('Starting child generation fetch', { 
-            generationId,
-            maxRetries 
-          } as any);
+          const allOutputs: GenerationOutput[] = [
+            {
+              id: parentData.id,
+              storage_path: parentData.storage_path,
+              output_index: 0,
+              provider_task_id: parentData.provider_task_id || undefined,
+              model_id: parentData.model_id || undefined,
+              provider: parentProvider || undefined
+            },
+            ...(childrenData || []).map((child: any) => ({
+              id: child.id,
+              storage_path: child.storage_path,
+              output_index: child.output_index,
+              provider_task_id: child.provider_task_id || undefined,
+              model_id: child.model_id || undefined,
+              provider: ((child.ai_models as { provider?: string })?.provider) || undefined
+            }))
+          ];
 
-          // Retry loop for fetching children
-          while (retryCount <= maxRetries) {
-            const { data: childrenData } = await supabase
-              .from('generations')
-              .select(`
-                id, 
-                storage_path, 
-                output_index, 
-                type,
-                provider_task_id,
-                model_id,
-                model_record_id,
-                ai_models!inner(provider)
-              `)
-              .eq('parent_generation_id', generationId)
-              .order('output_index', { ascending: true });
-
-            // Extract provider from nested model data
-            const parentProvider = (parentData.ai_models as { provider?: string })?.provider || null;
-
-            // Build all outputs (parent + children)
-            const allOutputs: GenerationOutput[] = [
-              {
-                id: parentData.id,
-                storage_path: parentData.storage_path,
-                output_index: 0,
-                provider_task_id: parentData.provider_task_id || undefined,
-                model_id: parentData.model_id || undefined,
-                provider: parentProvider || undefined
-              },
-              ...(childrenData || []).map((child: Record<string, unknown>): GenerationOutput => ({
-                id: child.id as string,
-                storage_path: child.storage_path as string,
-                output_index: child.output_index as number,
-                provider_task_id: (child.provider_task_id as string) || undefined,
-                model_id: (child.model_id as string) || undefined,
-                provider: ((child.ai_models as { provider?: string })?.provider) || undefined
-              }))
-            ];
-
-            // Filter valid outputs with storage_path
-            validOutputs = allOutputs.filter(o => !!o.storage_path);
-            
-            logger.info('Outputs fetched', {
-              generationId,
-              allOutputsCount: allOutputs.length,
-              validOutputsCount: validOutputs.length,
-              childrenCount: childrenData?.length || 0,
-              retryCount,
-              parentHasPath: !!parentData.storage_path
-            } as any);
-            
-            // If we have outputs OR max retries reached, break
-            if (validOutputs.length > 0 || retryCount === maxRetries) {
-              break;
-            }
-            
-            // Wait before retry
-            logger.debug('No outputs ready, retrying', { 
-              generationId,
-              retryCount: retryCount + 1,
-              maxRetries,
-              delayMs: retryDelay
-            } as any);
-            await new Promise(resolve => setTimeout(resolve, retryDelay));
-            retryCount++;
-          }
-          
-          // Remove duplicates by storage_path
+          const validOutputs = allOutputs.filter(o => !!o.storage_path);
           const uniqueOutputs = validOutputs.filter((output, index, self) =>
             index === self.findIndex(o => o.storage_path === output.storage_path)
           );
 
-          if (uniqueOutputs.length === 0) {
-            logger.error('Generation completed but outputs not ready', undefined, {
+          if (uniqueOutputs.length > 0) {
+            // We have outputs - stop polling and complete
+            console.log('✅ About to call onComplete', {
               generationId,
-              retriesUsed: retryCount,
-              parentStoragePath: parentData.storage_path,
-              allOutputsCount: validOutputs.length
-            } as any);
-            optionsRef.current.onError?.('Generation completed but outputs are not ready after retries.');
+              outputCount: uniqueOutputs.length,
+              outputs: uniqueOutputs.map(o => ({ id: o.id, hasPath: !!o.storage_path }))
+            });
+            
+            clearAllTimers();
+            setIsPolling(false);
+            setPollingId(null);
+            optionsRef.current.onComplete?.(uniqueOutputs, generationId);
+            
+            console.log('✅ onComplete called successfully');
             return;
           }
-
-          console.log('✅ Generation complete - calling onComplete', {
+          
+          // No outputs yet - continue polling (don't stop, don't clear timers)
+          logger.info('Generation completed but outputs not ready yet, continuing to poll', {
             generationId,
-            outputCount: uniqueOutputs.length,
-            retriesUsed: retryCount,
-            firstOutputPath: uniqueOutputs[0]?.storage_path?.substring(0, 50),
-            outputs: uniqueOutputs.map(o => ({ id: o.id, hasPath: !!o.storage_path }))
-          });
-          logger.info('✅ Generation complete - calling onComplete', {
-            generationId,
-            outputCount: uniqueOutputs.length,
-            retriesUsed: retryCount,
-            firstOutputPath: uniqueOutputs[0]?.storage_path?.substring(0, 50)
+            parentHasPath: !!parentData.storage_path,
+            childrenCount: childrenData?.length || 0
           } as any);
-
-          // Call completion callback with parent ID
-          console.log('📞 About to call onComplete callback');
-          optionsRef.current.onComplete(uniqueOutputs, generationId);
-          console.log('✅ onComplete callback invoked successfully');
+          return;
         } else {
           // Failed generation - extract detailed error
+          clearAllTimers();
+          setIsPolling(false);
+          setPollingId(null);
           const providerResponse = parentData.provider_response as any;
           const errorMessage = providerResponse?.error || 'Generation failed';
           optionsRef.current.onError?.(errorMessage);
@@ -238,126 +180,89 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
       }
     } catch (error: any) {
       logger.error('Polling error', error, { generationId } as any);
-      optionsRef.current.onError?.(error.message || 'Failed to check generation status');
+      clearAllTimers();
+      setIsPolling(false);
+      setPollingId(null);
+      optionsRef.current.onError?.(error.message || 'Unknown error during polling');
     }
   }, [clearAllTimers]);
 
   /**
-   * Start polling for a generation
+   * Start polling with progressive intervals
    */
   const startPolling = useCallback((generationId: string) => {
-    if (isPolling) {
-      console.warn('⚠️  Already polling, stopping previous poll', { 
-        currentPollingId: pollingId,
-        newGenerationId: generationId
-      });
-      logger.warn('Already polling, stopping previous poll', { 
-        currentPollingId: pollingId,
-        newGenerationId: generationId
-      } as any);
-      stopPolling();
+    if (isPolling && pollingId === generationId) {
+      logger.debug('Already polling this generation', { generationId } as any);
+      return;
     }
 
-    console.log('🔄 Starting generation polling', { generationId });
-    logger.info('Starting generation polling', { generationId } as any);
+    clearAllTimers();
     setIsPolling(true);
     setPollingId(generationId);
+
+    logger.info('Starting generation polling', { generationId } as any);
+
     const startTime = Date.now();
 
-    // TIER 1: Immediate check at 1 second
-    const immediateTimeout = setTimeout(() => {
-      pollStatus(generationId);
-    }, POLLING_CONFIG.IMMEDIATE_CHECK);
-    timeoutsRef.current.push(immediateTimeout);
-
-    // TIER 2: Early check at 3 seconds
-    const initialTimeout = setTimeout(() => {
-      pollStatus(generationId);
-    }, POLLING_CONFIG.INITIAL_DELAY);
-    timeoutsRef.current.push(initialTimeout);
-
-    // TIER 3: Fast polling (5s intervals) for first 2 minutes
-    const fastInterval = setInterval(() => {
+    const scheduleNext = () => {
       const elapsed = Date.now() - startTime;
-      if (elapsed >= POLLING_CONFIG.FAST_DURATION) {
-        clearInterval(fastInterval);
+      
+      let interval: number;
+      if (elapsed < POLLING_CONFIG.FAST_DURATION) {
+        interval = POLLING_CONFIG.FAST_INTERVAL;
+      } else if (elapsed < POLLING_CONFIG.FAST_DURATION + POLLING_CONFIG.MEDIUM_DURATION) {
+        interval = POLLING_CONFIG.MEDIUM_INTERVAL;
       } else {
-        pollStatus(generationId);
+        interval = POLLING_CONFIG.SLOW_INTERVAL;
       }
-    }, POLLING_CONFIG.FAST_INTERVAL);
-    intervalsRef.current.push(fastInterval);
 
-    // TIER 4: Medium polling (10s intervals) from 2-5 minutes
-    const mediumIntervalTimeout = setTimeout(() => {
-      const mediumInterval = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        if (elapsed >= POLLING_CONFIG.MEDIUM_DURATION) {
-          clearInterval(mediumInterval);
-        } else {
-          pollStatus(generationId);
-        }
-      }, POLLING_CONFIG.MEDIUM_INTERVAL);
-      intervalsRef.current.push(mediumInterval);
-    }, POLLING_CONFIG.FAST_DURATION);
-    timeoutsRef.current.push(mediumIntervalTimeout);
-
-    // TIER 5: Slow polling (20s intervals) after 5 minutes
-    const slowIntervalTimeout = setTimeout(() => {
-      const slowInterval = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        
-        // Max timeout check
-        if (elapsed >= POLLING_CONFIG.MAX_DURATION) {
-          clearAllTimers();
-          setIsPolling(false);
-          setPollingId(null);
-          optionsRef.current.onTimeout?.();
-          return;
-        }
-
+      const timeout = setTimeout(() => {
         pollStatus(generationId);
-      }, POLLING_CONFIG.SLOW_INTERVAL);
-      intervalsRef.current.push(slowInterval);
-    }, POLLING_CONFIG.MEDIUM_DURATION);
-    timeoutsRef.current.push(slowIntervalTimeout);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPolling, pollStatus, clearAllTimers]);
+        scheduleNext();
+      }, interval);
+
+      timeoutsRef.current.push(timeout);
+    };
+
+    // Initial poll
+    pollStatus(generationId);
+    scheduleNext();
+  }, [isPolling, pollingId, clearAllTimers, pollStatus]);
 
   /**
-   * Stop polling manually
+   * Stop polling
    */
   const stopPolling = useCallback(() => {
+    logger.info('Stopping generation polling', { pollingId } as any);
     clearAllTimers();
     setIsPolling(false);
     setPollingId(null);
-  }, [clearAllTimers]);
+  }, [clearAllTimers, pollingId]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (isPolling) {
-        logger.info('useGenerationPolling unmounting, cleaning up polling');
-      }
       clearAllTimers();
     };
-  }, [clearAllTimers, isPolling]);
+  }, [clearAllTimers]);
 
-  // Auto-recovery: Force reset if polling for more than 30 minutes
+  // Safety timeout: force-stop polling after excessive duration
   useEffect(() => {
     if (isPolling && pollingId) {
-      const timeout = setTimeout(() => {
-        logger.warn('Polling exceeded maximum duration (30 min), force resetting', {
-          pollingId,
-          duration: '30 minutes'
+      const safetyTimeout = setTimeout(() => {
+        logger.warn('Polling safety timeout reached', {
+          generationId: pollingId,
+          duration: POLLING_CONFIG.MAX_DURATION
         } as any);
-
-        stopPolling();
+        clearAllTimers();
+        setIsPolling(false);
+        setPollingId(null);
         optionsRef.current.onTimeout?.();
-      }, 30 * 60 * 1000);
+      }, POLLING_CONFIG.MAX_DURATION);
 
-      return () => clearTimeout(timeout);
+      return () => clearTimeout(safetyTimeout);
     }
-  }, [isPolling, pollingId, stopPolling]);
+  }, [isPolling, pollingId, clearAllTimers]);
 
   return {
     startPolling,

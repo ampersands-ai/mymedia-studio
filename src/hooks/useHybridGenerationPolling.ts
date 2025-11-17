@@ -89,11 +89,11 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
           .eq('parent_generation_id', parentData.id)
           .order('output_index');
 
-        let outputs: GenerationOutput[];
+        const outputs: GenerationOutput[] = [];
 
-        // Handle batch outputs (multiple children)
+        // Add child generations (batch outputs)
         if (childrenData && childrenData.length > 0) {
-          outputs = childrenData.map((child: any) => ({
+          outputs.push(...childrenData.map((child: any) => ({
             id: child.id,
             storage_path: child.storage_path || '',
             type: parentData.type,
@@ -101,11 +101,12 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
             provider_task_id: child.provider_task_id || '',
             model_id: child.model_id || '',
             provider: child.ai_models?.provider || '',
-          }));
-        } 
-        // Handle single output (no children, parent is the output)
-        else if (parentData.storage_path) {
-          outputs = [{
+          })));
+        }
+
+        // Also add parent if it has output (single output models)
+        if (parentData.storage_path) {
+          outputs.push({
             id: parentData.id,
             storage_path: parentData.storage_path,
             type: parentData.type,
@@ -113,11 +114,7 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
             provider_task_id: parentData.provider_task_id || '',
             model_id: parentData.model_id || '',
             provider: parentData.ai_models?.provider || '',
-          }];
-        }
-        // No outputs available yet
-        else {
-          outputs = [];
+          });
         }
 
         optionsRef.current.onComplete(outputs, parentData.id);

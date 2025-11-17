@@ -42,14 +42,6 @@ interface InputPanelProps {
   cameraLoading: boolean;
   isNative: boolean;
   onNativeCameraPick: (source: 'camera' | 'gallery') => Promise<void>;
-  textKey: string | undefined;
-  textKeySchema: JsonSchemaProperty | null;
-  textKeyValue: SchemaValue;
-  onTextKeyChange: SchemaChangeHandler;
-  voiceKey: string | undefined;
-  voiceKeySchema: JsonSchemaProperty | null;
-  voiceKeyValue: SchemaValue;
-  onVoiceKeyChange: SchemaChangeHandler;
   hasDuration: boolean;
   durationValue: SchemaValue;
   onDurationChange: SchemaChangeHandler;
@@ -102,14 +94,6 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   cameraLoading,
   isNative,
   onNativeCameraPick,
-  textKey,
-  textKeySchema,
-  textKeyValue,
-  onTextKeyChange,
-  voiceKey,
-  voiceKeySchema,
-  voiceKeyValue,
-  onVoiceKeyChange,
   hasDuration,
   durationValue,
   onDurationChange,
@@ -158,19 +142,11 @@ export const InputPanel: React.FC<InputPanelProps> = ({
     if (modelSchema?.properties?.prompt) specializedFields.add('prompt');
     if (modelSchema?.properties?.positivePrompt) specializedFields.add('positivePrompt');
     if (modelSchema?.properties?.positive_prompt) specializedFields.add('positive_prompt');
-    if (textKey && ['prompt', 'positiveprompt', 'positive_prompt', 'input_text', 'text'].includes(textKey.toLowerCase())) {
-      specializedFields.add(textKey);
-    }
   }
 
   // Image renderer fields
   if (useImageRenderer && imageFieldName) {
     specializedFields.add(imageFieldName);
-  }
-
-  // Voice renderer fields
-  if (useVoiceRenderer && voiceKey) {
-    specializedFields.add(voiceKey);
   }
 
   // Duration renderer fields
@@ -200,11 +176,6 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   alwaysSpecialFields.forEach(f => {
     if (modelSchema?.properties?.[f]) specializedFields.add(f);
   });
-
-  // Add textKey if it's not a prompt-like field (it renders specially above)
-  if (textKey && !['prompt', 'positiveprompt', 'positive_prompt', 'input_text', 'text'].includes(textKey.toLowerCase())) {
-    specializedFields.add(textKey);
-  }
 
   const [showScrollTop, setShowScrollTop] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -432,37 +403,13 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                 onChange={(value) => onModelParametersChange({ ...modelParameters, dimensions: value })}
                 modelId={modelId}
                 provider={provider}
-              />
-            )}
-          </div>
-        )}
+            />
+          )}
+        </div>
+      )}
 
-        {/* Primary text field (script, lyrics, etc.) */}
-        {textKey && textKeySchema && !['prompt', 'positiveprompt', 'positive_prompt', 'input_text', 'text'].includes(textKey.toLowerCase()) && (
-          <SchemaInput
-            name={textKey}
-            schema={textKeySchema}
-            value={textKeyValue}
-            onChange={onTextKeyChange}
-            modelId={modelId}
-            provider={provider}
-          />
-        )}
-
-        {/* Primary voice field for ElevenLabs */}
-        {voiceKey && voiceKeySchema && (
-          <SchemaInput
-            name={voiceKey}
-            schema={voiceKeySchema}
-            value={voiceKeyValue}
-            onChange={onVoiceKeyChange}
-            modelId={modelId}
-            provider={provider}
-          />
-        )}
-
-        {/* Duration field (outside advanced) */}
-        {hasDuration && durationSchema && (
+      {/* Duration field (outside advanced) */}
+      {hasDuration && durationSchema && (
           <SchemaInput
             name="duration"
             schema={durationSchema}

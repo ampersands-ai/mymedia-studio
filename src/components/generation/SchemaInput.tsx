@@ -83,16 +83,8 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     schema.items?.type === "object" &&
     schema.items?.properties?.inputImage?.format === "uri";
 
-  // Check if this is an image upload field (by explicit format or specific field name)
-  const isImageUpload = 
-    (schema.format === "base64" || schema.format === "binary" || schema.format === "data-url") ||
-    name === "inputImage" || // FLUX.1 Kontext Pro
-    name === "image_url" || // Qwen, Ideogram Remix
-    name === "image" || // Google Image Upscale
-    name === "filesUrl" || // ChatGPT 4o
-    name === "image_urls" || // Midjourney
-    schema.title?.toLowerCase().includes("upload") || // Catch any field with "upload" in title
-    schema.description?.toLowerCase().includes("choose file"); // Catch descriptive hints
+  // Only use explicit renderer property
+  const isImageUpload = schema.renderer === 'image';
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -118,37 +110,21 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     onChange(null);
   };
 
-  // Build array of field texts for detection
-  const fieldTexts = [name, schema?.title, schema?.description]
-    .filter(Boolean)
-    .map((s: unknown) => String(s).toLowerCase());
+  // Use explicit renderer or standard JSON schema properties only
+  const isLikelyPrimaryText = 
+    schema.renderer === 'prompt' ||
+    (schema?.type === 'string' && 
+     !schema?.enum && 
+     !isImageUpload && 
+     ['textarea', 'markdown'].includes(schema?.format || ''));
 
-  // Robust negative field detector - checks name pattern AND keywords
-  const isNegativeField = 
-    /(^|[_.-])(negative_prompt|neg_prompt)\b/.test(name.toLowerCase()) ||
-    fieldTexts.some((s: string) => /\b(negative|avoid|unwanted|exclude|without)\b/.test(s));
-
-  // Dynamic detection for primary long text field - explicitly exclude negative fields
-  const isLikelyPrimaryText = (
-    schema?.type === 'string' &&
-    !schema?.enum &&
-    !isImageUpload &&
-    !isNegativeField && ( // Global exclusion of negative fields
-      ['textarea','markdown'].includes(schema?.format) ||
-      (typeof schema?.maxLength === 'number' ? schema.maxLength >= 200 : false) ||
-      fieldTexts.some((s: string) => /\b(prompt|script|input text|text|caption|description)\b/.test(s))
-    )
-  );
-
-  // Detect secondary text fields - prioritize negative fields first
+  // Detect secondary text fields based on maxLength only
   const isSecondaryTextField = (
     schema?.type === 'string' &&
     !schema?.enum &&
     !isImageUpload &&
-    !isLikelyPrimaryText && (
-      isNegativeField || // Negative fields are always secondary/compact
-      (typeof schema?.maxLength === 'number' && schema.maxLength >= 100 && schema.maxLength < 200)
-    )
+    !isLikelyPrimaryText &&
+    (typeof schema?.maxLength === 'number' && schema.maxLength >= 100 && schema.maxLength < 200)
   );
 
   // Elegant, large textarea for primary text
@@ -388,17 +364,10 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     );
   }
 
-  const nameLc = name.toLowerCase();
-  const titleLc = (schema?.title || '').toLowerCase();
-  const descLc = (schema?.description || '').toLowerCase();
-  const voiceKeyHit = ['input.voice','voice','voice_name','voice_id'].includes(nameLc) || titleLc.includes('voice') || descLc.includes('voice');
+  // Only use explicit renderer property
+  const isVoiceField = schema.renderer === 'voice';
 
-  const isElevenLabsVoiceField = 
-    (modelId?.toLowerCase().includes('elevenlabs') ?? false) &&
-    Array.isArray(schema?.enum) &&
-    voiceKeyHit;
-
-  if (isElevenLabsVoiceField) {
+  if (isVoiceField) {
     return (
       <div className="space-y-2">
         <Label htmlFor={name}>

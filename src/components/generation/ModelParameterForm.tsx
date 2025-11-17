@@ -17,7 +17,7 @@ interface ModelParameterFormProps {
   modelSchema: unknown;
   onChange: (params: ModelParameters) => void;
   currentValues?: ModelParameters;
-  excludeFields?: string[];
+  allowedKeys?: string[];
   modelId?: string;
   provider?: string;
 }
@@ -26,19 +26,16 @@ export const ModelParameterForm = ({
   modelSchema: modelSchemaProp, 
   onChange, 
   currentValues = {}, 
-  excludeFields = [], 
+  allowedKeys, 
   modelId, 
   provider 
 }: ModelParameterFormProps) => {
-  // Convert and validate schema
   const modelSchema = toModelJsonSchema(modelSchemaProp);
   
-  // Initialize with defaults immediately to avoid timing issues
   const [parameters, setParameters] = useState<ModelParameters>(() => {
     return initializeParameters(modelSchema, currentValues);
   });
 
-  // Update when model schema changes
   useEffect(() => {
     if (!modelSchema) return;
 
@@ -47,7 +44,6 @@ export const ModelParameterForm = ({
     onChange(defaults);
   }, [modelSchema, currentValues, onChange]);
 
-  // Re-hydrate display when parent clears values (e.g., Reset)
   useEffect(() => {
     if (!modelSchema?.properties) return;
     
@@ -56,7 +52,6 @@ export const ModelParameterForm = ({
       if (!schemaProp) return;
       const schema = schemaProp as JsonSchemaProperty;
       const val = currentValues[key];
-      // If value is empty string, undefined, or null, use schema default
       if ((val === "" || val === undefined || val === null) && schema.default !== undefined) {
         rehydrated[key] = schema.default as ModelParameterValue;
       } else {
@@ -67,21 +62,17 @@ export const ModelParameterForm = ({
     setParameters(rehydrated);
   }, [currentValues, modelSchema]);
 
-  // Auto-correct invalid combinations based on dependencies
   const autoCorrectDependencies = (
     _changedField: string, 
     _newValue: ModelParameterValue, 
     updatedParams: ModelParameters
   ): ModelParameters => {
-    // Only handle dependency-based corrections, not general enum validation
-    // Let backend handle enum validation and defaults
     return updatedParams;
   };
 
   const handleParameterChange = (key: string, value: ModelParameterValue) => {
     let updated = { ...parameters, [key]: value };
     
-    // Auto-correct dependent fields
     updated = autoCorrectDependencies(key, value, updated);
     
     setParameters(updated);
@@ -95,13 +86,12 @@ export const ModelParameterForm = ({
   const properties = modelSchema.properties;
   const required = modelSchema.required || [];
 
-  // Use x-order if available to maintain parameter order
   const order = getFieldOrder(modelSchema);
   
-  // Filter out excluded fields while preserving order
-  const filteredKeys = order.filter(
-    (key: string) => !excludeFields.includes(key) && properties[key]
-  );
+  // Use allowedKeys if provided, otherwise use order
+  const filteredKeys = allowedKeys 
+    ? allowedKeys.filter(key => properties[key])
+    : order.filter((key: string) => properties[key]);
 
   return (
     <div className="space-y-4">

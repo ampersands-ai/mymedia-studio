@@ -18,14 +18,11 @@ import type {
 import type { JsonSchemaProperty, ModelJsonSchema, ModelParameters } from "@/types/model-schema";
 
 interface InputPanelProps {
-  // Model selection
   selectedModel: string | null;
   filteredModels: ModelRecord[];
   selectedGroup: CreationGroup;
   onModelChange: (modelId: string) => void;
   modelsLoading: boolean;
-
-  // Prompt
   prompt: string;
   onPromptChange: (prompt: string) => void;
   hasPromptField: boolean;
@@ -33,12 +30,8 @@ interface InputPanelProps {
   maxPromptLength: number;
   onSurpriseMe: () => void;
   generatingSurprise: boolean;
-
-  // Caption
   generateCaption: boolean;
   onGenerateCaptionChange: (enabled: boolean) => void;
-
-  // Image upload
   uploadedImages: File[];
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveImage: (index: number) => void;
@@ -49,8 +42,6 @@ interface InputPanelProps {
   cameraLoading: boolean;
   isNative: boolean;
   onNativeCameraPick: (source: 'camera' | 'gallery') => Promise<void>;
-
-  // Primary fields (text/voice)
   textKey: string | undefined;
   textKeySchema: JsonSchemaProperty | null;
   textKeyValue: SchemaValue;
@@ -59,8 +50,6 @@ interface InputPanelProps {
   voiceKeySchema: JsonSchemaProperty | null;
   voiceKeyValue: SchemaValue;
   onVoiceKeyChange: SchemaChangeHandler;
-
-  // Duration & Increment
   hasDuration: boolean;
   durationValue: SchemaValue;
   onDurationChange: SchemaChangeHandler;
@@ -68,19 +57,14 @@ interface InputPanelProps {
   hasIncrement: boolean;
   incrementValue: boolean;
   onIncrementChange: (value: boolean) => void;
-
-  // Advanced options
   advancedOpen: boolean;
   onAdvancedOpenChange: (open: boolean) => void;
   modelSchema: ModelJsonSchema | null;
   modelParameters: ModelParameters;
   onModelParametersChange: (params: ModelParameters) => void;
-  excludeFields: string[];
   modelId: string;
   provider: string;
   advancedOptionsRef: React.RefObject<HTMLDivElement>;
-
-  // Actions
   onGenerate: () => void;
   onReset: () => void;
   isGenerating: boolean;
@@ -138,7 +122,6 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   modelSchema,
   modelParameters,
   onModelParametersChange,
-  excludeFields,
   modelId,
   provider,
   advancedOptionsRef,
@@ -443,17 +426,13 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
         {/* Render parameters based purely on schema flags */}
         {(() => {
-          const availableProperties = Object.keys(modelSchema?.properties || {}).filter(
-            (key) => !excludeFields.includes(key)
-          );
+          const availableProperties = Object.keys(modelSchema?.properties || {});
           
-          // Get parameters that should be in BASIC form (not advanced, and visible to user)
           const basicParams = availableProperties.filter(key => {
             const prop = modelSchema.properties[key];
             return prop?.isAdvanced !== true && prop?.showToUser !== false;
           });
           
-          // Get parameters for ADVANCED panel (marked as advanced and visible to user)
           const advancedParams = availableProperties.filter(key => {
             const prop = modelSchema.properties[key];
             return prop?.isAdvanced === true && prop?.showToUser !== false;
@@ -481,16 +460,15 @@ export const InputPanel: React.FC<InputPanelProps> = ({
               {/* Advanced Options panel - only show if there are advanced parameters */}
               {advancedParams.length > 0 && (
                 <div ref={advancedOptionsRef}>
-                  <AdvancedOptionsPanel
-                    open={advancedOpen}
-                    onOpenChange={onAdvancedOpenChange}
-                    modelSchema={modelSchema}
-                    parameters={modelParameters}
-                    onParametersChange={onModelParametersChange}
-                    excludeFields={excludeFields}
-                    modelId={modelId}
-                    provider={provider}
-                  />
+              <AdvancedOptionsPanel
+                open={advancedOpen}
+                onOpenChange={onAdvancedOpenChange}
+                modelSchema={modelSchema}
+                parameters={modelParameters}
+                onParametersChange={onModelParametersChange}
+                modelId={modelId}
+                provider={provider}
+              />
                 </div>
               )}
             </>

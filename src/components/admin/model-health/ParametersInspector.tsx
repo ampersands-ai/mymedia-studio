@@ -9,7 +9,7 @@ import { useMemo, useState } from "react";
 
 interface ParametersInspectorProps {
   schema: JsonSchema;
-  originalSchema?: JsonSchema;  // NEW: for comparing modifications
+  originalSchema?: JsonSchema;
   currentValues: Record<string, any>;
   onValueChange: (name: string, value: any) => void;
   onPushToSchema: (name: string, value: any) => void;
@@ -20,11 +20,17 @@ interface ParametersInspectorProps {
   imageFields?: string[];
   onToggleImageField?: (name: string) => void;
   onRevertToDefault?: () => void;
+  onTogglePromptRenderer?: (enabled: boolean) => void;
+  onToggleImageRenderer?: (enabled: boolean) => void;
+  onToggleVoiceRenderer?: (enabled: boolean) => void;
+  onToggleDurationRenderer?: (enabled: boolean) => void;
+  onToggleIncrementRenderer?: (enabled: boolean) => void;
+  onToggleOutputFormatRenderer?: (enabled: boolean) => void;
 }
 
 export const ParametersInspector = ({
   schema,
-  originalSchema,  // NEW
+  originalSchema,
   currentValues,
   onValueChange,
   onPushToSchema,
@@ -35,6 +41,12 @@ export const ParametersInspector = ({
   imageFields = [],
   onToggleImageField = () => {},
   onRevertToDefault,
+  onTogglePromptRenderer = () => {},
+  onToggleImageRenderer = () => {},
+  onToggleVoiceRenderer = () => {},
+  onToggleDurationRenderer = () => {},
+  onToggleIncrementRenderer = () => {},
+  onToggleOutputFormatRenderer = () => {},
 }: ParametersInspectorProps) => {
   const [activeTab, setActiveTab] = useState('all');
 

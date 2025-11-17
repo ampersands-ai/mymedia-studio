@@ -264,16 +264,6 @@ const ComprehensiveModelTestPage = () => {
     return promptProp?.maxLength;
   }, [currentModel]);
 
-  const excludeFields = useMemo(() => {
-    const fields = ['prompt'];
-    if (imageFieldInfo.fieldName) fields.push(imageFieldInfo.fieldName);
-    if (textKey) fields.push(textKey);
-    if (voiceKey) fields.push(voiceKey);
-    if (hasDuration) fields.push('duration');
-    if (hasIncrement) fields.push('loop');
-    return fields;
-  }, [imageFieldInfo, textKey, voiceKey, hasDuration, hasIncrement]);
-
   const textKeyValue = state.modelParameters[textKey || ''];
   const voiceKeyValue = state.modelParameters[voiceKey || ''];
   const durationValue = state.modelParameters['duration'];
@@ -617,6 +607,108 @@ const ComprehensiveModelTestPage = () => {
     }
   }, [currentModel, originalSchema, queryClient]);
 
+  const handleTogglePromptRenderer = useCallback(async (enabled: boolean) => {
+    if (!currentModel) return;
+    try {
+      const updated = { ...currentModel.input_schema, usePromptRenderer: enabled };
+      await supabase
+        .from('ai_models')
+        .update({ input_schema: updated })
+        .eq('record_id', currentModel.record_id);
+      queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-models'] });
+      toast.success(`Prompt renderer ${enabled ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      console.error('Update error:', error);
+      toast.error("Failed to update renderer");
+    }
+  }, [currentModel, queryClient]);
+
+  const handleToggleImageRenderer = useCallback(async (enabled: boolean) => {
+    if (!currentModel) return;
+    try {
+      const updated = { ...currentModel.input_schema, useImageRenderer: enabled };
+      await supabase
+        .from('ai_models')
+        .update({ input_schema: updated })
+        .eq('record_id', currentModel.record_id);
+      queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-models'] });
+      toast.success(`Image renderer ${enabled ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      console.error('Update error:', error);
+      toast.error("Failed to update renderer");
+    }
+  }, [currentModel, queryClient]);
+
+  const handleToggleVoiceRenderer = useCallback(async (enabled: boolean) => {
+    if (!currentModel) return;
+    try {
+      const updated = { ...currentModel.input_schema, useVoiceRenderer: enabled };
+      await supabase
+        .from('ai_models')
+        .update({ input_schema: updated })
+        .eq('record_id', currentModel.record_id);
+      queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-models'] });
+      toast.success(`Voice renderer ${enabled ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      console.error('Update error:', error);
+      toast.error("Failed to update renderer");
+    }
+  }, [currentModel, queryClient]);
+
+  const handleToggleDurationRenderer = useCallback(async (enabled: boolean) => {
+    if (!currentModel) return;
+    try {
+      const updated = { ...currentModel.input_schema, useDurationRenderer: enabled };
+      await supabase
+        .from('ai_models')
+        .update({ input_schema: updated })
+        .eq('record_id', currentModel.record_id);
+      queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-models'] });
+      toast.success(`Duration renderer ${enabled ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      console.error('Update error:', error);
+      toast.error("Failed to update renderer");
+    }
+  }, [currentModel, queryClient]);
+
+  const handleToggleIncrementRenderer = useCallback(async (enabled: boolean) => {
+    if (!currentModel) return;
+    try {
+      const updated = { ...currentModel.input_schema, useIncrementRenderer: enabled };
+      await supabase
+        .from('ai_models')
+        .update({ input_schema: updated })
+        .eq('record_id', currentModel.record_id);
+      queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-models'] });
+      toast.success(`Increment renderer ${enabled ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      console.error('Update error:', error);
+      toast.error("Failed to update renderer");
+    }
+  }, [currentModel, queryClient]);
+
+  const handleToggleOutputFormatRenderer = useCallback(async (enabled: boolean) => {
+    if (!currentModel) return;
+    try {
+      const updated = { ...currentModel.input_schema, useOutputFormatRenderer: enabled };
+      await supabase
+        .from('ai_models')
+        .update({ input_schema: updated })
+        .eq('record_id', currentModel.record_id);
+      queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-models'] });
+      toast.success(`Output format renderer ${enabled ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      console.error('Update error:', error);
+      toast.error("Failed to update renderer");
+    }
+  }, [currentModel, queryClient]);
+
   const handleGenerateDocumentation = useCallback(async () => {
     if (!currentModel) return;
 
@@ -708,7 +800,7 @@ const ComprehensiveModelTestPage = () => {
         modelSchema={currentModel?.input_schema as ModelJsonSchema || null}
         modelParameters={state.modelParameters}
         onModelParametersChange={handleModelParametersChange}
-        excludeFields={excludeFields}
+        excludeFields={[]}
         modelId={currentModel?.id || ''}
         provider={currentModel?.provider || ''}
         advancedOptionsRef={advancedOptionsRef}
@@ -854,6 +946,12 @@ const ComprehensiveModelTestPage = () => {
                 imageFields={currentModel.input_schema?.imageInputField ? [currentModel.input_schema.imageInputField] : []}
                 onToggleImageField={handleToggleImageField}
                 onRevertToDefault={handleRevertToDefault}
+                onTogglePromptRenderer={handleTogglePromptRenderer}
+                onToggleImageRenderer={handleToggleImageRenderer}
+                onToggleVoiceRenderer={handleToggleVoiceRenderer}
+                onToggleDurationRenderer={handleToggleDurationRenderer}
+                onToggleIncrementRenderer={handleToggleIncrementRenderer}
+                onToggleOutputFormatRenderer={handleToggleOutputFormatRenderer}
               />
       )}
 

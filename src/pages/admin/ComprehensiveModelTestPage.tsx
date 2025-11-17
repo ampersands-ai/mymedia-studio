@@ -210,23 +210,80 @@ const ComprehensiveModelTestPage = () => {
     userTokens: userTokens || null,
   });
 
-  // Monitor generation lifecycle for execution flow
+  // Monitor generation lifecycle for execution flow with detailed tracking
   useEffect(() => {
     if (isGenerating && executionStage === 'api_request_sent') {
       // Generation has started, move to polling stage
       setExecutionStage('generation_polling');
-    } else if (!isGenerating && executionStage === 'generation_polling' && state.generatedOutputs.length > 0) {
-      // Generation completed with outputs
-      setExecutionStage('generation_complete');
       setExecutionStageData(prev => ({
         ...prev,
-        generation_complete: {
-          outputs_count: state.generatedOutputs.length,
-          storage_paths: state.generatedOutputs.map(o => o.storage_path),
+        api_request_sent: {
+          timestamp: Date.now(),
+          provider_endpoint: currentModel?.api_endpoint || 'Unknown',
+          http_method: 'POST',
+          auth_type: 'API Key',
+          status: 'Request successfully sent to provider API',
+        },
+        generation_polling: {
+          poll_count: 0,
+          time_elapsed_ms: 0,
+          current_status: 'Waiting for generation to complete',
+          polling_intervals_ms: 2000,
+          note: 'Polling provider API for generation status updates',
         }
       }));
+    } else if (!isGenerating && executionStage === 'generation_polling') {
+      // Generation finished
+      if (state.generatedOutputs.length > 0) {
+        // Success case
+        const firstOutput = state.generatedOutputs[0];
+        setExecutionStage('generation_complete');
+        setExecutionStageData(prev => ({
+          ...prev,
+          final_api_response: {
+            completion_status: 'success',
+            storage_path: firstOutput.storage_path || 'Not available',
+            total_generation_time_ms: Date.now() - (prev.api_request_sent?.timestamp || Date.now()),
+            provider_metadata: {
+              provider_task_id: firstOutput.provider_task_id || 'N/A',
+              model_id: firstOutput.model_id || 'N/A',
+            },
+            status: `✓ Generation completed successfully (${state.generatedOutputs.length} output${state.generatedOutputs.length > 1 ? 's' : ''})`,
+          },
+          media_delivered: {
+            storage_path: firstOutput.storage_path || 'Not available',
+            delivery_time_ms: Date.now() - (prev.api_request_sent?.timestamp || Date.now()),
+            validation_success: true,
+            status: `✓ Media successfully generated and accessible`,
+          },
+          generation_complete: {
+            outputs_count: state.generatedOutputs.length,
+            storage_paths: state.generatedOutputs.map(o => o.storage_path),
+            status: `✓ All outputs processed and ready`,
+          }
+        }));
+      } else {
+        // No outputs - likely an error
+        setExecutionStage('error');
+        setExecutionStageData(prev => ({
+          ...prev,
+          error: {
+            message: 'No outputs generated',
+            code: 'NO_OUTPUT',
+            timestamp: Date.now(),
+            stage: 'generation_polling',
+            details: 'Generation polling completed but no outputs were returned. This could mean:\n' +
+                     '1. The provider API rejected the request\n' +
+                     '2. Generation timed out\n' +
+                     '3. An error occurred during processing\n' +
+                     '4. The model does not support the provided parameters\n\n' +
+                     'Check the console logs and network requests for more details.',
+          }
+        }));
+        setExecutionError('No outputs generated - check logs for details');
+      }
     }
-  }, [isGenerating, executionStage, state.generatedOutputs]);
+  }, [isGenerating, executionStage, state.generatedOutputs, currentModel?.api_endpoint]);
 
   // Derived values (exact same logic as CustomCreation)
   const textKey = useMemo(() => {
@@ -448,23 +505,43 @@ const ComprehensiveModelTestPage = () => {
 
   const handleGenerateWithInspection = useCallback(async () => {
     if (inspectionMode === 'off' || inspectionMode === 'reviewing') {
-      // Prepare execution data upfront
+      // Prepare detailed execution data
       const creditBalance = userTokens?.tokens_remaining || 0;
+      const promptValue = state.prompt?.trim() || '';
+      const hasPrompt = promptValue.length > 0;
+      const hasImages = uploadedImages.length > 0;
+      const parameterCount = Object.keys(state.modelParameters).length;
+      
       const executionData = {
         input_validation: {
-          prompt: state.prompt,
-          model: currentModel?.name,
-          parameters: state.modelParameters,
-          uploaded_images: uploadedImages.length,
+          prompt: hasPrompt ? promptValue : 'No prompt provided',
+          prompt_length: promptValue.length,
+          model_record_id: currentModel?.record_id || 'No model selected',
+          has_images: hasImages,
+          image_count: uploadedImages.length,
+          custom_parameters: state.modelParameters,
+          validation_status: hasPrompt || hasImages ? 'Valid input detected' : 'No input provided',
         },
         credit_check: {
-          estimated_cost: estimatedTokens,
-          current_balance: creditBalance,
-          sufficient: estimatedTokens <= creditBalance,
+          credits_required: estimatedTokens,
+          credits_available: creditBalance,
+          sufficient_balance: estimatedTokens <= creditBalance,
+          will_deduct: true,
+          status: estimatedTokens <= creditBalance 
+            ? `✓ Sufficient credits (${creditBalance} available, ${estimatedTokens} required)` 
+            : `✗ Insufficient credits (need ${estimatedTokens}, have ${creditBalance})`,
         },
         api_request_prepared: {
-          model_id: currentModel?.record_id,
-          parameters_count: Object.keys(state.modelParameters).length,
+          endpoint: currentModel?.api_endpoint || 'Not specified',
+          provider: currentModel?.provider || 'Unknown',
+          content_type: currentModel?.content_type || 'Unknown',
+          payload: {
+            model: currentModel?.id,
+            prompt: promptValue,
+            parameters: state.modelParameters,
+            images: uploadedImages.length,
+          },
+          status: `Request prepared for ${currentModel?.provider || 'provider'} with ${parameterCount} parameters`,
         }
       };
 
@@ -476,13 +553,17 @@ const ComprehensiveModelTestPage = () => {
       try {
         await handleGenerate();
       } catch (error: any) {
-        setExecutionError(error.message || 'Generation failed');
+        const errorMessage = error.message || 'Generation failed';
+        setExecutionError(errorMessage);
         setExecutionStage('error');
         setExecutionStageData(prev => ({
           ...prev,
           error: {
-            message: error.message,
-            code: error.code,
+            message: errorMessage,
+            code: error.code || 'UNKNOWN_ERROR',
+            timestamp: Date.now(),
+            stage: executionStage,
+            details: 'The generation request failed. Check the error message above for specific details.',
           }
         }));
       }

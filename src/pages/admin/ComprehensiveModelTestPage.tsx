@@ -461,15 +461,20 @@ const ComprehensiveModelTestPage = () => {
   }, [currentModel, queryClient]);
 
   const handlePushAllToSchema = useCallback(async () => {
-    if (!currentModel) return;
+    if (!currentModel || !originalSchema) return;
 
     try {
       const updatedSchema = JSON.parse(JSON.stringify(currentModel.input_schema));
       let updateCount = 0;
 
+      // Compare against ORIGINAL schema defaults, not current ones
       Object.entries(state.modelParameters).forEach(([key, value]) => {
-        const schemaDefault = updatedSchema.properties[key]?.default;
-        if (JSON.stringify(value) !== JSON.stringify(schemaDefault)) {
+        const originalDefault = originalSchema.properties?.[key]?.default;
+        const currentDefault = updatedSchema.properties?.[key]?.default;
+        
+        // Only update if value differs from original AND is not already in current schema
+        if (JSON.stringify(value) !== JSON.stringify(originalDefault) && 
+            JSON.stringify(value) !== JSON.stringify(currentDefault)) {
           updatedSchema.properties[key].default = value;
           updateCount++;
         }
@@ -820,9 +825,10 @@ const ComprehensiveModelTestPage = () => {
 
       {/* Parameter Inspector */}
       {currentModel && (
-              <ParametersInspector
-                schema={currentModel.input_schema as any}
-                currentValues={state.modelParameters}
+          <ParametersInspector
+            schema={currentModel.input_schema as any}
+            originalSchema={originalSchema}
+            currentValues={state.modelParameters}
                 onValueChange={(name, value) => {
                   updateState({ modelParameters: { ...state.modelParameters, [name]: value } });
                 }}

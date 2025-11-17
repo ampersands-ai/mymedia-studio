@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 
 interface ParametersInspectorProps {
   schema: JsonSchema;
+  originalSchema?: JsonSchema;  // NEW: for comparing modifications
   currentValues: Record<string, any>;
   onValueChange: (name: string, value: any) => void;
   onPushToSchema: (name: string, value: any) => void;
@@ -23,6 +24,7 @@ interface ParametersInspectorProps {
 
 export const ParametersInspector = ({
   schema,
+  originalSchema,  // NEW
   currentValues,
   onValueChange,
   onPushToSchema,
@@ -51,8 +53,11 @@ export const ParametersInspector = ({
       const item = { name, schema: propSchema, isRequired };
       
       const currentValue = currentValues[name];
-      const defaultValue = propSchema.default;
-      if (JSON.stringify(currentValue) !== JSON.stringify(defaultValue)) {
+      // Compare against original schema if available, otherwise current schema
+      const originalDefault = originalSchema?.properties?.[name]?.default;
+      const compareValue = originalDefault !== undefined ? originalDefault : propSchema.default;
+      
+      if (JSON.stringify(currentValue) !== JSON.stringify(compareValue)) {
         modified++;
       }
 
@@ -74,7 +79,7 @@ export const ParametersInspector = ({
       allParams: all,
       modifiedCount: modified,
     };
-  }, [schema, currentValues]);
+  }, [schema, originalSchema, currentValues]);
 
   const exportConfiguration = () => {
     const config = {
@@ -100,8 +105,10 @@ export const ParametersInspector = ({
       <div className="space-y-4">
         {params.map(({ name, schema: paramSchema, isRequired }) => {
           const currentValue = currentValues[name];
-          const defaultValue = paramSchema.default;
-          const isModified = JSON.stringify(currentValue) !== JSON.stringify(defaultValue);
+          // Compare against original schema if available
+          const originalDefault = originalSchema?.properties?.[name]?.default;
+          const compareValue = originalDefault !== undefined ? originalDefault : paramSchema.default;
+          const isModified = JSON.stringify(currentValue) !== JSON.stringify(compareValue);
 
           return (
             <ParameterMetadataCard
@@ -109,7 +116,7 @@ export const ParametersInspector = ({
               name={name}
               schema={paramSchema}
               value={currentValue}
-              defaultValue={defaultValue}
+              defaultValue={paramSchema.default}
               isRequired={isRequired}
               isModified={isModified}
               onValueChange={onValueChange}

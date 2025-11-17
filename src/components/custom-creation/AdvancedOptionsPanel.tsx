@@ -34,11 +34,11 @@ export const AdvancedOptionsPanel: React.FC<AdvancedOptionsPanelProps> = ({
     return null;
   }
 
-  // Check if there are any ADVANCED parameters specifically
+  // Check if there are any ADVANCED parameters specifically that should be shown to users
   const advancedProperties = Object.keys(modelSchema.properties).filter(
     (key) => {
       const prop = modelSchema.properties![key];
-      return prop.isAdvanced === true && !excludeFields.includes(key);
+      return prop.isAdvanced === true && prop.showToUser !== false && !excludeFields.includes(key);
     }
   );
 

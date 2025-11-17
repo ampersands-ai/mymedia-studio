@@ -441,34 +441,30 @@ export const InputPanel: React.FC<InputPanelProps> = ({
           </div>
         )}
 
-        {/* Render remaining parameters based on count */}
+        {/* Render parameters based purely on schema flags */}
         {(() => {
           const availableProperties = Object.keys(modelSchema?.properties || {}).filter(
             (key) => !excludeFields.includes(key)
           );
           
-          // Get parameters that should be in Advanced Options based on schema
+          // Get parameters that should be in BASIC form (not advanced, and visible to user)
+          const basicParams = availableProperties.filter(key => {
+            const prop = modelSchema.properties[key];
+            return prop?.isAdvanced !== true && prop?.showToUser !== false;
+          });
+          
+          // Get parameters for ADVANCED panel (marked as advanced and visible to user)
           const advancedParams = availableProperties.filter(key => {
             const prop = modelSchema.properties[key];
-            return prop?.isAdvanced === true;
+            return prop?.isAdvanced === true && prop?.showToUser !== false;
           });
-
-          // Get remaining flexible parameters (not excluded, not advanced)
-          const flexibleParams = availableProperties.filter(
-            (key) => !advancedParams.includes(key)
-          );
-          
-          // Show flexible parameters outside if less than 3
-          const showOutside = flexibleParams.length > 0 && flexibleParams.length < 3;
-          
-          // Only show Advanced Options panel if there are advanced params OR 3+ flexible params
-          const showAdvancedPanel = advancedParams.length > 0 || flexibleParams.length >= 3;
           
           return (
             <>
-              {showOutside && (
+              {/* Basic parameters - always show outside */}
+              {basicParams.length > 0 && (
                 <div className="space-y-4">
-                  {flexibleParams.map((key) => (
+                  {basicParams.map((key) => (
                     <SchemaInput
                       key={key}
                       name={key}
@@ -482,7 +478,8 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                 </div>
               )}
               
-              {showAdvancedPanel && (
+              {/* Advanced Options panel - only show if there are advanced parameters */}
+              {advancedParams.length > 0 && (
                 <div ref={advancedOptionsRef}>
                   <AdvancedOptionsPanel
                     open={advancedOpen}
@@ -490,7 +487,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                     modelSchema={modelSchema}
                     parameters={modelParameters}
                     onParametersChange={onModelParametersChange}
-                    excludeFields={[...excludeFields, ...(showOutside ? flexibleParams : [])]}
+                    excludeFields={excludeFields}
                     modelId={modelId}
                     provider={provider}
                   />

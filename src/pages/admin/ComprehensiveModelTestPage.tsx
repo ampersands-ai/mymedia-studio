@@ -431,6 +431,8 @@ const ComprehensiveModelTestPage = () => {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-model', currentModel.record_id] });
       toast.success(`Updated ${paramName}`);
     } catch (error) {
       console.error('Schema update error:', error);
@@ -453,6 +455,8 @@ const ComprehensiveModelTestPage = () => {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-model', currentModel.record_id] });
       toast.success(`Moved ${paramName} to ${currentState ? 'basic' : 'advanced'} options`);
     } catch (error) {
       console.error('Schema update error:', error);
@@ -493,6 +497,8 @@ const ComprehensiveModelTestPage = () => {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-model', currentModel.record_id] });
       toast.success(`Updated ${updateCount} parameter(s)`);
     } catch (error) {
       console.error('Batch schema update error:', error);
@@ -522,6 +528,8 @@ const ComprehensiveModelTestPage = () => {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-model', currentModel.record_id] });
       toast.success(`${isCurrentlyImage ? 'Removed' : 'Added'} image field for ${paramName}`);
     } catch (error) {
       console.error('Image field toggle error:', error);
@@ -545,6 +553,8 @@ const ComprehensiveModelTestPage = () => {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-model', currentModel.record_id] });
       toast.success(`${paramName} is now ${currentState ? 'visible' : 'hidden'} to users`);
     } catch (error) {
       console.error('Hidden toggle error:', error);
@@ -577,6 +587,8 @@ const ComprehensiveModelTestPage = () => {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-model', currentModel.record_id] });
       toast.success(`${paramName} is now ${currentState ? 'optional' : 'required'}`);
     } catch (error) {
       console.error('Required toggle error:', error);
@@ -596,6 +608,8 @@ const ComprehensiveModelTestPage = () => {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-models'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-model', currentModel.record_id] });
       toast.success("Reverted to original schema");
     } catch (error) {
       console.error('Revert error:', error);

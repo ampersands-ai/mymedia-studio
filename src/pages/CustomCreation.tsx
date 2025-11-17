@@ -16,6 +16,7 @@ import { useImageUpload } from "@/hooks/useImageUpload";
 import { useCaptionGeneration } from "@/hooks/useCaptionGeneration";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
 import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
+import { useQueryClient } from "@tanstack/react-query";
 import type { GenerationOutput } from "@/hooks/useGenerationState";
 import { CreationGroupSelector } from "@/components/custom-creation/CreationGroupSelector";
 import { InputPanel } from "@/components/custom-creation/InputPanel";
@@ -32,6 +33,7 @@ const CustomCreation = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const outputSectionRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
   // State management
   const { 
@@ -348,6 +350,25 @@ const CustomCreation = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.pollingGenerationId, stopPolling, updateState, progress, updateProgress, setFirstGeneration, state.generateCaption]);
 
+  // Realtime subscription for ai_models updates (schema changes from admin)
+  useEffect(() => {
+    const channel = supabase
+      .channel('ai-models-changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'ai_models' 
+      }, () => {
+        console.log('🔄 AI Models schema updated, refreshing...');
+        queryClient.invalidateQueries({ queryKey: ['ai-models'] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
 
   // Image upload
   const {
@@ -632,24 +653,16 @@ const CustomCreation = () => {
             modelId={state.selectedModel || ''}
             provider={currentModel?.provider || ''}
             excludeFields={[
-              // Image/file upload fields
-              'prompt', 'positivePrompt', 'positive_prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 
-              'filesUrl', 'fileUrls', 'reference_image_urls', 'frameImages',
-              
-              // Primary fields already shown
-              textKey || '', voiceKey || '', 'duration', 'increment', 'incrementBySeconds',
-              
-              // Number of images fields (move outside advanced)
-              'num_images', 'max_images', 'numberOfImages', 'numImages', 'number_of_images',
-              
-              // Aspect ratio / size fields (move outside advanced)
-              'aspect_ratio', 'aspectRatio', 'image_size', 'imageSize', 'image_resolution', 
-              'imageResolution', 'resolution', 'size', 'dimensions',
-              
-              // Output format field (move outside advanced)
-              'outputFormat', 'output_format', 'format',
-              
-              // NOTE: negative_prompt is NOT here - it stays in Advanced Options
+              // Only exclude fields that are rendered specially
+              'prompt',
+              'positivePrompt',
+              'positive_prompt',
+              imageFieldInfo.fieldName || '',
+              textKey || '',
+              voiceKey || '',
+              hasDuration ? 'duration' : '',
+              hasIncrement ? 'increment' : '',
+              hasIncrement ? 'incrementBySeconds' : '',
             ].filter(Boolean) as string[]}
             onReset={() => {
               handleCancelGeneration(state.pollingGenerationId);

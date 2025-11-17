@@ -1,21 +1,4 @@
-export interface ProviderRequest {
-  model: string;
-  prompt: string;
-  parameters: Record<string, any>;
-  api_endpoint?: string;
-  payload_structure?: string;
-  userId?: string; // For storage path generation
-  generationId?: string; // For storage path generation
-  supabase?: any; // Supabase client for presigned URLs
-}
-
-export interface ProviderResponse {
-  output_data: Uint8Array;
-  file_extension: string;
-  file_size: number;
-  metadata: Record<string, any>;
-  storage_path?: string; // Optional: indicates content already uploaded to storage
-}
+import { ProviderRequest, ProviderResponse } from "./index.ts";
 
 function uint8ArrayToBase64(bytes: Uint8Array): string {
   let binary = '';
@@ -111,20 +94,7 @@ async function pollForVideoResult(taskUUID: string, apiKey: string, apiUrl: stri
   throw new Error("Video generation timed out after 60 seconds");
 }
 
-// Model-specific parameter restrictions
-const MODEL_RESTRICTIONS: Record<string, string[]> = {
-  'bytedance:': ['outputFormat', 'outputQuality'], // Seedance models
-  'runware:110': ['outputFormat'], // Background removal
-};
-
-function isParameterSupported(model: string, paramName: string): boolean {
-  for (const [modelPrefix, unsupportedParams] of Object.entries(MODEL_RESTRICTIONS)) {
-    if (model.startsWith(modelPrefix) && unsupportedParams.includes(paramName)) {
-      return false;
-    }
-  }
-  return true;
-}
+// Removed hardcoded MODEL_RESTRICTIONS - now using dynamic schema-based validation
 
 export async function callRunware(
   request: ProviderRequest
@@ -145,24 +115,41 @@ export async function callRunware(
   
   console.log('[Runware] API call starting', { model: cleanModel, taskUUID });
 
-  // Normalize numeric parameters
+  // Get schema properties (what fields this model actually accepts)
   const params = request.parameters || {};
-  
-  // Compute effective prompt with comprehensive fallbacks
-  const effectivePrompt = (
-    request.prompt?.trim() || 
-    params.positivePrompt?.trim() || 
-    params.prompt?.trim() || 
-    ''
-  );
-  
-  // Strict validation
-  if (!effectivePrompt || effectivePrompt.length < 2) {
-    console.error('[Runware] Missing prompt', { hasRequestPrompt: !!request.prompt, hasParamsPrompt: !!params.positivePrompt });
-    throw new Error('Missing required parameter: positivePrompt');
-  }
-  if (effectivePrompt.length > 3000) {
-    throw new Error('Prompt must be less than 3000 characters.');
+  const schemaProperties = request.input_schema?.properties || {};
+  const requiredFields = request.input_schema?.required || [];
+
+  // Handle prompt fields dynamically (prompt, positivePrompt, positive_prompt)
+  const promptAliases = ['prompt', 'positivePrompt', 'positive_prompt'];
+  const promptField = promptAliases.find(alias => schemaProperties[alias]);
+
+  let effectivePrompt = '';
+  if (promptField) {
+    // Check if this model's schema requires a prompt
+    const isPromptRequired = requiredFields.includes(promptField);
+    
+    // Get effective prompt value
+    effectivePrompt = (
+      request.prompt?.trim() || 
+      params[promptField]?.trim() || 
+      ''
+    );
+    
+    // Validate ONLY if schema says it's required
+    if (isPromptRequired && (!effectivePrompt || effectivePrompt.length < 2)) {
+      console.error('[Runware] Missing required prompt', { 
+        promptField, 
+        isRequired: isPromptRequired,
+        hasRequestPrompt: !!request.prompt,
+        hasParamsPrompt: !!params[promptField]
+      });
+      throw new Error(`Missing required parameter: ${promptField}`);
+    }
+    
+    if (effectivePrompt && effectivePrompt.length > 3000) {
+      throw new Error('Prompt must be less than 3000 characters.');
+    }
   }
   
   console.log('[Runware] Prompt', { prompt: effectivePrompt.substring(0, 100), truncated: effectivePrompt.length > 100 });
@@ -198,53 +185,23 @@ export async function callRunware(
     }
   }
   
-  // Build task payload - trust validated parameters from schema
+  // Build task payload dynamically from schema
   const taskPayload: any = {
     taskType,
     taskUUID,
     model: cleanModel,
-    positivePrompt: effectivePrompt,
   };
 
-  // Common parameters (with model-specific filtering)
-  if (params.width !== undefined) taskPayload.width = Number(params.width);
-  if (params.height !== undefined) taskPayload.height = Number(params.height);
-  if (params.numberResults !== undefined) taskPayload.numberResults = Number(params.numberResults);
-  if (params.outputFormat !== undefined && isParameterSupported(cleanModel, 'outputFormat')) {
-    taskPayload.outputFormat = params.outputFormat;
+  // ONLY add parameters that exist in the schema
+  for (const [key, value] of Object.entries(params)) {
+    if (schemaProperties[key]) {
+      taskPayload[key] = value;
+    }
   }
-  if (params.outputQuality !== undefined && isParameterSupported(cleanModel, 'outputQuality')) {
-    taskPayload.outputQuality = Number(params.outputQuality);
-  }
-  taskPayload.includeCost = params.includeCost ?? true;
 
-  // Image-specific parameters
-  if (!isVideo) {
-    if (params.outputType !== undefined) taskPayload.outputType = params.outputType;
-    if (params.steps !== undefined) taskPayload.steps = Number(params.steps);
-    if (params.CFGScale !== undefined) taskPayload.CFGScale = Number(params.CFGScale);
-    if (params.scheduler !== undefined) taskPayload.scheduler = params.scheduler;
-    if (params.seed !== undefined) taskPayload.seed = Number(params.seed);
-    if (params.strength !== undefined) taskPayload.strength = Number(params.strength);
-    if (params.lora !== undefined) taskPayload.lora = params.lora;
-    taskPayload.checkNSFW = params.checkNSFW ?? true;
-  }
-  
-  // Video-specific parameters
-  if (isVideo) {
-    if (params.fps !== undefined) taskPayload.fps = Number(params.fps);
-    if (params.duration !== undefined) taskPayload.duration = Math.round(Number(params.duration));
-    if (params.frameImages !== undefined) {
-      console.log('[Runware Video] Converting frames', { count: params.frameImages.length });
-      taskPayload.frameImages = await convertFrameImagesToRunwareFormat(params.frameImages);
-    }
-    if (params.providerSettings !== undefined) taskPayload.providerSettings = params.providerSettings;
-    
-    // Add uploadEndpoint for direct upload to storage
-    if (presignedUrl) {
-      taskPayload.uploadEndpoint = presignedUrl;
-      console.log('[Runware Video] Using direct storage upload');
-    }
+  // Set prompt if we have a value
+  if (effectivePrompt && promptField) {
+    taskPayload[promptField] = effectivePrompt;
   }
 
   // Build request payload with authentication and task

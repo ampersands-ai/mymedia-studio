@@ -5,6 +5,10 @@ export interface ProviderRequest {
   prompt: string;
   parameters: Record<string, any>;
   uploadEndpoint?: string; // For video direct upload (presigned URL)
+  input_schema?: any; // Model's JSON schema for dynamic validation
+  userId?: string; // For storage path generation (sync only)
+  generationId?: string; // For storage path generation (sync only)
+  supabase?: any; // Supabase client for presigned URLs (sync only)
 }
 
 export interface ProviderResponse {

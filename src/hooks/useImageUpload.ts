@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNativeCamera } from "@/hooks/useNativeCamera";
@@ -7,6 +7,56 @@ import { getImageFieldInfo } from "@/lib/custom-creation-utils";
 import type { Database } from "@/integrations/supabase/types";
 
 type AIModel = Database['public']['Tables']['ai_models']['Row'];
+
+const STORAGE_KEY_PREFIX = 'uploadedImages_';
+
+/**
+ * Convert File to storable format (with data URL)
+ */
+const fileToStorable = async (file: File) => ({
+  name: file.name,
+  type: file.type,
+  size: file.size,
+  lastModified: file.lastModified,
+  dataUrl: await fileToDataUrl(file),
+});
+
+/**
+ * Convert File to base64 data URL
+ */
+const fileToDataUrl = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
+/**
+ * Reconstruct File from stored data
+ */
+const storableToFile = (stored: any): File => {
+  const arr = stored.dataUrl.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1] || stored.type;
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], stored.name, { 
+    type: stored.type,
+    lastModified: stored.lastModified,
+  });
+};
+
+/**
+ * Get storage key based on current model
+ */
+const getStorageKey = (modelId: string | null) => {
+  return `${STORAGE_KEY_PREFIX}${modelId || 'default'}`;
+};
 
 /**
  * Image upload management with validation and native camera support
@@ -17,6 +67,45 @@ export const useImageUpload = (currentModel: AIModel | null) => {
   const { pickImage, pickMultipleImages, isLoading: cameraLoading, isNative } = useNativeCamera();
   
   const imageFieldInfo = getImageFieldInfo(currentModel);
+
+  // Load persisted images from sessionStorage on mount or model change
+  useEffect(() => {
+    const storageKey = getStorageKey(currentModel?.record_id || null);
+    const stored = sessionStorage.getItem(storageKey);
+    
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        const files = parsed.map(storableToFile);
+        setUploadedImages(files);
+        console.log(`Restored ${files.length} images from sessionStorage`);
+      } catch (err) {
+        console.error('Failed to restore images:', err);
+        sessionStorage.removeItem(storageKey);
+      }
+    } else {
+      // Clear images when switching models
+      setUploadedImages([]);
+    }
+  }, [currentModel?.record_id]);
+
+  // Persist images to sessionStorage when they change
+  useEffect(() => {
+    const storageKey = getStorageKey(currentModel?.record_id || null);
+    
+    if (uploadedImages.length > 0) {
+      Promise.all(uploadedImages.map(fileToStorable))
+        .then(storable => {
+          sessionStorage.setItem(storageKey, JSON.stringify(storable));
+          console.log(`Persisted ${storable.length} images to sessionStorage`);
+        })
+        .catch(err => {
+          console.error('Failed to persist images:', err);
+        });
+    } else {
+      sessionStorage.removeItem(storageKey);
+    }
+  }, [uploadedImages, currentModel?.record_id]);
 
   /**
    * Handle file upload from input

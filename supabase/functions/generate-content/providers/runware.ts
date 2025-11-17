@@ -102,12 +102,11 @@ async function pollForVideoResult(
 
 // Removed hardcoded MODEL_RESTRICTIONS - now using dynamic schema-based validation
 
-export async function callRunware(
-  request: ProviderRequest
-): Promise<ProviderResponse> {
-  const RUNWARE_API_KEY = Deno.env.get('RUNWARE_API_KEY');
+export async function callRunware(request: ProviderRequest): Promise<ProviderResponse> {
+  console.log(JSON.stringify({ event: 'runware_call_start', model: request.model }));
   
-  if (!RUNWARE_API_KEY) {
+  const API_KEY = Deno.env.get('RUNWARE_API_KEY');
+  if (!API_KEY) {
     throw new Error('RUNWARE_API_KEY not configured');
   }
 
@@ -118,6 +117,18 @@ export async function callRunware(
   
   // Clean model ID (remove any trailing quotes or whitespace)
   const cleanModel = request.model.replace(/["'\s]+$/g, '');
+
+  // Extract prompt from parameters ONLY (never from top-level)
+  const prompt = request.parameters.prompt || 
+                request.parameters.positivePrompt || 
+                request.parameters.positive_prompt || 
+                '';
+
+  console.log(JSON.stringify({ 
+    event: 'prompt_extraction', 
+    hasPrompt: !!prompt,
+    promptLength: prompt.length 
+  }));
   
   console.log('[Runware] Calling Runware API', { model: cleanModel, taskUUID, provider: 'runware' });
 
@@ -207,7 +218,7 @@ export async function callRunware(
   const requestBody = [
     {
       taskType: "authentication",
-      apiKey: RUNWARE_API_KEY
+      apiKey: API_KEY
     },
     taskPayload
   ];
@@ -297,7 +308,7 @@ export async function callRunware(
     // If no immediate URL for video, poll for async result
     if (!contentUrl && isVideo) {
       console.log('[Runware] No immediate video URL - starting polling', { taskUUID });
-      const polledResult = await pollForVideoResult(taskUUID, RUNWARE_API_KEY, apiUrl);
+      const polledResult = await pollForVideoResult(taskUUID, API_KEY, apiUrl);
       contentUrl = polledResult.videoURL;
 
       if (!contentUrl) {

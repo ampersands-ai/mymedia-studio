@@ -77,7 +77,23 @@ export async function executeGeneration({
   }
 
   // Step 4: Build custom parameters with conditional filtering
-  const customParameters = buildCustomParameters(modelParameters, model.input_schema);
+  let customParameters = buildCustomParameters(modelParameters, model.input_schema);
+  
+  // Step 4.5: STRICT SCHEMA ENFORCEMENT - Filter to only schema-defined properties
+  if (model.input_schema?.properties) {
+    const allowedKeys = Object.keys(model.input_schema.properties);
+    const filtered: Record<string, any> = {};
+    for (const key of allowedKeys) {
+      if (customParameters[key] !== undefined) {
+        filtered[key] = customParameters[key];
+      }
+    }
+    customParameters = filtered;
+    logger.info('Frontend schema filtering', { 
+      allowedKeys, 
+      filteredKeys: Object.keys(filtered) 
+    });
+  }
 
   // Step 5: Upload images and assign to correct schema field
   if (imageFieldInfo.fieldName && uploadedImages.length > 0) {

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Camera, ImageIcon, Upload, X, Loader2 } from "lucide-react";
+import { useState } from "react";
 
 interface ImageUploadSectionProps {
   images: File[];
@@ -27,6 +28,50 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
   fileInputRef,
   onNativeCameraPick,
 }) => {
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (images.length < maxImages) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (images.length >= maxImages) return;
+
+    const files = Array.from(e.dataTransfer.files);
+    const imageFiles = files.filter(file => 
+      ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)
+    );
+
+    if (imageFiles.length > 0) {
+      const syntheticEvent = {
+        target: { files: imageFiles }
+      } as unknown as React.ChangeEvent<HTMLInputElement>;
+      
+      onUpload(syntheticEvent);
+    }
+  };
+
   return (
     <div className="space-y-3">
       <label className="text-sm font-medium text-foreground">
@@ -97,7 +142,20 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
               </Button>
             </div>
           ) : (
-            <>
+            <div
+              onDragEnter={handleDragEnter}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`
+                relative border-2 border-dashed rounded-lg p-8 text-center
+                transition-all duration-200
+                ${isDragging 
+                  ? 'border-primary bg-primary/5 scale-[1.02]' 
+                  : 'border-border hover:border-primary/50'
+                }
+              `}
+            >
               <input
                 ref={fileInputRef}
                 type="file"
@@ -106,15 +164,32 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
                 onChange={onUpload}
                 className="hidden"
               />
-              <Button
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full justify-center gap-2"
-              >
-                <Upload className="h-4 w-4" />
-                Upload Images
-              </Button>
-            </>
+              
+              {isDragging ? (
+                <div className="space-y-2">
+                  <Upload className="h-10 w-10 mx-auto text-primary animate-bounce" />
+                  <p className="text-base font-medium text-primary">
+                    Drop images here
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <Upload className="h-10 w-10 mx-auto text-muted-foreground" />
+                  <div>
+                    <Button
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="mb-2"
+                    >
+                      Choose Files
+                    </Button>
+                    <p className="text-sm text-muted-foreground">
+                      or drag and drop images here
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </>
       )}

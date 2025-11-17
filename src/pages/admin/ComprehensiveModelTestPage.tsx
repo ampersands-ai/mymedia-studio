@@ -945,12 +945,6 @@ const ComprehensiveModelTestPage = () => {
                 imageFields={currentModel.input_schema?.imageInputField ? [currentModel.input_schema.imageInputField] : []}
                 onToggleImageField={handleToggleImageField}
                 onRevertToDefault={handleRevertToDefault}
-                onTogglePromptRenderer={handleTogglePromptRenderer}
-                onToggleImageRenderer={handleToggleImageRenderer}
-                onToggleVoiceRenderer={handleToggleVoiceRenderer}
-                onToggleDurationRenderer={handleToggleDurationRenderer}
-                onToggleIncrementRenderer={handleToggleIncrementRenderer}
-                onToggleOutputFormatRenderer={handleToggleOutputFormatRenderer}
               />
       )}
 

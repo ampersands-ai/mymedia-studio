@@ -119,7 +119,8 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
 
         optionsRef.current.onComplete(outputs, parentData.id);
       } else if (parentData.status === 'failed' || parentData.status === 'error') {
-        optionsRef.current.onError?.(`Generation ${parentData.status}`);
+        const errorMsg = (parentData.provider_response as any)?.error || `Generation ${parentData.status}`;
+        optionsRef.current.onError?.(errorMsg);
       }
 
       clearAllTimers();
@@ -150,7 +151,7 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
       try {
         const { data, error } = await supabase
           .from('generations')
-          .select('status, id')
+          .select('status, id, provider_response')
           .eq('id', generationId)
           .single();
 

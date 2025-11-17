@@ -551,16 +551,6 @@ export default function ModelHealthTestPage() {
           estimatedTokens={estimatedTokens}
           modelId={state.selectedModel || ''}
           provider={currentModel?.provider || ''}
-          excludeFields={[
-            // Only exclude fields that are rendered specially
-            hasPromptField ? 'prompt' : '',
-            imageFieldInfo.fieldName || '',
-            textKey || '',
-            voiceKey || '',
-            hasDuration ? 'duration' : '',
-            hasIncrement ? 'increment' : '',
-            hasIncrement ? 'incrementBySeconds' : '',
-          ].filter(Boolean) as string[]}
           onReset={handleResetTest}
           isPolling={isPolling}
           pollingGenerationId={state.pollingGenerationId}

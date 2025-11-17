@@ -76,7 +76,9 @@ const ComprehensiveModelTestPage = () => {
     }) || [];
   }, [allModelsUnfiltered]);
 
-  const currentModel = filteredModels.find((m: any) => m.record_id === state.selectedModel);
+  const currentModel = useMemo(() => {
+    return filteredModels.find((m: any) => m.record_id === state.selectedModel) || null;
+  }, [filteredModels, state.selectedModel]);
 
   // Track original schema for revert functionality
   useEffect(() => {
@@ -84,20 +86,6 @@ const ComprehensiveModelTestPage = () => {
       setOriginalSchema(JSON.parse(JSON.stringify(currentModel.input_schema)));
     }
   }, [currentModel?.record_id]);
-
-  // Monitor generation completion for execution flow
-  useEffect(() => {
-    if (executionStage === 'generation_polling' && state.generatedOutputs.length > 0) {
-      setExecutionStage('generation_complete');
-      setExecutionStageData(prev => ({
-        ...prev,
-        generation_complete: {
-          outputs_count: state.generatedOutputs.length,
-          storage_paths: state.generatedOutputs.map(o => o.storage_path),
-        }
-      }));
-    }
-  }, [executionStage, state.generatedOutputs]);
 
   // Initialize model parameters with schema defaults when model changes
   useEffect(() => {
@@ -221,6 +209,24 @@ const ComprehensiveModelTestPage = () => {
     setFirstGeneration,
     userTokens: userTokens || null,
   });
+
+  // Monitor generation lifecycle for execution flow
+  useEffect(() => {
+    if (isGenerating && executionStage === 'api_request_sent') {
+      // Generation has started, move to polling stage
+      setExecutionStage('generation_polling');
+    } else if (!isGenerating && executionStage === 'generation_polling' && state.generatedOutputs.length > 0) {
+      // Generation completed with outputs
+      setExecutionStage('generation_complete');
+      setExecutionStageData(prev => ({
+        ...prev,
+        generation_complete: {
+          outputs_count: state.generatedOutputs.length,
+          storage_paths: state.generatedOutputs.map(o => o.storage_path),
+        }
+      }));
+    }
+  }, [isGenerating, executionStage, state.generatedOutputs]);
 
   // Derived values (exact same logic as CustomCreation)
   const textKey = useMemo(() => {
@@ -442,52 +448,33 @@ const ComprehensiveModelTestPage = () => {
 
   const handleGenerateWithInspection = useCallback(async () => {
     if (inspectionMode === 'off' || inspectionMode === 'reviewing') {
-      // Reset execution state
-      setExecutionStage('input_validation');
-      setExecutionStageData({});
+      // Prepare execution data upfront
+      const creditBalance = userTokens?.tokens_remaining || 0;
+      const executionData = {
+        input_validation: {
+          prompt: state.prompt,
+          model: currentModel?.name,
+          parameters: state.modelParameters,
+          uploaded_images: uploadedImages.length,
+        },
+        credit_check: {
+          estimated_cost: estimatedTokens,
+          current_balance: creditBalance,
+          sufficient: estimatedTokens <= creditBalance,
+        },
+        api_request_prepared: {
+          model_id: currentModel?.record_id,
+          parameters_count: Object.keys(state.modelParameters).length,
+        }
+      };
+
+      // Set initial execution state
+      setExecutionStage('api_request_sent');
+      setExecutionStageData(executionData);
       setExecutionError(null);
 
       try {
-        // Stage 1: Input Validation
-        setExecutionStageData(prev => ({
-          ...prev,
-          input_validation: {
-            prompt: state.prompt,
-            model: currentModel?.name,
-            parameters: state.modelParameters,
-            uploaded_images: uploadedImages.length,
-          }
-        }));
-        
-        // Stage 2: Credit Check
-        setExecutionStage('credit_check');
-        const creditBalance = userTokens?.tokens_remaining || 0;
-        setExecutionStageData(prev => ({
-          ...prev,
-          credit_check: {
-            estimated_cost: estimatedTokens,
-            current_balance: creditBalance,
-            sufficient: estimatedTokens <= creditBalance,
-          }
-        }));
-
-        // Stage 3: API Request Prepared
-        setExecutionStage('api_request_prepared');
-        setExecutionStageData(prev => ({
-          ...prev,
-          api_request_prepared: {
-            model_id: currentModel?.record_id,
-            parameters_count: Object.keys(state.modelParameters).length,
-          }
-        }));
-
-        // Stage 4: API Request Sent
-        setExecutionStage('api_request_sent');
         await handleGenerate();
-
-        // Stage 5: Polling
-        setExecutionStage('generation_polling');
-        
       } catch (error: any) {
         setExecutionError(error.message || 'Generation failed');
         setExecutionStage('error');

@@ -13,6 +13,8 @@ interface ParametersInspectorProps {
   onValueChange: (name: string, value: any) => void;
   onPushToSchema: (name: string, value: any) => void;
   onToggleAdvanced: (name: string, currentState: boolean) => void;
+  onToggleHidden?: (name: string, currentState: boolean) => void;
+  onToggleRequired?: (name: string, currentState: boolean) => void;
   onPushAllToSchema: () => void;
   imageFields?: string[];
   onToggleImageField?: (name: string) => void;
@@ -25,6 +27,8 @@ export const ParametersInspector = ({
   onValueChange,
   onPushToSchema,
   onToggleAdvanced,
+  onToggleHidden = () => {},
+  onToggleRequired = () => {},
   onPushAllToSchema,
   imageFields = [],
   onToggleImageField = () => {},
@@ -111,6 +115,8 @@ export const ParametersInspector = ({
               onValueChange={onValueChange}
               onPushToSchema={onPushToSchema}
               onToggleAdvanced={onToggleAdvanced}
+              onToggleHidden={onToggleHidden}
+              onToggleRequired={onToggleRequired}
               onToggleImageField={onToggleImageField}
               isImageField={imageFields.includes(name)}
             />

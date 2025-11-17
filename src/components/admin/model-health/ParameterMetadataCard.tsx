@@ -20,6 +20,8 @@ interface ParameterMetadataCardProps {
   onValueChange: (name: string, value: any) => void;
   onPushToSchema: (name: string, value: any) => void;
   onToggleAdvanced: (name: string, currentState: boolean) => void;
+  onToggleHidden?: (name: string, currentState: boolean) => void;
+  onToggleRequired?: (name: string, currentState: boolean) => void;
   onToggleImageField: (name: string) => void;
   isImageField: boolean;
 }
@@ -34,6 +36,8 @@ export const ParameterMetadataCard = ({
   onValueChange,
   onPushToSchema,
   onToggleAdvanced,
+  onToggleHidden = () => {},
+  onToggleRequired = () => {},
   onToggleImageField,
   isImageField,
 }: ParameterMetadataCardProps) => {
@@ -280,36 +284,83 @@ export const ParameterMetadataCard = ({
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-2 pt-2 border-t">
-          {isModified && (
+         {/* Parameter Flags Section */}
+        <div className="space-y-3 pt-3 border-t">
+          <Label className="text-xs text-muted-foreground font-semibold">Parameter Flags</Label>
+          
+          <div className="grid grid-cols-2 gap-3">
+            {/* Advanced Toggle */}
+            <div className="flex items-center justify-between p-2 rounded border border-border">
+              <div className="flex flex-col">
+                <Label className="text-xs font-medium">Advanced</Label>
+                <span className="text-[10px] text-muted-foreground">
+                  {isAdvanced ? 'In advanced panel' : 'In basic form'}
+                </span>
+              </div>
+              <Switch
+                checked={isAdvanced}
+                onCheckedChange={() => onToggleAdvanced(name, isAdvanced)}
+              />
+            </div>
+
+            {/* Hidden Toggle */}
+            <div className="flex items-center justify-between p-2 rounded border border-border">
+              <div className="flex flex-col">
+                <Label className="text-xs font-medium">Hidden</Label>
+                <span className="text-[10px] text-muted-foreground">
+                  {isHidden ? 'Backend only' : 'User visible'}
+                </span>
+              </div>
+              <Switch
+                checked={isHidden}
+                onCheckedChange={() => onToggleHidden(name, isHidden)}
+              />
+            </div>
+
+            {/* Required Toggle */}
+            <div className="flex items-center justify-between p-2 rounded border border-border">
+              <div className="flex flex-col">
+                <Label className="text-xs font-medium">Required</Label>
+                <span className="text-[10px] text-muted-foreground">
+                  {isRequired ? 'Must provide' : 'Optional'}
+                </span>
+              </div>
+              <Switch
+                checked={isRequired}
+                onCheckedChange={() => onToggleRequired(name, isRequired)}
+              />
+            </div>
+
+            {/* Image Field Toggle */}
+            <div className="flex items-center justify-between p-2 rounded border border-border">
+              <div className="flex flex-col">
+                <Label className="text-xs font-medium">Image Input</Label>
+                <span className="text-[10px] text-muted-foreground">
+                  {isImageField ? 'Upload enabled' : 'Text only'}
+                </span>
+              </div>
+              <Switch
+                checked={isImageField}
+                onCheckedChange={() => onToggleImageField(name)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Push to Schema button below flags */}
+        {isModified && (
+          <div className="pt-2 border-t">
             <Button
               size="sm"
               variant="outline"
               onClick={() => onPushToSchema(name, value)}
-              className="flex-1"
+              className="w-full"
             >
               <ArrowUpCircle className="h-3 w-3 mr-2" />
-              Push to Schema
+              Push Current Value to Schema Default
             </Button>
-          )}
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => onToggleAdvanced(name, isAdvanced)}
-          >
-            {isAdvanced ? <ArrowDownCircle className="h-3 w-3 mr-2" /> : <ArrowUpCircle className="h-3 w-3 mr-2" />}
-            {isAdvanced ? 'Move to Basic' : 'Move to Advanced'}
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => onToggleImageField(name)}
-          >
-            <Upload className="h-3 w-3 mr-2" />
-            {isImageField ? 'Remove Image' : 'Add Image'}
-          </Button>
-        </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

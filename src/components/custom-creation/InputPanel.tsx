@@ -137,7 +137,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
     selectedModel &&
     (!isPromptRequired || prompt.trim()) &&
     (!isImageRequired || uploadedImages.length > 0) &&
-    prompt.length <= maxPromptLength;
+    (maxPromptLength === undefined || prompt.length <= maxPromptLength);
   
   // Get selected model details for duration display
   const selectedModelData = filteredModels.find(m => m.record_id === selectedModel);

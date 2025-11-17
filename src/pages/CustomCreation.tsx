@@ -522,25 +522,65 @@ const CustomCreation = () => {
     }
   }, [state.prompt, progress, updateProgress]);
 
-  // Compute schema-derived values for InputPanel
-  const modelSchema = currentModel?.input_schema as { 
-    properties?: Record<string, unknown>; 
-    required?: string[] 
-  } | null | undefined;
-  const textKey = schemaHelpers.findPrimaryTextKey(modelSchema?.properties);
-  const voiceKey = schemaHelpers.findPrimaryVoiceKey(modelSchema?.properties, currentModel as any);
-  const hasPromptField = !!(
-    modelSchema?.properties?.prompt || 
-    modelSchema?.properties?.positivePrompt ||
-    modelSchema?.properties?.positive_prompt ||
-    textKey
-  );
-  const isPromptRequired = (modelSchema?.required || []).some((field: string) => 
-    ['prompt', 'positivePrompt', 'positive_prompt'].includes(field)
-  );
-  const maxPromptLength = schemaHelpers.getMaxPromptLength(currentModel as any, state.modelParameters.customMode);
-  const hasDuration = !!(modelSchema?.properties?.duration);
-  const hasIncrement = !!(modelSchema?.properties?.increment || modelSchema?.properties?.incrementBySeconds);
+  // Compute schema-derived values for InputPanel (pure schema-only, no assumptions)
+  const modelSchema = currentModel?.input_schema as ModelJsonSchema | null | undefined;
+  
+  const textKey = useMemo(() => {
+    // Pure schema-only: 'text' is not a valid renderer type, so always return null
+    return null;
+  }, [modelSchema]);
+  
+  const voiceKey = useMemo(() => {
+    if (!modelSchema?.properties) return null;
+    return Object.keys(modelSchema.properties).find(key => {
+      const prop = modelSchema.properties![key] as JsonSchemaProperty;
+      return prop.renderer === 'voice';
+    }) || null;
+  }, [modelSchema]);
+  
+  const hasPromptField = useMemo(() => {
+    if (!modelSchema?.properties) return false;
+    return Object.keys(modelSchema.properties).some(key => {
+      const prop = modelSchema.properties![key] as JsonSchemaProperty;
+      return prop.renderer === 'prompt';
+    });
+  }, [modelSchema]);
+  
+  const isPromptRequired = useMemo(() => {
+    if (!modelSchema?.properties || !modelSchema?.required) return false;
+    const promptKey = Object.keys(modelSchema.properties).find(key => {
+      const prop = modelSchema.properties![key] as JsonSchemaProperty;
+      return prop.renderer === 'prompt';
+    });
+    return promptKey ? modelSchema.required.includes(promptKey) : false;
+  }, [modelSchema]);
+  
+  const maxPromptLength = useMemo(() => {
+    if (!modelSchema?.properties) return undefined;
+    const promptKey = Object.keys(modelSchema.properties).find(key => {
+      const prop = modelSchema.properties![key] as JsonSchemaProperty;
+      return prop.renderer === 'prompt';
+    });
+    if (!promptKey) return undefined;
+    const promptProp = modelSchema.properties[promptKey] as JsonSchemaProperty;
+    return promptProp?.maxLength;
+  }, [modelSchema]);
+  
+  const hasDuration = useMemo(() => {
+    if (!modelSchema?.properties) return false;
+    return Object.keys(modelSchema.properties).some(key => {
+      const prop = modelSchema.properties![key] as JsonSchemaProperty;
+      return prop.renderer === 'duration';
+    });
+  }, [modelSchema]);
+  
+  const hasIncrement = useMemo(() => {
+    if (!modelSchema?.properties) return false;
+    return Object.keys(modelSchema.properties).some(key => {
+      const prop = modelSchema.properties![key] as JsonSchemaProperty;
+      return prop.renderer === 'increment';
+    });
+  }, [modelSchema]);
   
   const advancedOptionsRef = useRef<HTMLDivElement>(null);
 

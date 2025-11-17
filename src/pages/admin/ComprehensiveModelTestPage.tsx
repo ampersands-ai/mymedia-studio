@@ -193,12 +193,8 @@ const ComprehensiveModelTestPage = () => {
     const schema = currentModel.input_schema as ModelJsonSchema;
     if (!schema.properties) return null;
     
-    return Object.keys(schema.properties).find(key => {
-      const prop = schema.properties![key] as JsonSchemaProperty;
-      return prop.type === 'string' && 
-             prop.format !== 'data-url' && 
-             key.toLowerCase().includes('text');
-    }) || null;
+    // Pure schema-only: 'text' is not a valid renderer type, so always return null
+    return null;
   }, [currentModel]);
 
   const textKeySchema = useMemo(() => {
@@ -212,9 +208,10 @@ const ComprehensiveModelTestPage = () => {
     const schema = currentModel.input_schema as ModelJsonSchema;
     if (!schema.properties) return null;
     
+    // Pure schema-only: ONLY check explicit renderer property
     return Object.keys(schema.properties).find(key => {
       const prop = schema.properties![key] as JsonSchemaProperty;
-      return key.toLowerCase().includes('voice');
+      return prop.renderer === 'voice';
     }) || null;
   }, [currentModel]);
 
@@ -228,39 +225,76 @@ const ComprehensiveModelTestPage = () => {
     if (!currentModel?.input_schema) return false;
     const schema = currentModel.input_schema as ModelJsonSchema;
     if (!schema.properties) return false;
-    return 'duration' in schema.properties;
+    
+    // Pure schema-only: ONLY check explicit renderer property
+    return Object.keys(schema.properties).some(key => {
+      const prop = schema.properties![key] as JsonSchemaProperty;
+      return prop.renderer === 'duration';
+    });
   }, [currentModel]);
 
   const durationSchema = useMemo(() => {
-    if (!hasDuration || !currentModel?.input_schema) return null;
+    if (!currentModel?.input_schema) return null;
     const schema = currentModel.input_schema as ModelJsonSchema;
-    return schema.properties?.['duration'] as JsonSchemaProperty || null;
-  }, [hasDuration, currentModel]);
+    if (!schema.properties) return null;
+    
+    const durationKey = Object.keys(schema.properties).find(key => {
+      const prop = schema.properties![key] as JsonSchemaProperty;
+      return prop.renderer === 'duration';
+    });
+    return durationKey ? schema.properties[durationKey] as JsonSchemaProperty : null;
+  }, [currentModel]);
 
   const hasIncrement = useMemo(() => {
     if (!currentModel?.input_schema) return false;
     const schema = currentModel.input_schema as ModelJsonSchema;
     if (!schema.properties) return false;
-    return 'loop' in schema.properties;
+    
+    // Pure schema-only: ONLY check explicit renderer property
+    return Object.keys(schema.properties).some(key => {
+      const prop = schema.properties![key] as JsonSchemaProperty;
+      return prop.renderer === 'increment';
+    });
   }, [currentModel]);
 
   const hasPromptField = useMemo(() => {
     if (!currentModel?.input_schema) return false;
     const schema = currentModel.input_schema as ModelJsonSchema;
     if (!schema.properties) return false;
-    return 'prompt' in schema.properties;
+    
+    // Pure schema-only: ONLY check explicit renderer property
+    return Object.keys(schema.properties).some(key => {
+      const prop = schema.properties![key] as JsonSchemaProperty;
+      return prop.renderer === 'prompt';
+    });
   }, [currentModel]);
 
   const isPromptRequired = useMemo(() => {
     if (!currentModel?.input_schema) return false;
     const schema = currentModel.input_schema as ModelJsonSchema;
-    return schema.required?.includes('prompt') || false;
+    if (!schema.properties || !schema.required) return false;
+    
+    // Pure schema-only: Find field with renderer='prompt' and check if it's required
+    const promptKey = Object.keys(schema.properties).find(key => {
+      const prop = schema.properties![key] as JsonSchemaProperty;
+      return prop.renderer === 'prompt';
+    });
+    return promptKey ? schema.required.includes(promptKey) : false;
   }, [currentModel]);
 
   const maxPromptLength = useMemo(() => {
     if (!currentModel?.input_schema) return undefined;
     const schema = currentModel.input_schema as ModelJsonSchema;
-    const promptProp = schema.properties?.['prompt'] as JsonSchemaProperty;
+    if (!schema.properties) return undefined;
+    
+    // Pure schema-only: Find field with renderer='prompt' and get its maxLength
+    const promptKey = Object.keys(schema.properties).find(key => {
+      const prop = schema.properties![key] as JsonSchemaProperty;
+      return prop.renderer === 'prompt';
+    });
+    if (!promptKey) return undefined;
+    
+    const promptProp = schema.properties[promptKey] as JsonSchemaProperty;
     return promptProp?.maxLength;
   }, [currentModel]);
 

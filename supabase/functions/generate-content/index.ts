@@ -4,6 +4,7 @@ import { callProvider } from "./providers/index.ts";
 import { calculateTokenCost } from "./utils/token-calculator.ts";
 import { uploadToStorage } from "./utils/storage.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
+import { convertImagesToUrls } from "./utils/image-processor.ts";
 import { 
   GenerateContentRequestSchema,
   type GenerateContentRequest 
@@ -991,9 +992,17 @@ Deno.serve(async (req) => {
           }
         });
 
+        // Convert base64 images to signed URLs (required for Kie.ai and other providers)
+        const processedParams = await convertImagesToUrls(
+          allowedParams,
+          user.id,
+          supabase,
+          logger
+        );
+
       providerRequest = {
         model: model.id,
-        parameters: allowedParams, // Only schema-allowed parameters
+        parameters: processedParams, // Parameters with images converted to URLs
         input_schema: model.input_schema,
         api_endpoint: model.api_endpoint,
         payload_structure: model.payload_structure || 'wrapper',

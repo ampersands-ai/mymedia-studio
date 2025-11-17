@@ -52,6 +52,15 @@ export interface JsonSchema {
   properties: Record<string, JsonSchemaProperty>;
   required?: string[];
   'x-order'?: string[];
+  imageInputField?: string | null;
+  
+  // Explicit renderer toggles
+  usePromptRenderer?: boolean;      // Use PromptInput for prompt field
+  useImageRenderer?: boolean;        // Use ImageUploadSection for image field
+  useVoiceRenderer?: boolean;        // Use specialized voice input
+  useDurationRenderer?: boolean;     // Use specialized duration input
+  useIncrementRenderer?: boolean;    // Use specialized increment toggle
+  useOutputFormatRenderer?: boolean; // Use specialized output format section
 }
 
 /**

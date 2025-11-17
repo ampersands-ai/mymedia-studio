@@ -11,7 +11,6 @@ interface AdvancedOptionsPanelProps {
   modelSchema: ModelJsonSchema | null;
   parameters: ModelParameters;
   onParametersChange: (params: ModelParameters) => void;
-  excludeFields: string[];
   modelId: string;
   provider: string;
 }
@@ -25,24 +24,20 @@ export const AdvancedOptionsPanel: React.FC<AdvancedOptionsPanelProps> = ({
   modelSchema,
   parameters,
   onParametersChange,
-  excludeFields,
   modelId,
   provider,
 }) => {
-  // Type guard to check if modelSchema has properties
   if (!modelSchema?.properties) {
     return null;
   }
 
-  // Check if there are any ADVANCED parameters specifically that should be shown to users
   const advancedProperties = Object.keys(modelSchema.properties).filter(
     (key) => {
       const prop = modelSchema.properties![key];
-      return prop.isAdvanced === true && prop.showToUser !== false && !excludeFields.includes(key);
+      return prop.isAdvanced === true && prop.showToUser !== false;
     }
   );
 
-  // Only show Advanced Options if there are advanced parameters
   if (advancedProperties.length === 0) {
     return null;
   }
@@ -69,7 +64,7 @@ export const AdvancedOptionsPanel: React.FC<AdvancedOptionsPanelProps> = ({
             modelSchema={modelSchema}
             onChange={onParametersChange}
             currentValues={parameters}
-            excludeFields={excludeFields}
+            allowedKeys={advancedProperties}
             modelId={modelId}
             provider={provider}
           />

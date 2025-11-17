@@ -552,24 +552,14 @@ export default function ModelHealthTestPage() {
           modelId={state.selectedModel || ''}
           provider={currentModel?.provider || ''}
           excludeFields={[
-            // Image/file upload fields
-            'prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 
-            'filesUrl', 'fileUrls', 'reference_image_urls', 'frameImages',
-            
-            // Primary fields already shown
-            textKey || '', voiceKey || '', 'duration', 'increment', 'incrementBySeconds',
-            
-            // Number of images fields (move outside advanced)
-            'num_images', 'max_images', 'numberOfImages', 'numImages', 'number_of_images',
-            
-            // Aspect ratio / size fields (move outside advanced)
-            'aspect_ratio', 'aspectRatio', 'image_size', 'imageSize', 'image_resolution', 
-            'imageResolution', 'resolution', 'size', 'dimensions',
-            
-            // Output format field (move outside advanced)
-            'outputFormat', 'output_format', 'format',
-            
-            // NOTE: negative_prompt is NOT here - it stays in Advanced Options
+            // Only exclude fields that are rendered specially
+            hasPromptField ? 'prompt' : '',
+            imageFieldInfo.fieldName || '',
+            textKey || '',
+            voiceKey || '',
+            hasDuration ? 'duration' : '',
+            hasIncrement ? 'increment' : '',
+            hasIncrement ? 'incrementBySeconds' : '',
           ].filter(Boolean) as string[]}
           onReset={handleResetTest}
           isPolling={isPolling}

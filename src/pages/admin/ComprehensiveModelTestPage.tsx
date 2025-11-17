@@ -523,6 +523,65 @@ const ComprehensiveModelTestPage = () => {
         </div>
       </div>
 
+      {/* EXACT InputPanel from CustomCreation - MOVED TO TOP */}
+      <InputPanel
+        selectedModel={state.selectedModel}
+        filteredModels={filteredModels as any}
+        selectedGroup={state.selectedGroup}
+        onModelChange={handleModelChange}
+        modelsLoading={modelsLoading}
+        prompt={state.prompt}
+        onPromptChange={handlePromptChange}
+        hasPromptField={hasPromptField}
+        isPromptRequired={isPromptRequired}
+        maxPromptLength={maxPromptLength}
+        onSurpriseMe={handleSurpriseMe}
+        generatingSurprise={state.generatingSurprise}
+        generateCaption={state.generateCaption}
+        onGenerateCaptionChange={handleGenerateCaptionChange}
+        uploadedImages={uploadedImages}
+        onFileUpload={handleFileUpload}
+        onRemoveImage={removeImage}
+        imageFieldName={imageFieldInfo.fieldName}
+        isImageRequired={imageFieldInfo.isRequired}
+        maxImages={imageFieldInfo.maxImages}
+        fileInputRef={fileInputRef}
+        cameraLoading={cameraLoading}
+        isNative={isNative}
+        onNativeCameraPick={handleNativeCameraPick}
+        textKey={textKey}
+        textKeySchema={textKeySchema}
+        textKeyValue={textKeyValue}
+        onTextKeyChange={handleTextKeyChange}
+        voiceKey={voiceKey}
+        voiceKeySchema={voiceKeySchema}
+        voiceKeyValue={voiceKeyValue}
+        onVoiceKeyChange={handleVoiceKeyChange}
+        hasDuration={hasDuration}
+        durationValue={durationValue}
+        onDurationChange={handleDurationChange}
+        durationSchema={durationSchema}
+        hasIncrement={hasIncrement}
+        incrementValue={incrementValue}
+        onIncrementChange={handleIncrementChange}
+        advancedOpen={state.advancedOpen}
+        onAdvancedOpenChange={handleAdvancedOpenChange}
+        modelSchema={currentModel?.input_schema as ModelJsonSchema || null}
+        modelParameters={state.modelParameters}
+        onModelParametersChange={handleModelParametersChange}
+        excludeFields={excludeFields}
+        modelId={currentModel?.id || ''}
+        provider={currentModel?.provider || ''}
+        advancedOptionsRef={advancedOptionsRef}
+        onGenerate={handleGenerateWithInspection}
+        onReset={handleReset}
+        isGenerating={isGenerating}
+        isPolling={isPolling}
+        pollingGenerationId={state.pollingGenerationId}
+        localGenerating={state.localGenerating}
+        estimatedTokens={estimatedTokens}
+      />
+
       {/* Model Summary Card */}
       {currentModel && (
         <Card>
@@ -668,65 +727,6 @@ const ComprehensiveModelTestPage = () => {
           currentPhase={isGenerating ? 'executing' : 'idle'}
         />
       )}
-
-      {/* EXACT InputPanel from CustomCreation */}
-      <InputPanel
-        selectedModel={state.selectedModel}
-        filteredModels={filteredModels as any}
-        selectedGroup={state.selectedGroup}
-        onModelChange={handleModelChange}
-        modelsLoading={modelsLoading}
-        prompt={state.prompt}
-        onPromptChange={handlePromptChange}
-        hasPromptField={hasPromptField}
-        isPromptRequired={isPromptRequired}
-        maxPromptLength={maxPromptLength}
-        onSurpriseMe={handleSurpriseMe}
-        generatingSurprise={state.generatingSurprise}
-        generateCaption={state.generateCaption}
-        onGenerateCaptionChange={handleGenerateCaptionChange}
-        uploadedImages={uploadedImages}
-        onFileUpload={handleFileUpload}
-        onRemoveImage={removeImage}
-        imageFieldName={imageFieldInfo.fieldName}
-        isImageRequired={imageFieldInfo.isRequired}
-        maxImages={imageFieldInfo.maxImages}
-        fileInputRef={fileInputRef}
-        cameraLoading={cameraLoading}
-        isNative={isNative}
-        onNativeCameraPick={handleNativeCameraPick}
-        textKey={textKey}
-        textKeySchema={textKeySchema}
-        textKeyValue={textKeyValue}
-        onTextKeyChange={handleTextKeyChange}
-        voiceKey={voiceKey}
-        voiceKeySchema={voiceKeySchema}
-        voiceKeyValue={voiceKeyValue}
-        onVoiceKeyChange={handleVoiceKeyChange}
-        hasDuration={hasDuration}
-        durationValue={durationValue}
-        onDurationChange={handleDurationChange}
-        durationSchema={durationSchema}
-        hasIncrement={hasIncrement}
-        incrementValue={incrementValue}
-        onIncrementChange={handleIncrementChange}
-        advancedOpen={state.advancedOpen}
-        onAdvancedOpenChange={handleAdvancedOpenChange}
-        modelSchema={currentModel?.input_schema as ModelJsonSchema || null}
-        modelParameters={state.modelParameters}
-        onModelParametersChange={handleModelParametersChange}
-        excludeFields={excludeFields}
-        modelId={currentModel?.id || ''}
-        provider={currentModel?.provider || ''}
-        advancedOptionsRef={advancedOptionsRef}
-        onGenerate={handleGenerateWithInspection}
-        onReset={handleReset}
-        isGenerating={isGenerating}
-        isPolling={isPolling}
-        pollingGenerationId={state.pollingGenerationId}
-        localGenerating={state.localGenerating}
-        estimatedTokens={estimatedTokens}
-      />
 
       {/* EXACT OutputPanel from CustomCreation */}
       <OutputPanel

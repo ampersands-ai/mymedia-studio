@@ -402,13 +402,11 @@ export default function ModelHealthTestPage() {
     }
   }, [currentModel, state.prompt, setStatePrompt]);
 
-  // Compute schema-derived values for InputPanel
+  // Schema-derived values for InputPanel
   const modelSchema = currentModel?.input_schema as { 
     properties?: Record<string, unknown>; 
     required?: string[] 
   } | null | undefined;
-  const textKey = schemaHelpers.findPrimaryTextKey(modelSchema?.properties);
-  const voiceKey = schemaHelpers.findPrimaryVoiceKey(modelSchema?.properties, currentModel as any);
   const hasPromptField = !!(modelSchema?.properties?.prompt);
   const isPromptRequired = (modelSchema?.required || []).some((field: string) => 
     ['prompt', 'positivePrompt', 'positive_prompt'].includes(field)
@@ -526,14 +524,6 @@ export default function ModelHealthTestPage() {
           cameraLoading={cameraLoading}
           isNative={isNative}
           onNativeCameraPick={handleNativeCameraPick}
-          textKey={textKey}
-          textKeySchema={(textKey && modelSchema?.properties?.[textKey]) as JsonSchemaProperty | null}
-          textKeyValue={state.modelParameters[textKey || '']}
-          onTextKeyChange={(value) => updateState({ modelParameters: { ...state.modelParameters, [textKey || '']: value } })}
-          voiceKey={voiceKey}
-          voiceKeySchema={(voiceKey && modelSchema?.properties?.[voiceKey]) as JsonSchemaProperty | null}
-          voiceKeyValue={state.modelParameters[voiceKey || '']}
-          onVoiceKeyChange={(value) => updateState({ modelParameters: { ...state.modelParameters, [voiceKey || '']: value } })}
           hasDuration={hasDuration}
           durationValue={state.modelParameters.duration}
           durationSchema={(hasDuration && modelSchema?.properties?.duration) as JsonSchemaProperty | null}

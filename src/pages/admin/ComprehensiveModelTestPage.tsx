@@ -366,40 +366,7 @@ const ComprehensiveModelTestPage = () => {
     }
   }, [isGenerating, isPolling, executionStage, state.generatedOutputs.length, state.parentGenerationId, currentModel?.api_endpoint, estimatedTokens]);
 
-  // Derived values (exact same logic as CustomCreation)
-  const textKey = useMemo(() => {
-    if (!currentModel?.input_schema) return null;
-    const schema = currentModel.input_schema as ModelJsonSchema;
-    if (!schema.properties) return null;
-    
-    // Pure schema-only: 'text' is not a valid renderer type, so always return null
-    return null;
-  }, [currentModel]);
-
-  const textKeySchema = useMemo(() => {
-    if (!textKey || !currentModel?.input_schema) return null;
-    const schema = currentModel.input_schema as ModelJsonSchema;
-    return schema.properties?.[textKey] as JsonSchemaProperty || null;
-  }, [textKey, currentModel]);
-
-  const voiceKey = useMemo(() => {
-    if (!currentModel?.input_schema) return null;
-    const schema = currentModel.input_schema as ModelJsonSchema;
-    if (!schema.properties) return null;
-    
-    // Pure schema-only: ONLY check explicit renderer property
-    return Object.keys(schema.properties).find(key => {
-      const prop = schema.properties![key] as JsonSchemaProperty;
-      return prop.renderer === 'voice';
-    }) || null;
-  }, [currentModel]);
-
-  const voiceKeySchema = useMemo(() => {
-    if (!voiceKey || !currentModel?.input_schema) return null;
-    const schema = currentModel.input_schema as ModelJsonSchema;
-    return schema.properties?.[voiceKey] as JsonSchemaProperty || null;
-  }, [voiceKey, currentModel]);
-
+  // Derived values
   const hasDuration = useMemo(() => {
     if (!currentModel?.input_schema) return false;
     const schema = currentModel.input_schema as ModelJsonSchema;
@@ -477,8 +444,6 @@ const ComprehensiveModelTestPage = () => {
     return promptProp?.maxLength;
   }, [currentModel]);
 
-  const textKeyValue = state.modelParameters[textKey || ''];
-  const voiceKeyValue = state.modelParameters[voiceKey || ''];
   const durationValue = state.modelParameters['duration'];
   const incrementValue = state.modelParameters['loop'];
 
@@ -494,16 +459,6 @@ const ComprehensiveModelTestPage = () => {
   const handleGenerateCaptionChange = useCallback((checked: boolean) => {
     updateState({ generateCaption: checked });
   }, [updateState]);
-
-  const handleTextKeyChange = useCallback((value: string) => {
-    if (!textKey) return;
-    updateState({ modelParameters: { ...state.modelParameters, [textKey]: value } });
-  }, [textKey, state.modelParameters, updateState]);
-
-  const handleVoiceKeyChange = useCallback((value: string) => {
-    if (!voiceKey) return;
-    updateState({ modelParameters: { ...state.modelParameters, [voiceKey]: value } });
-  }, [voiceKey, state.modelParameters, updateState]);
 
   const handleDurationChange = useCallback((value: SchemaValue) => {
     updateState({ modelParameters: { ...state.modelParameters, duration: value } });
@@ -1159,14 +1114,6 @@ const ComprehensiveModelTestPage = () => {
         cameraLoading={cameraLoading}
         isNative={isNative}
         onNativeCameraPick={handleNativeCameraPick}
-        textKey={textKey}
-        textKeySchema={textKeySchema}
-        textKeyValue={textKeyValue}
-        onTextKeyChange={handleTextKeyChange}
-        voiceKey={voiceKey}
-        voiceKeySchema={voiceKeySchema}
-        voiceKeyValue={voiceKeyValue}
-        onVoiceKeyChange={handleVoiceKeyChange}
         hasDuration={hasDuration}
         durationValue={durationValue}
         onDurationChange={handleDurationChange}

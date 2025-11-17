@@ -536,21 +536,8 @@ const CustomCreation = () => {
     }
   }, [state.prompt, progress, updateProgress]);
 
-  // Compute schema-derived values for InputPanel (pure schema-only, no assumptions)
+  // Compute schema-derived values for InputPanel
   const modelSchema = currentModel?.input_schema as ModelJsonSchema | null | undefined;
-  
-  const textKey = useMemo(() => {
-    // Pure schema-only: 'text' is not a valid renderer type, so always return null
-    return null;
-  }, [modelSchema]);
-  
-  const voiceKey = useMemo(() => {
-    if (!modelSchema?.properties) return null;
-    return Object.keys(modelSchema.properties).find(key => {
-      const prop = modelSchema.properties![key] as JsonSchemaProperty;
-      return prop.renderer === 'voice';
-    }) || null;
-  }, [modelSchema]);
   
   const hasPromptField = useMemo(() => {
     if (!modelSchema?.properties) return false;
@@ -681,14 +668,6 @@ const CustomCreation = () => {
             cameraLoading={cameraLoading}
             isNative={isNative}
             onNativeCameraPick={handleNativeCameraPick}
-            textKey={textKey}
-            textKeySchema={(textKey && modelSchema?.properties?.[textKey]) as JsonSchemaProperty | null}
-            textKeyValue={state.modelParameters[textKey || '']}
-            onTextKeyChange={(value) => updateState({ modelParameters: { ...state.modelParameters, [textKey || '']: value } })}
-            voiceKey={voiceKey}
-            voiceKeySchema={(voiceKey && modelSchema?.properties?.[voiceKey]) as JsonSchemaProperty | null}
-            voiceKeyValue={state.modelParameters[voiceKey || '']}
-            onVoiceKeyChange={(value) => updateState({ modelParameters: { ...state.modelParameters, [voiceKey || '']: value } })}
             hasDuration={hasDuration}
             durationValue={state.modelParameters.duration}
             durationSchema={(hasDuration && modelSchema?.properties?.duration) as JsonSchemaProperty | null}

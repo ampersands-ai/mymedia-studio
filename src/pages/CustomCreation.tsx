@@ -352,7 +352,7 @@ const CustomCreation = () => {
                   const { data: gen } = await supabase
                     .from('generations')
                     .select('provider_response, status')
-                    .eq('id', state.pollingGenerationId!)
+                    .eq('id', payload.new.id)
                     .single();
                   const pr: any = gen?.provider_response || {};
                   const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || (pr?.error && pr?.error?.message);

@@ -215,7 +215,8 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
             generationId,
             outputCount: uniqueOutputs.length,
             retriesUsed: retryCount,
-            firstOutputPath: uniqueOutputs[0]?.storage_path?.substring(0, 50)
+            firstOutputPath: uniqueOutputs[0]?.storage_path?.substring(0, 50),
+            outputs: uniqueOutputs.map(o => ({ id: o.id, hasPath: !!o.storage_path }))
           });
           logger.info('✅ Generation complete - calling onComplete', {
             generationId,
@@ -225,7 +226,9 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
           } as any);
 
           // Call completion callback with parent ID
+          console.log('📞 About to call onComplete callback');
           optionsRef.current.onComplete(uniqueOutputs, generationId);
+          console.log('✅ onComplete callback invoked successfully');
         } else {
           // Failed generation - extract detailed error
           const providerResponse = parentData.provider_response as any;

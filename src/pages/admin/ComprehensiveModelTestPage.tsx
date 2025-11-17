@@ -212,6 +212,16 @@ const ComprehensiveModelTestPage = () => {
 
   // Monitor generation lifecycle for execution flow with detailed tracking
   useEffect(() => {
+    console.log('🔄 Generation lifecycle changed', {
+      isGenerating,
+      isPolling,
+      executionStage,
+      outputsCount: state.generatedOutputs.length,
+      hasOutputs: state.generatedOutputs.length > 0,
+      pollingId: state.pollingGenerationId,
+      parentId: state.parentGenerationId
+    });
+
     if (isGenerating && executionStage === 'api_request_sent') {
       // Generation API call in progress
       setExecutionStage('first_api_response');
@@ -249,9 +259,9 @@ const ComprehensiveModelTestPage = () => {
           generation_polling: {
             poll_count: 0,
             time_elapsed_ms: 0,
-            current_status: 'Polling database for webhook updates every 2 seconds',
-            polling_intervals_ms: 2000,
-            note: 'Checking if provider webhook has updated generation status',
+            current_status: 'Waiting for generation to complete',
+            polling_intervals_ms: '1s → 3s → 5s → 10s → 20s (progressive)',
+            note: 'Polling database for webhook updates. Provider sends webhook to update status; frontend polls DB to detect changes.',
           }
         }));
       } else {
@@ -271,8 +281,12 @@ const ComprehensiveModelTestPage = () => {
           }
         }));
       }
-    } else if (!isGenerating && executionStage === 'generation_polling' && state.generatedOutputs.length > 0) {
+    } else if (!isGenerating && !isPolling && executionStage === 'generation_polling' && state.generatedOutputs.length > 0) {
       // Polling found completed outputs
+      console.log('✅ Transitioning to media_delivered', {
+        outputsCount: state.generatedOutputs.length,
+        firstOutput: state.generatedOutputs[0]
+      });
       const firstOutput = state.generatedOutputs[0];
       setExecutionStage('media_delivered');
       setExecutionStageData(prev => ({
@@ -308,7 +322,48 @@ const ComprehensiveModelTestPage = () => {
       // Still polling - no outputs yet (this is normal for async generations)
       // Don't mark as error immediately - polling will continue
     }
-  }, [isGenerating, executionStage, state.generatedOutputs, state.parentGenerationId, currentModel?.api_endpoint, estimatedTokens]);
+
+    // Fallback: If we have outputs but execution stage is stuck on polling
+    if (executionStage === 'generation_polling' && 
+        !isGenerating && 
+        !isPolling &&
+        state.generatedOutputs.length > 0) {
+      console.log('⚠️ Fallback: Forcing transition to media_delivered', {
+        outputsCount: state.generatedOutputs.length
+      });
+      
+      const firstOutput = state.generatedOutputs[0];
+      setExecutionStage('media_delivered');
+      setExecutionStageData(prev => ({
+        ...prev,
+        final_api_response: {
+          completion_status: 'success',
+          received_at: Date.now(),
+          provider_metadata: {
+            provider_task_id: firstOutput.provider_task_id || 'N/A',
+            model_id: firstOutput.model_id || 'N/A',
+          },
+          status: `✓ Provider webhook/polling confirmed generation complete`,
+        },
+        media_storage: {
+          storage_path: firstOutput.storage_path || 'Not available',
+          upload_completed_at: Date.now(),
+          status: `✓ Media uploaded to storage successfully`,
+        },
+        media_validation: {
+          file_accessible: !!firstOutput.storage_path,
+          storage_path: firstOutput.storage_path || 'Not available',
+          validation_success: true,
+          status: `✓ Media validated and accessible`,
+        },
+        media_delivered: {
+          outputs_count: state.generatedOutputs.length,
+          delivered_at: Date.now(),
+          status: `✓ All ${state.generatedOutputs.length} output(s) delivered successfully`,
+        }
+      }));
+    }
+  }, [isGenerating, isPolling, executionStage, state.generatedOutputs.length, state.parentGenerationId, currentModel?.api_endpoint, estimatedTokens]);
 
   // Derived values (exact same logic as CustomCreation)
   const textKey = useMemo(() => {
@@ -512,6 +567,51 @@ const ComprehensiveModelTestPage = () => {
       }
     );
   }, [state.generatedOutputs, currentModel, progress, updateProgress]);
+
+  const handleRefreshOutputs = useCallback(async () => {
+    const genId = state.pollingGenerationId || state.parentGenerationId;
+    if (!genId) {
+      toast.error('No generation ID available');
+      return;
+    }
+
+    console.log('🔄 Manually refreshing outputs', { genId });
+    toast.info('Refreshing outputs...');
+
+    try {
+      // Fetch all outputs for this generation
+      const { data: outputs, error } = await supabase
+        .from('generations')
+        .select('id, storage_path, output_index, provider_task_id, model_id, type')
+        .or(`id.eq.${genId},parent_generation_id.eq.${genId}`)
+        .not('storage_path', 'is', null)
+        .order('output_index', { ascending: true });
+
+      if (error) throw error;
+
+      if (outputs && outputs.length > 0) {
+        console.log('✅ Found outputs', { count: outputs.length });
+        updateState({
+          generatedOutputs: outputs.map((o: any) => ({
+            id: o.id,
+            storage_path: o.storage_path,
+            output_index: o.output_index || 0,
+            provider_task_id: o.provider_task_id,
+            model_id: o.model_id,
+            type: o.type,
+          })),
+          generatedOutput: outputs[0].storage_path,
+          localGenerating: false,
+        });
+        toast.success(`Found ${outputs.length} output(s)`);
+      } else {
+        toast.error('No outputs found in database');
+      }
+    } catch (error: any) {
+      console.error('❌ Failed to refresh outputs', error);
+      toast.error('Failed to refresh outputs');
+    }
+  }, [state.pollingGenerationId, state.parentGenerationId, updateState]);
 
   const handleViewHistory = useCallback(() => {
     navigate('/dashboard/history');
@@ -1204,11 +1304,37 @@ const ComprehensiveModelTestPage = () => {
 
       {/* Execution Flow Visualizer */}
       {executionStage !== 'idle' && (
-        <ExecutionFlowVisualizer
-          currentStage={executionStage}
-          error={executionError}
-          stageData={executionStageData}
-        />
+        <>
+          <ExecutionFlowVisualizer
+            currentStage={executionStage}
+            error={executionError}
+            stageData={executionStageData}
+          />
+          
+          {/* Recovery Button - Show if polling is stuck */}
+          {executionStage === 'generation_polling' && !isPolling && !isGenerating && state.generatedOutputs.length === 0 && (
+            <Card className="border-yellow-500/50 bg-yellow-500/5">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Polling appears stuck</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Click to manually check if outputs are available in the database
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={handleRefreshOutputs}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Loader2 className="h-4 w-4 mr-2" />
+                    Refresh Outputs
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
 
       {inspectionMode !== 'reviewing' && Object.keys(inspectionData).length > 0 && (

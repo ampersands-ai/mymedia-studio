@@ -524,6 +524,61 @@ const ComprehensiveModelTestPage = () => {
     }
   }, [currentModel, queryClient]);
 
+  const handleToggleHidden = useCallback(async (paramName: string, currentState: boolean) => {
+    if (!currentModel) return;
+
+    try {
+      const updatedSchema = JSON.parse(JSON.stringify(currentModel.input_schema));
+      // Toggle showToUser (undefined/true = visible, false = hidden)
+      updatedSchema.properties[paramName].showToUser = currentState ? undefined : false;
+
+      const { error } = await supabase
+        .from('ai_models')
+        .update({ input_schema: updatedSchema })
+        .eq('record_id', currentModel.record_id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      toast.success(`${paramName} is now ${currentState ? 'visible' : 'hidden'} to users`);
+    } catch (error) {
+      console.error('Hidden toggle error:', error);
+      toast.error("Failed to update visibility");
+    }
+  }, [currentModel, queryClient]);
+
+  const handleToggleRequired = useCallback(async (paramName: string, currentState: boolean) => {
+    if (!currentModel) return;
+
+    try {
+      const updatedSchema = JSON.parse(JSON.stringify(currentModel.input_schema));
+      const requiredArray = updatedSchema.required || [];
+      
+      if (currentState) {
+        // Remove from required
+        updatedSchema.required = requiredArray.filter((name: string) => name !== paramName);
+      } else {
+        // Add to required
+        if (!requiredArray.includes(paramName)) {
+          updatedSchema.required = [...requiredArray, paramName];
+        }
+      }
+
+      const { error } = await supabase
+        .from('ai_models')
+        .update({ input_schema: updatedSchema })
+        .eq('record_id', currentModel.record_id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['all-models'] });
+      toast.success(`${paramName} is now ${currentState ? 'optional' : 'required'}`);
+    } catch (error) {
+      console.error('Required toggle error:', error);
+      toast.error("Failed to update required status");
+    }
+  }, [currentModel, queryClient]);
+
   const handleRevertToDefault = useCallback(async () => {
     if (!currentModel || !originalSchema) return;
 
@@ -765,19 +820,21 @@ const ComprehensiveModelTestPage = () => {
 
       {/* Parameter Inspector */}
       {currentModel && (
-            <ParametersInspector
-              schema={currentModel.input_schema as any}
-              currentValues={state.modelParameters}
-              onValueChange={(name, value) => {
-                updateState({ modelParameters: { ...state.modelParameters, [name]: value } });
-              }}
-              onPushToSchema={handlePushParameterToSchema}
-              onToggleAdvanced={handleToggleAdvanced}
-              onPushAllToSchema={handlePushAllToSchema}
-              imageFields={currentModel.input_schema?.imageInputField ? [currentModel.input_schema.imageInputField] : []}
-              onToggleImageField={handleToggleImageField}
-              onRevertToDefault={handleRevertToDefault}
-            />
+              <ParametersInspector
+                schema={currentModel.input_schema as any}
+                currentValues={state.modelParameters}
+                onValueChange={(name, value) => {
+                  updateState({ modelParameters: { ...state.modelParameters, [name]: value } });
+                }}
+                onPushToSchema={handlePushParameterToSchema}
+                onToggleAdvanced={handleToggleAdvanced}
+                onToggleHidden={handleToggleHidden}
+                onToggleRequired={handleToggleRequired}
+                onPushAllToSchema={handlePushAllToSchema}
+                imageFields={currentModel.input_schema?.imageInputField ? [currentModel.input_schema.imageInputField] : []}
+                onToggleImageField={handleToggleImageField}
+                onRevertToDefault={handleRevertToDefault}
+              />
       )}
 
       {/* Inspection UI */}

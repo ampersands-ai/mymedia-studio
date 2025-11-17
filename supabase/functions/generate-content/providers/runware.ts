@@ -154,19 +154,14 @@ export async function callRunware(
     // Check if this model's schema requires a prompt
     const isPromptRequired = requiredFields.includes(promptField);
     
-    // Get effective prompt value
-    const effectivePrompt = (
-      request.prompt?.trim() || 
-      params[promptField]?.trim() || 
-      ''
-    );
+    // Get effective prompt value from parameters only
+    const effectivePrompt = params[promptField]?.trim() || '';
     
     // Validate ONLY if schema says it's required
     if (isPromptRequired && (!effectivePrompt || effectivePrompt.length < 2)) {
       console.error('[Runware] Missing required prompt', { 
         promptField, 
         isRequired: isPromptRequired,
-        hasRequestPrompt: !!request.prompt,
         hasParamsPrompt: !!params[promptField]
       });
       throw new Error(`Missing required parameter: ${promptField}`);

@@ -65,12 +65,8 @@ export async function callKieAI(
       [modelFieldName]: request.model,
       callBackUrl: callbackUrl,
       ...modelDefaults, // Inject defaults first
-      ...request.parameters // User params can override if needed
+      ...request.parameters // User params can override if needed (includes prompt if in schema)
     };
-    // Only include prompt if provided
-    if (request.prompt) {
-      payload.prompt = request.prompt;
-    }
   } else {
     // Standard nested input structure for other models
     logger.debug('Using WRAPPER payload structure');
@@ -85,12 +81,8 @@ export async function callKieAI(
     payload = {
       model: request.model,
       callBackUrl: callbackUrl,
-      input: cleanedParameters
+      input: cleanedParameters // cleanedParameters already includes prompt if schema defines it
     };
-    // Only include prompt if provided
-    if (request.prompt) {
-      payload.input.prompt = request.prompt;
-    }
   }
   
   logger.debug('Request configuration', { 

@@ -142,7 +142,6 @@ export const useGenerationPolling = (options: UseGenerationPollingOptions) => {
                 ai_models!inner(provider)
               `)
               .eq('parent_generation_id', generationId)
-              .eq('type', parentData.type)
               .order('output_index', { ascending: true });
 
             // Extract provider from nested model data

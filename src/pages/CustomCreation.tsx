@@ -564,7 +564,7 @@ const CustomCreation = () => {
     });
     if (!promptKey) return undefined;
     const promptProp = modelSchema.properties[promptKey] as JsonSchemaProperty;
-    return promptProp?.maxLength;
+    return promptProp?.maxLength ?? 5000;
   }, [modelSchema]);
   
   const hasDuration = useMemo(() => {

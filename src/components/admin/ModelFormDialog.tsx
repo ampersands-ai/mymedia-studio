@@ -279,10 +279,18 @@ export function ModelFormDialog({
           user.email || user.id
         );
 
+        // Extract group from the file path for display
+        const groupPath = fileName.split('/')[0];
+        const displayGroup = groupPath.replace(/_/g, ' ')
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+
         // TODO: In production, you would save the file content to the filesystem
         // For now, we just log it and store the filename
         logger.info("Generated locked model file", {
           fileName,
+          group: groupPath,
           contentLength: content.length,
         });
 
@@ -300,9 +308,9 @@ export function ModelFormDialog({
         if (error) throw error;
 
         toast.success(
-          `Model locked! Generated file: ${fileName}`,
+          `Model locked in ${displayGroup} group`,
           {
-            description: "The model is now isolated and won't be affected by system changes.",
+            description: `Generated: ${fileName}\nThe model is now isolated and won't be affected by system changes.`,
             duration: 5000,
           }
         );

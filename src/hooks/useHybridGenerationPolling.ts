@@ -31,6 +31,8 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
   const intervalsRef = useRef<NodeJS.Timeout[]>([]);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const fallbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const stallGuardRef = useRef<NodeJS.Timeout | null>(null);
+  const childDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const completedGenerationsRef = useRef<Set<string>>(new Set());
 
   const optionsRef = useRef(options);
@@ -44,6 +46,14 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
     if (fallbackTimeoutRef.current) {
       clearTimeout(fallbackTimeoutRef.current);
       fallbackTimeoutRef.current = null;
+    }
+    if (stallGuardRef.current) {
+      clearTimeout(stallGuardRef.current);
+      stallGuardRef.current = null;
+    }
+    if (childDebounceRef.current) {
+      clearTimeout(childDebounceRef.current);
+      childDebounceRef.current = null;
     }
     timeoutsRef.current = [];
     intervalsRef.current = [];
@@ -210,6 +220,42 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
           }
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'generations',
+          filter: `parent_generation_id=eq.${generationId}`
+        },
+        (payload: any) => {
+          logger.info('Child generation event', { 
+            childId: payload.new?.id,
+            hasStoragePath: !!payload.new?.storage_path 
+          } as any);
+
+          // If child has output, parent might be complete soon
+          if (payload.new?.storage_path) {
+            // Debounce to allow parent to flip to completed
+            if (childDebounceRef.current) {
+              clearTimeout(childDebounceRef.current);
+            }
+            childDebounceRef.current = setTimeout(() => {
+              logger.info('Child output detected, processing completion', { generationId } as any);
+              processCompletion(generationId);
+            }, 1000);
+          }
+
+          // Reset stall guard on any child activity
+          if (stallGuardRef.current) {
+            clearTimeout(stallGuardRef.current);
+            stallGuardRef.current = setTimeout(() => {
+              logger.warn('Stall guard triggered, switching to polling', { generationId } as any);
+              startFallbackPolling(generationId);
+            }, 20000);
+          }
+        }
+      )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           logger.info('Realtime connected', { userId } as any);
@@ -241,7 +287,7 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
   /**
    * Start polling for a generation
    */
-  const startPolling = useCallback((generationId: string) => {
+  const startPolling = useCallback(async (generationId: string) => {
     if (!user?.id) {
       logger.error('Cannot start polling: no user ID');
       return;
@@ -253,9 +299,35 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
     setIsPolling(true);
     setPollingId(generationId);
     
+    // Immediate status check - catch already-completed generations
+    try {
+      const { data, error } = await supabase
+        .from('generations')
+        .select('status')
+        .eq('id', generationId)
+        .single();
+
+      if (!error && data && ['completed', 'failed', 'error'].includes(data.status)) {
+        logger.info('Generation already complete, processing immediately', { 
+          generationId, 
+          status: data.status 
+        } as any);
+        processCompletion(generationId);
+        return;
+      }
+    } catch (err) {
+      logger.error('Immediate status check failed', err as any);
+    }
+    
+    // Set up stall guard (20 seconds)
+    stallGuardRef.current = setTimeout(() => {
+      logger.warn('Stall guard triggered, switching to polling', { generationId } as any);
+      startFallbackPolling(generationId);
+    }, 20000);
+
     // Try Realtime first
     setupRealtimeSubscription(user.id, generationId);
-  }, [user?.id, setupRealtimeSubscription]);
+  }, [user?.id, setupRealtimeSubscription, processCompletion, startFallbackPolling]);
 
   /**
    * Stop polling

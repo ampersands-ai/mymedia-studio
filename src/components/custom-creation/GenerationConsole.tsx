@@ -105,6 +105,7 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
                   </div>
                   <div className="flex-1 space-y-2">
                     <h3 className="font-semibold text-foreground">Generation Failed</h3>
+                    <p className="text-sm font-semibold text-destructive">Model Status: Temporarily Offline, try a different model.</p>
                     <p className="text-sm text-muted-foreground">{failedGenerationError.message}</p>
                     <p className="text-xs text-muted-foreground mt-2">
                       Your credits have been refunded automatically

@@ -68,6 +68,17 @@ export async function executeGeneration({
   // Step 3: Build custom parameters with conditional filtering
   let customParameters = buildCustomParameters(modelParameters, model.input_schema);
 
+  // Step 3a: Add prompt to customParameters BEFORE schema filtering
+  const promptFieldName = 
+    model.input_schema?.properties?.prompt ? 'prompt' :
+    model.input_schema?.properties?.positivePrompt ? 'positivePrompt' :
+    model.input_schema?.properties?.positive_prompt ? 'positive_prompt' :
+    null;
+  
+  if (promptFieldName && prompt.trim()) {
+    customParameters[promptFieldName] = prompt.trim();
+  }
+
   // Step 4: STRICT SCHEMA ENFORCEMENT - Filter to only schema-defined properties
   if (model.input_schema?.properties) {
     const allowedKeys = Object.keys(model.input_schema.properties);
@@ -138,18 +149,6 @@ export async function executeGeneration({
       custom_parameters: customParameters,
       enhance_prompt: false,
     };
-    
-    // Add prompt with the correct field name if it exists in schema
-    // Reuse prompt field detection from validation
-    const promptFieldName = 
-      model.input_schema?.properties?.prompt ? 'prompt' :
-      model.input_schema?.properties?.positivePrompt ? 'positivePrompt' :
-      model.input_schema?.properties?.positive_prompt ? 'positive_prompt' :
-      null;
-      
-    if (promptFieldName && prompt.trim()) {
-      generateParams.custom_parameters[promptFieldName] = prompt.trim();
-    }
     
     const result = await generate(generateParams);
 

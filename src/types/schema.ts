@@ -40,11 +40,13 @@ export interface JsonSchemaProperty {
   maximum?: number;
   minLength?: number;
   maxLength?: number;
+  minItems?: number;
+  maxItems?: number;
   format?: string;
   items?: JsonSchemaProperty;
   
   // Explicit renderer assignment (replaces heuristic detection)
-  renderer?: 'prompt' | 'image' | 'voice' | 'duration' | 'increment' | 'output-format' | null;
+  renderer?: string;
 }
 
 /**

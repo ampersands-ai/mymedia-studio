@@ -24,11 +24,13 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
   const [dialogOpen, setDialogOpen] = useState(false);
   const [showJson, setShowJson] = useState(false);
   const [savingOrder, setSavingOrder] = useState(false);
+  const [originalSchema, setOriginalSchema] = useState<JsonSchema>(schema);
 
   useEffect(() => {
     try {
       const parsed = parseSchema(schema);
       setParameters(parsed);
+      setOriginalSchema(schema);
     } catch (error) {
       logger.error('Schema parsing failed', error as Error, {
         component: 'SchemaBuilder',
@@ -52,7 +54,7 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
   const handleDeleteParameter = (paramName: string) => {
     const updated = parameters.filter(p => p.name !== paramName);
     setParameters(updated);
-    onChange(generateSchema(updated));
+    onChange(generateSchema(updated, originalSchema));
   };
 
   const handleSaveParameter = (param: Parameter) => {
@@ -67,7 +69,7 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
     }
     
     setParameters(updated);
-    onChange(generateSchema(updated));
+    onChange(generateSchema(updated, originalSchema));
     setDialogOpen(false);
   };
 
@@ -76,7 +78,7 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
     const updated = [...parameters];
     [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
     setParameters(updated);
-    const newSchema = generateSchema(updated);
+    const newSchema = generateSchema(updated, originalSchema);
     onChange(newSchema);
     
     // Auto-save if modelRecordId and onSave are provided
@@ -95,7 +97,7 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
     const updated = [...parameters];
     [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
     setParameters(updated);
-    const newSchema = generateSchema(updated);
+    const newSchema = generateSchema(updated, originalSchema);
     onChange(newSchema);
     
     // Auto-save if modelRecordId and onSave are provided
@@ -109,12 +111,12 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
     }
   };
 
-  const generatedJson = JSON.stringify(generateSchema(parameters), null, 2);
+  const generatedJson = JSON.stringify(generateSchema(parameters, originalSchema), null, 2);
   const currentImageField = (schema as any).imageInputField || null;
 
   const handleImageFieldChange = (value: string) => {
     const updated = {
-      ...generateSchema(parameters),
+      ...generateSchema(parameters, originalSchema),
       imageInputField: value === "none" ? null : value
     };
     onChange(updated);

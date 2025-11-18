@@ -53,24 +53,20 @@ export async function callKieAI(
     request.parameters.reference_image_urls = [request.parameters.reference_image_urls];
   }
   
-  // Handle Veo3 imageUrls + End_Frame merging
+  // Handle Veo3 startFrame/endFrame merging into imageUrls
   // ONLY applies to FIRST_AND_LAST_FRAMES_2_VIDEO mode (image-to-video with start/end frames)
   // SKIP for REFERENCE_2_VIDEO mode (reference images already handled as array)
   if ((request.model === 'veo3' || request.model === 'veo3_fast') && 
       request.parameters.generationType !== 'REFERENCE_2_VIDEO') {
-    const imageUrlsValue = request.parameters.imageUrls;
-    const endFrameValue = request.parameters.End_Frame;
+    const startFrameValue = request.parameters.startFrame;
+    const endFrameValue = request.parameters.endFrame;
     
-    // Build the imageUrls array
+    // Build the imageUrls array from startFrame and endFrame
     const imageUrlsArray: string[] = [];
     
     // Add start frame if present
-    if (imageUrlsValue) {
-      if (typeof imageUrlsValue === 'string') {
-        imageUrlsArray.push(imageUrlsValue);
-      } else if (Array.isArray(imageUrlsValue)) {
-        imageUrlsArray.push(...imageUrlsValue);
-      }
+    if (startFrameValue && typeof startFrameValue === 'string') {
+      imageUrlsArray.push(startFrameValue);
     }
     
     // Add end frame if present (as second element)
@@ -78,15 +74,16 @@ export async function callKieAI(
       imageUrlsArray.push(endFrameValue);
     }
     
-    // Replace imageUrls with the array, and remove End_Frame
+    // Replace with imageUrls array and remove original fields
     if (imageUrlsArray.length > 0) {
       request.parameters.imageUrls = imageUrlsArray;
-      delete request.parameters.End_Frame;
+      delete request.parameters.startFrame;
+      delete request.parameters.endFrame;
       
-      logger.debug('Merged Veo3 image frames for FIRST_AND_LAST_FRAMES_2_VIDEO', {
+      logger.debug('Merged Veo3 startFrame/endFrame for FIRST_AND_LAST_FRAMES_2_VIDEO', {
         metadata: { 
           imageCount: imageUrlsArray.length,
-          hasStartFrame: !!imageUrlsValue,
+          hasStartFrame: !!startFrameValue,
           hasEndFrame: !!endFrameValue
         }
       });

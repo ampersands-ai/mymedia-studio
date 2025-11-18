@@ -96,12 +96,26 @@ export async function executeGeneration({
   }
 
   // Step 5: Upload images and assign to correct schema field
-  if (imageFieldInfo.fieldName && uploadedImages.length > 0) {
+  if (uploadedImages.length > 0) {
     const imageUrls = await uploadImagesToStorage(userId);
-    if (imageFieldInfo.isArray) {
-      customParameters[imageFieldInfo.fieldName] = imageUrls;
-    } else {
-      customParameters[imageFieldInfo.fieldName] = imageUrls[0];
+    
+    // Check if we have separate startFrame/endFrame fields (for Veo3 Image-to-Video)
+    const hasStartFrame = model.input_schema?.properties?.startFrame;
+    const hasEndFrame = model.input_schema?.properties?.endFrame;
+    
+    if (hasStartFrame && hasEndFrame) {
+      // Assign first image to startFrame, second to endFrame
+      customParameters.startFrame = imageUrls[0];
+      if (imageUrls.length > 1) {
+        customParameters.endFrame = imageUrls[1];
+      }
+    } else if (imageFieldInfo.fieldName) {
+      // Use existing single-field logic
+      if (imageFieldInfo.isArray) {
+        customParameters[imageFieldInfo.fieldName] = imageUrls;
+      } else {
+        customParameters[imageFieldInfo.fieldName] = imageUrls[0];
+      }
     }
   }
 

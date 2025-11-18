@@ -591,8 +591,8 @@ Deno.serve(async (req) => {
         logger.debug('Applied Runware video format defaults', {
           metadata: { content_type: 'video', provider: 'runware' }
         });
-      } else {
-        // Other providers use snake_case
+      } else if (model.provider !== 'kie_ai') {
+        // Other providers use snake_case (except kie_ai which has model-specific schemas)
         const videoDefaults = {
           output_format: 'mp4',
           format: 'mp4',

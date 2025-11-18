@@ -14,13 +14,27 @@ export interface TimingResult {
 
 export async function validateTiming(
   generation: any,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  payload?: any
 ): Promise<TimingResult> {
   const estimatedSeconds = generation.ai_models?.estimated_time_seconds || 300;
   const MIN_PROCESSING_TIME = 2.85 * 1000; // 2.85 seconds (aggressive anti-replay)
   const MAX_PROCESSING_TIME = estimatedSeconds * 2.5 * 1000; // 2.5x multiplier
 
   const processingTime = Date.now() - new Date(generation.created_at).getTime();
+  
+  // Determine if this is a failure callback
+  const state = payload?.data?.state;
+  const httpCode = typeof payload?.code === 'number' ? payload.code : 
+                   typeof payload?.status === 'number' ? payload.status : 
+                   (typeof payload?.code === 'string' ? parseInt(payload.code, 10) : 
+                    (typeof payload?.status === 'string' ? parseInt(payload.status, 10) : null));
+  const msgStr = String(payload?.msg || payload?.data?.failMsg || '').toLowerCase();
+  const failurePatterns = ['error', 'fail', 'exceed', 'retry', 'timeout', 'invalid', 
+                           '超过', '失败', '错误', '錯誤', '失敗', 'erreur', 'fehler'];
+  const isFailure = state === 'failed' || 
+                    (httpCode !== null && httpCode >= 400) || 
+                    failurePatterns.some(pattern => msgStr.includes(pattern));
 
   webhookLogger.info('Timing analysis', {
     taskId: generation.provider_task_id,
@@ -29,11 +43,14 @@ export async function validateTiming(
     estimated_seconds: estimatedSeconds,
     actual_processing_seconds: Math.round(processingTime / 1000),
     min_threshold_seconds: MIN_PROCESSING_TIME / 1000,
-    max_threshold_seconds: MAX_PROCESSING_TIME / 1000
+    max_threshold_seconds: MAX_PROCESSING_TIME / 1000,
+    is_failure: isFailure,
+    skip_min_check: isFailure ? 'yes (failures can be immediate)' : 'no'
   });
 
-  // Reject impossibly fast webhooks (< 2.85s = replay/automation attack)
-  if (processingTime < MIN_PROCESSING_TIME) {
+  // Skip minimum timing check for failures (they can happen immediately)
+  // Only check timing for success callbacks to prevent replay attacks
+  if (!isFailure && processingTime < MIN_PROCESSING_TIME) {
     webhookLogger.failure(generation.id, 'SECURITY LAYER 3 FAILED: Webhook too fast - possible replay attack', {
       taskId: generation.provider_task_id,
       generation_id: generation.id,

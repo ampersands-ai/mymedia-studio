@@ -25,7 +25,7 @@ import { BestPracticesCard } from "@/components/custom-creation/BestPracticesCar
 import { supabase } from "@/integrations/supabase/client";
 import { createSignedUrl, extractStoragePath } from "@/lib/storage-utils";
 import { downloadMultipleOutputs } from "@/lib/download-utils";
-import { getSurpriseMePrompt } from "@/data/surpriseMePrompts";
+import { useCinematicPrompts, getSurpriseMePromptFromDb } from "@/hooks/useCinematicPrompts";
 import { toast } from "sonner";
 import type { JsonSchemaProperty, ModelJsonSchema } from "@/types/model-schema";
 import { initializeParameters } from "@/types/model-schema";
@@ -50,6 +50,7 @@ const CustomCreation = () => {
   const { data: allModels, isLoading: modelsLoading } = useModels();
   const { data: userTokens } = useUserTokens();
   const { progress, updateProgress, setFirstGeneration, markComplete, dismiss } = useOnboarding();
+  const { data: cinematicPrompts } = useCinematicPrompts();
 
   // Filter and sort models by selected group (default to cost sorting)
   const filteredModels = useMemo(() => {
@@ -527,10 +528,10 @@ const CustomCreation = () => {
   const onSurpriseMe = useCallback(() => {
     logger.info('Surprise Me triggered', { selectedGroup: state.selectedGroup } as any);
     updateState({ generatingSurprise: true });
-    const surprisePrompt = getSurpriseMePrompt(state.selectedGroup);
+    const surprisePrompt = getSurpriseMePromptFromDb(state.selectedGroup, cinematicPrompts);
     setStatePrompt(surprisePrompt);
     updateState({ generatingSurprise: false });
-  }, [state.selectedGroup, updateState, setStatePrompt]);
+  }, [state.selectedGroup, updateState, setStatePrompt, cinematicPrompts]);
 
   // Download all outputs
   const handleDownloadAll = async () => {

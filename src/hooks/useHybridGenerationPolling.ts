@@ -146,7 +146,8 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
       duration: 3000,
     });
 
-    const intervals = [3000, 5000, 10000, 30000];
+    // More responsive intervals: 2s → 3s → 5s → 8s (max)
+    const intervals = [2000, 3000, 5000, 8000];
     let attempt = 0;
 
     const poll = async () => {
@@ -164,7 +165,7 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
           return;
         }
 
-        // Schedule next poll with exponential backoff
+        // Schedule next poll with exponential backoff (max 8s instead of 30s)
         const interval = intervals[Math.min(attempt, intervals.length - 1)];
         attempt++;
         

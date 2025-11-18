@@ -85,6 +85,13 @@ export function ModelFormDialog({
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [locking, setLocking] = useState(false);
+  const [previewDialog, setPreviewDialog] = useState({
+    open: false,
+    fileName: '',
+    content: '',
+    schema: null as JsonSchema | null,
+    model: null as AIModel | null,
+  });
 
   const isLocked = model?.is_locked || false;
 
@@ -279,42 +286,16 @@ export function ModelFormDialog({
           user.email || user.id
         );
 
-        // Extract group from the file path for display
-        const groupPath = fileName.split('/')[0];
-        const displayGroup = groupPath.replace(/_/g, ' ')
-          .split(' ')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
-
-        // TODO: In production, you would save the file content to the filesystem
-        // For now, we just log it and store the filename
-        logger.info("Generated locked model file", {
+        // Show preview dialog instead of immediately updating DB
+        setPreviewDialog({
+          open: true,
           fileName,
-          group: groupPath,
-          contentLength: content.length,
+          content,
+          schema: model.input_schema,
+          model,
         });
-
-        // Update the database with lock information
-        const { error } = await supabase
-          .from("ai_models")
-          .update({
-            is_locked: true,
-            locked_at: new Date().toISOString(),
-            locked_by: user.id,
-            locked_file_path: fileName,
-          })
-          .eq("record_id", model.record_id);
-
-        if (error) throw error;
-
-        toast.success(
-          `Model locked in ${displayGroup} group`,
-          {
-            description: `Generated: ${fileName}\nThe model is now isolated and won't be affected by system changes.`,
-            duration: 5000,
-          }
-        );
-        onSuccess();
+        
+        setLocking(false);
       }
     } catch (error: any) {
       logger.error("Failed to lock/unlock model", error, {
@@ -327,7 +308,152 @@ export function ModelFormDialog({
     }
   };
 
+  const handleConfirmLock = async () => {
+    if (!previewDialog.model) return;
+    
+    try {
+      setLocking(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      // Extract group from the file path for display
+      const groupPath = previewDialog.fileName.split('/')[0];
+      const displayGroup = groupPath.replace(/_/g, ' ')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+
+      logger.info("Generated locked model file", {
+        fileName: previewDialog.fileName,
+        group: groupPath,
+        contentLength: previewDialog.content.length,
+      });
+
+      // Update the database with lock information
+      const { error } = await supabase
+        .from("ai_models")
+        .update({
+          is_locked: true,
+          locked_at: new Date().toISOString(),
+          locked_by: user.id,
+          locked_file_path: previewDialog.fileName,
+        })
+        .eq("record_id", previewDialog.model.record_id);
+
+      if (error) throw error;
+
+      // Close preview dialog
+      setPreviewDialog({ open: false, fileName: '', content: '', schema: null, model: null });
+
+      toast.success(
+        `Model locked in ${displayGroup} group`,
+        {
+          description: `File path: src/lib/models/locked/${previewDialog.fileName}\n\nPlease tell the AI to create this file with the reviewed code.`,
+          duration: 8000,
+        }
+      );
+      onSuccess();
+    } catch (error: any) {
+      logger.error("Failed to confirm lock", error);
+      toast.error(error.message || "Failed to lock model");
+    } finally {
+      setLocking(false);
+    }
+  };
+
   return (
+    <>
+      {/* Code Preview Dialog */}
+      <Dialog open={previewDialog.open} onOpenChange={(open) => !open && setPreviewDialog({ ...previewDialog, open: false })}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">
+              🔒 Review Generated Code for {previewDialog.model?.model_name}
+            </DialogTitle>
+            <DialogDescription>
+              Review the complete TypeScript file before locking this model.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Group Badge */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Group:</span>
+              <code className="bg-primary/10 text-primary px-2 py-1 rounded text-sm font-mono">
+                {previewDialog.fileName.split('/')[0].replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+              </code>
+            </div>
+
+            {/* File Path */}
+            <div className="space-y-1">
+              <span className="text-sm font-medium">File Path:</span>
+              <code className="block bg-muted p-2 rounded text-xs font-mono break-all">
+                src/lib/models/locked/{previewDialog.fileName}
+              </code>
+            </div>
+
+            {/* Renderer Configuration */}
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm">🎨 Renderer Configuration</h4>
+              <div className="bg-muted p-3 rounded text-sm grid grid-cols-2 md:grid-cols-3 gap-2">
+                <div>Prompt: {previewDialog.schema?.usePromptRenderer ? '✅' : '❌'}</div>
+                <div>Image: {previewDialog.schema?.useImageRenderer ? '✅' : '❌'}</div>
+                <div>Voice: {previewDialog.schema?.useVoiceRenderer ? '✅' : '❌'}</div>
+                <div>Duration: {previewDialog.schema?.useDurationRenderer ? '✅' : '❌'}</div>
+                <div>Increment: {previewDialog.schema?.useIncrementRenderer ? '✅' : '❌'}</div>
+                <div>Output Format: {previewDialog.schema?.useOutputFormatRenderer ? '✅' : '❌'}</div>
+              </div>
+            </div>
+
+            {/* Field Renderers */}
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm">📋 Field Renderers</h4>
+              <div className="bg-muted p-3 rounded text-sm space-y-1 max-h-40 overflow-y-auto">
+                {Object.entries(previewDialog.schema?.properties || {}).map(([key, prop]: [string, any]) => (
+                  <div key={key} className="font-mono text-xs">
+                    <code className="text-primary">{key}</code>: {prop.renderer || 'default'} 
+                    {prop.type && <span className="text-muted-foreground"> ({prop.type})</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Code Viewer */}
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm">📄 Generated Code</h4>
+              <div className="bg-muted rounded border">
+                <pre className="p-4 text-xs font-mono overflow-x-auto max-h-[400px] overflow-y-auto">
+                  {previewDialog.content}
+                </pre>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Lines: {previewDialog.content.split('\n').length} | 
+                Size: {(previewDialog.content.length / 1024).toFixed(1)} KB
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPreviewDialog({ open: false, fileName: '', content: '', schema: null, model: null })}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleConfirmLock}
+                disabled={locking}
+              >
+                {locking ? "Confirming..." : "Confirm & Save"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Main Model Form Dialog */}
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -747,5 +873,6 @@ export function ModelFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

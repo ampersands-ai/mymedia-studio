@@ -111,9 +111,19 @@ export const MODEL_CONFIG = {
 
 // ============================================================================
 // FROZEN SCHEMA (from Admin UI at time of lock)
+// Includes ALL renderer configurations for complete UI control
 // ============================================================================
 
-export const SCHEMA = ${JSON.stringify(model.input_schema, null, 2)} as const;
+export const SCHEMA = ${JSON.stringify({
+  ...model.input_schema,
+  usePromptRenderer: (model.input_schema as any).usePromptRenderer ?? true,
+  useImageRenderer: (model.input_schema as any).useImageRenderer ?? true,
+  useVoiceRenderer: (model.input_schema as any).useVoiceRenderer ?? false,
+  useDurationRenderer: (model.input_schema as any).useDurationRenderer ?? false,
+  useIncrementRenderer: (model.input_schema as any).useIncrementRenderer ?? true,
+  useOutputFormatRenderer: (model.input_schema as any).useOutputFormatRenderer ?? false,
+  imageInputField: (model.input_schema as any).imageInputField ?? null,
+}, null, 2)} as const;
 
 // ============================================================================
 // PAYLOAD PREPARATION (Model-Specific Logic)

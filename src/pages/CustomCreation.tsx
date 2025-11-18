@@ -9,6 +9,7 @@ import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist
 import { SuccessConfetti } from "@/components/onboarding/SuccessConfetti";
 import { useModels } from "@/hooks/useModels";
 import { useUserTokens } from "@/hooks/useUserTokens";
+import { useModelSchema } from "@/hooks/useModelSchema";
 import { useCustomCreationState } from "@/hooks/useCustomCreationState";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
 import { useCustomGeneration } from "@/hooks/useCustomGeneration";
@@ -64,6 +65,9 @@ const CustomCreation = () => {
 
   // Get current model
   const currentModel = filteredModels.find(m => m.record_id === state.selectedModel);
+
+  // Get model schema (locked models load from file, unlocked from database)
+  const { schema: modelSchema, loading: schemaLoading } = useModelSchema(currentModel as any || null);
 
   // Initialize model parameters with schema defaults when model changes
   useEffect(() => {
@@ -622,8 +626,6 @@ const CustomCreation = () => {
   }, [state.prompt, progress, updateProgress]);
 
   // Compute schema-derived values for InputPanel
-  const modelSchema = currentModel?.input_schema as ModelJsonSchema | null | undefined;
-  
   const hasPromptField = useMemo(() => {
     if (!modelSchema?.properties) return false;
     return Object.keys(modelSchema.properties).some(key => {

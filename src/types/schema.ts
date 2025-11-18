@@ -58,6 +58,14 @@ export interface JsonSchema {
   required?: string[];
   'x-order'?: string[];
   
+  // Explicit renderer toggles (control which specialized UI components to show)
+  usePromptRenderer?: boolean;
+  useImageRenderer?: boolean;
+  useVoiceRenderer?: boolean;
+  useDurationRenderer?: boolean;
+  useIncrementRenderer?: boolean;
+  useOutputFormatRenderer?: boolean;
+  
   // Legacy - kept for backward compatibility
   imageInputField?: string | null;
 }

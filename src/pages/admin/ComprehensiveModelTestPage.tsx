@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useModels } from "@/hooks/useModels";
 import { useAllModels } from "@/hooks/useAllModels";
+import { useModelSchema } from "@/hooks/useModelSchema";
 import { ParametersInspector } from "@/components/admin/model-health/ParametersInspector";
 import { ExecutionFlowVisualizer } from "@/components/admin/model-health/ExecutionFlowVisualizer";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -80,6 +81,9 @@ const ComprehensiveModelTestPage = () => {
   const currentModel = useMemo(() => {
     return filteredModels.find((m: any) => m.record_id === state.selectedModel) || null;
   }, [filteredModels, state.selectedModel]);
+
+  // Get model schema (locked models load from file, unlocked from database)
+  const { schema: modelSchema } = useModelSchema(currentModel as any);
 
   // Track original schema for revert functionality
   useEffect(() => {
@@ -1137,7 +1141,7 @@ const ComprehensiveModelTestPage = () => {
         onIncrementChange={handleIncrementChange}
         advancedOpen={state.advancedOpen}
         onAdvancedOpenChange={handleAdvancedOpenChange}
-        modelSchema={currentModel?.input_schema as ModelJsonSchema || null}
+        modelSchema={modelSchema || null}
         modelParameters={state.modelParameters}
         onModelParametersChange={handleModelParametersChange}
         modelId={currentModel?.id || ''}

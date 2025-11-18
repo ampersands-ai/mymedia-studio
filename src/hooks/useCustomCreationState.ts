@@ -219,6 +219,7 @@ export const useCustomCreationState = () => {
         generatedOutput: null,
         generatedOutputs: [],
         selectedOutputIndex: 0,
+        failedGenerationError: null,
       };
     });
   }, []);
@@ -244,6 +245,7 @@ export const useCustomCreationState = () => {
         generatedOutput: null,
         generatedOutputs: [],
         selectedOutputIndex: 0,
+        failedGenerationError: null,
       };
     });
   }, []);

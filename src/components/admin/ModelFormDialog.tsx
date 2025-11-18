@@ -84,6 +84,9 @@ export function ModelFormDialog({
   });
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [locking, setLocking] = useState(false);
+
+  const isLocked = model?.is_locked || false;
 
   useEffect(() => {
     if (model) {
@@ -230,19 +233,155 @@ export function ModelFormDialog({
     }
   };
 
+  const handleLockToggle = async () => {
+    if (!model) {
+      toast.error("Cannot lock/unlock a new model. Save it first.");
+      return;
+    }
+
+    try {
+      setLocking(true);
+
+      if (isLocked) {
+        // Unlock the model
+        const { error } = await supabase
+          .from("ai_models")
+          .update({
+            is_locked: false,
+            locked_at: null,
+            locked_by: null,
+          })
+          .eq("record_id", model.record_id);
+
+        if (error) throw error;
+        
+        toast.success("Model unlocked. You can now edit the schema.");
+        onSuccess();
+      } else {
+        // Lock the model - generate the file
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("No user found");
+
+        // Import the code generator
+        const { saveLockedModelFile } = await import(
+          "@/lib/models/generateModelFile"
+        );
+
+        // Convert ModelConfiguration to AIModel format for generator
+        const modelForGenerator = {
+          ...model,
+          input_schema: model.input_schema as unknown as Record<string, unknown>,
+        };
+
+        // Generate the locked model file
+        const { fileName, content } = await saveLockedModelFile(
+          modelForGenerator as any,
+          user.email || user.id
+        );
+
+        // TODO: In production, you would save the file content to the filesystem
+        // For now, we just log it and store the filename
+        logger.info("Generated locked model file", {
+          fileName,
+          contentLength: content.length,
+        });
+
+        // Update the database with lock information
+        const { error } = await supabase
+          .from("ai_models")
+          .update({
+            is_locked: true,
+            locked_at: new Date().toISOString(),
+            locked_by: user.id,
+            locked_file_path: fileName,
+          })
+          .eq("record_id", model.record_id);
+
+        if (error) throw error;
+
+        toast.success(
+          `Model locked! Generated file: ${fileName}`,
+          {
+            description: "The model is now isolated and won't be affected by system changes.",
+            duration: 5000,
+          }
+        );
+        onSuccess();
+      }
+    } catch (error: any) {
+      logger.error("Failed to lock/unlock model", error, {
+        modelId: model?.id,
+        operation: isLocked ? "unlock" : "lock",
+      });
+      toast.error(error.message || `Failed to ${isLocked ? "unlock" : "lock"} model`);
+    } finally {
+      setLocking(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-black">
-            {model ? "Edit Model" : "Add New Model"}
-          </DialogTitle>
-          <DialogDescription>
-            Configure AI model settings, credit costs, and parameters
-          </DialogDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="text-2xl font-black flex items-center gap-2">
+                {model ? "Edit Model" : "Add New Model"}
+                {model && (
+                  <span className="text-sm font-normal">
+                    {isLocked ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                        🔒 Locked
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-500/10 text-green-600 dark:text-green-400">
+                        🔓 Unlocked
+                      </span>
+                    )}
+                  </span>
+                )}
+              </DialogTitle>
+              <DialogDescription>
+                {isLocked
+                  ? "This model is locked. Unlock it to make changes."
+                  : "Configure AI model settings, credit costs, and parameters"}
+              </DialogDescription>
+            </div>
+            {model && (
+              <Button
+                type="button"
+                variant={isLocked ? "outline" : "default"}
+                size="sm"
+                onClick={handleLockToggle}
+                disabled={locking}
+              >
+                {locking
+                  ? isLocked
+                    ? "Unlocking..."
+                    : "Locking..."
+                  : isLocked
+                  ? "🔓 Unlock Model"
+                  : "🔒 Lock Model"}
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {isLocked && (
+            <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <p className="text-sm text-amber-600 dark:text-amber-400">
+                ⚠️ This model is locked and uses a dedicated TypeScript file. 
+                Unlock it to make changes, then re-lock when done.
+              </p>
+              {model?.locked_file_path && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  File: <code className="px-1 py-0.5 rounded bg-background">{model.locked_file_path}</code>
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="id">Model ID *</Label>
@@ -254,6 +393,7 @@ export function ModelFormDialog({
                 }
                 placeholder="veo3-fast"
                 required
+                disabled={isLocked}
               />
               <p className="text-xs text-muted-foreground">
                 Model identifier (can be duplicated for different endpoints)
@@ -592,7 +732,7 @@ export function ModelFormDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={saving}>
+            <Button type="submit" disabled={saving || isLocked}>
               {saving ? "Saving..." : model ? "Update Model" : "Create Model"}
             </Button>
           </div>

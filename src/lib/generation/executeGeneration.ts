@@ -24,6 +24,12 @@ interface ExecuteGenerationParams {
  * Shared generation pipeline used by both Custom Creation and Test flows.
  * Ensures identical validation, parameter building, image handling, and API calls.
  * 
+ * VALIDATION APPROACH (Jan 2025 - Schema-Driven):
+ * - No hardcoded excludeFields list
+ * - Image fields validated AFTER upload (URLs inserted into customParameters)
+ * - All required fields validated using schema.required with type-aware empty checks
+ * - Prompt fields get user input; other fields use customParameters values
+ * 
  * @returns generation ID if successful, throws error otherwise
  */
 export async function executeGeneration({
@@ -59,27 +65,10 @@ export async function executeGeneration({
     throw new Error(validation.error);
   }
 
-  // Step 3: Validate required schema fields (advanced options)
-  if (model.input_schema) {
-    const requiredFields = model.input_schema.required || [];
-    const schemaProperties = model.input_schema.properties || {};
-    const excludeFields = ['prompt', 'positivePrompt', 'positive_prompt', 'inputImage', 'image_urls', 'imageUrl', 'image_url', 'image', 'images', 'filesUrl', 'fileUrls', 'reference_image_urls', 'frameImages'];
-
-    for (const field of requiredFields) {
-      if (excludeFields.includes(field)) continue;
-      
-      const value = modelParameters[field];
-      if (value === undefined || value === null || value === '') {
-        const fieldTitle = schemaProperties[field]?.title || field;
-        throw new Error(`Please provide a value for: ${fieldTitle}`);
-      }
-    }
-  }
-
-  // Step 4: Build custom parameters with conditional filtering
+  // Step 3: Build custom parameters with conditional filtering
   let customParameters = buildCustomParameters(modelParameters, model.input_schema);
-  
-  // Step 4.5: STRICT SCHEMA ENFORCEMENT - Filter to only schema-defined properties
+
+  // Step 4: STRICT SCHEMA ENFORCEMENT - Filter to only schema-defined properties
   if (model.input_schema?.properties) {
     const allowedKeys = Object.keys(model.input_schema.properties);
     const filtered: Record<string, any> = {};
@@ -105,12 +94,42 @@ export async function executeGeneration({
     }
   }
 
-  // Step 6: Detect which prompt field the schema uses
-  const promptFieldName = 
-    model.input_schema?.properties?.prompt ? 'prompt' :
-    model.input_schema?.properties?.positivePrompt ? 'positivePrompt' :
-    model.input_schema?.properties?.positive_prompt ? 'positive_prompt' :
-    null;
+  // Step 6: Schema-driven required field validation (after images uploaded)
+  if (model.input_schema?.required && model.input_schema?.properties) {
+    const requiredFields = model.input_schema.required;
+    const schemaProperties = model.input_schema.properties;
+    
+    // Detect prompt field for special handling
+    const promptFieldName = 
+      schemaProperties.prompt ? 'prompt' :
+      schemaProperties.positivePrompt ? 'positivePrompt' :
+      schemaProperties.positive_prompt ? 'positive_prompt' :
+      null;
+
+    for (const field of requiredFields) {
+      // For prompt fields, use the user's prompt input
+      const value = (field === promptFieldName) ? prompt.trim() : customParameters[field];
+      const fieldSchema = schemaProperties[field];
+      const fieldTitle = fieldSchema?.title || field;
+      
+      // Type-aware empty checks
+      let isEmpty = false;
+      if (value === undefined || value === null) {
+        isEmpty = true;
+      } else if (typeof value === 'string') {
+        isEmpty = value.trim() === '';
+      } else if (Array.isArray(value)) {
+        isEmpty = value.length === 0;
+      } else if (typeof value === 'object') {
+        isEmpty = Object.keys(value).length === 0;
+      }
+      // numbers and booleans: allow 0 and false
+      
+      if (isEmpty) {
+        throw new Error(`Please provide a value for: ${fieldTitle}`);
+      }
+    }
+  }
 
   // Step 7: Call generation API
   try {
@@ -121,6 +140,13 @@ export async function executeGeneration({
     };
     
     // Add prompt with the correct field name if it exists in schema
+    // Reuse prompt field detection from validation
+    const promptFieldName = 
+      model.input_schema?.properties?.prompt ? 'prompt' :
+      model.input_schema?.properties?.positivePrompt ? 'positivePrompt' :
+      model.input_schema?.properties?.positive_prompt ? 'positive_prompt' :
+      null;
+      
     if (promptFieldName && prompt.trim()) {
       generateParams.custom_parameters[promptFieldName] = prompt.trim();
     }

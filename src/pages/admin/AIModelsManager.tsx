@@ -97,7 +97,7 @@ export default function AIModelsManager() {
         cost_multipliers: typeof model.cost_multipliers === 'object' && model.cost_multipliers !== null 
           ? model.cost_multipliers as Record<string, number>
           : null,
-        payload_structure: (model.payload_structure === 'direct' || model.payload_structure === 'wrapper')
+        payload_structure: (model.payload_structure === 'flat' || model.payload_structure === 'wrapper')
           ? model.payload_structure
           : 'wrapper',
         groups: Array.isArray(model.groups) 
@@ -604,7 +604,7 @@ export default function AIModelsManager() {
                       <SelectItem value="all">All Structures</SelectItem>
                       {uniqueStructures.map(structure => (
                         <SelectItem key={structure} value={structure}>
-                          {structure === 'direct' ? 'Direct' : 'Wrapper'}
+                          {structure === 'flat' ? 'Flat' : 'Wrapper'}
                         </SelectItem>
                       ))}
                     </SelectContent>

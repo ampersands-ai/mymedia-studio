@@ -95,6 +95,14 @@ export interface CustomCreationState {
   // Template preview
   templateBeforeImage: string | null;
   templateAfterImage: string | null;
+  
+  // Failed generation error
+  failedGenerationError: {
+    message: string;
+    generationId: string;
+    timestamp: number;
+    providerResponse?: any;
+  } | null;
 }
 
 /**

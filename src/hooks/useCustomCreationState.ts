@@ -119,6 +119,9 @@ const INITIAL_STATE: CustomCreationState = {
   // Template preview
   templateBeforeImage: null,
   templateAfterImage: null,
+  
+  // Failed generation error
+  failedGenerationError: null,
 };
 
 /**

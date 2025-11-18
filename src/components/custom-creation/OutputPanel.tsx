@@ -53,6 +53,13 @@ interface OutputPanelProps {
   modelName?: string;
   connectionTier?: 'realtime' | 'polling' | 'disconnected';
   realtimeConnected?: boolean;
+  failedGenerationError?: {
+    message: string;
+    generationId: string;
+    timestamp: number;
+    providerResponse?: any;
+  } | null;
+  onClearError?: () => void;
 }
 
 /**
@@ -86,8 +93,12 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
       onDownloadSuccess,
       templateBeforeImage,
       templateAfterImage,
+      modelProvider,
+      modelName,
       connectionTier = 'disconnected',
       realtimeConnected = false,
+      failedGenerationError,
+      onClearError,
     },
     ref
   ) => {
@@ -100,7 +111,8 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
       generationState.generatedOutput || 
       generationState.generatedOutputs.length > 0 ||
       (childVideoGenerations && childVideoGenerations.length > 0) ||
-      !!generationState.generationStartTime;
+      !!generationState.generationStartTime ||
+      !!failedGenerationError;
 
     const showStatusBanner = (localGenerating || isGenerating || isPolling || pollingGenerationId) && 
       !generationState.generatedOutput && 
@@ -197,6 +209,8 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
               childVideoGenerations={childVideoGenerations}
               parentGenerationId={parentGenerationId}
               onDownloadSuccess={onDownloadSuccess}
+              failedGenerationError={failedGenerationError}
+              onClearError={onClearError}
             />
           ) : (
             <div className="flex flex-col items-center justify-center min-h-[400px] p-4">

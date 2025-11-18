@@ -83,8 +83,14 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     schema.items?.type === "object" &&
     schema.items?.properties?.inputImage?.format === "uri";
 
+  // Check if this is an array of image strings (e.g., ["url1", "url2", "url3"]) - for Veo Reference
+  const isImageArray = 
+    schema.type === "array" && 
+    schema.items?.type === "string" &&
+    schema.renderer === 'image';
+
   // Only use explicit renderer property
-  const isImageUpload = schema.renderer === 'image';
+  const isImageUpload = schema.renderer === 'image' && !isArrayOfImages && !isImageArray;
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -93,12 +99,26 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64String = reader.result as string;
-      setImagePreview(base64String);
       
       // If this is an array of image objects, store as [{ inputImage: "base64" }]
       if (isArrayOfImages) {
         onChange([{ inputImage: base64String }] as unknown as ModelParameterValue);
+        setImagePreview(null);
+      } else if (isImageArray) {
+        // Handle array of strings (Veo Reference model)
+        const currentArray = Array.isArray(value) ? value : [];
+        const maxItems = schema.maxItems || 10;
+        
+        if (currentArray.length >= maxItems) {
+          // Use toast if available
+          console.warn(`Maximum ${maxItems} images allowed`);
+          return;
+        }
+        
+        onChange([...currentArray, base64String] as ModelParameterValue);
+        setImagePreview(null);
       } else {
+        setImagePreview(base64String);
         onChange(base64String);
       }
     };
@@ -286,6 +306,79 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
             </>
           )}
         </div>
+      </div>
+    );
+  }
+
+  // Render array of image strings (e.g., ["url1", "url2", "url3"]) - for Veo Reference model
+  if (isImageArray) {
+    const imageArray = (Array.isArray(value) ? value : []) as string[];
+    const maxItems = schema.maxItems || 10;
+    
+    return (
+      <div className="space-y-2">
+        <Label>
+          {displayName}
+          {isRequired && <span className="text-destructive ml-1">*</span>}
+          <span className="text-xs text-muted-foreground ml-2">
+            ({imageArray.length}/{maxItems})
+          </span>
+        </Label>
+        {schema.description && (
+          <p className="text-xs text-muted-foreground mb-2">{schema.description}</p>
+        )}
+        
+        {/* Grid of uploaded images with remove buttons */}
+        {imageArray.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2">
+            {imageArray.map((imgUrl, idx) => (
+              <div key={idx} className="relative group">
+                <img 
+                  src={imgUrl} 
+                  alt={`Reference ${idx + 1}`}
+                  className="w-full h-24 object-cover rounded-lg border border-border"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => {
+                    const newArray = imageArray.filter((_, i) => i !== idx);
+                    onChange(newArray.length > 0 ? newArray : null);
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {/* Upload button - show only if under max limit */}
+        {imageArray.length < maxItems && (
+          <>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+              id={`image-upload-${name}`}
+            />
+            <button
+              type="button"
+              onClick={() => document.getElementById(`image-upload-${name}`)?.click()}
+              className="w-full border-2 border-dashed border-border rounded-lg p-6 hover:border-primary/50 transition-colors bg-background"
+            >
+              <div className="flex flex-col items-center justify-center gap-2">
+                <Plus className="h-5 w-5 text-muted-foreground" />
+                <span className="text-sm font-medium">
+                  Add Image {imageArray.length > 0 ? `(${imageArray.length}/${maxItems})` : ''}
+                </span>
+              </div>
+            </button>
+          </>
+        )}
       </div>
     );
   }

@@ -54,8 +54,10 @@ export async function callKieAI(
   }
   
   // Handle Veo3 imageUrls + End_Frame merging
-  // Veo3 API expects imageUrls as an array [startFrame] or [startFrame, endFrame]
-  if (request.model === 'veo3' || request.model === 'veo3_fast') {
+  // ONLY applies to FIRST_AND_LAST_FRAMES_2_VIDEO mode (image-to-video with start/end frames)
+  // SKIP for REFERENCE_2_VIDEO mode (reference images already handled as array)
+  if ((request.model === 'veo3' || request.model === 'veo3_fast') && 
+      request.parameters.generationType !== 'REFERENCE_2_VIDEO') {
     const imageUrlsValue = request.parameters.imageUrls;
     const endFrameValue = request.parameters.End_Frame;
     
@@ -81,7 +83,7 @@ export async function callKieAI(
       request.parameters.imageUrls = imageUrlsArray;
       delete request.parameters.End_Frame;
       
-      logger.debug('Merged Veo3 image frames', {
+      logger.debug('Merged Veo3 image frames for FIRST_AND_LAST_FRAMES_2_VIDEO', {
         metadata: { 
           imageCount: imageUrlsArray.length,
           hasStartFrame: !!imageUrlsValue,
@@ -89,6 +91,22 @@ export async function callKieAI(
         }
       });
     }
+  }
+  
+  // For REFERENCE_2_VIDEO mode, imageUrls should already be an array from schema
+  // Ensure it's properly formatted
+  if (request.parameters.generationType === 'REFERENCE_2_VIDEO' && 
+      request.parameters.imageUrls) {
+    if (!Array.isArray(request.parameters.imageUrls)) {
+      request.parameters.imageUrls = [request.parameters.imageUrls];
+    }
+    
+    logger.debug('Veo Reference mode images', {
+      metadata: { 
+        imageCount: request.parameters.imageUrls.length,
+        generationType: request.parameters.generationType
+      }
+    });
   }
   
   if (useFlatStructure) {

@@ -313,7 +313,8 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                       if (!schemaProp) return null;
                       
                       // Check if this is an image field and if the next field is also an image
-                      const isImageField = schemaProp.renderer === 'image';
+              // Only group single image fields side-by-side, not array-type images
+              const isImageField = schemaProp.renderer === 'image' && schemaProp.type !== 'array';
                       const nextKey = basicParams[index + 1];
                       const nextProp = nextKey ? getSchemaProperty(modelSchema, nextKey) : null;
                       const nextIsImage = nextProp?.renderer === 'image';

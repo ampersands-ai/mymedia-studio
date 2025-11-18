@@ -19,15 +19,40 @@ function sanitizeModelName(modelName: string): string {
 }
 
 /**
+ * Extract primary group from model's groups array
+ * Falls back to "uncategorized" if no valid group found
+ */
+function extractPrimaryGroup(model: AIModel): string {
+  const validGroups = [
+    "image_editing",
+    "prompt_to_image", 
+    "prompt_to_video",
+    "image_to_video",
+    "prompt_to_audio"
+  ];
+  
+  if (Array.isArray(model.groups) && model.groups.length > 0) {
+    const firstGroup = model.groups[0];
+    if (typeof firstGroup === 'string' && validGroups.includes(firstGroup)) {
+      return firstGroup;
+    }
+  }
+  
+  return "uncategorized";
+}
+
+/**
  * Generate TypeScript code for a locked model
  */
 export function generateModelFile(model: AIModel, lockedBy: string): string {
   const timestamp = new Date().toISOString();
   const fileName = `${sanitizeModelName(model.model_name)}.ts`;
+  const primaryGroup = extractPrimaryGroup(model);
   
   return `/**
  * 🔒 LOCKED MODEL: ${model.model_name}
  * 
+ * Group: ${primaryGroup}
  * Generated: ${timestamp}
  * Locked by: ${lockedBy}
  * Provider: ${model.provider}
@@ -303,10 +328,12 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 }
 
 /**
- * Generate filename for a locked model
+ * Generate filename path for a locked model (includes group directory)
  */
 export function generateFileName(model: AIModel): string {
-  return `${sanitizeModelName(model.model_name)}.ts`;
+  const primaryGroup = extractPrimaryGroup(model);
+  const sanitizedName = sanitizeModelName(model.model_name);
+  return `${primaryGroup}/${sanitizedName}.ts`;
 }
 
 /**
@@ -318,10 +345,12 @@ export async function saveLockedModelFile(
 ): Promise<{ fileName: string; content: string }> {
   const fileName = generateFileName(model);
   const content = generateModelFile(model, lockedBy);
+  const primaryGroup = extractPrimaryGroup(model);
 
   logger.info("Generated locked model file", {
     modelId: model.id,
     fileName,
+    group: primaryGroup,
     contentLength: content.length,
   });
 

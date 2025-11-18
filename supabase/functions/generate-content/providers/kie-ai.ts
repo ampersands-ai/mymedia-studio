@@ -53,6 +53,44 @@ export async function callKieAI(
     request.parameters.reference_image_urls = [request.parameters.reference_image_urls];
   }
   
+  // Handle Veo3 imageUrls + End_Frame merging
+  // Veo3 API expects imageUrls as an array [startFrame] or [startFrame, endFrame]
+  if (request.model === 'veo3' || request.model === 'veo3_fast') {
+    const imageUrlsValue = request.parameters.imageUrls;
+    const endFrameValue = request.parameters.End_Frame;
+    
+    // Build the imageUrls array
+    const imageUrlsArray: string[] = [];
+    
+    // Add start frame if present
+    if (imageUrlsValue) {
+      if (typeof imageUrlsValue === 'string') {
+        imageUrlsArray.push(imageUrlsValue);
+      } else if (Array.isArray(imageUrlsValue)) {
+        imageUrlsArray.push(...imageUrlsValue);
+      }
+    }
+    
+    // Add end frame if present (as second element)
+    if (endFrameValue && typeof endFrameValue === 'string') {
+      imageUrlsArray.push(endFrameValue);
+    }
+    
+    // Replace imageUrls with the array, and remove End_Frame
+    if (imageUrlsArray.length > 0) {
+      request.parameters.imageUrls = imageUrlsArray;
+      delete request.parameters.End_Frame;
+      
+      logger.debug('Merged Veo3 image frames', {
+        metadata: { 
+          imageCount: imageUrlsArray.length,
+          hasStartFrame: !!imageUrlsValue,
+          hasEndFrame: !!endFrameValue
+        }
+      });
+    }
+  }
+  
   if (useFlatStructure) {
     // Flat structure for veo3, sora-2-*, mj_txt2img, etc.
     logger.debug('Using FLAT payload structure');

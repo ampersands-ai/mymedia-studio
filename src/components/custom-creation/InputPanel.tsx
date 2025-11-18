@@ -296,18 +296,71 @@ export const InputPanel: React.FC<InputPanelProps> = ({
               {/* Basic parameters - always show outside */}
               {basicParams.length > 0 && (
                 <div className="space-y-4">
-                  {basicParams.map((key) => (
-                    <SchemaInput
-                      key={key}
-                      name={key}
-                      schema={modelSchema.properties[key]}
-                      value={modelParameters[key]}
-                      onChange={(value) => onModelParametersChange({ ...modelParameters, [key]: value })}
-                      required={modelSchema.required?.includes(key)}
-                      modelId={modelId}
-                      provider={provider}
-                    />
-                  ))}
+                  {(() => {
+                    const renderedIndices = new Set<number>();
+                    
+                    return basicParams.map((key, index) => {
+                      // Skip if already rendered as part of a group
+                      if (renderedIndices.has(index)) return null;
+                      
+                      const schemaProp = getSchemaProperty(modelSchema, key);
+                      if (!schemaProp) return null;
+                      
+                      // Check if this is an image field and if the next field is also an image
+                      const isImageField = schemaProp.renderer === 'image';
+                      const nextKey = basicParams[index + 1];
+                      const nextProp = nextKey ? getSchemaProperty(modelSchema, nextKey) : null;
+                      const nextIsImage = nextProp?.renderer === 'image';
+                      
+                      // Special case: imageUrls and End_Frame for Veo models
+                      const isStartFrame = key === 'imageUrls';
+                      const isEndFrame = nextKey === 'End_Frame';
+                      const shouldGroupImages = isImageField && nextIsImage && isStartFrame && isEndFrame;
+                      
+                      if (shouldGroupImages) {
+                        // Mark next index as rendered
+                        renderedIndices.add(index + 1);
+                        
+                        // Render both fields side-by-side
+                        return (
+                          <div key={`group-${key}-${nextKey}`} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <SchemaInput
+                              name={key}
+                              schema={schemaProp}
+                              value={modelParameters[key]}
+                              onChange={(value) => onModelParametersChange({ ...modelParameters, [key]: value })}
+                              required={modelSchema?.required?.includes(key)}
+                              modelId={modelId}
+                              provider={provider}
+                            />
+                            <SchemaInput
+                              name={nextKey}
+                              schema={nextProp!}
+                              value={modelParameters[nextKey]}
+                              onChange={(value) => onModelParametersChange({ ...modelParameters, [nextKey]: value })}
+                              required={modelSchema?.required?.includes(nextKey)}
+                              modelId={modelId}
+                              provider={provider}
+                            />
+                          </div>
+                        );
+                      }
+                      
+                      // Render single field normally
+                      return (
+                        <SchemaInput
+                          key={key}
+                          name={key}
+                          schema={schemaProp}
+                          value={modelParameters[key]}
+                          onChange={(value) => onModelParametersChange({ ...modelParameters, [key]: value })}
+                          required={modelSchema?.required?.includes(key)}
+                          modelId={modelId}
+                          provider={provider}
+                        />
+                      );
+                    });
+                  })()}
                 </div>
               )}
               

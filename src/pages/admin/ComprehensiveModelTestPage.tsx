@@ -604,6 +604,8 @@ const ComprehensiveModelTestPage = () => {
           generatedOutput: outputs[0].storage_path,
           localGenerating: false,
         });
+        // Stop polling since we found the outputs manually
+        stopPolling();
         toast.success(`Found ${outputs.length} output(s)`);
       } else {
         toast.error('No outputs found in database');

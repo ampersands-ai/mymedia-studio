@@ -44,6 +44,13 @@ interface GenerationConsoleProps {
   }>;
   parentGenerationId: string | null;
   onDownloadSuccess: () => void;
+  failedGenerationError?: {
+    message: string;
+    generationId: string;
+    timestamp: number;
+    providerResponse?: any;
+  } | null;
+  onClearError?: () => void;
 }
 
 /**
@@ -70,6 +77,8 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
   childVideoGenerations,
   parentGenerationId,
   onDownloadSuccess,
+  failedGenerationError,
+  onClearError,
 }) => {
   console.log('📺 GenerationConsole render', {
     outputsCount: generationState.generatedOutputs.length,
@@ -82,6 +91,42 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
     <div className="space-y-4">
       <Card className="border-border bg-muted/50">
         <CardContent className="p-4 space-y-4">
+          {failedGenerationError ? (
+            // Show persistent error display
+            <div className="space-y-4">
+              <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-destructive/20 p-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-destructive">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <h3 className="font-semibold text-foreground">Generation Failed</h3>
+                    <p className="text-sm text-muted-foreground">{failedGenerationError.message}</p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Your credits have been refunded automatically
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  {onClearError && (
+                    <Button onClick={onClearError} size="sm" variant="outline">
+                      Clear Error
+                    </Button>
+                  )}
+                  <Button onClick={onViewHistory} size="sm" variant="ghost">
+                    <History className="w-4 h-4 mr-2" />
+                    View History
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            // Normal generation display
+            <>
           <div className="flex items-start gap-2">
             <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
             <p className="text-xs text-muted-foreground">
@@ -163,6 +208,8 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
               onRegenerate={onGenerateVideo}
               generatingVideoIndex={generatingVideoIndex}
             />
+          )}
+            </>
           )}
         </CardContent>
       </Card>

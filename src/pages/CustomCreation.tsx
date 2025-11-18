@@ -242,12 +242,23 @@ const CustomCreation = () => {
       } else if (currentGen.status === 'failed' || currentGen.status === 'error') {
         // Handle immediate failure (job failed before page load)
         console.log('❌ Generation was already failed');
-        updateState({ localGenerating: false, pollingGenerationId: null });
         
         try {
           const pr: any = currentGen.provider_response || {};
           const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || (pr?.error && pr?.error?.message);
           const msg = detailed ? String(detailed) : `Generation ${currentGen.status}`;
+          
+          // Store error in state for persistent display
+          updateState({ 
+            localGenerating: false, 
+            pollingGenerationId: null,
+            failedGenerationError: {
+              message: msg,
+              generationId: currentGen.id,
+              timestamp: Date.now(),
+              providerResponse: currentGen.provider_response
+            }
+          });
           
           toast.error(msg, {
             description: 'Your credits will be refunded automatically if nothing was produced.',
@@ -255,6 +266,16 @@ const CustomCreation = () => {
           });
         } catch (e) {
           console.warn('Failed to display error details for pre-failed generation', e);
+          updateState({ 
+            localGenerating: false, 
+            pollingGenerationId: null,
+            failedGenerationError: {
+              message: 'Generation failed',
+              generationId: currentGen.id,
+              timestamp: Date.now(),
+              providerResponse: currentGen.provider_response
+            }
+          });
           toast.error('Generation failed', {
             description: 'Your credits will be refunded automatically if nothing was produced.',
             action: { label: 'View History', onClick: () => navigate('/dashboard/history') }
@@ -368,7 +389,6 @@ const CustomCreation = () => {
               } else if (newStatus === 'failed' || newStatus === 'error') {
                 console.log('❌ Generation failed via realtime');
                 stopPolling();
-                updateState({ localGenerating: false, pollingGenerationId: null });
 
                 // Fetch latest provider details for a meaningful error message
                 try {
@@ -381,12 +401,33 @@ const CustomCreation = () => {
                   const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || (pr?.error && pr?.error?.message);
                   const msg = detailed ? String(detailed) : `Generation ${newStatus}`;
 
+                  // Store error in state for persistent display
+                  updateState({ 
+                    localGenerating: false, 
+                    pollingGenerationId: null,
+                    failedGenerationError: {
+                      message: msg,
+                      generationId: payload.new.id,
+                      timestamp: Date.now(),
+                      providerResponse: gen?.provider_response
+                    }
+                  });
+
                   toast.error(msg, {
                     description: 'Your credits will be refunded automatically if nothing was produced.',
                     action: { label: 'View History', onClick: () => navigate('/dashboard/history') }
                   });
                 } catch (e) {
                   console.warn('Failed to fetch provider details for error toast', e);
+                  updateState({ 
+                    localGenerating: false, 
+                    pollingGenerationId: null,
+                    failedGenerationError: {
+                      message: 'Generation failed',
+                      generationId: payload.new.id,
+                      timestamp: Date.now()
+                    }
+                  });
                   toast.error('Generation failed', {
                     description: 'Your credits will be refunded automatically if nothing was produced.',
                     action: { label: 'View History', onClick: () => navigate('/dashboard/history') }
@@ -628,6 +669,16 @@ const CustomCreation = () => {
   
   const advancedOptionsRef = useRef<HTMLDivElement>(null);
 
+  // Handler to clear failed generation error
+  const handleClearError = useCallback(() => {
+    updateState({ 
+      failedGenerationError: null,
+      pollingGenerationId: null,
+      localGenerating: false,
+      generationStartTime: null
+    });
+  }, [updateState]);
+
   // Infer content type from first output's file extension if available
   const contentType = (() => {
     const firstPath = state.generatedOutputs[0]?.storage_path || null;
@@ -786,6 +837,8 @@ const CustomCreation = () => {
               modelName={currentModel?.model_name}
               connectionTier={connectionTier}
               realtimeConnected={realtimeConnected}
+              failedGenerationError={state.failedGenerationError}
+              onClearError={handleClearError}
             />
           </div>
         </div>

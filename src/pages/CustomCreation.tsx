@@ -160,7 +160,7 @@ const CustomCreation = () => {
       // IMMEDIATE STATUS CHECK (fixes race condition for fast completions)
       const { data: currentGen } = await supabase
         .from('generations')
-        .select('id, status, storage_path, is_batch_output, type, output_index')
+        .select('id, status, storage_path, is_batch_output, type, output_index, provider_response')
         .eq('id', state.pollingGenerationId)
         .single();
 
@@ -238,6 +238,29 @@ const CustomCreation = () => {
           toast.error('Generation completed but no outputs were found');
         }
 
+        return; // Don't set up subscription
+      } else if (currentGen.status === 'failed' || currentGen.status === 'error') {
+        // Handle immediate failure (job failed before page load)
+        console.log('❌ Generation was already failed');
+        updateState({ localGenerating: false, pollingGenerationId: null });
+        
+        try {
+          const pr: any = currentGen.provider_response || {};
+          const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || (pr?.error && pr?.error?.message);
+          const msg = detailed ? String(detailed) : `Generation ${currentGen.status}`;
+          
+          toast.error(msg, {
+            description: 'Your credits will be refunded automatically if nothing was produced.',
+            action: { label: 'View History', onClick: () => navigate('/dashboard/history') }
+          });
+        } catch (e) {
+          console.warn('Failed to display error details for pre-failed generation', e);
+          toast.error('Generation failed', {
+            description: 'Your credits will be refunded automatically if nothing was produced.',
+            action: { label: 'View History', onClick: () => navigate('/dashboard/history') }
+          });
+        }
+        
         return; // Don't set up subscription
       }
 

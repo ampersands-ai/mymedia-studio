@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
     const generation = verifyResult.generation!;
     
     // === LAYER 3: DYNAMIC TIMING VALIDATION ===
-    const timingResult = await validateTiming(generation, supabase);
+    const timingResult = await validateTiming(generation, supabase, payload);
     if (!timingResult.success) {
       return new Response(
         JSON.stringify({ error: timingResult.error }),

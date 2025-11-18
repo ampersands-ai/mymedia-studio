@@ -146,7 +146,13 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   }
 
   // Image renderer fields
-  if (useImageRenderer && imageFieldName) {
+  // Special case: Don't use specialized renderer for imageUrls if End_Frame exists (Veo models)
+  // so both can be rendered side-by-side in the schema loop
+  const hasEndFrame = modelSchema?.properties?.End_Frame;
+  const shouldUseSpecializedImageRenderer = useImageRenderer && imageFieldName && 
+    !(imageFieldName === 'imageUrls' && hasEndFrame);
+  
+  if (shouldUseSpecializedImageRenderer) {
     specializedFields.add(imageFieldName);
   }
 
@@ -221,7 +227,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
           />
         )}
 
-        {imageFieldName && (
+        {imageFieldName && shouldUseSpecializedImageRenderer && (
           <ImageUploadSection
             images={uploadedImages}
             onUpload={onFileUpload}

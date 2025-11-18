@@ -166,8 +166,23 @@ Deno.serve(async (req) => {
       items = payload.data?.data || [];
     }
 
+    // Extract HTTP code from payload (support both numeric and string formats)
+    const httpCode = typeof payload.code === 'number' ? payload.code : 
+                     typeof payload.status === 'number' ? payload.status : 
+                     null;
+    
+    // Build comprehensive error message string for pattern matching
+    const msgStr = String(payload.msg || failMsg || '').toLowerCase();
+    
+    // Expanded failure patterns (English + common non-English variants)
+    const failurePatterns = ['error', 'fail', 'exceed', 'retry', 'timeout', 'invalid', 
+                             '超过', '失败', '错误', '錯誤', '失敗', 'erreur', 'fehler'];
+    const hasFailurePattern = failurePatterns.some(pattern => msgStr.includes(pattern));
+    
     const isSuccess = state === 'success' || payload.code === 200 || (payload.msg && payload.msg.toLowerCase().includes('success'));
-    const isFailed = state === 'failed' || payload.status === 400 || payload.code === 400 || payload.code === 422 || (payload.msg && payload.msg.toLowerCase().includes('fail'));
+    const isFailed = state === 'failed' || 
+                     (httpCode !== null && httpCode >= 400) || 
+                     hasFailurePattern;
 
     // === HANDLE FAILURE ===
     if (isFailed) {

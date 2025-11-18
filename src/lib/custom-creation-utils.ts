@@ -95,7 +95,8 @@ export const buildCustomParameters = (
 };
 
 /**
- * Validate generation inputs
+ * Validate generation inputs (prompt only)
+ * Image validation is now handled by schema-driven validation in executeGeneration
  */
 export const validateGenerationInputs = (
   model: any,
@@ -113,9 +114,7 @@ export const validateGenerationInputs = (
     return { valid: false, error: `Prompt must be less than ${maxPromptLength} characters` };
   }
   
-  if (isImageRequired && uploadedImages.length === 0) {
-    return { valid: false, error: "Please upload at least one image for this creation type" };
-  }
+  // Image validation removed - now handled by schema-driven validation after upload
   
   return { valid: true };
 };

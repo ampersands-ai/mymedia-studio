@@ -42,7 +42,7 @@ export interface JsonSchemaProperty {
   examples?: unknown[];
   
   // Explicit renderer assignment (replaces heuristic detection)
-  renderer?: 'prompt' | 'image' | 'voice' | 'duration' | 'increment' | 'output-format' | null;
+  renderer?: string;
 }
 
 /**

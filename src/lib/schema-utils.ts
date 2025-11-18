@@ -16,6 +16,9 @@ export interface Parameter {
   format?: string;
   showToUser?: boolean; // Control visibility in end-user forms (default: true)
   isAdvanced?: boolean; // Show in Advanced Options panel (default: false)
+  renderer?: string; // Custom renderer type
+  minItems?: number; // For array types
+  maxItems?: number; // For array types
 }
 
 /**
@@ -50,7 +53,10 @@ export function parseSchema(schema: JsonSchema): Parameter[] {
       items: prop.items,
       format: prop.format,
       showToUser: prop.showToUser !== undefined ? prop.showToUser : true, // Default to true for backward compatibility
-      isAdvanced: prop.isAdvanced === true // Default to false for backward compatibility
+      isAdvanced: prop.isAdvanced === true, // Default to false for backward compatibility
+      renderer: prop.renderer,
+      minItems: prop.minItems,
+      maxItems: prop.maxItems
     });
   });
 
@@ -61,7 +67,7 @@ export function parseSchema(schema: JsonSchema): Parameter[] {
  * Generate JSON Schema from Parameter[]
  * This ensures we save in the correct format
  */
-export function generateSchema(parameters: Parameter[]): JsonSchema {
+export function generateSchema(parameters: Parameter[], existingSchema?: JsonSchema): JsonSchema {
   const properties: Record<string, JsonSchemaProperty> = {};
 
   parameters.forEach(param => {
@@ -102,6 +108,10 @@ export function generateSchema(parameters: Parameter[]): JsonSchema {
         type: param.items.type as JsonSchemaType,
         format: param.items.format
       };
+      
+      // Preserve array constraints
+      if (param.minItems !== undefined) property.minItems = param.minItems;
+      if (param.maxItems !== undefined) property.maxItems = param.maxItems;
     }
 
     // Save showToUser flag (only if explicitly set to false, to keep backward compatibility)
@@ -114,15 +124,35 @@ export function generateSchema(parameters: Parameter[]): JsonSchema {
       property.isAdvanced = true;
     }
 
+    // Preserve renderer property
+    if (param.renderer) {
+      property.renderer = param.renderer;
+    }
+
     properties[param.name] = property;
   });
 
-  return {
+  const newSchema: JsonSchema = {
     type: "object",
     required: parameters.filter(p => p.required).map(p => p.name),
     properties,
     "x-order": parameters.map(p => p.name)
   };
+
+  // Preserve custom schema-level properties from existing schema
+  if (existingSchema) {
+    if (existingSchema.imageInputField) {
+      newSchema.imageInputField = existingSchema.imageInputField;
+    }
+    // Preserve any other custom root-level properties
+    Object.keys(existingSchema).forEach(key => {
+      if (!['type', 'required', 'properties', 'x-order'].includes(key)) {
+        (newSchema as any)[key] = (existingSchema as any)[key];
+      }
+    });
+  }
+
+  return newSchema;
 }
 
 /**

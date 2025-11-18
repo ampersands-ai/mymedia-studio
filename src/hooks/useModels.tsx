@@ -21,6 +21,11 @@ export interface AIModel {
   model_family?: string | null;
   variant_name?: string | null;
   display_order_in_family?: number | null;
+  // Lock system fields
+  is_locked?: boolean;
+  locked_at?: string | null;
+  locked_by?: string | null;
+  locked_file_path?: string | null;
 }
 
 export const useModels = () => {

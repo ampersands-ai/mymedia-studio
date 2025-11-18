@@ -7,7 +7,7 @@ import {
 } from "@/lib/custom-creation-utils";
 import { logger } from "@/lib/logger";
 
-interface ExecuteGenerationParams {
+export interface ExecuteGenerationParams {
   model: any;
   prompt: string;
   modelParameters: Record<string, any>;
@@ -23,6 +23,9 @@ interface ExecuteGenerationParams {
 /**
  * Shared generation pipeline used by both Custom Creation and Test flows.
  * Ensures identical validation, parameter building, image handling, and API calls.
+ * 
+ * For locked models, routes to dedicated model files via ModelRouter.
+ * For unlocked models, uses the dynamic execution flow below.
  * 
  * VALIDATION APPROACH (Jan 2025 - Schema-Driven):
  * - No hardcoded excludeFields list
@@ -44,6 +47,25 @@ export async function executeGeneration({
   navigate,
   maxPromptLength = 5000,
 }: ExecuteGenerationParams): Promise<string> {
+  
+  // Route to locked model file if model is locked
+  if (model.is_locked && model.locked_file_path) {
+    const { executeModelGeneration } = await import("@/lib/models/ModelRouter");
+    return executeModelGeneration({
+      model,
+      prompt,
+      modelParameters,
+      uploadedImages,
+      userId,
+      uploadImagesToStorage,
+      generate,
+      startPolling,
+      navigate,
+      maxPromptLength,
+    });
+  }
+
+  // Otherwise, use dynamic execution flow below
   
   // Step 1: Detect image field requirements
   const imageFieldInfo = getImageFieldInfo(model);

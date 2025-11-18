@@ -28,6 +28,10 @@ export type Database = {
           id: string
           input_schema: Json
           is_active: boolean | null
+          is_locked: boolean | null
+          locked_at: string | null
+          locked_by: string | null
+          locked_file_path: string | null
           logo_url: string | null
           max_images: number | null
           model_family: string | null
@@ -51,6 +55,10 @@ export type Database = {
           id: string
           input_schema?: Json
           is_active?: boolean | null
+          is_locked?: boolean | null
+          locked_at?: string | null
+          locked_by?: string | null
+          locked_file_path?: string | null
           logo_url?: string | null
           max_images?: number | null
           model_family?: string | null
@@ -74,6 +82,10 @@ export type Database = {
           id?: string
           input_schema?: Json
           is_active?: boolean | null
+          is_locked?: boolean | null
+          locked_at?: string | null
+          locked_by?: string | null
+          locked_file_path?: string | null
           logo_url?: string | null
           max_images?: number | null
           model_family?: string | null

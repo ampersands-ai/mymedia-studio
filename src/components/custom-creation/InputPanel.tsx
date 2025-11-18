@@ -146,11 +146,11 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   }
 
   // Image renderer fields
-  // Special case: Don't use specialized renderer for imageUrls if End_Frame exists (Veo models)
+  // Special case: Don't use specialized renderer for startFrame if endFrame exists (Veo HQ/Fast)
   // so both can be rendered side-by-side in the schema loop
-  const hasEndFrame = modelSchema?.properties?.End_Frame;
+  const hasEndFrame = modelSchema?.properties?.endFrame;
   const shouldUseSpecializedImageRenderer = useImageRenderer && imageFieldName && 
-    !(imageFieldName === 'imageUrls' && hasEndFrame);
+    !(imageFieldName === 'startFrame' && hasEndFrame);
   
   if (shouldUseSpecializedImageRenderer) {
     specializedFields.add(imageFieldName);
@@ -317,11 +317,11 @@ export const InputPanel: React.FC<InputPanelProps> = ({
               const isImageField = schemaProp.renderer === 'image' && schemaProp.type !== 'array';
                       const nextKey = basicParams[index + 1];
                       const nextProp = nextKey ? getSchemaProperty(modelSchema, nextKey) : null;
-                      const nextIsImage = nextProp?.renderer === 'image';
+                      const nextIsImage = nextProp?.renderer === 'image' && nextProp?.type !== 'array';
                       
-                      // Special case: imageUrls and End_Frame for Veo models
-                      const isStartFrame = key === 'imageUrls';
-                      const isEndFrame = nextKey === 'End_Frame';
+                      // Special case: startFrame and endFrame for Veo HQ/Fast models
+                      const isStartFrame = key === 'startFrame';
+                      const isEndFrame = nextKey === 'endFrame';
                       const shouldGroupImages = isImageField && nextIsImage && isStartFrame && isEndFrame;
                       
                       if (shouldGroupImages) {

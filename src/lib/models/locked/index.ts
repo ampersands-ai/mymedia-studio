@@ -1,6 +1,18 @@
 /**
  * Model Registry - Central index of all isolated model files
  * Each model is completely independent with zero shared logic
+ * 
+ * IMPORTANT: Runware API Requirements
+ * ------------------------------------
+ * ALL Runware models REQUIRE an array payload format:
+ * [
+ *   { taskType: "authentication", apiKey: "..." },
+ *   { taskUUID: "...", taskType: "...", ...params }
+ * ]
+ * 
+ * This requirement takes precedence over the model's payload_structure setting.
+ * The execute-custom-model edge function checks provider === 'runware' FIRST
+ * before checking payload_structure to ensure proper array formatting.
  */
 
 // Image Editing Models (16)

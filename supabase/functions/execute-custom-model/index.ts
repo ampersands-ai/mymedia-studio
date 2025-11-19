@@ -110,17 +110,17 @@ Deno.serve(async (req) => {
 
     // Prepare payload based on model structure
     let payload: any;
-    if (model.payload_structure === 'wrapper') {
-      payload = {
-        modelId: model.id,
-        input: inputs
-      };
-    } else if (model.payload_structure === 'direct') {
-      payload = inputs;
-    } else if (model.payload_structure === 'flat' || model.provider === 'runware') {
-      // Runware format - requires authentication + task with taskUUID
-      // Force this for all Runware models regardless of payload_structure
+    
+    // CRITICAL: Check Runware FIRST - all Runware models require array format
+    // regardless of their payload_structure setting in the database
+    if (model.provider === 'runware') {
       const taskUUID = crypto.randomUUID();
+      
+      // Ensure taskType is set (default to imageInference if not provided)
+      if (!inputs.taskType) {
+        inputs.taskType = 'imageInference';
+      }
+      
       payload = [
         {
           taskType: "authentication",
@@ -132,6 +132,17 @@ Deno.serve(async (req) => {
         }
       ];
       console.log('Runware payload created:', JSON.stringify(payload, null, 2));
+    } 
+    // Handle non-Runware providers based on payload_structure
+    else if (model.payload_structure === 'wrapper') {
+      payload = {
+        modelId: model.id,
+        input: inputs
+      };
+    } else if (model.payload_structure === 'direct') {
+      payload = inputs;
+    } else if (model.payload_structure === 'flat') {
+      payload = inputs;
     } else {
       payload = inputs;
     }

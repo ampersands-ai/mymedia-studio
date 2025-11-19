@@ -10,8 +10,6 @@
  * Content Type: image
  */
 
-import { supabase } from "@/integrations/supabase/client";
-import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
 /**
  * Model configuration constants
@@ -102,91 +100,3 @@ export function calculateCost(inputs: Record<string, any>): number {
   return MODEL_CONFIG.baseCreditCost;
 }
 
-/**
- * Execute generation - Direct API call
- */
-export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { model, prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, generate, startPolling, navigate } = params;
-  
-  // Prepare inputs with uploaded images
-  const inputs: Record<string, any> = { prompt, ...modelParameters };
-  
-  // Upload images if provided
-  if (uploadedImages.length > 0) {
-    const imageUrls = await uploadImagesToStorage(userId);
-    inputs.inputImage = imageUrls[0];
-  }
-  
-  // Validate inputs
-  const validation = validate(inputs);
-  if (!validation.valid) {
-    throw new Error(validation.error);
-  }
-  
-  // Calculate cost
-  const cost = calculateCost(inputs);
-  
-  // Create generation record
-  const { data: generation, error: genError } = await supabase
-    .from("generations")
-    .insert({
-      user_id: userId,
-      model_id: MODEL_CONFIG.modelId,
-      model_record_id: MODEL_CONFIG.recordId,
-      type: MODEL_CONFIG.contentType,
-      prompt: prompt,
-      tokens_used: cost,
-      status: "pending",
-      settings: modelParameters,
-    })
-    .select()
-    .single();
-  
-  if (genError || !generation) {
-    throw new Error(`Failed to create generation: ${genError?.message}`);
-  }
-  
-  // Prepare payload
-  const payload = preparePayload(inputs);
-  
-  // Call kie_ai API
-  const apiKey = await getKieApiKey();
-  const response = await fetch(`https://api.kie.ai${MODEL_CONFIG.apiEndpoint}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
-  
-  if (!response.ok) {
-    throw new Error(`API call failed: ${response.statusText}`);
-  }
-  
-  const result = await response.json();
-  
-  // Update generation with provider details
-  await supabase
-    .from("generations")
-    .update({
-      provider_task_id: result.taskId || result.id,
-      provider_request: payload,
-      provider_response: result,
-    })
-    .eq("id", generation.id);
-  
-  // Start polling
-  startPolling(generation.id);
-  
-  return generation.id;
-}
-
-/**
- * Helper to get kie_ai API key from secrets
- */
-async function getKieApiKey(): Promise<string> {
-  // TODO: Implement proper secrets management
-  // For now, this will need to be configured via environment or edge function
-  throw new Error("KIE_API_KEY needs to be configured in secrets");
-}

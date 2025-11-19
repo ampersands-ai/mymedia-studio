@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
     // Add uploaded images if applicable
     if (uploaded_image_urls && uploaded_image_urls.length > 0) {
       if (model.content_type === 'video' || model.provider === 'runware') {
-        inputs.image_url = uploaded_image_urls[0];
+        inputs.inputImage = uploaded_image_urls[0]; // Runware uses inputImage
       } else if (inputs.image_urls !== undefined) {
         inputs.image_urls = uploaded_image_urls;
       }
@@ -117,8 +117,18 @@ Deno.serve(async (req) => {
     } else if (model.payload_structure === 'direct') {
       payload = inputs;
     } else if (model.payload_structure === 'flat') {
-      // Runware format
-      payload = [inputs];
+      // Runware format - requires authentication + task with taskUUID
+      const taskUUID = crypto.randomUUID();
+      payload = [
+        {
+          taskType: "authentication",
+          apiKey: apiKey
+        },
+        {
+          taskUUID,
+          ...inputs
+        }
+      ];
     } else {
       payload = inputs;
     }

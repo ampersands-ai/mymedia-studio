@@ -342,14 +342,29 @@ export function ModelFormDialog({
 
       if (error) throw error;
 
+      // Store content and file name for the auto-create action
+      const filePath = `src/lib/models/locked/${previewDialog.fileName}`;
+      const fileContent = previewDialog.content;
+
       // Close preview dialog
       setPreviewDialog({ open: false, fileName: '', content: '', schema: null, model: null });
 
       toast.success(
         `Model locked in ${displayGroup} group`,
         {
-          description: `File path: src/lib/models/locked/${previewDialog.fileName}\n\nPlease tell the AI to create this file with the reviewed code.`,
-          duration: 8000,
+          description: `File path: ${filePath}`,
+          duration: 10000,
+          action: {
+            label: "Create File",
+            onClick: () => {
+              // Copy the AI prompt to clipboard
+              const aiPrompt = `Create the locked model file at ${filePath} with the following complete implementation:\n\n\`\`\`typescript\n${fileContent}\n\`\`\``;
+              navigator.clipboard.writeText(aiPrompt);
+              toast.success("AI prompt copied! Paste it in the chat to create the file.", {
+                duration: 5000,
+              });
+            },
+          },
         }
       );
       onSuccess();

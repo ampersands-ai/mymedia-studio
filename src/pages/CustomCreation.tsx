@@ -71,16 +71,15 @@ const CustomCreation = () => {
 
   // Initialize model parameters with schema defaults when model changes
   useEffect(() => {
-    if (!currentModel?.input_schema) return;
+    if (!modelSchema) return;
     
-    const schema = currentModel.input_schema as ModelJsonSchema;
-    const initialized = initializeParameters(schema, state.modelParameters);
+    const initialized = initializeParameters(modelSchema, state.modelParameters);
     
     // Only update if defaults changed (avoid infinite loop)
     if (JSON.stringify(initialized) !== JSON.stringify(state.modelParameters)) {
       updateState({ modelParameters: initialized });
     }
-  }, [currentModel?.record_id, currentModel?.input_schema]);
+  }, [currentModel?.record_id, modelSchema]);
 
   // Schema helpers
   const schemaHelpers = useSchemaHelpers();
@@ -734,7 +733,7 @@ const CustomCreation = () => {
             filteredModels={filteredModels}
             selectedGroup={state.selectedGroup}
             onModelChange={setStateSelectedModel}
-            modelsLoading={modelsLoading}
+            modelsLoading={modelsLoading || schemaLoading}
             prompt={state.prompt}
             onPromptChange={(value) => {
               setStatePrompt(value);

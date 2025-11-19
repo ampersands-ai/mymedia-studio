@@ -1,14 +1,14 @@
-/** Google Imagen 4 (prompt_to_image) - Record: 5290ad50-ebeb-4fc0-97fb-bff7db6784b5 */
+/** Grok Imagine (prompt_to_image) - Record: 49a79e90-830d-40ff-ad05-447cf0232592 */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "google/imagen4", recordId: "5290ad50-ebeb-4fc0-97fb-bff7db6784b5", modelName: "Google Imagen 4", provider: "kie_ai", contentType: "image", baseCreditCost: 4, estimatedTimeSeconds: 25, costMultipliers: { num_images: { "1": 1, "2": 2, "3": 3, "4": 4 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "grok-imagine/text-to-image", recordId: "49a79e90-830d-40ff-ad05-447cf0232592", modelName: "Grok Imagine", provider: "kie_ai", contentType: "image", baseCreditCost: 2, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 6 } as const;
 
-export const SCHEMA = { properties: { aspect_ratio: { default: "1:1", enum: ["1:1", "3:4", "4:3", "9:16", "16:9"], type: "string" }, negative_prompt: { type: "string" }, num_images: { default: 1, enum: [1, 2, 3, 4], title: "Number of Outputs", type: "string" }, prompt: { renderer: "prompt", type: "string" }, seed: { type: "string" } }, required: ["prompt"], type: "object" } as const;
+export const SCHEMA = { properties: { aspect_ratio: { default: "1:1", enum: ["1:1", "2:3", "3:2"], type: "string" }, prompt: { maxLength: 5000, type: "string" } }, required: ["prompt"], type: "object", "x-order": ["prompt", "aspect_ratio"] } as const;
 
 export function validate(inputs: Record<string, any>) { return inputs.prompt ? { valid: true } : { valid: false, error: "Prompt required" }; }
-export function preparePayload(inputs: Record<string, any>) { return { modelId: MODEL_CONFIG.modelId, input: { prompt: inputs.prompt, aspect_ratio: inputs.aspect_ratio || "1:1", num_images: inputs.num_images || 1, ...(inputs.seed && { seed: inputs.seed }), ...(inputs.negative_prompt && { negative_prompt: inputs.negative_prompt }) } }; }
-export function calculateCost(inputs: Record<string, any>) { const numImages = parseInt(inputs.num_images || "1"); return MODEL_CONFIG.baseCreditCost * (MODEL_CONFIG.costMultipliers.num_images[numImages] || 1); }
+export function preparePayload(inputs: Record<string, any>) { return { modelId: MODEL_CONFIG.modelId, input: { prompt: inputs.prompt, aspect_ratio: inputs.aspect_ratio || "1:1" } }; }
+export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, userId, startPolling } = params;

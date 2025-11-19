@@ -20,9 +20,9 @@ export const useModelSchema = (model: ModelConfiguration | null) => {
       return;
     }
 
-    // All models must have a file path
-    if (!model.locked_file_path) {
-      const err = new Error(`Model ${model.id} is missing locked_file_path. Regenerate the model file.`);
+    // All models must have code content
+    if (!model.locked_file_contents) {
+      const err = new Error(`Model ${model.id} is missing locked_file_contents. Regenerate the model.`);
       logger.error(err.message);
       setError(err);
       setLoading(false);
@@ -32,16 +32,19 @@ export const useModelSchema = (model: ModelConfiguration | null) => {
     setLoading(true);
     setError(null);
     
-    logger.info(`Loading schema from model file: ${model.id} at ${model.locked_file_path}`);
+    logger.info(`Loading schema from model code: ${model.id}`);
 
-    // Import from .ts file (ONLY source of truth)
-    import(`@/lib/models/${model.locked_file_path}`)
+    // Import from data URL (code stored in database)
+    const code = model.locked_file_contents;
+    const dataUrl = `data:text/javascript;base64,${btoa(code)}`;
+    
+    import(/* @vite-ignore */ dataUrl)
       .then((module) => {
         if (!module.SCHEMA) {
-          throw new Error(`Model file ${model.locked_file_path} is missing SCHEMA export`);
+          throw new Error(`Model code for ${model.id} is missing SCHEMA export`);
         }
         
-        logger.info(`Loaded schema from file: ${model.id} (fields=${Object.keys(module.SCHEMA.properties || {}).length})`);
+        logger.info(`Loaded schema from database: ${model.id} (fields=${Object.keys(module.SCHEMA.properties || {}).length})`);
         
         setSchema(module.SCHEMA as ModelJsonSchema);
         setLoading(false);
@@ -51,7 +54,7 @@ export const useModelSchema = (model: ModelConfiguration | null) => {
         setError(err);
         setLoading(false);
       });
-  }, [model?.record_id, model?.locked_file_path]);
+  }, [model?.record_id, model?.locked_file_contents]);
 
   return { schema, loading, error };
 };

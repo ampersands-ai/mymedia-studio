@@ -145,18 +145,58 @@ export function preparePayload(inputs: Record<string, any>): Record<string, any>
     prompt: inputs.prompt || "",
   };
 
-  // Add all other parameters from inputs
+  // === VEO3 MODEL-SPECIFIC TRANSFORMATIONS ===
+  // This transformation is model-specific and isolated to locked files
+  const isVeo3Model = MODEL_CONFIG.modelId === 'veo3' || MODEL_CONFIG.modelId === 'veo3_fast';
+  
+  if (isVeo3Model && inputs.generationType !== 'REFERENCE_2_VIDEO') {
+    // Merge startFrame/endFrame into imageUrls array for Kie.ai API
+    // User sees startFrame/endFrame in schema (user-friendly)
+    // Backend converts to imageUrls format (API requirement)
+    const imageUrlsArray: string[] = [];
+    
+    if (inputs.startFrame && typeof inputs.startFrame === 'string') {
+      imageUrlsArray.push(inputs.startFrame);
+    }
+    
+    if (inputs.endFrame && typeof inputs.endFrame === 'string') {
+      imageUrlsArray.push(inputs.endFrame);
+    }
+    
+    if (imageUrlsArray.length > 0) {
+      payload.imageUrls = imageUrlsArray;
+      
+      logger.debug("Merged startFrame/endFrame into imageUrls", {
+        imageCount: imageUrlsArray.length,
+        hasStartFrame: !!inputs.startFrame,
+        hasEndFrame: !!inputs.endFrame
+      });
+    }
+    
+    // Add Kie.ai API defaults (not exposed in user schema)
+    // These are API requirements documented here in the locked file
+    payload.watermark = "";
+    payload.enableFallback = false;
+    payload.enableTranslation = true;
+    
+    logger.debug("Added Kie.ai API defaults", {
+      watermark: payload.watermark,
+      enableFallback: payload.enableFallback,
+      enableTranslation: payload.enableTranslation
+    });
+  }
+
+  // Add all other parameters from inputs (except startFrame/endFrame for Veo3)
   Object.entries(inputs).forEach(([key, value]) => {
-    if (key !== "prompt" && value !== undefined && value !== null) {
+    if (key !== "prompt" && 
+        !(isVeo3Model && (key === "startFrame" || key === "endFrame")) &&
+        value !== undefined && 
+        value !== null) {
       payload[key] = value;
     }
   });
 
-  // Model-specific transformations go here
-  // TODO: Add any model-specific payload transformations
-  // Example for Veo models:
-  // if (inputs.startFrame) payload.startFrame = inputs.startFrame;
-  // if (inputs.endFrame) payload.endFrame = inputs.endFrame;
+  return payload;
 
   return payload;
 }

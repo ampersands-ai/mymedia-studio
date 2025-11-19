@@ -126,7 +126,7 @@ export async function executeGeneration({
     const hasEndFrame = model.input_schema?.properties?.endFrame;
     
     if (hasStartFrame && hasEndFrame) {
-      // Assign first image to startFrame, second to endFrame
+      // Both startFrame and endFrame need uploads
       customParameters.startFrame = imageUrls[0];
       if (imageUrls.length > 1) {
         customParameters.endFrame = imageUrls[1];

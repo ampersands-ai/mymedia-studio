@@ -1,14 +1,7 @@
 import { ProviderRequest, ProviderResponse } from "./index.ts";
 import { EdgeLogger } from "../../_shared/edge-logger.ts";
 
-// Default parameters for flat-structure models
-  const FLAT_MODEL_DEFAULTS: Record<string, any> = {
-    'veo3': {
-      watermark: "",
-      enableFallback: false,
-      enableTranslation: true
-    }
-  };
+// No more hidden defaults - all parameters come from locked model files or schema
 
 export async function callKieAI(
   request: ProviderRequest,
@@ -53,72 +46,21 @@ export async function callKieAI(
     request.parameters.reference_image_urls = [request.parameters.reference_image_urls];
   }
   
-  // Handle Veo3 startFrame/endFrame merging into imageUrls
-  // ONLY applies to FIRST_AND_LAST_FRAMES_2_VIDEO mode (image-to-video with start/end frames)
-  // SKIP for REFERENCE_2_VIDEO mode (reference images already handled as array)
-  if ((request.model === 'veo3' || request.model === 'veo3_fast') && 
-      request.parameters.generationType !== 'REFERENCE_2_VIDEO') {
-    const startFrameValue = request.parameters.startFrame;
-    const endFrameValue = request.parameters.endFrame;
-    
-    // Build the imageUrls array from startFrame and endFrame
-    const imageUrlsArray: string[] = [];
-    
-    // Add start frame if present
-    if (startFrameValue && typeof startFrameValue === 'string') {
-      imageUrlsArray.push(startFrameValue);
-    }
-    
-    // Add end frame if present (as second element)
-    if (endFrameValue && typeof endFrameValue === 'string') {
-      imageUrlsArray.push(endFrameValue);
-    }
-    
-    // Replace with imageUrls array and remove original fields
-    if (imageUrlsArray.length > 0) {
-      request.parameters.imageUrls = imageUrlsArray;
-      delete request.parameters.startFrame;
-      delete request.parameters.endFrame;
-      
-      logger.debug('Merged Veo3 startFrame/endFrame for FIRST_AND_LAST_FRAMES_2_VIDEO', {
-        metadata: { 
-          imageCount: imageUrlsArray.length,
-          hasStartFrame: !!startFrameValue,
-          hasEndFrame: !!endFrameValue
-        }
-      });
-    }
-  }
-  
-  // For REFERENCE_2_VIDEO mode, imageUrls should already be an array from schema
-  // Ensure it's properly formatted
-  if (request.parameters.generationType === 'REFERENCE_2_VIDEO' && 
-      request.parameters.imageUrls) {
-    if (!Array.isArray(request.parameters.imageUrls)) {
-      request.parameters.imageUrls = [request.parameters.imageUrls];
-    }
-    
-    logger.debug('Veo Reference mode images', {
-      metadata: { 
-        imageCount: request.parameters.imageUrls.length,
-        generationType: request.parameters.generationType
-      }
-    });
-  }
+  // No more generic transformations - all model-specific logic moved to locked model files
+  // This provider is now a dumb transport layer that sends whatever payload it receives
   
   if (useFlatStructure) {
     // Flat structure for veo3, sora-2-*, mj_txt2img, etc.
     logger.debug('Using FLAT payload structure');
-    const modelDefaults = FLAT_MODEL_DEFAULTS[request.model] || {};
     
     // Determine the correct field name: 'taskType' for Midjourney, 'model' for others
     const modelFieldName = request.model === 'mj_txt2img' ? 'taskType' : 'model';
     
+    // No more FLAT_MODEL_DEFAULTS - all transformations happen in locked model files
     payload = {
       [modelFieldName]: request.model,
-      callBackUrl: callbackUrl,
-      ...modelDefaults, // Inject defaults first
-      ...request.parameters // User params can override if needed (includes prompt if in schema)
+      callBackUrl: callbackUrl,  // System field - not from schema
+      ...request.parameters // All parameters come from locked model preparePayload or schema
     };
   } else {
     // Standard nested input structure for other models

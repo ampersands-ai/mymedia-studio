@@ -16,6 +16,7 @@ interface ImageUploaderProps {
 
 export function ImageUploader({ value, onChange, label, bucket = "generated-content" }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,6 +92,38 @@ export function ImageUploader({ value, onChange, label, bucket = "generated-cont
     onChange("");
   };
 
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    const mockEvent = {
+      target: { files: [file] }
+    } as unknown as React.ChangeEvent<HTMLInputElement>;
+    
+    handleFileUpload(mockEvent);
+  };
+
   return (
     <div className="space-y-2">
       {label && <Label>{label}</Label>}
@@ -99,23 +132,31 @@ export function ImageUploader({ value, onChange, label, bucket = "generated-cont
         <Input
           value={value || ""}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Enter image URL or upload"
+          placeholder="Enter image URL or drag and drop"
         />
         
         <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={uploading}
-            onClick={() => document.getElementById(`file-upload-${label}`)?.click()}
+          <div
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`transition-colors ${isDragging ? "opacity-50" : ""}`}
           >
-            {uploading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Upload className="w-4 h-4" />
-            )}
-          </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={uploading}
+              onClick={() => document.getElementById(`file-upload-${label}`)?.click()}
+            >
+              {uploading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Upload className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
           
           {value && (
             <>

@@ -1,8 +1,8 @@
-/** Sora 2 by OpenAI Watermarked (prompt_to_video) - Record: c6e5b4a3-5d2f-1c0e-6a9f-3d5b6c7e4a8f */
+/** Sora 2 by OpenAI Watermarked (prompt_to_video) - Record: 5f8a9b3c-d1e2-4a7b-9c6d-3e8f1a2b5c7d */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "sora-turbo-prompt-to-video", recordId: "c6e5b4a3-5d2f-1c0e-6a9f-3d5b6c7e4a8f", modelName: "Sora 2 by OpenAI (Watermarked)", provider: "kie_ai", contentType: "video", baseCreditCost: 80, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "sora-2-text-to-video", recordId: "5f8a9b3c-d1e2-4a7b-9c6d-3e8f1a2b5c7d", modelName: "Sora 2 by OpenAI (Watermarked)", provider: "kie_ai", contentType: "video", baseCreditCost: 50, estimatedTimeSeconds: 360, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "16:9", enum: ["16:9", "9:16", "1:1"], type: "string" }, loop: { default: false, enum: [true, false], type: "boolean" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" } }, required: ["prompt"], type: "object" } as const;
 

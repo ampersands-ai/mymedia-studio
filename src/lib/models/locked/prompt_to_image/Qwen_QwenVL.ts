@@ -1,8 +1,8 @@
-/** Qwen QwenVL (prompt_to_image) - Record: b8f9c5e2-7d4a-6f3b-9e1c-5a8d3f7b4e9a */
+/** Qwen QwenVL (prompt_to_image) - Record: 36246bd4-f2e5-472b-bcf8-3dd99bc313d8 */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "qwen/qwenvl", recordId: "b8f9c5e2-7d4a-6f3b-9e1c-5a8d3f7b4e9a", modelName: "Qwen QwenVL", provider: "kie_ai", contentType: "image", baseCreditCost: 2, estimatedTimeSeconds: 25, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "qwen/text-to-image", recordId: "36246bd4-f2e5-472b-bcf8-3dd99bc313d8", modelName: "Qwen Text to Image", provider: "kie_ai", contentType: "image", baseCreditCost: 0.5, estimatedTimeSeconds: 25, costMultipliers: { "image_size": { "landscape_16_9": 2, "landscape_4_3": 3, "portrait_16_9": 2, "portrait_4_3": 3, "square": 1, "square_hd": 5 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "1:1", enum: ["1:1", "3:4", "4:3", "9:16", "16:9"], type: "string" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" }, seed: { type: "integer" } }, required: ["prompt"], type: "object" } as const;
 

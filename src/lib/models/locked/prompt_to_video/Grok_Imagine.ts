@@ -1,8 +1,8 @@
-/** Grok Imagine (prompt_to_video) - Record: d8c7b6a5-7e4f-3c2d-8a1f-5d7b8c9e4a6f */
+/** Grok Imagine (prompt_to_video) - Record: 0643a43b-4995-4c5b-ac1d-76ea257a93a0 */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "grok-imagine/prompt-to-video", recordId: "d8c7b6a5-7e4f-3c2d-8a1f-5d7b8c9e4a6f", modelName: "Grok Imagine", provider: "kie_ai", contentType: "video", baseCreditCost: 12, estimatedTimeSeconds: 45, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "grok-imagine/text-to-video", recordId: "0643a43b-4995-4c5b-ac1d-76ea257a93a0", modelName: "Grok Imagine", provider: "kie_ai", contentType: "video", baseCreditCost: 10, estimatedTimeSeconds: 45, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { properties: { mode: { default: "normal", enum: ["fun", "normal", "spicy"], type: "string" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" } }, required: ["prompt"], type: "object" } as const;
 

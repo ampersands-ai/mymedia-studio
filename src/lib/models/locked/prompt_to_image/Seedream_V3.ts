@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "seedream/seedream-v3", recordId: "ac90c626-ab01-4bc0-a000-9b952ddbde0e", modelName: "Seedream V3", provider: "kie_ai", contentType: "image", baseCreditCost: 2, estimatedTimeSeconds: 20, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "bytedance/seedream", recordId: "ac90c626-ab01-4bc0-a000-9b952ddbde0e", modelName: "Seedream V3", provider: "kie_ai", contentType: "image", baseCreditCost: 1.75, estimatedTimeSeconds: 20, costMultipliers: { "max_images": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "1:1", enum: ["1:1", "16:9", "9:16", "4:3", "3:4"], type: "string" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" }, seed: { type: "integer" } }, required: ["prompt"], type: "object" } as const;
 

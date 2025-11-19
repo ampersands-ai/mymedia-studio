@@ -99,8 +99,9 @@ Deno.serve(async (req) => {
     // Prepare inputs
     const inputs: Record<string, any> = { prompt, ...model_parameters };
     
-    // Add model ID for Runware (required by API)
+    // Add AIR model identifier for Runware (e.g. "runware:100@1")
     if (model.provider === 'runware') {
+      // Use model.id which should contain the AIR identifier like "runware:100@1"
       inputs.model = model.id;
     }
     
@@ -126,18 +127,15 @@ Deno.serve(async (req) => {
         inputs.taskType = 'imageInference';
       }
       
+      // Runware REST API uses Bearer auth in header, not authentication object in payload
       payload = [
-        {
-          taskType: "authentication",
-          apiKey: apiKey
-        },
         {
           taskUUID,
           ...inputs
         }
       ];
-      console.log('Runware payload created:', JSON.stringify(payload, null, 2));
-    } 
+      console.log('Runware payload created (single task object):', JSON.stringify(payload, null, 2));
+    }
     // Handle non-Runware providers based on payload_structure
     else if (model.payload_structure === 'wrapper') {
       payload = {
@@ -160,10 +158,11 @@ Deno.serve(async (req) => {
     let headers: Record<string, string>;
     
     if (model.provider === 'runware') {
-      // Runware uses its own endpoint and doesn't need Authorization header
+      // Runware REST API uses Bearer token authentication
       apiEndpoint = model.api_endpoint || 'https://api.runware.ai/v1';
       headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
       };
     } else {
       // KIE AI and others use Bearer token auth

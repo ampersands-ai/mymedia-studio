@@ -1,8 +1,8 @@
-/** Ideogram V3 (prompt_to_image) - Record: e7c9a5f3-8d4b-6f2c-9a1e-5d8b3c7f4a6e */
+/** Ideogram V3 (prompt_to_image) - Record: 94c0e508-226a-4e3d-8229-3820a61faa88 */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "ideogram/v3", recordId: "e7c9a5f3-8d4b-6f2c-9a1e-5d8b3c7f4a6e", modelName: "Ideogram V3", provider: "kie_ai", contentType: "image", baseCreditCost: 3, estimatedTimeSeconds: 35, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "ideogram/v3-text-to-image", recordId: "94c0e508-226a-4e3d-8229-3820a61faa88", modelName: "Ideogram V3", provider: "kie_ai", contentType: "image", baseCreditCost: 1.75, estimatedTimeSeconds: 35, costMultipliers: { "num_images": { "1": 1, "2": 2, "3": 3, "4": 4 }, "rendering_speed": { "BALANCED": 2, "QUALITY": 3, "TURBO": 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "1:1", enum: ["1:1", "3:4", "4:3", "9:16", "16:9"], type: "string" }, magic_prompt_option: { default: "AUTO", enum: ["AUTO", "ON", "OFF"], type: "string" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" }, seed: { type: "integer" }, style_type: { default: "AUTO", enum: ["AUTO", "GENERAL", "REALISTIC", "DESIGN", "RENDER_3D", "ANIME"], type: "string" } }, required: ["prompt"], type: "object" } as const;
 

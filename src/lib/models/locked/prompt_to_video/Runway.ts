@@ -1,8 +1,8 @@
-/** Runway (prompt_to_video) - Record: f9e8c7b6-8d5c-4f3e-9a2f-6d8b5c9e4a7f */
+/** Runway (prompt_to_video) - Record: 9efdc56b-6a76-4c82-94cf-16285d8c3e7d */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "runway-prompt-to-video", recordId: "f9e8c7b6-8d5c-4f3e-9a2f-6d8b5c9e4a7f", modelName: "Runway", provider: "kie_ai", contentType: "video", baseCreditCost: 15, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "runway-duration-5-generate model", recordId: "9efdc56b-6a76-4c82-94cf-16285d8c3e7d", modelName: "Runway", provider: "kie_ai", contentType: "video", baseCreditCost: 3, estimatedTimeSeconds: 300, costMultipliers: { "duration": { "10": 2.5 }, "quality": { "1080p": 2.5 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { properties: { duration: { default: "5", enum: ["5", "10"], type: "string" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" } }, required: ["prompt"], type: "object" } as const;
 

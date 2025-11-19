@@ -1,8 +1,8 @@
-/** Google Veo 3.1 HQ (prompt_to_video) - Record: e9c8b7a6-8d5c-4f3e-9a2f-6d8b5c9e4a7f */
+/** Google Veo 3.1 HQ (prompt_to_video) - Record: d117daae-f3ec-4b79-b98f-adefeee21454 */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "google/veo-3.1-hq", recordId: "e9c8b7a6-8d5c-4f3e-9a2f-6d8b5c9e4a7f", modelName: "Google Veo 3.1 HQ", provider: "kie_ai", contentType: "video", baseCreditCost: 40, estimatedTimeSeconds: 240, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "veo3", recordId: "d117daae-f3ec-4b79-b98f-adefeee21454", modelName: "Google Veo 3.1 HQ", provider: "kie_ai", contentType: "video", baseCreditCost: 125, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "16:9", enum: ["16:9", "9:16", "1:1"], type: "string" }, duration: { default: "5", enum: ["5", "10"], type: "string" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" } }, required: ["prompt"], type: "object" } as const;
 

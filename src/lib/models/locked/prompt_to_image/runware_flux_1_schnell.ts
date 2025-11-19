@@ -1,8 +1,8 @@
-/** runware flux 1 schnell (prompt_to_image) - Record: d9c7a5f3-8d4b-6f2c-9a1e-5d8b3c7f4a6e */
+/** runware flux 1 schnell (prompt_to_image) - Record: 32e98d54-3e47-41f8-ae70-0b0c18b78b8f */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "runware:flux-1-schnell", recordId: "d9c7a5f3-8d4b-6f2c-9a1e-5d8b3c7f4a6e", modelName: "runware flux 1 schnell", provider: "runware", contentType: "image", baseCreditCost: 0.08, estimatedTimeSeconds: 8, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "runware:100@1", recordId: "32e98d54-3e47-41f8-ae70-0b0c18b78b8f", modelName: "Flux.1 Schnell", provider: "runware", contentType: "image", baseCreditCost: 0.2, estimatedTimeSeconds: 8, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { properties: { positivePrompt: { renderer: "prompt", type: "string" }, outputFormat: { default: "PNG", enum: ["PNG", "JPEG", "WEBP"], type: "string" } }, required: ["positivePrompt", "outputFormat"], type: "object" } as const;
 

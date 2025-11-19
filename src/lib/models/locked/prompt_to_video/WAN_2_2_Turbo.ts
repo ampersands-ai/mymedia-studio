@@ -1,8 +1,8 @@
-/** WAN 2.2 Turbo (prompt_to_video) - Record: b5e4c3a2-4d1f-0c9e-5a8f-2d4b5c6e3a7f */
+/** WAN 2.2 Turbo (prompt_to_video) - Record: 7d29fe4e-0a9b-4f3c-8e5d-1a6c9b2d4e8f */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "wan/v2-2-turbo-prompt-to-video", recordId: "b5e4c3a2-4d1f-0c9e-5a8f-2d4b5c6e3a7f", modelName: "WAN 2.2 Turbo", provider: "kie_ai", contentType: "video", baseCreditCost: 18, estimatedTimeSeconds: 180, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "wan/v2-2-turbo-prompt-to-video", recordId: "7d29fe4e-0a9b-4f3c-8e5d-1a6c9b2d4e8f", modelName: "WAN 2.2 Turbo", provider: "kie_ai", contentType: "video", baseCreditCost: 10, estimatedTimeSeconds: 180, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { properties: { prompt: { maxLength: 5000, renderer: "prompt", type: "string" } }, required: ["prompt"], type: "object" } as const;
 

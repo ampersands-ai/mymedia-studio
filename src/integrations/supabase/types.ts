@@ -26,7 +26,7 @@ export type Database = {
           estimated_time_seconds: number | null
           groups: Json | null
           id: string
-          input_schema: Json
+          input_schema: Json | null
           is_active: boolean | null
           is_locked: boolean | null
           locked_at: string | null
@@ -54,7 +54,7 @@ export type Database = {
           estimated_time_seconds?: number | null
           groups?: Json | null
           id: string
-          input_schema?: Json
+          input_schema?: Json | null
           is_active?: boolean | null
           is_locked?: boolean | null
           locked_at?: string | null
@@ -82,7 +82,7 @@ export type Database = {
           estimated_time_seconds?: number | null
           groups?: Json | null
           id?: string
-          input_schema?: Json
+          input_schema?: Json | null
           is_active?: boolean | null
           is_locked?: boolean | null
           locked_at?: string | null

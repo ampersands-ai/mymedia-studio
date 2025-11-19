@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "sora-turbo", recordId: "d7f8c5a3-9b2e-6f4d-8c9a-5e7b3a6d4f8c", modelName: "Sora 2 by OpenAI (Watermarked)", provider: "kie_ai", contentType: "video", baseCreditCost: 75, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "sora-2-image-to-video", recordId: "11a995d9-a89e-47a2-b00c-11b2b7dbb717", modelName: "Sora 2 by OpenAI (Watermarked)", provider: "kie_ai", contentType: "video", baseCreditCost: 75, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "16:9", enum: ["16:9", "9:16", "1:1"], type: "string" }, image_url: { type: "string" }, loop: { default: false, enum: [true, false], type: "boolean" }, prompt: { maxLength: 5000, type: "string" } }, required: ["prompt", "image_url"], type: "object" } as const;
 

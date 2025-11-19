@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "wan/v2-2-turbo-image-to-video", recordId: "c9e5a7f3-8d4b-6f2c-9a8e-5d7b3c4f6a9e", modelName: "WAN 2.2 Turbo", provider: "kie_ai", contentType: "video", baseCreditCost: 15, estimatedTimeSeconds: 180, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "wan/2-2-a14b-image-to-video-turbo", recordId: "e4ae6c36-dfcb-4fe4-94f3-46962df720b1", modelName: "WAN 2.2 Turbo", provider: "kie_ai", contentType: "video", baseCreditCost: 15, estimatedTimeSeconds: 180, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { properties: { image_url: { type: "string" }, prompt: { maxLength: 5000, type: "string" } }, required: ["prompt", "image_url"], type: "object" } as const;
 

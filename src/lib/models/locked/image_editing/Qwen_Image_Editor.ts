@@ -2,13 +2,13 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "qwen/image-editor", recordId: "58a5db33-7729-48e8-88e5-ee05ea4c0c13", modelName: "Qwen Image Editor", provider: "kie_ai", contentType: "image", baseCreditCost: 0.75, estimatedTimeSeconds: 60, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "qwen/image-edit", recordId: "b6d430f1-e823-4192-bf72-0dba29079931", modelName: "Qwen Image Editor", provider: "kie_ai", contentType: "image", baseCreditCost: 1, estimatedTimeSeconds: 25, costMultipliers: { image_size: { landscape_16_9: 2, landscape_4_3: 2.5, portrait_16_9: 2, portrait_4_3: 2.5, square: 1, square_hd: 3.5 }, num_images: { "1": 1, "2": 2, "3": 3, "4": 4 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { imageInputField: "image_url", properties: { aspect_ratio: { default: "1:1", enum: ["1:1", "3:4", "4:3", "9:16", "16:9"], type: "string" }, image_url: { renderer: "image", type: "string" }, negative_prompt: { maxLength: 5000, type: "string" }, prompt: { maxLength: 5000, type: "string" }, seed: { type: "integer" } }, required: ["prompt", "image_url"], type: "object" } as const;
 
 export function validate(inputs: Record<string, any>) { return inputs.prompt && inputs.image_url ? { valid: true } : { valid: false, error: "Prompt and image required" }; }
 export function preparePayload(inputs: Record<string, any>) { return { modelId: MODEL_CONFIG.modelId, input: { prompt: inputs.prompt, image_url: inputs.image_url, aspect_ratio: inputs.aspect_ratio || "1:1" } }; }
-export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
+export function calculateCost(inputs: Record<string, any>) { const base = MODEL_CONFIG.baseCreditCost; const imageSizeMult = MODEL_CONFIG.costMultipliers.image_size?.[inputs.image_size || "square"] || 1; const numImagesMult = MODEL_CONFIG.costMultipliers.num_images?.[inputs.num_images || "1"] || 1; return base * imageSizeMult * numImagesMult; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, startPolling } = params;

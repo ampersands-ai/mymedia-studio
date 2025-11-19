@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    let kieApiKey: string;
+    let kieApiKey = Deno.env.get('KIE_AI_API_KEY')!; // Fallback default
 
     // Get generation details if generation_id provided
     let taskIdToQuery = task_id;

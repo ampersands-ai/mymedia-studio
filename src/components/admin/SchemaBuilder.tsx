@@ -16,9 +16,10 @@ interface SchemaBuilderProps {
   onChange: (schema: JsonSchema) => void;
   modelRecordId?: string;
   onSave?: (schema: JsonSchema) => Promise<void>;
+  disabled?: boolean;
 }
 
-export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: SchemaBuilderProps) {
+export function SchemaBuilder({ schema, onChange, modelRecordId, onSave, disabled = false }: SchemaBuilderProps) {
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [editingParameter, setEditingParameter] = useState<Parameter | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -42,22 +43,26 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
   }, [schema, modelRecordId]);
 
   const handleAddParameter = () => {
+    if (disabled) return;
     setEditingParameter(null);
     setDialogOpen(true);
   };
 
   const handleEditParameter = (param: Parameter) => {
+    if (disabled) return;
     setEditingParameter(param);
     setDialogOpen(true);
   };
 
   const handleDeleteParameter = (paramName: string) => {
+    if (disabled) return;
     const updated = parameters.filter(p => p.name !== paramName);
     setParameters(updated);
     onChange(generateSchema(updated, originalSchema));
   };
 
   const handleSaveParameter = (param: Parameter) => {
+    if (disabled) return;
     let updated: Parameter[];
     
     if (editingParameter) {
@@ -74,7 +79,7 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
   };
 
   const handleMoveUp = async (index: number) => {
-    if (index === 0) return;
+    if (disabled || index === 0) return;
     const updated = [...parameters];
     [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
     setParameters(updated);
@@ -93,7 +98,7 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
   };
 
   const handleMoveDown = async (index: number) => {
-    if (index === parameters.length - 1) return;
+    if (disabled || index === parameters.length - 1) return;
     const updated = [...parameters];
     [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
     setParameters(updated);
@@ -115,6 +120,7 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
   const currentImageField = (schema as any).imageInputField || null;
 
   const handleImageFieldChange = (value: string) => {
+    if (disabled) return;
     const updated = {
       ...generateSchema(parameters, originalSchema),
       imageInputField: value === "none" ? null : value
@@ -124,14 +130,21 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
 
   return (
     <div className="space-y-4">
+      {disabled && (
+        <div className="bg-muted/50 border border-border rounded-md p-3 text-sm text-muted-foreground">
+          🔒 This model is locked. Schema is read-only. Unlock the model to make changes.
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {parameters.length} parameter{parameters.length !== 1 ? 's' : ''} defined
         </p>
-        <Button type="button" onClick={handleAddParameter} size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Parameter
-        </Button>
+        {!disabled && (
+          <Button type="button" onClick={handleAddParameter} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Parameter
+          </Button>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -149,9 +162,9 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
                     size="sm" 
                     variant="ghost" 
                     onClick={() => handleMoveUp(index)}
-                    disabled={index === 0 || savingOrder}
+                    disabled={disabled || index === 0 || savingOrder}
                     className="h-8 w-8 p-0"
-                    title="Move up"
+                    title={disabled ? "Locked" : "Move up"}
                   >
                     <ArrowUp className="h-4 w-4" />
                   </Button>
@@ -160,9 +173,9 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
                     size="sm" 
                     variant="ghost" 
                     onClick={() => handleMoveDown(index)}
-                    disabled={index === parameters.length - 1 || savingOrder}
+                    disabled={disabled || index === parameters.length - 1 || savingOrder}
                     className="h-8 w-8 p-0"
-                    title="Move down"
+                    title={disabled ? "Locked" : "Move down"}
                   >
                     <ArrowDown className="h-4 w-4" />
                   </Button>
@@ -226,24 +239,26 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
                   </div>
                 </div>
                 
-                <div className="flex gap-1">
-                  <Button 
-                    type="button"
-                    size="sm" 
-                    variant="ghost" 
-                    onClick={() => handleEditParameter(param)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    type="button"
-                    size="sm" 
-                    variant="ghost" 
-                    onClick={() => handleDeleteParameter(param.name)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                {!disabled && (
+                  <div className="flex gap-1">
+                    <Button 
+                      type="button"
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => handleEditParameter(param)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      type="button"
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => handleDeleteParameter(param.name)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </Card>
           ))
@@ -258,6 +273,7 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave }: Schem
         <Select
           value={currentImageField || "none"}
           onValueChange={handleImageFieldChange}
+          disabled={disabled}
         >
           <SelectTrigger id="image-input-field">
             <SelectValue placeholder="No image input" />

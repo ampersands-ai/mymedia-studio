@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DocumentationViewer } from "@/components/admin/DocumentationViewer";
+import { RegenerateAllModelsButton } from "@/components/admin/RegenerateAllModelsButton";
 
 const CREATION_GROUPS = [
   { id: "image_editing", label: "Image Editing" },
@@ -437,13 +438,16 @@ export default function AIModelsManager() {
             Manage AI models, providers, and credit costs
           </p>
         </div>
-        <Button
-          onClick={handleAdd}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold border-3 border-black brutal-shadow"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Model
-        </Button>
+        <div className="flex gap-2">
+          <RegenerateAllModelsButton />
+          <Button
+            onClick={handleAdd}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold border-3 border-black brutal-shadow"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Model
+          </Button>
+        </div>
       </div>
 
       <Card className="border-3 border-black brutal-shadow">

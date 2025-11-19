@@ -149,3 +149,6 @@ verify_jwt = true  # Admin-only test image generation
 
 [functions.analyze-model-docs]
 verify_jwt = true  # Admin-only documentation generation
+
+[functions.write-model-file]
+verify_jwt = true  # Admin-only file writing

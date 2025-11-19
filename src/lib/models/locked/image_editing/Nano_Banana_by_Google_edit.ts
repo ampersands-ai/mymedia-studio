@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "google/nano-banana-edit", recordId: "a70d01a3-05de-4918-b934-55a7e5e5d407", modelName: "Nano Banana by Google", provider: "kie_ai", contentType: "image", baseCreditCost: 1, estimatedTimeSeconds: 15, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "google/nano-banana-edit", recordId: "a70d01a3-05de-4918-b934-55a7e5e5d407", modelName: "Nano Banana by Google", provider: "kie_ai", contentType: "image", baseCreditCost: 2, estimatedTimeSeconds: 25, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 10, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "1:1", enum: ["1:1", "3:4", "4:3", "9:16", "16:9"], type: "string" }, image_url: { renderer: "image", type: "string" }, mask_url: { renderer: "image", type: "string" }, number_of_images: { default: 1, maximum: 4, minimum: 1, type: "integer" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" }, seed: { type: "integer" } }, required: ["prompt", "image_url"], type: "object" } as const;
 

@@ -142,6 +142,26 @@ export function ModelFormDialog({
   const handleSchemaSave = async (newSchema: JsonSchema) => {
     if (!model?.record_id) return;
     
+    // CRITICAL GUARD: Prevent schema modification on locked models
+    if (isLocked) {
+      logger.error('Attempted schema save on locked model', new Error('Schema modification blocked for locked model'), {
+        modelRecordId: model.record_id,
+        modelId: model.id,
+        modelName: model.model_name,
+      });
+      toast.error("Cannot modify schema for a locked model. Unlock it first.");
+      return;
+    }
+    
+    const paramCount = Object.keys(newSchema.properties || {}).length;
+    logger.info('Saving schema for model', {
+      modelRecordId: model.record_id,
+      modelId: model.id,
+      modelName: model.model_name,
+      parameterCount: paramCount,
+      groups: model.groups,
+    });
+    
     try {
       const { error } = await supabase
         .from("ai_models")
@@ -154,6 +174,9 @@ export function ModelFormDialog({
       logger.error('Model parameter order save failed', error, {
         component: 'ModelFormDialog',
         modelRecordId: model.record_id,
+        modelId: model.id,
+        modelName: model.model_name,
+        parameterCount: paramCount,
         operation: 'saveParameterOrder'
       });
       toast.error("Failed to save parameter order");
@@ -250,13 +273,21 @@ export function ModelFormDialog({
       setLocking(true);
 
       if (isLocked) {
-        // Unlock the model
+        // Unlock the model - explicitly clear lock metadata
+        logger.info('Unlocking model', {
+          modelRecordId: model.record_id,
+          modelId: model.id,
+          modelName: model.model_name,
+        });
+        
         const { error } = await supabase
           .from("ai_models")
           .update({
             is_locked: false,
             locked_at: null,
             locked_by: null,
+            locked_file_path: null,
+            locked_file_contents: null,
           })
           .eq("record_id", model.record_id);
 
@@ -265,6 +296,27 @@ export function ModelFormDialog({
         toast.success("Model unlocked. You can now edit the schema.");
         onSuccess();
       } else {
+        // CRITICAL VALIDATION: Check if schema is empty before locking
+        const paramCount = Object.keys(model.input_schema?.properties || {}).length;
+        if (paramCount === 0) {
+          logger.error('Attempted to lock model with empty schema', new Error('Empty schema validation failed'), {
+            modelRecordId: model.record_id,
+            modelId: model.id,
+            modelName: model.model_name,
+          });
+          toast.error("Cannot lock model with empty parameter schema. Add parameters first.");
+          setLocking(false);
+          return;
+        }
+        
+        logger.info('Locking model', {
+          modelRecordId: model.record_id,
+          modelId: model.id,
+          modelName: model.model_name,
+          parameterCount: paramCount,
+          groups: model.groups,
+        });
+        
         // Lock the model - generate the file
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("No user found");
@@ -824,7 +876,8 @@ export function ModelFormDialog({
                 });
               }}
               modelRecordId={model?.record_id}
-              onSave={handleSchemaSave}
+              onSave={isLocked ? undefined : handleSchemaSave}
+              disabled={isLocked}
             />
             <p className="text-xs text-muted-foreground">
               <strong>Only fields defined here will be sent to the provider API.</strong>

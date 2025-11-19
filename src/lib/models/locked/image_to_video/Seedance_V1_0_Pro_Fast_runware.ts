@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "bytedance:2@2", recordId: "f8a6c4e9-7d3b-5f9c-8a2e-6d4b7c5f9a3e", modelName: "Seedance V1.0 Pro Fast", provider: "runware", contentType: "video", baseCreditCost: 1.5, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "bytedance:2@2", recordId: "3ac57af3-f7f0-4205-b1a4-3c7c3c1c7dad", modelName: "Seedance V1.0 Pro Fast", provider: "runware", contentType: "video", baseCreditCost: 1.5, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 1, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { properties: { duration: { default: 5, maximum: 12, minimum: 2, type: "number" }, fps: { default: 24, maximum: 60, minimum: 12, type: "number" }, height: { default: 736, showToUser: false, type: "number" }, includeCost: { default: true, showToUser: false, type: "boolean" }, inputImage: { renderer: "image", type: "string" }, outputFormat: { default: "MP4", enum: ["MP4", "GIF"], type: "string" }, outputType: { default: ["URL"], items: { format: "uri", type: "string" }, showToUser: false, type: "array" }, positivePrompt: { renderer: "prompt", type: "string" }, taskType: { default: "imageToVideo", showToUser: false, type: "string" }, width: { default: 1280, showToUser: false, type: "number" } }, required: ["positivePrompt", "inputImage"], type: "object" } as const;
 

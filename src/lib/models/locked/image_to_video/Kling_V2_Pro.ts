@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "kling/v2-1-pro", recordId: "84084ca4-4153-47d3-82db-c9e1d5f8a7b2", modelName: "Kling V2 Pro", provider: "kie_ai", contentType: "video", baseCreditCost: 12, estimatedTimeSeconds: 300, costMultipliers: { duration: { 10: 2, 5: 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 2, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "kling/v2-1-pro", recordId: "84084ca4-4153-46bc-8d01-cd4e37d1da68", modelName: "Kling V2 Pro", provider: "kie_ai", contentType: "video", baseCreditCost: 12, estimatedTimeSeconds: 300, costMultipliers: { duration: { "10": 2, "5": 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 2, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { properties: { duration: { default: "5", enum: ["5", "10"], type: "string" }, image_url: { description: "Editing instruction", type: "string" }, negative_prompt: { default: "blur, distort, and low quality", type: "string" }, prompt: { description: "Editing instruction", type: "string" } }, required: ["prompt", "image_url"], type: "object" } as const;
 

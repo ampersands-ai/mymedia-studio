@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "runway-image-to-video", recordId: "b8f9c5e2-6d4a-3f7b-9e8c-5a7d3f6b4e9a", modelName: "Runway", provider: "kie_ai", contentType: "video", baseCreditCost: 10, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "runway-duration-5-generate", recordId: "d2c37239-d544-4cce-bd8d-fb48ea44b287", modelName: "Runway", provider: "kie_ai", contentType: "video", baseCreditCost: 10, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { properties: { duration: { default: "5", enum: ["5", "10"], type: "string" }, image_url: { type: "string" }, prompt: { type: "string" } }, required: ["prompt", "image_url"], type: "object" } as const;
 

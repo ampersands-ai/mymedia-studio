@@ -690,6 +690,7 @@ export default function AIModelsManager() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="font-bold">Record ID</TableHead>
                   <TableHead className="font-bold">Model ID</TableHead>
                   <TableHead className="font-bold">Provider</TableHead>
                   <TableHead className="font-bold">Family</TableHead>
@@ -708,6 +709,9 @@ export default function AIModelsManager() {
               <TableBody>
                 {sortedModels.map((model) => (
                   <TableRow key={model.record_id}>
+                    <TableCell className="font-mono text-xs text-muted-foreground" title={model.record_id}>
+                      {model.record_id.slice(0, 8)}...
+                    </TableCell>
                     <TableCell className="font-mono text-sm">
                       {model.id}
                     </TableCell>

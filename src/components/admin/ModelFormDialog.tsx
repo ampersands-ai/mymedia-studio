@@ -112,6 +112,22 @@ export function ModelFormDialog({
     
     if (shouldReset) {
       if (model) {
+        // DEBUG: Log which model record is being edited
+        const paramCount = Object.keys(model.input_schema?.properties || {}).length;
+        const paramNames = Object.keys(model.input_schema?.properties || {}).join(', ');
+        
+        logger.info('Model form opened', {
+          component: 'ModelFormDialog',
+          recordId: model.record_id,
+          modelId: model.id,
+          modelName: model.model_name,
+          provider: model.provider,
+          contentType: model.content_type,
+          isLocked: model.is_locked,
+          parameterCount: paramCount,
+          parameters: paramNames,
+        });
+
         setFormData({
           id: model.id,
           provider: model.provider,
@@ -247,6 +263,64 @@ export function ModelFormDialog({
         toast.error("Input Schema must define at least one parameter. Refusing to save an empty schema.");
         setSaving(false);
         return;
+      }
+
+      // CRITICAL GUARD: Compare with existing DB schema to prevent degradation
+      if (model && model.record_id) {
+        const { data: currentModel, error: fetchError } = await supabase
+          .from("ai_models")
+          .select("input_schema")
+          .eq("record_id", model.record_id)
+          .single();
+
+        if (fetchError) {
+          logger.error('Failed to fetch current model schema for comparison', fetchError, {
+            component: 'ModelFormDialog',
+            modelRecordId: model.record_id,
+          });
+        } else if (currentModel?.input_schema) {
+          const currentSchema = currentModel.input_schema as any;
+          const currentParamCount = Object.keys(currentSchema.properties || {}).length;
+          const newParamCount = Object.keys(inputSchema.properties || {}).length;
+
+          // Warn if we're about to save fewer parameters than currently exist
+          if (newParamCount < currentParamCount) {
+            const currentParams = Object.keys(currentSchema.properties || {}).join(', ');
+            const newParams = Object.keys(inputSchema.properties || {}).join(', ');
+            
+            logger.error('Schema degradation detected', new Error('Attempting to save schema with fewer parameters'), {
+              component: 'ModelFormDialog',
+              modelRecordId: model.record_id,
+              modelId: model.id,
+              modelName: model.model_name,
+              currentParamCount,
+              newParamCount,
+              currentParams,
+              newParams,
+            });
+
+            const confirmed = confirm(
+              `⚠️ SCHEMA DEGRADATION WARNING ⚠️\n\n` +
+              `You are about to OVERWRITE the existing schema with FEWER parameters.\n\n` +
+              `Current DB schema has ${currentParamCount} parameters:\n${currentParams}\n\n` +
+              `New schema has only ${newParamCount} parameters:\n${newParams}\n\n` +
+              `This will DELETE fields like startFrame, endFrame, etc. from the database!\n\n` +
+              `Are you absolutely sure you want to proceed?`
+            );
+
+            if (!confirmed) {
+              toast.info("Save cancelled - schema not modified");
+              setSaving(false);
+              return;
+            }
+
+            logger.info('User confirmed schema degradation', {
+              component: 'ModelFormDialog',
+              modelRecordId: model.record_id,
+              modelId: model.id,
+            });
+          }
+        }
       }
 
       const data = {
@@ -573,9 +647,26 @@ export function ModelFormDialog({
                 )}
               </DialogTitle>
               <DialogDescription>
-                {isLocked
-                  ? "This model is locked. Unlock it to make changes."
-                  : "Configure AI model settings, credit costs, and parameters"}
+                {model ? (
+                  <div className="space-y-1">
+                    <div>
+                      {isLocked
+                        ? "This model is locked. Unlock it to make changes."
+                        : "Configure AI model settings, credit costs, and parameters"}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-muted-foreground">Record ID:</span>
+                      <code className="bg-muted px-2 py-0.5 rounded font-mono" title={model.record_id}>
+                        {model.record_id.slice(0, 8)}...
+                      </code>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground">Model ID:</span>
+                      <code className="bg-muted px-2 py-0.5 rounded font-mono">{model.id}</code>
+                    </div>
+                  </div>
+                ) : (
+                  "Create a new AI model configuration"
+                )}
               </DialogDescription>
             </div>
             {model && (
@@ -769,6 +860,13 @@ export function ModelFormDialog({
               <p className="text-xs text-muted-foreground">
                 Maximum number of images users can upload (0 = no images needed, leave empty = 0)
               </p>
+              {formData.max_images && parseInt(formData.max_images) > 1 && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 p-2 rounded">
+                  💡 For multi-image models (e.g., Veo 3 with startFrame/endFrame): 
+                  Define image parameters explicitly in the schema (with <code>renderer: "image"</code>) 
+                  instead of using the generic image input field.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -903,7 +1001,50 @@ export function ModelFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Input Schema *</Label>
+            <div className="flex items-center justify-between">
+              <Label>Input Schema *</Label>
+              {model && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    if (!model.record_id) return;
+                    
+                    try {
+                      const { data, error } = await supabase
+                        .from("ai_models")
+                        .select("input_schema")
+                        .eq("record_id", model.record_id)
+                        .single();
+
+                      if (error) throw error;
+                      
+                      if (data?.input_schema) {
+                        const dbSchema = data.input_schema as any;
+                        const dbParamCount = Object.keys(dbSchema.properties || {}).length;
+                        const currentParamCount = Object.keys(JSON.parse(formData.input_schema || '{}').properties || {}).length;
+                        
+                        setFormData({
+                          ...formData,
+                          input_schema: JSON.stringify(dbSchema, null, 2),
+                        });
+                        
+                        toast.success(
+                          `Schema restored from database (${dbParamCount} parameters)`,
+                          { description: currentParamCount !== dbParamCount ? `Previous: ${currentParamCount} parameters` : undefined }
+                        );
+                      }
+                    } catch (error: any) {
+                      toast.error("Failed to restore schema from database");
+                      logger.error('Failed to restore schema', error);
+                    }
+                  }}
+                >
+                  🔄 Restore from DB
+                </Button>
+              )}
+            </div>
             <SchemaBuilder
               schema={typeof formData.input_schema === 'string' 
                 ? JSON.parse(formData.input_schema || '{}')

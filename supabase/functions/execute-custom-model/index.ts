@@ -99,6 +99,11 @@ Deno.serve(async (req) => {
     // Prepare inputs
     const inputs: Record<string, any> = { prompt, ...model_parameters };
     
+    // Add model ID for Runware (required by API)
+    if (model.provider === 'runware') {
+      inputs.model = model.id;
+    }
+    
     // Add uploaded images if applicable
     if (uploaded_image_urls && uploaded_image_urls.length > 0) {
       if (model.content_type === 'video' || model.provider === 'runware') {

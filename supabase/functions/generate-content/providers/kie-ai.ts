@@ -1,5 +1,6 @@
 import { ProviderRequest, ProviderResponse } from "./index.ts";
 import { EdgeLogger } from "../../_shared/edge-logger.ts";
+import { getKieApiKey } from "../../_shared/getKieApiKey.ts";
 
 // No more hidden defaults - all parameters come from locked model files or schema
 
@@ -8,11 +9,7 @@ export async function callKieAI(
   webhookToken: string
 ): Promise<ProviderResponse> {
   const logger = new EdgeLogger('kie-ai-provider', crypto.randomUUID());
-  const KIE_AI_API_KEY = Deno.env.get('KIE_AI_API_KEY');
-  
-  if (!KIE_AI_API_KEY) {
-    throw new Error('KIE_AI_API_KEY not configured. Please add it to your Supabase secrets.');
-  }
+  const KIE_AI_API_KEY = getKieApiKey(request.model, request.model_record_id || '');
 
   const baseUrl = 'https://api.kie.ai';
   const createTaskEndpoint = request.api_endpoint || '/api/v1/jobs/createTask';

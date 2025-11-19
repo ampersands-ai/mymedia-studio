@@ -6,6 +6,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { webhookLogger } from "../../_shared/logger.ts";
+import { getKieApiKey } from "../../_shared/getKieApiKey.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -62,12 +63,14 @@ serve(async (req) => {
 
     webhookLogger.info('Querying KIE status', { generationId: generation_id, taskId });
 
+    const kieApiKey = getKieApiKey(generation.model_id || '', generation.model_record_id || '');
+
     // Query KIE AI status
     const kieResponse = await fetch('https://api.kie.ai/api/v1/jobs/queryTask', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('KIE_AI_API_KEY')}`
+        'Authorization': `Bearer ${kieApiKey}`
       },
       body: JSON.stringify({ taskId })
     });

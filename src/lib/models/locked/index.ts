@@ -69,15 +69,14 @@ import * as RunwareFlux1Schnell from "./prompt_to_image/runware_flux_1_schnell";
 import * as RunwareStableDiffusionV3 from "./prompt_to_image/runware_stable_diffusion_v3";
 import * as RunwareStableDiffusionXL from "./prompt_to_image/runware_stable_diffusion_xl";
 
-// Prompt to Video Models (11)
+// Prompt to Video Models (10)
 import * as GoogleVeo31Fast_PromptToVideo from "./prompt_to_video/Google_Veo_3_1_Fast";
 import * as GoogleVeo31HQ_PromptToVideo from "./prompt_to_video/Google_Veo_3_1_HQ";
 import * as GrokImagine_PromptToVideo from "./prompt_to_video/Grok_Imagine";
 import * as KlingV2Master_PromptToVideo from "./prompt_to_video/Kling_V2_Master";
-import * as KlingV2Pro_PromptToVideo from "./prompt_to_video/Kling_V2_Pro";
-import * as KlingV2Standard_PromptToVideo from "./prompt_to_video/Kling_V2_Standard";
 import * as Runway_PromptToVideo from "./prompt_to_video/Runway";
 import * as SeedanceV1Lite_PromptToVideo from "./prompt_to_video/Seedance_V1_Lite";
+import * as SeedanceV1ProFastRunware_PromptToVideo from "./prompt_to_video/Seedance_V1_0_Pro_Fast_runware";
 import * as SeedreamV1Pro_PromptToVideo from "./prompt_to_video/Seedream_V1_Pro";
 import * as Sora2OpenAI_PromptToVideo from "./prompt_to_video/Sora_2_by_OpenAI_Watermarked";
 import * as WAN22Turbo_PromptToVideo from "./prompt_to_video/WAN_2_2_Turbo";
@@ -131,25 +130,6 @@ export const MODEL_REGISTRY: Record<string, ModelModule> = {
  */
 export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   // ═══════════════════════════════════════════════════════════════════════════
-  // IMAGE EDITING MODELS (16 total)
-  // ═══════════════════════════════════════════════════════════════════════════
-  "4b68811b-28be-45cb-bcae-9db721ba4547": ChatGPT4oImage_ImageEditing as ModelModule,      // ChatGPT 4o Image
-  "00ef3f28-4fab-4244-b93f-0ba48641fcbd": RecraftCrispUpscale as ModelModule,               // Crisp Image Upscale
-  "ab0ae096-f0ef-4197-b186-f38d69e72dd3": FLUX1KontextMax_ImageEditing as ModelModule,      // FLUX.1 Kontext Max (editing)
-  "d0ef1f83-a613-47d4-82f8-10e41da3e2a0": FLUX1KontextPro_ImageEditing as ModelModule,      // FLUX.1 Kontext Pro (editing)
-  "2959b083-2177-4b8c-ae56-31170c2eb9dc": GoogleImageUpscale as ModelModule,                 // Google Image Upscale
-  "4a421ed9-ed0c-40bf-b06d-892871506124": IdeogramCharacter_ImageEditing as ModelModule,    // Ideogram Character (editing)
-  "922ca567-5aa1-4fd3-86ba-587b723a5dbf": IdeogramImageRemix as ModelModule,                // Ideogram Image Remix
-  "2c4802d0-f805-4c31-bab1-a07675e003eb": IdeogramV3Reframe as ModelModule,                 // Ideogram V3 Reframe
-  "a70d01a3-05de-4918-b934-55a7e5e5d407": NanoBananaEdit as ModelModule,                     // Nano Banana by Google (editing)
-  "b6d430f1-e823-4192-bf72-0dba29079931": QwenImageEditor as ModelModule,                   // Qwen Image Editor
-  "99532b69-d951-4431-87e3-1d88a9c8ee73": QwenImageToImage as ModelModule,                  // Qwen Image to Image
-  "58b8b09f-57fd-42e3-ae2d-689e9ea3064d": RemoveBackgroundKie as ModelModule,               // Remove Background (kie_ai)
-  "d1d8b152-e123-4375-8f55-c0d0a699009b": RemoveBackgroundRunware as ModelModule,           // Remove Background (runware)
-  "dcd3329b-fafa-4689-b2e4-a08f7832c7ac": SeedreamV4_ImageEditing as ModelModule,           // Seedream V4 (editing)
-  "f14e7b76-98a8-47c7-a0bc-e58dc9ba811c": RunwareUpscale as ModelModule,                    // runware:upscale
-  
-  // ═══════════════════════════════════════════════════════════════════════════
   // PROMPT TO AUDIO MODELS (3 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "379f8945-bd7f-48f3-a1bb-9d2e2413234c": ElevenLabsFast as ModelModule,                    // Eleven Labs Fast
@@ -157,60 +137,77 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "5c544c90-9344-4acb-9129-0acb9a6a915a": Suno as ModelModule,                              // Suno
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROMPT TO IMAGE MODELS (22 total)
+  // IMAGE EDITING MODELS (15 total)
   // ═══════════════════════════════════════════════════════════════════════════
-  "3b83cee8-6164-4d98-aebe-f4eadcb3da1d": ChatGPT4oImage_PromptToImage as ModelModule,      // ChatGPT 4o-Image
-  "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c": Flux1Dev as ModelModule,                          // Flux.1 Dev
-  "c1bd50df-1c27-48a3-8630-0970eedd21f6": FLUX1KontextMax_PromptToImage as ModelModule,     // FLUX.1 Kontext Max (prompt)
-  "94b43382-bf4b-490d-82b5-265d14473f9b": FLUX1KontextPro_PromptToImage as ModelModule,     // FLUX.1 Kontext Pro (prompt)
-  "32e98d54-3e47-41f8-ae70-0b0c18b78b8f": FLUX1Schnell as ModelModule,                      // Flux.1 Schnell
-  "5290ad50-ebeb-4fc0-97fb-bff7db6784b5": GoogleImagen4 as ModelModule,                     // Google Imagen 4
-  "0ff9bb96-041e-4c24-90c5-543064b642ca": GoogleImagen4Fast as ModelModule,                 // Google Imagen 4 Fast
-  "23e81043-5e53-400b-bc1a-2a1ed9f30ce0": GoogleImagen4Ultra as ModelModule,                // Google Imagen 4 Ultra
-  "49a79e90-830d-40ff-ad05-447cf0232592": GrokImagine_PromptToImage as ModelModule,         // Grok Imagine (prompt)
-  "79ce627d-f90c-47b2-ae3f-9437d93f4529": HiDreamDev as ModelModule,                        // HiDream Dev
-  "7fe80ee8-701c-49b9-a21e-79f8c82489c8": HiDreamFast as ModelModule,                       // HiDream Fast
-  "94c0e508-226a-4e3d-8229-3820a61faa88": IdeogramV3 as ModelModule,                        // Ideogram V3
-  "eff6c62e-c20e-4eed-9f5b-81e1a7f01529": Midjourney as ModelModule,                        // Midjourney
-  "4c680009-d3fe-436f-85a7-467c76e85f9e": NanoBananaLovableAI as ModelModule,               // Nano Banana (Lovable AI)
-  "09b03fa3-e648-4d42-8494-b91bd2e609b8": NanoBananaByGoogle as ModelModule,                // Nano Banana by Google (prompt)
-  "36246bd4-f2e5-472b-bcf8-3dd99bc313d8": QwenQwenVL as ModelModule,                        // Qwen Text to Image
-  "edc7a24b-b9da-46a7-8155-635626c0f9a3": RunwareStableDiffusionXL as ModelModule,          // runware:101@1
-  "ac90c626-ab01-4bc0-a000-9b952ddbde0e": SeedreamV3 as ModelModule,                        // Seedream V3
-  "c0e4f338-683a-4b5d-8289-518f2b5ea983": SeedreamV4_PromptToImage as ModelModule,          // Seedream V4 (prompt)
+  "4b68811b-28be-45cb-bcae-9db721ba4547": ChatGPT4oImage_ImageEditing as ModelModule,      // ChatGPT 4o Image | image_editing | kie_ai
+  "00ef3f28-4fab-4244-b93f-0ba48641fcbd": RecraftCrispUpscale as ModelModule,               // Crisp Image Upscale | image_editing | kie_ai
+  "ab0ae096-f0ef-4197-b186-f38d69e72dd3": FLUX1KontextMax_ImageEditing as ModelModule,      // FLUX.1 Kontext Max | image_editing | kie_ai
+  "d0ef1f83-a613-47d4-82f8-10e41da3e2a0": FLUX1KontextPro_ImageEditing as ModelModule,      // FLUX.1 Kontext Pro | image_editing | kie_ai
+  "2959b083-2177-4b8c-ae56-31170c2eb9dc": GoogleImageUpscale as ModelModule,                 // Google Image Upscale | image_editing | kie_ai
+  "4a421ed9-ed0c-40bf-b06d-892871506124": IdeogramCharacter_ImageEditing as ModelModule,    // Ideogram Character | image_editing | kie_ai
+  "922ca567-5aa1-4fd3-86ba-587b723a5dbf": IdeogramImageRemix as ModelModule,                // Ideogram Image Remix | image_editing | kie_ai
+  "2c4802d0-f805-4c31-bab1-a07675e003eb": IdeogramV3Reframe as ModelModule,                 // Ideogram V3 Reframe | image_editing | kie_ai
+  "a70d01a3-05de-4918-b934-55a7e5e5d407": NanoBananaEdit as ModelModule,                     // Nano Banana by Google | image_editing | kie_ai
+  "b6d430f1-e823-4192-bf72-0dba29079931": QwenImageEditor as ModelModule,                   // Qwen Image Editor | image_editing | kie_ai
+  "99532b69-d951-4431-87e3-1d88a9c8ee73": QwenImageToImage as ModelModule,                  // Qwen Image to Image | image_editing | kie_ai
+  "58b8b09f-57fd-42e3-ae2d-689e9ea3064d": RemoveBackgroundKie as ModelModule,               // Remove Background | image_editing | kie_ai
+  "d1d8b152-e123-4375-8f55-c0d0a699009b": RemoveBackgroundRunware as ModelModule,           // Remove Background | image_editing | runware
+  "dcd3329b-fafa-4689-b2e4-a08f7832c7ac": SeedreamV4_ImageEditing as ModelModule,           // Seedream V4 | image_editing | kie_ai
+  "f14e7b76-98a8-47c7-a0bc-e58dc9ba811c": RunwareUpscale as ModelModule,                    // runware:upscale | image_editing | runware
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROMPT TO IMAGE MODELS (19 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "3b83cee8-6164-4d98-aebe-f4eadcb3da1d": ChatGPT4oImage_PromptToImage as ModelModule,      // ChatGPT 4o-Image | prompt_to_image | kie_ai
+  "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c": Flux1Dev as ModelModule,                          // Flux.1 Dev | prompt_to_image | runware
+  "c1bd50df-1c27-48a3-8630-0970eedd21f6": FLUX1KontextMax_PromptToImage as ModelModule,     // FLUX.1 Kontext Max | prompt_to_image | kie_ai
+  "94b43382-bf4b-490d-82b5-265d14473f9b": FLUX1KontextPro_PromptToImage as ModelModule,     // FLUX.1 Kontext Pro | prompt_to_image | kie_ai
+  "32e98d54-3e47-41f8-ae70-0b0c18b78b8f": FLUX1Schnell as ModelModule,                      // Flux.1 Schnell | prompt_to_image | runware
+  "5290ad50-ebeb-4fc0-97fb-bff7db6784b5": GoogleImagen4 as ModelModule,                     // Google Imagen 4 | prompt_to_image | kie_ai
+  "0ff9bb96-041e-4c24-90c5-543064b642ca": GoogleImagen4Fast as ModelModule,                 // Google Imagen 4 Fast | prompt_to_image | kie_ai
+  "23e81043-5e53-400b-bc1a-2a1ed9f30ce0": GoogleImagen4Ultra as ModelModule,                // Google Imagen 4 Ultra | prompt_to_image | kie_ai
+  "49a79e90-830d-40ff-ad05-447cf0232592": GrokImagine_PromptToImage as ModelModule,         // Grok Imagine | prompt_to_image | kie_ai
+  "79ce627d-f90c-47b2-ae3f-9437d93f4529": HiDreamDev as ModelModule,                        // HiDream Dev | prompt_to_image | runware
+  "7fe80ee8-701c-49b9-a21e-79f8c82489c8": HiDreamFast as ModelModule,                       // HiDream Fast | prompt_to_image | runware
+  "94c0e508-226a-4e3d-8229-3820a61faa88": IdeogramV3 as ModelModule,                        // Ideogram V3 | prompt_to_image | kie_ai
+  "eff6c62e-c20e-4eed-9f5b-81e1a7f01529": Midjourney as ModelModule,                        // Midjourney | prompt_to_image | kie_ai
+  "4c680009-d3fe-436f-85a7-467c76e85f9e": NanoBananaLovableAI as ModelModule,               // Nano Banana (Lovable AI) | prompt_to_image | lovable_ai_sync
+  "09b03fa3-e648-4d42-8494-b91bd2e609b8": NanoBananaByGoogle as ModelModule,                // Nano Banana by Google | prompt_to_image | kie_ai
+  "36246bd4-f2e5-472b-bcf8-3dd99bc313d8": QwenQwenVL as ModelModule,                        // Qwen Text to Image | prompt_to_image | kie_ai
+  "edc7a24b-b9da-46a7-8155-635626c0f9a3": RunwareFlux11Pro as ModelModule,                  // runware:101@1 | prompt_to_image | runware
+  "ac90c626-ab01-4bc0-a000-9b952ddbde0e": SeedreamV3 as ModelModule,                        // Seedream V3 | prompt_to_image | kie_ai
+  "c0e4f338-683a-4b5d-8289-518f2b5ea983": SeedreamV4_PromptToImage as ModelModule,          // Seedream V4 | prompt_to_image | kie_ai
 
   // ═══════════════════════════════════════════════════════════════════════════
   // IMAGE TO VIDEO MODELS (13 total)
   // ═══════════════════════════════════════════════════════════════════════════
-  "a96af675-b780-4879-a61f-7285be8766c2": GoogleVeo31Fast_ImageToVideo as ModelModule,      // Google Veo 3.1 Fast (image-to-video)
-  "a5c2ec16-6294-4588-86b6-7b4182601cda": GoogleVeo31HQ_ImageToVideo as ModelModule,        // Google Veo 3.1 HQ (image-to-video)
-  "6e8a863e-8630-4eef-bdbb-5b41f4c883f9": GoogleVeo31Reference as ModelModule,              // Google Veo 3.1 Reference
-  "8c46aade-1272-4409-bb3a-3701e2423320": GrokImagine_ImageToVideo as ModelModule,          // Grok Imagine
-  "c3397c13-3a52-4973-a87c-b4c20aca0fc0": KlingV2Master_ImageToVideo as ModelModule,        // Kling V2 Master
-  "84084ca4-4153-47d3-82db-c9e1d5f8a7b2": KlingV2Pro_ImageToVideo as ModelModule,           // Kling V2 Pro
-  "a2f3b7e9-5c8d-4f6a-9e1b-3d7c8a4f5e6b": KlingV2Standard_ImageToVideo as ModelModule,      // Kling V2 Standard
-  "b8f9c5e2-6d4a-3f7b-9e8c-5a7d3f6b4e9a": Runway_ImageToVideo as ModelModule,               // Runway
-  "f3c7e9a2-4d5b-6f8c-9a1e-3b7d5c8f4a6e": SeedanceV1Lite_ImageToVideo as ModelModule,      // Seedance V1 Lite
-  "e6d9a4f7-2c5b-8f3e-9a7d-4c8f5b6e3a9d": SeedreamV1Pro_ImageToVideo as ModelModule,        // Seedream V1 Pro
-  "d7f8c5a3-9b2e-6f4d-8c9a-5e7b3a6d4f8c": Sora2OpenAI as ModelModule,                       // Sora 2 by OpenAI (Watermarked)
-  "c9e5a7f3-8d4b-6f2c-9a8e-5d7b3c4f6a9e": WAN22Turbo_ImageToVideo as ModelModule,           // WAN 2.2 Turbo
-  "3ac57af3-f7f0-4205-b1a4-3c7c3c1c7dad": SeedanceV1ProFastRunware as ModelModule,          // Seedance V1.0 Pro Fast (runware)
+  "8aac94cb-5625-47f4-880c-4f0fd8bd83a1": GoogleVeo31Fast_ImageToVideo as ModelModule,      // Google Veo 3.1 Fast | image_to_video | kie_ai
+  "a5c2ec16-6294-4588-86b6-7b4182601cda": GoogleVeo31HQ_ImageToVideo as ModelModule,        // Google Veo 3.1 HQ | image_to_video | kie_ai
+  "6e8a863e-8630-4eef-bdbb-5b41f4c883f9": GoogleVeo31Reference as ModelModule,              // Google Veo 3.1 Reference | image_to_video | kie_ai
+  "8c46aade-1272-4409-bb3a-3701e2423320": GrokImagine_ImageToVideo as ModelModule,          // Grok Imagine | image_to_video | kie_ai
+  "c3397c13-3a52-4973-a87c-b4c20aca0fc0": KlingV2Master_ImageToVideo as ModelModule,        // Kling V2 Master | image_to_video | kie_ai
+  "84084ca4-4153-46bc-8d01-cd4e37d1da68": KlingV2Pro_ImageToVideo as ModelModule,           // Kling V2 Pro | image_to_video | kie_ai
+  "88e09730-07e0-4481-bda8-d9d9bde9fec6": KlingV2Standard_ImageToVideo as ModelModule,      // Kling V2 Standard | image_to_video | kie_ai
+  "d2c37239-d544-4cce-bd8d-fb48ea44b287": Runway_ImageToVideo as ModelModule,               // Runway | image_to_video | kie_ai
+  "d7df81f6-dc86-4e04-9f75-d4e8c9b03fb2": SeedanceV1Lite_ImageToVideo as ModelModule,      // Seedance V1 Lite | image_to_video | kie_ai
+  "3ac57af3-f7f0-4205-b1a4-3c7c3c1c7dad": SeedanceV1ProFastRunware as ModelModule,          // Seedance V1.0 Pro Fast | image_to_video | runware
+  "50eb3f02-1e58-4b85-a535-e8391a5623c4": SeedreamV1Pro_ImageToVideo as ModelModule,        // Seedream V1 Pro | image_to_video | kie_ai
+  "11a995d9-a89e-47a2-b00c-11b2b7dbb717": Sora2OpenAI as ModelModule,                       // Sora 2 by OpenAI (Watermarked) | image_to_video | kie_ai
+  "e4ae6c36-dfcb-4fe4-94f3-46962df720b1": WAN22Turbo_ImageToVideo as ModelModule,           // WAN 2.2 Turbo | image_to_video | kie_ai
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROMPT TO VIDEO MODELS (11 total)
+  // PROMPT TO VIDEO MODELS (10 total)
   // ═══════════════════════════════════════════════════════════════════════════
-  "8aac94cb-5625-47f4-880c-4f0fd8bd83a1": GoogleVeo31Fast_PromptToVideo as ModelModule,      // Google Veo 3.1 Fast (prompt-to-video)
-  "d117daae-f3ec-4b79-b98f-adefeee21454": GoogleVeo31HQ_PromptToVideo as ModelModule,        // Google Veo 3.1 HQ (prompt-to-video)
-  "0643a43b-4995-4c5b-ac1d-76ea257a93a0": GrokImagine_PromptToVideo as ModelModule,          // Grok Imagine (prompt-to-video)
-  "c5754cad-2b2c-4636-bc19-4ccaa97dde3d": KlingV2Master_PromptToVideo as ModelModule,        // Kling V2 Master (prompt-to-video)
-  "84084ca4-4153-46bc-8d01-cd4e37d1da68": KlingV2Pro_PromptToVideo as ModelModule,           // Kling V2 Pro (prompt-to-video)
-  "88e09730-07e0-4481-bda8-d9d9bde9fec6": KlingV2Standard_PromptToVideo as ModelModule,      // Kling V2 Standard (prompt-to-video)
-  "d2c37239-d544-4cce-bd8d-fb48ea44b287": Runway_PromptToVideo as ModelModule,               // Runway (prompt-to-video)
-  "734c7712-aae3-4ad2-93b9-df198623503d": SeedanceV1Lite_PromptToVideo as ModelModule,    // Seedance V1.0 Pro Fast (prompt-to-video)
-  "e7c5a4f6-8d2b-5f3c-9a6e-7d4b8c5f3a9e": SeedanceV1Lite_PromptToVideo as ModelModule,      // Seedance V1 Lite (prompt-to-video)
-  "d5c7a4f6-8d2b-5f3c-9a6e-7d4b8c5f3a9e": SeedreamV1Pro_PromptToVideo as ModelModule,        // Seedream V1 Pro (prompt-to-video)
-  "c4e5a7f6-8d2b-5f3c-9a6e-7d4b8c5f3a9e": Sora2OpenAI_PromptToVideo as ModelModule,          // Sora 2 by OpenAI (Watermarked) (prompt-to-video)
-  "b3f6a8e7-9d2c-6f4d-8a7e-5d6b4c8f5a9e": WAN22Turbo_PromptToVideo as ModelModule,           // WAN 2.2 Turbo (prompt-to-video)
+  "a96af675-b780-4879-a61f-7285be8766c2": GoogleVeo31Fast_PromptToVideo as ModelModule,     // Google Veo 3.1 Fast | prompt_to_video | kie_ai
+  "d117daae-f3ec-4b79-b98f-adefeee21454": GoogleVeo31HQ_PromptToVideo as ModelModule,       // Google Veo 3.1 HQ | prompt_to_video | kie_ai
+  "0643a43b-4995-4c5b-ac1d-76ea257a93a0": GrokImagine_PromptToVideo as ModelModule,         // Grok Imagine | prompt_to_video | kie_ai
+  "c5754cad-2b2c-4636-bc19-4ccaa97dde3d": KlingV2Master_PromptToVideo as ModelModule,       // Kling V2 Master | prompt_to_video | kie_ai
+  "7bde9fb9-b16b-47b0-86a7-c0762a1a58e3": Runway_PromptToVideo as ModelModule,              // Runway | prompt_to_video | kie_ai
+  "d9808197-5344-431e-a28e-b84482de076a": SeedanceV1Lite_PromptToVideo as ModelModule,     // Seedance V1 Lite | prompt_to_video | kie_ai
+  "734c7712-aae3-4ad2-93b9-df198623503d": SeedanceV1ProFastRunware_PromptToVideo as ModelModule, // Seedance V1.0 Pro Fast | prompt_to_video | runware
+  "b2e60db5-d8b5-4b27-971d-7e195e6ffeda": SeedreamV1Pro_PromptToVideo as ModelModule,       // Seedream V1 Pro | prompt_to_video | kie_ai
+  "81a078c7-10fa-450c-92d5-c9f46166be45": Sora2OpenAI_PromptToVideo as ModelModule,         // Sora 2 by OpenAI (Watermarked) | prompt_to_video | kie_ai
+  "0aaf528a-1334-4121-8467-331c95e8da6d": WAN22Turbo_PromptToVideo as ModelModule,          // WAN 2.2 Turbo | prompt_to_video | kie_ai
 };
 
 /**

@@ -49,30 +49,20 @@ export async function generateAllModelFiles() {
         // Generate the file path
         const fileName = generateFileName(model as any);
 
-        // Call edge function to write the file
-        const { data, error: writeError } = await supabase.functions.invoke(
-          "write-model-file",
-          {
-            body: {
-              filePath: fileName,
-              content: fileContent,
-              modelRecordId: model.record_id,
-              modelId: model.id,
-            },
-          }
-        );
-
-        if (writeError) throw writeError;
-
-        // Update database with file path
+        // Update database with generated content
         const { error: updateError } = await supabase
           .from("ai_models")
-          .update({ locked_file_path: fileName })
+          .update({
+            locked_file_path: fileName,
+            locked_file_contents: fileContent,
+          })
           .eq("record_id", model.record_id);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          throw updateError;
+        }
 
-        logger.info(`✅ Successfully generated file for ${model.id}: ${fileName}`);
+        logger.info(`✅ Successfully generated and stored code for ${model.id}: ${fileName}`);
         results.success++;
       } catch (err) {
         logger.error(`❌ Failed to generate file for ${model.id}:`, err instanceof Error ? err : undefined);

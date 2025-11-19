@@ -512,6 +512,12 @@ export function ModelFormDialog({
       const filePath = `src/lib/models/locked/${previewDialog.fileName}`;
       const modelName = previewDialog.model?.model_name || '';
 
+      logger.info("Model locked successfully", { 
+        modelId: previewDialog.model.id,
+        filePath,
+        contentLength: previewDialog.content.length 
+      });
+
       // Close preview dialog
       setPreviewDialog({ open: false, fileName: '', content: '', schema: null, model: null });
 

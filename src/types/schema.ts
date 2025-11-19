@@ -71,7 +71,7 @@ export interface JsonSchema {
 }
 
 /**
- * Model configuration with strongly typed schema
+ * Type for AI model configuration
  */
 export interface ModelConfiguration {
   record_id: string;
@@ -81,7 +81,7 @@ export interface ModelConfiguration {
   content_type: string;
   base_token_cost: number;
   cost_multipliers: Record<string, number> | null;
-  input_schema: JsonSchema;
+  input_schema: JsonSchema; // DEPRECATED - use locked_file_contents
   api_endpoint: string | null;
   is_active: boolean;
   groups?: string[];
@@ -93,12 +93,16 @@ export interface ModelConfiguration {
   model_family?: string;
   variant_name?: string;
   display_order_in_family?: number;
+  created_at?: string;
+  updated_at?: string;
   // Lock system fields
   is_locked?: boolean;
   locked_at?: string | null;
   locked_by?: string | null;
   locked_file_path?: string | null;
+  locked_file_contents?: string | null; // TypeScript code for the model (single source of truth)
 }
+
 
 /**
  * Template parameter values

@@ -26,4 +26,8 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   return gen.id;
 }
 
-async function getRunwareApiKey(): Promise<string> { throw new Error("RUNWARE_API_KEY needs configuration"); }
+import { getRunwareApiKey as getCentralRunwareApiKey } from "../getRunwareApiKey";
+
+async function getRunwareApiKey(): Promise<string> {
+  return getCentralRunwareApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId);
+}

@@ -971,6 +971,7 @@ Deno.serve(async (req) => {
 
       providerRequest = {
         model: model.id,
+        model_record_id: model.record_id,
         parameters: processedParams, // Parameters with images converted to URLs
         input_schema: model.input_schema,
         api_endpoint: model.api_endpoint,

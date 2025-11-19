@@ -345,28 +345,36 @@ export function ModelFormDialog({
       // Store content and file name for the auto-create action
       const filePath = `src/lib/models/locked/${previewDialog.fileName}`;
       const fileContent = previewDialog.content;
+      const modelName = previewDialog.model?.model_name || '';
 
       // Close preview dialog
       setPreviewDialog({ open: false, fileName: '', content: '', schema: null, model: null });
 
+      // Prepare AI prompt for file creation
+      const aiPrompt = `Create the locked model file at ${filePath} with the following complete implementation:
+
+\`\`\`typescript
+${fileContent}
+\`\`\``;
+
       toast.success(
-        `Model locked in ${displayGroup} group`,
+        `Model "${modelName}" locked successfully!`,
         {
-          description: `File path: ${filePath}`,
-          duration: 10000,
+          description: `Ready to create file: ${filePath}`,
+          duration: Infinity,
           action: {
             label: "Create File",
             onClick: () => {
-              // Copy the AI prompt to clipboard
-              const aiPrompt = `Create the locked model file at ${filePath} with the following complete implementation:\n\n\`\`\`typescript\n${fileContent}\n\`\`\``;
               navigator.clipboard.writeText(aiPrompt);
-              toast.success("AI prompt copied! Paste it in the chat to create the file.", {
+              toast.success("AI prompt copied!", {
+                description: "Paste it in the chat to create the locked model file.",
                 duration: 5000,
               });
             },
           },
         }
       );
+      
       onSuccess();
     } catch (error: any) {
       logger.error("Failed to confirm lock", error);

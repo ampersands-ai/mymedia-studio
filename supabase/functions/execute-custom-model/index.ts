@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getRunwareApiKey } from "../_shared/getRunwareApiKey.ts";
 import { getKieApiKey } from "../_shared/getKieApiKey.ts";
 
@@ -175,10 +175,22 @@ Deno.serve(async (req) => {
     console.error('Model execution error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Model execution failed';
     
+    // Map errors to appropriate status codes
+    let statusCode = 500;
+    if (errorMessage === 'Unauthorized') {
+      statusCode = 401;
+    } else if (errorMessage.includes('Model not found')) {
+      statusCode = 404;
+    } else if (errorMessage.includes('API key not configured') || errorMessage.includes('not configured')) {
+      statusCode = 503; // Service unavailable
+    } else if (errorMessage.includes('API failed')) {
+      statusCode = 502; // Bad gateway
+    }
+    
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { 
-        status: errorMessage === 'Unauthorized' ? 401 : 500,
+        status: statusCode,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );

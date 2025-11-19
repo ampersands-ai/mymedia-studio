@@ -175,16 +175,25 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
         setFirstGeneration(genId);
       }
     } catch (error) {
-      const handledError = handleError(error, {
-        requestId,
-        component: 'useCustomGeneration',
-        operation: 'handleGenerate',
-        modelId: state.selectedModel,
-        prompt: state.prompt.substring(0, 100)
-      });
+      const appError = handleError(error);
       
-      customGenerationLogger.error('Custom generation failed', handledError, { requestId });
-      // Errors are already toasted by executeGeneration
+      // Enhanced user-friendly error messages
+      if (appError.message.includes('API key not configured') || appError.message.includes('not configured')) {
+        toast.error('Model temporarily unavailable. Please contact support.');
+      } else if (appError.message.includes('Unauthorized') || appError.message.includes('Session expired')) {
+        toast.error('Session expired. Please log in again.');
+      } else if (appError.message.includes('Model not found')) {
+        toast.error('This model is no longer available.');
+      } else if (appError.message.includes('Failed to send a request') || appError.message.includes('Connection')) {
+        toast.error('Connection error. Please check your internet and try again.');
+      } else if (appError.message.includes('Insufficient tokens') || appError.message.includes('credits')) {
+        toast.error('Insufficient credits. Please add more credits to continue.');
+      } else {
+        toast.error(appError.message || 'Generation failed. Please try again.');
+      }
+      
+      customGenerationLogger.error('Custom generation failed', appError);
+      
       updateState({ generationStartTime: null });
     } finally {
       updateState({ localGenerating: false });

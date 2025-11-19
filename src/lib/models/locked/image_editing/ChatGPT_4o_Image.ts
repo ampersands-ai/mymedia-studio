@@ -9,9 +9,6 @@
  * This file is the single source of truth for this model
  */
 
-import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { supabase } from "@/integrations/supabase/client";
-import { logger } from "@/lib/logger";
 
 // MODEL CONFIGURATION
 export const MODEL_CONFIG = {
@@ -84,82 +81,4 @@ export function calculateCost(inputs: Record<string, any>): number {
   const multiplier = MODEL_CONFIG.costMultipliers.nVariants[String(nVariants)] || 1;
   cost *= multiplier;
   return Math.round(cost * 100) / 100;
-}
-
-// EXECUTION
-export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { prompt, modelParameters, userId } = params;
-  
-  // Validate
-  const validation = validate({ ...modelParameters, prompt });
-  if (!validation.valid) throw new Error(validation.error);
-  
-  // Calculate cost
-  const cost = calculateCost({ ...modelParameters, prompt });
-  
-  // Create generation record
-  const { data: generation, error: genError } = await supabase
-    .from('generations')
-    .insert({
-      user_id: userId,
-      model_id: MODEL_CONFIG.modelId,
-      model_record_id: MODEL_CONFIG.recordId,
-      prompt,
-      type: MODEL_CONFIG.contentType,
-      status: 'processing',
-      tokens_used: cost,
-      settings: modelParameters
-    })
-    .select()
-    .single();
-
-  if (genError || !generation) throw new Error(`Failed to create generation: ${genError?.message}`);
-
-  // Prepare payload
-  const payload = preparePayload({ ...modelParameters, prompt });
-
-  // Call KIE.ai API
-  try {
-    const response = await fetch(`https://api.klingai.com${MODEL_CONFIG.apiEndpoint}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await getKieApiKey()}`
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) throw new Error(`API call failed: ${response.statusText}`);
-    
-    const result = await response.json();
-    
-    // Update generation with task ID
-    await supabase
-      .from('generations')
-      .update({
-        provider_task_id: result.taskId,
-        provider_request: payload,
-        provider_response: result
-      })
-      .eq('id', generation.id);
-
-    // Start polling
-    params.startPolling(generation.id);
-    
-    return generation.id;
-  } catch (error) {
-    await supabase
-      .from('generations')
-      .update({ status: 'failed' })
-      .eq('id', generation.id);
-    throw error;
-  }
-}
-
-async function getKieApiKey(): Promise<string> {
-  const { data, error } = await supabase.functions.invoke('get-api-key', {
-    body: { provider: 'kie_ai' }
-  });
-  if (error || !data?.apiKey) throw new Error('Failed to get API key');
-  return data.apiKey;
 }

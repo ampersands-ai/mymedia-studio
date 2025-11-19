@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getKieApiKey } from "../_shared/getKieApiKey.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,8 +29,9 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const kieApiKey = Deno.env.get('KIE_AI_API_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    let kieApiKey: string;
 
     // Get generation details if generation_id provided
     let taskIdToQuery = task_id;
@@ -61,6 +63,8 @@ Deno.serve(async (req) => {
         });
         throw new Error('No task_id found in generation');
       }
+      
+      kieApiKey = getKieApiKey(data.model_id || '', data.model_record_id || '');
     }
 
     logger.info('Polling Kie.ai task status', { 

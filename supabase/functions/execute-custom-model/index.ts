@@ -117,8 +117,9 @@ Deno.serve(async (req) => {
       };
     } else if (model.payload_structure === 'direct') {
       payload = inputs;
-    } else if (model.payload_structure === 'flat') {
+    } else if (model.payload_structure === 'flat' || model.provider === 'runware') {
       // Runware format - requires authentication + task with taskUUID
+      // Force this for all Runware models regardless of payload_structure
       const taskUUID = crypto.randomUUID();
       payload = [
         {
@@ -130,9 +131,13 @@ Deno.serve(async (req) => {
           ...inputs
         }
       ];
+      console.log('Runware payload created:', JSON.stringify(payload, null, 2));
     } else {
       payload = inputs;
     }
+
+    console.log('Provider:', model.provider, 'Payload structure:', model.payload_structure);
+    console.log('Sending payload:', JSON.stringify(payload).substring(0, 200));
 
     // Call external API
     let apiEndpoint: string;

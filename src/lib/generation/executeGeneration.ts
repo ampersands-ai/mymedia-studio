@@ -14,8 +14,8 @@ export interface ExecuteGenerationParams {
 }
 
 /**
- * Shared generation pipeline used by both Custom Creation and Test flows.
- * ALL models now route through ModelRouter to execute from .ts files.
+ * Shared generation pipeline - DIRECT execution from physical model files
+ * NO routing, NO shared logic - each model file handles everything
  * 
  * @returns generation ID if successful, throws error otherwise
  */
@@ -32,9 +32,21 @@ export async function executeGeneration({
   maxPromptLength = 5000,
 }: ExecuteGenerationParams): Promise<string> {
   
-  // ALL models now route through ModelRouter (file-based execution)
-  const { executeModelGeneration } = await import("@/lib/models/ModelRouter");
-  return executeModelGeneration({
+  // Direct execution from physical model file
+  const { getModelModule } = await import("@/lib/models/locked");
+  
+  const modelModule = getModelModule(model.record_id, model.id);
+  
+  if (!modelModule) {
+    throw new Error(`Model file not found for ${model.model_name}. Generate the file first.`);
+  }
+  
+  if (!modelModule.execute) {
+    throw new Error(`Model file for ${model.model_name} is missing execute() function`);
+  }
+  
+  // Execute directly - model file handles EVERYTHING
+  return modelModule.execute({
     model,
     prompt,
     modelParameters,

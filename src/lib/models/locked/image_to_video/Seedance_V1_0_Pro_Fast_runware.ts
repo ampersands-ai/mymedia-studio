@@ -1,0 +1,29 @@
+/** Seedance V1.0 Pro Fast runware (image_to_video) - Record: f8a6c4e9-7d3b-5f9c-8a2e-6d4b7c5f9a3e */
+import { supabase } from "@/integrations/supabase/client";
+import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
+
+export const MODEL_CONFIG = { modelId: "bytedance:2@2", recordId: "f8a6c4e9-7d3b-5f9c-8a2e-6d4b7c5f9a3e", modelName: "Seedance V1.0 Pro Fast", provider: "runware", contentType: "video", baseCreditCost: 1.5, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 1, defaultOutputs: 1 } as const;
+
+export const SCHEMA = { properties: { duration: { default: 5, maximum: 12, minimum: 2, type: "number" }, fps: { default: 24, maximum: 60, minimum: 12, type: "number" }, height: { default: 736, showToUser: false, type: "number" }, includeCost: { default: true, showToUser: false, type: "boolean" }, inputImage: { renderer: "image", type: "string" }, outputFormat: { default: "MP4", enum: ["MP4", "GIF"], type: "string" }, outputType: { default: ["URL"], items: { format: "uri", type: "string" }, showToUser: false, type: "array" }, positivePrompt: { renderer: "prompt", type: "string" }, taskType: { default: "imageToVideo", showToUser: false, type: "string" }, width: { default: 1280, showToUser: false, type: "number" } }, required: ["positivePrompt", "inputImage"], type: "object" } as const;
+
+export function validate(inputs: Record<string, any>) { return inputs.positivePrompt && inputs.inputImage ? { valid: true } : { valid: false, error: "Prompt and image required" }; }
+export function preparePayload(inputs: Record<string, any>) { return { taskType: "imageToVideo", positivePrompt: inputs.positivePrompt, inputImage: inputs.inputImage, duration: inputs.duration || 5, fps: inputs.fps || 24, width: 1280, height: 736, outputFormat: inputs.outputFormat || "MP4", outputType: ["URL"], includeCost: true }; }
+export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
+
+export async function execute(params: ExecuteGenerationParams): Promise<string> {
+  const { prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, startPolling } = params;
+  const inputs: Record<string, any> = { positivePrompt: prompt, ...modelParameters };
+  if (uploadedImages.length > 0) inputs.inputImage = (await uploadImagesToStorage(userId))[0];
+  const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
+  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: MODEL_CONFIG.contentType, prompt, tokens_used: calculateCost(inputs), status: "pending", settings: modelParameters }).select().single();
+  if (error || !gen) throw new Error(`Failed: ${error?.message}`);
+  const apiKey = await getRunwareApiKey();
+  const res = await fetch(MODEL_CONFIG.apiEndpoint, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` }, body: JSON.stringify([preparePayload(inputs)]) });
+  if (!res.ok) throw new Error(`API failed: ${res.statusText}`);
+  const result = await res.json();
+  await supabase.from("generations").update({ provider_task_id: result[0]?.taskUUID, provider_request: preparePayload(inputs), provider_response: result }).eq("id", gen.id);
+  startPolling(gen.id);
+  return gen.id;
+}
+
+async function getRunwareApiKey(): Promise<string> { throw new Error("RUNWARE_API_KEY needs configuration"); }

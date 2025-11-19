@@ -1,71 +1,54 @@
 /**
- * Model Router - Directs execution to locked model files or dynamic system
- * 
- * When a model is locked, it uses a dedicated generated TypeScript file
- * When unlocked, it uses the standard dynamic executeGeneration flow
+ * Model Router - Executes model generation from .ts files
+ * ALL models (locked and unlocked) use their respective .ts files
  */
 
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { logger } from "@/lib/logger";
 
-interface LockedModelExecutor {
+interface ModelExecutor {
   execute: (params: ExecuteGenerationParams) => Promise<string>;
 }
 
 /**
- * Route model generation to locked file or dynamic system
+ * Execute model generation from .ts file
  */
 export async function executeModelGeneration(
   params: ExecuteGenerationParams
 ): Promise<string> {
   const { model } = params;
 
-  // Validate locked model has file path
   if (!model.locked_file_path) {
-    logger.error("Locked model missing file path", undefined, { modelId: model.id });
-    throw new Error(`Locked model ${model.id} is missing locked_file_path`);
+    throw new Error(`Model ${model.id} is missing locked_file_path. Regenerate the model file.`);
   }
 
   try {
-    // Dynamically import the locked model file
-    const lockedModelPath = `/src/lib/models/locked/${model.locked_file_path}`;
-    
-    logger.info("Using locked model file", {
+    logger.info("Executing model from file", {
       modelId: model.id,
-      filePath: lockedModelPath,
+      filePath: model.locked_file_path,
     });
 
-    // Import the locked model executor
-    const lockedModel = await import(
+    // Import the model file
+    const modelModule = await import(
       /* @vite-ignore */
-      lockedModelPath
-    ) as LockedModelExecutor;
+      `@/lib/models/${model.locked_file_path}`
+    ) as ModelExecutor;
 
-    if (!lockedModel.execute) {
-      throw new Error(
-        `Locked model file ${model.locked_file_path} is missing execute() function`
-      );
+    if (!modelModule.execute) {
+      throw new Error(`Model file ${model.locked_file_path} is missing execute() function`);
     }
 
-    // Execute using the isolated locked model
-    const generationId = await lockedModel.execute(params);
+    // Execute using the model file
+    const generationId = await modelModule.execute(params);
     
     return generationId;
   } catch (error) {
-    logger.error("Failed to execute locked model", error instanceof Error ? error : undefined, {
+    logger.error("Failed to execute model", error instanceof Error ? error : undefined, {
       modelId: model.id,
       filePath: model.locked_file_path,
       errorMessage: error instanceof Error ? error.message : String(error),
     });
 
-    // Provide helpful error message
-    if (error instanceof Error && error.message.includes("Cannot find module")) {
-      throw new Error(
-        `Locked model file not found: ${model.locked_file_path}. ` +
-        `The model may need to be unlocked and re-locked.`
-      );
-    }
-
-    throw error;
+    throw new Error(`Model execution failed. Check if file exists: ${model.locked_file_path}`);
   }
 }

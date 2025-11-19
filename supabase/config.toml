@@ -2,3 +2,6 @@ project_id = "gzlwkvmivbfcvczoqphq"
 
 [functions.cancel-render]
 verify_jwt = true
+
+[functions.execute-custom-model]
+verify_jwt = true

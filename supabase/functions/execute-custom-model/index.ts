@@ -1,0 +1,186 @@
+import { createClient } from "@supabase/supabase-js";
+import { getRunwareApiKey } from "../_shared/getRunwareApiKey.ts";
+import { getKieApiKey } from "../_shared/getKieApiKey.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface ExecuteModelRequest {
+  model_record_id: string;
+  prompt: string;
+  model_parameters: Record<string, any>;
+  uploaded_image_urls?: string[];
+}
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization')! },
+        },
+      }
+    );
+
+    // Authenticate user
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      throw new Error('Unauthorized');
+    }
+
+    // Parse request
+    const { model_record_id, prompt, model_parameters, uploaded_image_urls }: ExecuteModelRequest = await req.json();
+
+    // Load model from database
+    const { data: model, error: modelError } = await supabaseClient
+      .from('ai_models')
+      .select('*')
+      .eq('record_id', model_record_id)
+      .single();
+    
+    if (modelError || !model) {
+      throw new Error('Model not found');
+    }
+
+    // Calculate token cost
+    let tokenCost = model.base_token_cost;
+    if (model.cost_multipliers) {
+      for (const [param, multiplierConfig] of Object.entries(model.cost_multipliers)) {
+        const value = model_parameters[param];
+        if (value && typeof multiplierConfig === 'object') {
+          const multiplier = (multiplierConfig as Record<string, number>)[value] ?? 1;
+          tokenCost *= multiplier;
+        }
+      }
+    }
+
+    // Create generation record
+    const { data: generation, error: genError } = await supabaseClient
+      .from('generations')
+      .insert({
+        user_id: user.id,
+        model_id: model.id,
+        model_record_id: model.record_id,
+        type: model.content_type,
+        prompt,
+        tokens_used: tokenCost,
+        status: 'processing',
+        settings: model_parameters
+      })
+      .select()
+      .single();
+
+    if (genError || !generation) {
+      throw new Error(`Failed to create generation: ${genError?.message}`);
+    }
+
+    // Get API key based on provider
+    let apiKey: string;
+    if (model.provider === 'runware') {
+      apiKey = getRunwareApiKey(model.id);
+    } else if (model.provider === 'kie_ai') {
+      apiKey = getKieApiKey(model.id, model.record_id);
+    } else if (model.provider === 'lovable_ai_sync') {
+      // Lovable AI models handled separately via generate-content-sync
+      throw new Error('Use generate-content-sync for Lovable AI models');
+    } else {
+      throw new Error(`Unknown provider: ${model.provider}`);
+    }
+
+    // Prepare inputs
+    const inputs: Record<string, any> = { prompt, ...model_parameters };
+    
+    // Add uploaded images if applicable
+    if (uploaded_image_urls && uploaded_image_urls.length > 0) {
+      if (model.content_type === 'video' || model.provider === 'runware') {
+        inputs.image_url = uploaded_image_urls[0];
+      } else if (inputs.image_urls !== undefined) {
+        inputs.image_urls = uploaded_image_urls;
+      }
+    }
+
+    // Prepare payload based on model structure
+    let payload: any;
+    if (model.payload_structure === 'wrapper') {
+      payload = {
+        modelId: model.id,
+        input: inputs
+      };
+    } else if (model.payload_structure === 'direct') {
+      payload = inputs;
+    } else if (model.payload_structure === 'flat') {
+      // Runware format
+      payload = [inputs];
+    } else {
+      payload = inputs;
+    }
+
+    // Call external API
+    const apiEndpoint = model.api_endpoint || 'https://api.kie.ai/api/v1/jobs/createTask';
+    const apiResponse = await fetch(apiEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!apiResponse.ok) {
+      const errorText = await apiResponse.text();
+      throw new Error(`API failed (${apiResponse.status}): ${errorText}`);
+    }
+
+    const result = await apiResponse.json();
+
+    // Extract task ID based on response structure
+    let taskId: string | undefined;
+    if (Array.isArray(result) && result[0]?.taskUUID) {
+      taskId = result[0].taskUUID; // Runware format
+    } else if (result.taskId) {
+      taskId = result.taskId; // KIE AI format
+    } else if (result.id) {
+      taskId = result.id;
+    }
+
+    // Update generation with provider response
+    await supabaseClient
+      .from('generations')
+      .update({
+        provider_task_id: taskId,
+        provider_request: payload,
+        provider_response: result,
+        status: 'pending'
+      })
+      .eq('id', generation.id);
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        generation_id: generation.id,
+        task_id: taskId
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('Model execution error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Model execution failed';
+    
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { 
+        status: errorMessage === 'Unauthorized' ? 401 : 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+});

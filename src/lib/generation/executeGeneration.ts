@@ -14,8 +14,8 @@ export interface ExecuteGenerationParams {
 }
 
 /**
- * Shared generation pipeline - DIRECT execution from physical model files
- * NO routing, NO shared logic - each model file handles everything
+ * Server-side model execution via edge function
+ * Secure API key handling, no client-side secrets
  * 
  * @returns generation ID if successful, throws error otherwise
  */
@@ -26,36 +26,37 @@ export async function executeGeneration({
   uploadedImages,
   userId,
   uploadImagesToStorage,
-  generate,
   startPolling,
-  navigate,
-  maxPromptLength = 5000,
 }: ExecuteGenerationParams): Promise<string> {
   
-  // Direct execution from physical model file
-  const { getModelModule } = await import("@/lib/models/locked");
+  const { supabase } = await import("@/integrations/supabase/client");
   
-  const modelModule = getModelModule(model.record_id, model.id);
-  
-  if (!modelModule) {
-    throw new Error(`Model file not found for ${model.model_name}. Generate the file first.`);
+  // Upload images to storage first (if any)
+  let uploadedImageUrls: string[] = [];
+  if (uploadedImages.length > 0) {
+    uploadedImageUrls = await uploadImagesToStorage(userId);
   }
-  
-  if (!modelModule.execute) {
-    throw new Error(`Model file for ${model.model_name} is missing execute() function`);
-  }
-  
-  // Execute directly - model file handles EVERYTHING
-  return modelModule.execute({
-    model,
-    prompt,
-    modelParameters,
-    uploadedImages,
-    userId,
-    uploadImagesToStorage,
-    generate,
-    startPolling,
-    navigate,
-    maxPromptLength,
+
+  // Call the edge function for secure server-side execution
+  const { data, error } = await supabase.functions.invoke('execute-custom-model', {
+    body: {
+      model_record_id: model.record_id,
+      prompt,
+      model_parameters: modelParameters,
+      uploaded_image_urls: uploadedImageUrls
+    }
   });
+
+  if (error) {
+    throw new Error(error.message || 'Model execution failed');
+  }
+
+  if (!data?.generation_id) {
+    throw new Error('Invalid response from server');
+  }
+
+  // Start polling for generation status
+  startPolling(data.generation_id);
+
+  return data.generation_id;
 }

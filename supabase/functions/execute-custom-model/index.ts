@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getRunwareApiKey } from "../_shared/getRunwareApiKey.ts";
 import { getKieApiKey } from "../_shared/getKieApiKey.ts";
+import { uploadToStorage } from "../_shared/storage.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -161,7 +162,86 @@ Deno.serve(async (req) => {
       taskId = result.id;
     }
 
-    // Update generation with provider response
+    // Check if this is a synchronous Runware response with immediate result
+    if (model.provider === 'runware' && result.data?.[0]?.imageURL) {
+      console.log('Processing synchronous Runware response');
+      
+      try {
+        const imageUrl = result.data[0].imageURL;
+        console.log('Downloading image from:', imageUrl);
+        
+        // Download image from Runware
+        const imageResponse = await fetch(imageUrl);
+        if (!imageResponse.ok) {
+          throw new Error(`Failed to download image: ${imageResponse.status}`);
+        }
+        
+        const imageData = new Uint8Array(await imageResponse.arrayBuffer());
+        console.log('Image downloaded, size:', imageData.length);
+        
+        // Upload to Supabase storage
+        const storagePath = await uploadToStorage(
+          supabaseClient,
+          user.id,
+          generation.id,
+          imageData,
+          'png',
+          'image'
+        );
+        console.log('Image uploaded to storage:', storagePath);
+        
+        // Get public URL
+        const { data: { publicUrl } } = supabaseClient.storage
+          .from('generated-content')
+          .getPublicUrl(storagePath);
+        
+        console.log('Public URL:', publicUrl);
+        
+        // Update generation to completed
+        await supabaseClient
+          .from('generations')
+          .update({
+            status: 'completed',
+            output_url: publicUrl,
+            storage_path: storagePath,
+            provider_task_id: taskId,
+            provider_request: payload,
+            provider_response: result
+          })
+          .eq('id', generation.id);
+        
+        console.log('Generation marked as completed');
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            generation_id: generation.id,
+            status: 'completed',
+            output_url: publicUrl
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+        
+      } catch (storageError) {
+        console.error('Failed to process synchronous result:', storageError);
+        
+        // Mark generation as failed
+        await supabaseClient
+          .from('generations')
+          .update({
+            status: 'failed',
+            provider_task_id: taskId,
+            provider_request: payload,
+            provider_response: result
+          })
+          .eq('id', generation.id);
+        
+        throw new Error(`Failed to process result: ${storageError instanceof Error ? storageError.message : 'Unknown error'}`);
+      }
+    }
+
+    // Async response (KIE AI or other) - webhook will handle completion
+    console.log('Processing asynchronous response, waiting for webhook');
     await supabaseClient
       .from('generations')
       .update({
@@ -176,7 +256,8 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         generation_id: generation.id,
-        task_id: taskId
+        task_id: taskId,
+        status: 'pending'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

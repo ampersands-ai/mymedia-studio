@@ -135,13 +135,27 @@ Deno.serve(async (req) => {
     }
 
     // Call external API
-    const apiEndpoint = model.api_endpoint || 'https://api.kie.ai/api/v1/jobs/createTask';
-    const apiResponse = await fetch(apiEndpoint, {
-      method: 'POST',
-      headers: {
+    let apiEndpoint: string;
+    let headers: Record<string, string>;
+    
+    if (model.provider === 'runware') {
+      // Runware uses its own endpoint and doesn't need Authorization header
+      apiEndpoint = model.api_endpoint || 'https://api.runware.ai/v1';
+      headers = {
+        'Content-Type': 'application/json'
+      };
+    } else {
+      // KIE AI and others use Bearer token auth
+      apiEndpoint = model.api_endpoint || 'https://api.kie.ai/api/v1/jobs/createTask';
+      headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
-      },
+      };
+    }
+    
+    const apiResponse = await fetch(apiEndpoint, {
+      method: 'POST',
+      headers,
       body: JSON.stringify(payload)
     });
 

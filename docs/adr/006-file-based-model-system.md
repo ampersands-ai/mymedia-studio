@@ -1,89 +1,121 @@
-# ADR 006: File-Based Model System
+# ADR 006: Physical File-Based Model System (Complete Isolation)
 
 ## Status
-Accepted (January 2025)
+Accepted (January 2025) - **Updated: Full Isolation Architecture**
 
 ## Context
 
-Previous system used database `input_schema` column for dynamic model loading. This architecture caused several problems:
-
-1. **Schema Drift**: Schema in database could diverge from actual execution logic
-2. **Hidden Behavior**: Model-specific transformations scattered across shared provider files
-3. **Debug Difficulty**: No single place to understand a model's complete behavior
-4. **No Audit Trail**: Schema changes not tracked in version control
-5. **Unclear Ownership**: Hard to know where to make changes for a specific model
+Previous system had multiple issues:
+1. **Schema Drift**: Database schema diverged from execution logic
+2. **Hidden Behavior**: Shared provider files created dependencies
+3. **Debug Difficulty**: No single place to understand model behavior
+4. **No Audit Trail**: Changes not tracked in version control
+5. **Dynamic Imports**: Files stored in database, not as physical files
 
 ## Decision
 
-**All models (locked and unlocked) use TypeScript files as the single source of truth.**
+**COMPLETE ISOLATION: Each model is a physical `.ts` file with ZERO shared logic.**
 
-### New Architecture
+### Core Principles
 
-1. **Every model has a `.ts` file** in `src/lib/models/{group}/`
-2. **File contains everything:**
-   - Schema definition (what UI shows)
-   - Validation rules
-   - Payload preparation (model-specific transformations)
-   - API call logic
-   - Polling logic
-   - Cost calculation
-3. **Database stores ONLY metadata:**
-   - Display name
-   - Logo URL
-   - Is active
-   - Is locked
-   - File path
-4. **No dynamic schema loading from database**
+1. **Physical files ONLY** - No database storage of code
+2. **Zero shared logic** - Each file is 100% independent
+3. **Direct execution** - No routers, no middleware
+4. **Git trackable** - All changes visible in version control
+5. **Immutable when locked** - Lock protection in Admin UI
 
-### File Generation
+### Architecture
 
-- Admin UI generates files via `write-model-file` edge function
-- Files are written to disk (not just stored in database)
-- Locked models freeze the file (requires unlock to regenerate)
-- Unlocked models can be edited and regenerated from Admin UI
+```
+src/lib/models/locked/
+├── index.ts (Registry - maps IDs to modules)
+├── ModelFileGenerator.ts (Utility to generate files)
+├── image_editing/
+│   ├── ChatGPT_4o_Image.ts
+│   ├── Recraft_Crisp_Upscale.ts
+│   └── ... (all image editing models)
+├── prompt_to_image/
+│   ├── ChatGPT_4o_Image.ts
+│   └── ... (all prompt-to-image models)
+├── prompt_to_video/
+│   └── ... (all prompt-to-video models)
+├── image_to_video/
+│   └... (all image-to-video models)
+└── prompt_to_audio/
+    └── ... (all prompt-to-audio models)
+```
 
-### Execution Flow
+### Each File Contains (100% Isolated)
+
+```typescript
+// src/lib/models/locked/{group}/{ModelName}.ts
+
+export const MODEL_CONFIG = { /* frozen config */ };
+export const SCHEMA = { /* frozen schema */ };
+export function validate(inputs) { /* validation */ }
+export function preparePayload(inputs) { /* payload prep */ }
+export function calculateCost(inputs) { /* cost calc */ }
+export async function execute(params) {
+  // Complete generation flow:
+  // - Validate inputs
+  // - Calculate cost
+  // - Create DB record
+  // - Call provider API (inlined)
+  // - Update DB with response
+  // - Start polling
+  // - Return generation ID
+}
+```
+
+### Execution Flow (Direct - No Routing)
 
 ```
 User clicks Generate
   ↓
 executeGeneration() called
   ↓
-ModelRouter.executeModelGeneration()
+Import from registry: getModelModule(record_id)
   ↓
-Import model's .ts file
+Direct call: modelModule.execute(params)
   ↓
-Call file's execute() function
+Model file handles EVERYTHING internally
   ↓
-File handles everything internally
+Returns generation ID
 ```
+
+### NO LONGER USED
+
+- ❌ `ModelRouter.ts` (deleted - no routing)
+- ❌ `locked_file_contents` column (database doesn't store code)
+- ❌ Dynamic imports from database
+- ❌ Shared provider files for locked models
 
 ## Benefits
 
-### Single Source of Truth
-- File defines EVERYTHING about the model
-- No hidden logic in shared providers
-- Read the file, understand the model
+### Complete Isolation
+- Zero dependencies between models
+- Changes to one model never affect others
+- Each file is fully self-contained
 
-### Audit Trail
-- All changes tracked in Git
-- Diff shows exactly what changed
-- Can revert to previous versions
+### Git Trackable
+- All model changes visible in commits
+- Can diff any change
+- Easy rollback to previous versions
 
-### Isolation
-- Each model is independent
-- Changes to one model don't affect others
-- No shared execution logic to break
-
-### Transparency
-- Clear what each model does
-- Easy to debug issues
-- New developers can understand quickly
+### Direct Execution
+- No routing layers
+- No shared logic to break
+- UI → File → API (simple path)
 
 ### Production Stability
-- Locked models can't change accidentally
-- Unlocked models can be iterated safely
-- Clear distinction between stable and experimental
+- Locked files are immutable
+- Admin UI enforces lock protection
+- Can't accidentally break production models
+
+### Debugging Simplicity
+- Read one file, understand everything
+- No hidden logic in providers
+- Clear error messages
 
 ## Consequences
 

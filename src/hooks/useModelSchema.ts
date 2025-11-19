@@ -4,8 +4,8 @@ import type { ModelJsonSchema } from "@/types/model-schema";
 import { logger } from "@/lib/logger";
 
 /**
- * Hook to load model schema from generated .ts file
- * ALL models (locked and unlocked) now use .ts files as source of truth
+ * Hook to load model schema from physical .ts file
+ * ALL models use physical files as single source of truth (NO dynamic imports)
  */
 export const useModelSchema = (model: ModelConfiguration | null) => {
   const [schema, setSchema] = useState<ModelJsonSchema | null>(null);
@@ -20,33 +20,27 @@ export const useModelSchema = (model: ModelConfiguration | null) => {
       return;
     }
 
-    // All models must have code content
-    if (!model.locked_file_contents) {
-      const err = new Error(`Model ${model.id} is missing locked_file_contents. Regenerate the model.`);
-      logger.error(err.message);
-      setError(err);
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
     setError(null);
     
-    logger.info(`Loading schema from model code: ${model.id}`);
+    logger.info(`Loading schema from physical file: ${model.record_id}`);
 
-    // Import from data URL (code stored in database)
-    const code = model.locked_file_contents;
-    const dataUrl = `data:text/javascript;base64,${btoa(code)}`;
-    
-    import(/* @vite-ignore */ dataUrl)
-      .then((module) => {
-        if (!module.SCHEMA) {
-          throw new Error(`Model code for ${model.id} is missing SCHEMA export`);
+    // Import directly from physical file via registry
+    import("@/lib/models/locked")
+      .then((registry) => {
+        const modelModule = registry.getModelModule(model.record_id, model.id);
+        
+        if (!modelModule) {
+          throw new Error(`Model file not found for ${model.model_name} (${model.record_id}). Generate the file first.`);
         }
         
-        logger.info(`Loaded schema from database: ${model.id} (fields=${Object.keys(module.SCHEMA.properties || {}).length})`);
+        if (!modelModule.SCHEMA) {
+          throw new Error(`Model file for ${model.id} is missing SCHEMA export`);
+        }
         
-        setSchema(module.SCHEMA as ModelJsonSchema);
+        logger.info(`Loaded schema from physical file: ${model.id} (fields=${Object.keys(modelModule.SCHEMA.properties || {}).length})`);
+        
+        setSchema(modelModule.SCHEMA as ModelJsonSchema);
         setLoading(false);
       })
       .catch((err) => {
@@ -54,7 +48,7 @@ export const useModelSchema = (model: ModelConfiguration | null) => {
         setError(err);
         setLoading(false);
       });
-  }, [model?.record_id, model?.locked_file_contents]);
+  }, [model?.record_id, model?.id]);
 
   return { schema, loading, error };
 };

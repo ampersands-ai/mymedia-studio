@@ -33,6 +33,7 @@ interface SchemaInputProps {
 
 export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema, rows, modelId, provider }: SchemaInputProps) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   
   // Check if showToUser flag should hide this field
   if (schema.showToUser === false) {
@@ -120,6 +121,51 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
       } else {
         setImagePreview(base64String);
         onChange(base64String);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      
+      if (isArrayOfImages) {
+        onChange([{ inputImage: base64String }] as unknown as ModelParameterValue);
+        setImagePreview(null);
+      } else if (isImageArray) {
+        const currentImages = Array.isArray(value) ? value : [];
+        onChange([...currentImages, base64String] as ModelParameterValue);
+      } else {
+        onChange(base64String as ModelParameterValue);
+        setImagePreview(base64String);
       }
     };
     reader.readAsDataURL(file);
@@ -296,11 +342,17 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
               <button
                 type="button"
                 onClick={() => document.getElementById(`image-upload-${name}`)?.click()}
-                className="w-full border-2 border-dashed border-border rounded-lg p-8 hover:border-primary/50 transition-colors bg-background"
+                onDragEnter={handleDragEnter}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`w-full border-2 border-dashed rounded-lg p-8 transition-colors bg-background ${
+                  isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                }`}
               >
                 <div className="flex flex-col items-center justify-center gap-2">
                   <Upload className="h-6 w-6 text-muted-foreground" />
-                  <span className="text-sm font-medium">Upload Image</span>
+                  <span className="text-sm font-medium">Drag and drop or click to upload</span>
                 </div>
               </button>
             </>
@@ -368,12 +420,18 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
             <button
               type="button"
               onClick={() => document.getElementById(`image-upload-${name}`)?.click()}
-              className="w-full border-2 border-dashed border-border rounded-lg p-6 hover:border-primary/50 transition-colors bg-background"
+              onDragEnter={handleDragEnter}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`w-full border-2 border-dashed rounded-lg p-6 transition-colors bg-background ${
+                isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+              }`}
             >
               <div className="flex flex-col items-center justify-center gap-2">
                 <Plus className="h-5 w-5 text-muted-foreground" />
                 <span className="text-sm font-medium">
-                  Add Image {imageArray.length > 0 ? `(${imageArray.length}/${maxItems})` : ''}
+                  {imageArray.length > 0 ? 'Drag and drop or click to add more' : 'Drag and drop or click to upload'}
                 </span>
               </div>
             </button>
@@ -440,11 +498,17 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
               <button
                 type="button"
                 onClick={() => document.getElementById(`image-upload-${name}`)?.click()}
-                className="w-full border-2 border-dashed border-border rounded-lg p-8 hover:border-primary/50 transition-colors bg-background"
+                onDragEnter={handleDragEnter}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`w-full border-2 border-dashed rounded-lg p-8 transition-colors bg-background ${
+                  isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                }`}
               >
                 <div className="flex flex-col items-center justify-center gap-2">
                   <Upload className="h-6 w-6 text-muted-foreground" />
-                  <span className="text-sm font-medium">Upload Image</span>
+                  <span className="text-sm font-medium">Drag and drop or click to upload</span>
                 </div>
               </button>
               {schema.description && (

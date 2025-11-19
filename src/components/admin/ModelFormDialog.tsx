@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import {
@@ -95,49 +95,69 @@ export function ModelFormDialog({
 
   const isLocked = model?.is_locked || false;
 
+  const previousRecordIdRef = useRef<string | null>(null);
+  const previousOpenRef = useRef(open);
+
   useEffect(() => {
-    if (model) {
-      setFormData({
-        id: model.id,
-        provider: model.provider,
-        model_name: model.model_name,
-        content_type: model.content_type,
-        base_token_cost: model.base_token_cost.toString(),
-        payload_structure: model.payload_structure || "wrapper",
-        cost_multipliers: JSON.stringify(model.cost_multipliers || {}, null, 2),
-        input_schema: JSON.stringify(model.input_schema, null, 2),
-        api_endpoint: model.api_endpoint || "",
-        estimated_time_seconds: model.estimated_time_seconds?.toString() || "",
-        max_images: model.max_images?.toString() || "",
-        logo_url: model.logo_url || "",
-        default_outputs: model.default_outputs?.toString() || "1",
-        model_family: model.model_family || "",
-        variant_name: model.variant_name || "",
-        display_order_in_family: model.display_order_in_family?.toString() || "0",
-      });
-      setSelectedGroups(model.groups || []);
-    } else {
-      setFormData({
-        id: "",
-        provider: "",
-        model_name: "",
-        content_type: "",
-        base_token_cost: "",
-        payload_structure: "wrapper",
-        cost_multipliers: "{}",
-        input_schema: "{}",
-        api_endpoint: "",
-        estimated_time_seconds: "",
-        max_images: "",
-        logo_url: "",
-        default_outputs: "1",
-        model_family: "",
-        variant_name: "",
-        display_order_in_family: "0",
-      });
-      setSelectedGroups([]);
+    const currentRecordId = model?.record_id || null;
+    const previousRecordId = previousRecordIdRef.current;
+    const dialogJustOpened = !previousOpenRef.current && open;
+    
+    // Determine if we should reset the form
+    const shouldReset = 
+      dialogJustOpened || // Dialog opened
+      (previousRecordId !== currentRecordId) || // Different model
+      (previousRecordId === null && currentRecordId !== null) || // null → model
+      (previousRecordId !== null && currentRecordId === null); // model → null
+    
+    if (shouldReset) {
+      if (model) {
+        setFormData({
+          id: model.id,
+          provider: model.provider,
+          model_name: model.model_name,
+          content_type: model.content_type,
+          base_token_cost: model.base_token_cost.toString(),
+          payload_structure: model.payload_structure || "wrapper",
+          cost_multipliers: JSON.stringify(model.cost_multipliers || {}, null, 2),
+          input_schema: JSON.stringify(model.input_schema, null, 2),
+          api_endpoint: model.api_endpoint || "",
+          estimated_time_seconds: model.estimated_time_seconds?.toString() || "",
+          max_images: model.max_images?.toString() || "",
+          logo_url: model.logo_url || "",
+          default_outputs: model.default_outputs?.toString() || "1",
+          model_family: model.model_family || "",
+          variant_name: model.variant_name || "",
+          display_order_in_family: model.display_order_in_family?.toString() || "0",
+        });
+        setSelectedGroups(model.groups || []);
+      } else {
+        setFormData({
+          id: "",
+          provider: "",
+          model_name: "",
+          content_type: "",
+          base_token_cost: "",
+          payload_structure: "wrapper",
+          cost_multipliers: "{}",
+          input_schema: "{}",
+          api_endpoint: "",
+          estimated_time_seconds: "",
+          max_images: "",
+          logo_url: "",
+          default_outputs: "1",
+          model_family: "",
+          variant_name: "",
+          display_order_in_family: "0",
+        });
+        setSelectedGroups([]);
+      }
     }
-  }, [model]);
+    
+    // Update refs for next render
+    previousRecordIdRef.current = currentRecordId;
+    previousOpenRef.current = open;
+  }, [model, open]);
 
   const handleSchemaSave = async (newSchema: JsonSchema) => {
     if (!model?.record_id) return;
@@ -154,6 +174,18 @@ export function ModelFormDialog({
     }
     
     const paramCount = Object.keys(newSchema.properties || {}).length;
+    
+    // CRITICAL GUARD: Prevent saving empty schemas
+    if (paramCount === 0) {
+      logger.error("Blocked attempt to save empty schema", new Error("Empty schema rejected"), {
+        modelRecordId: model.record_id,
+        modelId: model.id,
+        modelName: model.model_name,
+      });
+      toast.error("Cannot save an empty parameter schema.");
+      return;
+    }
+    
     logger.info('Saving schema for model', {
       modelRecordId: model.record_id,
       modelId: model.id,
@@ -205,6 +237,14 @@ export function ModelFormDialog({
         inputSchema = JSON.parse(formData.input_schema);
       } catch {
         toast.error("Invalid JSON in Input Schema");
+        setSaving(false);
+        return;
+      }
+
+      // CRITICAL GUARD: Prevent saving empty schemas
+      const paramCount = Object.keys(inputSchema.properties || {}).length;
+      if (paramCount === 0) {
+        toast.error("Input Schema must define at least one parameter. Refusing to save an empty schema.");
         setSaving(false);
         return;
       }

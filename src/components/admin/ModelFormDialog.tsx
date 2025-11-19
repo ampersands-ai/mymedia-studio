@@ -337,41 +337,23 @@ export function ModelFormDialog({
           locked_at: new Date().toISOString(),
           locked_by: user.id,
           locked_file_path: previewDialog.fileName,
+          locked_file_contents: previewDialog.content,
         })
         .eq("record_id", previewDialog.model.record_id);
 
       if (error) throw error;
 
-      // Store content and file name for the auto-create action
       const filePath = `src/lib/models/locked/${previewDialog.fileName}`;
-      const fileContent = previewDialog.content;
       const modelName = previewDialog.model?.model_name || '';
 
       // Close preview dialog
       setPreviewDialog({ open: false, fileName: '', content: '', schema: null, model: null });
 
-      // Prepare AI prompt for file creation
-      const aiPrompt = `Create the locked model file at ${filePath} with the following complete implementation:
-
-\`\`\`typescript
-${fileContent}
-\`\`\``;
-
       toast.success(
         `Model "${modelName}" locked successfully!`,
         {
-          description: `Ready to create file: ${filePath}`,
-          duration: Infinity,
-          action: {
-            label: "Create File",
-            onClick: () => {
-              navigator.clipboard.writeText(aiPrompt);
-              toast.success("AI prompt copied!", {
-                description: "Paste it in the chat to create the locked model file.",
-                duration: 5000,
-              });
-            },
-          },
+          description: `Locked file snapshot stored: ${filePath}`,
+          duration: 5000,
         }
       );
       

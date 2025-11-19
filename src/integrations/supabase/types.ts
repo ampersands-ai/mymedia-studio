@@ -31,6 +31,7 @@ export type Database = {
           is_locked: boolean | null
           locked_at: string | null
           locked_by: string | null
+          locked_file_contents: string | null
           locked_file_path: string | null
           logo_url: string | null
           max_images: number | null
@@ -58,6 +59,7 @@ export type Database = {
           is_locked?: boolean | null
           locked_at?: string | null
           locked_by?: string | null
+          locked_file_contents?: string | null
           locked_file_path?: string | null
           logo_url?: string | null
           max_images?: number | null
@@ -85,6 +87,7 @@ export type Database = {
           is_locked?: boolean | null
           locked_at?: string | null
           locked_by?: string | null
+          locked_file_contents?: string | null
           locked_file_path?: string | null
           logo_url?: string | null
           max_images?: number | null

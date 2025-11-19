@@ -183,8 +183,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   // IMAGE TO VIDEO MODELS (13 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "a96af675-b780-4879-a61f-7285be8766c2": GoogleVeo31Fast_ImageToVideo as ModelModule,      // Google Veo 3.1 Fast (image-to-video)
-  "a5c2ec16-6294-4588-86b6-7b4182601cda": GoogleVeo31HQ_ImageToVideo as ModelModule,        // Google Veo 3.1 HQ
-  "d117daae-f3ec-4b79-b98f-adefeee21454": GoogleVeo31HQ_ImageToVideo as ModelModule,        // Google Veo 3.1 HQ (duplicate) - REAL RECORD_ID
+  "a5c2ec16-6294-4588-86b6-7b4182601cda": GoogleVeo31HQ_ImageToVideo as ModelModule,        // Google Veo 3.1 HQ (image-to-video)
   "6e8a863e-8630-4eef-bdbb-5b41f4c883f9": GoogleVeo31Reference as ModelModule,              // Google Veo 3.1 Reference
   "8c46aade-1272-4409-bb3a-3701e2423320": GrokImagine_ImageToVideo as ModelModule,          // Grok Imagine
   "c3397c13-3a52-4973-a87c-b4c20aca0fc0": KlingV2Master_ImageToVideo as ModelModule,        // Kling V2 Master
@@ -207,37 +206,11 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "84084ca4-4153-46bc-8d01-cd4e37d1da68": KlingV2Pro_PromptToVideo as ModelModule,           // Kling V2 Pro (prompt-to-video)
   "88e09730-07e0-4481-bda8-d9d9bde9fec6": KlingV2Standard_PromptToVideo as ModelModule,      // Kling V2 Standard (prompt-to-video)
   "d2c37239-d544-4cce-bd8d-fb48ea44b287": Runway_PromptToVideo as ModelModule,               // Runway (prompt-to-video)
-  "734c7712-aae3-4ad2-93b9-df198623503d": SeedanceV1ProFast_PromptToVideo as ModelModule,    // Seedance V1.0 Pro Fast (prompt-to-video)
-  "schnell": FLUX1Schnell as ModelModule,                                                    // FLUX.1 Schnell (alias)
-  "2d5f8c3a-9b7e-4f6d-8c1a-5e3b9a6f4d8c": GoogleImagen4 as ModelModule,                     // Google Imagen 4
-  "a8f5c3e9-7d4b-6f2c-9a1e-5d8b3c7f4a6e": IdeogramCharacter_PromptToImage as ModelModule,   // Ideogram Character
-  "f9c5e7a3-8d4b-6f2c-9a1e-5d7b3c8f4a6e": IdeogramV2Plus as ModelModule,                    // Ideogram V2+
-  "e7c9a5f3-8d4b-6f2c-9a1e-5d8b3c7f4a6e": IdeogramV3 as ModelModule,                        // Ideogram V3
-  "d8c5a7f3-9b4e-6f2c-8a1d-5e7b3c9f4a6e": JasperTextToImage as ModelModule,                 // Jasper Text to Image
-  "c7e9a5f3-8d4b-6f2c-9a1e-5d8b3c7f4a6e": NanoBananaByGoogle as ModelModule,                // Nano Banana by Google
-  "b8f9c5e2-7d4a-6f3b-9e1c-5a8d3f7b4e9a": QwenQwenVL as ModelModule,                        // Qwen QwenVL
-  "a6c8e4f7-9d2b-5f3c-8a6e-7d4b9c5f3a8e": SeedreamV4_PromptToImage as ModelModule,          // Seedream V4
-  "f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e": UltraDetailV0 as ModelModule,                     // Ultra Detail V0
-  "e9c7a5f3-8d4b-6f2c-9a1e-5d8b3c7f4a6e": RunwareFlux11Pro as ModelModule,                  // runware flux 1.1 pro
-  "d9c7a5f3-8d4b-6f2c-9a1e-5d8b3c7f4a6e": RunwareFlux1Schnell as ModelModule,               // runware flux 1 schnell
-  "c8f9b5e2-7d4a-6f3b-9e1c-5a8d3f7b4e9a": RunwareStableDiffusionV3 as ModelModule,          // runware stable diffusion v3
-  "b7f8c5e2-6d4a-5f3b-8e1c-4a7d2f6b3e9a": RunwareStableDiffusionXL as ModelModule,          // runware stable diffusion xl
-  
-  // ═══════════════════════════════════════════════════════════════════════════
-  // PROMPT TO VIDEO MODELS (11 total)
-  // ═══════════════════════════════════════════════════════════════════════════
-  "f8e9c7a5-9d4b-6f2c-8a1e-5d7b3c9f4a6e": GoogleVeo31Fast_PromptToVideo as ModelModule,     // Google Veo 3.1 Fast
-  "e9c8b7a6-8d5c-4f3e-9a2f-6d8b5c9e4a7f": GoogleVeo31HQ_PromptToVideo as ModelModule,       // Google Veo 3.1 HQ
-  "d8c7b6a5-7e4f-3c2d-8a1f-5d7b8c9e4a6f": GrokImagine_PromptToVideo as ModelModule,         // Grok Imagine
-  "c7e9b5a4-6d3f-2c8e-9a1f-4d6b7c8e5a9f": KlingV2Master_PromptToVideo as ModelModule,       // Kling V2 Master
-  "b6e8c4a3-5d2f-1c7e-8a0f-3d5b6c7e4a8f": KlingV2Pro_PromptToVideo as ModelModule,          // Kling V2 Pro
-  "a5e7c3a2-4d1f-0c6e-7a9f-2d4b5c6e3a7f": KlingV2Standard_PromptToVideo as ModelModule,     // Kling V2 Standard
-  "f9e8c7b6-8d5c-4f3e-9a2f-6d8b5c9e4a7f": Runway_PromptToVideo as ModelModule,              // Runway
-  "e8d7c6b5-7e4f-3c2d-8a1f-5d7b8c9e4a6f": SeedanceV1Lite_PromptToVideo as ModelModule,     // Seedance V1 Lite
-  "734c7712-aae3-4ad2-93b9-df198623503d": SeedanceV1Lite_PromptToVideo as ModelModule,     // Seedance V1.0 Pro Fast - REAL RECORD_ID
-  "d7c6b5a4-6e3f-2c1d-7a0f-4d6b7c8e5a9f": SeedreamV1Pro_PromptToVideo as ModelModule,       // Seedream V1 Pro
-  "c6e5b4a3-5d2f-1c0e-6a9f-3d5b6c7e4a8f": Sora2OpenAI_PromptToVideo as ModelModule,         // Sora 2 by OpenAI (Watermarked)
-  "b5e4c3a2-4d1f-0c9e-5a8f-2d4b5c6e3a7f": WAN22Turbo_PromptToVideo as ModelModule,          // WAN 2.2 Turbo
+  "734c7712-aae3-4ad2-93b9-df198623503d": SeedanceV1Lite_PromptToVideo as ModelModule,    // Seedance V1.0 Pro Fast (prompt-to-video)
+  "e7c5a4f6-8d2b-5f3c-9a6e-7d4b8c5f3a9e": SeedanceV1Lite_PromptToVideo as ModelModule,      // Seedance V1 Lite (prompt-to-video)
+  "d5c7a4f6-8d2b-5f3c-9a6e-7d4b8c5f3a9e": SeedreamV1Pro_PromptToVideo as ModelModule,        // Seedream V1 Pro (prompt-to-video)
+  "c4e5a7f6-8d2b-5f3c-9a6e-7d4b8c5f3a9e": Sora2OpenAI_PromptToVideo as ModelModule,          // Sora 2 by OpenAI (Watermarked) (prompt-to-video)
+  "b3f6a8e7-9d2c-6f4d-8a7e-5d6b4c8f5a9e": WAN22Turbo_PromptToVideo as ModelModule,           // WAN 2.2 Turbo (prompt-to-video)
 };
 
 /**

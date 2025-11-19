@@ -135,7 +135,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "58a5db33-7729-48e8-88e5-ee05ea4c0c13": QwenImageEditor as ModelModule,                   // Qwen Image Editor
   "b5d09ee9-3b13-49b7-a1b3-fbd63a45b02b": QwenImageToImage as ModelModule,                  // Qwen Image to Image
   "0c77b10f-7b51-45fe-9e4e-cb30ebd61819": RemoveBackgroundKie as ModelModule,               // Remove Background (kie.ai)
-  "d2f8b5e4-3a9c-4c72-8f61-2e4d9a7b6c3f": RemoveBackgroundRunware as ModelModule,           // Remove Background (runware)
+  "d1d8b152-e123-4375-8f55-c0d0a699009b": RemoveBackgroundRunware as ModelModule,           // Remove Background (runware) - REAL RECORD_ID
   "d2ffb834-fc59-4c80-bf48-c2cc25281fdd": SeedreamV4_ImageEditing as ModelModule,           // Seedream V4
   "e8c4a9f2-6b7d-4e3a-9c1f-5d8b7a3e6f2c": RunwareUpscale as ModelModule,                    // Runware Upscale
   
@@ -143,7 +143,9 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   // IMAGE TO VIDEO MODELS (14 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "8aac94cb-5625-47f4-880c-4f0fd8bd83a1": GoogleVeo31Fast_ImageToVideo as ModelModule,      // Google Veo 3.1 Fast
+  "a96af675-b780-4879-a61f-7285be8766c2": GoogleVeo31Fast_ImageToVideo as ModelModule,      // Google Veo 3.1 Fast (duplicate) - REAL RECORD_ID
   "a5c2ec16-6294-4588-86b6-7b4182601cda": GoogleVeo31HQ_ImageToVideo as ModelModule,        // Google Veo 3.1 HQ
+  "d117daae-f3ec-4b79-b98f-adefeee21454": GoogleVeo31HQ_ImageToVideo as ModelModule,        // Google Veo 3.1 HQ (duplicate) - REAL RECORD_ID
   "6e8a863e-8630-4eef-bdbb-5b41f4c883f9": GoogleVeo31Reference as ModelModule,              // Google Veo 3.1 Reference
   "8c46aade-1272-4409-bb3a-3701e2423320": GrokImagine_ImageToVideo as ModelModule,          // Grok Imagine
   "c3397c13-3a52-4973-a87c-b4c20aca0fc0": KlingV2Master_ImageToVideo as ModelModule,        // Kling V2 Master
@@ -154,7 +156,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "e6d9a4f7-2c5b-8f3e-9a7d-4c8f5b6e3a9d": SeedreamV1Pro_ImageToVideo as ModelModule,        // Seedream V1 Pro
   "d7f8c5a3-9b2e-6f4d-8c9a-5e7b3a6d4f8c": Sora2OpenAI as ModelModule,                       // Sora 2 by OpenAI (Watermarked)
   "c9e5a7f3-8d4b-6f2c-9a8e-5d7b3c4f6a9e": WAN22Turbo_ImageToVideo as ModelModule,           // WAN 2.2 Turbo
-  "f8a6c4e9-7d3b-5f9c-8a2e-6d4b7c5f9a3e": SeedanceV1ProFastRunware as ModelModule,          // Seedance V1.0 Pro Fast (runware)
+  "3ac57af3-f7f0-4205-b1a4-3c7c3c1c7dad": SeedanceV1ProFastRunware as ModelModule,          // Seedance V1.0 Pro Fast (runware) - REAL RECORD_ID
   
   // ═══════════════════════════════════════════════════════════════════════════
   // PROMPT TO AUDIO MODELS (3 total)
@@ -167,11 +169,12 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   // PROMPT TO IMAGE MODELS (18 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "3b83cee8-6164-4d98-aebe-f4eadcb3da1d": ChatGPT4oImage_PromptToImage as ModelModule,      // ChatGPT 4o Image
-  "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c": Flux1Dev as ModelModule,                          // Flux 1 Dev
+  "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c": Flux1Dev as ModelModule,                          // Flux 1 Dev - REAL RECORD_ID
   "c1bd50df-1c27-48a3-8630-0970eedd21f6": FLUX1KontextMax_PromptToImage as ModelModule,     // FLUX.1 Kontext Max
   "94b43382-bf4b-490d-82b5-265d14473f9b": FLUX1KontextPro_PromptToImage as ModelModule,     // FLUX.1 Kontext Pro
   "100@1": FLUX1Pro as ModelModule,                                                          // FLUX.1 Pro
-  "schnell": FLUX1Schnell as ModelModule,                                                    // FLUX.1 Schnell
+  "32e98d54-3e47-41f8-ae70-0b0c18b78b8f": FLUX1Schnell as ModelModule,                      // FLUX.1 Schnell - REAL RECORD_ID
+  "schnell": FLUX1Schnell as ModelModule,                                                    // FLUX.1 Schnell (alias)
   "2d5f8c3a-9b7e-4f6d-8c1a-5e3b9a6f4d8c": GoogleImagen4 as ModelModule,                     // Google Imagen 4
   "a8f5c3e9-7d4b-6f2c-9a1e-5d8b3c7f4a6e": IdeogramCharacter_PromptToImage as ModelModule,   // Ideogram Character
   "f9c5e7a3-8d4b-6f2c-9a1e-5d7b3c8f4a6e": IdeogramV2Plus as ModelModule,                    // Ideogram V2+
@@ -197,6 +200,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "a5e7c3a2-4d1f-0c6e-7a9f-2d4b5c6e3a7f": KlingV2Standard_PromptToVideo as ModelModule,     // Kling V2 Standard
   "f9e8c7b6-8d5c-4f3e-9a2f-6d8b5c9e4a7f": Runway_PromptToVideo as ModelModule,              // Runway
   "e8d7c6b5-7e4f-3c2d-8a1f-5d7b8c9e4a6f": SeedanceV1Lite_PromptToVideo as ModelModule,     // Seedance V1 Lite
+  "734c7712-aae3-4ad2-93b9-df198623503d": SeedanceV1Lite_PromptToVideo as ModelModule,     // Seedance V1.0 Pro Fast - REAL RECORD_ID
   "d7c6b5a4-6e3f-2c1d-7a0f-4d6b7c8e5a9f": SeedreamV1Pro_PromptToVideo as ModelModule,       // Seedream V1 Pro
   "c6e5b4a3-5d2f-1c0e-6a9f-3d5b6c7e4a8f": Sora2OpenAI_PromptToVideo as ModelModule,         // Sora 2 by OpenAI (Watermarked)
   "b5e4c3a2-4d1f-0c9e-5a8f-2d4b5c6e3a7f": WAN22Turbo_PromptToVideo as ModelModule,          // WAN 2.2 Turbo

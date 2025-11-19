@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "recraft/background-remover", recordId: "0c77b10f-7b51-45fe-9e4e-cb30ebd61819", modelName: "Remove Background", provider: "kie_ai", contentType: "image", baseCreditCost: 0.1, estimatedTimeSeconds: 8, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "recraft/remove-background", recordId: "58b8b09f-57fd-42e3-ae2d-689e9ea3064d", modelName: "Remove Background", provider: "kie_ai", contentType: "image", baseCreditCost: 0.5, estimatedTimeSeconds: 20, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
 
 export const SCHEMA = { imageInputField: "image", properties: { image: { renderer: "image", type: "string" } }, required: ["image"], type: "object" } as const;
 

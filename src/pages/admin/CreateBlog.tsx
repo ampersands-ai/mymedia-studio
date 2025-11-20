@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Loader2, Sparkles, Send, ArrowLeft, Plus, X, Image as ImageIcon } from "lucide-react";
 import { BlogEditor } from "@/components/blog/BlogEditor";
 import { SEOFields } from "@/components/blog/SEOFields";
+import { ImageGenerationPanel } from "@/components/blog/ImageGenerationPanel";
 import { BlogPost, SEOMetadata } from "@/types/blog";
 import {
   AlertDialog,
@@ -50,6 +51,7 @@ export default function CreateBlog() {
   const [seoMetadata, setSeoMetadata] = useState<SEOMetadata>({});
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [suggestedImages, setSuggestedImages] = useState<any[]>([]);
 
   // Backlinks state
   const [backlinks, setBacklinks] = useState<Array<{ url: string; anchor_text: string; is_internal: boolean }>>([]);
@@ -126,6 +128,7 @@ export default function CreateBlog() {
         schema_data: data.schema_data,
       });
       setTags(data.tags || []);
+      setSuggestedImages(data.suggested_images || []);
 
       toast.success('Blog post generated successfully! Review and edit as needed.');
     } catch (error: any) {
@@ -380,6 +383,21 @@ export default function CreateBlog() {
         <h2 className="text-2xl font-bold mb-4">📝 Content Editor</h2>
         <BlogEditor content={content} onChange={setContent} />
       </Card>
+
+      {/* AI Image Generation */}
+      {title && (
+        <div className="mb-6">
+          <ImageGenerationPanel
+            suggestedImages={suggestedImages}
+            onImageGenerated={(image) => {
+              toast.success('Image generated! HTML copied - paste into editor.');
+              // Optionally auto-insert into content
+              // setContent(content + `\n<img src="${image.url}" alt="${image.alt_text}" class="rounded-lg shadow-lg my-4" />\n`);
+            }}
+            blogTitle={title}
+          />
+        </div>
+      )}
 
       {/* Excerpt */}
       <Card className="p-6 mb-6">

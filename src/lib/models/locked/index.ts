@@ -86,6 +86,8 @@ import * as GoogleVeo31Fast_PromptToVideo from "./prompt_to_video/Google_Veo_3_1
 import * as GoogleVeo31HQ_PromptToVideo from "./prompt_to_video/Google_Veo_3_1_HQ";
 import * as GrokImagine_PromptToVideo from "./prompt_to_video/Grok_Imagine";
 import * as KlingV2Master_PromptToVideo from "./prompt_to_video/Kling_V2_Master";
+import * as KlingV2Pro_PromptToVideo from "./prompt_to_video/Kling_V2_Pro";
+import * as KlingV2Standard_PromptToVideo from "./prompt_to_video/Kling_V2_Standard";
 import * as Runway_PromptToVideo from "./prompt_to_video/Runway";
 import * as SeedanceV1Lite_PromptToVideo from "./prompt_to_video/Seedance_V1_Lite";
 import * as SeedanceV1ProFastRunware_PromptToVideo from "./prompt_to_video/Seedance_V1_0_Pro_Fast_runware";
@@ -93,7 +95,7 @@ import * as SeedreamV1Pro_PromptToVideo from "./prompt_to_video/Seedream_V1_Pro"
 import * as Sora2OpenAI_PromptToVideo from "./prompt_to_video/Sora_2_by_OpenAI_Watermarked";
 import * as WAN22Turbo_PromptToVideo from "./prompt_to_video/WAN_2_2_Turbo";
 
-interface ModelModule {
+export interface ModelModule {
   MODEL_CONFIG: {
     modelId: string;
     recordId: string;
@@ -137,7 +139,7 @@ export const MODEL_REGISTRY: Record<string, ModelModule> = {
  * Maps unique record_ids to their model modules.
  * This is the PRIMARY and PREFERRED lookup method since record_id is unique.
  * 
- * Total: 60 models across 5 groups
+ * Total: 72 models across 5 groups
  * ═══════════════════════════════════════════════════════════════════════════
  */
 export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
@@ -168,27 +170,35 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "f14e7b76-98a8-47c7-a0bc-e58dc9ba811c": RunwareUpscale as ModelModule,                    // runware:upscale | image_editing | runware
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROMPT TO IMAGE MODELS (19 total)
+  // PROMPT TO IMAGE MODELS (28 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "3b83cee8-6164-4d98-aebe-f4eadcb3da1d": ChatGPT4oImage_PromptToImage as ModelModule,      // ChatGPT 4o-Image | prompt_to_image | kie_ai
   "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c": Flux1Dev as ModelModule,                          // Flux.1 Dev | prompt_to_image | runware
+  "100@1": FLUX1Pro as ModelModule,                                                         // FLUX.1 Pro | prompt_to_image | runware
   "c1bd50df-1c27-48a3-8630-0970eedd21f6": FLUX1KontextMax_PromptToImage as ModelModule,     // FLUX.1 Kontext Max | prompt_to_image | kie_ai
   "94b43382-bf4b-490d-82b5-265d14473f9b": FLUX1KontextPro_PromptToImage as ModelModule,     // FLUX.1 Kontext Pro | prompt_to_image | kie_ai
-  "32e98d54-3e47-41f8-ae70-0b0c18b78b8f": FLUX1Schnell as ModelModule,                      // Flux.1 Schnell | prompt_to_image | runware
+  "schnell": FLUX1Schnell as ModelModule,                                                   // FLUX.1 Schnell | prompt_to_image | runware
+  "32e98d54-3e47-41f8-ae70-0b0c18b78b8f": RunwareFlux1Schnell as ModelModule,               // runware flux 1 schnell | prompt_to_image | runware
   "5290ad50-ebeb-4fc0-97fb-bff7db6784b5": GoogleImagen4 as ModelModule,                     // Google Imagen 4 | prompt_to_image | kie_ai
   "0ff9bb96-041e-4c24-90c5-543064b642ca": GoogleImagen4Fast as ModelModule,                 // Google Imagen 4 Fast | prompt_to_image | kie_ai
   "23e81043-5e53-400b-bc1a-2a1ed9f30ce0": GoogleImagen4Ultra as ModelModule,                // Google Imagen 4 Ultra | prompt_to_image | kie_ai
   "49a79e90-830d-40ff-ad05-447cf0232592": GrokImagine_PromptToImage as ModelModule,         // Grok Imagine | prompt_to_image | kie_ai
   "79ce627d-f90c-47b2-ae3f-9437d93f4529": HiDreamDev as ModelModule,                        // HiDream Dev | prompt_to_image | runware
   "7fe80ee8-701c-49b9-a21e-79f8c82489c8": HiDreamFast as ModelModule,                       // HiDream Fast | prompt_to_image | runware
+  "a8f5c3e9-7d4b-6f2c-9a1e-5d8b3c7f4a6e": IdeogramCharacter_PromptToImage as ModelModule,   // Ideogram Character | prompt_to_image | kie_ai
+  "f9c5e7a3-8d4b-6f2c-9a1e-5d7b3c8f4a6e": IdeogramV2Plus as ModelModule,                     // Ideogram V2+ | prompt_to_image | kie_ai
   "94c0e508-226a-4e3d-8229-3820a61faa88": IdeogramV3 as ModelModule,                        // Ideogram V3 | prompt_to_image | kie_ai
+  "d8c5a7f3-9b4e-6f2c-8a1d-5e7b3c9f4a6e": JasperTextToImage as ModelModule,                 // Jasper Text to Image | prompt_to_image | kie_ai
   "eff6c62e-c20e-4eed-9f5b-81e1a7f01529": Midjourney as ModelModule,                        // Midjourney | prompt_to_image | kie_ai
   "4c680009-d3fe-436f-85a7-467c76e85f9e": NanoBananaLovableAI as ModelModule,               // Nano Banana (Lovable AI) | prompt_to_image | lovable_ai_sync
   "09b03fa3-e648-4d42-8494-b91bd2e609b8": NanoBananaByGoogle as ModelModule,                // Nano Banana by Google | prompt_to_image | kie_ai
   "36246bd4-f2e5-472b-bcf8-3dd99bc313d8": QwenQwenVL as ModelModule,                        // Qwen Text to Image | prompt_to_image | kie_ai
   "edc7a24b-b9da-46a7-8155-635626c0f9a3": RunwareFlux11Pro as ModelModule,                  // runware:101@1 | prompt_to_image | runware
+  "c8f9b5e2-7d4a-6f3b-9e1c-5a8d3f7b4e9a": RunwareStableDiffusionV3 as ModelModule,          // runware stable diffusion v3 | prompt_to_image | runware
+  "b7f8c5e2-6d4a-5f3b-8e1c-4a7d2f6b3e9a": RunwareStableDiffusionXL as ModelModule,          // runware stable diffusion xl | prompt_to_image | runware
   "ac90c626-ab01-4bc0-a000-9b952ddbde0e": SeedreamV3 as ModelModule,                        // Seedream V3 | prompt_to_image | kie_ai
   "c0e4f338-683a-4b5d-8289-518f2b5ea983": SeedreamV4_PromptToImage as ModelModule,          // Seedream V4 | prompt_to_image | kie_ai
+  "f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e": UltraDetailV0 as ModelModule,                     // Ultra Detail V0 | prompt_to_image | kie_ai
 
   // ═══════════════════════════════════════════════════════════════════════════
   // IMAGE TO VIDEO MODELS (13 total)
@@ -208,12 +218,14 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "e4ae6c36-dfcb-4fe4-94f3-46962df720b1": WAN22Turbo_ImageToVideo as ModelModule,           // WAN 2.2 Turbo | image_to_video | kie_ai
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROMPT TO VIDEO MODELS (10 total)
+  // PROMPT TO VIDEO MODELS (12 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "a96af675-b780-4879-a61f-7285be8766c2": GoogleVeo31Fast_PromptToVideo as ModelModule,     // Google Veo 3.1 Fast | prompt_to_video | kie_ai
   "d117daae-f3ec-4b79-b98f-adefeee21454": GoogleVeo31HQ_PromptToVideo as ModelModule,       // Google Veo 3.1 HQ | prompt_to_video | kie_ai
   "0643a43b-4995-4c5b-ac1d-76ea257a93a0": GrokImagine_PromptToVideo as ModelModule,         // Grok Imagine | prompt_to_video | kie_ai
   "c5754cad-2b2c-4636-bc19-4ccaa97dde3d": KlingV2Master_PromptToVideo as ModelModule,       // Kling V2 Master | prompt_to_video | kie_ai
+  "b6e8c4a3-5d2f-1c7e-8a0f-3d5b6c7e4a8f": KlingV2Pro_PromptToVideo as ModelModule,          // Kling V2 Pro | prompt_to_video | kie_ai
+  "e1f2a3b4-c5d6-7e8f-9a0b-1c2d3e4f5a6b": KlingV2Standard_PromptToVideo as ModelModule,     // Kling V2 Standard | prompt_to_video | kie_ai
   "7bde9fb9-b16b-47b0-86a7-c0762a1a58e3": Runway_PromptToVideo as ModelModule,              // Runway | prompt_to_video | kie_ai
   "d9808197-5344-431e-a28e-b84482de076a": SeedanceV1Lite_PromptToVideo as ModelModule,     // Seedance V1 Lite | prompt_to_video | kie_ai
   "734c7712-aae3-4ad2-93b9-df198623503d": SeedanceV1ProFastRunware_PromptToVideo as ModelModule, // Seedance V1.0 Pro Fast | prompt_to_video | runware
@@ -258,4 +270,51 @@ export function getAvailableModelRecordIds(): string[] {
  */
 export function getAvailableModelIds(): string[] {
   return Object.keys(MODEL_REGISTRY);
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ADR 007 REQUIRED HELPER FUNCTIONS
+ * ═══════════════════════════════════════════════════════════════════════════
+ * These functions support the direct model execution architecture
+ * where model .ts files handle their own API calls
+ */
+
+/**
+ * Get model by record_id (throws if not found)
+ * This is the PRIMARY lookup method per ADR 007
+ */
+export function getModel(recordId: string): ModelModule {
+  const model = RECORD_ID_REGISTRY[recordId];
+  if (!model) {
+    throw new Error(`Model not found: ${recordId}`);
+  }
+  return model;
+}
+
+/**
+ * Get all model configurations
+ * Returns array of MODEL_CONFIG objects for UI rendering
+ */
+export function getAllModels(): Array<ModelModule['MODEL_CONFIG']> {
+  return Object.values(RECORD_ID_REGISTRY).map(m => m.MODEL_CONFIG);
+}
+
+/**
+ * Get models filtered by content type
+ * @param type - 'image', 'video', 'audio'
+ */
+export function getModelsByContentType(type: string): Array<ModelModule['MODEL_CONFIG']> {
+  return Object.values(RECORD_ID_REGISTRY)
+    .filter(m => m.MODEL_CONFIG.contentType === type)
+    .map(m => m.MODEL_CONFIG);
+}
+
+/**
+ * Get models filtered by provider
+ */
+export function getModelsByProvider(provider: string): Array<ModelModule['MODEL_CONFIG']> {
+  return Object.values(RECORD_ID_REGISTRY)
+    .filter(m => m.MODEL_CONFIG.provider === provider)
+    .map(m => m.MODEL_CONFIG);
 }

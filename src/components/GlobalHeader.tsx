@@ -112,10 +112,10 @@ export const GlobalHeader = () => {
                   <span className="text-sm font-semibold text-foreground">
                     {creditBalance !== null ? (
                       <div className="flex flex-col">
-                        <span>{creditBalance.toFixed(2)} Credits</span>
+                        <span>{creditBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Credits</span>
                         {reservedCredits > 0 && (
                           <span className="text-xs text-muted-foreground">
-                            ({reservedCredits.toFixed(2)} reserved)
+                            ({reservedCredits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} reserved)
                           </span>
                         )}
                       </div>
@@ -124,21 +124,6 @@ export const GlobalHeader = () => {
                     )}
                   </span>
                 </div>
-              </button>
-            )}
-
-            {creditBalance !== null && (
-              <button 
-                onClick={() => {
-                  updateProgress({ viewedTokenCost: true });
-                  navigate("/dashboard/settings", { state: { defaultTab: 'usage' } });
-                }}
-                className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 flex items-center gap-2 hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md"
-              >
-                <Coins className="h-5 w-5 text-primary-orange" />
-                <span className="font-bold text-base">
-                  {creditBalance.toLocaleString()}
-                </span>
               </button>
             )}
 

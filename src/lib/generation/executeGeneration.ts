@@ -1,7 +1,11 @@
 import type { NavigateFunction } from "react-router-dom";
+import { getModel } from "@/lib/models/registry";
 
 export interface ExecuteGenerationParams {
-  model: any;
+  model: {
+    record_id: string;
+    [key: string]: any; // Allow additional properties for backwards compatibility
+  };
   prompt: string;
   modelParameters: Record<string, any>;
   uploadedImages: File[];
@@ -27,36 +31,37 @@ export async function executeGeneration({
   userId,
   uploadImagesToStorage,
   startPolling,
+  navigate,
 }: ExecuteGenerationParams): Promise<string> {
   
-  const { supabase } = await import("@/integrations/supabase/client");
-  
+  // Get model from registry
+  const modelModule = getModel(model.record_id);
+  if (!modelModule) {
+    throw new Error(`Model not found in registry: ${model.record_id}`);
+  }
+
   // Upload images to storage first (if any)
   let uploadedImageUrls: string[] = [];
   if (uploadedImages.length > 0) {
     uploadedImageUrls = await uploadImagesToStorage(userId);
   }
 
-  // Call the edge function for secure server-side execution
-  const { data, error } = await supabase.functions.invoke('execute-custom-model', {
-    body: {
-      model_record_id: model.record_id,
-      prompt,
-      model_parameters: modelParameters,
-      uploaded_image_urls: uploadedImageUrls
-    }
+  // Execute model directly using its execute() function
+  const generationId = await modelModule.execute({
+    model: modelModule.MODEL_CONFIG,
+    prompt,
+    modelParameters,
+    uploadedImages,
+    uploadedImageUrls,
+    userId,
+    uploadImagesToStorage,
+    generate: async () => ({}),
+    startPolling,
+    navigate,
   });
 
-  if (error) {
-    throw new Error(error.message || 'Model execution failed');
-  }
-
-  if (!data?.generation_id) {
-    throw new Error('Invalid response from server');
-  }
-
   // Start polling for generation status
-  startPolling(data.generation_id);
+  startPolling(generationId);
 
-  return data.generation_id;
+  return generationId;
 }

@@ -232,13 +232,11 @@ export const useStoryboardScenes = (
     }
 
     // 2. Check credit balance upfront
-    const { data: model } = await supabase
-      .from('ai_models')
-      .select('base_token_cost, provider')
-      .eq('id', modelId)
-      .single();
-    
-    const tokenCost = model?.base_token_cost || 1;
+    const { getAllModels } = await import('@/lib/models/registry');
+    const modules = getAllModels();
+    const modelModule = modules.find(m => m.MODEL_CONFIG.modelId === modelId);
+
+    const tokenCost = modelModule?.MODEL_CONFIG.baseCreditCost || 1;
     const totalCost = tokenCost * scenesToGenerate.length;
     
     const { data: tokenData } = await supabase

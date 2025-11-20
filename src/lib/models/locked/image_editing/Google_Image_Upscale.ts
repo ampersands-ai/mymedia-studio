@@ -23,7 +23,18 @@ export const MODEL_CONFIG = {
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
   maxImages: 1,
-  defaultOutputs: 1,
+  defaultOutputs: 1,,
+
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/google.svg",
+  modelFamily: "Google",
+  variantName: "Google Image Upscale",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_editing/Google_Image_Upscale.ts"
 } as const;
 
 export const SCHEMA = {

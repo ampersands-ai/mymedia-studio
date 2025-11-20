@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "runware:stable-diffusion-v3", recordId: "c8f9b5e2-7d4a-6f3b-9e1c-5a8d3f7b4e9a", modelName: "runware stable diffusion v3", provider: "runware", contentType: "image", baseCreditCost: 0.15, estimatedTimeSeconds: 12, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "runware:stable-diffusion-v3", recordId: "c8f9b5e2-7d4a-6f3b-9e1c-5a8d3f7b4e9a", modelName: "runware stable diffusion v3", provider: "runware", contentType: "image", baseCreditCost: 0.15, estimatedTimeSeconds: 12, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/runware.svg",
+  modelFamily: "Runware",
+  variantName: "stable diffusion v3",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/prompt_to_image/runware_stable_diffusion_v3.ts" } as const;
 
 export const SCHEMA = { properties: { positivePrompt: { renderer: "prompt", type: "string" }, outputFormat: { default: "PNG", enum: ["PNG", "JPEG", "WEBP"], type: "string" } }, required: ["positivePrompt", "outputFormat"], type: "object" } as const;
 

@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "grok-imagine/text-to-video", recordId: "0643a43b-4995-4c5b-ac1d-76ea257a93a0", modelName: "Grok Imagine", provider: "kie_ai", contentType: "video", baseCreditCost: 10, estimatedTimeSeconds: 45, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "grok-imagine/text-to-video", recordId: "0643a43b-4995-4c5b-ac1d-76ea257a93a0", modelName: "Grok Imagine", provider: "kie_ai", contentType: "video", baseCreditCost: 10, estimatedTimeSeconds: 45, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/xai.svg",
+  modelFamily: "xAI",
+  variantName: "Grok Imagine",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/prompt_to_video/Grok_Imagine.ts" } as const;
 
 export const SCHEMA = { properties: { mode: { default: "normal", enum: ["fun", "normal", "spicy"], type: "string" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" } }, required: ["prompt"], type: "object" } as const;
 

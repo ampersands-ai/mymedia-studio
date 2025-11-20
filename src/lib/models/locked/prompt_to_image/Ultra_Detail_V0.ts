@@ -3,7 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "ultra-detail/v0", recordId: "f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e", modelName: "Ultra Detail V0", provider: "kie_ai", contentType: "image", baseCreditCost: 3.5, estimatedTimeSeconds: 45, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "ultra-detail/v0", recordId: "f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e", modelName: "Ultra Detail V0", provider: "kie_ai", contentType: "image", baseCreditCost: 3.5, estimatedTimeSeconds: 45, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  modelFamily: "Ultra Detail",
+  variantName: "Ultra Detail V0",
+  displayOrderInFamily: 3,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/prompt_to_image/Ultra_Detail_V0.ts" } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "1:1", enum: ["1:1", "3:4", "4:3", "9:16", "16:9"], type: "string" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" }, quality: { default: "high", enum: ["standard", "high", "ultra"], type: "string" }, seed: { type: "integer" } }, required: ["prompt"], type: "object" } as const;
 

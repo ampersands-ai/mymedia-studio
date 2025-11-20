@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "grok-imagine/text-to-image", recordId: "49a79e90-830d-40ff-ad05-447cf0232592", modelName: "Grok Imagine", provider: "kie_ai", contentType: "image", baseCreditCost: 2, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 6 } as const;
+export const MODEL_CONFIG = { modelId: "grok-imagine/text-to-image", recordId: "49a79e90-830d-40ff-ad05-447cf0232592", modelName: "Grok Imagine", provider: "kie_ai", contentType: "image", baseCreditCost: 2, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 6, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/xai.svg",
+  modelFamily: "xAI",
+  variantName: "Grok Imagine",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/prompt_to_image/Grok_Imagine.ts" } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "1:1", enum: ["1:1", "2:3", "3:2"], type: "string" }, prompt: { maxLength: 5000, type: "string" } }, required: ["prompt"], type: "object", "x-order": ["prompt", "aspect_ratio"] } as const;
 

@@ -143,14 +143,12 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
         if (mappingSource === `user_input.${fieldName}`) {
           targetParameterName = paramKey;
           
-          // Get the model schema for this step
-          const { data: stepModelData } = await supabase
-            .from('ai_models')
-            .select('input_schema')
-            .eq('record_id', step.model_record_id)
-            .single();
-          
-          const schema = toModelInputSchema(stepModelData?.input_schema);
+          // Get the model schema for this step from registry
+          const { getAllModels } = await import('@/lib/models/registry');
+          const modules = getAllModels();
+          const modelModule = modules.find(m => m.MODEL_CONFIG.recordId === step.model_record_id);
+
+          const schema = toModelInputSchema(modelModule?.SCHEMA);
           targetParameterSchema = getSchemaProperty(schema, paramKey);
           break;
         }

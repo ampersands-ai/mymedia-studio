@@ -3,7 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "seedance/v1-lite", recordId: "e8d7c6b5-7e4f-3c2d-8a1f-5d7b8c9e4a6f", modelName: "Seedance V1 Lite", provider: "kie_ai", contentType: "video", baseCreditCost: 8, estimatedTimeSeconds: 90, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "seedance/v1-lite", recordId: "e8d7c6b5-7e4f-3c2d-8a1f-5d7b8c9e4a6f", modelName: "Seedance V1 Lite", provider: "kie_ai", contentType: "video", baseCreditCost: 8, estimatedTimeSeconds: 90, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  modelFamily: "Seedance",
+  variantName: "Seedance V1 Lite",
+  displayOrderInFamily: 1,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/prompt_to_video/Seedance_V1_Lite.ts" } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "16:9", enum: ["16:9", "9:16", "1:1"], type: "string" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" } }, required: ["prompt"], type: "object" } as const;
 

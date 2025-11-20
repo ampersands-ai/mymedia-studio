@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "ideogram/v3-remix", recordId: "922ca567-5aa1-4fd3-86ba-587b723a5dbf", modelName: "Ideogram Image Remix", provider: "kie_ai", contentType: "image", baseCreditCost: 1.75, estimatedTimeSeconds: 60, costMultipliers: { num_images: { "1": 1, "2": 2, "3": 3, "4": 4 }, rendering_speed: { BALANCED: 2, QUALITY: 3, TURBO: 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "ideogram/v3-remix", recordId: "922ca567-5aa1-4fd3-86ba-587b723a5dbf", modelName: "Ideogram Image Remix", provider: "kie_ai", contentType: "image", baseCreditCost: 1.75, estimatedTimeSeconds: 60, costMultipliers: { num_images: { "1": 1, "2": 2, "3": 3, "4": 4 }, rendering_speed: { BALANCED: 2, QUALITY: 3, TURBO: 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/ideogram.svg",
+  modelFamily: "Ideogram",
+  variantName: "Image Remix",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_editing/Ideogram_Image_Remix.ts" } as const;
 
 export const SCHEMA = { imageInputField: "image_url", properties: { expand_prompt: { default: true, enum: [true, false], type: "boolean" }, image_size: { default: "square", enum: ["square", "square_hd", "portrait_4_3", "portrait_16_9", "landscape_4_3", "landscape_16_9"], type: "string" }, image_url: { renderer: "image", type: "string" }, image_weight: { default: 50, maximum: 100, minimum: 0, type: "integer" }, negative_prompt: { maxLength: 5000, type: "string" }, num_images: { default: "1", enum: ["1", "2", "3", "4"], type: "string" }, prompt: { type: "string" }, rendering_speed: { default: "TURBO", enum: ["TURBO", "BALANCED", "QUALITY"], type: "string" }, seed: { type: "integer" }, style: { default: "AUTO", enum: ["AUTO", "REALISTIC", "FICTION"], type: "string" } }, required: ["prompt", "image_url"], type: "object" } as const;
 

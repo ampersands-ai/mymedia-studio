@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "ideogram/character", recordId: "4a421ed9-ed0c-40bf-b06d-892871506124", modelName: "Ideogram Character", provider: "kie_ai", contentType: "image", baseCreditCost: 6, estimatedTimeSeconds: 25, costMultipliers: { num_images: { "1": 1, "2": 2, "3": 3, "4": 4 }, rendering_speed: { BALANCED: 1.5, QUALITY: 2, TURBO: 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "ideogram/character", recordId: "4a421ed9-ed0c-40bf-b06d-892871506124", modelName: "Ideogram Character", provider: "kie_ai", contentType: "image", baseCreditCost: 6, estimatedTimeSeconds: 25, costMultipliers: { num_images: { "1": 1, "2": 2, "3": 3, "4": 4 }, rendering_speed: { BALANCED: 1.5, QUALITY: 2, TURBO: 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/ideogram.svg",
+  modelFamily: "Ideogram",
+  variantName: "Character",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_editing/Ideogram_Character.ts" } as const;
 
 export const SCHEMA = { properties: { expand_prompt: { default: true, enum: [true, false], type: "boolean" }, image_size: { default: "square", enum: ["square", "square_hd", "portrait_4_3", "portrait_16_9", "landscape_4_3", "landscape_16_9"], type: "string" }, negative_prompt: { maxLength: 5000, type: "string" }, num_images: { default: "1", enum: ["1", "2", "3", "4"], type: "string" }, prompt: { type: "string" }, reference_image_urls: { items: { type: "string" }, title: "Upload your reference image", type: "array" }, rendering_speed: { default: "TURBO", enum: ["TURBO", "BALANCED", "QUALITY"], type: "string" }, seed: { type: "integer" }, style: { default: "AUTO", enum: ["AUTO", "REALISTIC", "FICTION"], type: "string" } }, required: ["prompt", "reference_image_urls"], type: "object" } as const;
 

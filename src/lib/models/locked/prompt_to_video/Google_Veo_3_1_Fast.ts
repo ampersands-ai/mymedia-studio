@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "veo3_fast", recordId: "a96af675-b780-4879-a61f-7285be8766c2", modelName: "Google Veo 3.1 Fast", provider: "kie_ai", contentType: "video", baseCreditCost: 30, estimatedTimeSeconds: 120, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "veo3_fast", recordId: "a96af675-b780-4879-a61f-7285be8766c2", modelName: "Google Veo 3.1 Fast", provider: "kie_ai", contentType: "video", baseCreditCost: 30, estimatedTimeSeconds: 120, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/google.svg",
+  modelFamily: "Google",
+  variantName: "Veo 3.1 Fast",
+  displayOrderInFamily: 1,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/prompt_to_video/Google_Veo_3_1_Fast.ts" } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "16:9", enum: ["16:9", "9:16", "1:1"], type: "string" }, duration: { default: "5", enum: ["5", "10"], type: "string" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" } }, required: ["prompt"], type: "object" } as const;
 

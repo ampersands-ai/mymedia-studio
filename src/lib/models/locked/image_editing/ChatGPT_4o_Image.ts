@@ -26,7 +26,18 @@ export const MODEL_CONFIG = {
   apiEndpoint: "/api/v1/gpt4o-image/generate",
   payloadStructure: "flat",
   maxImages: 5,
-  defaultOutputs: 1,
+  defaultOutputs: 1,,
+
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/openai.svg",
+  modelFamily: "OpenAI",
+  variantName: "ChatGPT 4o Image",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_editing/ChatGPT_4o_Image.ts"
 } as const;
 
 // FROZEN SCHEMA

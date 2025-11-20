@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "kling/v2-1-master-image-to-video", recordId: "c3397c13-3a52-4973-a87c-b4c20aca0fc0", modelName: "Kling V2 Master", provider: "kie_ai", contentType: "video", baseCreditCost: 40, estimatedTimeSeconds: 300, costMultipliers: { duration: { 10: 2, 5: 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "kling/v2-1-master-image-to-video", recordId: "c3397c13-3a52-4973-a87c-b4c20aca0fc0", modelName: "Kling V2 Master", provider: "kie_ai", contentType: "video", baseCreditCost: 40, estimatedTimeSeconds: 300, costMultipliers: { duration: { 10: 2, 5: 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/kling.svg",
+  modelFamily: "Kling",
+  variantName: "V2 Master",
+  displayOrderInFamily: 3,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_to_video/Kling_V2_Master.ts" } as const;
 
 export const SCHEMA = { properties: { duration: { default: "5", enum: ["5", "10"], type: "string" }, image_url: { description: "Editing instruction", type: "string" }, negative_prompt: { default: "blur, distort, and low quality", type: "string" }, prompt: { description: "Editing instruction", type: "string" } }, required: ["prompt", "image_url"], type: "object" } as const;
 

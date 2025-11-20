@@ -3,7 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "bytedance/seedream-v4-text-to-image", recordId: "c0e4f338-683a-4b5d-8289-518f2b5ea983", modelName: "Seedream V4", provider: "kie_ai", contentType: "image", baseCreditCost: 1.75, estimatedTimeSeconds: 30, costMultipliers: { "max_images": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "bytedance/seedream-v4-text-to-image", recordId: "c0e4f338-683a-4b5d-8289-518f2b5ea983", modelName: "Seedream V4", provider: "kie_ai", contentType: "image", baseCreditCost: 1.75, estimatedTimeSeconds: 30, costMultipliers: { "max_images": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  modelFamily: "Seedream",
+  variantName: "Seedream V4",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/prompt_to_image/Seedream_V4.ts" } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "1:1", enum: ["1:1", "3:4", "4:3", "9:16", "16:9"], type: "string" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" }, seed: { type: "integer" } }, required: ["prompt"], type: "object" } as const;
 

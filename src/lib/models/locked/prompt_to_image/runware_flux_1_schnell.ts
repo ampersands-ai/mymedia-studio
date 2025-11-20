@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "runware:100@1", recordId: "32e98d54-3e47-41f8-ae70-0b0c18b78b8f", modelName: "Flux.1 Schnell", provider: "runware", contentType: "image", baseCreditCost: 0.2, estimatedTimeSeconds: 8, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "runware:100@1", recordId: "32e98d54-3e47-41f8-ae70-0b0c18b78b8f", modelName: "Flux.1 Schnell", provider: "runware", contentType: "image", baseCreditCost: 0.2, estimatedTimeSeconds: 8, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/flux.svg",
+  modelFamily: "FLUX",
+  variantName: "1 Schnell",
+  displayOrderInFamily: 1,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/prompt_to_image/runware_flux_1_schnell.ts" } as const;
 
 export const SCHEMA = { properties: { positivePrompt: { renderer: "prompt", type: "string" }, outputFormat: { default: "PNG", enum: ["PNG", "JPEG", "WEBP"], type: "string" } }, required: ["positivePrompt", "outputFormat"], type: "object" } as const;
 

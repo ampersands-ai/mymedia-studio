@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "runware:101@1", recordId: "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c", modelName: "Flux.1 Dev", provider: "runware", contentType: "image", baseCreditCost: 0.4, estimatedTimeSeconds: 15, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "runware:101@1", recordId: "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c", modelName: "Flux.1 Dev", provider: "runware", contentType: "image", baseCreditCost: 0.4, estimatedTimeSeconds: 15, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/flux.svg",
+  modelFamily: "FLUX",
+  variantName: "1 Dev",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/prompt_to_image/Flux_1_Dev.ts" } as const;
 
 export const SCHEMA = { properties: { CFGScale: { default: 3.5, showToUser: false, type: "number" }, checkNSFW: { default: true, showToUser: false, type: "boolean" }, height: { default: 1152, showToUser: false, type: "number" }, includeCost: { default: true, showToUser: false, type: "boolean" }, numberResults: { default: 1, showToUser: false, title: "number of images", type: "number" }, outputFormat: { default: "WEBP", enum: ["WEBP", "JPEG", "PNG"], title: "Output Format", type: "string" }, outputQuality: { default: 85, showToUser: false, type: "number" }, outputType: { default: ["URL"], items: { format: "uri", type: "string" }, showToUser: false, type: "array" }, positivePrompt: { renderer: "prompt", type: "string" }, scheduler: { default: "FlowMatchEulerDiscreteScheduler", showToUser: false, type: "string" }, steps: { default: 28, showToUser: false, type: "number" }, taskType: { default: "imageInference", showToUser: false, type: "string" }, width: { default: 896, showToUser: false, type: "number" } }, required: ["positivePrompt", "numberResults", "outputFormat"], type: "object" } as const;
 

@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "runware:105@1", recordId: "de96f11c-bc91-4cdd-ae71-0308e7584f8a", modelName: "runware upscale", provider: "runware", contentType: "image", baseCreditCost: 20, estimatedTimeSeconds: 90, costMultipliers: { upscaleFactor: { "2": 1, "3": 1.5, "4": 2 } }, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "runware:105@1", recordId: "de96f11c-bc91-4cdd-ae71-0308e7584f8a", modelName: "runware upscale", provider: "runware", contentType: "image", baseCreditCost: 20, estimatedTimeSeconds: 90, costMultipliers: { upscaleFactor: { "2": 1, "3": 1.5, "4": 2 } }, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 1, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/runware.svg",
+  modelFamily: "Runware",
+  variantName: "upscale",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_editing/runware_upscale.ts" } as const;
 
 export const SCHEMA = { imageInputField: "inputImage", properties: { includeCost: { default: true, showToUser: false, type: "boolean" }, inputImage: { renderer: "image", type: "string" }, outputFormat: { default: "PNG", enum: ["PNG", "JPEG", "WEBP"], type: "string" }, outputType: { default: ["URL"], items: { format: "uri", type: "string" }, showToUser: false, type: "array" }, taskType: { default: "imageUpscale", showToUser: false, type: "string" }, upscaleFactor: { default: 4, enum: [2, 4], type: "number" } }, required: ["inputImage"], type: "object" } as const;
 

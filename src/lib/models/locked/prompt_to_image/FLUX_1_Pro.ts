@@ -1,6 +1,7 @@
 /** FLUX.1 Pro prompt_to_image - Record: 100@1 */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
+import { deductCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = {
   modelId: "runware:100@1",
@@ -72,13 +73,16 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const validation = validate(inputs);
   if (!validation.valid) throw new Error(validation.error);
   
+  const cost = calculateCost(inputs);
+  await deductCredits(userId, cost);
+  
   const { data: gen, error } = await supabase.from("generations").insert({
     user_id: userId,
     model_id: MODEL_CONFIG.modelId,
     model_record_id: MODEL_CONFIG.recordId,
     type: MODEL_CONFIG.contentType,
     prompt,
-    tokens_used: calculateCost(inputs),
+    tokens_used: cost,
     status: "pending",
     settings: modelParameters
   }).select().single();

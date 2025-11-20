@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "jasper/text-to-image", recordId: "d8c5a7f3-9b4e-6f2c-8a1d-5e7b3c9f4a6e", modelName: "Jasper Text to Image", provider: "kie_ai", contentType: "image", baseCreditCost: 2, estimatedTimeSeconds: 20, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "jasper/text-to-image", recordId: "d8c5a7f3-9b4e-6f2c-8a1d-5e7b3c9f4a6e", modelName: "Jasper Text to Image", provider: "kie_ai", contentType: "prompt_to_image", baseCreditCost: 2, estimatedTimeSeconds: 20, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   modelFamily: "Jasper",

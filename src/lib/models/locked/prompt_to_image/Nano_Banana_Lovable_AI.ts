@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "google/gemini-2.5-flash-image", recordId: "4c680009-d3fe-436f-85a7-467c76e85f9e", modelName: "Nano Banana (Lovable AI)", provider: "lovable_ai_sync", contentType: "image", baseCreditCost: 1, estimatedTimeSeconds: 15, costMultipliers: {}, apiEndpoint: null, payloadStructure: "direct", maxImages: 0, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "google/gemini-2.5-flash-image", recordId: "4c680009-d3fe-436f-85a7-467c76e85f9e", modelName: "Nano Banana (Lovable AI)", provider: "lovable_ai_sync", contentType: "prompt_to_image", baseCreditCost: 1, estimatedTimeSeconds: 15, costMultipliers: {}, apiEndpoint: null, payloadStructure: "direct", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/google.svg",

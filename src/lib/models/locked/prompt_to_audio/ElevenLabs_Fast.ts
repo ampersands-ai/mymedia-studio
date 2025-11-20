@@ -17,7 +17,7 @@ export const MODEL_CONFIG = {
   recordId: "379f8945-bd7f-48f3-a1bb-9d2e2413234c",
   modelName: "Eleven Labs Fast",
   provider: "kie_ai",
-  contentType: "audio",
+  contentType: "prompt_to_audio",
   baseCreditCost: 1.25,
   estimatedTimeSeconds: 90,
   costMultipliers: {},

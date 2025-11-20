@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "veo3", recordId: "a5c2ec16-6294-4588-86b6-7b4182601cda", modelName: "Google Veo 3.1 HQ", provider: "kie_ai", contentType: "video", baseCreditCost: 125, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/veo/generate", payloadStructure: "flat", maxImages: 2, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "veo3", recordId: "a5c2ec16-6294-4588-86b6-7b4182601cda", modelName: "Google Veo 3.1 HQ", provider: "kie_ai", contentType: "image_to_video", baseCreditCost: 125, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/veo/generate", payloadStructure: "flat", maxImages: 2, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/google.svg",

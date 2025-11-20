@@ -8,7 +8,7 @@ export const MODEL_CONFIG = {
   recordId: "d1d8b152-e123-4375-8f55-c0d0a699009b",
   modelName: "Remove Background",
   provider: "runware",
-  contentType: "image",
+  contentType: "image_editing",
   baseCreditCost: 0.07,
   estimatedTimeSeconds: 15,
   costMultipliers: {},

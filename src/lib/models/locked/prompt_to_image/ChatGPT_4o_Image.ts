@@ -20,7 +20,7 @@ export const MODEL_CONFIG = {
   recordId: "3b83cee8-6164-4d98-aebe-f4eadcb3da1d",
   modelName: "ChatGPT 4o-Image",
   provider: "kie_ai",
-  contentType: "image",
+  contentType: "prompt_to_image",
   baseCreditCost: 3,
   estimatedTimeSeconds: 120,
   costMultipliers: { nVariants: { "1": 1, "2": 1.16666, "4": 1.3333 } },

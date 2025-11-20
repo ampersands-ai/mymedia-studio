@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "grok-imagine/image-to-video", recordId: "8c46aade-1272-4409-bb3a-3701e2423320", modelName: "Grok Imagine", provider: "kie_ai", contentType: "video", baseCreditCost: 10, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "grok-imagine/image-to-video", recordId: "8c46aade-1272-4409-bb3a-3701e2423320", modelName: "Grok Imagine", provider: "kie_ai", contentType: "image_to_video", baseCreditCost: 10, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/xai.svg",

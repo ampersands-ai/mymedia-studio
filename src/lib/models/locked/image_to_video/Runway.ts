@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "runway-duration-5-generate", recordId: "d2c37239-d544-4cce-bd8d-fb48ea44b287", modelName: "Runway", provider: "kie_ai", contentType: "video", baseCreditCost: 10, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "runway-duration-5-generate", recordId: "d2c37239-d544-4cce-bd8d-fb48ea44b287", modelName: "Runway", provider: "kie_ai", contentType: "image_to_video", baseCreditCost: 10, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/runway.svg",

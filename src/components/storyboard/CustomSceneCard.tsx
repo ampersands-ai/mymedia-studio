@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Trash2, Sparkles, Image as ImageIcon, Upload, Video, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { useUserCredits } from '@/hooks/useUserCredits';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BackgroundMediaSelector } from '../video/BackgroundMediaSelector';
@@ -50,7 +50,7 @@ export function CustomSceneCard({
   const [isGenerating, setIsGenerating] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [showEnhanceDialog, setShowEnhanceDialog] = useState(false);
-  const { data: tokenData, refetch: refetchTokens } = useUserTokens();
+  const { availableCredits, refetch: refetchCredits } = useUserCredits();
 
   const handleEnhancePrompt = async () => {
     setShowEnhanceDialog(false);
@@ -60,8 +60,7 @@ export function CustomSceneCard({
       return;
     }
 
-    const currentTokens = Number(tokenData?.tokens_remaining || 0);
-    if (currentTokens < 0.1) {
+    if (availableCredits < 0.1) {
       toast.error('Insufficient credits. You need 0.1 credits to enhance prompts.', { duration: 2000 });
       return;
     }
@@ -80,7 +79,7 @@ export function CustomSceneCard({
       if (data?.enhanced_prompt) {
         onUpdate('imagePrompt', data.enhanced_prompt);
         toast.success('Prompt enhanced! (0.1 credits used)');
-        refetchTokens();
+        refetchCredits();
       }
     } catch (error: any) {
       logger.error('Scene prompt enhancement failed', error, {
@@ -116,7 +115,7 @@ export function CustomSceneCard({
       if (data?.output_url) {
         onUpdate('imageUrl', data.output_url);
         toast.success('Image generated successfully!');
-        refetchTokens();
+        refetchCredits();
       }
     } catch (error: any) {
       logger.error('Scene image generation failed', error, {

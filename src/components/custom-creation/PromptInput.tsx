@@ -5,7 +5,7 @@ import { Sparkles, Loader2 } from "lucide-react";
 import { CAPTION_GENERATION_COST } from "@/constants/custom-creation";
 import { logger } from "@/lib/logger";
 import { usePromptEnhancement } from "@/hooks/usePromptEnhancement";
-import { useUserTokens } from "@/hooks/useUserTokens";
+import { useUserCredits } from "@/hooks/useUserCredits";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -46,7 +46,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
 }) => {
   const isOverLimit = value.length > maxLength;
   const { enhancePrompt, isEnhancing } = usePromptEnhancement();
-  const { data: tokenData, refetch: refetchTokens } = useUserTokens();
+  const { availableCredits, refetch: refetchCredits } = useUserCredits();
   const [showEnhanceDialog, setShowEnhanceDialog] = useState(false);
 
   const handleEnhancePrompt = async () => {
@@ -57,8 +57,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
       return;
     }
 
-    const currentTokens = Number(tokenData?.tokens_remaining || 0);
-    if (currentTokens < 0.1) {
+    if (availableCredits < 0.1) {
       toast.error('Insufficient credits. You need 0.1 credits to enhance prompts.', { duration: 2000 });
       return;
     }
@@ -66,7 +65,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
     const enhanced = await enhancePrompt(value, 'image');
     if (enhanced) {
       onChange(enhanced);
-      refetchTokens();
+      refetchCredits();
     }
   };
 

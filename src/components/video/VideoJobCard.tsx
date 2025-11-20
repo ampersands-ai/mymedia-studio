@@ -9,7 +9,7 @@ import { Loader2, Download, Eye, Clock, AlertCircle, Play, XCircle, Volume2, Edi
 import { formatDistanceToNow } from 'date-fns';
 import { useState, useEffect, useRef } from 'react';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { useUserCredits } from '@/hooks/useUserCredits';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { useVideoUrl, useAudioUrl } from '@/hooks/media';
@@ -113,11 +113,11 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const [videoError, setVideoError] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling, recoverJob, isRecoveringJob, dismissError, isDismissingError, generateCaption, isGeneratingCaption } = useVideoJobs();
-  const { data: tokens } = useUserTokens();
+  const { availableCredits } = useUserCredits();
   
   // Calculate voiceover regeneration cost (144 credits per 1000 chars)
   const voiceoverRegenerationCost = Math.ceil((editedVoiceoverScript.length / 1000) * 144);
-  const canAffordVoiceoverRegeneration = (tokens?.tokens_remaining ?? 0) >= voiceoverRegenerationCost;
+  const canAffordVoiceoverRegeneration = availableCredits >= voiceoverRegenerationCost;
   
   const handleGenerateCaption = () => {
     if (!job.script) {
@@ -126,7 +126,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     }
     
     // Check if user has enough credits
-    if (tokens && tokens.tokens_remaining < 0.1) {
+    if (availableCredits < 0.1) {
       toast.error('Insufficient credits. You need at least 0.1 credits.');
       return;
     }
@@ -956,7 +956,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
                       <p>This will cost <strong>0.1 credits</strong>.</p>
                       <div className="flex items-center gap-2 text-sm">
                         <Coins className="w-4 h-4" />
-                        <span>Your current balance: <strong>{tokens?.tokens_remaining.toFixed(2)} credits</strong></span>
+                        <span>Your current balance: <strong>{availableCredits.toFixed(2)} credits</strong></span>
                       </div>
                     </AlertDialogDescription>
                   </AlertDialogHeader>

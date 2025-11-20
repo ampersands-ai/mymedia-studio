@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStoryboard } from '@/hooks/useStoryboard';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { useUserCredits } from '@/hooks/useUserCredits';
 import { useStoryboardForm } from '@/hooks/storyboard/useStoryboardForm';
 import { Film, Loader2, Sparkles, Edit3 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -20,7 +20,7 @@ export function StoryboardInput() {
   const [mode, setMode] = useState<'ai' | 'custom'>('ai');
   const { formState, updateField, estimatedRenderCost, canGenerate } = useStoryboardForm();
   const { generateStoryboard, isGenerating } = useStoryboard();
-  const { data: tokenData } = useUserTokens();
+  const { availableCredits } = useUserCredits();
 
   const handleGenerate = async () => {
     if (!canGenerate) {
@@ -143,7 +143,7 @@ export function StoryboardInput() {
             <CostDisplay
               duration={formState.duration}
               estimatedCost={estimatedRenderCost}
-              tokensRemaining={Number(tokenData?.tokens_remaining || 0)}
+              tokensRemaining={availableCredits}
             />
 
             <Button

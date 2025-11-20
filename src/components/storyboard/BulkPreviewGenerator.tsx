@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { Sparkles, X, AlertCircle } from 'lucide-react';
 import { useModels } from '@/hooks/useModels';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { useUserCredits } from '@/hooks/useUserCredits';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { logger } from '@/lib/logger';
 
@@ -36,7 +36,7 @@ export const BulkPreviewGenerator = ({ storyboard, scenes, onGenerateAll }: Bulk
   const abortControllerRef = useRef<AbortController | null>(null);
   
   const { data: models } = useModels();
-  const { data: tokenData } = useUserTokens();
+  const { availableCredits } = useUserCredits();
 
   // Count scenes needing previews (intro + regular scenes without previews)
   const scenesNeedingPreviews = [
@@ -66,7 +66,7 @@ export const BulkPreviewGenerator = ({ storyboard, scenes, onGenerateAll }: Bulk
   const selectedModel = imageModels.find(m => m.id === selectedModelId) || imageModels[0];
   const tokenCost = selectedModel?.base_token_cost || 1;
   const totalCost = Math.round((tokenCost * totalToGenerate) * 100) / 100;
-  const hasEnoughCredits = (tokenData?.tokens_remaining || 0) >= totalCost;
+  const hasEnoughCredits = availableCredits >= totalCost;
 
   const handleGenerate = async () => {
     const controller = new AbortController();
@@ -179,7 +179,7 @@ export const BulkPreviewGenerator = ({ storyboard, scenes, onGenerateAll }: Bulk
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Insufficient credits. Need {totalCost} credits, you have {tokenData?.tokens_remaining || 0}.
+                  Insufficient credits. Need {totalCost} credits, you have {availableCredits.toFixed(2)}.
                 </AlertDescription>
               </Alert>
             )}

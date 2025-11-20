@@ -1,7 +1,7 @@
 /** Kling V2 Standard (prompt_to_video) - Record: a5e7c3a2-4d1f-0c6e-7a9f-2d4b5c6e3a7f */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { deductCredits } from "@/lib/models/creditDeduction";
+import { reserveCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = { modelId: "kling/v2-standard", recordId: "e1f2a3b4-c5d6-7e8f-9a0b-1c2d3e4f5a6b", modelName: "Kling V2 Standard", provider: "kie_ai", contentType: "video", baseCreditCost: 18, estimatedTimeSeconds: 180, costMultipliers: { "duration": { "10": 2, "5": 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
 
@@ -16,7 +16,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const inputs: Record<string, any> = { prompt, ...modelParameters };
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
-  await deductCredits(userId, cost);
+  await reserveCredits(userId, cost);
   const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: MODEL_CONFIG.contentType, prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const { data: keyData } = await supabase.functions.invoke('get-api-key', {

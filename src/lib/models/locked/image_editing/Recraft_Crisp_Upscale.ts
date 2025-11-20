@@ -10,7 +10,7 @@
 
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { supabase } from "@/integrations/supabase/client";
-import { deductCredits } from "@/lib/models/creditDeduction";
+import { reserveCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = {
   modelId: "recraft/crisp-upscale",
@@ -60,7 +60,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   if (!validation.valid) throw new Error(validation.error);
   
   const cost = calculateCost({ ...modelParameters, prompt });
-  await deductCredits(userId, cost);
+  await reserveCredits(userId, cost);
   const { data: generation, error: genError } = await supabase
     .from('generations')
     .insert({

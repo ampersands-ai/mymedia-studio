@@ -1,7 +1,7 @@
 /** FLUX.1 Schnell prompt_to_image - Record: schnell */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { deductCredits } from "@/lib/models/creditDeduction";
+import { reserveCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = {
   modelId: "runware:flux-schnell",
@@ -64,7 +64,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   if (!validation.valid) throw new Error(validation.error);
   
   const cost = calculateCost(inputs);
-  await deductCredits(userId, cost);
+  await reserveCredits(userId, cost);
   
   const { data: gen, error } = await supabase.from("generations").insert({
     user_id: userId,

@@ -1,7 +1,7 @@
 /** Remove Background runware (image_editing) - Record: d2f8b5e4-3a9c-4c72-8f61-2e4d9a7b6c3f */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { deductCredits } from "@/lib/models/creditDeduction";
+import { reserveCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = {
   modelId: "runware:110@1",
@@ -87,7 +87,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   }
 
   const cost = calculateCost(inputs);
-  await deductCredits(userId, cost);
+  await reserveCredits(userId, cost);
 
   const { data: gen, error } = await supabase
     .from("generations")

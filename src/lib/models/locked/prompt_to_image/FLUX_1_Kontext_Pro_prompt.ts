@@ -1,7 +1,7 @@
 /** FLUX.1 Kontext Pro prompt_to_image - Record: 94b43382-bf4b-490d-82b5-265d14473f9b */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { deductCredits } from "@/lib/models/creditDeduction";
+import { reserveCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = { modelId: "flux-kontext-pro", recordId: "94b43382-bf4b-490d-82b5-265d14473f9b", modelName: "FLUX.1 Kontext Pro", provider: "kie_ai", contentType: "image", baseCreditCost: 2.5, estimatedTimeSeconds: 50, costMultipliers: {}, apiEndpoint: "/api/v1/flux/kontext/generate", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1 } as const;
 
@@ -17,7 +17,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   if (uploadedImages.length > 0) inputs.inputImage = (await uploadImagesToStorage(userId))[0];
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
-  await deductCredits(userId, cost);
+  await reserveCredits(userId, cost);
   const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: MODEL_CONFIG.contentType, prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const apiKey = await getKieApiKey();

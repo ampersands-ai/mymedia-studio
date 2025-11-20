@@ -1,7 +1,7 @@
 /** Remove Background kie_ai (image_editing) - Record: 0c77b10f-7b51-45fe-9e4e-cb30ebd61819 */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { deductCredits } from "@/lib/models/creditDeduction";
+import { reserveCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = { modelId: "recraft/remove-background", recordId: "58b8b09f-57fd-42e3-ae2d-689e9ea3064d", modelName: "Remove Background", provider: "kie_ai", contentType: "image", baseCreditCost: 0.5, estimatedTimeSeconds: 20, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
 
@@ -17,7 +17,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   if (uploadedImages.length > 0) inputs.image = (await uploadImagesToStorage(userId))[0];
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
-  await deductCredits(userId, cost);
+  await reserveCredits(userId, cost);
   const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: MODEL_CONFIG.contentType, prompt: prompt || "Remove background", tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const { data: keyData } = await supabase.functions.invoke('get-api-key', {

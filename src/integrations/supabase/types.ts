@@ -1294,6 +1294,7 @@ export type Database = {
           status: string
           storage_path: string | null
           template_id: string | null
+          tokens_charged: number | null
           tokens_used: number
           type: string
           user_id: string
@@ -1325,6 +1326,7 @@ export type Database = {
           status?: string
           storage_path?: string | null
           template_id?: string | null
+          tokens_charged?: number | null
           tokens_used: number
           type: string
           user_id: string
@@ -1356,6 +1358,7 @@ export type Database = {
           status?: string
           storage_path?: string | null
           template_id?: string | null
+          tokens_charged?: number | null
           tokens_used?: number
           type?: string
           user_id?: string
@@ -3551,6 +3554,23 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "template_categories"
             referencedColumns: ["slug"]
+          },
+        ]
+      }
+      user_available_credits: {
+        Row: {
+          available_credits: number | null
+          reserved_credits: number | null
+          total_credits: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }

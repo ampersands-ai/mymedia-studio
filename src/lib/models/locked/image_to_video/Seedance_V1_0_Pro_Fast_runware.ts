@@ -1,7 +1,7 @@
 /** Seedance V1.0 Pro Fast runware (image_to_video) - Record: f8a6c4e9-7d3b-5f9c-8a2e-6d4b7c5f9a3e */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { deductCredits } from "@/lib/models/creditDeduction";
+import { reserveCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = { modelId: "bytedance:2@2", recordId: "3ac57af3-f7f0-4205-b1a4-3c7c3c1c7dad", modelName: "Seedance V1.0 Pro Fast", provider: "runware", contentType: "video", baseCreditCost: 1.5, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 1, defaultOutputs: 1 } as const;
 
@@ -17,7 +17,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   if (uploadedImages.length > 0) inputs.inputImage = (await uploadImagesToStorage(userId))[0];
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
-  await deductCredits(userId, cost);
+  await reserveCredits(userId, cost);
   const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: MODEL_CONFIG.contentType, prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const apiKey = await getRunwareApiKey();

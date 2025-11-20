@@ -1,7 +1,7 @@
 /** Seedream V1 Pro (image_to_video) - Record: e6d9a4f7-2c5b-8f3e-9a7d-4c8f5b6e3a9d */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { deductCredits } from "@/lib/models/creditDeduction";
+import { reserveCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = { modelId: "bytedance/v1-pro-image-to-video", recordId: "50eb3f02-1e58-4b85-a535-e8391a5623c4", modelName: "Seedream V1 Pro", provider: "kie_ai", contentType: "video", baseCreditCost: 8, estimatedTimeSeconds: 300, costMultipliers: { duration: { "3": 1, "4": 1.33, "5": 1.66, "6": 2, "7": 2.33, "8": 2.66, "9": 3, "10": 3.33 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
 
@@ -17,7 +17,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   if (uploadedImages.length > 0) inputs.image_url = (await uploadImagesToStorage(userId))[0];
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
-  await deductCredits(userId, cost);
+  await reserveCredits(userId, cost);
   const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: MODEL_CONFIG.contentType, prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const apiKey = await getKieApiKey();

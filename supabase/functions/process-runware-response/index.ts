@@ -19,9 +19,16 @@ serve(async (req) => {
   }
 
   const logger = new EdgeLogger('process-runware-response', crypto.randomUUID());
+  let generation_id: string | undefined;
+  
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
 
   try {
-    const { generation_id } = await req.json();
+    const body = await req.json();
+    generation_id = body.generation_id;
     
     if (!generation_id) {
       return new Response(
@@ -31,11 +38,6 @@ serve(async (req) => {
     }
 
     logger.info('Processing Runware response', { metadata: { generationId: generation_id } });
-
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
 
     // Get generation details
     const { data: generation, error: genError } = await supabase
@@ -146,7 +148,15 @@ serve(async (req) => {
       throw new Error(`Failed to update generation: ${updateError.message}`);
     }
 
-    logger.info('Processing complete', { 
+    // Settle credits after successful completion
+    await supabase.functions.invoke('settle-generation-credits', {
+      body: {
+        generationId: generation_id,
+        status: 'completed'
+      }
+    });
+
+    logger.info('Processing complete', {
       metadata: { 
         generationId: generation_id,
         storagePath,
@@ -167,6 +177,21 @@ serve(async (req) => {
 
   } catch (error: any) {
     logger.error('Processing failed', error);
+    
+    // Release credits on failure
+    if (generation_id) {
+      try {
+        await supabase.functions.invoke('settle-generation-credits', {
+          body: {
+            generationId: generation_id,
+            status: 'failed'
+          }
+        });
+      } catch (settlementError) {
+        logger.error('Credit settlement failed', settlementError as Error);
+      }
+    }
+    
     return new Response(
       JSON.stringify({ 
         error: 'Processing failed',

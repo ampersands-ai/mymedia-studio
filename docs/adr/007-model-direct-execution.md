@@ -492,6 +492,282 @@ export interface ModelModule {
 
 ## Benefits
 
+### Performance
+- **~200ms faster**: Eliminated edge function roundtrip
+- **Lower latency**: Direct API calls reduce hops
+- **Better UX**: Faster generation start times
+
+### Cost
+- **$0 edge function costs**: No compute charges for routing
+- **Simplified billing**: One less service to monitor
+
+### Architecture
+- **Simpler**: Client → Model → API (3 layers instead of 5)
+- **Clearer errors**: Direct error propagation
+- **Easier debugging**: Fewer abstraction layers
+
+### Security
+- **API keys still secure**: Fetched via edge function only when needed
+- **No client exposure**: Keys never touch browser environment
+- **Audit trail maintained**: All API calls still logged
+
+## Reserve & Settle Credit Architecture
+
+### Overview
+Credits are **reserved** before generation starts, then **settled** (charged) only if generation succeeds, or **released** (returned) if it fails.
+
+### Database Schema
+
+**generations table:**
+- `tokens_used` (NUMERIC) - Reserved amount (set at generation start)
+- `tokens_charged` (NUMERIC) - Actually charged amount (0 until settled)
+
+**user_available_credits view:**
+```sql
+SELECT 
+  user_id,
+  tokens_remaining as total_credits,
+  COALESCE(reserved_credits, 0) as reserved_credits,
+  tokens_remaining - COALESCE(reserved_credits, 0) as available_credits
+FROM user_subscriptions
+LEFT JOIN (
+  SELECT 
+    user_id,
+    SUM(tokens_used - tokens_charged) as reserved_credits
+  FROM generations
+  WHERE status IN ('pending', 'processing')
+  GROUP BY user_id
+) reserved ON user_subscriptions.user_id = reserved.user_id;
+```
+
+### Credit Lifecycle
+
+```
+[Reserve] → Check balance → Create generation (tokens_used=cost, tokens_charged=0)
+    ↓
+[Generation Completes] → Webhook/polling detects completion
+    ↓
+[Settle] → Update tokens_charged=cost → Deduct from user_subscriptions
+    ↓
+[User Charged] ✅
+
+OR
+
+[Reserve] → Generation fails
+    ↓
+[Release] → Update tokens_charged=0 (stays reserved, never deducted)
+    ↓
+[User NOT Charged] ✅
+```
+
+### Benefits
+- **Fair Charging:** Users only pay for successful generations
+- **Abuse Prevention:** Can't spam with 0 balance
+- **Clear UI:** Shows reserved vs available credits
+- **Automatic Cleanup:** Failed generations don't charge
+
+## Credit Deduction Flow
+
+### 1. Model Execution (Client-Side)
+
+```typescript
+// In model file execute():
+const cost = calculateCost(inputs);
+
+// Reserve credits (check balance WITHOUT deducting)
+await reserveCredits(userId, cost);
+
+// Create generation record
+const gen = await supabase.from("generations").insert({
+  user_id: userId,
+  tokens_used: cost,      // ← Reserved amount
+  tokens_charged: 0,      // ← Not charged yet
+  status: "pending"
+});
+
+// Call provider API
+const result = await callProviderAPI(...);
+
+// Start polling for completion
+startPolling(gen.id);
+```
+
+### 2. Webhook/Polling Settlement
+
+**On Success:**
+```typescript
+// Webhook receives 'completed' status
+await supabase.functions.invoke('settle-generation-credits', {
+  body: {
+    generationId: gen.id,
+    status: 'completed'
+  }
+});
+
+// settle-generation-credits function:
+// 1. Update generations.tokens_charged = tokens_used
+// 2. Deduct from user_subscriptions.tokens_remaining
+```
+
+**On Failure:**
+```typescript
+// Webhook receives 'failed' status
+await supabase.functions.invoke('settle-generation-credits', {
+  body: {
+    generationId: gen.id,
+    status: 'failed'
+  }
+});
+
+// settle-generation-credits function:
+// 1. Update generations.tokens_charged = 0
+// 2. Credits automatically available (never deducted)
+```
+
+### Error Handling
+
+**Case 1: Insufficient Credits**
+```typescript
+// reserveCredits() throws before API call
+throw new Error("Insufficient available credits. Required: 10, Available: 5");
+// No generation record created
+// No API call made
+// User balance unchanged
+```
+
+**Case 2: API Call Fails**
+```typescript
+// Generation created with tokens_charged=0
+// Provider API returns error
+// Webhook/polling calls settlement with status='failed'
+// tokens_charged remains 0
+// User not charged
+```
+
+**Case 3: Webhook Never Arrives**
+```typescript
+// Auto-timeout job runs every 5 minutes
+// Finds generations stuck in 'pending' for >5 minutes
+// Automatically calls settlement with status='failed'
+// Releases reserved credits
+```
+
+## UI Credit Display Strategy
+
+### Reading Credits from Database
+
+All UI components should use the `useUserCredits` hook:
+
+```typescript
+import { useUserCredits } from '@/hooks/useUserCredits';
+
+const { totalCredits, reservedCredits, availableCredits, isLoading } = useUserCredits();
+```
+
+This hook queries the `user_available_credits` view which calculates:
+- `total_credits` = `user_subscriptions.tokens_remaining`
+- `reserved_credits` = Sum of `(tokens_used - tokens_charged)` for pending/processing generations
+- `available_credits` = `total_credits - reserved_credits`
+
+### UI Components
+
+**Primary Display (GlobalHeader):**
+```tsx
+<div className="credit-display">
+  <div className="text-lg font-semibold">
+    {availableCredits.toLocaleString()} Credits
+  </div>
+  {reservedCredits > 0 && (
+    <div className="text-xs text-muted-foreground">
+      ({reservedCredits} reserved)
+    </div>
+  )}
+</div>
+```
+
+**Detailed View (Settings Page):**
+```tsx
+<div className="credit-breakdown">
+  <div className="flex justify-between">
+    <span>Total Credits:</span>
+    <span className="font-semibold">{totalCredits}</span>
+  </div>
+  <div className="flex justify-between text-muted-foreground">
+    <span>Reserved (Pending):</span>
+    <span>-{reservedCredits}</span>
+  </div>
+  <div className="flex justify-between border-t pt-2">
+    <span>Available:</span>
+    <span className="font-semibold text-primary">{availableCredits}</span>
+  </div>
+</div>
+```
+
+**Generation Cost Check:**
+```typescript
+const canAfford = availableCredits >= estimatedCost;
+
+if (!canAfford) {
+  toast.error(
+    `Insufficient credits. Need ${estimatedCost}, have ${availableCredits} available (${reservedCredits} reserved in pending generations)`
+  );
+}
+```
+
+### Real-Time Updates
+
+Credits update automatically via:
+1. **React Query refetch** - After each generation starts
+2. **Polling updates** - When generations complete
+3. **Realtime subscription** - For instant balance updates
+
+## Testing Strategy
+
+### Credit System Tests
+
+**Test 1: Reserve Credits**
+- User has 10 available credits
+- Start generation requiring 5 credits
+- Verify: `available_credits` = 5, `reserved_credits` = 5, `total_credits` = 10
+- Verify: Generation created with `tokens_used=5`, `tokens_charged=0`
+
+**Test 2: Settle Credits on Success**
+- Complete generation from Test 1
+- Verify: Webhook calls `settle-generation-credits` with status='completed'
+- Verify: `tokens_charged` updated to 5
+- Verify: `total_credits` reduced to 5
+- Verify: `available_credits` = 5, `reserved_credits` = 0
+
+**Test 3: Release Credits on Failure**
+- Start generation requiring 5 credits (10 total, 5 available)
+- API call fails
+- Verify: Webhook calls `settle-generation-credits` with status='failed'
+- Verify: `tokens_charged` = 0
+- Verify: `total_credits` = 10 (unchanged)
+- Verify: `available_credits` = 10 (released)
+
+**Test 4: Insufficient Credits**
+- User has 10 total credits, 8 reserved
+- Try to start generation requiring 5 credits
+- Verify: Error thrown before API call
+- Verify: No generation record created
+- Verify: Balance unchanged
+
+**Test 5: UI Credit Display**
+- User has 100 total, 20 reserved
+- Verify UI shows: "80 Credits (20 reserved)"
+- Complete 1 pending generation (10 credits)
+- Verify UI updates to: "90 Credits (10 reserved)"
+
+**Test 6: Auto-Timeout Cleanup**
+- Create generation stuck in 'pending' for 6 minutes
+- Wait for auto-timeout job to run
+- Verify: Generation marked as 'failed'
+- Verify: Credits released (`tokens_charged` = 0)
+- Verify: User balance restored
+
+## Benefits
+
 ### Performance Improvements
 - **Latency Reduction**: Eliminates 100-300ms edge function overhead
 - **Direct Path**: Client → Model → API (vs Client → Edge → Model → API)

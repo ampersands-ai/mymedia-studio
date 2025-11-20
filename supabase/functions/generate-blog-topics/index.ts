@@ -10,6 +10,7 @@ interface TopicRequest {
   keywords?: string[];
   tone?: 'professional' | 'casual' | 'technical' | 'conversational';
   targetAudience?: string;
+  aiModel?: string;
 }
 
 Deno.serve(async (req) => {
@@ -38,9 +39,12 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { industry, keywords, tone, targetAudience }: TopicRequest = await req.json();
+    const { industry, keywords, tone, targetAudience, aiModel }: TopicRequest = await req.json();
 
-    console.log('Generating blog topics:', { industry, keywords, tone, targetAudience });
+    // Default to Claude 3.5 Sonnet if no model specified
+    const selectedModel = aiModel || 'claude-3-5-sonnet-20241022';
+
+    console.log('Generating blog topics:', { industry, keywords, tone, targetAudience, model: selectedModel });
 
     // Build AI prompt for topic generation
     const prompt = `Generate 5 SEO-optimized blog topic ideas for ${industry || 'technology industry'} targeting ${targetAudience || 'general audience'}.
@@ -62,7 +66,7 @@ Format your response as a JSON array with this structure:
   }
 ]`;
 
-    // Call Lovable AI
+    // Call Lovable AI with selected model
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -70,7 +74,7 @@ Format your response as a JSON array with this structure:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: selectedModel,
         messages: [
           {
             role: 'user',

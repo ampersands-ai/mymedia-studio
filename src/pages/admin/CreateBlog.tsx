@@ -39,6 +39,7 @@ export default function CreateBlog() {
   const [topicTone, setTopicTone] = useState<"professional" | "casual" | "technical" | "conversational">("professional");
   const [targetAudience, setTargetAudience] = useState("general audience");
   const [suggestedTopics, setSuggestedTopics] = useState<any[]>([]);
+  const [selectedAIModel, setSelectedAIModel] = useState("claude-3-5-sonnet-20241022");
 
   // Blog post state
   const [title, setTitle] = useState("");
@@ -67,6 +68,7 @@ export default function CreateBlog() {
           keywords: topicKeywords,
           tone: topicTone,
           targetAudience,
+          aiModel: selectedAIModel,
         },
       });
 
@@ -107,6 +109,7 @@ export default function CreateBlog() {
           targetAudience,
           internalLinks: backlinks.filter(b => b.is_internal),
           externalLinks: backlinks.filter(b => !b.is_internal),
+          aiModel: selectedAIModel,
         },
       });
 
@@ -276,6 +279,72 @@ export default function CreateBlog() {
           Back to Admin
         </Button>
       </div>
+
+      {/* AI Model Selection */}
+      <Card className="p-6 mb-6 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20">
+        <h2 className="text-2xl font-bold mb-4">🤖 AI Model Selection</h2>
+        <div className="space-y-2">
+          <Label htmlFor="ai-model">Select AI Model for Content Generation</Label>
+          <Select value={selectedAIModel} onValueChange={setSelectedAIModel}>
+            <SelectTrigger id="ai-model" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="claude-3-5-sonnet-20241022">
+                <div className="flex items-center justify-between w-full">
+                  <span>Claude 3.5 Sonnet</span>
+                  <Badge variant="default" className="ml-2">Best Quality</Badge>
+                </div>
+              </SelectItem>
+              <SelectItem value="claude-3-5-haiku-20241022">
+                <div className="flex items-center justify-between w-full">
+                  <span>Claude 3.5 Haiku</span>
+                  <Badge variant="secondary" className="ml-2">Fast</Badge>
+                </div>
+              </SelectItem>
+              <SelectItem value="gpt-4o">
+                <div className="flex items-center justify-between w-full">
+                  <span>ChatGPT-4o</span>
+                  <Badge variant="default" className="ml-2">Premium</Badge>
+                </div>
+              </SelectItem>
+              <SelectItem value="gpt-4o-mini">
+                <div className="flex items-center justify-between w-full">
+                  <span>ChatGPT-4o Mini</span>
+                  <Badge variant="secondary" className="ml-2">Balanced</Badge>
+                </div>
+              </SelectItem>
+              <SelectItem value="grok-beta">
+                <div className="flex items-center justify-between w-full">
+                  <span>Grok Beta (xAI)</span>
+                  <Badge variant="outline" className="ml-2">Latest</Badge>
+                </div>
+              </SelectItem>
+              <SelectItem value="gemini-2.0-flash-exp">
+                <div className="flex items-center justify-between w-full">
+                  <span>Gemini 2.0 Flash</span>
+                  <Badge variant="secondary" className="ml-2">Experimental</Badge>
+                </div>
+              </SelectItem>
+              <SelectItem value="gemini-1.5-pro">
+                <div className="flex items-center justify-between w-full">
+                  <span>Gemini 1.5 Pro</span>
+                  <Badge variant="default" className="ml-2">Pro</Badge>
+                </div>
+              </SelectItem>
+              <SelectItem value="gemini-1.5-flash">
+                <div className="flex items-center justify-between w-full">
+                  <span>Gemini 1.5 Flash</span>
+                  <Badge variant="secondary" className="ml-2">Fast</Badge>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-muted-foreground">
+            This model will be used for both topic generation and blog post creation
+          </p>
+        </div>
+      </Card>
 
       {/* Step 1: Generate Topic */}
       <Card className="p-6 mb-6">

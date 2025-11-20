@@ -41,6 +41,7 @@ export const AdminLayout = () => {
               { path: "/dashboard/custom-creation", label: "User Dashboard", icon: LayoutDashboard },
               { path: "/admin/dashboard", label: "Overview", icon: BarChart3 },
             { path: "/admin/analytics", label: "Analytics", icon: TrendingUp },
+            { path: "/admin/advanced-analytics", label: "Advanced Analytics", icon: BarChart3 },
             { path: "/admin/blog/create", label: "Create Blog", icon: PenSquare },
             { path: "/admin/models", label: "AI Models", icon: Database },
             { path: "/admin/templates", label: "Templates", icon: FileText },

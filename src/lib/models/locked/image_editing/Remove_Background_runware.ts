@@ -8,7 +8,7 @@ export const MODEL_CONFIG = {
   modelName: "Remove Background",
   provider: "runware",
   contentType: "image",
-  baseCreditCost: 0.06,
+  baseCreditCost: 0.07,
   estimatedTimeSeconds: 15,
   costMultipliers: {},
   apiEndpoint: "https://api.runware.ai/v1",

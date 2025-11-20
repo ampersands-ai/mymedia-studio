@@ -7,6 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "qwen/image-to-image", recordId: "99532b69-d951-4431-87e3-1d88a9c8ee73", modelName: "Qwen Image to Image", provider: "kie_ai", contentType: "image_editing", baseCreditCost: 2, estimatedTimeSeconds: 25, costMultipliers: { image_size: { landscape_16_9: 1, landscape_4_3: 1, portrait_16_9: 1, portrait_4_3: 1, square: 1, square_hd: 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
+  logoUrl: "/logos/kie.svg",
   modelFamily: "Qwen",
   variantName: "Image to Image",
   displayOrderInFamily: 2,

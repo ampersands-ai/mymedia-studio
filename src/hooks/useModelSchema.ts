@@ -22,29 +22,35 @@ export const useModelSchema = (model: ModelConfiguration | null) => {
 
     setLoading(true);
     setError(null);
-    
-    logger.info(`Loading schema from physical file: ${model.record_id}`);
+
+    // Only log in development mode to avoid exposing sensitive model metadata
+    if (import.meta.env.DEV) {
+      logger.debug(`Loading schema for model: ${model.model_name}`);
+    }
 
     // Import directly from physical file via registry
     import("@/lib/models/locked")
       .then((registry) => {
         const modelModule = registry.getModelModule(model.record_id, model.id);
-        
+
         if (!modelModule) {
-          throw new Error(`Model file not found for ${model.model_name} (${model.record_id}). Generate the file first.`);
+          throw new Error(`Model file not found for ${model.model_name}. Generate the file first.`);
         }
-        
+
         if (!modelModule.SCHEMA) {
-          throw new Error(`Model file for ${model.id} is missing SCHEMA export`);
+          throw new Error(`Model file for ${model.model_name} is missing SCHEMA export`);
         }
-        
-        logger.info(`Loaded schema from physical file: ${model.id} (fields=${Object.keys(modelModule.SCHEMA.properties || {}).length})`);
-        
+
+        // Only log detailed info in development
+        if (import.meta.env.DEV) {
+          logger.debug(`Loaded schema for ${model.model_name} (${Object.keys(modelModule.SCHEMA.properties || {}).length} fields)`);
+        }
+
         setSchema(modelModule.SCHEMA as ModelJsonSchema);
         setLoading(false);
       })
       .catch((err) => {
-        logger.error(`Failed to load schema for ${model.id}: ${err.message}`);
+        logger.error(`Failed to load schema: ${err.message}`);
         setError(err);
         setLoading(false);
       });

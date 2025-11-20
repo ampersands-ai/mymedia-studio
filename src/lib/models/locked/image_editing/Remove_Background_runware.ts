@@ -1,4 +1,5 @@
 /** Remove Background runware (image_editing) - Record: d2f8b5e4-3a9c-4c72-8f61-2e4d9a7b6c3f */
+import { getGenerationType } from '@/lib/models/registry';
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
@@ -106,7 +107,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       user_id: userId,
       model_id: MODEL_CONFIG.modelId,
       model_record_id: MODEL_CONFIG.recordId,
-      type: MODEL_CONFIG.contentType,
+      type: getGenerationType(MODEL_CONFIG.contentType),
       prompt: prompt || "Remove background",
       tokens_used: cost,
       status: "pending",

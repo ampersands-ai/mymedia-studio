@@ -15,6 +15,7 @@ interface BlogRequest {
   targetAudience?: string;
   internalLinks?: Array<{ text: string; url: string }>;
   externalLinks?: Array<{ text: string; url: string }>;
+  aiModel?: string;
 }
 
 Deno.serve(async (req) => {
@@ -52,10 +53,14 @@ Deno.serve(async (req) => {
       numImages = 3,
       targetAudience = 'general audience',
       internalLinks = [],
-      externalLinks = []
+      externalLinks = [],
+      aiModel
     }: BlogRequest = await req.json();
 
-    console.log('Generating blog post:', { topic, keywords, tone, length });
+    // Default to Claude 3.5 Sonnet if no model specified
+    const selectedModel = aiModel || 'claude-3-5-sonnet-20241022';
+
+    console.log('Generating blog post:', { topic, keywords, tone, length, model: selectedModel });
 
     // Calculate word count target
     const wordCounts = { short: 500, medium: 1000, long: 2000 };
@@ -123,7 +128,7 @@ Format your response as JSON:
   "reading_time": 5
 }`;
 
-    // Call Lovable AI
+    // Call Lovable AI with selected model
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -131,7 +136,7 @@ Format your response as JSON:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: selectedModel,
         messages: [
           {
             role: 'system',

@@ -15,7 +15,7 @@ export const MODEL_CONFIG = {
   apiEndpoint: "https://api.runware.ai/v1",
   payloadStructure: "flat",
   maxImages: 1,
-  defaultOutputs: 1,,
+  defaultOutputs: 1,
 
   // UI metadata
   isActive: true,

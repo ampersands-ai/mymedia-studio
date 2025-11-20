@@ -75,7 +75,11 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   
-  const apiKey = await getRunwareApiKey();
+  const { data: keyData } = await supabase.functions.invoke('get-api-key', {
+    body: { modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId }
+  });
+  if (!keyData?.apiKey) throw new Error('Failed to retrieve API key');
+  const apiKey = keyData.apiKey;
   
   const res = await fetch(MODEL_CONFIG.apiEndpoint, {
     method: "POST",
@@ -100,8 +104,3 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   return gen.id;
 }
 
-import { getRunwareApiKey as getCentralRunwareApiKey } from "../getRunwareApiKey";
-
-async function getRunwareApiKey(): Promise<string> {
-  return getCentralRunwareApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId);
-}

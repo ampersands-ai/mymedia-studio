@@ -114,7 +114,7 @@ export interface ModelModule {
   validate: (inputs: Record<string, any>) => { valid: boolean; error?: string };
   preparePayload: (inputs: Record<string, any>) => Record<string, any>;
   calculateCost: (inputs: Record<string, any>) => number;
-  execute?: (params: any) => Promise<string>; // Optional - now handled by edge function
+  execute: (params: any) => Promise<string>; // Required per ADR 007
 }
 
 /**

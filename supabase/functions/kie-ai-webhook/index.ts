@@ -171,13 +171,15 @@ Deno.serve(async (req) => {
         })
         .eq('id', generation.id);
 
-      // Refund tokens
-      await supabase.rpc('increment_tokens', {
-        user_id_param: generation.user_id,
-        amount: generation.tokens_used
+      // Release credits on failure  
+      await supabase.functions.invoke('settle-generation-credits', {
+        body: {
+          generationId: generation.id,
+          status: 'failed'
+        }
       });
 
-      logger.info('Tokens refunded', { metadata: { amount: generation.tokens_used } });
+      logger.info('Credits released for failed generation', { metadata: { amount: generation.tokens_used } });
 
       // Audit log
       await supabase.from('kie_credit_audits').insert({
@@ -293,9 +295,12 @@ Deno.serve(async (req) => {
             provider_response: { error: 'Failed to download from provider', timestamp: new Date().toISOString() }
           }).eq('id', generation.id);
           
-          await supabase.rpc('increment_tokens', {
-            user_id_param: generation.user_id,
-            amount: generation.tokens_used
+          // Release credits on failure
+          await supabase.functions.invoke('settle-generation-credits', {
+            body: {
+              generationId: generation.id,
+              status: 'failed'
+            }
           });
           
           return new Response(
@@ -320,9 +325,12 @@ Deno.serve(async (req) => {
             provider_response: { error: 'Storage upload failed', timestamp: new Date().toISOString() }
           }).eq('id', generation.id);
           
-          await supabase.rpc('increment_tokens', {
-            user_id_param: generation.user_id,
-            amount: generation.tokens_used
+          // Release credits on failure
+          await supabase.functions.invoke('settle-generation-credits', {
+            body: {
+              generationId: generation.id,
+              status: 'failed'
+            }
           });
           
           return new Response(
@@ -469,7 +477,15 @@ Deno.serve(async (req) => {
         metadata: { generationId: generation.id, childCount: resultUrls.length } 
       });
       
-      logger.logDuration('kie-ai-webhook-processing', webhookStartTime, { 
+      // Settle credits after successful completion
+      await supabase.functions.invoke('settle-generation-credits', {
+        body: {
+          generationId: generation.id,
+          status: 'completed'
+        }
+      });
+      
+      logger.logDuration('kie-ai-webhook-processing', webhookStartTime, {
         userId: generation.user_id,
         metadata: { generationId: generation.id, taskId, callbackType } 
       });

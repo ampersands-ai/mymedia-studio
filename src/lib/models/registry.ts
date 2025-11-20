@@ -31,5 +31,6 @@ export {
   modelFileExists,
   getAvailableModelRecordIds,
   getAvailableModelIds,
+  getGenerationType,
   type ModelModule
 } from './locked/index';

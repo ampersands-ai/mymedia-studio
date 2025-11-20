@@ -1,7 +1,7 @@
 /**
  * Model Registry - Central index of all isolated model files
  * Each model is completely independent with zero shared logic
- * 
+ *
  * IMPORTANT: Runware API Requirements
  * ------------------------------------
  * ALL Runware models REQUIRE an array payload format:
@@ -9,11 +9,23 @@
  *   { taskType: "authentication", apiKey: "..." },
  *   { taskUUID: "...", taskType: "...", ...params }
  * ]
- * 
+ *
  * This requirement takes precedence over the model's payload_structure setting.
  * The execute-custom-model edge function checks provider === 'runware' FIRST
  * before checking payload_structure to ensure proper array formatting.
  */
+
+/**
+ * Helper function: Convert contentType to database generation type
+ * Database expects: 'image' | 'video' | 'audio' | 'text'
+ * ContentType values: 'prompt_to_image' | 'image_editing' | 'prompt_to_video' | etc.
+ */
+export function getGenerationType(contentType: string): 'image' | 'video' | 'audio' | 'text' {
+  if (contentType.includes('image')) return 'image';
+  if (contentType.includes('video')) return 'video';
+  if (contentType.includes('audio')) return 'audio';
+  return 'text';
+}
 
 // Image Editing Models (16)
 import * as ChatGPT4oImage_ImageEditing from "./image_editing/ChatGPT_4o_Image";

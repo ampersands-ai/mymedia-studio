@@ -1,4 +1,5 @@
 /** FLUX.1 Pro prompt_to_image - Record: 100@1 */
+import { getGenerationType } from '@/lib/models/registry';
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
@@ -91,7 +92,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
     user_id: userId,
     model_id: MODEL_CONFIG.modelId,
     model_record_id: MODEL_CONFIG.recordId,
-    type: MODEL_CONFIG.contentType,
+    type: getGenerationType(MODEL_CONFIG.contentType),
     prompt,
     tokens_used: cost,
     status: "pending",

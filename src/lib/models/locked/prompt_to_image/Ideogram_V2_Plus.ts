@@ -1,6 +1,7 @@
 /** Ideogram V2+ (prompt_to_image) - Record: f9c5e7a3-8d4b-6f2c-9a1e-5d7b3c8f4a6e */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
+import { deductCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = { modelId: "ideogram/v2-plus", recordId: "f9c5e7a3-8d4b-6f2c-9a1e-5d7b3c8f4a6e", modelName: "Ideogram V2+", provider: "kie_ai", contentType: "image", baseCreditCost: 2.5, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
 
@@ -14,7 +15,9 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const { prompt, modelParameters, userId, startPolling } = params;
   const inputs: Record<string, any> = { prompt, ...modelParameters };
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
-  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: MODEL_CONFIG.contentType, prompt, tokens_used: calculateCost(inputs), status: "pending", settings: modelParameters }).select().single();
+  const cost = calculateCost(inputs);
+  await deductCredits(userId, cost);
+  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: MODEL_CONFIG.contentType, prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const apiKey = await getKieApiKey();
   const res = await fetch(`https://api.kie.ai${MODEL_CONFIG.apiEndpoint}`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` }, body: JSON.stringify(preparePayload(inputs)) });

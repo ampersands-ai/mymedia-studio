@@ -1,6 +1,7 @@
 /** Nano Banana by Google (image_editing) - Record: a70d01a3-05de-4918-b934-55a7e5e5d407 */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
+import { deductCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = { modelId: "google/nano-banana-edit", recordId: "a70d01a3-05de-4918-b934-55a7e5e5d407", modelName: "Nano Banana by Google", provider: "kie_ai", contentType: "image", baseCreditCost: 2, estimatedTimeSeconds: 25, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 10, defaultOutputs: 1 } as const;
 
@@ -45,13 +46,16 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const validation = validate(inputs); 
   if (!validation.valid) throw new Error(validation.error);
   
+  const cost = calculateCost(inputs);
+  await deductCredits(userId, cost);
+  
   const { data: gen, error } = await supabase.from("generations").insert({ 
     user_id: userId, 
     model_id: MODEL_CONFIG.modelId, 
     model_record_id: MODEL_CONFIG.recordId, 
     type: MODEL_CONFIG.contentType, 
     prompt, 
-    tokens_used: calculateCost(inputs), 
+    tokens_used: cost, 
     status: "pending", 
     settings: modelParameters 
   }).select().single();

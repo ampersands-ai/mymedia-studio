@@ -27,4 +27,8 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   return gen.id;
 }
 
-async function getKieApiKey(): Promise<string> { throw new Error("KIE_API_KEY needs to be configured"); }
+import { getKieApiKey as getCentralKieApiKey } from "../getKieApiKey";
+
+async function getKieApiKey(): Promise<string> {
+  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId);
+}

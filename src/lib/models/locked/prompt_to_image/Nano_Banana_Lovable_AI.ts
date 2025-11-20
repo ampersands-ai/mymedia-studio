@@ -1,7 +1,7 @@
 /** Nano Banana (Lovable AI) (prompt_to_image) - Record: 4c680009-d3fe-436f-85a7-467c76e85f9e */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { deductCredits } from "@/lib/models/creditDeduction";
+import { reserveCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = { modelId: "google/gemini-2.5-flash-image", recordId: "4c680009-d3fe-436f-85a7-467c76e85f9e", modelName: "Nano Banana (Lovable AI)", provider: "lovable_ai_sync", contentType: "image", baseCreditCost: 1, estimatedTimeSeconds: 15, costMultipliers: {}, apiEndpoint: null, payloadStructure: "direct", maxImages: 0, defaultOutputs: 1 } as const;
 
@@ -16,7 +16,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const inputs: Record<string, any> = { prompt, ...modelParameters };
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
-  await deductCredits(userId, cost);
+  await reserveCredits(userId, cost);
   const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: MODEL_CONFIG.contentType, prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   

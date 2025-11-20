@@ -12,7 +12,7 @@
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
-import { deductCredits } from "@/lib/models/creditDeduction";
+import { reserveCredits } from "@/lib/models/creditDeduction";
 
 // MODEL CONFIGURATION
 export const MODEL_CONFIG = {
@@ -90,7 +90,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const cost = calculateCost({ ...modelParameters, prompt });
   
   // Deduct credits
-  await deductCredits(userId, cost);
+  await reserveCredits(userId, cost);
   
   // Create generation record
   const { data: generation, error: genError } = await supabase

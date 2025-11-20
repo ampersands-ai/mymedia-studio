@@ -1,7 +1,7 @@
 /** Eleven Labs TTS (prompt_to_audio) - Record: 45fc7e71-0174-48eb-998d-547e8d2476db */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { deductCredits } from "@/lib/models/creditDeduction";
+import { reserveCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = { modelId: "elevenlabs/text-to-speech-multilingual-v2", recordId: "45fc7e71-0174-48eb-998d-547e8d2476db", modelName: "Eleven Labs TTS", provider: "kie_ai", contentType: "audio", baseCreditCost: 3, estimatedTimeSeconds: 90, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
 
@@ -16,7 +16,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const inputs: Record<string, any> = { text: prompt, ...modelParameters };
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
-  await deductCredits(userId, cost);
+  await reserveCredits(userId, cost);
   const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: MODEL_CONFIG.contentType, prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const apiKey = await getKieApiKey();

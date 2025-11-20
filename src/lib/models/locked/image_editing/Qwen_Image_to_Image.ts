@@ -1,7 +1,7 @@
 /** Qwen Image to Image (image_editing) - Record: b5d09ee9-3b13-49b7-a1b3-fbd63a45b02b */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { deductCredits } from "@/lib/models/creditDeduction";
+import { reserveCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = { modelId: "qwen/image-to-image", recordId: "99532b69-d951-4431-87e3-1d88a9c8ee73", modelName: "Qwen Image to Image", provider: "kie_ai", contentType: "image", baseCreditCost: 2, estimatedTimeSeconds: 25, costMultipliers: { image_size: { landscape_16_9: 1, landscape_4_3: 1, portrait_16_9: 1, portrait_4_3: 1, square: 1, square_hd: 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
 
@@ -17,7 +17,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   if (uploadedImages.length > 0) inputs.image_url = (await uploadImagesToStorage(userId))[0];
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
-  await deductCredits(userId, cost);
+  await reserveCredits(userId, cost);
   const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: MODEL_CONFIG.contentType, prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const apiKey = await getKieApiKey();

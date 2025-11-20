@@ -1,7 +1,7 @@
 /** runware stable diffusion xl (prompt_to_image) - Record: b7f8c5e2-6d4a-5f3b-8e1c-4a7d2f6b3e9a */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { deductCredits } from "@/lib/models/creditDeduction";
+import { reserveCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = { modelId: "runware:stable-diffusion-xl", recordId: "b7f8c5e2-6d4a-5f3b-8e1c-4a7d2f6b3e9a", modelName: "runware stable diffusion xl", provider: "runware", contentType: "image", baseCreditCost: 0.12, estimatedTimeSeconds: 10, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1 } as const;
 
@@ -16,7 +16,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const inputs: Record<string, any> = { positivePrompt: prompt, ...modelParameters };
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
-  await deductCredits(userId, cost);
+  await reserveCredits(userId, cost);
   const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: MODEL_CONFIG.contentType, prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const { data: keyData } = await supabase.functions.invoke('get-api-key', {

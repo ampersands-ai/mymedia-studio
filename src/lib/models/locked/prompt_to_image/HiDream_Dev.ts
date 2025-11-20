@@ -1,7 +1,7 @@
 /** HiDream Dev (prompt_to_image) - Record: 79ce627d-f90c-47b2-ae3f-9437d93f4529 */
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { deductCredits } from "@/lib/models/creditDeduction";
+import { reserveCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = { modelId: "runware:97@2", recordId: "79ce627d-f90c-47b2-ae3f-9437d93f4529", modelName: "HiDream Dev", provider: "runware", contentType: "image", baseCreditCost: 0.5, estimatedTimeSeconds: 15, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "direct", maxImages: 0, defaultOutputs: 1 } as const;
 
@@ -16,7 +16,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const inputs: Record<string, any> = { positivePrompt: prompt, ...modelParameters };
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
-  await deductCredits(userId, cost);
+  await reserveCredits(userId, cost);
   const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: MODEL_CONFIG.contentType, prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const apiKey = await getRunwareApiKey();

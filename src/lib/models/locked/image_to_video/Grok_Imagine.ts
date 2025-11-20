@@ -17,7 +17,11 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: MODEL_CONFIG.contentType, prompt, tokens_used: calculateCost(inputs), status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
-  const apiKey = await getKieApiKey();
+  const { data: keyData } = await supabase.functions.invoke('get-api-key', {
+    body: { modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId }
+  });
+  if (!keyData?.apiKey) throw new Error('Failed to retrieve API key');
+  const apiKey = keyData.apiKey;
   const res = await fetch(`https://api.kie.ai${MODEL_CONFIG.apiEndpoint}`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` }, body: JSON.stringify(preparePayload(inputs)) });
   if (!res.ok) throw new Error(`API failed: ${res.statusText}`);
   const result = await res.json();
@@ -26,8 +30,3 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   return gen.id;
 }
 
-import { getKieApiKey as getCentralKieApiKey } from "../getKieApiKey";
-
-async function getKieApiKey(): Promise<string> {
-  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId);
-}

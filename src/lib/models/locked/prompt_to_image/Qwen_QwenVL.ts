@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "qwen/text-to-image", recordId: "36246bd4-f2e5-472b-bcf8-3dd99bc313d8", modelName: "Qwen Text to Image", provider: "kie_ai", contentType: "image", baseCreditCost: 0.5, estimatedTimeSeconds: 25, costMultipliers: { "image_size": { "landscape_16_9": 2, "landscape_4_3": 3, "portrait_16_9": 2, "portrait_4_3": 3, "square": 1, "square_hd": 5 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "qwen/text-to-image", recordId: "36246bd4-f2e5-472b-bcf8-3dd99bc313d8", modelName: "Qwen Text to Image", provider: "kie_ai", contentType: "prompt_to_image", baseCreditCost: 0.5, estimatedTimeSeconds: 25, costMultipliers: { "image_size": { "landscape_16_9": 2, "landscape_4_3": 3, "portrait_16_9": 2, "portrait_4_3": 3, "square": 1, "square_hd": 5 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   modelFamily: "Qwen",

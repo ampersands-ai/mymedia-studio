@@ -16,7 +16,7 @@ export const MODEL_CONFIG = {
   recordId: "2959b083-2177-4b8c-ae56-31170c2eb9dc",
   modelName: "Google Image Upscale",
   provider: "kie_ai",
-  contentType: "image",
+  contentType: "image_editing",
   baseCreditCost: 0.25,
   estimatedTimeSeconds: 18,
   costMultipliers: {},

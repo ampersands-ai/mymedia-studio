@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "bytedance:2@2", recordId: "3ac57af3-f7f0-4205-b1a4-3c7c3c1c7dad", modelName: "Seedance V1.0 Pro Fast", provider: "runware", contentType: "video", baseCreditCost: 1.5, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 1, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "bytedance:2@2", recordId: "3ac57af3-f7f0-4205-b1a4-3c7c3c1c7dad", modelName: "Seedance V1.0 Pro Fast", provider: "runware", contentType: "image_to_video", baseCreditCost: 1.5, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 1, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   modelFamily: "Seedance",

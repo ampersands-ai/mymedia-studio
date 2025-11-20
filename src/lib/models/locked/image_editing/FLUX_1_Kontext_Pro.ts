@@ -19,7 +19,7 @@ export const MODEL_CONFIG = {
   recordId: "d0ef1f83-a613-47d4-82f8-10e41da3e2a0",
   modelName: "FLUX.1 Kontext Pro",
   provider: "kie_ai",
-  contentType: "image",
+  contentType: "image_editing",
   baseCreditCost: 2.5,
   estimatedTimeSeconds: 50,
   costMultipliers: {},

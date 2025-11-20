@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "midjourney/text-to-image", recordId: "eff6c62e-c20e-4eed-9f5b-81e1a7f01529", modelName: "Midjourney", provider: "kie_ai", contentType: "image", baseCreditCost: 3, estimatedTimeSeconds: 45, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "midjourney/text-to-image", recordId: "eff6c62e-c20e-4eed-9f5b-81e1a7f01529", modelName: "Midjourney", provider: "kie_ai", contentType: "prompt_to_image", baseCreditCost: 3, estimatedTimeSeconds: 45, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/midjourney.svg",

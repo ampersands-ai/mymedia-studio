@@ -17,7 +17,7 @@ export const MODEL_CONFIG = {
   recordId: "00ef3f28-4fab-4244-b93f-0ba48641fcbd",
   modelName: "Crisp Image Upscale",
   provider: "kie_ai",
-  contentType: "image",
+  contentType: "image_editing",
   baseCreditCost: 0.25,
   estimatedTimeSeconds: 20,
   costMultipliers: {},

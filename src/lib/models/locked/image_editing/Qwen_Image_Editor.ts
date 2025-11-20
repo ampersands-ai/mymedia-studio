@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "qwen/image-edit", recordId: "b6d430f1-e823-4192-bf72-0dba29079931", modelName: "Qwen Image Editor", provider: "kie_ai", contentType: "image", baseCreditCost: 1, estimatedTimeSeconds: 25, costMultipliers: { image_size: { landscape_16_9: 2, landscape_4_3: 2.5, portrait_16_9: 2, portrait_4_3: 2.5, square: 1, square_hd: 3.5 }, num_images: { "1": 1, "2": 2, "3": 3, "4": 4 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "qwen/image-edit", recordId: "b6d430f1-e823-4192-bf72-0dba29079931", modelName: "Qwen Image Editor", provider: "kie_ai", contentType: "image_editing", baseCreditCost: 1, estimatedTimeSeconds: 25, costMultipliers: { image_size: { landscape_16_9: 2, landscape_4_3: 2.5, portrait_16_9: 2, portrait_4_3: 2.5, square: 1, square_hd: 3.5 }, num_images: { "1": 1, "2": 2, "3": 3, "4": 4 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   modelFamily: "Qwen",

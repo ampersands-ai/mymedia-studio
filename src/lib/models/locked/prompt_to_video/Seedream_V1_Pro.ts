@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "seedream/v1-pro", recordId: "d7c6b5a4-6e3f-2c1d-7a0f-4d6b7c8e5a9f", modelName: "Seedream V1 Pro", provider: "kie_ai", contentType: "video", baseCreditCost: 25, estimatedTimeSeconds: 200, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "seedream/v1-pro", recordId: "d7c6b5a4-6e3f-2c1d-7a0f-4d6b7c8e5a9f", modelName: "Seedream V1 Pro", provider: "kie_ai", contentType: "prompt_to_video", baseCreditCost: 25, estimatedTimeSeconds: 200, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   modelFamily: "Seedream",

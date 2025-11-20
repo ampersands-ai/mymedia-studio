@@ -8,7 +8,7 @@ export const MODEL_CONFIG = {
   recordId: "100@1",
   modelName: "FLUX.1 Pro",
   provider: "runware",
-  contentType: "image",
+  contentType: "prompt_to_image",
   baseCreditCost: 0.2,
   estimatedTimeSeconds: 15,
   costMultipliers: {},

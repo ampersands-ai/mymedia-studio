@@ -27,7 +27,7 @@ export const MODEL_CONFIG = {
   apiEndpoint: "/api/v1/gpt4o-image/generate",
   payloadStructure: "flat",
   maxImages: 0,
-  defaultOutputs: 1,,
+  defaultOutputs: 1,
 
   // UI metadata
   isActive: true,

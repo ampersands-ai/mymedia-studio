@@ -23,7 +23,7 @@ export const MODEL_CONFIG = {
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
   maxImages: 1,
-  defaultOutputs: 1,,
+  defaultOutputs: 1,
 
   // UI metadata
   isActive: true,

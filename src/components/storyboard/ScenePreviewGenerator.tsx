@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Sparkles, RefreshCw, Image as ImageIcon, Video, CheckCircle2, Clock } from 'lucide-react';
 import { useGeneration } from '@/hooks/useGeneration';
 import { useModels } from '@/hooks/useModels';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { useUserCredits } from '@/hooks/useUserCredits';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -53,7 +53,7 @@ export const ScenePreviewGenerator = ({
   
   const { generate, isGenerating, result, error } = useGeneration();
   const { data: models } = useModels();
-  const { data: tokenData } = useUserTokens();
+  const { availableCredits } = useUserCredits();
   const queryClient = useQueryClient();
   const lastHandledUrlRef = useRef<string | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -309,7 +309,7 @@ export const ScenePreviewGenerator = ({
     }
 
     // Only check token cost if not a free retry
-    if (!isFreeRetry && (tokenData?.tokens_remaining || 0) < tokenCost) {
+    if (!isFreeRetry && availableCredits < tokenCost) {
       return; // Silent no-op, UI already shows insufficient credits message
     }
   
@@ -656,7 +656,7 @@ export const ScenePreviewGenerator = ({
 
               <Button
                 onClick={() => handleGenerate()}
-                disabled={isGenerating || isAsyncGeneration || (tokenData?.tokens_remaining || 0) < tokenCost || availableModels.length === 0}
+                disabled={isGenerating || isAsyncGeneration || availableCredits < tokenCost || availableModels.length === 0}
                 className="w-full"
                 variant="outline"
               >
@@ -664,7 +664,7 @@ export const ScenePreviewGenerator = ({
                 Generate Preview ({tokenCost} credit{tokenCost !== 1 ? 's' : ''})
               </Button>
 
-              {(tokenData?.tokens_remaining || 0) < tokenCost && (
+              {availableCredits < tokenCost && (
                 <p className="text-xs text-destructive">
                   Insufficient credits. You need {tokenCost} credit{tokenCost !== 1 ? 's' : ''}.
                 </p>
@@ -690,7 +690,7 @@ export const ScenePreviewGenerator = ({
                     
                     <Button
                       onClick={() => handleGenerate()}
-                      disabled={isGenerating || isAsyncGeneration || (tokenData?.tokens_remaining || 0) < tokenCost}
+                      disabled={isGenerating || isAsyncGeneration || availableCredits < tokenCost}
                       className="w-full"
                       variant="outline"
                     >
@@ -717,7 +717,7 @@ export const ScenePreviewGenerator = ({
                   </div>
                 )}
 
-                {(tokenData?.tokens_remaining || 0) < tokenCost && (
+                {availableCredits < tokenCost && (
                   <p className="text-xs text-destructive">
                     Insufficient credits. You need {tokenCost} credit{tokenCost !== 1 ? 's' : ''}.
                   </p>

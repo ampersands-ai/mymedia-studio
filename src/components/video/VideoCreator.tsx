@@ -10,7 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { useUserCredits } from '@/hooks/useUserCredits';
 import { useSavedCaptionPresets } from '@/hooks/useSavedCaptionPresets';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Coins, Sparkles, Volume2, Clock, ChevronDown, Save, Trash2 } from 'lucide-react';
@@ -40,12 +40,12 @@ export function VideoCreator() {
   const [presetName, setPresetName] = useState('');
   const [confirmGenerateOpen, setConfirmGenerateOpen] = useState(false);
   const { createJob, isCreating, jobs } = useVideoJobs();
-  const { data: tokens } = useUserTokens();
+  const { availableCredits } = useUserCredits();
   const { presets, savePreset, deletePreset } = useSavedCaptionPresets();
 
   // Calculate dynamic cost based on duration (0.5 credits per second)
   const estimatedCost = duration * 0.5;
-  const maxAffordableDuration = Math.floor((tokens?.tokens_remaining ?? 0) / 0.5);
+  const maxAffordableDuration = Math.floor(availableCredits / 0.5);
 
   const handleSurpriseMe = async () => {
     setIsGeneratingTopic(true);
@@ -128,7 +128,7 @@ export function VideoCreator() {
      'fetching_video', 'assembling'].includes(job.status)
   );
 
-  const canAfford = (tokens?.tokens_remaining ?? 0) >= estimatedCost;
+  const canAfford = availableCredits >= estimatedCost;
   const isDisabled = isCreating || isGeneratingTopic || hasActiveJob;
 
   return (
@@ -868,7 +868,7 @@ export function VideoCreator() {
               <span className="font-bold text-sm md:text-base">Cost: {Number(estimatedCost).toFixed(2)} credits</span>
             </div>
             <div className="text-xs md:text-sm text-muted-foreground">
-              Balance: {Number(tokens?.tokens_remaining || 0).toFixed(2)} credits
+              Balance: {availableCredits.toFixed(2)} credits
             </div>
           </div>
           {!canAfford && (

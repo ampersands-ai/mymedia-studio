@@ -1,8 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Coins, Shield, Layout } from "lucide-react";
+import { Coins, Shield, Layout, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
-import { useUserTokens } from "@/hooks/useUserTokens";
+import { useUserCredits } from "@/hooks/useUserCredits";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { MobileMenu } from "@/components/MobileMenu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -15,9 +15,9 @@ export const GlobalHeader = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
-  const { data: tokenData } = useUserTokens();
+  const { availableCredits, reservedCredits, isLoading } = useUserCredits();
   const { updateProgress } = useOnboarding();
-  const creditBalance = tokenData?.tokens_remaining ?? null;
+  const creditBalance = isLoading ? null : availableCredits;
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -96,6 +96,34 @@ export const GlobalHeader = () => {
               >
                 <Layout className="h-5 w-5" />
                 Dashboard
+              </button>
+            )}
+
+            {creditBalance !== null && (
+              <button
+                onClick={() => {
+                  updateProgress({ viewedTokenCost: true });
+                  navigate("/pricing");
+                }}
+                className="flex items-center gap-2 px-4 py-2 backdrop-blur-lg bg-card/80 border border-border/30 rounded-full hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md font-semibold"
+              >
+                <Coins className="h-5 w-5 text-primary" />
+                <div className="flex flex-col items-start">
+                  <span className="text-sm font-semibold text-foreground">
+                    {creditBalance !== null ? (
+                      <div className="flex flex-col">
+                        <span>{creditBalance.toFixed(2)} Credits</span>
+                        {reservedCredits > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            ({reservedCredits.toFixed(2)} reserved)
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
+                  </span>
+                </div>
               </button>
             )}
 

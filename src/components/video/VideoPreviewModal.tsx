@@ -23,7 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Download, Share2, Sparkles, Copy, Check, Loader2, Coins } from 'lucide-react';
 import { toast } from 'sonner';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { useUserCredits } from '@/hooks/useUserCredits';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useVideoUrl } from '@/hooks/media';
 import { logger } from '@/lib/logger';
@@ -51,7 +51,7 @@ const getStoragePathFromUrl = (url: string | null): string | null => {
 export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModalProps) {
   const isMobile = useIsMobile();
   const { generateCaption, isGeneratingCaption } = useVideoJobs();
-  const { data: userTokens } = useUserTokens();
+  const { availableCredits } = useUserCredits();
   const [copiedCaption, setCopiedCaption] = useState(false);
   const [copiedHashtags, setCopiedHashtags] = useState(false);
   const [showCaptionConfirm, setShowCaptionConfirm] = useState(false);
@@ -70,7 +70,7 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
     }
     
     // Check if user has enough credits
-    if (userTokens && userTokens.tokens_remaining < 0.1) {
+    if (availableCredits < 0.1) {
       toast.error('Insufficient credits. You need at least 0.1 credits.');
       return;
     }
@@ -251,7 +251,7 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
                 <p>This will cost <strong>0.1 credits</strong>.</p>
                 <div className="flex items-center gap-2 text-sm">
                   <Coins className="w-4 h-4" />
-                  <span>Your current balance: <strong>{userTokens?.tokens_remaining.toFixed(2)} credits</strong></span>
+                  <span>Your current balance: <strong>{availableCredits.toFixed(2)} credits</strong></span>
                 </div>
               </AlertDialogDescription>
             </AlertDialogHeader>

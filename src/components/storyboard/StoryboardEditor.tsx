@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import type { Json } from '@/integrations/supabase/types';
 import { useStoryboard } from '@/hooks/useStoryboard';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { useUserCredits } from '@/hooks/useUserCredits';
 import { useVideoUrl } from '@/hooks/media/useVideoUrl';
 import { useStoryboardLocalState } from '@/hooks/storyboard/useStoryboardLocalState';
 import { useStoryboardCostCalculator } from '@/hooks/storyboard/useStoryboardCostCalculator';
@@ -56,7 +56,7 @@ export const StoryboardEditor = () => {
     generateAllScenePreviews,
   } = useStoryboard();
   
-  const { data: tokenData } = useUserTokens();
+  const { availableCredits } = useUserCredits();
   
   // Video URL
   const { url: videoSignedUrl, isLoading: isLoadingVideo } = useVideoUrl(
@@ -89,7 +89,7 @@ export const StoryboardEditor = () => {
       return;
     }
     
-    if (hasInsufficientCredits(tokenData?.tokens_remaining || 0, actualRenderCost)) {
+    if (hasInsufficientCredits(availableCredits, actualRenderCost)) {
       toast.error(`Insufficient credits. Need ${actualRenderCost.toFixed(2)} credits to render video.`);
       return;
     }
@@ -236,7 +236,7 @@ export const StoryboardEditor = () => {
       {!isRendering && (
         <RenderVideoButton
           isRendering={isRendering}
-          tokenBalance={tokenData?.tokens_remaining || 0}
+          tokenBalance={availableCredits}
           actualRenderCost={actualRenderCost}
           initialEstimate={initialEstimate}
           costDifference={costDifference}
@@ -252,7 +252,7 @@ export const StoryboardEditor = () => {
         open={state.showRerenderDialog}
         onOpenChange={(open) => updateState({ showRerenderDialog: open })}
         rerenderCost={state.rerenderCost}
-        tokenBalance={tokenData?.tokens_remaining || 0}
+        tokenBalance={availableCredits}
         onConfirm={handleConfirmRerender}
       />
       

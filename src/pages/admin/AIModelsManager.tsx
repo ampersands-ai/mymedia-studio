@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,13 +11,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown, Copy, Filter, X, FileText, Loader2 } from "lucide-react";
+import {
+  Plus, Edit, Power, PowerOff, ArrowUpDown, Copy, Filter, X,
+  FileText, Download, Lock, Unlock, AlertCircle, RefreshCw
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ModelFormDialog } from "@/components/admin/ModelFormDialog";
 import type { ModelConfiguration } from "@/types/schema";
-import { jsonToSchema } from "@/types/schema";
 import {
   Select,
   SelectContent,
@@ -26,8 +26,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DocumentationViewer } from "@/components/admin/DocumentationViewer";
-import { RegenerateAllModelsButton } from "@/components/admin/RegenerateAllModelsButton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  getAllModels,
+  type ModelModule,
+  getGenerationType
+} from "@/lib/models/registry";
+import {
+  generateModelUpdateScript,
+  generateNewModelScript,
+  generateModelDeleteScript,
+  generateLockToggleScript,
+  downloadScript,
+  getLockStatuses,
+  type ModelUpdatePayload
+} from "@/lib/admin/modelFileEditor";
+import { ModelFormDialog } from "@/components/admin/ModelFormDialog";
 
 const CREATION_GROUPS = [
   { id: "image_editing", label: "Image Editing" },
@@ -39,10 +53,45 @@ const CREATION_GROUPS = [
 
 type AIModel = ModelConfiguration;
 
+/**
+ * Convert ModelModule to ModelConfiguration for UI compatibility
+ */
+function moduleToModel(module: ModelModule): AIModel {
+  const config = module.MODEL_CONFIG;
+
+  return {
+    record_id: config.recordId,
+    id: config.modelId,
+    provider: config.provider,
+    model_name: config.modelName,
+    content_type: config.contentType,
+    base_token_cost: config.baseCreditCost,
+    cost_multipliers: config.costMultipliers || null,
+    input_schema: module.SCHEMA || null,
+    api_endpoint: config.apiEndpoint,
+    payload_structure: config.payloadStructure,
+    max_images: config.maxImages,
+    estimated_time_seconds: config.estimatedTimeSeconds,
+    default_outputs: config.defaultOutputs,
+    is_active: config.isActive,
+    groups: [config.contentType], // Groups array for filtering
+    logo_url: config.logoUrl || null,
+    model_family: config.modelFamily || null,
+    variant_name: config.variantName || null,
+    display_order_in_family: config.displayOrderInFamily || null,
+    is_locked: config.isLocked,
+    locked_file_path: config.lockedFilePath,
+    locked_at: null,
+    locked_by: null,
+  } as AIModel;
+}
+
 export default function AIModelsManager() {
   const [models, setModels] = useState<AIModel[]>([]);
+  const [lockStatuses, setLockStatuses] = useState<Record<string, boolean>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingModel, setEditingModel] = useState<AIModel | null>(null);
+  const [pendingChanges, setPendingChanges] = useState<ModelUpdatePayload[]>([]);
   const [sortBy, setSortBy] = useState<string>("cost");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -51,119 +100,50 @@ export default function AIModelsManager() {
     contentType: "all",
     structure: "all",
     status: "all",
-    group: "all"
+    group: "all",
+    lockStatus: "all"
   });
-  const [docStatus, setDocStatus] = useState<Record<string, { exists: boolean; last_updated: string; generation_count: number }>>({});
-  const [generatingDocs, setGeneratingDocs] = useState<string | null>(null);
-  const [bulkGenerating, setBulkGenerating] = useState(false);
-  const [docsProgress, setDocsProgress] = useState(0);
-  const [selectedDocumentation, setSelectedDocumentation] = useState<any>(null);
-  const [docViewerOpen, setDocViewerOpen] = useState(false);
 
   useEffect(() => {
     fetchModels();
-    fetchDocumentationStatus();
+    fetchLockStatuses();
   }, []);
 
-  const fetchModels = async () => {
+  const fetchModels = () => {
     try {
-      const { data, error } = await supabase
-        .from("ai_models")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        // Check if it's an RLS policy error
-        const isRLSError = error.code === 'PGRST301' || 
-                          error.message?.includes('row-level security') ||
-                          error.message?.includes('policy');
-        
-        if (isRLSError) {
-          toast.error("Access denied. Please ensure you have admin privileges.");
-          logger.error("RLS policy blocked access to AI models", error as Error, { 
-            component: 'AIModelsManager',
-            operation: 'fetchModels',
-            errorCode: error.code
-          });
-        } else {
-          throw error;
-        }
-        return;
-      }
-      
-      // Convert Supabase Json types to our typed structures
-      const typedModels: AIModel[] = (data || []).map(model => ({
-        ...model,
-        input_schema: jsonToSchema(model.input_schema),
-        cost_multipliers: typeof model.cost_multipliers === 'object' && model.cost_multipliers !== null 
-          ? model.cost_multipliers as Record<string, number>
-          : null,
-        payload_structure: (model.payload_structure === 'flat' || model.payload_structure === 'wrapper')
-          ? model.payload_structure
-          : 'wrapper',
-        groups: Array.isArray(model.groups) 
-          ? model.groups.filter((g): g is string => typeof g === 'string')
-          : undefined
-      }));
-      
-      setModels(typedModels);
+      const modules = getAllModels();
+      const modelConfigs = modules.map(moduleToModel);
+      setModels(modelConfigs);
+      logger.debug(`Loaded ${modelConfigs.length} models from registry`);
     } catch (error) {
-      logger.error("Failed to fetch AI models", error as Error, {
+      logger.error("Failed to load models from registry", error as Error, {
         component: 'AIModelsManager',
         operation: 'fetchModels'
       });
-      toast.error("Failed to load AI models");
+      toast.error("Failed to load AI models from registry");
     }
   };
 
-  const toggleModelStatus = async (recordId: string, currentStatus: boolean) => {
+  const fetchLockStatuses = () => {
     try {
-      const { error } = await supabase
-        .from("ai_models")
-        .update({ is_active: !currentStatus })
-        .eq("record_id", recordId);
-
-      if (error) throw error;
-      
-      toast.success(`Model ${!currentStatus ? "enabled" : "disabled"}`);
-      fetchModels();
+      const statuses = getLockStatuses();
+      setLockStatuses(statuses);
     } catch (error) {
-      logger.error("Failed to toggle model status", error as Error, { 
-        component: 'AIModelsManager',
-        operation: 'toggleModelStatus',
-        recordId,
-        currentStatus
-      });
-      toast.error("Failed to update model status");
+      logger.error("Failed to fetch lock statuses", error as Error);
     }
   };
 
-  const handleDelete = async (recordId: string) => {
-    if (!confirm("Are you sure you want to delete this model? This cannot be undone.")) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from("ai_models")
-        .delete()
-        .eq("record_id", recordId);
-
-      if (error) throw error;
-      
-      toast.success("Model deleted successfully");
-      fetchModels();
-    } catch (error) {
-      logger.error("Failed to delete model", error as Error, { 
-        component: 'AIModelsManager',
-        operation: 'handleDelete',
-        recordId
-      });
-      toast.error("Failed to delete model");
-    }
+  const handleRefresh = () => {
+    fetchModels();
+    fetchLockStatuses();
+    toast.success("Refreshed models from registry");
   };
 
   const handleEdit = (model: AIModel) => {
+    if (model.is_locked) {
+      toast.error("Cannot edit locked model. Unlock it first.");
+      return;
+    }
     setEditingModel(model);
     setDialogOpen(true);
   };
@@ -174,209 +154,193 @@ export default function AIModelsManager() {
   };
 
   const handleDuplicate = (model: AIModel) => {
-    // Create a copy without the record_id to create a new model
     const duplicateModel = {
       ...model,
-      record_id: '', // Clear to force creation of new model
-      id: `${model.id}-copy`, // Suggest a new ID
+      record_id: '', // Will be generated
+      id: `${model.id}-copy`,
       model_name: `${model.model_name} (Copy)`,
+      is_locked: false, // New models are never locked
     } as AIModel;
     setEditingModel(duplicateModel);
     setDialogOpen(true);
   };
 
-  const handleSuccess = () => {
+  const handleSaveChanges = (updatedModel: AIModel) => {
+    if (updatedModel.record_id) {
+      // Existing model - add to pending changes
+      const existingIndex = pendingChanges.findIndex(
+        c => c.recordId === updatedModel.record_id
+      );
+
+      const updates: ModelUpdatePayload = {
+        recordId: updatedModel.record_id,
+        updates: {
+          id: updatedModel.id,
+          model_name: updatedModel.model_name,
+          provider: updatedModel.provider,
+          content_type: updatedModel.content_type,
+          base_token_cost: updatedModel.base_token_cost,
+          cost_multipliers: updatedModel.cost_multipliers,
+          input_schema: updatedModel.input_schema,
+          api_endpoint: updatedModel.api_endpoint,
+          payload_structure: updatedModel.payload_structure,
+          max_images: updatedModel.max_images,
+          estimated_time_seconds: updatedModel.estimated_time_seconds,
+          default_outputs: updatedModel.default_outputs,
+          is_active: updatedModel.is_active,
+          logo_url: updatedModel.logo_url,
+          model_family: updatedModel.model_family,
+          variant_name: updatedModel.variant_name,
+          display_order_in_family: updatedModel.display_order_in_family,
+        }
+      };
+
+      if (existingIndex >= 0) {
+        const newChanges = [...pendingChanges];
+        newChanges[existingIndex] = updates;
+        setPendingChanges(newChanges);
+      } else {
+        setPendingChanges([...pendingChanges, updates]);
+      }
+
+      toast.success(`Changes queued for ${updatedModel.model_name}. Download update script to apply.`);
+    } else {
+      // New model - generate creation script
+      const script = generateNewModelScript(updatedModel);
+      downloadScript(script, `create-${updatedModel.model_name.replace(/[^a-zA-Z0-9]/g, '_')}.cjs`);
+      toast.success("Model creation script downloaded. Run it to create the model file.");
+    }
+
     setDialogOpen(false);
     setEditingModel(null);
-    fetchModels();
   };
 
-  const handleEnableAll = async () => {
-    try {
-      const { error } = await supabase
-        .from("ai_models")
-        .update({ is_active: true })
-        .neq("is_active", true);
+  const handleToggleStatus = (recordId: string, currentStatus: boolean) => {
+    const model = models.find(m => m.record_id === recordId);
 
-      if (error) throw error;
-      toast.success("All models enabled");
-      fetchModels();
-    } catch (error) {
-      logger.error("Failed to enable all models", error as Error, { 
-        component: 'AIModelsManager',
-        operation: 'handleEnableAll'
-      });
-      toast.error("Failed to enable all models");
+    if (model?.is_locked) {
+      toast.error("Cannot modify locked model. Unlock it first.");
+      return;
     }
+
+    const updates: ModelUpdatePayload = {
+      recordId,
+      updates: { is_active: !currentStatus }
+    };
+
+    setPendingChanges([...pendingChanges, updates]);
+    toast.success(`Status change queued. Download update script to apply.`);
   };
 
-  const handleDisableAll = async () => {
-    if (!confirm("Are you sure you want to disable all models?")) return;
+  const handleDelete = (recordId: string) => {
+    const model = models.find(m => m.record_id === recordId);
 
-    try {
-      const { error } = await supabase
-        .from("ai_models")
-        .update({ is_active: false })
-        .eq("is_active", true);
-
-      if (error) throw error;
-      toast.success("All models disabled");
-      fetchModels();
-    } catch (error) {
-      logger.error("Failed to disable all models", error as Error, { 
-        component: 'AIModelsManager',
-        operation: 'handleDisableAll'
-      });
-      toast.error("Failed to disable all models");
+    if (model?.is_locked) {
+      toast.error("Cannot delete locked model. Unlock it first.");
+      return;
     }
+
+    if (!confirm("This will deactivate the model (set is_active: false). Continue?")) {
+      return;
+    }
+
+    const updates: ModelUpdatePayload = {
+      recordId,
+      updates: { is_active: false }
+    };
+
+    setPendingChanges([...pendingChanges, updates]);
+    toast.success("Deactivation queued. Download update script to apply.");
   };
 
-  const fetchDocumentationStatus = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('model_documentation')
-        .select('model_record_id, last_analyzed_at, analyzed_generations_count');
-
-      if (error) throw error;
-
-      const statusMap: Record<string, { exists: boolean; last_updated: string; generation_count: number }> = {};
-      data?.forEach((doc) => {
-        statusMap[doc.model_record_id] = {
-          exists: true,
-          last_updated: doc.last_analyzed_at,
-          generation_count: doc.analyzed_generations_count
-        };
-      });
-      setDocStatus(statusMap);
-    } catch (error) {
-      logger.error("Failed to fetch documentation status", error as Error);
-    }
+  const handleToggleLock = (recordId: string, currentLockStatus: boolean) => {
+    const script = generateLockToggleScript(recordId, !currentLockStatus);
+    const action = currentLockStatus ? "unlock" : "lock";
+    downloadScript(script, `${action}-model-${recordId.slice(0, 8)}.cjs`);
+    toast.success(`${action} script downloaded. Run it to ${action} the model.`);
   };
 
-  const handleGenerateDocumentation = async (modelRecordId: string) => {
-    setGeneratingDocs(modelRecordId);
-    try {
-      const { data, error } = await supabase.functions.invoke('analyze-model-docs', {
-        body: { model_record_id: modelRecordId, regenerate: true }
-      });
-
-      if (error) throw error;
-
-      if (data.success) {
-        toast.success(data.message);
-        await fetchDocumentationStatus();
-      } else {
-        toast.error(data.message || 'Failed to generate documentation');
-      }
-    } catch (error) {
-      logger.error("Failed to generate documentation", error as Error);
-      toast.error("Failed to generate documentation");
-    } finally {
-      setGeneratingDocs(null);
+  const handleDownloadPendingChanges = () => {
+    if (pendingChanges.length === 0) {
+      toast.error("No pending changes to download");
+      return;
     }
+
+    const script = generateModelUpdateScript(pendingChanges);
+    downloadScript(script, `update-models-${Date.now()}.cjs`);
+    toast.success(`Update script downloaded with ${pendingChanges.length} changes`);
+    setPendingChanges([]); // Clear pending changes after download
   };
 
-  const handleViewDocumentation = async (modelRecordId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('model_documentation')
-        .select('*')
-        .eq('model_record_id', modelRecordId)
-        .single();
-
-      if (error) throw error;
-
-      setSelectedDocumentation(data);
-      setDocViewerOpen(true);
-    } catch (error) {
-      logger.error("Failed to fetch documentation", error as Error);
-      toast.error("Failed to load documentation");
-    }
+  const handleClearPendingChanges = () => {
+    setPendingChanges([]);
+    toast.success("Pending changes cleared");
   };
 
-  const handleGenerateAllActiveDocs = async () => {
-    const activeModels = sortedModels.filter(m => m.is_active);
-    const kieModels = activeModels.filter(m => m.provider === 'kie-ai');
-    const runwareModels = activeModels.filter(m => m.provider === 'runware');
-    const prioritizedModels = [...kieModels, ...runwareModels];
+  const handleEnableAll = () => {
+    const inactiveModels = models.filter(m => !m.is_active && !m.is_locked);
 
-    setBulkGenerating(true);
-    setDocsProgress(0);
-
-    for (let i = 0; i < prioritizedModels.length; i += 3) {
-      const batch = prioritizedModels.slice(i, i + 3);
-      await Promise.all(
-        batch.map(async (model) => {
-          try {
-            await supabase.functions.invoke('analyze-model-docs', {
-              body: { model_record_id: model.record_id }
-            });
-          } catch (error) {
-            logger.error(`Failed to generate docs for ${model.model_name}`, error as Error);
-          }
-        })
-      );
-      setDocsProgress(i + batch.length);
+    if (inactiveModels.length === 0) {
+      toast.info("All unlocked models are already active");
+      return;
     }
 
-    await fetchDocumentationStatus();
-    setBulkGenerating(false);
-    setDocsProgress(0);
-    toast.success(`Generated documentation for ${prioritizedModels.length} models`);
+    const bulkUpdates = inactiveModels.map(m => ({
+      recordId: m.record_id,
+      updates: { is_active: true }
+    }));
+
+    setPendingChanges([...pendingChanges, ...bulkUpdates]);
+    toast.success(`Queued ${bulkUpdates.length} models to enable. Download update script.`);
   };
 
-  const getDocStatusBadge = (modelRecordId: string) => {
-    const status = docStatus[modelRecordId];
-    if (!status?.exists) return null;
+  const handleDisableAll = () => {
+    if (!confirm("Disable all unlocked active models?")) return;
 
-    const daysSinceUpdate = (Date.now() - new Date(status.last_updated).getTime()) / (1000 * 60 * 60 * 24);
-    
-    if (daysSinceUpdate < 7) {
-      return <Badge variant="outline" className="text-green-600 border-green-600">📄 Fresh</Badge>;
-    } else if (daysSinceUpdate < 30) {
-      return <Badge variant="outline" className="text-yellow-600 border-yellow-600">📄 Stale</Badge>;
-    } else {
-      return <Badge variant="outline" className="text-red-600 border-red-600">📄 Old</Badge>;
-    }
+    const activeModels = models.filter(m => m.is_active && !m.is_locked);
+    const bulkUpdates = activeModels.map(m => ({
+      recordId: m.record_id,
+      updates: { is_active: false }
+    }));
+
+    setPendingChanges([...pendingChanges, ...bulkUpdates]);
+    toast.success(`Queued ${bulkUpdates.length} models to disable. Download update script.`);
   };
 
   // Filter models
   const filteredModels = models.filter((model) => {
-    // Search filter (model ID, name, provider)
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      const matchesSearch = 
+      const matchesSearch =
         model.id.toLowerCase().includes(searchLower) ||
         model.model_name.toLowerCase().includes(searchLower) ||
         model.provider.toLowerCase().includes(searchLower);
       if (!matchesSearch) return false;
     }
-    
-    // Provider filter
+
     if (filters.provider !== "all" && model.provider !== filters.provider) {
       return false;
     }
-    
-    // Content type filter
+
     if (filters.contentType !== "all" && model.content_type !== filters.contentType) {
       return false;
     }
-    
-    // Structure filter
+
     if (filters.structure !== "all" && model.payload_structure !== filters.structure) {
       return false;
     }
-    
-    // Status filter
+
     if (filters.status === "active" && !model.is_active) return false;
     if (filters.status === "inactive" && model.is_active) return false;
-    
-    // Group filter
+
+    if (filters.lockStatus === "locked" && !model.is_locked) return false;
+    if (filters.lockStatus === "unlocked" && model.is_locked) return false;
+
     if (filters.group !== "all") {
       const modelGroups = Array.isArray(model.groups) ? model.groups : [];
       if (!modelGroups.includes(filters.group)) return false;
     }
-    
+
     return true;
   });
 
@@ -397,9 +361,8 @@ export default function AIModelsManager() {
       }
       case "status":
         return (a.is_active === b.is_active) ? 0 : a.is_active ? -1 : 1;
-      case "created_at":
       default:
-        return 0; // Already sorted by created_at from query
+        return 0;
     }
   });
 
@@ -410,42 +373,92 @@ export default function AIModelsManager() {
       contentType: "all",
       structure: "all",
       status: "all",
-      group: "all"
+      group: "all",
+      lockStatus: "all"
     });
   };
 
-  const hasActiveFilters = 
+  const hasActiveFilters =
     filters.search !== "" ||
     filters.provider !== "all" ||
     filters.contentType !== "all" ||
     filters.structure !== "all" ||
     filters.status !== "all" ||
-    filters.group !== "all";
+    filters.group !== "all" ||
+    filters.lockStatus !== "all";
 
-  // Get unique values for filter dropdowns
   const uniqueProviders = [...new Set(models.map(m => m.provider))];
   const uniqueContentTypes = [...new Set(models.map(m => m.content_type))];
   const uniqueStructures = [...new Set(models.map(m => m.payload_structure || 'wrapper'))];
   const allGroups = [...new Set(models.flatMap(m => Array.isArray(m.groups) ? m.groups : []))];
 
-  // No loading state - render immediately
   return (
     <div className="space-y-6">
+      {/* Info Alert */}
+      <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-950">
+        <AlertCircle className="h-4 w-4 text-blue-600" />
+        <AlertTitle className="text-blue-900 dark:text-blue-100">Registry-Based Model Management</AlertTitle>
+        <AlertDescription className="text-blue-800 dark:text-blue-200">
+          Models are loaded from <code className="font-mono text-xs bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded">src/lib/models/locked/</code> TypeScript files.
+          Changes generate migration scripts that you download and run locally to update the files.
+          Locked models cannot be modified.
+        </AlertDescription>
+      </Alert>
+
+      {/* Pending Changes Alert */}
+      {pendingChanges.length > 0 && (
+        <Alert className="border-orange-500 bg-orange-50 dark:bg-orange-950">
+          <Download className="h-4 w-4 text-orange-600" />
+          <AlertTitle className="text-orange-900 dark:text-orange-100">
+            {pendingChanges.length} Pending Change{pendingChanges.length > 1 ? 's' : ''}
+          </AlertTitle>
+          <AlertDescription className="text-orange-800 dark:text-orange-200 flex items-center gap-2">
+            <span className="flex-1">
+              Download and run the update script to apply your changes to model files.
+            </span>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={handleDownloadPendingChanges}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                <Download className="h-3 w-3 mr-2" />
+                Download Script
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleClearPendingChanges}
+              >
+                Clear
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-black mb-2">AI MODELS</h1>
+          <h1 className="text-4xl font-black mb-2">AI MODELS (REGISTRY)</h1>
           <p className="text-muted-foreground">
-            Manage AI models, providers, and credit costs
+            Manage AI models from TypeScript source files • {models.length} models loaded
           </p>
         </div>
         <div className="flex gap-2">
-          <RegenerateAllModelsButton />
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            className="border-2"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
           <Button
             onClick={handleAdd}
             className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold border-3 border-black brutal-shadow"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add Model
+            New Model
           </Button>
         </div>
       </div>
@@ -456,7 +469,7 @@ export default function AIModelsManager() {
             <CardTitle>
               All Models ({filteredModels.length}{filteredModels.length !== models.length && ` of ${models.length}`})
             </CardTitle>
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-2 items-center flex-wrap">
               <Button
                 variant={showFilters ? "default" : "outline"}
                 size="sm"
@@ -477,12 +490,11 @@ export default function AIModelsManager() {
                   <SelectValue placeholder="Sort by..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="created_at">Recently Added</SelectItem>
                   <SelectItem value="name">Model Name</SelectItem>
                   <SelectItem value="provider">Provider</SelectItem>
                   <SelectItem value="type">Content Type</SelectItem>
                   <SelectItem value="cost">Base Cost</SelectItem>
-                  <SelectItem value="duration">Duration (Fastest First)</SelectItem>
+                  <SelectItem value="duration">Duration</SelectItem>
                   <SelectItem value="status">Status</SelectItem>
                 </SelectContent>
               </Select>
@@ -504,28 +516,18 @@ export default function AIModelsManager() {
                 <PowerOff className="h-4 w-4 mr-2" />
                 Disable All
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleGenerateAllActiveDocs}
-                disabled={bulkGenerating}
-                className="border-2"
-              >
-                {bulkGenerating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generating {docsProgress}/{sortedModels.filter(m => m.is_active).length}
-                  </>
-                ) : (
-                  <>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Generate All Docs
-                  </>
-                )}
-              </Button>
+              {pendingChanges.length > 0 && (
+                <Button
+                  onClick={handleDownloadPendingChanges}
+                  className="bg-orange-600 hover:bg-orange-700 text-white font-bold"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download ({pendingChanges.length})
+                </Button>
+              )}
             </div>
           </div>
-          
+
           {showFilters && (
             <div className="mt-6 p-4 bg-muted/50 rounded-lg border-2 border-border space-y-4">
               <div className="flex items-center justify-between mb-2">
@@ -542,9 +544,8 @@ export default function AIModelsManager() {
                   </Button>
                 )}
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Search */}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="search" className="text-xs">Search</Label>
                   <Input
@@ -556,7 +557,6 @@ export default function AIModelsManager() {
                   />
                 </div>
 
-                {/* Provider */}
                 <div className="space-y-2">
                   <Label htmlFor="provider" className="text-xs">Provider</Label>
                   <Select
@@ -575,7 +575,6 @@ export default function AIModelsManager() {
                   </Select>
                 </div>
 
-                {/* Content Type */}
                 <div className="space-y-2">
                   <Label htmlFor="contentType" className="text-xs">Content Type</Label>
                   <Select
@@ -594,28 +593,6 @@ export default function AIModelsManager() {
                   </Select>
                 </div>
 
-                {/* Structure */}
-                <div className="space-y-2">
-                  <Label htmlFor="structure" className="text-xs">Structure</Label>
-                  <Select
-                    value={filters.structure}
-                    onValueChange={(value) => setFilters(prev => ({ ...prev, structure: value }))}
-                  >
-                    <SelectTrigger id="structure" className="h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Structures</SelectItem>
-                      {uniqueStructures.map(structure => (
-                        <SelectItem key={structure} value={structure}>
-                          {structure === 'flat' ? 'Flat' : 'Wrapper'}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Status */}
                 <div className="space-y-2">
                   <Label htmlFor="status" className="text-xs">Status</Label>
                   <Select
@@ -633,7 +610,23 @@ export default function AIModelsManager() {
                   </Select>
                 </div>
 
-                {/* Group */}
+                <div className="space-y-2">
+                  <Label htmlFor="lockStatus" className="text-xs">Lock Status</Label>
+                  <Select
+                    value={filters.lockStatus}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, lockStatus: value }))}
+                  >
+                    <SelectTrigger id="lockStatus" className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="locked">Locked</SelectItem>
+                      <SelectItem value="unlocked">Unlocked</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="group" className="text-xs">Group</Label>
                   <Select
@@ -678,7 +671,7 @@ export default function AIModelsManager() {
               ) : (
                 <>
                   <p className="text-muted-foreground mb-4">
-                    No AI models configured yet
+                    No models found in registry
                   </p>
                   <Button
                     onClick={handleAdd}
@@ -691,163 +684,121 @@ export default function AIModelsManager() {
               )}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="font-bold">Record ID</TableHead>
-                  <TableHead className="font-bold">Model ID</TableHead>
-                  <TableHead className="font-bold">Provider</TableHead>
-                  <TableHead className="font-bold">Family</TableHead>
-                  <TableHead className="font-bold">Variant</TableHead>
-                  <TableHead className="font-bold">Model Name</TableHead>
-                  <TableHead className="font-bold">Type</TableHead>
-                  <TableHead className="font-bold">Structure</TableHead>
-                  <TableHead className="font-bold">Groups</TableHead>
-                  <TableHead className="font-bold">Base Cost</TableHead>
-                  <TableHead className="font-bold">Order</TableHead>
-                  <TableHead className="font-bold">Status</TableHead>
-                  <TableHead className="font-bold text-center">Documentation</TableHead>
-                  <TableHead className="font-bold">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedModels.map((model) => (
-                  <TableRow key={model.record_id}>
-                    <TableCell className="font-mono text-xs text-muted-foreground" title={model.record_id}>
-                      {model.record_id.slice(0, 8)}...
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {model.id}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {model.provider}
-                    </TableCell>
-                    <TableCell>
-                      {(model as any).model_family ? (
-                        <Badge variant="outline">{(model as any).model_family}</Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {(model as any).variant_name || (
-                        <span className="text-xs text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>{model.model_name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{model.content_type}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={(model as any).payload_structure === 'flat' ? 'secondary' : 'outline'}>
-                        {(model as any).payload_structure === 'flat' ? 'Flat' : 'Wrapper'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {(Array.isArray(model.groups) ? model.groups : []).map((group: string) => (
-                          <Badge key={group} variant="secondary" className="text-xs">
-                            {CREATION_GROUPS.find(g => g.id === group)?.label || group}
-                          </Badge>
-                        ))}
-                        {(!model.groups || (Array.isArray(model.groups) && model.groups.length === 0)) && (
-                          <span className="text-xs text-muted-foreground">None</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-bold">
-                      {model.base_token_cost} credits
-                    </TableCell>
-                    <TableCell className="text-center text-muted-foreground">
-                      {(model as any).display_order_in_family ?? '-'}
-                    </TableCell>
-                    <TableCell>
-                      {model.is_active ? (
-                        <Badge className="bg-green-500">Active</Badge>
-                      ) : (
-                        <Badge variant="secondary">Inactive</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1 items-center">
-                        {docStatus[model.record_id]?.exists ? (
-                          <>
-                            {getDocStatusBadge(model.record_id)}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewDocumentation(model.record_id)}
-                              className="h-7 text-xs"
-                            >
-                              View
-                            </Button>
-                          </>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-bold">Lock</TableHead>
+                    <TableHead className="font-bold">Record ID</TableHead>
+                    <TableHead className="font-bold">Model ID</TableHead>
+                    <TableHead className="font-bold">Provider</TableHead>
+                    <TableHead className="font-bold">Family</TableHead>
+                    <TableHead className="font-bold">Model Name</TableHead>
+                    <TableHead className="font-bold">Type</TableHead>
+                    <TableHead className="font-bold">Base Cost</TableHead>
+                    <TableHead className="font-bold">Order</TableHead>
+                    <TableHead className="font-bold">Status</TableHead>
+                    <TableHead className="font-bold">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedModels.map((model) => (
+                    <TableRow key={model.record_id} className={model.is_locked ? "bg-muted/30" : ""}>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleLock(model.record_id, model.is_locked)}
+                          title={model.is_locked ? "Download unlock script" : "Download lock script"}
+                        >
+                          {model.is_locked ? (
+                            <Lock className="h-4 w-4 text-red-500" />
+                          ) : (
+                            <Unlock className="h-4 w-4 text-green-500" />
+                          )}
+                        </Button>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground" title={model.record_id}>
+                        {model.record_id.slice(0, 8)}...
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {model.id}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {model.provider}
+                      </TableCell>
+                      <TableCell>
+                        {model.model_family ? (
+                          <Badge variant="outline">{model.model_family}</Badge>
                         ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {model.model_name}
+                        {model.variant_name && (
+                          <span className="text-xs text-muted-foreground ml-2">
+                            ({model.variant_name})
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{model.content_type}</Badge>
+                      </TableCell>
+                      <TableCell className="font-bold">
+                        {model.base_token_cost} credits
+                      </TableCell>
+                      <TableCell className="text-center text-muted-foreground">
+                        {model.display_order_in_family ?? '-'}
+                      </TableCell>
+                      <TableCell>
+                        {model.is_active ? (
+                          <Badge className="bg-green-500">Active</Badge>
+                        ) : (
+                          <Badge variant="secondary">Inactive</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleGenerateDocumentation(model.record_id)}
-                            disabled={generatingDocs === model.record_id}
-                            className="h-7 text-xs"
+                            onClick={() => handleEdit(model)}
+                            disabled={model.is_locked}
+                            title={model.is_locked ? "Locked - cannot edit" : "Edit model"}
                           >
-                            {generatingDocs === model.record_id ? (
-                              <>
-                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                Generating...
-                              </>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDuplicate(model)}
+                            title="Duplicate model"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleToggleStatus(model.record_id, model.is_active)
+                            }
+                            disabled={model.is_locked}
+                            title={model.is_locked ? "Locked - cannot toggle" : "Toggle status"}
+                          >
+                            {model.is_active ? (
+                              <PowerOff className="h-4 w-4" />
                             ) : (
-                              <>
-                                <FileText className="h-3 w-3 mr-1" />
-                                Generate
-                              </>
+                              <Power className="h-4 w-4" />
                             )}
                           </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleEdit(model)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDuplicate(model)}
-                          title="Duplicate model"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            toggleModelStatus(model.record_id, model.is_active)
-                          }
-                        >
-                          {model.is_active ? (
-                            <PowerOff className="h-4 w-4" />
-                          ) : (
-                            <Power className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(model.record_id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -856,15 +807,7 @@ export default function AIModelsManager() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         model={editingModel}
-        onSuccess={handleSuccess}
-      />
-
-      <DocumentationViewer
-        documentation={selectedDocumentation}
-        open={docViewerOpen}
-        onOpenChange={setDocViewerOpen}
-        onRegenerate={handleGenerateDocumentation}
-        isRegenerating={generatingDocs === selectedDocumentation?.model_record_id}
+        onSuccess={handleSaveChanges as any}
       />
     </div>
   );

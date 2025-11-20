@@ -29,6 +29,7 @@ export const MODEL_CONFIG = {
 
   // UI metadata
   isActive: true,
+  logoUrl: "/logos/kie.svg",
   modelFamily: "Kie Ai",
   variantName: "Crisp Image Upscale",
   displayOrderInFamily: 2,

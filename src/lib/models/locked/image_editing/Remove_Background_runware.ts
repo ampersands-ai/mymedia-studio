@@ -24,6 +24,13 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   if (!res.ok) throw new Error(`API failed: ${res.statusText}`);
   const result = await res.json();
   await supabase.from("generations").update({ provider_task_id: result[0]?.taskUUID || gen.id, provider_request: apiPayload, provider_response: result }).eq("id", gen.id);
+  
+  // Process the response immediately (Runware is synchronous)
+  const { error: processError } = await supabase.functions.invoke('process-runware-response', { 
+    body: { generation_id: gen.id } 
+  });
+  if (processError) console.error('Failed to process response:', processError);
+  
   startPolling(gen.id);
   return gen.id;
 }

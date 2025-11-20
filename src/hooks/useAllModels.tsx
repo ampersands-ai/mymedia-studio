@@ -37,7 +37,7 @@ export const useAllModels = () => {
         estimated_time_seconds: m.MODEL_CONFIG.estimatedTimeSeconds,
         default_outputs: m.MODEL_CONFIG.defaultOutputs,
         is_active: m.MODEL_CONFIG.isActive,
-        groups: null,
+        groups: [m.MODEL_CONFIG.contentType],
         logo_url: m.MODEL_CONFIG.logoUrl || null,
         model_family: m.MODEL_CONFIG.modelFamily || null,
         variant_name: m.MODEL_CONFIG.variantName || null,

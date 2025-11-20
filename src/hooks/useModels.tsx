@@ -71,8 +71,8 @@ export const useModels = () => {
           // Active status
           is_active: m.MODEL_CONFIG.isActive,
 
-          // Groups (derived from content_type in UI, set to null here)
-          groups: null,
+          // Groups - UI filters by this array, so populate from contentType
+          groups: [m.MODEL_CONFIG.contentType],
 
           // UI metadata
           logo_url: m.MODEL_CONFIG.logoUrl || null,
@@ -140,7 +140,7 @@ export const useModelByRecordId = (recordId: string | undefined) => {
         estimated_time_seconds: m.MODEL_CONFIG.estimatedTimeSeconds,
         default_outputs: m.MODEL_CONFIG.defaultOutputs,
         is_active: m.MODEL_CONFIG.isActive,
-        groups: null,
+        groups: [m.MODEL_CONFIG.contentType],
         logo_url: m.MODEL_CONFIG.logoUrl || null,
         model_family: m.MODEL_CONFIG.modelFamily || null,
         variant_name: m.MODEL_CONFIG.variantName || null,

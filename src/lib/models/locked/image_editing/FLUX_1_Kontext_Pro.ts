@@ -26,7 +26,18 @@ export const MODEL_CONFIG = {
   apiEndpoint: "/api/v1/flux/kontext/generate",
   payloadStructure: "flat",
   maxImages: 1,
-  defaultOutputs: 1,
+  defaultOutputs: 1,,
+
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/flux.svg",
+  modelFamily: "FLUX",
+  variantName: "1 Kontext Pro",
+  displayOrderInFamily: 3,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_editing/FLUX_1_Kontext_Pro.ts"
 } as const;
 
 export const SCHEMA = {

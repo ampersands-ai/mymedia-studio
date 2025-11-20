@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "google/imagen4-ultra", recordId: "23e81043-5e53-400b-bc1a-2a1ed9f30ce0", modelName: "Google Imagen 4 Ultra", provider: "kie_ai", contentType: "image", baseCreditCost: 6, estimatedTimeSeconds: 25, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "google/imagen4-ultra", recordId: "23e81043-5e53-400b-bc1a-2a1ed9f30ce0", modelName: "Google Imagen 4 Ultra", provider: "kie_ai", contentType: "image", baseCreditCost: 6, estimatedTimeSeconds: 25, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/google.svg",
+  modelFamily: "Google",
+  variantName: "Imagen 4 Ultra",
+  displayOrderInFamily: 3,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/prompt_to_image/Google_Imagen_4_Ultra.ts" } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "1:1", enum: ["1:1", "3:4", "4:3", "9:16", "16:9"], type: "string" }, negative_prompt: { type: "string" }, prompt: { renderer: "prompt", type: "string" }, seed: { type: "string" } }, required: ["prompt"], type: "object", "x-order": ["seed", "prompt", "aspect_ratio", "negative_prompt"] } as const;
 

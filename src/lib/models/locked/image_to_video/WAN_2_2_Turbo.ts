@@ -3,7 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "wan/2-2-a14b-image-to-video-turbo", recordId: "e4ae6c36-dfcb-4fe4-94f3-46962df720b1", modelName: "WAN 2.2 Turbo", provider: "kie_ai", contentType: "video", baseCreditCost: 15, estimatedTimeSeconds: 180, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "wan/2-2-a14b-image-to-video-turbo", recordId: "e4ae6c36-dfcb-4fe4-94f3-46962df720b1", modelName: "WAN 2.2 Turbo", provider: "kie_ai", contentType: "video", baseCreditCost: 15, estimatedTimeSeconds: 180, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  modelFamily: "WAN",
+  variantName: "WAN 2.2 Turbo",
+  displayOrderInFamily: 1,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_to_video/WAN_2_2_Turbo.ts" } as const;
 
 export const SCHEMA = { properties: { image_url: { type: "string" }, prompt: { maxLength: 5000, type: "string" } }, required: ["prompt", "image_url"], type: "object" } as const;
 

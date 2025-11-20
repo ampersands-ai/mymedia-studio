@@ -3,7 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "bytedance/v1-pro-image-to-video", recordId: "50eb3f02-1e58-4b85-a535-e8391a5623c4", modelName: "Seedream V1 Pro", provider: "kie_ai", contentType: "video", baseCreditCost: 8, estimatedTimeSeconds: 300, costMultipliers: { duration: { "3": 1, "4": 1.33, "5": 1.66, "6": 2, "7": 2.33, "8": 2.66, "9": 3, "10": 3.33 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "bytedance/v1-pro-image-to-video", recordId: "50eb3f02-1e58-4b85-a535-e8391a5623c4", modelName: "Seedream V1 Pro", provider: "kie_ai", contentType: "video", baseCreditCost: 8, estimatedTimeSeconds: 300, costMultipliers: { duration: { "3": 1, "4": 1.33, "5": 1.66, "6": 2, "7": 2.33, "8": 2.66, "9": 3, "10": 3.33 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  modelFamily: "Seedream",
+  variantName: "Seedream V1 Pro",
+  displayOrderInFamily: 3,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_to_video/Seedream_V1_Pro.ts" } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "3:4", enum: ["1:1", "3:4", "4:3", "9:16", "16:9"], type: "string" }, duration: { default: "3", enum: ["3", "4", "5", "6", "7", "8", "9", "10"], type: "string" }, image_url: { type: "string" }, prompt: { type: "string" } }, required: ["prompt", "image_url"], type: "object" } as const;
 

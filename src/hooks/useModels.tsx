@@ -1,5 +1,15 @@
+/**
+ * useModels Hook - MIGRATED TO .TS FILE CONTROL
+ *
+ * This hook now reads model data directly from the registry (.ts files)
+ * instead of querying the database. This enables complete version control
+ * of all model metadata through git.
+ *
+ * Changes made to MODEL_CONFIG in .ts files appear immediately in the UI.
+ * No database sync required!
+ */
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { getAllModels } from "@/lib/models/registry";
 
 export interface AIModel {
   record_id: string;
@@ -32,14 +42,50 @@ export const useModels = () => {
   return useQuery<AIModel[]>({
     queryKey: ["ai-models"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("ai_models")
-        .select("*")
-        .eq("is_active", true)
-        .order("content_type", { ascending: true });
+      // Read directly from registry (no database query!)
+      const modules = getAllModels();
 
-      if (error) throw error;
-      return (data || []) as AIModel[];
+      // Transform ModelModule[] to AIModel[] format
+      return modules
+        .filter(m => m.MODEL_CONFIG.isActive) // Only return active models
+        .map(m => ({
+          // Core fields (snake_case to match original interface)
+          record_id: m.MODEL_CONFIG.recordId,
+          id: m.MODEL_CONFIG.modelId,
+          provider: m.MODEL_CONFIG.provider,
+          model_name: m.MODEL_CONFIG.modelName,
+          content_type: m.MODEL_CONFIG.contentType,
+          base_token_cost: m.MODEL_CONFIG.baseCreditCost,
+          cost_multipliers: m.MODEL_CONFIG.costMultipliers || null,
+
+          // Schema from SCHEMA export
+          input_schema: m.SCHEMA || null,
+
+          // API configuration
+          api_endpoint: m.MODEL_CONFIG.apiEndpoint,
+          payload_structure: m.MODEL_CONFIG.payloadStructure,
+          max_images: m.MODEL_CONFIG.maxImages,
+          estimated_time_seconds: m.MODEL_CONFIG.estimatedTimeSeconds,
+          default_outputs: m.MODEL_CONFIG.defaultOutputs,
+
+          // Active status
+          is_active: m.MODEL_CONFIG.isActive,
+
+          // Groups (derived from content_type in UI, set to null here)
+          groups: null,
+
+          // UI metadata
+          logo_url: m.MODEL_CONFIG.logoUrl || null,
+          model_family: m.MODEL_CONFIG.modelFamily || null,
+          variant_name: m.MODEL_CONFIG.variantName || null,
+          display_order_in_family: m.MODEL_CONFIG.displayOrderInFamily || null,
+
+          // Lock system
+          is_locked: m.MODEL_CONFIG.isLocked,
+          locked_file_path: m.MODEL_CONFIG.lockedFilePath,
+          locked_at: null, // Not tracked in .ts files
+          locked_by: null, // Not tracked in .ts files
+        }));
     },
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 60 * 1000, // 1 minute
@@ -64,21 +110,46 @@ export const useModelsByContentType = () => {
   return { modelsByContentType, models, ...rest };
 };
 
-// Hook for fetching a single model by record_id (including inactive models for testing)
+// Hook for fetching a single model by record_id
 export const useModelByRecordId = (recordId: string | undefined) => {
   return useQuery({
     queryKey: ["ai-model", recordId],
     queryFn: async () => {
       if (!recordId) return null;
-      
-      const { data, error } = await supabase
-        .from("ai_models")
-        .select("*")
-        .eq("record_id", recordId)
-        .maybeSingle();
 
-      if (error) throw error;
-      return data as AIModel | null;
+      // Read directly from registry instead of database
+      const modules = getAllModels();
+      const module = modules.find(m => m.MODEL_CONFIG.recordId === recordId);
+
+      if (!module) return null;
+
+      // Transform to AIModel format
+      const m = module;
+      return {
+        record_id: m.MODEL_CONFIG.recordId,
+        id: m.MODEL_CONFIG.modelId,
+        provider: m.MODEL_CONFIG.provider,
+        model_name: m.MODEL_CONFIG.modelName,
+        content_type: m.MODEL_CONFIG.contentType,
+        base_token_cost: m.MODEL_CONFIG.baseCreditCost,
+        cost_multipliers: m.MODEL_CONFIG.costMultipliers || null,
+        input_schema: m.SCHEMA || null,
+        api_endpoint: m.MODEL_CONFIG.apiEndpoint,
+        payload_structure: m.MODEL_CONFIG.payloadStructure,
+        max_images: m.MODEL_CONFIG.maxImages,
+        estimated_time_seconds: m.MODEL_CONFIG.estimatedTimeSeconds,
+        default_outputs: m.MODEL_CONFIG.defaultOutputs,
+        is_active: m.MODEL_CONFIG.isActive,
+        groups: null,
+        logo_url: m.MODEL_CONFIG.logoUrl || null,
+        model_family: m.MODEL_CONFIG.modelFamily || null,
+        variant_name: m.MODEL_CONFIG.variantName || null,
+        display_order_in_family: m.MODEL_CONFIG.displayOrderInFamily || null,
+        is_locked: m.MODEL_CONFIG.isLocked,
+        locked_file_path: m.MODEL_CONFIG.lockedFilePath,
+        locked_at: null,
+        locked_by: null,
+      } as AIModel;
     },
     enabled: !!recordId,
     staleTime: 30 * 1000,

@@ -3,7 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "runware:97@1", recordId: "7fe80ee8-701c-49b9-a21e-79f8c82489c8", modelName: "HiDream Fast", provider: "runware", contentType: "image", baseCreditCost: 0.3, estimatedTimeSeconds: 10, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "direct", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "runware:97@1", recordId: "7fe80ee8-701c-49b9-a21e-79f8c82489c8", modelName: "HiDream Fast", provider: "runware", contentType: "image", baseCreditCost: 0.3, estimatedTimeSeconds: 10, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "direct", maxImages: 0, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  modelFamily: "HiDream",
+  variantName: "Fast",
+  displayOrderInFamily: 1,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/prompt_to_image/HiDream_Fast.ts" } as const;
 
 export const SCHEMA = { properties: { CFGScale: { default: 1, showToUser: false, type: "number" }, checkNSFW: { default: true, showToUser: false, type: "boolean" }, height: { default: 1152, showToUser: false, type: "number" }, includeCost: { default: true, showToUser: false, type: "boolean" }, numberResults: { default: 1, showToUser: false, title: "number of images", type: "number" }, outputFormat: { default: "WEBP", enum: ["PNG", "JPG", "WEBP"], showToUser: false, type: "string" }, outputType: { default: "URL", showToUser: false, type: "string" }, positivePrompt: { renderer: "prompt", type: "string" }, taskType: { default: "imageInference", showToUser: false, type: "string" }, taskUUID: { showToUser: false, type: "string" }, uploadEndpoint: { showToUser: false, type: "string" }, width: { default: 896, showToUser: false, type: "number" } }, required: ["positivePrompt"], type: "object" } as const;
 

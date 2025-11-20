@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "midjourney/text-to-image", recordId: "eff6c62e-c20e-4eed-9f5b-81e1a7f01529", modelName: "Midjourney", provider: "kie_ai", contentType: "image", baseCreditCost: 3, estimatedTimeSeconds: 45, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "midjourney/text-to-image", recordId: "eff6c62e-c20e-4eed-9f5b-81e1a7f01529", modelName: "Midjourney", provider: "kie_ai", contentType: "image", baseCreditCost: 3, estimatedTimeSeconds: 45, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/midjourney.svg",
+  modelFamily: "Midjourney",
+  variantName: "Midjourney",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/prompt_to_image/Midjourney.ts" } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "1:1", enum: ["1:1", "16:9", "9:16", "4:3", "3:4", "21:9", "3:2", "2:3"], type: "string" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" } }, required: ["prompt"], type: "object", "x-order": ["prompt", "aspect_ratio"] } as const;
 

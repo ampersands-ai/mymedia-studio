@@ -3,7 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "bytedance/v1-lite-image-to-video", recordId: "d7df81f6-dc86-4e04-9f75-d4e8c9b03fb2", modelName: "Seedance V1 Lite", provider: "kie_ai", contentType: "video", baseCreditCost: 2, estimatedTimeSeconds: 300, costMultipliers: { duration: { "3": 1, "4": 1.33, "5": 1.66, "6": 2, "7": 2.33, "8": 2.66, "9": 3, "10": 3.33, "11": 3.66, "12": 4 }, resolution: { "480p": 1, "720p": 2.5, "1080p": 5 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "bytedance/v1-lite-image-to-video", recordId: "d7df81f6-dc86-4e04-9f75-d4e8c9b03fb2", modelName: "Seedance V1 Lite", provider: "kie_ai", contentType: "video", baseCreditCost: 2, estimatedTimeSeconds: 300, costMultipliers: { duration: { "3": 1, "4": 1.33, "5": 1.66, "6": 2, "7": 2.33, "8": 2.66, "9": 3, "10": 3.33, "11": 3.66, "12": 4 }, resolution: { "480p": 1, "720p": 2.5, "1080p": 5 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  modelFamily: "Seedance",
+  variantName: "Seedance V1 Lite",
+  displayOrderInFamily: 1,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_to_video/Seedance_V1_Lite.ts" } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "3:4", enum: ["1:1", "3:4", "4:3", "9:16", "16:9", "9:21"], type: "string" }, duration: { default: "3", enum: ["3", "4", "5", "6", "7", "8", "9", "10", "11", "12"], type: "string" }, image_url: { type: "string" }, prompt: { type: "string" }, resolution: { default: "480p", enum: ["480p", "720p", "1080p"], type: "string" } }, required: ["prompt", "image_url"], type: "object" } as const;
 

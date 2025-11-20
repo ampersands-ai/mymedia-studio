@@ -15,7 +15,18 @@ export const MODEL_CONFIG = {
   apiEndpoint: "https://api.runware.ai/v1",
   payloadStructure: "flat",
   maxImages: 0,
-  defaultOutputs: 1
+  defaultOutputs: 1,
+
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/flux.svg",
+  modelFamily: "FLUX",
+  variantName: "1 Pro",
+  displayOrderInFamily: 3,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/prompt_to_image/FLUX_1_Pro.ts"
 } as const;
 
 export const SCHEMA = {

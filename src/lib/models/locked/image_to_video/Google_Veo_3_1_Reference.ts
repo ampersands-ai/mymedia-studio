@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "veo3_fast", recordId: "6e8a863e-8630-4eef-bdbb-5b41f4c883f9", modelName: "Google Veo 3.1 Reference", provider: "kie_ai", contentType: "video", baseCreditCost: 30, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/veo/generate", payloadStructure: "flat", maxImages: 3, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "veo3_fast", recordId: "6e8a863e-8630-4eef-bdbb-5b41f4c883f9", modelName: "Google Veo 3.1 Reference", provider: "kie_ai", contentType: "video", baseCreditCost: 30, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/veo/generate", payloadStructure: "flat", maxImages: 3, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/google.svg",
+  modelFamily: "Google",
+  variantName: "Veo 3.1 Reference",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_to_video/Google_Veo_3_1_Reference.ts" } as const;
 
 export const SCHEMA = { imageInputField: "", properties: { aspectRatio: { default: "16:9", enum: ["Auto", "16:9", "9:16"], title: " Aspect Ratio", type: "string" }, generationType: { default: "REFERENCE_2_VIDEO", showToUser: false, type: "string" }, imageUrls: { description: "Max of 3", renderer: "image", title: "Upload Images", type: "string" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" }, seeds: { maximum: 99999, minimum: 10000, type: "integer" } }, required: ["prompt", "imageUrls", "generationType"], type: "object" } as const;
 

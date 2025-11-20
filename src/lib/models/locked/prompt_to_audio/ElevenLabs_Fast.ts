@@ -24,7 +24,18 @@ export const MODEL_CONFIG = {
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
   maxImages: 0,
-  defaultOutputs: 1,
+  defaultOutputs: 1,,
+
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/elevenlabs.svg",
+  modelFamily: "ElevenLabs",
+  variantName: "Fast",
+  displayOrderInFamily: 1,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/prompt_to_audio/ElevenLabs_Fast.ts"
 } as const;
 
 export const SCHEMA = {

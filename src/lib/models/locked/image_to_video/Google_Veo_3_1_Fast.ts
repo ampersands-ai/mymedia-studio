@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "veo3_fast", recordId: "8aac94cb-5625-47f4-880c-4f0fd8bd83a1", modelName: "Google Veo 3.1 Fast", provider: "kie_ai", contentType: "video", baseCreditCost: 30, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/veo/generate", payloadStructure: "flat", maxImages: 2, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "veo3_fast", recordId: "8aac94cb-5625-47f4-880c-4f0fd8bd83a1", modelName: "Google Veo 3.1 Fast", provider: "kie_ai", contentType: "video", baseCreditCost: 30, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/veo/generate", payloadStructure: "flat", maxImages: 2, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/google.svg",
+  modelFamily: "Google",
+  variantName: "Veo 3.1 Fast",
+  displayOrderInFamily: 1,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_to_video/Google_Veo_3_1_Fast.ts" } as const;
 
 export const SCHEMA = { properties: { aspectRatio: { default: "16:9", enum: ["16:9", "9:16", "1:1"], type: "string" }, endFrame: { description: "Last frame for the video generation (optional)", format: "uri", renderer: "image", title: "End Frame (Optional)", type: "string" }, generationType: { default: "FIRST_AND_LAST_FRAMES_2_VIDEO", showToUser: false, type: "string" }, model: { default: "veo3_fast", showToUser: false, type: "string" }, prompt: { description: "Describe the motion and style", maxLength: 1000, renderer: "prompt", type: "string" }, seeds: { maximum: 99999, minimum: 10000, type: "number" }, startFrame: { description: "First frame for the video generation", format: "uri", renderer: "image", title: "Start Frame", type: "string" } }, required: ["prompt", "startFrame", "model", "generationType"], type: "object", usePromptRenderer: true } as const;
 

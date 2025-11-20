@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "veo3", recordId: "a5c2ec16-6294-4588-86b6-7b4182601cda", modelName: "Google Veo 3.1 HQ", provider: "kie_ai", contentType: "video", baseCreditCost: 125, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/veo/generate", payloadStructure: "flat", maxImages: 2, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "veo3", recordId: "a5c2ec16-6294-4588-86b6-7b4182601cda", modelName: "Google Veo 3.1 HQ", provider: "kie_ai", contentType: "video", baseCreditCost: 125, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/veo/generate", payloadStructure: "flat", maxImages: 2, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/google.svg",
+  modelFamily: "Google",
+  variantName: "Veo 3.1 HQ",
+  displayOrderInFamily: 3,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_to_video/Google_Veo_3_1_HQ.ts" } as const;
 
 export const SCHEMA = { properties: { aspectRatio: { default: "16:9", description: "Output video dimensions", enum: ["16:9", "9:16", "1:1"], type: "string" }, endFrame: { description: "Last frame for the video generation (optional)", format: "uri", renderer: "image", title: "End Frame (Optional)", type: "string" }, generationType: { default: "FIRST_AND_LAST_FRAMES_2_VIDEO", showToUser: false, type: "string" }, model: { default: "veo3", showToUser: false, type: "string" }, prompt: { description: "Describe the motion and style", maxLength: 1000, renderer: "prompt", type: "string" }, seeds: { maximum: 99999, minimum: 10000, type: "number" }, startFrame: { description: "First frame for the video generation", format: "uri", renderer: "image", title: "Start Frame", type: "string" } }, required: ["prompt", "startFrame", "model", "generationType"], type: "object" } as const;
 

@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "sora-2-image-to-video", recordId: "11a995d9-a89e-47a2-b00c-11b2b7dbb717", modelName: "Sora 2 by OpenAI (Watermarked)", provider: "kie_ai", contentType: "video", baseCreditCost: 75, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "sora-2-image-to-video", recordId: "11a995d9-a89e-47a2-b00c-11b2b7dbb717", modelName: "Sora 2 by OpenAI (Watermarked)", provider: "kie_ai", contentType: "video", baseCreditCost: 75, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/openai.svg",
+  modelFamily: "OpenAI",
+  variantName: "Sora 2 by OpenAI (Watermarked)",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_to_video/Sora_2_by_OpenAI_Watermarked.ts" } as const;
 
 export const SCHEMA = { properties: { aspect_ratio: { default: "16:9", enum: ["16:9", "9:16", "1:1"], type: "string" }, image_url: { type: "string" }, loop: { default: false, enum: [true, false], type: "boolean" }, prompt: { maxLength: 5000, type: "string" } }, required: ["prompt", "image_url"], type: "object" } as const;
 

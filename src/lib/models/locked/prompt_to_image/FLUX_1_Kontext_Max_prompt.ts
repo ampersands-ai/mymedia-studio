@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "flux-kontext-max", recordId: "c1bd50df-1c27-48a3-8630-0970eedd21f6", modelName: "FLUX.1 Kontext Max", provider: "kie_ai", contentType: "image", baseCreditCost: 5, estimatedTimeSeconds: 50, costMultipliers: {}, apiEndpoint: "/api/v1/flux/kontext/generate", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "flux-kontext-max", recordId: "c1bd50df-1c27-48a3-8630-0970eedd21f6", modelName: "FLUX.1 Kontext Max", provider: "kie_ai", contentType: "image", baseCreditCost: 5, estimatedTimeSeconds: 50, costMultipliers: {}, apiEndpoint: "/api/v1/flux/kontext/generate", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/flux.svg",
+  modelFamily: "FLUX",
+  variantName: "1 Kontext Max",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/prompt_to_image/FLUX_1_Kontext_Max_prompt.ts" } as const;
 
 export const SCHEMA = { imageInputField: "inputImage", properties: { aspectRatio: { default: "16:9", enum: ["1:1", "3:4", "4:3", "9:16", "16:9", "21:9"], type: "string" }, enableTranslation: { default: true, enum: [true, false], showToUser: false, type: "boolean" }, inputImage: { renderer: "image", type: "string" }, outputFormat: { default: "jpeg", enum: ["jpeg", "png"], type: "string" }, prompt: { renderer: "prompt", type: "string" } }, required: ["prompt"], type: "object" } as const;
 

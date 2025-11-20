@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "ideogram/v3-reframe", recordId: "2c4802d0-f805-4c31-bab1-a07675e003eb", modelName: "Ideogram V3 Reframe", provider: "kie_ai", contentType: "image", baseCreditCost: 1.75, estimatedTimeSeconds: 60, costMultipliers: { num_images: { "1": 1, "2": 2, "3": 3, "4": 4 }, rendering_speed: { BALANCED: 2, QUALITY: 3, TURBO: 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "ideogram/v3-reframe", recordId: "2c4802d0-f805-4c31-bab1-a07675e003eb", modelName: "Ideogram V3 Reframe", provider: "kie_ai", contentType: "image", baseCreditCost: 1.75, estimatedTimeSeconds: 60, costMultipliers: { num_images: { "1": 1, "2": 2, "3": 3, "4": 4 }, rendering_speed: { BALANCED: 2, QUALITY: 3, TURBO: 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  logoUrl: "/logos/ideogram.svg",
+  modelFamily: "Ideogram",
+  variantName: "V3 Reframe",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_editing/Ideogram_V3_Reframe.ts" } as const;
 
 export const SCHEMA = { imageInputField: "image_url", properties: { aspect_ratio: { default: "1:1", enum: ["1:1", "3:4", "4:3", "9:16", "16:9"], type: "string" }, expand_prompt: { default: true, enum: [true, false], type: "boolean" }, image_url: { renderer: "image", type: "string" }, negative_prompt: { maxLength: 5000, type: "string" }, prompt: { maxLength: 5000, type: "string" }, rendering_speed: { default: "TURBO", enum: ["TURBO", "BALANCED", "QUALITY"], type: "string" }, seed: { type: "integer" } }, required: ["image_url"], type: "object" } as const;
 

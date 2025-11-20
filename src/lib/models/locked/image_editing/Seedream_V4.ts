@@ -2,7 +2,16 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "bytedance/seedream-v4-image-edit", recordId: "57f1e8f3-e4e3-42bd-bd9e-2f2ac6eee41d", modelName: "Seedream V4", provider: "kie_ai", contentType: "image", baseCreditCost: 1, estimatedTimeSeconds: 40, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "bytedance/seedream-v4-image-edit", recordId: "57f1e8f3-e4e3-42bd-bd9e-2f2ac6eee41d", modelName: "Seedream V4", provider: "kie_ai", contentType: "image", baseCreditCost: 1, estimatedTimeSeconds: 40, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  modelFamily: "Seedream",
+  variantName: "Seedream V4",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_editing/Seedream_V4.ts" } as const;
 
 export const SCHEMA = { imageInputField: "image_url", properties: { aspect_ratio: { default: "1:1", enum: ["1:1", "3:4", "4:3", "9:16", "16:9"], type: "string" }, enable_safety_checker: { default: true, enum: [true, false], type: "boolean" }, image_url: { renderer: "image", type: "string" }, negative_prompt: { maxLength: 5000, type: "string" }, prompt: { maxLength: 5000, type: "string" }, resolution: { default: "480p", enum: ["480p", "720p", "1080p"], type: "string" }, seed: { type: "integer" }, strength: { default: 0.7, maximum: 1, minimum: 0, type: "number" } }, required: ["prompt", "image_url"], type: "object" } as const;
 

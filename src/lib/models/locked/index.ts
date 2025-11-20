@@ -97,18 +97,34 @@ import * as WAN22Turbo_PromptToVideo from "./prompt_to_video/WAN_2_2_Turbo";
 
 export interface ModelModule {
   MODEL_CONFIG: {
+    // Core model identification
     modelId: string;
     recordId: string;
     modelName: string;
     provider: string;
-    contentType: string;
+    contentType: string; // Maps to CreationGroup: "image", "video", "audio"
+
+    // Cost and performance
     baseCreditCost: number;
     estimatedTimeSeconds: number;
     costMultipliers: any;
+    defaultOutputs: number;
+
+    // API configuration
     apiEndpoint: string | null;
     payloadStructure: string;
     maxImages: number | null;
-    defaultOutputs: number;
+
+    // UI metadata (NEW - migrated from database)
+    isActive: boolean;
+    logoUrl?: string | null;
+    modelFamily?: string | null;     // Brand/family grouping (e.g., "Google", "FLUX", "Kling")
+    variantName?: string | null;     // Specific variant (e.g., "Imagen 4 Fast", "V2 Pro")
+    displayOrderInFamily?: number;   // Sort order within family (lower numbers first)
+
+    // Lock system (NEW - for file-based architecture)
+    isLocked: boolean;              // Always true for locked files
+    lockedFilePath: string;         // Path to this file in src/lib/models/locked/
   };
   SCHEMA: any;
   validate: (inputs: Record<string, any>) => { valid: boolean; error?: string };
@@ -293,28 +309,27 @@ export function getModel(recordId: string): ModelModule {
 }
 
 /**
- * Get all model configurations
- * Returns array of MODEL_CONFIG objects for UI rendering
+ * Get all model modules
+ * Returns array of complete ModelModule objects (includes MODEL_CONFIG and SCHEMA)
+ * Updated per complete migration to .ts file control
  */
-export function getAllModels(): Array<ModelModule['MODEL_CONFIG']> {
-  return Object.values(RECORD_ID_REGISTRY).map(m => m.MODEL_CONFIG);
+export function getAllModels(): ModelModule[] {
+  return Object.values(RECORD_ID_REGISTRY);
 }
 
 /**
  * Get models filtered by content type
  * @param type - 'image', 'video', 'audio'
  */
-export function getModelsByContentType(type: string): Array<ModelModule['MODEL_CONFIG']> {
+export function getModelsByContentType(type: string): ModelModule[] {
   return Object.values(RECORD_ID_REGISTRY)
-    .filter(m => m.MODEL_CONFIG.contentType === type)
-    .map(m => m.MODEL_CONFIG);
+    .filter(m => m.MODEL_CONFIG.contentType === type);
 }
 
 /**
  * Get models filtered by provider
  */
-export function getModelsByProvider(provider: string): Array<ModelModule['MODEL_CONFIG']> {
+export function getModelsByProvider(provider: string): ModelModule[] {
   return Object.values(RECORD_ID_REGISTRY)
-    .filter(m => m.MODEL_CONFIG.provider === provider)
-    .map(m => m.MODEL_CONFIG);
+    .filter(m => m.MODEL_CONFIG.provider === provider);
 }

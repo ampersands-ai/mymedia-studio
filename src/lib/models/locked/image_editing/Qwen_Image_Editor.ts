@@ -3,7 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "qwen/image-edit", recordId: "b6d430f1-e823-4192-bf72-0dba29079931", modelName: "Qwen Image Editor", provider: "kie_ai", contentType: "image", baseCreditCost: 1, estimatedTimeSeconds: 25, costMultipliers: { image_size: { landscape_16_9: 2, landscape_4_3: 2.5, portrait_16_9: 2, portrait_4_3: 2.5, square: 1, square_hd: 3.5 }, num_images: { "1": 1, "2": 2, "3": 3, "4": 4 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "qwen/image-edit", recordId: "b6d430f1-e823-4192-bf72-0dba29079931", modelName: "Qwen Image Editor", provider: "kie_ai", contentType: "image", baseCreditCost: 1, estimatedTimeSeconds: 25, costMultipliers: { image_size: { landscape_16_9: 2, landscape_4_3: 2.5, portrait_16_9: 2, portrait_4_3: 2.5, square: 1, square_hd: 3.5 }, num_images: { "1": 1, "2": 2, "3": 3, "4": 4 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  modelFamily: "Qwen",
+  variantName: "Image Editor",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_editing/Qwen_Image_Editor.ts" } as const;
 
 export const SCHEMA = { imageInputField: "image_url", properties: { aspect_ratio: { default: "1:1", enum: ["1:1", "3:4", "4:3", "9:16", "16:9"], type: "string" }, image_url: { renderer: "image", type: "string" }, negative_prompt: { maxLength: 5000, type: "string" }, prompt: { maxLength: 5000, type: "string" }, seed: { type: "integer" } }, required: ["prompt", "image_url"], type: "object" } as const;
 

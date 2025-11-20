@@ -24,7 +24,17 @@ export const MODEL_CONFIG = {
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
   maxImages: 1,
-  defaultOutputs: 1,
+  defaultOutputs: 1,,
+
+  // UI metadata
+  isActive: true,
+  modelFamily: "Kie Ai",
+  variantName: "Crisp Image Upscale",
+  displayOrderInFamily: 2,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/image_editing/Recraft_Crisp_Upscale.ts"
 } as const;
 
 export const SCHEMA = {

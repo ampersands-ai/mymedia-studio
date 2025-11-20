@@ -3,7 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "bytedance:2@2", recordId: "734c7712-aae3-4ad2-93b9-df198623503d", modelName: "Seedance V1.0 Pro Fast", provider: "runware", contentType: "video", baseCreditCost: 1.5, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1 } as const;
+export const MODEL_CONFIG = { modelId: "bytedance:2@2", recordId: "734c7712-aae3-4ad2-93b9-df198623503d", modelName: "Seedance V1.0 Pro Fast", provider: "runware", contentType: "video", baseCreditCost: 1.5, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
+  // UI metadata
+  isActive: true,
+  modelFamily: "Seedance",
+  variantName: "Seedance V1.0 Pro Fast",
+  displayOrderInFamily: 3,
+
+  // Lock system
+  isLocked: true,
+  lockedFilePath: "src/lib/models/locked/prompt_to_video/Seedance_V1_0_Pro_Fast_runware.ts" } as const;
 
 export const SCHEMA = { properties: { duration: { default: 5, maximum: 12, minimum: 2, title: "Duration (seconds)", type: "number" }, fps: { default: 24, maximum: 60, minimum: 12, title: "Frames Per Second", type: "number" }, height: { default: 736, showToUser: false, type: "number" }, includeCost: { default: true, showToUser: false, type: "boolean" }, numberResults: { default: 1, maximum: 4, minimum: 1, title: "number of videos", type: "number" }, outputFormat: { default: "mp4", enum: ["mp4", "webm", "mov"], type: "string" }, outputQuality: { default: 85, showToUser: false, type: "number" }, positivePrompt: { title: "Prompt", type: "string" }, providerSettings: { default: { bytedance: { cameraFixed: false } }, showToUser: false, type: "object" }, taskType: { default: "videoInference", showToUser: false, type: "string" }, width: { default: 544, showToUser: false, type: "number" } }, required: ["positivePrompt", "duration", "numberResults", "outputFormat"], type: "object" } as const;
 

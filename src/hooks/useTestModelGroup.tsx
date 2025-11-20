@@ -69,14 +69,23 @@ export const useTestModelGroup = () => {
         description: `Testing all models in group: ${group}`,
       });
 
-      // Fetch all active models with full schema for validation (EXACT SAME as production needs)
-      const { data: models, error: modelsError } = await supabase
-        .from('ai_models')
-        .select('id, record_id, model_name, provider, input_schema, content_type, groups, max_images')
-        .contains('groups', [group])
-        .eq('is_active', true);
+      // Fetch all active models with full schema for validation from registry
+      const { getAllModels } = await import('@/lib/models/registry');
+      const allModules = getAllModels();
 
-      if (modelsError) throw modelsError;
+      // Filter by content type (which maps to group)
+      const models = allModules
+        .filter(m => m.MODEL_CONFIG.isActive && m.MODEL_CONFIG.contentType === group)
+        .map(m => ({
+          id: m.MODEL_CONFIG.modelId,
+          record_id: m.MODEL_CONFIG.recordId,
+          model_name: m.MODEL_CONFIG.modelName,
+          provider: m.MODEL_CONFIG.provider,
+          input_schema: m.SCHEMA,
+          content_type: m.MODEL_CONFIG.contentType,
+          groups: null,
+          max_images: m.MODEL_CONFIG.maxImages
+        }));
 
       if (!models || models.length === 0) {
         throw new Error(`No active models found in group: ${group}`);

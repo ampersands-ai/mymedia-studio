@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "runware:100@1", recordId: "32e98d54-3e47-41f8-ae70-0b0c18b78b8f", modelName: "Flux.1 Schnell", provider: "runware", contentType: "prompt_to_image", baseCreditCost: 0.2, estimatedTimeSeconds: 8, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/public/logos/flux.png",
+  logoUrl: "/logos/flux.png",
   modelFamily: "FLUX",
   variantName: "1 Schnell",
   displayOrderInFamily: 1,

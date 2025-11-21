@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "wan/2-2-a14b-image-to-video-turbo", recordId: "e4ae6c36-dfcb-4fe4-94f3-46962df720b1", modelName: "WAN 2.2 Turbo", provider: "kie_ai", contentType: "image_to_video", baseCreditCost: 15, estimatedTimeSeconds: 180, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/public/logos/wan.png",
+  logoUrl: "/logos/wan.png",
   modelFamily: "WAN",
   variantName: "WAN 2.2 Turbo",
   displayOrderInFamily: 1,

@@ -6,7 +6,7 @@ import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration
 export const MODEL_CONFIG = { modelId: "bytedance/seedream-v4-image-edit", recordId: "57f1e8f3-e4e3-42bd-bd9e-2f2ac6eee41d", modelName: "Seedream V4", provider: "kie_ai", contentType: "image_editing", baseCreditCost: 1, estimatedTimeSeconds: 40, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/public/logos/seedream.png",
+  logoUrl: "/logos/seedream.png",
   modelFamily: "Seedream",
   variantName: "Seedream V4",
   displayOrderInFamily: 2,

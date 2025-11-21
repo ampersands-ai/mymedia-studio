@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "google/imagen4-fast", recordId: "0ff9bb96-041e-4c24-90c5-543064b642ca", modelName: "Google Imagen 4 Fast", provider: "kie_ai", contentType: "prompt_to_image", baseCreditCost: 2, estimatedTimeSeconds: 25, costMultipliers: { num_images: { "1": 1, "2": 2, "3": 3, "4": 4 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/public/logos/google.png",
+  logoUrl: "/logos/google.png",
   modelFamily: "Google",
   variantName: "Imagen 4 Fast",
   displayOrderInFamily: 1,

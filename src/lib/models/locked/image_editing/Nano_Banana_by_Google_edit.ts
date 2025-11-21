@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "google/nano-banana-edit", recordId: "a70d01a3-05de-4918-b934-55a7e5e5d407", modelName: "Nano Banana by Google", provider: "kie_ai", contentType: "image_editing", baseCreditCost: 2, estimatedTimeSeconds: 25, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 10, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/google.svg",
+  logoUrl: "/src/assets/partners/google.png",
   modelFamily: "Google",
   variantName: "Nano Banana",
   displayOrderInFamily: 2,

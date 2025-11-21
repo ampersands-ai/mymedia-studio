@@ -29,7 +29,7 @@ export const MODEL_CONFIG = {
 
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/elevenlabs.svg",
+  logoUrl: "/src/assets/partners/elevenlabs.png",
   modelFamily: "ElevenLabs",
   variantName: "Fast",
   displayOrderInFamily: 1,

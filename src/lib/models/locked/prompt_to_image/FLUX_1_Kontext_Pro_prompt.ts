@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "flux-kontext-pro", recordId: "94b43382-bf4b-490d-82b5-265d14473f9b", modelName: "FLUX.1 Kontext Pro", provider: "kie_ai", contentType: "prompt_to_image", baseCreditCost: 2.5, estimatedTimeSeconds: 50, costMultipliers: {}, apiEndpoint: "/api/v1/flux/kontext/generate", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/flux.svg",
+  logoUrl: "/src/assets/partners/blackforest.svg",
   modelFamily: "FLUX",
   variantName: "1 Kontext Pro",
   displayOrderInFamily: 3,

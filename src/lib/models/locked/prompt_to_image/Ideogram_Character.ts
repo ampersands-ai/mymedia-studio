@@ -6,7 +6,7 @@ import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration
 export const MODEL_CONFIG = { modelId: "ideogram/character", recordId: "a8f5c3e9-7d4b-6f2c-9a1e-5d8b3c7f4a6e", modelName: "Ideogram Character", provider: "kie_ai", contentType: "prompt_to_image", baseCreditCost: 2, estimatedTimeSeconds: 25, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/ideogram.svg",
+  logoUrl: "/src/assets/partners/ideogram.png",
   modelFamily: "Ideogram",
   variantName: "Character",
   displayOrderInFamily: 2,

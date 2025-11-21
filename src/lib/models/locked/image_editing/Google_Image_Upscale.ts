@@ -28,7 +28,7 @@ export const MODEL_CONFIG = {
 
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/google.svg",
+  logoUrl: "/src/assets/partners/google.png",
   modelFamily: "Google",
   variantName: "Google Image Upscale",
   displayOrderInFamily: 2,

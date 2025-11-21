@@ -70,7 +70,7 @@ const Templates = () => {
         .filter(m => allModelRecordIds.has(m.MODEL_CONFIG.recordId))
         .map(m => ({
           record_id: m.MODEL_CONFIG.recordId,
-          base_token_cost: m.MODEL_CONFIG.baseTokenCost
+          base_token_cost: m.MODEL_CONFIG.baseCreditCost
         }));
 
       if (!models) return;

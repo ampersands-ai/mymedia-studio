@@ -20,7 +20,7 @@ export const MODEL_CONFIG = {
 
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/runware.svg",
+  logoUrl: "/src/assets/partners/brain-ai.png",
   modelFamily: "Runware",
   variantName: "Remove Background",
   displayOrderInFamily: 2,

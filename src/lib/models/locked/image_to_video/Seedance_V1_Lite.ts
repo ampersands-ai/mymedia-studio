@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "bytedance/v1-lite-image-to-video", recordId: "d7df81f6-dc86-4e04-9f75-d4e8c9b03fb2", modelName: "Seedance V1 Lite", provider: "kie_ai", contentType: "image_to_video", baseCreditCost: 2, estimatedTimeSeconds: 300, costMultipliers: { duration: { "3": 1, "4": 1.33, "5": 1.66, "6": 2, "7": 2.33, "8": 2.66, "9": 3, "10": 3.33, "11": 3.66, "12": 4 }, resolution: { "480p": 1, "720p": 2.5, "1080p": 5 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/seedance.svg",
+  logoUrl: "/src/assets/partners/seedance.png",
   modelFamily: "Seedance",
   variantName: "Seedance V1 Lite",
   displayOrderInFamily: 1,

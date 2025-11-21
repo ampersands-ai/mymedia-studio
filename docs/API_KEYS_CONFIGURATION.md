@@ -8,11 +8,20 @@ The `get-api-key` Edge Function automatically routes to the correct API key base
 1. **Provider** (runware or kie_ai)
 2. **Model type** or **Specific model ID**
 
-## Provider Detection
+## Provider Parameter (Required)
 
-The system automatically infers the provider:
-- Models with `runware:` or `bytedance:` prefix → **provider = runware**
-- Models with `recordId` → **provider = kie_ai**
+The `provider` parameter is **required** and must be explicitly passed by all models:
+- KIE AI models: `provider: "kie_ai"`
+- Runware models: `provider: "runware"`
+
+**Why explicit provider (industry standard):**
+- ✅ **Explicit over implicit** - No magic inference logic
+- ✅ **Self-documenting code** - Clear which provider each model uses
+- ✅ **Type safety** - Required parameters catch errors at compile time
+- ✅ **Easier debugging** - No guessing what was inferred
+- ✅ **Maintainability** - Future developers understand immediately
+
+All 28 model files now explicitly pass `provider: MODEL_CONFIG.provider` to the `get-api-key` Edge Function.
 
 ---
 

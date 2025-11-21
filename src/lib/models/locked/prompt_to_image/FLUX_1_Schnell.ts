@@ -1,4 +1,4 @@
-/** FLUX.1 Schnell prompt_to_image - Record: schnell */
+/** FLUX.1 Schnell prompt_to_image - Record: 8b3e9d2f-5c6a-7f1b-2e9c-4d5a8f3b7c1e */
 import { getGenerationType } from '@/lib/models/registry';
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
@@ -6,7 +6,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = {
   modelId: "runware:flux-schnell",
-  recordId: "schnell",
+  recordId: "8b3e9d2f-5c6a-7f1b-2e9c-4d5a8f3b7c1e",
   modelName: "FLUX.1 Schnell",
   provider: "runware",
   contentType: "prompt_to_image",

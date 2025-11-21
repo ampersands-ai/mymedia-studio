@@ -135,14 +135,12 @@ export default function AIModelsDashboard() {
     setSaving(true);
     const { error } = await supabase
       .from("app_settings")
-      .upsert(
-        {
-          setting_key: "model_visibility",
-          setting_value: newSettings,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "setting_key" }
-      );
+      .upsert({
+        setting_key: "model_visibility",
+        setting_value: newSettings as any,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("setting_key", "model_visibility");
 
     setSaving(false);
     if (error) {
@@ -429,7 +427,13 @@ export default function AIModelsDashboard() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           {model.logo_url && (
-                            <img src={model.logo_url} alt="" className="h-6 w-6 rounded object-contain" />
+                            <div className="h-6 w-6 rounded bg-white/90 dark:bg-white/95 p-0.5 flex items-center justify-center flex-shrink-0 shadow-sm">
+                              <img 
+                                src={model.logo_url} 
+                                alt={model.model_name || ""} 
+                                className="h-full w-full object-contain" 
+                              />
+                            </div>
                           )}
                           <div>
                             <div className="font-medium">{model.model_name}</div>

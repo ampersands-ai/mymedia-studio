@@ -20,7 +20,7 @@ export const MODEL_CONFIG = {
 
   // UI metadata
   isActive: true,
-  logoUrl: "/public/logos/plum.png",
+  logoUrl: "/logos/plum.png",
   modelFamily: "Runware",
   variantName: "Remove Background",
   displayOrderInFamily: 2,

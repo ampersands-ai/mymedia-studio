@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "seedance/v1-lite", recordId: "e8d7c6b5-7e4f-3c2d-8a1f-5d7b8c9e4a6f", modelName: "Seedance V1 Lite", provider: "kie_ai", contentType: "prompt_to_video", baseCreditCost: 8, estimatedTimeSeconds: 90, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/public/logos/seedream.png",
+  logoUrl: "/logos/seedream.png",
   modelFamily: "Seedance",
   variantName: "Seedance V1 Lite",
   displayOrderInFamily: 1,

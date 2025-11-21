@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "grok-imagine/text-to-image", recordId: "49a79e90-830d-40ff-ad05-447cf0232592", modelName: "Grok Imagine", provider: "kie_ai", contentType: "prompt_to_image", baseCreditCost: 2, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 6, 
   // UI metadata
   isActive: true,
-  logoUrl: "/public/logos/grok.png",
+  logoUrl: "/logos/grok.png",
   modelFamily: "xAI",
   variantName: "Grok Imagine",
   displayOrderInFamily: 2,

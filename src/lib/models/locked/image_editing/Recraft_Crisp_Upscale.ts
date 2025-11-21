@@ -29,7 +29,7 @@ export const MODEL_CONFIG = {
 
   // UI metadata
   isActive: true,
-  logoUrl: "/public/logos/recraft.png",
+  logoUrl: "/logos/recraft.png",
   modelFamily: "Kie Ai",
   variantName: "Crisp Image Upscale",
   displayOrderInFamily: 2,

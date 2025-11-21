@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "sora-2-text-to-video", recordId: "5f8a9b3c-d1e2-4a7b-9c6d-3e8f1a2b5c7d", modelName: "Sora 2 by OpenAI (Watermarked)", provider: "kie_ai", contentType: "prompt_to_video", baseCreditCost: 50, estimatedTimeSeconds: 360, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/public/logos/sora.png",
+  logoUrl: "/logos/sora.png",
   modelFamily: "OpenAI",
   variantName: "Sora 2 by OpenAI (Watermarked)",
   displayOrderInFamily: 2,

@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "runware:97@2", recordId: "79ce627d-f90c-47b2-ae3f-9437d93f4529", modelName: "HiDream Dev", provider: "runware", contentType: "prompt_to_image", baseCreditCost: 0.5, estimatedTimeSeconds: 15, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "direct", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/public/logos/hidream.png",
+  logoUrl: "/logos/hidream.png",
   modelFamily: "HiDream",
   variantName: "Dev",
   displayOrderInFamily: 2,

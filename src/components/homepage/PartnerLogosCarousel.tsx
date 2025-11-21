@@ -3,41 +3,23 @@ import { Autoplay, FreeMode } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/free-mode';
 
-// Import partner logos
-import xai from '@/assets/partners/xai.jpg';
-import midjourney from '@/assets/partners/midjourney.png';
-import metaGradient from '@/assets/partners/meta-gradient.png';
-import anthropic from '@/assets/partners/anthropic.png';
-import perplexity from '@/assets/partners/perplexity.png';
-import googleBars from '@/assets/partners/google-bars.png';
-import sora from '@/assets/partners/sora.png';
-import grok from '@/assets/partners/grok.png';
-import suno from '@/assets/partners/suno.jpeg';
-import plum from '@/assets/partners/plum.png';
-import minimax from '@/assets/partners/minimax.png';
-import brainAi from '@/assets/partners/brain-ai.png';
-import geometric from '@/assets/partners/geometric.jpg';
-import meta from '@/assets/partners/meta.jpeg';
-import google from '@/assets/partners/google.png';
-import hidream from '@/assets/partners/hidream.png';
-
 const partners: { name: string; logo: string }[] = [
-  { name: 'HiDream AI', logo: hidream },
-  { name: 'xAI', logo: xai },
-  { name: 'Midjourney', logo: midjourney },
-  { name: 'Meta', logo: metaGradient },
-  { name: 'Anthropic', logo: anthropic },
-  { name: 'Perplexity', logo: perplexity },
-  { name: 'Google', logo: googleBars },
-  { name: 'Sora', logo: sora },
-  { name: 'Grok', logo: grok },
-  { name: 'Suno', logo: suno },
-  { name: 'Plum AI', logo: plum },
-  { name: 'Minimax', logo: minimax },
-  { name: 'Brain AI', logo: brainAi },
-  { name: 'Geometric AI', logo: geometric },
-  { name: 'Meta AI', logo: meta },
-  { name: 'Google AI', logo: google },
+  { name: 'xAI', logo: '/logos/xai.png' },
+  { name: 'Midjourney', logo: '/logos/midjourney.png' },
+  { name: 'Anthropic', logo: '/logos/anthropic.png' },
+  { name: 'Google', logo: '/logos/google.png' },
+  { name: 'OpenAI', logo: '/logos/openai.png' },
+  { name: 'Sora', logo: '/logos/sora.png' },
+  { name: 'Grok', logo: '/logos/grok.png' },
+  { name: 'Suno', logo: '/logos/suno.png' },
+  { name: 'Plum AI', logo: '/logos/plum.png' },
+  { name: 'Minimax', logo: '/logos/minimax.png' },
+  { name: 'HiDream', logo: '/logos/hidream.png' },
+  { name: 'Runway', logo: '/logos/runway.png' },
+  { name: 'Kling', logo: '/logos/kling.png' },
+  { name: 'Ideogram', logo: '/logos/ideogram.png' },
+  { name: 'Flux', logo: '/logos/flux.png' },
+  { name: 'ElevenLabs', logo: '/logos/elevenlabs.png' },
 ];
 
 export const PartnerLogosCarousel = () => {
@@ -47,15 +29,15 @@ export const PartnerLogosCarousel = () => {
       <p className="text-sm text-white/70 text-center md:text-left font-medium tracking-wide">
         Powered by 16+ leading AI providers
       </p>
-      
+
       {/* Carousel container */}
       <div className="relative rounded-2xl backdrop-blur-sm bg-black/10 border border-white/10 py-6 overflow-hidden">
         {/* Left fade gradient */}
         <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-black/50 to-transparent z-10 pointer-events-none" />
-        
+
         {/* Right fade gradient */}
         <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-black/50 to-transparent z-10 pointer-events-none" />
-        
+
         <Swiper
           modules={[Autoplay, FreeMode]}
           slidesPerView="auto"

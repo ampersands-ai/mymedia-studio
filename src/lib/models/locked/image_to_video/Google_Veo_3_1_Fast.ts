@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "veo3_fast", recordId: "8aac94cb-5625-47f4-880c-4f0fd8bd83a1", modelName: "Google Veo 3.1 Fast", provider: "kie_ai", contentType: "image_to_video", baseCreditCost: 30, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/veo/generate", payloadStructure: "flat", maxImages: 2, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/src/assets/partners/google.png",
+  logoUrl: "/public/logos/google.png",
   modelFamily: "Google",
   variantName: "Veo 3.1 Fast",
   displayOrderInFamily: 1,

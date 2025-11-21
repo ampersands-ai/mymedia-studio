@@ -6,7 +6,7 @@ import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration
 export const MODEL_CONFIG = { modelId: "V5", recordId: "5c544c90-9344-4acb-9129-0acb9a6a915a", modelName: "Suno", provider: "kie_ai", contentType: "prompt_to_audio", baseCreditCost: 6, estimatedTimeSeconds: 180, costMultipliers: {}, apiEndpoint: "/api/v1/generate", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/src/assets/partners/suno.svg",
+  logoUrl: "/public/logos/suno.png",
   modelFamily: "Suno",
   variantName: "Suno",
   displayOrderInFamily: 2,

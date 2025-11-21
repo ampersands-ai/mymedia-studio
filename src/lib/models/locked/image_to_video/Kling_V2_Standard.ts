@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "kling/v2-1-standard", recordId: "88e09730-07e0-4481-bda8-d9d9bde9fec6", modelName: "Kling V2 Standard", provider: "kie_ai", contentType: "image_to_video", baseCreditCost: 6, estimatedTimeSeconds: 300, costMultipliers: { duration: { "10": 2, "5": 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/src/assets/partners/kling.png",
+  logoUrl: "/public/logos/kling.png",
   modelFamily: "Kling",
   variantName: "V2 Standard",
   displayOrderInFamily: 2,

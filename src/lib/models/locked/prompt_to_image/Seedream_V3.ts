@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "bytedance/seedream", recordId: "ac90c626-ab01-4bc0-a000-9b952ddbde0e", modelName: "Seedream V3", provider: "kie_ai", contentType: "prompt_to_image", baseCreditCost: 1.75, estimatedTimeSeconds: 20, costMultipliers: { "max_images": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/src/assets/partners/bytedance.png",
+  logoUrl: "/public/logos/seedream.png",
   modelFamily: "Seedream",
   variantName: "Seedream V3",
   displayOrderInFamily: 2,

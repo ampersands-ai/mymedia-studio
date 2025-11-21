@@ -32,7 +32,7 @@ export const MODEL_CONFIG = {
 
   // UI metadata
   isActive: true,
-  logoUrl: "/src/assets/partners/chatgpt.png",
+  logoUrl: "/public/logos/openai.png",
   modelFamily: "OpenAI",
   variantName: "ChatGPT 4o-Image",
   displayOrderInFamily: 2,

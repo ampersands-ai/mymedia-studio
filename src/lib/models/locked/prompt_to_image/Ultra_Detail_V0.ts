@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "ultra-detail/v0", recordId: "f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e", modelName: "Ultra Detail V0", provider: "kie_ai", contentType: "prompt_to_image", baseCreditCost: 3.5, estimatedTimeSeconds: 45, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/src/assets/partners/brain-ai.png",
+  logoUrl: "/public/logos/plum.png",
   modelFamily: "Ultra Detail",
   variantName: "Ultra Detail V0",
   displayOrderInFamily: 3,

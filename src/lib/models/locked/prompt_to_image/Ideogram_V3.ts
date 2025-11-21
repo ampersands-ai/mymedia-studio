@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "ideogram/v3-text-to-image", recordId: "94c0e508-226a-4e3d-8229-3820a61faa88", modelName: "Ideogram V3", provider: "kie_ai", contentType: "prompt_to_image", baseCreditCost: 1.75, estimatedTimeSeconds: 35, costMultipliers: { "num_images": { "1": 1, "2": 2, "3": 3, "4": 4 }, "rendering_speed": { "BALANCED": 2, "QUALITY": 3, "TURBO": 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/src/assets/partners/ideogram.png",
+  logoUrl: "/public/logos/ideogram.png",
   modelFamily: "Ideogram",
   variantName: "V3",
   displayOrderInFamily: 2,

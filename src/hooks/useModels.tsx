@@ -10,6 +10,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { getAllModels } from "@/lib/models/registry";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface AIModel {
   record_id: string;
@@ -38,16 +39,37 @@ export interface AIModel {
   locked_file_path?: string | null;
 }
 
+interface VisibilitySettings {
+  visible: Record<string, boolean>;
+  deactivated: Record<string, boolean>;
+}
+
 export const useModels = () => {
   return useQuery<AIModel[]>({
     queryKey: ["ai-models"],
     queryFn: async () => {
+      // Fetch visibility settings from database
+      const { data: settingsData } = await supabase
+        .from("app_settings")
+        .select("setting_value")
+        .eq("setting_key", "model_visibility")
+        .maybeSingle();
+
+      const visibility: VisibilitySettings = settingsData?.setting_value as VisibilitySettings || { visible: {}, deactivated: {} };
+
       // Read directly from registry (no database query!)
       const modules = getAllModels();
 
       // Transform ModelModule[] to AIModel[] format
       return modules
-        .filter(m => m.MODEL_CONFIG.isActive) // Only return active models
+        .filter(m => {
+          const recordId = m.MODEL_CONFIG.recordId;
+          // Check if deactivated in admin settings
+          if (visibility.deactivated[recordId]) return false;
+          // Check visibility override, fall back to isActive from registry
+          if (recordId in visibility.visible) return visibility.visible[recordId];
+          return m.MODEL_CONFIG.isActive;
+        })
         .map(m => ({
           // Core fields (snake_case to match original interface)
           record_id: m.MODEL_CONFIG.recordId,

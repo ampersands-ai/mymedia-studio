@@ -217,11 +217,7 @@ export default function AIModelsManager() {
 
   const handleToggleStatus = (recordId: string, currentStatus: boolean) => {
     const model = models.find(m => m.record_id === recordId);
-
-    if (model?.is_locked) {
-      toast.error("Cannot modify locked model. Unlock it first.");
-      return;
-    }
+    if (!model) return;
 
     const updates: ModelUpdatePayload = {
       recordId,
@@ -229,18 +225,14 @@ export default function AIModelsManager() {
     };
 
     setPendingChanges([...pendingChanges, updates]);
-    toast.success(`Status change queued. Download update script to apply.`);
+    toast.success(`Status change queued for ${model.model_name}. Download update script to apply.`);
   };
 
   const handleDelete = (recordId: string) => {
     const model = models.find(m => m.record_id === recordId);
+    if (!model) return;
 
-    if (model?.is_locked) {
-      toast.error("Cannot delete locked model. Unlock it first.");
-      return;
-    }
-
-    if (!confirm("This will deactivate the model (set is_active: false). Continue?")) {
+    if (!confirm(`This will deactivate ${model.model_name} (set is_active: false). Continue?`)) {
       return;
     }
 
@@ -278,10 +270,10 @@ export default function AIModelsManager() {
   };
 
   const handleEnableAll = () => {
-    const inactiveModels = models.filter(m => !m.is_active && !m.is_locked);
+    const inactiveModels = models.filter(m => !m.is_active);
 
     if (inactiveModels.length === 0) {
-      toast.info("All unlocked models are already active");
+      toast.info("All models are already active");
       return;
     }
 
@@ -295,9 +287,9 @@ export default function AIModelsManager() {
   };
 
   const handleDisableAll = () => {
-    if (!confirm("Disable all unlocked active models?")) return;
+    if (!confirm("Disable all active models? This will generate a script to update TypeScript files.")) return;
 
-    const activeModels = models.filter(m => m.is_active && !m.is_locked);
+    const activeModels = models.filter(m => m.is_active);
     const bulkUpdates = activeModels.map(m => ({
       recordId: m.record_id,
       updates: { is_active: false }
@@ -764,8 +756,7 @@ export default function AIModelsManager() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleEdit(model)}
-                            disabled={model.is_locked}
-                            title={model.is_locked ? "Locked - cannot edit" : "Edit model"}
+                            title="Edit model (generates update script)"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -783,8 +774,7 @@ export default function AIModelsManager() {
                             onClick={() =>
                               handleToggleStatus(model.record_id, model.is_active)
                             }
-                            disabled={model.is_locked}
-                            title={model.is_locked ? "Locked - cannot toggle" : "Toggle status"}
+                            title="Toggle status (generates update script)"
                           >
                             {model.is_active ? (
                               <PowerOff className="h-4 w-4" />

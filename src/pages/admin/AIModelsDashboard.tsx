@@ -134,19 +134,16 @@ export default function AIModelsDashboard() {
   const saveSettings = async (newSettings: VisibilitySettings) => {
     setSaving(true);
 
-    // Delete existing then insert (avoids race conditions with upsert)
-    await supabase
-      .from("app_settings")
-      .delete()
-      .eq("setting_key", "model_visibility");
-
     const { error } = await supabase
       .from("app_settings")
-      .insert({
-        setting_key: "model_visibility",
-        setting_value: newSettings as any,
-        updated_at: new Date().toISOString(),
-      });
+      .upsert(
+        {
+          setting_key: "model_visibility",
+          setting_value: newSettings as any,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "setting_key", ignoreDuplicates: false }
+      );
 
     setSaving(false);
     if (error) {

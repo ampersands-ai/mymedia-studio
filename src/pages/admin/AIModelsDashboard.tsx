@@ -6,9 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, Search, Eye, EyeOff, CheckCircle, XCircle, Clock } from "lucide-react";
+import { ChevronDown, ChevronRight, Search, Eye, EyeOff, Ban, EyeIcon } from "lucide-react";
 import { toast } from "sonner";
 import { getAllModels, type ModelModule } from "@/lib/models/registry";
 import { useQuery } from "@tanstack/react-query";
@@ -29,13 +28,19 @@ interface ModelStats {
   failed: number;
 }
 
+interface VisibilitySettings {
+  visible: Record<string, boolean>;
+  deactivated: Record<string, boolean>;
+}
+
 export default function AIModelsDashboard() {
   const [search, setSearch] = useState("");
   const [contentTypeFilter, setContentTypeFilter] = useState<string>("all");
   const [providerFilter, setProviderFilter] = useState<string>("all");
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("week");
   const [expandedModel, setExpandedModel] = useState<string | null>(null);
-  const [visibilityOverrides, setVisibilityOverrides] = useState<Record<string, boolean>>({});
+  const [settings, setSettings] = useState<VisibilitySettings>({ visible: {}, deactivated: {} });
+  const [saving, setSaving] = useState(false);
 
   // Get all models from registry
   const models = useMemo(() => {
@@ -57,9 +62,9 @@ export default function AIModelsDashboard() {
   const providers = useMemo(() => [...new Set(models.map(m => m.provider))].sort(), [models]);
   const contentTypes = useMemo(() => [...new Set(models.map(m => m.content_type))].sort(), [models]);
 
-  // Fetch visibility overrides from database
+  // Fetch visibility settings from database
   useEffect(() => {
-    const fetchVisibility = async () => {
+    const fetchSettings = async () => {
       const { data } = await supabase
         .from("app_settings")
         .select("setting_value")
@@ -67,10 +72,14 @@ export default function AIModelsDashboard() {
         .single();
 
       if (data?.setting_value && typeof data.setting_value === 'object') {
-        setVisibilityOverrides(data.setting_value as Record<string, boolean>);
+        const val = data.setting_value as any;
+        setSettings({
+          visible: val.visible || {},
+          deactivated: val.deactivated || {},
+        });
       }
     };
-    fetchVisibility();
+    fetchSettings();
   }, []);
 
   // Fetch generation stats
@@ -118,41 +127,111 @@ export default function AIModelsDashboard() {
 
       return statsByModel;
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
   });
 
-  // Toggle visibility for a model
-  const toggleVisibility = async (recordId: string, currentVisible: boolean) => {
-    const newOverrides = {
-      ...visibilityOverrides,
-      [recordId]: !currentVisible,
-    };
-
-    setVisibilityOverrides(newOverrides);
-
+  // Save settings to database
+  const saveSettings = async (newSettings: VisibilitySettings) => {
+    setSaving(true);
     const { error } = await supabase
       .from("app_settings")
-      .upsert({
-        setting_key: "model_visibility",
-        setting_value: newOverrides,
-        updated_at: new Date().toISOString(),
-      });
+      .upsert(
+        {
+          setting_key: "model_visibility",
+          setting_value: newSettings,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "setting_key" }
+      );
 
+    setSaving(false);
     if (error) {
-      toast.error("Failed to update visibility");
-      // Revert on error
-      setVisibilityOverrides(visibilityOverrides);
+      toast.error("Failed to update: " + error.message);
+      return false;
+    }
+    return true;
+  };
+
+  // Toggle visibility for a model
+  const toggleVisibility = async (recordId: string) => {
+    const currentVisible = isVisibleToUsers(recordId);
+    const newSettings = {
+      ...settings,
+      visible: {
+        ...settings.visible,
+        [recordId]: !currentVisible,
+      },
+    };
+    setSettings(newSettings);
+    const success = await saveSettings(newSettings);
+    if (success) {
+      toast.success(`Model ${!currentVisible ? "shown" : "hidden"}`);
     } else {
-      toast.success(`Model ${!currentVisible ? "shown" : "hidden"} from users`);
+      setSettings(settings); // Revert
+    }
+  };
+
+  // Toggle deactivate for a model
+  const toggleDeactivate = async (recordId: string) => {
+    const currentDeactivated = settings.deactivated[recordId] || false;
+    const newSettings = {
+      ...settings,
+      deactivated: {
+        ...settings.deactivated,
+        [recordId]: !currentDeactivated,
+      },
+    };
+    setSettings(newSettings);
+    const success = await saveSettings(newSettings);
+    if (success) {
+      toast.success(`Model ${!currentDeactivated ? "deactivated" : "activated"}`);
+    } else {
+      setSettings(settings); // Revert
+    }
+  };
+
+  // Show all (non-deactivated) models
+  const showAll = async () => {
+    const newVisible: Record<string, boolean> = {};
+    models.forEach(m => {
+      if (!settings.deactivated[m.record_id]) {
+        newVisible[m.record_id] = true;
+      } else {
+        newVisible[m.record_id] = settings.visible[m.record_id] ?? false;
+      }
+    });
+    const newSettings = { ...settings, visible: newVisible };
+    setSettings(newSettings);
+    const success = await saveSettings(newSettings);
+    if (success) {
+      toast.success("All non-deactivated models are now visible");
+    }
+  };
+
+  // Hide all (non-deactivated) models
+  const hideAll = async () => {
+    const newVisible: Record<string, boolean> = {};
+    models.forEach(m => {
+      if (!settings.deactivated[m.record_id]) {
+        newVisible[m.record_id] = false;
+      } else {
+        newVisible[m.record_id] = settings.visible[m.record_id] ?? false;
+      }
+    });
+    const newSettings = { ...settings, visible: newVisible };
+    setSettings(newSettings);
+    const success = await saveSettings(newSettings);
+    if (success) {
+      toast.success("All non-deactivated models are now hidden");
     }
   };
 
   // Check if model is visible to users
-  const isVisibleToUsers = (recordId: string, isActive: boolean) => {
-    if (recordId in visibilityOverrides) {
-      return visibilityOverrides[recordId];
-    }
-    return isActive; // Default to is_active from registry
+  const isVisibleToUsers = (recordId: string) => {
+    if (settings.deactivated[recordId]) return false;
+    if (recordId in settings.visible) return settings.visible[recordId];
+    const model = models.find(m => m.record_id === recordId);
+    return model?.is_active ?? true;
   };
 
   // Filter models
@@ -179,25 +258,38 @@ export default function AIModelsDashboard() {
   // Summary stats
   const summaryStats = useMemo(() => {
     const totalModels = models.length;
-    const visibleModels = models.filter(m => isVisibleToUsers(m.record_id, m.is_active)).length;
+    const visibleModels = models.filter(m => isVisibleToUsers(m.record_id)).length;
+    const deactivatedModels = models.filter(m => settings.deactivated[m.record_id]).length;
     const totalRuns = Object.values(stats || {}).reduce((sum, s) => sum + s.total, 0);
     const successRate = totalRuns > 0
       ? Math.round((Object.values(stats || {}).reduce((sum, s) => sum + s.successful, 0) / totalRuns) * 100)
       : 0;
-    return { totalModels, visibleModels, totalRuns, successRate };
-  }, [models, stats, visibilityOverrides]);
+    return { totalModels, visibleModels, deactivatedModels, totalRuns, successRate };
+  }, [models, stats, settings]);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">AI Models Dashboard</h1>
-        <p className="text-muted-foreground">
-          View-only overview of all AI models and their performance
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold">AI Models Dashboard</h1>
+          <p className="text-muted-foreground">
+            View-only overview of all AI models and their performance
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={showAll} disabled={saving}>
+            <EyeIcon className="h-4 w-4 mr-2" />
+            Show All
+          </Button>
+          <Button variant="outline" onClick={hideAll} disabled={saving}>
+            <EyeOff className="h-4 w-4 mr-2" />
+            Hide All
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Models</CardTitle>
@@ -211,7 +303,15 @@ export default function AIModelsDashboard() {
             <CardTitle className="text-sm font-medium">Visible to Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{summaryStats.visibleModels}</div>
+            <div className="text-2xl font-bold text-green-600">{summaryStats.visibleModels}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Deactivated</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{summaryStats.deactivatedModels}</div>
           </CardContent>
         </Card>
         <Card>
@@ -300,6 +400,7 @@ export default function AIModelsDashboard() {
                 <TableHead>Type</TableHead>
                 <TableHead className="text-right">Cost</TableHead>
                 <TableHead className="text-center">Visible</TableHead>
+                <TableHead className="text-center">Deactivated</TableHead>
                 <TableHead className="text-right">Runs</TableHead>
                 <TableHead className="text-right">Success</TableHead>
                 <TableHead className="text-right">Failed</TableHead>
@@ -308,12 +409,13 @@ export default function AIModelsDashboard() {
             <TableBody>
               {filteredModels.map(model => {
                 const modelStats = stats?.[model.record_id] || { total: 0, successful: 0, failed: 0 };
-                const visible = isVisibleToUsers(model.record_id, model.is_active);
+                const visible = isVisibleToUsers(model.record_id);
+                const deactivated = settings.deactivated[model.record_id] || false;
                 const isExpanded = expandedModel === model.record_id;
 
                 return (
                   <>
-                    <TableRow key={model.record_id} className="cursor-pointer hover:bg-muted/50">
+                    <TableRow key={model.record_id} className={`cursor-pointer hover:bg-muted/50 ${deactivated ? 'opacity-50' : ''}`}>
                       <TableCell>
                         <Button
                           variant="ghost"
@@ -350,13 +452,24 @@ export default function AIModelsDashboard() {
                         <div className="flex items-center justify-center gap-2">
                           <Switch
                             checked={visible}
-                            onCheckedChange={() => toggleVisibility(model.record_id, visible)}
+                            onCheckedChange={() => toggleVisibility(model.record_id)}
+                            disabled={deactivated || saving}
                           />
                           {visible ? (
                             <Eye className="h-4 w-4 text-green-500" />
                           ) : (
                             <EyeOff className="h-4 w-4 text-muted-foreground" />
                           )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Switch
+                            checked={deactivated}
+                            onCheckedChange={() => toggleDeactivate(model.record_id)}
+                            disabled={saving}
+                          />
+                          {deactivated && <Ban className="h-4 w-4 text-red-500" />}
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-mono">
@@ -371,7 +484,7 @@ export default function AIModelsDashboard() {
                     </TableRow>
                     {isExpanded && (
                       <TableRow key={`${model.record_id}-expanded`}>
-                        <TableCell colSpan={9} className="bg-muted/30 p-4">
+                        <TableCell colSpan={10} className="bg-muted/30 p-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <h4 className="font-semibold mb-2">Schema Properties</h4>

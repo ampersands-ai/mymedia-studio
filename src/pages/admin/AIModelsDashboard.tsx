@@ -133,14 +133,36 @@ export default function AIModelsDashboard() {
   // Save settings to database
   const saveSettings = async (newSettings: VisibilitySettings) => {
     setSaving(true);
-    const { error } = await supabase
+
+    // Check if record exists
+    const { data: existing } = await supabase
       .from("app_settings")
-      .upsert({
-        setting_key: "model_visibility",
-        setting_value: newSettings as any,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("setting_key", "model_visibility");
+      .select("setting_key")
+      .eq("setting_key", "model_visibility")
+      .single();
+
+    let error;
+    if (existing) {
+      // Update existing record
+      const result = await supabase
+        .from("app_settings")
+        .update({
+          setting_value: newSettings as any,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("setting_key", "model_visibility");
+      error = result.error;
+    } else {
+      // Insert new record
+      const result = await supabase
+        .from("app_settings")
+        .insert({
+          setting_key: "model_visibility",
+          setting_value: newSettings as any,
+          updated_at: new Date().toISOString(),
+        });
+      error = result.error;
+    }
 
     setSaving(false);
     if (error) {

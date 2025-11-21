@@ -92,7 +92,7 @@ const Features = () => {
                       <Card key={model.record_id} className="hover:border-primary transition-colors">
                         <CardContent className="p-6">
                           <div className="flex items-start gap-4 mb-4">
-                            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0 p-2">
+                            <div className="w-12 h-12 rounded-lg bg-white/90 dark:bg-white/95 flex items-center justify-center flex-shrink-0 p-2 shadow-sm">
                               {model.logo_url ? (
                                 <img 
                                   src={model.logo_url} 
@@ -100,7 +100,9 @@ const Features = () => {
                                   className="w-full h-full object-contain"
                                 />
                               ) : (
-                                <Icon className="h-6 w-6 text-primary" />
+                                <div className="w-full h-full rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                                  <Icon className="h-6 w-6 text-primary" />
+                                </div>
                               )}
                             </div>
                             <div className="flex-1 min-w-0">

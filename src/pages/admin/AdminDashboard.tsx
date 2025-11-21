@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ModelHealthWidget } from "@/components/admin/model-health/ModelHealthWidget";
+import { getAllModels } from "@/lib/models/registry";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -26,15 +27,10 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch models count
-        const { count: totalModels } = await supabase
-          .from("ai_models")
-          .select("*", { count: "exact", head: true });
-
-        const { count: activeModels } = await supabase
-          .from("ai_models")
-          .select("*", { count: "exact", head: true })
-          .eq("is_active", true);
+        // Fetch models count from registry (not database)
+        const allModels = getAllModels();
+        const totalModels = allModels.length;
+        const activeModels = allModels.filter(m => m.MODEL_CONFIG.isActive).length;
 
         // Fetch templates count
         const { count: totalTemplates } = await supabase
@@ -79,8 +75,8 @@ export default function AdminDashboard() {
           .single();
 
         setStats({
-          totalModels: totalModels || 0,
-          activeModels: activeModels || 0,
+          totalModels,
+          activeModels,
           totalTemplates: totalTemplates || 0,
           activeTemplates: activeTemplates || 0,
           todayGenerations: todayGenerations || 0,

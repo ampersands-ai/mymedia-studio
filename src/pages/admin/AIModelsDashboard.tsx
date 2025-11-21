@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, Search, Eye, EyeOff, Ban, EyeIcon } from "lucide-react";
+import { ChevronDown, ChevronRight, Search, Eye, EyeOff, Ban, EyeIcon, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { getAllModels, type ModelModule } from "@/lib/models/registry";
 import { useQuery } from "@tanstack/react-query";
@@ -21,6 +21,9 @@ const CONTENT_TYPE_LABELS: Record<string, string> = {
 };
 
 type TimePeriod = "day" | "week" | "month" | "all";
+
+type SortField = "model_name" | "provider" | "content_type" | "base_cost" | "visible" | "deactivated" | "runs" | "successful" | "failed";
+type SortDirection = "asc" | "desc" | null;
 
 interface ModelStats {
   total: number;
@@ -41,6 +44,8 @@ export default function AIModelsDashboard() {
   const [expandedModel, setExpandedModel] = useState<string | null>(null);
   const [settings, setSettings] = useState<VisibilitySettings>({ visible: {}, deactivated: {} });
   const [saving, setSaving] = useState(false);
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
   // Get all models from registry
   const models = useMemo(() => {
@@ -235,9 +240,40 @@ export default function AIModelsDashboard() {
     return model?.is_active ?? true;
   };
 
-  // Filter models
+  // Handle column sorting
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      // Toggle direction: asc -> desc -> null (no sort)
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortDirection(null);
+        setSortField(null);
+      }
+    } else {
+      // New field, start with ascending
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  // Render sort icon based on current sort state
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    }
+    if (sortDirection === "asc") {
+      return <ArrowUp className="ml-2 h-4 w-4" />;
+    }
+    if (sortDirection === "desc") {
+      return <ArrowDown className="ml-2 h-4 w-4" />;
+    }
+    return <ArrowUpDown className="ml-2 h-4 w-4" />;
+  };
+
+  // Filter and sort models
   const filteredModels = useMemo(() => {
-    return models.filter(m => {
+    let filtered = models.filter(m => {
       if (search) {
         const searchLower = search.toLowerCase();
         if (!m.model_name.toLowerCase().includes(searchLower) &&
@@ -254,7 +290,62 @@ export default function AIModelsDashboard() {
       }
       return true;
     });
-  }, [models, search, contentTypeFilter, providerFilter]);
+
+    // Apply sorting
+    if (sortField && sortDirection) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue: any;
+        let bValue: any;
+
+        switch (sortField) {
+          case "model_name":
+            aValue = a.model_name.toLowerCase();
+            bValue = b.model_name.toLowerCase();
+            break;
+          case "provider":
+            aValue = a.provider.toLowerCase();
+            bValue = b.provider.toLowerCase();
+            break;
+          case "content_type":
+            aValue = a.content_type.toLowerCase();
+            bValue = b.content_type.toLowerCase();
+            break;
+          case "base_cost":
+            aValue = a.base_cost;
+            bValue = b.base_cost;
+            break;
+          case "visible":
+            aValue = isVisibleToUsers(a.record_id) ? 1 : 0;
+            bValue = isVisibleToUsers(b.record_id) ? 1 : 0;
+            break;
+          case "deactivated":
+            aValue = settings.deactivated[a.record_id] ? 1 : 0;
+            bValue = settings.deactivated[b.record_id] ? 1 : 0;
+            break;
+          case "runs":
+            aValue = stats?.[a.record_id]?.total || 0;
+            bValue = stats?.[b.record_id]?.total || 0;
+            break;
+          case "successful":
+            aValue = stats?.[a.record_id]?.successful || 0;
+            bValue = stats?.[b.record_id]?.successful || 0;
+            break;
+          case "failed":
+            aValue = stats?.[a.record_id]?.failed || 0;
+            bValue = stats?.[b.record_id]?.failed || 0;
+            break;
+          default:
+            return 0;
+        }
+
+        if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+        if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [models, search, contentTypeFilter, providerFilter, sortField, sortDirection, stats, settings]);
 
   // Summary stats
   const summaryStats = useMemo(() => {
@@ -396,15 +487,87 @@ export default function AIModelsDashboard() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[40px]"></TableHead>
-                <TableHead>Model</TableHead>
-                <TableHead>Provider</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Cost</TableHead>
-                <TableHead className="text-center">Visible</TableHead>
-                <TableHead className="text-center">Deactivated</TableHead>
-                <TableHead className="text-right">Runs</TableHead>
-                <TableHead className="text-right">Success</TableHead>
-                <TableHead className="text-right">Failed</TableHead>
+                <TableHead
+                  className="cursor-pointer select-none hover:bg-muted/50"
+                  onClick={() => handleSort("model_name")}
+                >
+                  <div className="flex items-center">
+                    Model
+                    {renderSortIcon("model_name")}
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer select-none hover:bg-muted/50"
+                  onClick={() => handleSort("provider")}
+                >
+                  <div className="flex items-center">
+                    Provider
+                    {renderSortIcon("provider")}
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer select-none hover:bg-muted/50"
+                  onClick={() => handleSort("content_type")}
+                >
+                  <div className="flex items-center">
+                    Type
+                    {renderSortIcon("content_type")}
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="text-right cursor-pointer select-none hover:bg-muted/50"
+                  onClick={() => handleSort("base_cost")}
+                >
+                  <div className="flex items-center justify-end">
+                    Cost
+                    {renderSortIcon("base_cost")}
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="text-center cursor-pointer select-none hover:bg-muted/50"
+                  onClick={() => handleSort("visible")}
+                >
+                  <div className="flex items-center justify-center">
+                    Visible
+                    {renderSortIcon("visible")}
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="text-center cursor-pointer select-none hover:bg-muted/50"
+                  onClick={() => handleSort("deactivated")}
+                >
+                  <div className="flex items-center justify-center">
+                    Deactivated
+                    {renderSortIcon("deactivated")}
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="text-right cursor-pointer select-none hover:bg-muted/50"
+                  onClick={() => handleSort("runs")}
+                >
+                  <div className="flex items-center justify-end">
+                    Runs
+                    {renderSortIcon("runs")}
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="text-right cursor-pointer select-none hover:bg-muted/50"
+                  onClick={() => handleSort("successful")}
+                >
+                  <div className="flex items-center justify-end">
+                    Success
+                    {renderSortIcon("successful")}
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="text-right cursor-pointer select-none hover:bg-muted/50"
+                  onClick={() => handleSort("failed")}
+                >
+                  <div className="flex items-center justify-end">
+                    Failed
+                    {renderSortIcon("failed")}
+                  </div>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

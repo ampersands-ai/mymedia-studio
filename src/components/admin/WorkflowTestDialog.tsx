@@ -105,7 +105,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
 
         if (model) {
           models[step.step_number] = {
-            input_schema: jsonToSchema(model.MODEL_CONFIG.inputSchema),
+            input_schema: jsonToSchema(model.SCHEMA),
             max_images: model.MODEL_CONFIG.maxImages,
             content_type: model.MODEL_CONFIG.contentType as ContentType,
             provider: model.MODEL_CONFIG.provider

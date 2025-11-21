@@ -150,12 +150,12 @@ export function TemplateFormDialog({
         .map(m => ({
           id: m.MODEL_CONFIG.modelId,
           model_name: m.MODEL_CONFIG.modelName,
-          input_schema: jsonToSchema(m.MODEL_CONFIG.inputSchema),
+          input_schema: jsonToSchema(m.SCHEMA),
           record_id: m.MODEL_CONFIG.recordId
         }))
         .sort((a, b) => a.model_name.localeCompare(b.model_name));
 
-      setModels(activeModels);
+      setModels(activeModels as any);
     } catch (error) {
       logger.error('Template models fetch failed', error as Error, {
         component: 'TemplateFormDialog',
@@ -177,19 +177,19 @@ export function TemplateFormDialog({
       setSelectedModel({
         id: model.MODEL_CONFIG.modelId,
         model_name: model.MODEL_CONFIG.modelName,
-        input_schema: jsonToSchema(model.MODEL_CONFIG.inputSchema),
+        input_schema: jsonToSchema(model.SCHEMA),
         record_id: model.MODEL_CONFIG.recordId,
         provider: model.MODEL_CONFIG.provider,
         content_type: model.MODEL_CONFIG.contentType,
         is_active: model.MODEL_CONFIG.isActive,
-        base_token_cost: model.MODEL_CONFIG.baseTokenCost,
+        base_token_cost: model.MODEL_CONFIG.baseCreditCost,
         estimated_time_seconds: model.MODEL_CONFIG.estimatedTimeSeconds,
         max_images: model.MODEL_CONFIG.maxImages,
         default_outputs: model.MODEL_CONFIG.defaultOutputs,
         api_endpoint: model.MODEL_CONFIG.apiEndpoint,
         model_family: model.MODEL_CONFIG.modelFamily,
         cost_multipliers: model.MODEL_CONFIG.costMultipliers,
-      });
+      } as any);
     } catch (error) {
       logger.error('Model details fetch failed', error as Error, {
         component: 'TemplateFormDialog',

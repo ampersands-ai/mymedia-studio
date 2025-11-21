@@ -78,14 +78,14 @@ const ComprehensiveModelTestPage = () => {
         provider: m.MODEL_CONFIG.provider,
         content_type: m.MODEL_CONFIG.contentType,
         is_active: m.MODEL_CONFIG.isActive,
-        base_token_cost: (m.MODEL_CONFIG as any).baseCreditCost || (m.MODEL_CONFIG as any).baseTokenCost || 1,
+        base_token_cost: m.MODEL_CONFIG.baseCreditCost || 1,
         estimated_time_seconds: m.MODEL_CONFIG.estimatedTimeSeconds,
         max_images: m.MODEL_CONFIG.maxImages,
         default_outputs: m.MODEL_CONFIG.defaultOutputs,
         api_endpoint: m.MODEL_CONFIG.apiEndpoint,
         model_family: m.MODEL_CONFIG.modelFamily,
         cost_multipliers: m.MODEL_CONFIG.costMultipliers,
-        input_schema: m.MODEL_CONFIG.inputSchema || (m as any).SCHEMA,
+        input_schema: m.SCHEMA,
       }));
     },
   });

@@ -403,7 +403,7 @@ export default function TemplatesManager() {
         onOpenChange={(open) => setWorkflowDialog({ ...workflowDialog, open })}
         workflow={workflowDialog.workflow}
         isNew={workflowDialog.isNew}
-        models={models}
+        models={models || []}
       onSuccess={() => {
         setWorkflowDialog({ open: false, workflow: null, isNew: false });
         queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });

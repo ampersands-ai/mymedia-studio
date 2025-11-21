@@ -134,35 +134,19 @@ export default function AIModelsDashboard() {
   const saveSettings = async (newSettings: VisibilitySettings) => {
     setSaving(true);
 
-    // Check if record exists (maybeSingle doesn't error on no rows)
-    const { data: existing } = await supabase
+    // Delete existing then insert (avoids race conditions with upsert)
+    await supabase
       .from("app_settings")
-      .select("setting_key")
-      .eq("setting_key", "model_visibility")
-      .maybeSingle();
+      .delete()
+      .eq("setting_key", "model_visibility");
 
-    let error;
-    if (existing) {
-      // Update existing record
-      const result = await supabase
-        .from("app_settings")
-        .update({
-          setting_value: newSettings as any,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("setting_key", "model_visibility");
-      error = result.error;
-    } else {
-      // Insert new record
-      const result = await supabase
-        .from("app_settings")
-        .insert({
-          setting_key: "model_visibility",
-          setting_value: newSettings as any,
-          updated_at: new Date().toISOString(),
-        });
-      error = result.error;
-    }
+    const { error } = await supabase
+      .from("app_settings")
+      .insert({
+        setting_key: "model_visibility",
+        setting_value: newSettings as any,
+        updated_at: new Date().toISOString(),
+      });
 
     setSaving(false);
     if (error) {

@@ -22,7 +22,7 @@ export interface AIModel {
   input_schema: Record<string, unknown> | null;
   api_endpoint: string | null;
   is_active: boolean;
-  groups?: Record<string, unknown> | null;
+  groups?: string[] | null;
   payload_structure?: string;
   max_images?: number | null;
   estimated_time_seconds?: number | null;

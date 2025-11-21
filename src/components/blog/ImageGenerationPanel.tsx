@@ -127,7 +127,7 @@ export const ImageGenerationPanel = ({
         }
 
         if (data.status === "failed") {
-          throw new Error(data.error_message || "Generation failed");
+          throw new Error("Generation failed");
         }
 
         await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 seconds

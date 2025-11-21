@@ -273,7 +273,7 @@ export const useStoryboardScenes = (
         const promptToUse = scene.imagePrompt;
         
         // Determine if we should use sync or async endpoint
-        const functionName = model?.provider === 'runware' 
+        const functionName = modelModule?.MODEL_CONFIG.provider === 'runware' 
           ? 'generate-content-sync' 
           : 'generate-content';
 

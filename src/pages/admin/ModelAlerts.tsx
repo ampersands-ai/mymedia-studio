@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getAllModels } from "@/lib/models/registry";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,17 +86,15 @@ export default function ModelAlerts() {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  // Fetch available models
+  // Fetch available models from registry
   const { data: models } = useQuery({
     queryKey: ["ai-models"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("ai_models")
-        .select("id, model_name")
-        .order("model_name");
-
-      if (error) throw error;
-      return data;
+      const allModels = getAllModels();
+      return allModels.map(m => ({
+        id: m.MODEL_CONFIG.modelId,
+        model_name: m.MODEL_CONFIG.modelName
+      })).sort((a, b) => a.model_name.localeCompare(b.model_name));
     },
   });
 

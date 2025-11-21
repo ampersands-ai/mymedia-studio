@@ -8,6 +8,7 @@ import { Carousel, CarouselViewport, CarouselContent, CarouselItem, CarouselNext
 import { useAllTemplates } from "@/hooks/useTemplates";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { getAllModels } from "@/lib/models/registry";
 import { Sparkles, Package, Users, TrendingUp, Layers, Wand2, Coins, Shirt, Plane, Search, Image as ImageIcon, Video } from "lucide-react";
 import { OptimizedBeforeAfterSlider } from "@/components/OptimizedBeforeAfterSlider";
 import { OptimizedImage } from "@/components/ui/optimized-image";
@@ -61,16 +62,19 @@ const Templates = () => {
         }
       });
       
-      // Single batch query to get all model costs at once
+      // Get all models from registry
       if (allModelRecordIds.size === 0) return;
-      
-      const { data: models } = await supabase
-        .from("ai_models")
-        .select("record_id, base_token_cost")
-        .in("record_id", Array.from(allModelRecordIds));
-      
+
+      const allModels = getAllModels();
+      const models = allModels
+        .filter(m => allModelRecordIds.has(m.MODEL_CONFIG.recordId))
+        .map(m => ({
+          record_id: m.MODEL_CONFIG.recordId,
+          base_token_cost: m.MODEL_CONFIG.baseTokenCost
+        }));
+
       if (!models) return;
-      
+
       // Create lookup map for O(1) access
       const modelCostMap = new Map(
         models.map(m => [m.record_id, m.base_token_cost])

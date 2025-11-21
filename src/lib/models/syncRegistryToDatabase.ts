@@ -42,7 +42,7 @@ export async function syncRegistryToDatabase(): Promise<SyncResult> {
       provider: m.MODEL_CONFIG.provider,
       content_type: m.MODEL_CONFIG.contentType,
       is_active: m.MODEL_CONFIG.isActive ?? true,
-      base_token_cost: m.MODEL_CONFIG.baseTokenCost || m.MODEL_CONFIG.baseCreditCost || 1,
+      base_token_cost: (m.MODEL_CONFIG as any).baseCreditCost || (m.MODEL_CONFIG as any).baseTokenCost || 1,
       estimated_time_seconds: m.MODEL_CONFIG.estimatedTimeSeconds || null,
       max_images: m.MODEL_CONFIG.maxImages || null,
       default_outputs: m.MODEL_CONFIG.defaultOutputs || 1,

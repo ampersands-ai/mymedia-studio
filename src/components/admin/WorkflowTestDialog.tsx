@@ -9,6 +9,7 @@ import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
 import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getAllModels } from "@/lib/models/registry";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { logger, generateRequestId } from "@/lib/logger";
 import type {
@@ -97,19 +98,17 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
 
     const fetchModels = async () => {
       const models: WorkflowStepModels = {};
-      for (const step of workflow.workflow_steps) {
-        const { data } = await supabase
-          .from('ai_models')
-          .select('input_schema, max_images, content_type, provider')
-          .eq('record_id', step.model_record_id)
-          .single();
+      const allModels = getAllModels();
 
-        if (data) {
+      for (const step of workflow.workflow_steps) {
+        const model = allModels.find(m => m.MODEL_CONFIG.recordId === step.model_record_id);
+
+        if (model) {
           models[step.step_number] = {
-            input_schema: jsonToSchema(data.input_schema),
-            max_images: data.max_images,
-            content_type: data.content_type,
-            provider: data.provider
+            input_schema: jsonToSchema(model.MODEL_CONFIG.inputSchema),
+            max_images: model.MODEL_CONFIG.maxImages,
+            content_type: model.MODEL_CONFIG.contentType as ContentType,
+            provider: model.MODEL_CONFIG.provider
           };
         }
       }

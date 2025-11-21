@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useModels } from "@/hooks/useModels";
-import { useAllModels } from "@/hooks/useAllModels";
+import { getAllModels } from "@/lib/models/registry";
 import { useModelSchema } from "@/hooks/useModelSchema";
 import { ParametersInspector } from "@/components/admin/model-health/ParametersInspector";
 import { ExecutionFlowVisualizer } from "@/components/admin/model-health/ExecutionFlowVisualizer";
@@ -67,7 +67,28 @@ const ComprehensiveModelTestPage = () => {
   const queryClient = useQueryClient();
 
   // Models and user data - use ALL models for comprehensive testing
-  const { data: allModelsUnfiltered, isLoading: modelsLoading } = useAllModels();
+  const { data: allModelsUnfiltered, isLoading: modelsLoading } = useQuery({
+    queryKey: ["ai-models"],
+    queryFn: async () => {
+      const allModels = getAllModels();
+      return allModels.map(m => ({
+        record_id: m.MODEL_CONFIG.recordId,
+        id: m.MODEL_CONFIG.modelId,
+        model_name: m.MODEL_CONFIG.modelName,
+        provider: m.MODEL_CONFIG.provider,
+        content_type: m.MODEL_CONFIG.contentType,
+        is_active: m.MODEL_CONFIG.isActive,
+        base_token_cost: m.MODEL_CONFIG.baseTokenCost,
+        estimated_time_seconds: m.MODEL_CONFIG.estimatedTimeSeconds,
+        max_images: m.MODEL_CONFIG.maxImages,
+        default_outputs: m.MODEL_CONFIG.defaultOutputs,
+        api_endpoint: m.MODEL_CONFIG.apiEndpoint,
+        model_family: m.MODEL_CONFIG.modelFamily,
+        cost_multipliers: m.MODEL_CONFIG.costMultipliers,
+        input_schema: m.MODEL_CONFIG.inputSchema,
+      }));
+    },
+  });
   const { data: userTokens } = useUserTokens();
   const { progress, updateProgress, setFirstGeneration } = useOnboarding();
 

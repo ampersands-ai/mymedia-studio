@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
+import { getAllModels } from "@/lib/models/registry";
 import {
   Dialog,
   DialogContent,
@@ -143,17 +144,18 @@ export function TemplateFormDialog({
 
   const fetchModels = async () => {
     try {
-      const { data, error } = await supabase
-        .from("ai_models")
-        .select("id, model_name, input_schema, record_id")
-        .eq("is_active", true)
-        .order("model_name");
+      const allModels = getAllModels();
+      const activeModels = allModels
+        .filter(m => m.MODEL_CONFIG.isActive)
+        .map(m => ({
+          id: m.MODEL_CONFIG.modelId,
+          model_name: m.MODEL_CONFIG.modelName,
+          input_schema: jsonToSchema(m.MODEL_CONFIG.inputSchema),
+          record_id: m.MODEL_CONFIG.recordId
+        }))
+        .sort((a, b) => a.model_name.localeCompare(b.model_name));
 
-      if (error) throw error;
-      setModels((data || []).map(m => ({
-        ...m,
-        input_schema: jsonToSchema(m.input_schema)
-      })));
+      setModels(activeModels);
     } catch (error) {
       logger.error('Template models fetch failed', error as Error, {
         component: 'TemplateFormDialog',
@@ -165,14 +167,29 @@ export function TemplateFormDialog({
 
   const fetchModelDetails = async (modelId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("ai_models")
-        .select("*")
-        .eq("id", modelId)
-        .single();
+      const allModels = getAllModels();
+      const model = allModels.find(m => m.MODEL_CONFIG.modelId === modelId);
 
-      if (error) throw error;
-      setSelectedModel(data ? { ...data, input_schema: jsonToSchema(data.input_schema) } : null);
+      if (!model) {
+        throw new Error(`Model not found: ${modelId}`);
+      }
+
+      setSelectedModel({
+        id: model.MODEL_CONFIG.modelId,
+        model_name: model.MODEL_CONFIG.modelName,
+        input_schema: jsonToSchema(model.MODEL_CONFIG.inputSchema),
+        record_id: model.MODEL_CONFIG.recordId,
+        provider: model.MODEL_CONFIG.provider,
+        content_type: model.MODEL_CONFIG.contentType,
+        is_active: model.MODEL_CONFIG.isActive,
+        base_token_cost: model.MODEL_CONFIG.baseTokenCost,
+        estimated_time_seconds: model.MODEL_CONFIG.estimatedTimeSeconds,
+        max_images: model.MODEL_CONFIG.maxImages,
+        default_outputs: model.MODEL_CONFIG.defaultOutputs,
+        api_endpoint: model.MODEL_CONFIG.apiEndpoint,
+        model_family: model.MODEL_CONFIG.modelFamily,
+        cost_multipliers: model.MODEL_CONFIG.costMultipliers,
+      });
     } catch (error) {
       logger.error('Model details fetch failed', error as Error, {
         component: 'TemplateFormDialog',

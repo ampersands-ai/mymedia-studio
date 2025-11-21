@@ -2,7 +2,7 @@ import type { ProviderRequest, ProviderResponse } from "./index.ts";
 
 /**
  * Lovable AI Provider - Synchronous image generation
- * Uses google/gemini-2.5-flash-image-preview model
+ * Uses gpt-image-1 model (OpenAI)
  */
 export async function callLovableAI(request: ProviderRequest): Promise<ProviderResponse> {
   const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -23,7 +23,7 @@ export async function callLovableAI(request: ProviderRequest): Promise<ProviderR
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.5-flash-image-preview',
+      model: 'gpt-image-1',
       messages: [{
         role: 'user',
         content: request.prompt
@@ -81,7 +81,7 @@ export async function callLovableAI(request: ProviderRequest): Promise<ProviderR
     file_size: binaryData.length,
     metadata: {
       provider: 'lovable_ai_sync',
-      model: 'google/gemini-2.5-flash-image-preview',
+      model: 'gpt-image-1',
       aspectRatio: request.parameters.aspectRatio || '1:1'
     }
   };

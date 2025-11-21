@@ -134,12 +134,12 @@ export default function AIModelsDashboard() {
   const saveSettings = async (newSettings: VisibilitySettings) => {
     setSaving(true);
 
-    // Check if record exists
+    // Check if record exists (maybeSingle doesn't error on no rows)
     const { data: existing } = await supabase
       .from("app_settings")
       .select("setting_key")
       .eq("setting_key", "model_visibility")
-      .single();
+      .maybeSingle();
 
     let error;
     if (existing) {

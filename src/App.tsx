@@ -48,7 +48,7 @@ const StoryboardPage = lazy(() => import("./pages/StoryboardPage"));
 const DashboardLayout = lazy(() => import("./layouts/DashboardLayout").then(m => ({ default: m.DashboardLayout })));
 const AdminLayout = lazy(() => import("./layouts/AdminLayout").then(m => ({ default: m.AdminLayout })));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
-const AIModelsManager = lazy(() => import("./pages/admin/AIModelsManager"));
+const AIModelsDashboard = lazy(() => import("./pages/admin/AIModelsDashboard"));
 const TemplatesManager = lazy(() => import("./pages/admin/TemplatesManager"));
 const UsersManager = lazy(() => import("./pages/admin/UsersManager"));
 const AllGenerations = lazy(() => import("./pages/admin/AllGenerations"));
@@ -152,7 +152,7 @@ const AppContent = () => {
             </Route>
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="dashboard" element={<RouteErrorBoundary routeName="Admin > Dashboard"><AdminDashboard /></RouteErrorBoundary>} />
-              <Route path="models" element={<RouteErrorBoundary routeName="Admin > AI Models"><AIModelsManager /></RouteErrorBoundary>} />
+              <Route path="models" element={<RouteErrorBoundary routeName="Admin > AI Models"><AIModelsDashboard /></RouteErrorBoundary>} />
               <Route path="templates" element={<RouteErrorBoundary routeName="Admin > Templates"><TemplatesManager /></RouteErrorBoundary>} />
               <Route path="users" element={<RouteErrorBoundary routeName="Admin > Users"><UsersManager /></RouteErrorBoundary>} />
               <Route path="generations" element={<RouteErrorBoundary routeName="Admin > Generations"><AllGenerations /></RouteErrorBoundary>} />

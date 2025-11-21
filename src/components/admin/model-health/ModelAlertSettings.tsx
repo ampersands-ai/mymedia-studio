@@ -41,19 +41,19 @@ export const ModelAlertSettings = () => {
       if (updates.enabled !== undefined) {
         promises.push(
           supabase.from("app_settings")
-            .upsert({ setting_key: "model_alerts_enabled", setting_value: updates.enabled })
+            .upsert({ setting_key: "model_alerts_enabled", setting_value: updates.enabled }, { onConflict: 'setting_key' })
         );
       }
       if (updates.threshold !== undefined) {
         promises.push(
           supabase.from("app_settings")
-            .upsert({ setting_key: "model_failure_threshold", setting_value: updates.threshold })
+            .upsert({ setting_key: "model_failure_threshold", setting_value: updates.threshold }, { onConflict: 'setting_key' })
         );
       }
       if (updates.windowMinutes !== undefined) {
         promises.push(
           supabase.from("app_settings")
-            .upsert({ setting_key: "model_failure_window_minutes", setting_value: updates.windowMinutes })
+            .upsert({ setting_key: "model_failure_window_minutes", setting_value: updates.windowMinutes }, { onConflict: 'setting_key' })
         );
       }
 

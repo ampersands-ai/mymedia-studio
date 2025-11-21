@@ -34,7 +34,7 @@ export const MODEL_CONFIG = {
 
   // UI metadata
   isActive: true,
-  logoUrl: "/src/assets/partners/blackforest.svg",
+  logoUrl: "/public/logos/flux.png",
   modelFamily: "FLUX",
   variantName: "1 Kontext Max",
   displayOrderInFamily: 2,

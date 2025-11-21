@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "ideogram/v2-plus", recordId: "f9c5e7a3-8d4b-6f2c-9a1e-5d7b3c8f4a6e", modelName: "Ideogram V2+", provider: "kie_ai", contentType: "prompt_to_image", baseCreditCost: 2.5, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/src/assets/partners/ideogram.png",
+  logoUrl: "/public/logos/ideogram.png",
   modelFamily: "Ideogram",
   variantName: "V2+",
   displayOrderInFamily: 2,

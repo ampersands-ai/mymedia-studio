@@ -7,7 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 export const MODEL_CONFIG = { modelId: "elevenlabs/text-to-speech-multilingual-v2", recordId: "45fc7e71-0174-48eb-998d-547e8d2476db", modelName: "Eleven Labs TTS", provider: "kie_ai", contentType: "prompt_to_audio", baseCreditCost: 3, estimatedTimeSeconds: 90, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
-  logoUrl: "/src/assets/partners/elevenlabs.png",
+  logoUrl: "/public/logos/elevenlabs.png",
   modelFamily: "ElevenLabs",
   variantName: "TTS",
   displayOrderInFamily: 2,

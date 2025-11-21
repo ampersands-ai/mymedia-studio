@@ -1,4 +1,4 @@
-/** FLUX.1 Pro prompt_to_image - Record: 100@1 */
+/** FLUX.1 Pro prompt_to_image - Record: 7a2f8c3e-4b5d-6e9a-1f8c-2d4b6e9a3f5c */
 import { getGenerationType } from '@/lib/models/registry';
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
@@ -6,7 +6,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 
 export const MODEL_CONFIG = {
   modelId: "runware:100@1",
-  recordId: "100@1",
+  recordId: "7a2f8c3e-4b5d-6e9a-1f8c-2d4b6e9a3f5c",
   modelName: "FLUX.1 Pro",
   provider: "runware",
   contentType: "prompt_to_image",

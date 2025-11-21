@@ -32,7 +32,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const { data: keyData } = await supabase.functions.invoke('get-api-key', {
-    body: { modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId }
+    body: { provider: MODEL_CONFIG.provider, modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId }
   });
   if (!keyData?.apiKey) throw new Error('Failed to retrieve API key');
   const apiKey = keyData.apiKey;

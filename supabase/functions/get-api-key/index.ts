@@ -97,6 +97,7 @@ Deno.serve(async (req) => {
 
     const { provider, modelId, recordId } = await req.json();
 
+    // Validate required parameter (explicit is better than implicit)
     if (!provider) {
       return new Response(
         JSON.stringify({ error: 'Missing required parameter: provider' }),

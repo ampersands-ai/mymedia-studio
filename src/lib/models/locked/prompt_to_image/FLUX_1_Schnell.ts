@@ -92,7 +92,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   
   const { data: keyData } = await supabase.functions.invoke('get-api-key', {
-    body: { modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId }
+    body: { provider: MODEL_CONFIG.provider, modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId }
   });
   if (!keyData?.apiKey) throw new Error('Failed to retrieve API key');
   const apiKey = keyData.apiKey;

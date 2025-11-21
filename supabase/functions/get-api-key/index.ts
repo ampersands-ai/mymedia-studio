@@ -95,11 +95,23 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { provider, modelId, recordId } = await req.json();
+    let { provider, modelId, recordId } = await req.json();
+
+    // Backward compatibility: infer provider from modelId if not provided
+    if (!provider && modelId) {
+      if (modelId.startsWith('runware:') || modelId.startsWith('bytedance:')) {
+        provider = 'runware';
+        console.log(`Inferred provider 'runware' from modelId: ${modelId}`);
+      } else if (recordId) {
+        // Most KIE AI models provide recordId
+        provider = 'kie_ai';
+        console.log(`Inferred provider 'kie_ai' from presence of recordId: ${recordId}`);
+      }
+    }
 
     if (!provider) {
       return new Response(
-        JSON.stringify({ error: 'Missing required parameter: provider' }),
+        JSON.stringify({ error: 'Missing required parameter: provider (and could not infer from modelId)' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

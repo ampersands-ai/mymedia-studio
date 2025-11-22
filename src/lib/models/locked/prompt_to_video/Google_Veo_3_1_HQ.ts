@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "veo3", recordId: "d117daae-f3ec-4b79-b98f-adefeee21454", modelName: "Google Veo 3.1 HQ", provider: "kie_ai", contentType: "prompt_to_video", baseCreditCost: 125, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "veo3", recordId: "d117daae-f3ec-4b79-b98f-adefeee21454", modelName: "Google Veo 3.1 HQ", provider: "kie_ai", contentType: "prompt_to_video",
+  use_api_key: "KIE_AI_API_KEY_PROMPT_TO_VIDEO", baseCreditCost: 125, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/google.png",
@@ -28,7 +29,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
-  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
+  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.use_api_key), prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const { data: keyData } = await supabase.functions.invoke('get-api-key', {
     body: { provider: MODEL_CONFIG.provider, modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId }

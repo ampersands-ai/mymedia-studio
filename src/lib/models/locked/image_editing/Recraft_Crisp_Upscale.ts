@@ -20,6 +20,7 @@ export const MODEL_CONFIG = {
   modelName: "Crisp Image Upscale",
   provider: "kie_ai",
   contentType: "image_editing",
+  use_api_key: "KIE_AI_API_KEY_IMAGE_EDITING",
   baseCreditCost: 0.25,
   estimatedTimeSeconds: 20,
   costMultipliers: {},
@@ -126,5 +127,5 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 }
 
 async function getKieApiKey(): Promise<string> {
-  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.contentType);
+  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
 }

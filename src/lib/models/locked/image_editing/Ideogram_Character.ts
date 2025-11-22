@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "ideogram/character", recordId: "4a421ed9-ed0c-40bf-b06d-892871506124", modelName: "Ideogram Character", provider: "kie_ai", contentType: "image_editing", baseCreditCost: 6, estimatedTimeSeconds: 25, costMultipliers: { num_images: { "1": 1, "2": 2, "3": 3, "4": 4 }, rendering_speed: { BALANCED: 1.5, QUALITY: 2, TURBO: 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "ideogram/character", recordId: "4a421ed9-ed0c-40bf-b06d-892871506124", modelName: "Ideogram Character", provider: "kie_ai", contentType: "image_editing",
+  use_api_key: "KIE_AI_API_KEY_IMAGE_EDITING", baseCreditCost: 6, estimatedTimeSeconds: 25, costMultipliers: { num_images: { "1": 1, "2": 2, "3": 3, "4": 4 }, rendering_speed: { BALANCED: 1.5, QUALITY: 2, TURBO: 1 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/ideogram.png",
@@ -29,7 +30,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
-  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
+  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.use_api_key), prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed to create generation: ${error?.message}`);
   const payload = preparePayload(inputs);
   const apiKey = await getKieApiKey();
@@ -44,5 +45,5 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 import { getKieApiKey as getCentralKieApiKey } from "../getKieApiKey";
 
 async function getKieApiKey(): Promise<string> {
-  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.contentType);
+  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
 }

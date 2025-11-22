@@ -21,6 +21,7 @@ export const MODEL_CONFIG = {
   modelName: "FLUX.1 Kontext Pro",
   provider: "kie_ai",
   contentType: "image_editing",
+  use_api_key: "KIE_AI_API_KEY_IMAGE_EDITING",
   baseCreditCost: 2.5,
   estimatedTimeSeconds: 50,
   costMultipliers: {},
@@ -102,7 +103,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
-  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
+  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.use_api_key), prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const { data: keyData } = await supabase.functions.invoke('get-api-key', { body: { provider: MODEL_CONFIG.provider, modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId } });
   if (!keyData?.apiKey) throw new Error('Failed to retrieve API key');

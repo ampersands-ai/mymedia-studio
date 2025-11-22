@@ -3,7 +3,8 @@ import { getGenerationType } from '@/lib/models/registry';
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "V5", recordId: "5c544c90-9344-4acb-9129-0acb9a6a915a", modelName: "Suno", provider: "kie_ai", contentType: "prompt_to_audio", baseCreditCost: 6, estimatedTimeSeconds: 180, costMultipliers: {}, apiEndpoint: "/api/v1/generate", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "V5", recordId: "5c544c90-9344-4acb-9129-0acb9a6a915a", modelName: "Suno", provider: "kie_ai", contentType: "prompt_to_audio",
+  use_api_key: "KIE_AI_API_KEY_PROMPT_TO_AUDIO", baseCreditCost: 6, estimatedTimeSeconds: 180, costMultipliers: {}, apiEndpoint: "/api/v1/generate", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/suno.png",
@@ -25,7 +26,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const { prompt, modelParameters, userId, startPolling } = params;
   const inputs: Record<string, any> = { prompt, ...modelParameters };
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
-  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: calculateCost(inputs), status: "pending", settings: modelParameters }).select().single();
+  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.use_api_key), prompt, tokens_used: calculateCost(inputs), status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const apiKey = await getKieApiKey();
   const res = await fetch(`https://api.kie.ai${MODEL_CONFIG.apiEndpoint}`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` }, body: JSON.stringify(preparePayload(inputs)) });
@@ -39,5 +40,5 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 import { getKieApiKey as getCentralKieApiKey } from "../getKieApiKey";
 
 async function getKieApiKey(): Promise<string> {
-  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.contentType);
+  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
 }

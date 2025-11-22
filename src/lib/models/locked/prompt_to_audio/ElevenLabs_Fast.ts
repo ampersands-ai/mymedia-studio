@@ -20,6 +20,7 @@ export const MODEL_CONFIG = {
   modelName: "Eleven Labs Fast",
   provider: "kie_ai",
   contentType: "prompt_to_audio",
+  use_api_key: "KIE_AI_API_KEY_PROMPT_TO_AUDIO",
   baseCreditCost: 1.25,
   estimatedTimeSeconds: 90,
   costMultipliers: {},
@@ -133,7 +134,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       model_id: MODEL_CONFIG.modelId,
       model_record_id: MODEL_CONFIG.recordId,
       prompt,
-      type: getGenerationType(MODEL_CONFIG.contentType),
+      type: getGenerationType(MODEL_CONFIG.use_api_key),
       status: 'processing',
       tokens_used: cost,
       settings: modelParameters
@@ -170,5 +171,5 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 }
 
 async function getKieApiKey(): Promise<string> {
-  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.contentType);
+  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
 }

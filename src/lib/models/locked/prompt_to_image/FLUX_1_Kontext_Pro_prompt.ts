@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "flux-kontext-pro", recordId: "94b43382-bf4b-490d-82b5-265d14473f9b", modelName: "FLUX.1 Kontext Pro", provider: "kie_ai", contentType: "prompt_to_image", baseCreditCost: 2.5, estimatedTimeSeconds: 50, costMultipliers: {}, apiEndpoint: "/api/v1/flux/kontext/generate", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "flux-kontext-pro", recordId: "94b43382-bf4b-490d-82b5-265d14473f9b", modelName: "FLUX.1 Kontext Pro", provider: "kie_ai", contentType: "prompt_to_image",
+  use_api_key: "KIE_AI_API_KEY_PROMPT_TO_IMAGE", baseCreditCost: 2.5, estimatedTimeSeconds: 50, costMultipliers: {}, apiEndpoint: "/api/v1/flux/kontext/generate", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/flux.png",
@@ -29,7 +30,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
-  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
+  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.use_api_key), prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const apiKey = await getKieApiKey();
   const res = await fetch(`https://api.kie.ai${MODEL_CONFIG.apiEndpoint}`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` }, body: JSON.stringify(preparePayload(inputs)) });
@@ -43,5 +44,5 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 import { getKieApiKey as getCentralKieApiKey } from "../getKieApiKey";
 
 async function getKieApiKey(): Promise<string> {
-  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.contentType);
+  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
 }

@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "runware:105@1", recordId: "de96f11c-bc91-4cdd-ae71-0308e7584f8a", modelName: "runware upscale", provider: "runware", contentType: "image_editing", baseCreditCost: 20, estimatedTimeSeconds: 90, costMultipliers: { upscaleFactor: { "2": 1, "3": 1.5, "4": 2 } }, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 1, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "runware:105@1", recordId: "de96f11c-bc91-4cdd-ae71-0308e7584f8a", modelName: "runware upscale", provider: "runware", contentType: "image_editing",
+  use_api_key: "RUNWARE_API_KEY_IMAGE_EDITING", baseCreditCost: 20, estimatedTimeSeconds: 90, costMultipliers: { upscaleFactor: { "2": 1, "3": 1.5, "4": 2 } }, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 1, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/plum.png",
@@ -29,7 +30,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
-  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt: prompt || "Upscale image", tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
+  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.use_api_key), prompt: prompt || "Upscale image", tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const apiKey = await getRunwareApiKey();
   const res = await fetch(MODEL_CONFIG.apiEndpoint, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` }, body: JSON.stringify([preparePayload(inputs)]) });

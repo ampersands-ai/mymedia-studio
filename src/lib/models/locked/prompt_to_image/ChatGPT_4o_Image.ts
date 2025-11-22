@@ -23,6 +23,7 @@ export const MODEL_CONFIG = {
   modelName: "ChatGPT 4o-Image",
   provider: "kie_ai",
   contentType: "prompt_to_image",
+  use_api_key: "KIE_AI_API_KEY_PROMPT_TO_IMAGE",
   baseCreditCost: 3,
   estimatedTimeSeconds: 120,
   costMultipliers: { nVariants: { "1": 1, "2": 1.16666, "4": 1.3333 } },
@@ -113,7 +114,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       model_id: MODEL_CONFIG.modelId,
       model_record_id: MODEL_CONFIG.recordId,
       prompt,
-      type: getGenerationType(MODEL_CONFIG.contentType),
+      type: getGenerationType(MODEL_CONFIG.use_api_key),
       status: 'processing',
       tokens_used: cost,
       settings: modelParameters
@@ -165,5 +166,5 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 }
 
 async function getKieApiKey(): Promise<string> {
-  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.contentType);
+  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
 }

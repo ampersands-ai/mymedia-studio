@@ -1,8 +1,8 @@
-import { ImgHTMLAttributes, useState, useRef } from "react";
+import { ImgHTMLAttributes, useState, useRef, useMemo } from "react";
 import { useInView } from 'react-intersection-observer';
 import { cn } from "@/lib/utils";
 import { Skeleton } from "./skeleton";
-import { getOptimizedImageUrl, getResponsiveSrcSet, getBlurPlaceholder } from '@/lib/supabase-images';
+import { getOptimizedImageUrl, getResponsiveSrcSet, getBlurPlaceholder, getPublicImageUrl } from '@/lib/supabase-images';
 
 interface OptimizedImageProps extends ImgHTMLAttributes<HTMLImageElement> {
   src: string;
@@ -29,6 +29,7 @@ export const OptimizedImage = ({
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isVisible, setIsVisible] = useState(priority);
+  const [fallbackUrl, setFallbackUrl] = useState<string | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
   const { ref: inViewRef, inView } = useInView({
@@ -43,28 +44,33 @@ export const OptimizedImage = ({
     setIsVisible(true);
   }
 
-  // Generate responsive srcSet and optimized URLs
+  // Generate responsive srcSet and optimized URLs - memoized to prevent excessive recalculation
   const shouldLoad = priority || isVisible;
-  
-  let webpUrl = src;
-  let avifUrl = src;
-  let jpegUrl = src;
-  let placeholderUrl = src;
-  let srcSet = '';
 
-  if (isSupabaseImage) {
-    // Use Supabase transformations
-    webpUrl = getOptimizedImageUrl(src, { width, format: 'webp' });
-    avifUrl = getOptimizedImageUrl(src, { width, format: 'avif' });
-    jpegUrl = getOptimizedImageUrl(src, { width, format: 'jpeg' });
-    placeholderUrl = getBlurPlaceholder(src);
-    srcSet = getResponsiveSrcSet(src);
-  } else {
-    // Generate standard srcSet for external images
-    srcSet = [640, 750, 828, 1080, 1200, 1920]
-      .map(w => `${src}?w=${w}&q=80 ${w}w`)
-      .join(', ');
-  }
+  const { webpUrl, avifUrl, jpegUrl, placeholderUrl, srcSet } = useMemo(() => {
+    if (isSupabaseImage) {
+      // Use Supabase transformations
+      return {
+        webpUrl: getOptimizedImageUrl(src, { width, format: 'webp' }),
+        avifUrl: getOptimizedImageUrl(src, { width, format: 'avif' }),
+        jpegUrl: getOptimizedImageUrl(src, { width, format: 'jpeg' }),
+        placeholderUrl: getBlurPlaceholder(src),
+        srcSet: getResponsiveSrcSet(src),
+      };
+    } else {
+      // Generate standard srcSet for external images
+      const standardSrcSet = [640, 750, 828, 1080, 1200, 1920]
+        .map(w => `${src}?w=${w}&q=80 ${w}w`)
+        .join(', ');
+      return {
+        webpUrl: src,
+        avifUrl: src,
+        jpegUrl: src,
+        placeholderUrl: src,
+        srcSet: standardSrcSet,
+      };
+    }
+  }, [src, width, isSupabaseImage]);
 
   return (
     <div
@@ -110,30 +116,18 @@ export const OptimizedImage = ({
       )}
 
       {shouldLoad && (
-        <picture>
-          {/* AVIF for best compression (modern browsers) */}
-          {isSupabaseImage && (
-            <source type="image/avif" srcSet={avifUrl} />
-          )}
-          
-          {/* WebP fallback */}
-          <source
-            type="image/webp"
-            srcSet={isSupabaseImage ? webpUrl : srcSet}
-            sizes={sizes}
-          />
-          
-          {/* JPEG fallback for universal support */}
+        fallbackUrl ? (
+          // Fallback to public URL if optimized fails
           <img
             {...props}
             ref={imgRef}
-            src={isSupabaseImage ? jpegUrl : src}
+            src={fallbackUrl}
             alt={alt}
             width={width}
             height={height}
             loading={priority ? "eager" : "lazy"}
             decoding="async"
-            fetchPriority={priority ? "high" : "auto"}
+            fetchpriority={priority ? "high" : "auto"}
             className={cn(
               "w-full h-full object-cover transition-opacity duration-300",
               isLoading ? "opacity-0" : "opacity-100",
@@ -141,11 +135,58 @@ export const OptimizedImage = ({
             )}
             onLoad={() => setIsLoading(false)}
             onError={() => {
+              console.error('❌ Fallback image failed', { src: fallbackUrl });
               setIsLoading(false);
               setHasError(true);
             }}
           />
-        </picture>
+        ) : (
+          <picture>
+            {/* AVIF for best compression (modern browsers) */}
+            {isSupabaseImage && (
+              <source type="image/avif" srcSet={avifUrl} />
+            )}
+
+            {/* WebP fallback */}
+            <source
+              type="image/webp"
+              srcSet={isSupabaseImage ? webpUrl : srcSet}
+              sizes={sizes}
+            />
+
+            {/* JPEG fallback for universal support */}
+            <img
+              {...props}
+              ref={imgRef}
+              src={isSupabaseImage ? jpegUrl : src}
+              alt={alt}
+              width={width}
+              height={height}
+              loading={priority ? "eager" : "lazy"}
+              decoding="async"
+              fetchpriority={priority ? "high" : "auto"}
+              className={cn(
+                "w-full h-full object-cover transition-opacity duration-300",
+                isLoading ? "opacity-0" : "opacity-100",
+                hasError && "hidden"
+              )}
+              onLoad={() => setIsLoading(false)}
+              onError={() => {
+                console.error('❌ Optimized image load failed', { src: isSupabaseImage ? jpegUrl : src });
+                // Try fallback to public URL for Supabase images
+                if (isSupabaseImage && !fallbackUrl) {
+                  console.log('🔄 Falling back to public URL');
+                  const publicUrl = getPublicImageUrl(src);
+                  setFallbackUrl(publicUrl);
+                  setIsLoading(true);
+                } else {
+                  setIsLoading(false);
+                  setHasError(true);
+                }
+              }}
+            />
+          </picture>
+        )
       )}
 
       {hasError && (

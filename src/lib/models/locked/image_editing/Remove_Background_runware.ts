@@ -1,5 +1,5 @@
 /** Remove Background runware (image_editing) - Record: d2f8b5e4-3a9c-4c72-8f61-2e4d9a7b6c3f */
-import { getGenerationType } from '@/lib/models/registry';
+import { getGenerationType } from "@/lib/models/registry";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
@@ -10,7 +10,7 @@ export const MODEL_CONFIG = {
   modelName: "Remove Background",
   provider: "runware",
   contentType: "image_editing",
-  baseCreditCost: 0.07,
+  baseCreditCost: 0.06,
   estimatedTimeSeconds: 15,
   costMultipliers: {},
   apiEndpoint: "https://api.runware.ai/v1",
@@ -27,7 +27,7 @@ export const MODEL_CONFIG = {
 
   // Lock system
   isLocked: true,
-  lockedFilePath: "src/lib/models/locked/image_editing/Remove_Background_runware.ts"
+  lockedFilePath: "src/lib/models/locked/image_editing/Remove_Background_runware.ts",
 } as const;
 
 export const SCHEMA = {

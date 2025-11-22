@@ -204,6 +204,7 @@ export const OptimizedGenerationPreview = ({
           storagePath={storagePath}
           alt="Generated content"
           className={cn(className, "animate-fade-in")}
+          priority={true}
         />
         {/* Action buttons overlay (only show if not in grid) */}
         {showActions && (

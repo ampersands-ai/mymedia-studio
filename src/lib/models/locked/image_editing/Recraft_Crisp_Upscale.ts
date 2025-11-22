@@ -67,11 +67,19 @@ export function calculateCost(inputs: Record<string, any>): number {
 }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { prompt, modelParameters, userId } = params;
-  const validation = validate({ ...modelParameters, prompt });
+  const { prompt, modelParameters, userId, uploadedImageUrls } = params;
+
+  // Map uploaded image URL to the image parameter
+  const inputs = {
+    ...modelParameters,
+    prompt,
+    image: uploadedImageUrls[0] || modelParameters.image
+  };
+
+  const validation = validate(inputs);
   if (!validation.valid) throw new Error(validation.error);
   
-  const cost = calculateCost({ ...modelParameters, prompt });
+  const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
   const { data: generation, error: genError } = await supabase
     .from('generations')
@@ -90,7 +98,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   if (genError || !generation) throw new Error(`Failed to create generation: ${genError?.message}`);
 
-  const payload = { task: MODEL_CONFIG.modelId.split('/')[1], input: preparePayload({ ...modelParameters, prompt }) };
+  const payload = { task: MODEL_CONFIG.modelId.split('/')[1], input: preparePayload(inputs) };
 
   try {
     const response = await fetch(`https://api.klingai.com${MODEL_CONFIG.apiEndpoint}`, {

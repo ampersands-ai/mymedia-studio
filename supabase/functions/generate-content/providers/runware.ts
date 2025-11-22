@@ -100,43 +100,16 @@ async function pollForVideoResult(
   throw new Error("Video generation timed out after 60 seconds");
 }
 
-// Removed hardcoded MODEL_RESTRICTIONS - now using dynamic schema-based validation
-
 /**
- * Preprocess parameters for Runware provider models
- * Handles provider-specific parameter mappings and defaults following industry best practices (Strategy pattern)
+ * Runware Provider Implementation
  *
- * Industry Standard: Encapsulate provider-specific logic within provider implementation
- * Reference: Strategy/Adapter pattern (Gang of Four)
+ * NOTE: All model-specific parameter preprocessing (prompt->positivePrompt, outputFormat defaults, etc.)
+ * should be handled in individual model .ts files via preparePayload() functions.
+ * This provider is a dumb transport layer that calls the Runware API.
  *
- * This function ensures:
- * 1. Prompt is mapped to positivePrompt if needed
- * 2. Video content has appropriate defaults (MP4 format)
- *
- * @param parameters - Raw parameters from request
- * @param prompt - User's prompt text
- * @param contentType - Content type from model config (image/video/audio)
- * @returns Preprocessed parameters ready for provider API
+ * Example: Runware image models handle prompt->positivePrompt mapping in their own .ts files.
+ * Example: Runware video models set outputFormat='MP4' in their own .ts files.
  */
-export function preprocessRunwareParameters(
-  parameters: Record<string, any>,
-  prompt: string,
-  contentType: string
-): Record<string, any> {
-  const processed = { ...parameters };
-
-  // Map prompt to positivePrompt if missing (Runware API uses 'positivePrompt')
-  if (!processed.positivePrompt && typeof prompt === 'string' && prompt.trim().length > 0) {
-    processed.positivePrompt = prompt;
-  }
-
-  // Video-specific defaults: Use uppercase MP4 format (Runware API requirement)
-  if (contentType === 'video' && !processed.outputFormat) {
-    processed.outputFormat = 'MP4';
-  }
-
-  return processed;
-}
 
 export async function callRunware(request: ProviderRequest): Promise<ProviderResponse> {
   console.log(JSON.stringify({ event: 'runware_call_start', model: request.model }));

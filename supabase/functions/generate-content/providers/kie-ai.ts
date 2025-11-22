@@ -41,39 +41,15 @@ function getKieApiKey(modelId: string, recordId: string): string {
   return apiKey;
 }
 
-// No more hidden defaults - all parameters come from locked model files or schema
-
 /**
- * Preprocess parameters for Kie.ai provider models
- * Handles provider-specific parameter mappings following industry best practices (Strategy pattern)
+ * Kie.ai Provider Implementation
  *
- * Industry Standard: Encapsulate provider-specific logic within provider implementation
- * Reference: Strategy/Adapter pattern (Gang of Four)
+ * NOTE: All model-specific parameter preprocessing (prompt->text, etc.) should be
+ * handled in individual model .ts files via preparePayload() functions.
+ * This provider is a dumb transport layer that calls the Kie.ai API.
  *
- * @param parameters - Raw parameters from request
- * @param prompt - User's prompt text
- * @param modelId - Model identifier for model-specific mappings
- * @returns Preprocessed parameters ready for provider API
+ * Example: ElevenLabs models handle prompt->text mapping in their own .ts files.
  */
-export function preprocessKieAiParameters(
-  parameters: Record<string, any>,
-  prompt: string,
-  modelId: string
-): Record<string, any> {
-  const processed = { ...parameters };
-
-  // ElevenLabs models require 'text' field instead of 'prompt'
-  // These models are routed through Kie.ai API
-  const isElevenLabsModel =
-    modelId === 'elevenlabs/text-to-speech-multilingual-v2' ||
-    modelId === 'elevenlabs/text-to-speech-turbo-2-5';
-
-  if (isElevenLabsModel && !processed.text && typeof prompt === 'string' && prompt.trim().length > 0) {
-    processed.text = prompt;
-  }
-
-  return processed;
-}
 
 export async function callKieAI(
   request: ProviderRequest,

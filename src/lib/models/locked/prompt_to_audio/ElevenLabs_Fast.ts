@@ -12,6 +12,7 @@ import { getGenerationType } from '@/lib/models/registry';
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { supabase } from "@/integrations/supabase/client";
 import { reserveCredits } from "@/lib/models/creditDeduction";
+import { getKieApiKey as getCentralKieApiKey } from "../getKieApiKey";
 
 export const MODEL_CONFIG = {
   modelId: "elevenlabs/text-to-speech-turbo-2-5",
@@ -169,7 +170,5 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 }
 
 async function getKieApiKey(): Promise<string> {
-  const { data, error } = await supabase.functions.invoke('get-api-key', { body: { provider: 'kie_ai' } });
-  if (error || !data?.apiKey) throw new Error('Failed to get API key');
-  return data.apiKey;
+  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId);
 }

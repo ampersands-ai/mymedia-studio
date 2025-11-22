@@ -14,6 +14,7 @@ import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { reserveCredits } from "@/lib/models/creditDeduction";
+import { getKieApiKey as getCentralKieApiKey } from "../getKieApiKey";
 
 // MODEL CONFIGURATION
 export const MODEL_CONFIG = {
@@ -164,9 +165,5 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 }
 
 async function getKieApiKey(): Promise<string> {
-  const { data, error } = await supabase.functions.invoke('get-api-key', {
-    body: { provider: 'kie_ai' }
-  });
-  if (error || !data?.apiKey) throw new Error('Failed to get API key');
-  return data.apiKey;
+  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId);
 }

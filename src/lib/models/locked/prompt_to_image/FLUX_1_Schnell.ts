@@ -10,6 +10,7 @@ export const MODEL_CONFIG = {
   modelName: "FLUX.1 Schnell",
   provider: "runware",
   contentType: "prompt_to_image",
+  use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE",
   baseCreditCost: 0.1,
   estimatedTimeSeconds: 10,
   costMultipliers: {},
@@ -92,7 +93,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   
   const { data: keyData } = await supabase.functions.invoke('get-api-key', {
-    body: { provider: MODEL_CONFIG.provider, modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId }
+    body: { provider: MODEL_CONFIG.provider, modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId, use_api_key: MODEL_CONFIG.use_api_key }
   });
   if (!keyData?.apiKey) throw new Error('Failed to retrieve API key');
   const apiKey = keyData.apiKey;

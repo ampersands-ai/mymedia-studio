@@ -12,6 +12,7 @@ import { getGenerationType } from '@/lib/models/registry';
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { supabase } from "@/integrations/supabase/client";
 import { reserveCredits } from "@/lib/models/creditDeduction";
+import { getKieApiKey as getCentralKieApiKey } from "../getKieApiKey";
 
 export const MODEL_CONFIG = {
   modelId: "recraft/crisp-upscale",
@@ -19,6 +20,7 @@ export const MODEL_CONFIG = {
   modelName: "Crisp Image Upscale",
   provider: "kie_ai",
   contentType: "image_editing",
+  use_api_key: "KIE_AI_API_KEY_IMAGE_EDITING",
   baseCreditCost: 0.25,
   estimatedTimeSeconds: 20,
   costMultipliers: {},
@@ -69,21 +71,12 @@ export function calculateCost(inputs: Record<string, any>): number {
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, userId, uploadedImageUrls } = params;
 
-  // Debug logging
-  console.log('🔍 Crisp Upscale execute called:', {
-    hasUploadedImageUrls: uploadedImageUrls?.length > 0,
-    uploadedImageUrls,
-    modelParameters,
-  });
-
   // Map uploaded image URL to the image parameter
   const inputs = {
     ...modelParameters,
     prompt,
     image: uploadedImageUrls[0] || modelParameters.image
   };
-
-  console.log('🔍 Inputs after mapping:', { image: inputs.image, hasImage: !!inputs.image });
 
   const validation = validate(inputs);
   if (!validation.valid) throw new Error(validation.error);
@@ -134,7 +127,5 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 }
 
 async function getKieApiKey(): Promise<string> {
-  const { data, error } = await supabase.functions.invoke('get-api-key', { body: { provider: 'kie_ai' } });
-  if (error || !data?.apiKey) throw new Error('Failed to get API key');
-  return data.apiKey;
+  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
 }

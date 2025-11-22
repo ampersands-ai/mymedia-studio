@@ -19,10 +19,22 @@ export const useNativeDownload = (): UseNativeDownloadResult => {
 
   /**
    * Determine MIME type from URL or filename
+   * Properly handles URLs with query parameters
    */
   const getMimeType = (url: string): string => {
-    const extension = url.split('.').pop()?.toLowerCase();
-    
+    // Extract pathname from URL (handles query parameters)
+    let pathname: string;
+    try {
+      const urlObj = new URL(url);
+      pathname = urlObj.pathname;
+    } catch {
+      // If URL parsing fails, use the string directly (might be a relative path)
+      pathname = url;
+    }
+
+    // Extract extension from pathname
+    const extension = pathname.split('.').pop()?.toLowerCase() || '';
+
     const mimeTypes: Record<string, string> = {
       jpg: 'image/jpeg',
       jpeg: 'image/jpeg',
@@ -37,15 +49,25 @@ export const useNativeDownload = (): UseNativeDownloadResult => {
       pdf: 'application/pdf',
     };
 
-    return mimeTypes[extension || ''] || 'application/octet-stream';
+    return mimeTypes[extension] || 'application/octet-stream';
   };
 
   /**
    * Download file to device
    */
   const downloadFile = async (url: string, filename?: string): Promise<void> => {
-    const name = filename || `download_${Date.now()}.${url.split('.').pop()}`;
-    
+    // Extract extension from URL pathname (handles query parameters)
+    let extension = '';
+    if (!filename) {
+      try {
+        const urlObj = new URL(url);
+        extension = urlObj.pathname.split('.').pop() || '';
+      } catch {
+        extension = url.split('.').pop() || '';
+      }
+    }
+    const name = filename || `download_${Date.now()}.${extension}`;
+
     if (!isNative) {
       // Web fallback: use anchor download
       try {

@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "grok-imagine/image-to-video", recordId: "8c46aade-1272-4409-bb3a-3701e2423320", modelName: "Grok Imagine", provider: "kie_ai", contentType: "image_to_video", baseCreditCost: 10, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "grok-imagine/image-to-video", recordId: "8c46aade-1272-4409-bb3a-3701e2423320", modelName: "Grok Imagine", provider: "kie_ai", contentType: "image_to_video",
+  use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO", baseCreditCost: 10, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/grok.png",
@@ -32,7 +33,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const { data: keyData } = await supabase.functions.invoke('get-api-key', {
-    body: { provider: MODEL_CONFIG.provider, modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId }
+    body: { provider: MODEL_CONFIG.provider, modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId, use_api_key: MODEL_CONFIG.use_api_key }
   });
   if (!keyData?.apiKey) throw new Error('Failed to retrieve API key');
   const apiKey = keyData.apiKey;

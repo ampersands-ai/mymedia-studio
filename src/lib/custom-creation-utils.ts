@@ -48,19 +48,24 @@ export const getImageFieldInfo = (model: any): {
 
 
 /**
+ * Check if model is a Kie AI audio model
+ * Centralized utility to avoid duplication
+ */
+export const isKieAiAudioModel = (model: { provider: string; content_type: string }): boolean => {
+  return model.provider === 'kie_ai' && model.content_type === 'audio';
+};
+
+/**
  * Get max prompt length based on model and customMode
  */
 export const getMaxPromptLength = (model: any, customMode: boolean | undefined): number => {
   if (!model) return 5000;
-  
-  // Check if this is a Kie.ai audio model with customMode false
-  const isKieAiAudio = model.provider === 'kie_ai' && model.content_type === 'audio';
-  
+
   // Kie.ai audio in non-custom mode has 500 char limit
-  if (isKieAiAudio && customMode === false) {
+  if (isKieAiAudioModel(model) && customMode === false) {
     return 500;
   }
-  
+
   // Default limit for all other cases
   return 5000;
 };

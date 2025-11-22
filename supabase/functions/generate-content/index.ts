@@ -5,10 +5,42 @@ import { calculateTokenCost } from "./utils/token-calculator.ts";
 import { uploadToStorage } from "./utils/storage.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { convertImagesToUrls } from "./utils/image-processor.ts";
-import { 
+import {
   GenerateContentRequestSchema,
-  type GenerateContentRequest 
+  type GenerateContentRequest
 } from "../_shared/schemas.ts";
+
+/**
+ * GENERATE CONTENT EDGE FUNCTION
+ * ================================
+ *
+ * .TS REGISTRY ARCHITECTURE (Source of Truth)
+ * --------------------------------------------
+ * This edge function uses model definitions EXCLUSIVELY from .ts files.
+ *
+ * ⚠️ DATABASE DEPENDENCY ELIMINATED ⚠️
+ * No ai_models or content_templates table lookups.
+ * Model data comes ONLY from .ts registry.
+ *
+ * HOW IT WORKS:
+ * 1. Client loads model from .ts registry using getModel(recordId)
+ * 2. Client sends REQUIRED model_config + model_schema to edge function
+ * 3. Edge function uses provided config (NO DATABASE LOOKUP)
+ * 4. Provider implementations route to external APIs
+ *
+ * MODEL-SPECIFIC LOGIC:
+ * All model-specific parameter transformations (prompt->text, prompt->positivePrompt, etc.)
+ * are handled in individual model .ts files via preparePayload() functions.
+ * Each model knows its own requirements - providers are dumb transport layers.
+ *
+ * ADDING NEW MODELS:
+ * - Create model .ts file in src/lib/models/locked/
+ * - Define MODEL_CONFIG, SCHEMA, preparePayload(), execute()
+ * - Register in src/lib/models/locked/index.ts
+ * - Model automatically available (no database sync needed)
+ *
+ * Reference: ADR 007 - Locked Model Registry System
+ */
 
 // Type definitions
 interface EdgeFunctionUser {
@@ -119,9 +151,8 @@ Deno.serve(async (req) => {
     }
     
     const {
-      template_id,
-      model_id,
-      model_record_id,
+      model_config,  // REQUIRED: Full model config from .ts registry
+      model_schema,  // REQUIRED: Model schema from .ts registry
       custom_parameters = {},
       enhance_prompt = false,
       enhancement_provider = 'lovable_ai',
@@ -197,95 +228,60 @@ Deno.serve(async (req) => {
       }
     }
 
-    logger.info('Async generation request', {
+    logger.info('Generation request received', {
       userId: authenticatedUser.id,
-      metadata: { template_id, model_id, model_record_id, enhance_prompt }
+      metadata: {
+        model_id: model_config.modelId,
+        provider: model_config.provider,
+        enhance_prompt
+      }
     });
 
-    // Validate: template_id XOR (model_id or model_record_id)
-    if ((!template_id && !model_id && !model_record_id) || (template_id && (model_id || model_record_id))) {
-      throw new Error('Must provide either template_id or model_id/model_record_id, not both');
+    // REQUIRE model_config from .ts registry - NO DATABASE LOOKUPS
+    if (!model_config || !model_schema) {
+      throw new Error(
+        'model_config and model_schema are REQUIRED. ' +
+        'Client must send full model definition from .ts registry. ' +
+        'Database has been eliminated for model data.'
+      );
     }
 
-    let model: Model;
-    let parameters: Record<string, unknown> = {};
-    let enhancementInstruction: string | null = null;
-
-    // Load configuration
-    if (template_id) {
-      // Template mode
-      const { data: templateData, error: templateError } = await supabase
-        .from('content_templates')
-        .select('*, ai_models(*)')
-        .eq('id', template_id)
-        .eq('is_active', true)
-        .single();
-
-      if (templateError || !templateData) {
-        throw new Error('Template not found or inactive');
+    logger.info('Using model config from .ts registry', {
+      userId: authenticatedUser.id,
+      metadata: {
+        model_id: model_config.modelId,
+        record_id: model_config.recordId,
+        provider: model_config.provider
       }
+    });
 
-      model = templateData.ai_models;
-      parameters = { ...templateData.preset_parameters, ...custom_parameters };
-      enhancementInstruction = templateData.enhancement_instruction;
-    } else {
-      // Custom mode - support both legacy model_id and new model_record_id
-      if (model_record_id) {
-        // Use record_id - guaranteed unique
-        const { data: modelData, error: modelError } = await supabase
-          .from('ai_models')
-          .select('*')
-          .eq('record_id', model_record_id)
-          .eq('is_active', true)
-          .single();
+    // Transform model_config to Model type (for compatibility with existing code)
+    const model: Model = {
+      id: model_config.modelId,
+      record_id: model_config.recordId,
+      provider: model_config.provider,
+      content_type: model_config.contentType,
+      base_token_cost: model_config.baseCreditCost,
+      input_schema: model_schema,
+      is_active: model_config.isActive ?? true,
+      cost_multipliers: model_config.costMultipliers || {},
+      api_endpoint: model_config.apiEndpoint || null,
+      payload_structure: model_config.payloadStructure || 'wrapper',
+      use_api_key: model_config.use_api_key,
+    };
 
-        if (modelError || !modelData) {
-          throw new Error('Model not found or inactive');
-        }
+    const parameters: Record<string, unknown> = custom_parameters;
+    const enhancementInstruction: string | null = null;
 
-        model = modelData;
-      } else if (model_id) {
-        // Legacy model_id path - check for duplicates
-        const { data: models, error: modelError, count } = await supabase
-          .from('ai_models')
-          .select('*', { count: 'exact' })
-          .eq('id', model_id)
-          .eq('is_active', true);
-
-        if (modelError) {
-          throw new Error(`Model lookup failed: ${modelError.message}`);
-        }
-
-        if (!models || models.length === 0) {
-          throw new Error('Model not found or inactive');
-        }
-
-      if (count && count > 1) {
-        logger.warn('Duplicate model_id detected', {
-          metadata: { model_id, duplicate_count: count }
-        });
-        return new Response(
-            JSON.stringify({ 
-              error: `Duplicate model id found. Multiple active models share id "${model_id}". Please use model_record_id instead.`,
-              code: 'DUPLICATE_MODEL_ID',
-              duplicated_id: model_id,
-              duplicate_count: count
-            }),
-            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        model = models[0];
-      } else {
-        throw new Error('Must provide either model_id or model_record_id');
+    logger.debug('.ts registry model config applied', {
+      userId: authenticatedUser.id,
+      metadata: {
+        model_id: model.id,
+        record_id: model.record_id,
+        provider: model.provider,
+        has_schema: !!model.input_schema,
+        source: '.ts registry (database eliminated)'
       }
-
-      parameters = custom_parameters;
-    }
-
-    logger.info('Model loaded', {
-      userId: user.id,
-      metadata: { model_id: model.id, provider: model.provider }
     });
 
     // Check if model has prompt field in schema (handle 'prompt', 'positivePrompt', 'positive_prompt')
@@ -523,27 +519,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (
-      (model.id === 'elevenlabs/text-to-speech-multilingual-v2' ||
-       model.id === 'elevenlabs/text-to-speech-turbo-2-5') &&
-      !parameters.text &&
-      typeof prompt === 'string' &&
-      prompt.trim().length > 0
-    ) {
-      parameters.text = prompt;
-      logger.debug('Applied prompt->text fallback for ElevenLabs model', { userId: user.id });
-    }
-
-    // Safety fallback for Runware models: map prompt to positivePrompt if positivePrompt is missing
-    if (
-      model.provider === 'runware' &&
-      !parameters.positivePrompt &&
-      typeof prompt === 'string' &&
-      prompt.trim().length > 0
-    ) {
-      parameters.positivePrompt = prompt;
-      logger.debug('Applied prompt->positivePrompt fallback for Runware model', { userId: user.id });
-    }
+    // Provider-specific parameter mappings have been moved to provider preprocessing functions
+    // See preprocessKieAiParameters() and preprocessRunwareParameters() in providers/
 
     let validatedParameters = validateAndFilterParameters(
       parameters,
@@ -969,21 +946,20 @@ Deno.serve(async (req) => {
           logger
         );
 
+        // NOTE: Provider-specific parameter preprocessing (prompt->text, prompt->positivePrompt, etc.)
+        // is now handled in individual model .ts files via preparePayload() functions.
+        // Each model knows its own parameter requirements and handles transformations.
+
       providerRequest = {
         model: model.id,
         model_record_id: model.record_id,
-        parameters: processedParams, // Parameters with images converted to URLs
+        parameters: processedParams, // Parameters processed by model .ts files
         input_schema: model.input_schema,
         api_endpoint: model.api_endpoint,
         payload_structure: model.payload_structure || 'wrapper',
         userId: user.id,
         generationId: createdGeneration.id
       };
-        
-        // Runware video default: uppercase MP4
-        if (model.provider === 'runware' && model.content_type === 'video' && !providerRequest.parameters.outputFormat) {
-          providerRequest.parameters.outputFormat = 'MP4';
-        }
 
         logger.debug('Provider request prepared', {
           userId: user.id,

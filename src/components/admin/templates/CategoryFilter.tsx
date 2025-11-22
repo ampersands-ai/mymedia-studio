@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ALL_CATEGORIES } from "@/lib/admin/template-filtering";
 
 interface CategoryFilterProps {
   categories: string[];
@@ -21,12 +22,12 @@ export function CategoryFilter({
   return (
     <div className="flex items-center gap-2 overflow-x-auto pb-2">
       <Button
-        variant={selectedCategories.includes('All') ? 'default' : 'outline'}
+        variant={selectedCategories.includes(ALL_CATEGORIES) ? 'default' : 'outline'}
         size="sm"
-        onClick={() => onToggle('All')}
-        className={selectedCategories.includes('All') ? 'border-2 border-black' : 'border-2'}
+        onClick={() => onToggle(ALL_CATEGORIES)}
+        className={selectedCategories.includes(ALL_CATEGORIES) ? 'border-2 border-black' : 'border-2'}
       >
-        All ({totalCount})
+        {ALL_CATEGORIES} ({totalCount})
       </Button>
       {categories.map(category => (
         <Button

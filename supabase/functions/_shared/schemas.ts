@@ -60,10 +60,40 @@ export const AIToolCallSchema = z.object({
 
 // ==================== Generate Content Schemas ====================
 
+/**
+ * Model configuration sent from client (from .ts registry)
+ * This eliminates the need for database lookups
+ */
+export const ModelConfigSchema = z.object({
+  modelId: z.string(),
+  recordId: z.string().uuid(),
+  modelName: z.string(),
+  provider: z.string(),
+  contentType: z.string(),
+  use_api_key: z.string().optional(),
+  apiEndpoint: z.string().nullable().optional(),
+  payloadStructure: z.string().optional(),
+  baseCreditCost: z.number(),
+  estimatedTimeSeconds: z.number().optional(),
+  costMultipliers: z.record(z.number()).optional(),
+  maxImages: z.number().nullable().optional(),
+  defaultOutputs: z.number().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const ModelSchemaDefinition = z.object({
+  type: z.string(),
+  properties: z.record(z.any()),
+  required: z.array(z.string()).optional(),
+  imageInputField: z.string().optional(),
+});
+
 export const GenerateContentRequestSchema = z.object({
-  template_id: z.string().uuid().optional(),
-  model_id: z.string().optional(),
-  model_record_id: z.string().uuid().optional(),
+  // REQUIRED: Full model config from .ts registry (database eliminated)
+  model_config: ModelConfigSchema,
+  model_schema: ModelSchemaDefinition,
+
+  // Request parameters
   prompt: z.string().optional(),
   custom_parameters: z.record(z.unknown()).default({}),
   enhance_prompt: z.boolean().default(false),
@@ -72,14 +102,7 @@ export const GenerateContentRequestSchema = z.object({
   workflow_step_number: z.number().int().positive().optional(),
   user_id: z.string().uuid().optional(),
   test_mode: z.boolean().default(false),
-}).refine(
-  (data) => {
-    const hasTemplate = Boolean(data.template_id);
-    const hasModel = Boolean(data.model_id || data.model_record_id);
-    return (hasTemplate && !hasModel) || (!hasTemplate && hasModel);
-  },
-  { message: "Must provide either template_id or model_id/model_record_id, not both" }
-);
+});
 
 export const ModelInputSchemaPropertySchema = z.object({
   type: z.string().optional(),

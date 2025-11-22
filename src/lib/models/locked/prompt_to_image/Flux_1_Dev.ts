@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "runware:101@1", recordId: "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c", modelName: "Flux.1 Dev", provider: "runware", contentType: "prompt_to_image", baseCreditCost: 0.4, estimatedTimeSeconds: 15, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "runware:101@1", recordId: "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c", modelName: "Flux.1 Dev", provider: "runware", contentType: "prompt_to_image",
+  use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE", baseCreditCost: 0.4, estimatedTimeSeconds: 15, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/flux.png",
@@ -39,4 +40,6 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   return gen.id;
 }
 
-async function getRunwareApiKey(): Promise<string> { throw new Error("RUNWARE_API_KEY needs configuration"); }
+async function getRunwareApiKey(): Promise<string> {
+  return getCentralRunwareApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
+}

@@ -10,6 +10,7 @@ export const MODEL_CONFIG = {
   modelName: "Remove Background",
   provider: "runware",
   contentType: "image_editing",
+  use_api_key: "RUNWARE_API_KEY_IMAGE_EDITING",
   baseCreditCost: 0.06,
   estimatedTimeSeconds: 15,
   costMultipliers: {},

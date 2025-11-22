@@ -21,6 +21,7 @@ export const MODEL_CONFIG = {
   modelName: "ChatGPT 4o Image",
   provider: "kie_ai",
   contentType: "image_editing",
+  use_api_key: "KIE_AI_API_KEY_IMAGE_EDITING",
   baseCreditCost: 3,
   estimatedTimeSeconds: 120,
   costMultipliers: { nVariants: { "1": 1, "2": 1.16666, "4": 1.3333 } },
@@ -126,7 +127,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
     .single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const { data: keyData } = await supabase.functions.invoke("get-api-key", {
-    body: { provider: MODEL_CONFIG.provider, modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId },
+    body: { provider: MODEL_CONFIG.provider, modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId, use_api_key: MODEL_CONFIG.use_api_key },
   });
   if (!keyData?.apiKey) throw new Error("Failed to retrieve API key");
   const res = await fetch(`https://api.kie.ai${MODEL_CONFIG.apiEndpoint}`, {

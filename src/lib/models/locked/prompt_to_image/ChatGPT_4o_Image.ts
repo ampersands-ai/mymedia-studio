@@ -14,6 +14,7 @@ import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { reserveCredits } from "@/lib/models/creditDeduction";
+import { getKieApiKey as getCentralKieApiKey } from "../getKieApiKey";
 
 // MODEL CONFIGURATION
 export const MODEL_CONFIG = {
@@ -22,6 +23,7 @@ export const MODEL_CONFIG = {
   modelName: "ChatGPT 4o-Image",
   provider: "kie_ai",
   contentType: "prompt_to_image",
+  use_api_key: "KIE_AI_API_KEY_PROMPT_TO_IMAGE",
   baseCreditCost: 3,
   estimatedTimeSeconds: 120,
   costMultipliers: { nVariants: { "1": 1, "2": 1.16666, "4": 1.3333 } },
@@ -164,9 +166,5 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 }
 
 async function getKieApiKey(): Promise<string> {
-  const { data, error } = await supabase.functions.invoke('get-api-key', {
-    body: { provider: 'kie_ai' }
-  });
-  if (error || !data?.apiKey) throw new Error('Failed to get API key');
-  return data.apiKey;
+  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
 }

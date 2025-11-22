@@ -14,14 +14,12 @@ const generateUniqueRenderJobId = (): string => {
   ).join('');
 };
 
-// Helper to detect if a URL is a video file
+// Helper to detect if a URL is a video file based on explicit extensions
 const isVideoUrl = (url: string | null | undefined): boolean => {
   if (!url) return false;
+  const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.m4v'];
   const lowerUrl = url.toLowerCase();
-  return lowerUrl.includes('.mp4') || 
-         lowerUrl.includes('.webm') || 
-         lowerUrl.includes('.mov') ||
-         lowerUrl.includes('video');
+  return videoExtensions.some(ext => lowerUrl.includes(ext));
 };
 
 Deno.serve(async (req) => {

@@ -2,14 +2,15 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Retrieves the appropriate Runware API key for a given model
- * Maps specific model types to their dedicated API keys
+ * Uses the explicit use_api_key field from MODEL_CONFIG
  */
-export async function getRunwareApiKey(modelId: string, recordId: string): Promise<string> {
+export async function getRunwareApiKey(modelId: string, recordId: string, use_api_key: string): Promise<string> {
   const { data, error } = await supabase.functions.invoke('get-api-key', {
-    body: { 
+    body: {
       provider: 'runware',
       modelId,
-      recordId
+      recordId,
+      use_api_key
     }
   });
 

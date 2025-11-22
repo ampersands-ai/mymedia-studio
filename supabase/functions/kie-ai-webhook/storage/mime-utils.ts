@@ -30,11 +30,13 @@ export function getMimeType(extension: string, contentType: string): string {
 }
 
 export function determineFileExtension(contentType: string, url: string): string {
+  // Try to extract from URL first
   if (url) {
     const match = url.match(/\.([a-z0-9]+)(?:\?|$)/i);
     if (match) return match[1];
   }
-  
+
+  // MIME type to extension mapping
   const mimeToExt: Record<string, string> = {
     'image/png': 'png',
     'image/jpeg': 'jpg',
@@ -49,6 +51,17 @@ export function determineFileExtension(contentType: string, url: string): string
     'audio/ogg': 'ogg',
     'text/plain': 'txt'
   };
-  
-  return mimeToExt[contentType.toLowerCase()] || 'mp4';
+
+  const extension = mimeToExt[contentType.toLowerCase()];
+
+  // Fail fast: Don't guess file extensions for unknown MIME types
+  if (!extension) {
+    throw new Error(
+      `Cannot determine file extension for unknown MIME type: "${contentType}". ` +
+      `URL provided: "${url || 'none'}". ` +
+      `Supported types: ${Object.keys(mimeToExt).join(', ')}`
+    );
+  }
+
+  return extension;
 }

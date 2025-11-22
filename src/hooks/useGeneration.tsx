@@ -11,6 +11,7 @@ import {
   GenerationErrorCode,
   type InsufficientCreditsError,
 } from "@/types/generation";
+import { getModel } from "@/lib/models/registry";
 
 const generationLogger = logger.child({ component: 'useGeneration' });
 
@@ -80,13 +81,22 @@ export const useGeneration = () => {
         }
       }
 
-      // STEP 2: Proceed with generation using appropriate endpoint
-      const bodyToSend = { ...validatedParams };
-      
+      // STEP 2: Load model from .ts registry and prepare request
+      // NEW: Send full model config to edge function (eliminates database lookup)
+      const modelModule = getModel(validatedParams.model_record_id);
+
+      const bodyToSend = {
+        ...validatedParams,
+        model_config: modelModule.MODEL_CONFIG,  // Full model config from .ts file
+        model_schema: modelModule.SCHEMA,        // Model schema from .ts file
+      };
+
       // Dev-only: Log exact payload for test vs production comparison
-      generationLogger.debug("Generation payload prepared", {
+      generationLogger.debug("Generation payload prepared with .ts registry", {
         requestId,
         model_record_id: bodyToSend.model_record_id,
+        model_id: bodyToSend.model_config.modelId,
+        provider: bodyToSend.model_config.provider,
         prompt: bodyToSend.prompt?.substring(0, 100), // Log first 100 chars only
         custom_parameters: bodyToSend.custom_parameters,
         enhance_prompt: bodyToSend.enhance_prompt,

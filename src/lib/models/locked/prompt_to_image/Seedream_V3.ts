@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "bytedance/seedream", recordId: "ac90c626-ab01-4bc0-a000-9b952ddbde0e", modelName: "Seedream V3", provider: "kie_ai", contentType: "prompt_to_image", baseCreditCost: 1.75, estimatedTimeSeconds: 20, costMultipliers: { "max_images": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "bytedance/seedream", recordId: "ac90c626-ab01-4bc0-a000-9b952ddbde0e", modelName: "Seedream V3", provider: "kie_ai", contentType: "prompt_to_image",
+  use_api_key: "KIE_AI_API_KEY_PROMPT_TO_IMAGE", baseCreditCost: 1.75, estimatedTimeSeconds: 20, costMultipliers: { "max_images": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/seedream.png",
@@ -31,7 +32,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const { data: keyData } = await supabase.functions.invoke('get-api-key', {
-    body: { provider: MODEL_CONFIG.provider, modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId }
+    body: { provider: MODEL_CONFIG.provider, modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId, use_api_key: MODEL_CONFIG.use_api_key }
   });
   if (!keyData?.apiKey) throw new Error('Failed to retrieve API key');
   const apiKey = keyData.apiKey;

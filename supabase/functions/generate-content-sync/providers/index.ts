@@ -9,6 +9,7 @@ export interface ProviderRequest {
   userId?: string; // For storage path generation (sync only)
   generationId?: string; // For storage path generation (sync only)
   supabase?: any; // Supabase client for presigned URLs (sync only)
+  use_api_key?: string; // Explicit API key name from MODEL_CONFIG
 }
 
 export interface ProviderResponse {

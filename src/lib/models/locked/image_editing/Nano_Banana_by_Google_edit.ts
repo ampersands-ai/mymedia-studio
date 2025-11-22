@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "google/nano-banana-edit", recordId: "a70d01a3-05de-4918-b934-55a7e5e5d407", modelName: "Nano Banana by Google", provider: "kie_ai", contentType: "image_editing", baseCreditCost: 2, estimatedTimeSeconds: 25, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 10, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "google/nano-banana-edit", recordId: "a70d01a3-05de-4918-b934-55a7e5e5d407", modelName: "Nano Banana by Google", provider: "kie_ai", contentType: "image_editing",
+  use_api_key: "KIE_AI_API_KEY_IMAGE_EDITING", baseCreditCost: 2, estimatedTimeSeconds: 25, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 10, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/google.png",
@@ -96,5 +97,5 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 import { getKieApiKey as getCentralKieApiKey } from "../getKieApiKey";
 
 async function getKieApiKey(): Promise<string> {
-  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId);
+  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
 }

@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 
-export const MODEL_CONFIG = { modelId: "veo3", recordId: "a5c2ec16-6294-4588-86b6-7b4182601cda", modelName: "Google Veo 3.1 HQ", provider: "kie_ai", contentType: "image_to_video", baseCreditCost: 125, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/veo/generate", payloadStructure: "flat", maxImages: 2, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "veo3", recordId: "a5c2ec16-6294-4588-86b6-7b4182601cda", modelName: "Google Veo 3.1 HQ", provider: "kie_ai", contentType: "image_to_video",
+  use_api_key: "KIE_AI_API_KEY_VEO3", baseCreditCost: 125, estimatedTimeSeconds: 300, costMultipliers: {}, apiEndpoint: "/api/v1/veo/generate", payloadStructure: "flat", maxImages: 2, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/google.png",
@@ -43,5 +44,5 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 import { getKieApiKey as getCentralKieApiKey } from "../getKieApiKey";
 
 async function getKieApiKey(): Promise<string> {
-  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId);
+  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
 }

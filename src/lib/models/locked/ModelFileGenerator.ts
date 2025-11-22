@@ -168,9 +168,9 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   }
 }
 
-async function getProviderApiKey(provider: string): Promise<string> {
+async function getProviderApiKey(provider: string, modelId: string, recordId: string, use_api_key: string): Promise<string> {
   const { data, error } = await supabase.functions.invoke('get-api-key', {
-    body: { provider }
+    body: { provider, modelId, recordId, use_api_key }
   });
   if (error || !data?.apiKey) throw new Error('Failed to get API key');
   return data.apiKey;

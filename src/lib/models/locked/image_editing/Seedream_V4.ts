@@ -3,7 +3,8 @@ import { getGenerationType } from '@/lib/models/registry';
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
-export const MODEL_CONFIG = { modelId: "bytedance/seedream-v4-image-edit", recordId: "57f1e8f3-e4e3-42bd-bd9e-2f2ac6eee41d", modelName: "Seedream V4", provider: "kie_ai", contentType: "image_editing", baseCreditCost: 1, estimatedTimeSeconds: 40, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
+export const MODEL_CONFIG = { modelId: "bytedance/seedream-v4-image-edit", recordId: "57f1e8f3-e4e3-42bd-bd9e-2f2ac6eee41d", modelName: "Seedream V4", provider: "kie_ai", contentType: "image_editing",
+  use_api_key: "KIE_AI_API_KEY_IMAGE_EDITING", baseCreditCost: 1, estimatedTimeSeconds: 40, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/seedream.png",
@@ -40,5 +41,5 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 import { getKieApiKey as getCentralKieApiKey } from "../getKieApiKey";
 
 async function getKieApiKey(): Promise<string> {
-  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId);
+  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
 }

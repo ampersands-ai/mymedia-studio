@@ -100,7 +100,16 @@ async function pollForVideoResult(
   throw new Error("Video generation timed out after 60 seconds");
 }
 
-// Removed hardcoded MODEL_RESTRICTIONS - now using dynamic schema-based validation
+/**
+ * Runware Provider Implementation
+ *
+ * NOTE: All model-specific parameter preprocessing (prompt->positivePrompt, outputFormat defaults, etc.)
+ * should be handled in individual model .ts files via preparePayload() functions.
+ * This provider is a dumb transport layer that calls the Runware API.
+ *
+ * Example: Runware image models handle prompt->positivePrompt mapping in their own .ts files.
+ * Example: Runware video models set outputFormat='MP4' in their own .ts files.
+ */
 
 export async function callRunware(request: ProviderRequest): Promise<ProviderResponse> {
   console.log(JSON.stringify({ event: 'runware_call_start', model: request.model }));

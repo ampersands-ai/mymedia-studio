@@ -41,7 +41,15 @@ function getKieApiKey(modelId: string, recordId: string): string {
   return apiKey;
 }
 
-// No more hidden defaults - all parameters come from locked model files or schema
+/**
+ * Kie.ai Provider Implementation
+ *
+ * NOTE: All model-specific parameter preprocessing (prompt->text, etc.) should be
+ * handled in individual model .ts files via preparePayload() functions.
+ * This provider is a dumb transport layer that calls the Kie.ai API.
+ *
+ * Example: ElevenLabs models handle prompt->text mapping in their own .ts files.
+ */
 
 export async function callKieAI(
   request: ProviderRequest,

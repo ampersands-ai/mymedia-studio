@@ -10,6 +10,7 @@ export const MODEL_CONFIG = {
   modelName: "FLUX.1 Pro",
   provider: "runware",
   contentType: "prompt_to_image",
+  use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE",
   baseCreditCost: 0.2,
   estimatedTimeSeconds: 15,
   costMultipliers: {},
@@ -129,5 +130,5 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 import { getRunwareApiKey as getCentralRunwareApiKey } from "../getRunwareApiKey";
 
 async function getRunwareApiKey(): Promise<string> {
-  return getCentralRunwareApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId);
+  return getCentralRunwareApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
 }

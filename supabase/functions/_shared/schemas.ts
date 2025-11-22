@@ -60,10 +60,45 @@ export const AIToolCallSchema = z.object({
 
 // ==================== Generate Content Schemas ====================
 
+/**
+ * Model configuration sent from client (from .ts registry)
+ * This eliminates the need for database lookups
+ */
+export const ModelConfigSchema = z.object({
+  modelId: z.string(),
+  recordId: z.string().uuid(),
+  modelName: z.string(),
+  provider: z.string(),
+  contentType: z.string(),
+  use_api_key: z.string().optional(),
+  apiEndpoint: z.string().nullable().optional(),
+  payloadStructure: z.string().optional(),
+  baseCreditCost: z.number(),
+  estimatedTimeSeconds: z.number().optional(),
+  costMultipliers: z.record(z.number()).optional(),
+  maxImages: z.number().nullable().optional(),
+  defaultOutputs: z.number().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const ModelSchemaDefinition = z.object({
+  type: z.string(),
+  properties: z.record(z.any()),
+  required: z.array(z.string()).optional(),
+  imageInputField: z.string().optional(),
+});
+
 export const GenerateContentRequestSchema = z.object({
+  // NEW: Full model config from .ts registry (replaces database lookup)
+  model_config: ModelConfigSchema.optional(),
+  model_schema: ModelSchemaDefinition.optional(),
+
+  // DEPRECATED: Legacy fields (kept for backward compatibility during migration)
   template_id: z.string().uuid().optional(),
   model_id: z.string().optional(),
   model_record_id: z.string().uuid().optional(),
+
+  // Request parameters
   prompt: z.string().optional(),
   custom_parameters: z.record(z.unknown()).default({}),
   enhance_prompt: z.boolean().default(false),
@@ -74,11 +109,18 @@ export const GenerateContentRequestSchema = z.object({
   test_mode: z.boolean().default(false),
 }).refine(
   (data) => {
-    const hasTemplate = Boolean(data.template_id);
-    const hasModel = Boolean(data.model_id || data.model_record_id);
-    return (hasTemplate && !hasModel) || (!hasTemplate && hasModel);
+    // Must provide model_config OR legacy fields (not both)
+    const hasModelConfig = Boolean(data.model_config);
+    const hasLegacyTemplate = Boolean(data.template_id);
+    const hasLegacyModel = Boolean(data.model_id || data.model_record_id);
+
+    // Either new path (model_config) or legacy path (template/model)
+    if (hasModelConfig) {
+      return !hasLegacyTemplate && !hasLegacyModel;
+    }
+    return (hasLegacyTemplate && !hasLegacyModel) || (!hasLegacyTemplate && hasLegacyModel);
   },
-  { message: "Must provide either template_id or model_id/model_record_id, not both" }
+  { message: "Must provide model_config (preferred) OR legacy template_id/model_id, not both" }
 );
 
 export const ModelInputSchemaPropertySchema = z.object({

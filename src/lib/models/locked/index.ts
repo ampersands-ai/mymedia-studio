@@ -19,12 +19,26 @@
  * Helper function: Convert contentType to database generation type
  * Database expects: 'image' | 'video' | 'audio' | 'text'
  * ContentType values: 'prompt_to_image' | 'image_editing' | 'prompt_to_video' | etc.
+ *
+ * EXPLICIT MAPPING - No inference logic
  */
 export function getGenerationType(contentType: string): 'image' | 'video' | 'audio' | 'text' {
-  if (contentType.includes('image')) return 'image';
-  if (contentType.includes('video')) return 'video';
-  if (contentType.includes('audio')) return 'audio';
-  return 'text';
+  const typeMap: Record<string, 'image' | 'video' | 'audio' | 'text'> = {
+    'prompt_to_image': 'image',
+    'image_editing': 'image',
+    'image_to_video': 'video',
+    'prompt_to_video': 'video',
+    'prompt_to_audio': 'audio',
+  };
+
+  const type = typeMap[contentType];
+
+  if (!type) {
+    console.warn(`Unknown contentType: "${contentType}", defaulting to 'text'`);
+    return 'text';
+  }
+
+  return type;
 }
 
 // Image Editing Models (16)

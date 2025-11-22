@@ -134,7 +134,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       model_id: MODEL_CONFIG.modelId,
       model_record_id: MODEL_CONFIG.recordId,
       prompt,
-      type: getGenerationType(MODEL_CONFIG.use_api_key),
+      type: getGenerationType(MODEL_CONFIG.contentType),
       status: 'processing',
       tokens_used: cost,
       settings: modelParameters

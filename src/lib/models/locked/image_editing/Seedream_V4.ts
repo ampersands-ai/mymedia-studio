@@ -27,7 +27,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const inputs: Record<string, any> = { prompt, ...modelParameters };
   if (uploadedImages.length > 0) inputs.image_url = (await uploadImagesToStorage(userId))[0];
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
-  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.use_api_key), prompt, tokens_used: calculateCost(inputs), status: "pending", settings: modelParameters }).select().single();
+  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: calculateCost(inputs), status: "pending", settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   const apiKey = await getKieApiKey();
   const res = await fetch(`https://api.kie.ai${MODEL_CONFIG.apiEndpoint}`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` }, body: JSON.stringify(preparePayload(inputs)) });

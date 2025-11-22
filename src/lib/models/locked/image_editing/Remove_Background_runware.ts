@@ -108,7 +108,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       user_id: userId,
       model_id: MODEL_CONFIG.modelId,
       model_record_id: MODEL_CONFIG.recordId,
-      type: getGenerationType(MODEL_CONFIG.use_api_key),
+      type: getGenerationType(MODEL_CONFIG.contentType),
       prompt: prompt || "Remove background",
       tokens_used: cost,
       status: "pending",

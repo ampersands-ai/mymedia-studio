@@ -12,7 +12,7 @@ export const POPULAR_TEMPLATE_IDS = [
 export const getPopularTemplates = async (): Promise<ContentTemplate[]> => {
   const { data, error } = await supabase
     .from('content_templates')
-    .select('*')
+    .select('*, ai_models(*)')
     .eq('is_active', true)
     .order('display_order', { ascending: true })
     .limit(3);

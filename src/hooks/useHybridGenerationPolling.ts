@@ -84,7 +84,8 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
           provider_task_id,
           model_id,
           model_record_id,
-          provider_response
+          provider_response,
+          ai_models!inner(provider)
         `)
         .eq('id', generationId)
         .single();
@@ -94,7 +95,7 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
       if (parentData.status === 'completed') {
         const { data: childrenData } = await supabase
           .from('generations')
-          .select(`id, storage_path, output_index, provider_task_id, model_id`)
+          .select(`id, storage_path, output_index, provider_task_id, model_id, ai_models!inner(provider)`)
           .eq('parent_generation_id', parentData.id)
           .order('output_index');
 
@@ -111,7 +112,7 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
               output_index: child.output_index || 0,
               provider_task_id: child.provider_task_id || '',
               model_id: child.model_id || '',
-              provider: '',
+              provider: child.ai_models?.provider || '',
             })));
         }
 
@@ -124,7 +125,7 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
             output_index: 0,
             provider_task_id: parentData.provider_task_id || '',
             model_id: parentData.model_id || '',
-            provider: '',
+            provider: parentData.ai_models?.provider || '',
           });
         }
 

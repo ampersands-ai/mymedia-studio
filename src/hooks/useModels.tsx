@@ -55,7 +55,7 @@ export const useModels = () => {
         .eq("setting_key", "model_visibility")
         .maybeSingle();
 
-      const visibility: VisibilitySettings = settingsData?.setting_value as VisibilitySettings || { visible: {}, deactivated: {} };
+      const visibility: VisibilitySettings = (settingsData?.setting_value as unknown as VisibilitySettings) || { visible: {}, deactivated: {} };
 
       // Read directly from registry (no database query!)
       const modules = getAllModels();

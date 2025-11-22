@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import type { WorkflowTemplate, WorkflowStep, UserInputField } from '@/hooks/useWorkflowTemplates';
 
 interface UseWorkflowEditorProps {
@@ -10,9 +9,8 @@ interface UseWorkflowEditorProps {
 }
 
 /**
- * Custom hook to manage workflow editor state and operations
- * @param props - Configuration object with workflow, open state, isNew flag, and models
- * @returns Object with local workflow state, category state, and step/field operations
+ * DEPRECATED: Workflow editor disabled
+ * content_templates table has been removed - file-based system now
  */
 export function useWorkflowEditor({
   workflow,
@@ -21,33 +19,17 @@ export function useWorkflowEditor({
 }: UseWorkflowEditorProps) {
   const [localWorkflow, setLocalWorkflow] = useState<Partial<WorkflowTemplate>>(workflow || {});
   const [originalWorkflowId, setOriginalWorkflowId] = useState<string | null>(null);
-  const [existingCategories, setExistingCategories] = useState<string[]>([]);
+  const [existingCategories] = useState<string[]>([]);
   const [showCustomCategory, setShowCustomCategory] = useState(false);
 
   // Initialize workflow data when dialog opens
   useEffect(() => {
-    const initializeDialog = async () => {
-      if (!open) return;
-
-      // Fetch existing categories from both tables
-      const [workflowRes, contentRes] = await Promise.all([
-        supabase.from('workflow_templates').select('category'),
-        supabase.from('content_templates').select('category')
-      ]);
-      
-      const allCategories = new Set<string>();
-      workflowRes.data?.forEach(t => allCategories.add(t.category));
-      contentRes.data?.forEach(t => allCategories.add(t.category));
-      
-      setExistingCategories(Array.from(allCategories).sort());
-      
-      // Set workflow data
-      setLocalWorkflow(workflow || {});
-      setOriginalWorkflowId(workflow?.id || null);
-      setShowCustomCategory(false);
-    };
+    if (!open) return;
     
-    initializeDialog();
+    console.warn('useWorkflowEditor: content_templates table removed');
+    setLocalWorkflow(workflow || {});
+    setOriginalWorkflowId(workflow?.id || null);
+    setShowCustomCategory(false);
   }, [open, workflow]);
 
   // Workflow step operations
@@ -76,7 +58,6 @@ export function useWorkflowEditor({
   const deleteStep = (index: number) => {
     const steps = [...(localWorkflow.workflow_steps || [])];
     steps.splice(index, 1);
-    // Renumber remaining steps
     steps.forEach((step, idx) => {
       step.step_number = idx + 1;
     });

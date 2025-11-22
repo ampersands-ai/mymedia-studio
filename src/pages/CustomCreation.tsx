@@ -582,25 +582,8 @@ const CustomCreation = () => {
         return;
       }
       
-      const currentModel = filteredModels.find(m => m.record_id === state.selectedModel);
-      if (!currentModel) {
-        updateState({ templateBeforeImage: null, templateAfterImage: null });
-        return;
-      }
-      
-      const { data: templateData } = await supabase
-        .from('content_templates')
-        .select('thumbnail_url')
-        .eq('model_record_id', state.selectedModel)
-        .limit(1)
-        .maybeSingle();
-      
-      if (templateData?.thumbnail_url) {
-        const thumbnailUrl = await createSignedUrl('generated-content', extractStoragePath(templateData.thumbnail_url));
-        updateState({ templateAfterImage: thumbnailUrl, templateBeforeImage: null });
-      } else {
-        updateState({ templateBeforeImage: null, templateAfterImage: null });
-      }
+      // DEPRECATED: content_templates removed - no before/after images
+      updateState({ templateBeforeImage: null, templateAfterImage: null });
     };
     
     loadTemplateImages();

@@ -127,7 +127,7 @@ export const OptimizedImage = ({
             height={height}
             loading={priority ? "eager" : "lazy"}
             decoding="async"
-            fetchpriority={priority ? "high" : "auto"}
+            fetchPriority={priority ? "high" : "auto"}
             className={cn(
               "w-full h-full object-cover transition-opacity duration-300",
               isLoading ? "opacity-0" : "opacity-100",
@@ -164,7 +164,7 @@ export const OptimizedImage = ({
               height={height}
               loading={priority ? "eager" : "lazy"}
               decoding="async"
-              fetchpriority={priority ? "high" : "auto"}
+              fetchPriority={priority ? "high" : "auto"}
               className={cn(
                 "w-full h-full object-cover transition-opacity duration-300",
                 isLoading ? "opacity-0" : "opacity-100",

@@ -3,13 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Database, FileText, Zap, TrendingUp, Users, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
+import { FileText, Zap, TrendingUp, Users } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ModelHealthWidget } from "@/components/admin/model-health/ModelHealthWidget";
 import { getAllModels } from "@/lib/models/registry";
-import { syncRegistryToDatabase, checkRegistrySync } from "@/lib/models/syncRegistryToDatabase";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -25,8 +24,6 @@ export default function AdminDashboard() {
   
   const [communityEnabled, setCommunityEnabled] = useState(false);
   const [loadingCommunityToggle, setLoadingCommunityToggle] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<{ inSync: boolean; missingCount: number } | null>(null);
-  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -92,10 +89,6 @@ export default function AdminDashboard() {
         if (communitySettings && typeof communitySettings.setting_value === 'object' && communitySettings.setting_value !== null) {
           setCommunityEnabled((communitySettings.setting_value as { enabled: boolean }).enabled === true);
         }
-
-        // Check registry sync status
-        const syncCheck = await checkRegistrySync();
-        setSyncStatus({ inSync: syncCheck.inSync, missingCount: syncCheck.missingCount });
       } catch (error) {
         logger.error("Failed to fetch dashboard stats", error as Error, {
           component: 'AdminDashboard',
@@ -106,27 +99,6 @@ export default function AdminDashboard() {
 
     fetchStats();
   }, []);
-
-  const handleSyncRegistry = async () => {
-    setSyncing(true);
-    try {
-      const result = await syncRegistryToDatabase();
-      if (result.success) {
-        toast.success(`Sync complete: ${result.inserted} inserted, ${result.updated} updated`);
-        setSyncStatus({ inSync: true, missingCount: 0 });
-      } else {
-        toast.error(`Sync completed with errors: ${result.errors.join(', ')}`);
-      }
-    } catch (error) {
-      logger.error("Registry sync failed", error as Error, {
-        component: 'AdminDashboard',
-        operation: 'handleSyncRegistry'
-      });
-      toast.error("Failed to sync registry to database");
-    } finally {
-      setSyncing(false);
-    }
-  };
 
   const handleCommunityToggle = async (checked: boolean) => {
     setLoadingCommunityToggle(true);
@@ -283,55 +255,6 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Registry Sync Card */}
-      <Card className="border-3 border-black brutal-shadow">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            Registry Database Sync
-          </CardTitle>
-          {syncStatus && (
-            syncStatus.inSync ? (
-              <CheckCircle className="h-5 w-5 text-green-500" />
-            ) : (
-              <AlertCircle className="h-5 w-5 text-yellow-500" />
-            )
-          )}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="font-bold">
-                {syncStatus?.inSync
-                  ? "Database is in sync with registry"
-                  : syncStatus
-                    ? `${syncStatus.missingCount} models missing from database`
-                    : "Checking sync status..."}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Sync TypeScript model registry to database for foreign key constraints
-              </p>
-            </div>
-            <Button
-              onClick={handleSyncRegistry}
-              disabled={syncing}
-              variant={syncStatus?.inSync ? "outline" : "default"}
-            >
-              {syncing ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Syncing...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Sync Now
-                </>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Model Health Widget */}
       <div className="grid grid-cols-1 gap-6">

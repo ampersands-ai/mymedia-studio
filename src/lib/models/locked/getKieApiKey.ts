@@ -4,12 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
  * Retrieves the appropriate KIE AI API key for a given model
  * Maps specific model types to their dedicated API keys
  */
-export async function getKieApiKey(modelId: string, recordId: string): Promise<string> {
+export async function getKieApiKey(modelId: string, recordId: string, contentType?: string): Promise<string> {
   const { data, error } = await supabase.functions.invoke('get-api-key', {
-    body: { 
+    body: {
       provider: 'kie_ai',
       modelId,
-      recordId
+      recordId,
+      contentType
     }
   });
 

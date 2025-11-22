@@ -30,7 +30,7 @@ export const useTemplates = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("content_templates")
-        .select("*, ai_models(*)")
+        .select("*")
         .eq("is_active", true)
         .order("display_order", { ascending: true });
 
@@ -70,7 +70,7 @@ export const useAllTemplates = () => {
       // Fetch content templates
       const { data: contentTemplates, error: templatesError } = await supabase
         .from("content_templates")
-        .select("*, ai_models(*)")
+        .select("*")
         .eq("is_active", true)
         .order("display_order", { ascending: true });
 
@@ -93,12 +93,6 @@ export const useAllTemplates = () => {
           user_editable_fields: (t.user_editable_fields as any) || [],
           hidden_field_defaults: (t.hidden_field_defaults as any) || {},
           preset_parameters: (t.preset_parameters as any) || {},
-          ai_models: t.ai_models ? {
-            ...t.ai_models,
-            groups: (t.ai_models.groups as any) || [],
-            cost_multipliers: (t.ai_models.cost_multipliers as any) || {},
-            input_schema: (t.ai_models.input_schema as any) || {},
-          } : undefined,
         })),
         ...(workflowTemplates || []).map(w => ({ 
           ...w, 
@@ -126,7 +120,7 @@ export const useAllTemplatesAdmin = () => {
       // Fetch ALL content templates (including inactive)
       const { data: contentTemplates, error: templatesError } = await supabase
         .from("content_templates")
-        .select("*, ai_models(*)")
+        .select("*")
         .order("display_order", { ascending: true });
 
       if (templatesError) throw templatesError;
@@ -147,12 +141,6 @@ export const useAllTemplatesAdmin = () => {
           user_editable_fields: (t.user_editable_fields as any) || [],
           hidden_field_defaults: (t.hidden_field_defaults as any) || {},
           preset_parameters: (t.preset_parameters as any) || {},
-          ai_models: t.ai_models ? {
-            ...t.ai_models,
-            groups: (t.ai_models.groups as any) || [],
-            cost_multipliers: (t.ai_models.cost_multipliers as any) || {},
-            input_schema: (t.ai_models.input_schema as any) || {},
-          } : undefined,
         })),
         ...(workflowTemplates || []).map(w => ({ 
           ...w, 

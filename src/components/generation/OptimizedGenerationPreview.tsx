@@ -42,8 +42,8 @@ export const OptimizedGenerationPreview = ({
     return 'image';
   })() : 'image';
 
-  // Use inferred type if contentType is missing or generic
-  const effectiveType = contentType || inferredType;
+  // Use inferred type from file extension (more reliable than contentType which might be "image_editing", "prompt_to_image", etc.)
+  const effectiveType = inferredType;
 
   // All hooks must be called before any conditional returns
   const { shareFile, canShare } = useNativeShare();

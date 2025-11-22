@@ -24,18 +24,21 @@ export interface ContentTemplate {
   estimated_time_seconds?: number | null;
 }
 
+/**
+ * TEMPLATES DEPRECATED - Database Eliminated
+ *
+ * content_templates table has been deleted as part of moving to .ts registry architecture.
+ * Templates are no longer supported as they required database storage.
+ *
+ * This hook now returns empty arrays to prevent crashes.
+ * Users should use direct model selection from .ts registry instead.
+ */
 export const useTemplates = () => {
   return useQuery({
     queryKey: ["templates"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("content_templates")
-        .select("*, ai_models(*)")
-        .eq("is_active", true)
-        .order("display_order", { ascending: true });
-
-      if (error) throw error;
-      return data as ContentTemplate[];
+      // Return empty array - templates feature deprecated
+      return [] as ContentTemplate[];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
@@ -63,20 +66,15 @@ export interface MergedTemplate extends Partial<ContentTemplate>, Partial<Workfl
 }
 
 // Hook to fetch all templates (content templates + workflows)
+// DEPRECATED: content_templates table deleted - returns workflows only
 export const useAllTemplates = () => {
   return useQuery({
     queryKey: ["all-templates"],
     queryFn: async () => {
-      // Fetch content templates
-      const { data: contentTemplates, error: templatesError } = await supabase
-        .from("content_templates")
-        .select("*, ai_models(*)")
-        .eq("is_active", true)
-        .order("display_order", { ascending: true });
+      // content_templates table deleted - skip
+      const contentTemplates: any[] = [];
 
-      if (templatesError) throw templatesError;
-
-      // Fetch workflow templates
+      // Fetch workflow templates only
       const { data: workflowTemplates, error: workflowsError } = await supabase
         .from("workflow_templates")
         .select("*")
@@ -85,23 +83,10 @@ export const useAllTemplates = () => {
 
       if (workflowsError) throw workflowsError;
 
-      // Merge and mark type - cast entire objects to bypass Json types
+      // Only workflows now (content templates deprecated)
       const mergedTemplates = [
-        ...(contentTemplates || []).map(t => ({ 
-          ...t, 
-          template_type: 'template' as const,
-          user_editable_fields: (t.user_editable_fields as any) || [],
-          hidden_field_defaults: (t.hidden_field_defaults as any) || {},
-          preset_parameters: (t.preset_parameters as any) || {},
-          ai_models: t.ai_models ? {
-            ...t.ai_models,
-            groups: (t.ai_models.groups as any) || [],
-            cost_multipliers: (t.ai_models.cost_multipliers as any) || {},
-            input_schema: (t.ai_models.input_schema as any) || {},
-          } : undefined,
-        })),
-        ...(workflowTemplates || []).map(w => ({ 
-          ...w, 
+        ...(workflowTemplates || []).map(w => ({
+          ...w,
           template_type: 'workflow' as const,
           user_input_fields: (w.user_input_fields as any) || [],
           workflow_steps: (w.workflow_steps as any) || [],
@@ -119,17 +104,13 @@ export const useAllTemplates = () => {
 };
 
 // Hook for admin to fetch ALL templates regardless of active status
+// DEPRECATED: content_templates table deleted - returns workflows only
 export const useAllTemplatesAdmin = () => {
   return useQuery({
     queryKey: ["all-templates-admin"],
     queryFn: async () => {
-      // Fetch ALL content templates (including inactive)
-      const { data: contentTemplates, error: templatesError } = await supabase
-        .from("content_templates")
-        .select("*, ai_models(*)")
-        .order("display_order", { ascending: true });
-
-      if (templatesError) throw templatesError;
+      // content_templates table deleted - skip
+      const contentTemplates: any[] = [];
 
       // Fetch ALL workflow templates (including inactive)
       const { data: workflowTemplates, error: workflowsError } = await supabase
@@ -139,23 +120,10 @@ export const useAllTemplatesAdmin = () => {
 
       if (workflowsError) throw workflowsError;
 
-      // Merge and mark type - cast entire objects to bypass Json types
+      // Only workflows now (content templates deprecated)
       const mergedTemplates = [
-        ...(contentTemplates || []).map(t => ({ 
-          ...t, 
-          template_type: 'template' as const,
-          user_editable_fields: (t.user_editable_fields as any) || [],
-          hidden_field_defaults: (t.hidden_field_defaults as any) || {},
-          preset_parameters: (t.preset_parameters as any) || {},
-          ai_models: t.ai_models ? {
-            ...t.ai_models,
-            groups: (t.ai_models.groups as any) || [],
-            cost_multipliers: (t.ai_models.cost_multipliers as any) || {},
-            input_schema: (t.ai_models.input_schema as any) || {},
-          } : undefined,
-        })),
-        ...(workflowTemplates || []).map(w => ({ 
-          ...w, 
+        ...(workflowTemplates || []).map(w => ({
+          ...w,
           template_type: 'workflow' as const,
           user_input_fields: (w.user_input_fields as any) || [],
           workflow_steps: (w.workflow_steps as any) || [],

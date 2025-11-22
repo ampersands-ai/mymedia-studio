@@ -456,24 +456,8 @@ const CustomCreation = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.pollingGenerationId, stopPolling, updateState, progress, updateProgress, setFirstGeneration, state.generateCaption]);
 
-  // Realtime subscription for ai_models updates (schema changes from admin)
-  useEffect(() => {
-    const channel = supabase
-      .channel('ai-models-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'ai_models' 
-      }, () => {
-        console.log('🔄 AI Models schema updated, refreshing...');
-        queryClient.invalidateQueries({ queryKey: ['ai-models'] });
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
+  // REMOVED: Realtime subscription for ai_models table (table deleted)
+  // Models now come from .ts registry only, no database updates to subscribe to
 
 
   // Image upload
@@ -588,19 +572,9 @@ const CustomCreation = () => {
         return;
       }
       
-      const { data: templateData } = await supabase
-        .from('content_templates')
-        .select('thumbnail_url')
-        .eq('model_record_id', state.selectedModel)
-        .limit(1)
-        .maybeSingle();
-      
-      if (templateData?.thumbnail_url) {
-        const thumbnailUrl = await createSignedUrl('generated-content', extractStoragePath(templateData.thumbnail_url));
-        updateState({ templateAfterImage: thumbnailUrl, templateBeforeImage: null });
-      } else {
-        updateState({ templateBeforeImage: null, templateAfterImage: null });
-      }
+      // content_templates table deleted - skip thumbnail loading
+      // Templates feature deprecated as part of database elimination
+      updateState({ templateBeforeImage: null, templateAfterImage: null });
     };
     
     loadTemplateImages();

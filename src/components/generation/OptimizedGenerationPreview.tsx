@@ -34,16 +34,33 @@ export const OptimizedGenerationPreview = ({
   className,
   showActions = true
 }: OptimizedGenerationPreviewProps) => {
-  // Infer content type from file extension if storagePath exists
-  const inferredType = storagePath ? (() => {
-    const ext = (storagePath.split('.').pop() || '').toLowerCase();
+  // Normalize contentType to basic media types (image, video, audio)
+  const normalizeContentType = (type: string): 'image' | 'video' | 'audio' => {
+    const normalized = type.toLowerCase();
+    // Video types
+    if (normalized.includes('video') || normalized === 'image_to_video' || normalized === 'prompt_to_video') {
+      return 'video';
+    }
+    // Audio types
+    if (normalized.includes('audio') || normalized === 'prompt_to_audio') {
+      return 'audio';
+    }
+    // Image types (default for image_editing, prompt_to_image, etc.)
+    return 'image';
+  };
+
+  // Infer type from file extension as fallback
+  const inferTypeFromExtension = (path: string): 'image' | 'video' | 'audio' => {
+    const ext = (path.split('.').pop() || '').toLowerCase();
     if (['mp4', 'webm', 'mov', 'm4v'].includes(ext)) return 'video';
     if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) return 'audio';
     return 'image';
-  })() : 'image';
+  };
 
-  // Use inferred type if contentType is missing or generic
-  const effectiveType = contentType || inferredType;
+  // Use contentType first (normalized), fall back to file extension
+  const effectiveType = contentType
+    ? normalizeContentType(contentType)
+    : (storagePath ? inferTypeFromExtension(storagePath) : 'image');
 
   // All hooks must be called before any conditional returns
   const { shareFile, canShare } = useNativeShare();

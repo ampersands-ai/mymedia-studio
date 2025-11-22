@@ -183,15 +183,17 @@ const CustomCreation = () => {
             .order('output_index', { ascending: true });
 
           if (children && children.length > 0) {
-            outputs = children.map(child => ({
-              id: child.id,
-              storage_path: child.storage_path,
-              output_index: child.output_index,
-              model_id: child.model_id,
-              provider_task_id: child.provider_task_id,
-              type: child.type,
-            }));
-            console.log(`✅ Found ${outputs.length} batch outputs`);
+            outputs = children
+              .filter(child => child.storage_path) // Only include children with valid storage_path
+              .map(child => ({
+                id: child.id,
+                storage_path: child.storage_path,
+                output_index: child.output_index,
+                model_id: child.model_id,
+                provider_task_id: child.provider_task_id,
+                type: child.type,
+              }));
+            console.log(`✅ Found ${outputs.length} batch outputs (filtered out ${children.length - outputs.length} without storage_path)`);
           }
         } else if (currentGen.storage_path) {
           // Single output
@@ -330,15 +332,17 @@ const CustomCreation = () => {
                   .order('output_index', { ascending: true });
 
                 if (children && children.length > 0) {
-                  outputs = children.map(child => ({
-                    id: child.id,
-                    storage_path: child.storage_path,
-                    output_index: child.output_index,
-                    model_id: child.model_id,
-                    provider_task_id: child.provider_task_id,
-                    type: child.type,
-                  }));
-                  console.log(`✅ Found ${outputs.length} batch outputs via realtime`);
+                  outputs = children
+                    .filter(child => child.storage_path) // Only include children with valid storage_path
+                    .map(child => ({
+                      id: child.id,
+                      storage_path: child.storage_path,
+                      output_index: child.output_index,
+                      model_id: child.model_id,
+                      provider_task_id: child.provider_task_id,
+                      type: child.type,
+                    }));
+                  console.log(`✅ Found ${outputs.length} batch outputs via realtime (filtered out ${children.length - outputs.length} without storage_path)`);
                 }
               } else if (generationData?.storage_path) {
                 // Single output

@@ -44,5 +44,5 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 import { getRunwareApiKey as getCentralRunwareApiKey } from "../getRunwareApiKey";
 
 async function getRunwareApiKey(): Promise<string> {
-  return getCentralRunwareApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId);
+  return getCentralRunwareApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
 }

@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import type { Database } from "@/integrations/supabase/types";
+import { isKieAiAudioModel } from "@/lib/custom-creation-utils";
 
 type AIModel = Database['public']['Tables']['ai_models']['Row'];
 
@@ -60,15 +61,12 @@ export const useSchemaHelpers = () => {
    */
   const getMaxPromptLength = useCallback((model: AIModel | null, customMode?: boolean): number => {
     if (!model) return 5000;
-    
-    // Check if this is a Kie.ai audio model with customMode false
-    const isKieAiAudio = model.provider === 'kie_ai' && model.content_type === 'audio';
-    
+
     // Kie.ai audio in non-custom mode has 500 char limit
-    if (isKieAiAudio && customMode === false) {
+    if (isKieAiAudioModel(model) && customMode === false) {
       return 500;
     }
-    
+
     // Default limit for all other cases
     return 5000;
   }, []);

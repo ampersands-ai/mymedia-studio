@@ -1,18 +1,23 @@
 import type { MergedTemplate } from "@/hooks/useTemplates";
 
 /**
+ * Special category value that indicates all categories should be shown
+ */
+export const ALL_CATEGORIES = 'All';
+
+/**
  * Filter templates by selected categories
  * @param templates - Array of templates to filter
- * @param selectedCategories - Array of category names to filter by (if includes 'All', returns all templates)
+ * @param selectedCategories - Array of category names to filter by (if includes ALL_CATEGORIES, returns all templates)
  * @returns Filtered array of templates
  */
 export function filterTemplatesByCategory(
   templates: MergedTemplate[],
   selectedCategories: string[]
 ): MergedTemplate[] {
-  const showAllCategories = selectedCategories.includes('All');
-  return showAllCategories 
-    ? templates 
+  const showAllCategories = selectedCategories.includes(ALL_CATEGORIES);
+  return showAllCategories
+    ? templates
     : templates.filter(t => selectedCategories.includes(t.category));
 }
 

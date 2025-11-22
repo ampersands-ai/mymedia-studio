@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { ALL_CATEGORIES } from "@/lib/admin/template-filtering";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -161,9 +162,9 @@ export default function TemplatesManager() {
   };
 
   // Filter by category
-  const showAllCategories = selectedCategories.includes('All');
-  const filteredTemplates = showAllCategories 
-    ? templates 
+  const showAllCategories = selectedCategories.includes(ALL_CATEGORIES);
+  const filteredTemplates = showAllCategories
+    ? templates
     : templates.filter(t => selectedCategories.includes(t.category));
   
   const sortedTemplates = [...filteredTemplates].sort((a, b) => {
@@ -253,12 +254,12 @@ export default function TemplatesManager() {
           {/* Category Filter */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2">
             <Button
-              variant={selectedCategories.includes('All') ? 'default' : 'outline'}
+              variant={selectedCategories.includes(ALL_CATEGORIES) ? 'default' : 'outline'}
               size="sm"
-              onClick={() => handleCategoryToggle('All')}
-              className={selectedCategories.includes('All') ? 'border-2 border-black' : 'border-2'}
+              onClick={() => handleCategoryToggle(ALL_CATEGORIES)}
+              className={selectedCategories.includes(ALL_CATEGORIES) ? 'border-2 border-black' : 'border-2'}
             >
-              All ({templates.length})
+              {ALL_CATEGORIES} ({templates.length})
             </Button>
             {uniqueCategories.map(category => (
               <Button

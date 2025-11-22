@@ -96,39 +96,26 @@ async function pollForVideoResult(taskUUID: string, apiKey: string, apiUrl: stri
 
 // Removed hardcoded MODEL_RESTRICTIONS - now using dynamic schema-based validation
 
-function getRunwareApiKeyFromEnv(modelId: string): string {
-  let secretName: string;
-  
-  if (modelId.startsWith('runware:100@1') ||
-      modelId.startsWith('runware:flux') ||
-      modelId.startsWith('runware:stable-diffusion')) {
-    secretName = 'RUNWARE_API_KEY_PROMPT_TO_IMAGE';
-  } else if (modelId.startsWith('runware:102@1') || 
-             modelId.startsWith('runware:103@1')) {
-    secretName = 'RUNWARE_API_KEY_IMAGE_EDITING';
-  } else if (modelId.startsWith('bytedance:')) {
-    secretName = 'RUNWARE_API_KEY_IMAGE_TO_VIDEO';
-  } else {
-    secretName = 'RUNWARE_API_KEY';
-  }
-  
-  const apiKey = Deno.env.get(secretName) || Deno.env.get('RUNWARE_API_KEY');
-  
+/**
+ * Get Runware API key from environment using explicit key name
+ * No more model ID pattern matching - uses explicit use_api_key field
+ */
+function getRunwareApiKeyFromEnv(use_api_key: string): string {
+  const apiKey = Deno.env.get(use_api_key) || Deno.env.get('RUNWARE_API_KEY');
+
   if (!apiKey) {
-    throw new Error(`${secretName} not configured`);
+    throw new Error(`${use_api_key} not configured. Please set this environment variable.`);
   }
-  
+
   return apiKey;
 }
 
 export async function callRunware(
   request: ProviderRequest
 ): Promise<ProviderResponse> {
-  const RUNWARE_API_KEY = getRunwareApiKeyFromEnv(request.model);
-  
-  if (!RUNWARE_API_KEY) {
-    throw new Error('RUNWARE_API_KEY not configured');
-  }
+  // Use explicit API key from request, fallback to default for backwards compatibility
+  const apiKeyName = request.use_api_key || 'RUNWARE_API_KEY';
+  const RUNWARE_API_KEY = getRunwareApiKeyFromEnv(apiKeyName);
 
   const apiUrl = 'https://api.runware.ai/v1';
   

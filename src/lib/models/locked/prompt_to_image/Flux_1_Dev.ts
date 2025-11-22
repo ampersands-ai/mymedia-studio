@@ -40,4 +40,6 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   return gen.id;
 }
 
-async function getRunwareApiKey(): Promise<string> { throw new Error("RUNWARE_API_KEY needs configuration"); }
+async function getRunwareApiKey(): Promise<string> {
+  return getCentralRunwareApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
+}

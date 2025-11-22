@@ -1,10 +1,17 @@
 import { useCallback } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tantml/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Scene, Storyboard } from './useStoryboardState';
 import { logger } from '@/lib/logger';
+
+// Helper: Check if URL is a video based on explicit file extensions
+const isVideoUrl = (url: string): boolean => {
+  const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.m4v'];
+  const lowerUrl = url.toLowerCase();
+  return videoExtensions.some(ext => lowerUrl.includes(ext));
+};
 
 export const useStoryboardScenes = (
   currentStoryboardId: string | null,
@@ -41,8 +48,8 @@ export const useStoryboardScenes = (
       
       // If updating intro image, detect if it's actually a video
       if (field === 'intro_image_preview_url' && typeof value === 'string') {
-        const isVideo = value.includes('.mp4') || value.includes('.webm') || value.includes('video');
-        
+        const isVideo = isVideoUrl(value);
+
         if (isVideo) {
           // Save to intro_video_url instead
           const { error } = await supabase
@@ -78,8 +85,8 @@ export const useStoryboardScenes = (
   const updateSceneImageMutation = useMutation({
     mutationFn: async ({ sceneId, imageUrl }: { sceneId: string; imageUrl: string }) => {
       // Detect if this is a video or image based on URL
-      const isVideo = imageUrl.includes('.mp4') || imageUrl.includes('.webm') || imageUrl.includes('video');
-      
+      const isVideo = isVideoUrl(imageUrl);
+
       const updateData = isVideo 
         ? { video_url: imageUrl, image_preview_url: null }  // Video: clear old image, set video
         : { image_preview_url: imageUrl };                   // Image: update preview

@@ -35,18 +35,23 @@ export const OptimizedGenerationPreview = ({
   showActions = true
 }: OptimizedGenerationPreviewProps) => {
   // Normalize contentType to basic media types (image, video, audio)
+  // Uses explicit mapping instead of string inference
   const normalizeContentType = (type: string): 'image' | 'video' | 'audio' => {
-    const normalized = type.toLowerCase();
-    // Video types
-    if (normalized.includes('video') || normalized === 'image_to_video' || normalized === 'prompt_to_video') {
-      return 'video';
-    }
-    // Audio types
-    if (normalized.includes('audio') || normalized === 'prompt_to_audio') {
-      return 'audio';
-    }
-    // Image types (default for image_editing, prompt_to_image, etc.)
-    return 'image';
+    const typeMap: Record<string, 'image' | 'video' | 'audio'> = {
+      'prompt_to_image': 'image',
+      'image_editing': 'image',
+      'image_to_video': 'video',
+      'prompt_to_video': 'video',
+      'prompt_to_audio': 'audio',
+      'audio': 'audio',
+      'video': 'video',
+      'image': 'image',
+    };
+
+    const mapped = typeMap[type.toLowerCase()];
+
+    // If unknown contentType, default to image (common case)
+    return mapped ?? 'image';
   };
 
   // Infer type from file extension as fallback

@@ -67,23 +67,13 @@ export function calculateCost(inputs: Record<string, any>): number {
 }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { prompt, modelParameters, userId, uploadedImageUrls } = params;
+  const { prompt, modelParameters, userId } = params;
 
-  // Debug logging
-  console.log('🔍 Crisp Upscale execute called:', {
-    hasUploadedImageUrls: uploadedImageUrls?.length > 0,
-    uploadedImageUrls,
-    modelParameters,
-  });
-
-  // Map uploaded image URL to the image parameter
+  // Map model parameters to inputs
   const inputs = {
     ...modelParameters,
     prompt,
-    image: uploadedImageUrls[0] || modelParameters.image
   };
-
-  console.log('🔍 Inputs after mapping:', { image: inputs.image, hasImage: !!inputs.image });
 
   const validation = validate(inputs);
   if (!validation.valid) throw new Error(validation.error);

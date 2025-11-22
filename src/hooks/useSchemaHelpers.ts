@@ -1,7 +1,5 @@
 import { useCallback } from "react";
-import type { Database } from "@/integrations/supabase/types";
-
-type AIModel = Database['public']['Tables']['ai_models']['Row'];
+import type { AIModel } from "@/hooks/useModels";
 
 /**
  * Schema parsing utilities for dynamic form generation

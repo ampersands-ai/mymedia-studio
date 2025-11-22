@@ -4,9 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNativeCamera } from "@/hooks/useNativeCamera";
 import { IMAGE_UPLOAD_CONFIG } from "@/constants/custom-creation";
 import { getImageFieldInfo } from "@/lib/custom-creation-utils";
-import type { Database } from "@/integrations/supabase/types";
-
-type AIModel = Database['public']['Tables']['ai_models']['Row'];
+import type { AIModel } from "@/hooks/useModels";
 
 const STORAGE_KEY_PREFIX = 'uploadedImages_';
 

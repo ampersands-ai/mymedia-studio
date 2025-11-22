@@ -16,28 +16,28 @@ import {
  *
  * .TS REGISTRY ARCHITECTURE (Source of Truth)
  * --------------------------------------------
- * This edge function uses model definitions from .ts files (NOT database).
+ * This edge function uses model definitions EXCLUSIVELY from .ts files.
+ *
+ * ⚠️ DATABASE DEPENDENCY ELIMINATED ⚠️
+ * No ai_models or content_templates table lookups.
+ * Model data comes ONLY from .ts registry.
  *
  * HOW IT WORKS:
  * 1. Client loads model from .ts registry using getModel(recordId)
- * 2. Client sends full model_config + model_schema to edge function
+ * 2. Client sends REQUIRED model_config + model_schema to edge function
  * 3. Edge function uses provided config (NO DATABASE LOOKUP)
  * 4. Provider implementations route to external APIs
  *
  * MODEL-SPECIFIC LOGIC:
  * All model-specific parameter transformations (prompt->text, prompt->positivePrompt, etc.)
  * are handled in individual model .ts files via preparePayload() functions.
- * Each model knows its own requirements.
- *
- * LEGACY COMPATIBILITY:
- * The edge function still supports database lookup for backward compatibility,
- * but this path is DEPRECATED and will be removed once all clients migrate.
+ * Each model knows its own requirements - providers are dumb transport layers.
  *
  * ADDING NEW MODELS:
  * - Create model .ts file in src/lib/models/locked/
  * - Define MODEL_CONFIG, SCHEMA, preparePayload(), execute()
  * - Register in src/lib/models/locked/index.ts
- * - Model automatically available to edge function
+ * - Model automatically available (no database sync needed)
  *
  * Reference: ADR 007 - Locked Model Registry System
  */
@@ -151,11 +151,8 @@ Deno.serve(async (req) => {
     }
     
     const {
-      model_config,  // NEW: Full model config from .ts registry
-      model_schema,  // NEW: Model schema from .ts registry
-      template_id,   // DEPRECATED: Legacy template path
-      model_id,      // DEPRECATED: Legacy model lookup
-      model_record_id, // DEPRECATED: Legacy model lookup
+      model_config,  // REQUIRED: Full model config from .ts registry
+      model_schema,  // REQUIRED: Model schema from .ts registry
       custom_parameters = {},
       enhance_prompt = false,
       enhancement_provider = 'lovable_ai',
@@ -231,146 +228,59 @@ Deno.serve(async (req) => {
       }
     }
 
-    logger.info('Async generation request', {
+    logger.info('Generation request received', {
       userId: authenticatedUser.id,
       metadata: {
-        has_model_config: !!model_config,
-        template_id,
-        model_id,
-        model_record_id,
+        model_id: model_config.modelId,
+        provider: model_config.provider,
         enhance_prompt
       }
     });
 
-    let model: Model;
-    let parameters: Record<string, unknown> = {};
-    let enhancementInstruction: string | null = null;
-
-    // NEW PATH: Use model_config from .ts registry (NO DATABASE LOOKUP)
-    if (model_config && model_schema) {
-      logger.info('Using model config from .ts registry (no database lookup)', {
-        userId: authenticatedUser.id,
-        metadata: {
-          model_id: model_config.modelId,
-          record_id: model_config.recordId,
-          provider: model_config.provider
-        }
-      });
-
-      // Transform model_config to Model type (for compatibility with existing code)
-      model = {
-        id: model_config.modelId,
-        record_id: model_config.recordId,
-        provider: model_config.provider,
-        content_type: model_config.contentType,
-        base_token_cost: model_config.baseCreditCost,
-        input_schema: model_schema,
-        is_active: model_config.isActive ?? true,
-        cost_multipliers: model_config.costMultipliers || {},
-        api_endpoint: model_config.apiEndpoint || null,
-        payload_structure: model_config.payloadStructure || 'wrapper',
-        use_api_key: model_config.use_api_key,
-      };
-
-      parameters = custom_parameters;
-
-      logger.debug('.ts registry model config applied', {
-        userId: authenticatedUser.id,
-        metadata: {
-          model_id: model.id,
-          provider: model.provider,
-          has_schema: !!model.input_schema
-        }
-      });
-
-    // LEGACY PATH: Database lookup (DEPRECATED - will be removed)
-    } else if (template_id || model_id || model_record_id) {
-      logger.warn('DEPRECATED: Using database lookup. Please update client to send model_config', {
-        userId: authenticatedUser.id,
-        metadata: { template_id, model_id, model_record_id }
-      });
-
-      if (template_id) {
-        // Template mode
-        const { data: templateData, error: templateError } = await supabase
-          .from('content_templates')
-          .select('*, ai_models(*)')
-          .eq('id', template_id)
-          .eq('is_active', true)
-          .single();
-
-        if (templateError || !templateData) {
-          throw new Error('Template not found or inactive');
-        }
-
-        model = templateData.ai_models;
-        parameters = { ...templateData.preset_parameters, ...custom_parameters };
-        enhancementInstruction = templateData.enhancement_instruction;
-      } else {
-        // Custom mode - support both legacy model_id and new model_record_id
-        if (model_record_id) {
-          // Use record_id - guaranteed unique
-          const { data: modelData, error: modelError } = await supabase
-            .from('ai_models')
-            .select('*')
-            .eq('record_id', model_record_id)
-            .eq('is_active', true)
-            .single();
-
-          if (modelError || !modelData) {
-            throw new Error('Model not found or inactive');
-          }
-
-          model = modelData;
-        } else if (model_id) {
-          // Legacy model_id path - check for duplicates
-          const { data: models, error: modelError, count } = await supabase
-            .from('ai_models')
-            .select('*', { count: 'exact' })
-            .eq('id', model_id)
-            .eq('is_active', true);
-
-          if (modelError) {
-            throw new Error(`Model lookup failed: ${modelError.message}`);
-          }
-
-          if (!models || models.length === 0) {
-            throw new Error('Model not found or inactive');
-          }
-
-          if (count && count > 1) {
-            logger.warn('Duplicate model_id detected', {
-              metadata: { model_id, duplicate_count: count }
-            });
-            return new Response(
-              JSON.stringify({
-                error: `Duplicate model id found. Multiple active models share id "${model_id}". Please use model_record_id instead.`,
-                code: 'DUPLICATE_MODEL_ID',
-                duplicated_id: model_id,
-                duplicate_count: count
-              }),
-              { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-
-          model = models[0];
-        } else {
-          throw new Error('Must provide either model_id or model_record_id');
-        }
-
-        parameters = custom_parameters;
-      }
-    } else {
-      throw new Error('Must provide either model_config (preferred) or legacy template_id/model_id/model_record_id');
+    // REQUIRE model_config from .ts registry - NO DATABASE LOOKUPS
+    if (!model_config || !model_schema) {
+      throw new Error(
+        'model_config and model_schema are REQUIRED. ' +
+        'Client must send full model definition from .ts registry. ' +
+        'Database has been eliminated for model data.'
+      );
     }
 
-    logger.info('Model loaded', {
+    logger.info('Using model config from .ts registry', {
+      userId: authenticatedUser.id,
+      metadata: {
+        model_id: model_config.modelId,
+        record_id: model_config.recordId,
+        provider: model_config.provider
+      }
+    });
+
+    // Transform model_config to Model type (for compatibility with existing code)
+    const model: Model = {
+      id: model_config.modelId,
+      record_id: model_config.recordId,
+      provider: model_config.provider,
+      content_type: model_config.contentType,
+      base_token_cost: model_config.baseCreditCost,
+      input_schema: model_schema,
+      is_active: model_config.isActive ?? true,
+      cost_multipliers: model_config.costMultipliers || {},
+      api_endpoint: model_config.apiEndpoint || null,
+      payload_structure: model_config.payloadStructure || 'wrapper',
+      use_api_key: model_config.use_api_key,
+    };
+
+    const parameters: Record<string, unknown> = custom_parameters;
+    const enhancementInstruction: string | null = null;
+
+    logger.debug('.ts registry model config applied', {
       userId: authenticatedUser.id,
       metadata: {
         model_id: model.id,
         record_id: model.record_id,
         provider: model.provider,
-        source: model_config ? '.ts registry' : 'database (deprecated)'
+        has_schema: !!model.input_schema,
+        source: '.ts registry (database eliminated)'
       }
     });
 

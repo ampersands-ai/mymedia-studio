@@ -89,14 +89,9 @@ export const ModelSchemaDefinition = z.object({
 });
 
 export const GenerateContentRequestSchema = z.object({
-  // NEW: Full model config from .ts registry (replaces database lookup)
-  model_config: ModelConfigSchema.optional(),
-  model_schema: ModelSchemaDefinition.optional(),
-
-  // DEPRECATED: Legacy fields (kept for backward compatibility during migration)
-  template_id: z.string().uuid().optional(),
-  model_id: z.string().optional(),
-  model_record_id: z.string().uuid().optional(),
+  // REQUIRED: Full model config from .ts registry (database eliminated)
+  model_config: ModelConfigSchema,
+  model_schema: ModelSchemaDefinition,
 
   // Request parameters
   prompt: z.string().optional(),
@@ -107,21 +102,7 @@ export const GenerateContentRequestSchema = z.object({
   workflow_step_number: z.number().int().positive().optional(),
   user_id: z.string().uuid().optional(),
   test_mode: z.boolean().default(false),
-}).refine(
-  (data) => {
-    // Must provide model_config OR legacy fields (not both)
-    const hasModelConfig = Boolean(data.model_config);
-    const hasLegacyTemplate = Boolean(data.template_id);
-    const hasLegacyModel = Boolean(data.model_id || data.model_record_id);
-
-    // Either new path (model_config) or legacy path (template/model)
-    if (hasModelConfig) {
-      return !hasLegacyTemplate && !hasLegacyModel;
-    }
-    return (hasLegacyTemplate && !hasLegacyModel) || (!hasLegacyTemplate && hasLegacyModel);
-  },
-  { message: "Must provide model_config (preferred) OR legacy template_id/model_id, not both" }
-);
+});
 
 export const ModelInputSchemaPropertySchema = z.object({
   type: z.string().optional(),

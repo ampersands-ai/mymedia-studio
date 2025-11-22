@@ -74,11 +74,19 @@ function inferBucket(bucketPath: string, fallback: string = 'generated-content')
     m = p.match(/\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\//);
     if (m && m[1]) return m[1];
   } catch {
-    // Not a URL; try to infer from leading segment like "bucket/path/to/file"
-    const leading = bucketPath.replace(/^\/+/, '').split('?')[0].split('#')[0].split('/')[0];
-    // Heuristic: if there is at least one more segment, treat as bucket
-    if (leading && bucketPath.replace(/^\/+/, '').includes('/')) return leading;
+    // Not a full URL: only treat the first segment as bucket if it's a known bucket
+    const cleaned = bucketPath.replace(/^\/+/, '').split('?')[0].split('#')[0];
+    const [firstSegment] = cleaned.split('/');
+
+    // Whitelist of known buckets to prevent treating UUIDs/paths as buckets
+    const KNOWN_BUCKETS = ['generated-content', 'storyboard-videos', 'faceless-videos', 'voice-previews'];
+
+    if (firstSegment && KNOWN_BUCKETS.includes(firstSegment)) {
+      return firstSegment;
+    }
   }
+
+  // Default: assume generated-content for plain storage paths
   return fallback;
 }
 
@@ -100,6 +108,13 @@ export function getOptimizedImageUrl(
   // Clean the path and detect bucket first
   const bucket = inferBucket(bucketPath, 'generated-content');
   const cleanPath = cleanImagePath(bucketPath, bucket);
+
+  // Temporary debug logging
+  console.log('🔧 getOptimizedImageUrl', {
+    originalPath: bucketPath.substring(0, 60),
+    inferredBucket: bucket,
+    cleanPath: cleanPath.substring(0, 60),
+  });
 
   // Build transformation URL
   const params = new URLSearchParams();

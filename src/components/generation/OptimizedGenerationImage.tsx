@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useInView } from "react-intersection-observer";
 import { getOptimizedImageUrl, getBlurPlaceholder, getPublicImageUrl, getStorageRelativePath } from "@/lib/supabase-images";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,38 +40,28 @@ export const OptimizedGenerationImage = ({
 
   const shouldLoad = priority || inView;
 
-  // Generate optimized URLs
-  const webpUrl = getOptimizedImageUrl(storagePath, {
+  // Generate optimized URLs - memoized to prevent excessive recalculation
+  const webpUrl = useMemo(() => getOptimizedImageUrl(storagePath, {
     format: 'webp',
     quality: 85,
     resize: 'contain',
-  });
+  }), [storagePath]);
 
-  const avifUrl = getOptimizedImageUrl(storagePath, {
+  const avifUrl = useMemo(() => getOptimizedImageUrl(storagePath, {
     format: 'avif',
     quality: 85,
     resize: 'contain',
-  });
+  }), [storagePath]);
 
-  const jpegUrl = getOptimizedImageUrl(storagePath, {
+  const jpegUrl = useMemo(() => getOptimizedImageUrl(storagePath, {
     format: 'jpeg',
     quality: 85,
     resize: 'contain',
-  });
+  }), [storagePath]);
 
-  const blurUrl = getBlurPlaceholder(storagePath);
-  const publicUrl = getPublicImageUrl(storagePath);
-  const storageRelativePath = getStorageRelativePath(storagePath);
-
-  // Log image loading info
-  console.log('🖼️ OptimizedGenerationImage', {
-    storagePath: storagePath?.substring(0, 50),
-    priority,
-    shouldLoad,
-    isLoading,
-    hasError,
-    jpegUrl: jpegUrl?.substring(0, 80)
-  });
+  const blurUrl = useMemo(() => getBlurPlaceholder(storagePath), [storagePath]);
+  const publicUrl = useMemo(() => getPublicImageUrl(storagePath), [storagePath]);
+  const storageRelativePath = useMemo(() => getStorageRelativePath(storagePath), [storagePath]);
   
   // Error fallback
   if (hasError) {
@@ -147,15 +137,9 @@ export const OptimizedGenerationImage = ({
             className={`w-full h-full object-contain ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
             loading={priority ? "eager" : "lazy"}
             onLoad={() => {
-              console.log('✅ Image loaded successfully');
               setIsLoading(false);
             }}
-            onError={async (e) => {
-              console.error('❌ Optimized image load failed', {
-                storagePath: storagePath.substring(0, 50),
-                jpegUrl: jpegUrl.substring(0, 80),
-                error: e
-              });
+            onError={async () => {
               imageLogger.warn('Optimized image load failed, trying fallback', {
                 storagePath: storagePath.substring(0, 50),
                 jpegUrl: jpegUrl.substring(0, 50)
@@ -163,7 +147,6 @@ export const OptimizedGenerationImage = ({
 
               // Immediately try public URL (no retry delay)
               if (!fallbackUrl) {
-                console.log('🔄 Falling back to public URL', { publicUrl: publicUrl.substring(0, 80) });
                 imageLogger.debug('Falling back to public URL', {
                   storagePath: storagePath.substring(0, 50)
                 });

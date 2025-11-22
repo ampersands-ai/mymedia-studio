@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, memo } from "react";
+import { useState, useRef, useEffect, memo, useMemo } from "react";
 import { useInView } from 'react-intersection-observer';
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -75,26 +75,53 @@ const OptimizedBeforeAfterSliderComponent = ({
   };
 
   // Detect if already a signed URL (contains /storage/v1/ or starts with http)
-  const beforeIsSignedUrl = beforeImage.includes('/storage/v1/') || beforeImage.startsWith('http');
-  const afterIsSignedUrl = afterImage.includes('/storage/v1/') || afterImage.startsWith('http');
+  const beforeIsSignedUrl = useMemo(() =>
+    beforeImage.includes('/storage/v1/') || beforeImage.startsWith('http'),
+    [beforeImage]
+  );
+  const afterIsSignedUrl = useMemo(() =>
+    afterImage.includes('/storage/v1/') || afterImage.startsWith('http'),
+    [afterImage]
+  );
 
-  // Generate optimized URLs only if not already signed URLs
-  const beforeImageOptimized = (isSupabaseImage && !beforeIsSignedUrl)
-    ? getOptimizedImageUrl(beforeImage, { width: 800, quality: 85, format: 'webp' })
-    : beforeImage;
-  const afterImageOptimized = (isSupabaseImage && !afterIsSignedUrl)
-    ? getOptimizedImageUrl(afterImage, { width: 800, quality: 85, format: 'webp' })
-    : afterImage;
+  // Generate optimized URLs only if not already signed URLs - memoized to prevent excessive recalculation
+  const beforeImageOptimized = useMemo(() =>
+    (isSupabaseImage && !beforeIsSignedUrl)
+      ? getOptimizedImageUrl(beforeImage, { width: 800, quality: 85, format: 'webp' })
+      : beforeImage,
+    [beforeImage, isSupabaseImage, beforeIsSignedUrl]
+  );
 
-  const beforeImageAvif = (isSupabaseImage && !beforeIsSignedUrl)
-    ? getOptimizedImageUrl(beforeImage, { width: 800, quality: 85, format: 'avif' })
-    : null;
-  const afterImageAvif = (isSupabaseImage && !afterIsSignedUrl)
-    ? getOptimizedImageUrl(afterImage, { width: 800, quality: 85, format: 'avif' })
-    : null;
+  const afterImageOptimized = useMemo(() =>
+    (isSupabaseImage && !afterIsSignedUrl)
+      ? getOptimizedImageUrl(afterImage, { width: 800, quality: 85, format: 'webp' })
+      : afterImage,
+    [afterImage, isSupabaseImage, afterIsSignedUrl]
+  );
 
-  const beforePlaceholder = (isSupabaseImage && !beforeIsSignedUrl) ? getBlurPlaceholder(beforeImage) : null;
-  const afterPlaceholder = (isSupabaseImage && !afterIsSignedUrl) ? getBlurPlaceholder(afterImage) : null;
+  const beforeImageAvif = useMemo(() =>
+    (isSupabaseImage && !beforeIsSignedUrl)
+      ? getOptimizedImageUrl(beforeImage, { width: 800, quality: 85, format: 'avif' })
+      : null,
+    [beforeImage, isSupabaseImage, beforeIsSignedUrl]
+  );
+
+  const afterImageAvif = useMemo(() =>
+    (isSupabaseImage && !afterIsSignedUrl)
+      ? getOptimizedImageUrl(afterImage, { width: 800, quality: 85, format: 'avif' })
+      : null,
+    [afterImage, isSupabaseImage, afterIsSignedUrl]
+  );
+
+  const beforePlaceholder = useMemo(() =>
+    (isSupabaseImage && !beforeIsSignedUrl) ? getBlurPlaceholder(beforeImage) : null,
+    [beforeImage, isSupabaseImage, beforeIsSignedUrl]
+  );
+
+  const afterPlaceholder = useMemo(() =>
+    (isSupabaseImage && !afterIsSignedUrl) ? getBlurPlaceholder(afterImage) : null,
+    [afterImage, isSupabaseImage, afterIsSignedUrl]
+  );
 
   const shouldLoad = priority || isVisible;
 

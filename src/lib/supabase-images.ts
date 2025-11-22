@@ -109,13 +109,6 @@ export function getOptimizedImageUrl(
   const bucket = inferBucket(bucketPath, 'generated-content');
   const cleanPath = cleanImagePath(bucketPath, bucket);
 
-  // Temporary debug logging
-  console.log('🔧 getOptimizedImageUrl', {
-    originalPath: bucketPath.substring(0, 60),
-    inferredBucket: bucket,
-    cleanPath: cleanPath.substring(0, 60),
-  });
-
   // Build transformation URL
   const params = new URLSearchParams();
 

@@ -263,14 +263,12 @@ Deno.serve(async (req) => {
       content_type: model_config.contentType,
       base_token_cost: model_config.baseCreditCost,
       input_schema: model_schema,
-      is_active: model_config.isActive ?? true,
       cost_multipliers: model_config.costMultipliers || {},
-      api_endpoint: model_config.apiEndpoint || null,
+      api_endpoint: model_config.apiEndpoint || undefined,
       payload_structure: model_config.payloadStructure || 'wrapper',
-      use_api_key: model_config.use_api_key,
     };
 
-    const parameters: Record<string, unknown> = custom_parameters;
+    let parameters: Record<string, unknown> = custom_parameters;
     const enhancementInstruction: string | null = null;
 
     logger.debug('.ts registry model config applied', {
@@ -705,7 +703,6 @@ Deno.serve(async (req) => {
           user_id: user.id,
           model_id: model.id,
           model_record_id: model.record_id,
-          template_id: template_id || null,
           type: model.content_type,
           prompt: finalPrompt,
           original_prompt: originalPrompt,
@@ -1100,7 +1097,6 @@ Deno.serve(async (req) => {
               resource_id: generationId,
               metadata: {
                 model_id: model.id,
-                template_id: template_id || null,
                 tokens_used: tokenCost,
                 content_type: model.content_type,
                 duration_ms: Date.now() - startTime

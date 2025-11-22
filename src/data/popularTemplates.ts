@@ -1,6 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
 import type { ContentTemplate } from "@/hooks/useTemplates";
-import { logger } from "@/lib/logger";
 
 // Popular template IDs - manually curated based on usage and versatility
 export const POPULAR_TEMPLATE_IDS = [
@@ -9,21 +7,11 @@ export const POPULAR_TEMPLATE_IDS = [
   'social-media-content'
 ];
 
+/**
+ * DEPRECATED: content_templates table has been removed
+ * Returns empty array - templates functionality deprecated
+ */
 export const getPopularTemplates = async (): Promise<ContentTemplate[]> => {
-  const { data, error } = await supabase
-    .from('content_templates')
-    .select('*, ai_models(*)')
-    .eq('is_active', true)
-    .order('display_order', { ascending: true })
-    .limit(3);
-
-  if (error) {
-    logger.error('Error fetching popular templates', error instanceof Error ? error : new Error(String(error)), {
-      component: 'popularTemplates',
-      operation: 'getPopularTemplates'
-    });
-    return [];
-  }
-
-  return data as ContentTemplate[];
+  console.warn('getPopularTemplates: content_templates table removed');
+  return [];
 };

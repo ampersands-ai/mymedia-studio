@@ -14,93 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      ai_models: {
-        Row: {
-          api_endpoint: string | null
-          base_token_cost: number
-          content_type: string
-          cost_multipliers: Json | null
-          created_at: string
-          default_outputs: number | null
-          display_order_in_family: number | null
-          estimated_time_seconds: number | null
-          groups: Json | null
-          id: string
-          input_schema: Json | null
-          is_active: boolean | null
-          is_locked: boolean | null
-          locked_at: string | null
-          locked_by: string | null
-          locked_file_contents: string | null
-          locked_file_path: string | null
-          logo_url: string | null
-          max_images: number | null
-          model_family: string | null
-          model_name: string
-          payload_structure: string
-          provider: string
-          record_id: string
-          updated_at: string
-          variant_name: string | null
-        }
-        Insert: {
-          api_endpoint?: string | null
-          base_token_cost: number
-          content_type: string
-          cost_multipliers?: Json | null
-          created_at?: string
-          default_outputs?: number | null
-          display_order_in_family?: number | null
-          estimated_time_seconds?: number | null
-          groups?: Json | null
-          id: string
-          input_schema?: Json | null
-          is_active?: boolean | null
-          is_locked?: boolean | null
-          locked_at?: string | null
-          locked_by?: string | null
-          locked_file_contents?: string | null
-          locked_file_path?: string | null
-          logo_url?: string | null
-          max_images?: number | null
-          model_family?: string | null
-          model_name: string
-          payload_structure?: string
-          provider: string
-          record_id?: string
-          updated_at?: string
-          variant_name?: string | null
-        }
-        Update: {
-          api_endpoint?: string | null
-          base_token_cost?: number
-          content_type?: string
-          cost_multipliers?: Json | null
-          created_at?: string
-          default_outputs?: number | null
-          display_order_in_family?: number | null
-          estimated_time_seconds?: number | null
-          groups?: Json | null
-          id?: string
-          input_schema?: Json | null
-          is_active?: boolean | null
-          is_locked?: boolean | null
-          locked_at?: string | null
-          locked_by?: string | null
-          locked_file_contents?: string | null
-          locked_file_path?: string | null
-          logo_url?: string | null
-          max_images?: number | null
-          model_family?: string | null
-          model_name?: string
-          payload_structure?: string
-          provider?: string
-          record_id?: string
-          updated_at?: string
-          variant_name?: string | null
-        }
-        Relationships: []
-      }
       api_call_logs: {
         Row: {
           additional_metadata: Json | null
@@ -866,95 +779,6 @@ export type Database = {
             referencedRelation: "generations"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "community_creations_model_record_id_fkey"
-            columns: ["model_record_id"]
-            isOneToOne: false
-            referencedRelation: "ai_models"
-            referencedColumns: ["record_id"]
-          },
-          {
-            foreignKeyName: "community_creations_model_record_id_fkey"
-            columns: ["model_record_id"]
-            isOneToOne: false
-            referencedRelation: "model_health_summary"
-            referencedColumns: ["record_id"]
-          },
-        ]
-      }
-      content_templates: {
-        Row: {
-          category: string
-          created_at: string
-          description: string | null
-          display_order: number | null
-          enhancement_instruction: string | null
-          estimated_time_seconds: number | null
-          hidden_field_defaults: Json | null
-          id: string
-          is_active: boolean | null
-          is_custom_model: boolean | null
-          model_id: string | null
-          model_record_id: string | null
-          name: string
-          preset_parameters: Json
-          thumbnail_url: string | null
-          updated_at: string
-          user_editable_fields: Json | null
-        }
-        Insert: {
-          category: string
-          created_at?: string
-          description?: string | null
-          display_order?: number | null
-          enhancement_instruction?: string | null
-          estimated_time_seconds?: number | null
-          hidden_field_defaults?: Json | null
-          id: string
-          is_active?: boolean | null
-          is_custom_model?: boolean | null
-          model_id?: string | null
-          model_record_id?: string | null
-          name: string
-          preset_parameters?: Json
-          thumbnail_url?: string | null
-          updated_at?: string
-          user_editable_fields?: Json | null
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          description?: string | null
-          display_order?: number | null
-          enhancement_instruction?: string | null
-          estimated_time_seconds?: number | null
-          hidden_field_defaults?: Json | null
-          id?: string
-          is_active?: boolean | null
-          is_custom_model?: boolean | null
-          model_id?: string | null
-          model_record_id?: string | null
-          name?: string
-          preset_parameters?: Json
-          thumbnail_url?: string | null
-          updated_at?: string
-          user_editable_fields?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_content_templates_model_record"
-            columns: ["model_record_id"]
-            isOneToOne: false
-            referencedRelation: "ai_models"
-            referencedColumns: ["record_id"]
-          },
-          {
-            foreignKeyName: "fk_content_templates_model_record"
-            columns: ["model_record_id"]
-            isOneToOne: false
-            referencedRelation: "model_health_summary"
-            referencedColumns: ["record_id"]
-          },
         ]
       }
       email_history: {
@@ -1367,31 +1191,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_generations_model_record"
-            columns: ["model_record_id"]
-            isOneToOne: false
-            referencedRelation: "ai_models"
-            referencedColumns: ["record_id"]
-          },
-          {
-            foreignKeyName: "fk_generations_model_record"
-            columns: ["model_record_id"]
-            isOneToOne: false
-            referencedRelation: "model_health_summary"
-            referencedColumns: ["record_id"]
-          },
-          {
             foreignKeyName: "generations_parent_generation_id_fkey"
             columns: ["parent_generation_id"]
             isOneToOne: false
             referencedRelation: "generations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "generations_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "content_templates"
             referencedColumns: ["id"]
           },
           {
@@ -1604,22 +1407,7 @@ export type Database = {
           provider?: string
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "model_documentation_model_record_id_fkey"
-            columns: ["model_record_id"]
-            isOneToOne: true
-            referencedRelation: "ai_models"
-            referencedColumns: ["record_id"]
-          },
-          {
-            foreignKeyName: "model_documentation_model_record_id_fkey"
-            columns: ["model_record_id"]
-            isOneToOne: true
-            referencedRelation: "model_health_summary"
-            referencedColumns: ["record_id"]
-          },
-        ]
+        Relationships: []
       }
       model_test_configs: {
         Row: {
@@ -1677,20 +1465,6 @@ export type Database = {
           validate_file_accessible?: boolean | null
         }
         Relationships: [
-          {
-            foreignKeyName: "model_test_configs_model_record_id_fkey"
-            columns: ["model_record_id"]
-            isOneToOne: true
-            referencedRelation: "ai_models"
-            referencedColumns: ["record_id"]
-          },
-          {
-            foreignKeyName: "model_test_configs_model_record_id_fkey"
-            columns: ["model_record_id"]
-            isOneToOne: true
-            referencedRelation: "model_health_summary"
-            referencedColumns: ["record_id"]
-          },
           {
             foreignKeyName: "model_test_configs_test_user_id_fkey"
             columns: ["test_user_id"]
@@ -1813,20 +1587,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "generations"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "model_test_results_model_record_id_fkey"
-            columns: ["model_record_id"]
-            isOneToOne: false
-            referencedRelation: "ai_models"
-            referencedColumns: ["record_id"]
-          },
-          {
-            foreignKeyName: "model_test_results_model_record_id_fkey"
-            columns: ["model_record_id"]
-            isOneToOne: false
-            referencedRelation: "model_health_summary"
-            referencedColumns: ["record_id"]
           },
           {
             foreignKeyName: "model_test_results_test_user_id_fkey"
@@ -3414,44 +3174,7 @@ export type Database = {
             referencedRelation: "generations"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "community_creations_model_record_id_fkey"
-            columns: ["model_record_id"]
-            isOneToOne: false
-            referencedRelation: "ai_models"
-            referencedColumns: ["record_id"]
-          },
-          {
-            foreignKeyName: "community_creations_model_record_id_fkey"
-            columns: ["model_record_id"]
-            isOneToOne: false
-            referencedRelation: "model_health_summary"
-            referencedColumns: ["record_id"]
-          },
         ]
-      }
-      model_health_summary: {
-        Row: {
-          avg_latency_ms: number | null
-          content_type: string | null
-          deduct_credits: boolean | null
-          failed_tests_24h: number | null
-          groups: Json | null
-          is_active: boolean | null
-          last_test_at: string | null
-          max_latency_ms: number | null
-          min_latency_ms: number | null
-          model_id: string | null
-          model_name: string | null
-          provider: string | null
-          recent_error_codes: string[] | null
-          record_id: string | null
-          success_rate_percent_24h: number | null
-          successful_tests_24h: number | null
-          timeout_seconds: number | null
-          total_tests_24h: number | null
-        }
-        Relationships: []
       }
       template_landing_pages_public: {
         Row: {

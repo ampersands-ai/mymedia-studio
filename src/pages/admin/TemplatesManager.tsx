@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Power, PowerOff, Trash2, ArrowUpDown, Copy, Play } from "lucide-react";
-import { TemplateFormDialog } from "@/components/admin/TemplateFormDialog";
 import { WorkflowTestDialog } from "@/components/admin/WorkflowTestDialog";
 import {
   Select,
@@ -391,13 +390,6 @@ export default function TemplatesManager() {
           )}
         </CardContent>
       </Card>
-
-      <TemplateFormDialog
-        open={contentTemplateDialog.open}
-        onOpenChange={(open) => setContentTemplateDialog({ ...contentTemplateDialog, open })}
-        template={contentTemplateDialog.template}
-        onSuccess={handleContentSuccess}
-      />
 
       <WorkflowEditorDialog
         open={workflowDialog.open}

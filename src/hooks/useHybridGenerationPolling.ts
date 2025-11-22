@@ -125,7 +125,7 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
             output_index: 0,
             provider_task_id: parentData.provider_task_id || '',
             model_id: parentData.model_id || '',
-            provider: parentData.ai_models?.provider || '',
+            provider: '', // Provider info no longer available from join
           });
         }
 

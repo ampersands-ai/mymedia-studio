@@ -103,15 +103,17 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
 
         // Add child generations (batch outputs)
         if (childrenData && childrenData.length > 0) {
-          outputs.push(...childrenData.map((child: any) => ({
-            id: child.id,
-            storage_path: child.storage_path || '',
-            type: parentData.type,
-            output_index: child.output_index || 0,
-            provider_task_id: child.provider_task_id || '',
-            model_id: child.model_id || '',
-            provider: child.ai_models?.provider || '',
-          })));
+          outputs.push(...childrenData
+            .filter((child: any) => child.storage_path) // Only include children with valid storage_path
+            .map((child: any) => ({
+              id: child.id,
+              storage_path: child.storage_path,
+              type: parentData.type,
+              output_index: child.output_index || 0,
+              provider_task_id: child.provider_task_id || '',
+              model_id: child.model_id || '',
+              provider: child.ai_models?.provider || '',
+            })));
         }
 
         // Also add parent if it has output (single output models)
@@ -126,6 +128,12 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
             provider: parentData.ai_models?.provider || '',
           });
         }
+
+        logger.info('Outputs prepared for completion callback', {
+          totalOutputs: outputs.length,
+          outputIds: outputs.map(o => o.id),
+          hasStoragePaths: outputs.every(o => !!o.storage_path)
+        } as any);
 
         optionsRef.current.onComplete(outputs, parentData.id);
       } else if (parentData.status === 'failed' || parentData.status === 'error') {

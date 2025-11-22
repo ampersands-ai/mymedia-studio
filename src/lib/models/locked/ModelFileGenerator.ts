@@ -178,33 +178,11 @@ async function getProviderApiKey(provider: string, modelId: string, recordId: st
 `;
 }
 
+/**
+ * DEPRECATED: Model file generator disabled
+ * ai_models table removed - models fully file-based now
+ */
 export async function generateAllModelFiles() {
-  console.log("Fetching all models from database...");
-  
-  const { data: models, error } = await supabase
-    .from('ai_models')
-    .select('*')
-    .order('provider', { ascending: true })
-    .order('model_name', { ascending: true });
-
-  if (error || !models) {
-    console.error("Failed to fetch models:", error);
-    return;
-  }
-
-  console.log(`Found ${models.length} models to generate`);
-
-  for (const model of models) {
-    const group = extractPrimaryGroup(model as AIModel);
-    const fileName = sanitizeFileName(model.model_name);
-    const filePath = `src/lib/models/locked/${group}/${fileName}.ts`;
-    const content = generateModelFileContent(model as AIModel);
-    
-    console.log(`Generated: ${filePath}`);
-    console.log("Content preview:", content.substring(0, 200));
-    console.log("---");
-  }
-
-  console.log(`\nGenerated ${models.length} model files!`);
-  console.log("\nNext step: Copy the generated content to create each file");
+  console.warn('generateAllModelFiles: ai_models table removed');
+  console.log("Model generation disabled - all models are now file-based");
 }

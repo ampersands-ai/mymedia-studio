@@ -20,10 +20,10 @@ export const MODEL_CONFIG = {
 
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/plum.png",
-  modelFamily: "Runware",
+  logoUrl: "/logos/artifio.png",
+  modelFamily: "Artifio",
   variantName: "Remove Background",
-  displayOrderInFamily: 2,
+  displayOrderInFamily: 1,
 
   // Lock system
   isLocked: true,

@@ -1,14 +1,49 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { callProvider } from "./providers/index.ts";
+import { preprocessKieAiParameters } from "./providers/kie-ai.ts";
+import { preprocessRunwareParameters } from "./providers/runware.ts";
 import { calculateTokenCost } from "./utils/token-calculator.ts";
 import { uploadToStorage } from "./utils/storage.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { convertImagesToUrls } from "./utils/image-processor.ts";
-import { 
+import {
   GenerateContentRequestSchema,
-  type GenerateContentRequest 
+  type GenerateContentRequest
 } from "../_shared/schemas.ts";
+
+/**
+ * PROVIDER PREPROCESSING ARCHITECTURE
+ * ====================================
+ *
+ * This edge function follows industry best practices for provider abstraction using the Strategy pattern.
+ *
+ * ARCHITECTURE PRINCIPLE:
+ * Provider-specific parameter mappings and defaults are encapsulated within provider implementation files,
+ * not scattered throughout the main orchestration logic.
+ *
+ * HOW IT WORKS:
+ * 1. Main edge function receives request and validates parameters against model schema
+ * 2. Provider-specific preprocessing functions transform parameters as needed
+ * 3. Provider implementation receives clean, provider-ready parameters
+ *
+ * ADDING NEW PROVIDER-SPECIFIC LOGIC:
+ * - Create a `preprocessXxxParameters()` function in providers/xxx.ts
+ * - Import and call it in the preprocessing section (see lines ~978-984)
+ * - Document the transformations in the function's JSDoc
+ *
+ * EXAMPLES:
+ * - Kie.ai: Maps prompt -> text for ElevenLabs models
+ * - Runware: Maps prompt -> positivePrompt, sets MP4 default for video
+ *
+ * BENEFITS:
+ * ✓ Provider logic is colocated with provider implementation
+ * ✓ Easy to add/modify provider-specific behavior
+ * ✓ Main orchestration logic stays clean and generic
+ * ✓ Follows Single Responsibility Principle
+ *
+ * Reference: Gang of Four Strategy pattern, AWS SDK provider architecture
+ */
 
 // Type definitions
 interface EdgeFunctionUser {
@@ -523,27 +558,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (
-      (model.id === 'elevenlabs/text-to-speech-multilingual-v2' ||
-       model.id === 'elevenlabs/text-to-speech-turbo-2-5') &&
-      !parameters.text &&
-      typeof prompt === 'string' &&
-      prompt.trim().length > 0
-    ) {
-      parameters.text = prompt;
-      logger.debug('Applied prompt->text fallback for ElevenLabs model', { userId: user.id });
-    }
-
-    // Safety fallback for Runware models: map prompt to positivePrompt if positivePrompt is missing
-    if (
-      model.provider === 'runware' &&
-      !parameters.positivePrompt &&
-      typeof prompt === 'string' &&
-      prompt.trim().length > 0
-    ) {
-      parameters.positivePrompt = prompt;
-      logger.debug('Applied prompt->positivePrompt fallback for Runware model', { userId: user.id });
-    }
+    // Provider-specific parameter mappings have been moved to provider preprocessing functions
+    // See preprocessKieAiParameters() and preprocessRunwareParameters() in providers/
 
     let validatedParameters = validateAndFilterParameters(
       parameters,
@@ -969,21 +985,28 @@ Deno.serve(async (req) => {
           logger
         );
 
+        // Apply provider-specific parameter preprocessing (Strategy pattern)
+        // This encapsulates provider-specific logic within provider implementations
+        let finalParams = processedParams;
+
+        if (model.provider === 'kie_ai') {
+          finalParams = preprocessKieAiParameters(processedParams, prompt, model.id);
+          logger.debug('Applied Kie.ai parameter preprocessing', { userId: user.id });
+        } else if (model.provider === 'runware') {
+          finalParams = preprocessRunwareParameters(processedParams, prompt, model.content_type);
+          logger.debug('Applied Runware parameter preprocessing', { userId: user.id });
+        }
+
       providerRequest = {
         model: model.id,
         model_record_id: model.record_id,
-        parameters: processedParams, // Parameters with images converted to URLs
+        parameters: finalParams, // Parameters with provider-specific preprocessing applied
         input_schema: model.input_schema,
         api_endpoint: model.api_endpoint,
         payload_structure: model.payload_structure || 'wrapper',
         userId: user.id,
         generationId: createdGeneration.id
       };
-        
-        // Runware video default: uppercase MP4
-        if (model.provider === 'runware' && model.content_type === 'video' && !providerRequest.parameters.outputFormat) {
-          providerRequest.parameters.outputFormat = 'MP4';
-        }
 
         logger.debug('Provider request prepared', {
           userId: user.id,

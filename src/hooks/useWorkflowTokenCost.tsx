@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import type { WorkflowTemplate } from "./useWorkflowTemplates";
 import { logger } from "@/lib/logger";
+import { getModel } from "@/lib/models/registry";
 
 export const useWorkflowTokenCost = (
   workflow: WorkflowTemplate,
@@ -15,7 +15,7 @@ export const useWorkflowTokenCost = (
       setIsCalculating(true);
 
       try {
-        // Fetch all models used in workflow
+        // Get model record IDs from workflow steps
         const modelRecordIds = workflow.workflow_steps
           ?.map((step) => step.model_record_id)
           .filter(Boolean) || [];
@@ -26,19 +26,26 @@ export const useWorkflowTokenCost = (
           return;
         }
 
-        const { data: models } = await supabase
-          .from("ai_models")
-          .select("record_id, base_token_cost, cost_multipliers, input_schema")
-          .in("record_id", modelRecordIds);
-
+        // Load models from .ts registry (database eliminated)
         let totalCost = 0;
 
         for (const step of workflow.workflow_steps || []) {
-          const model = models?.find((m) => m.record_id === step.model_record_id);
-          if (!model) continue;
+          if (!step.model_record_id) continue;
 
-          // Start with base cost
-          let stepCost = model.base_token_cost;
+          // Look up model from .ts registry
+          let modelModule;
+          try {
+            modelModule = getModel(step.model_record_id);
+          } catch (error) {
+            logger.warn('Model not found in registry', {
+              recordId: step.model_record_id,
+              workflowId: workflow.id
+            });
+            continue;
+          }
+
+          // Start with base cost from MODEL_CONFIG
+          let stepCost = modelModule.MODEL_CONFIG.baseCreditCost;
 
           // Resolve step parameters by merging static params with user inputs
           const resolvedParams = { ...step.parameters };
@@ -51,7 +58,7 @@ export const useWorkflowTokenCost = (
           }
 
           // Apply multipliers (exact same logic as CustomCreation and token-calculator.ts)
-          const multipliers = model.cost_multipliers || {};
+          const multipliers = modelModule.MODEL_CONFIG.costMultipliers || {};
           for (const [paramName, multiplierConfig] of Object.entries(multipliers)) {
             const paramValue = resolvedParams[paramName];
 

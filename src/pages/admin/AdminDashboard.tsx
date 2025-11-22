@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Zap, TrendingUp, Users } from "lucide-react";
+import { Database, Zap, TrendingUp, Users } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -14,8 +14,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({
     totalModels: 0,
     activeModels: 0,
-    totalTemplates: 0,
-    activeTemplates: 0,
+    // Templates stats removed - content_templates table deleted
     todayGenerations: 0,
     totalGenerations: 0,
     totalStoryboards: 0,
@@ -33,15 +32,7 @@ export default function AdminDashboard() {
         const totalModels = allModels.length;
         const activeModels = allModels.filter(m => m.MODEL_CONFIG.isActive).length;
 
-        // Fetch templates count
-        const { count: totalTemplates } = await supabase
-          .from("content_templates")
-          .select("*", { count: "exact", head: true });
-
-        const { count: activeTemplates } = await supabase
-          .from("content_templates")
-          .select("*", { count: "exact", head: true })
-          .eq("is_active", true);
+        // Templates removed - content_templates table deleted
 
         // Fetch generations count
         const { count: totalGenerations } = await supabase
@@ -78,8 +69,6 @@ export default function AdminDashboard() {
         setStats({
           totalModels,
           activeModels,
-          totalTemplates: totalTemplates || 0,
-          activeTemplates: activeTemplates || 0,
           todayGenerations: todayGenerations || 0,
           totalGenerations: totalGenerations || 0,
           totalStoryboards: totalStoryboards || 0,
@@ -132,11 +121,11 @@ export default function AdminDashboard() {
       <div>
         <h1 className="text-4xl font-black mb-2">Admin Dashboard</h1>
         <p className="text-muted-foreground">
-          Manage AI models, templates, and monitor system activity
+          Monitor system activity and manage settings
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="border-3 border-black brutal-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-bold">AI Models</CardTitle>
@@ -146,19 +135,6 @@ export default function AdminDashboard() {
             <div className="text-3xl font-black">{stats.activeModels}</div>
             <p className="text-xs text-muted-foreground">
               {stats.totalModels} total
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-3 border-black brutal-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-bold">Templates</CardTitle>
-            <FileText className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-black">{stats.activeTemplates}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.totalTemplates} total
             </p>
           </CardContent>
         </Card>
@@ -212,16 +188,14 @@ export default function AdminDashboard() {
             </p>
             <ul className="list-disc list-inside space-y-2 text-sm">
               <li>
-                <strong>AI Models:</strong> Add, edit, or disable AI models and
-                configure their credit costs
-              </li>
-              <li>
-                <strong>Templates:</strong> Create and manage content templates
-                with preset parameters
+                <strong>AI Models:</strong> Models are managed via TypeScript registry files
               </li>
               <li>
                 <strong>Users:</strong> View users, manage subscriptions, and
                 grant admin roles
+              </li>
+              <li>
+                <strong>Settings:</strong> Configure community features and system settings
               </li>
             </ul>
           </CardContent>

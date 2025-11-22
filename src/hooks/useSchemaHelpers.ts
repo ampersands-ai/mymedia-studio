@@ -1,8 +1,9 @@
 import { useCallback } from "react";
-import type { Database } from "@/integrations/supabase/types";
+import type { ModelConfiguration } from "@/types/schema";
 import { isKieAiAudioModel } from "@/lib/custom-creation-utils";
 
-type AIModel = Database['public']['Tables']['ai_models']['Row'];
+// Type stub for backward compatibility - models now loaded from registry
+type AIModel = ModelConfiguration;
 
 /**
  * Schema parsing utilities for dynamic form generation

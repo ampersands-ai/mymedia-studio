@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNativeCamera } from "@/hooks/useNativeCamera";
 import { IMAGE_UPLOAD_CONFIG } from "@/constants/custom-creation";
 import { getImageFieldInfo } from "@/lib/custom-creation-utils";
-import type { Database } from "@/integrations/supabase/types";
+import type { ModelConfiguration } from "@/types/schema";
 
-type AIModel = Database['public']['Tables']['ai_models']['Row'];
+// Type stub for backward compatibility - models now loaded from registry
+type AIModel = ModelConfiguration;
 
 const STORAGE_KEY_PREFIX = 'uploadedImages_';
 

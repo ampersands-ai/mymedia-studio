@@ -15,33 +15,6 @@ import {
   Plus, Edit, Power, PowerOff, ArrowUpDown, Copy, Filter, X,
   FileText, Download, Lock, Unlock, AlertCircle, RefreshCw
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import type { ModelConfiguration } from "@/types/schema";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  getAllModels,
-  type ModelModule,
-  getGenerationType
-} from "@/lib/models/registry";
-import {
-  generateModelUpdateScript,
-  generateNewModelScript,
-  generateModelDeleteScript,
-  generateLockToggleScript,
-  downloadScript,
-  getLockStatuses,
-  type ModelUpdatePayload
-} from "@/lib/admin/modelFileEditor";
-import { ModelFormDialog } from "@/components/admin/ModelFormDialog";
 
 const CREATION_GROUPS = [
   { id: "image_editing", label: "Image Editing" },
@@ -792,13 +765,6 @@ export default function AIModelsManager() {
           )}
         </CardContent>
       </Card>
-
-      <ModelFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        model={editingModel}
-        onSuccess={handleSaveChanges as any}
-      />
     </div>
   );
 }

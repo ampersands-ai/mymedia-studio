@@ -5,9 +5,6 @@ export type Generation = Database['public']['Tables']['generations']['Row'];
 export type GenerationInsert = Database['public']['Tables']['generations']['Insert'];
 export type GenerationUpdate = Database['public']['Tables']['generations']['Update'];
 
-export type Model = Database['public']['Tables']['ai_models']['Row'];
-export type ModelInsert = Database['public']['Tables']['ai_models']['Insert'];
-
 export type WorkflowTemplate = Database['public']['Tables']['workflow_templates']['Row'];
 export type WorkflowTemplateInsert = Database['public']['Tables']['workflow_templates']['Insert'];
 
@@ -34,13 +31,12 @@ export interface GenerationResponse {
 }
 
 export interface ModelListResponse {
-  models: Model[];
+  models: any[];
   count: number;
 }
 
 export interface WorkflowTemplateResponse {
   template: WorkflowTemplate;
-  model?: Model;
 }
 
 export interface VideoJobResponse {

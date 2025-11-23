@@ -91,10 +91,6 @@ export default function TemplatesManager() {
 
   // Event handlers
 
-  const handleCreateContent = () => {
-    setContentTemplateDialog({ open: true, template: null });
-  };
-
   const handleCreateWorkflow = () => {
     setWorkflowDialog({ 
       open: true, 
@@ -152,9 +148,6 @@ export default function TemplatesManager() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onClick={handleCreateContent}>
-              Content Template
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={handleCreateWorkflow}>
               Workflow Template
             </DropdownMenuItem>
@@ -240,9 +233,6 @@ export default function TemplatesManager() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem onClick={handleCreateContent}>
-                    Content Template
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleCreateWorkflow}>
                     Workflow Template
                   </DropdownMenuItem>
@@ -266,11 +256,7 @@ export default function TemplatesManager() {
                 {sortedTemplates.map((template) => (
                   <TableRow key={`${template.template_type}-${template.id}`}>
                     <TableCell>
-                      {template.template_type === 'template' ? (
-                        <Badge variant="secondary">Content</Badge>
-                      ) : (
-                        <Badge className="bg-purple-500">Workflow</Badge>
-                      )}
+                      <Badge className="bg-purple-500">Workflow</Badge>
                     </TableCell>
                     <TableCell className="font-mono text-sm">
                       {template.id}
@@ -289,19 +275,17 @@ export default function TemplatesManager() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        {template.template_type === 'workflow' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setTestingWorkflow(template as WorkflowTemplate);
-                              setTestDialogOpen(true);
-                            }}
-                          >
-                            <Play className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button 
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setTestingWorkflow(template as any);
+                            setTestDialogOpen(true);
+                          }}
+                        >
+                          <Play className="h-4 w-4" />
+                        </Button>
+                        <Button
                           variant="outline" 
                           size="sm"
                           onClick={() => handleEdit(template)}

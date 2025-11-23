@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { WorkflowTemplate } from "./useWorkflowTemplates";
 import type { AIModel } from "./useModels";
+import { supabase } from "@/integrations/supabase/client";
 
 // Re-export AIModel for backward compatibility
 export type { AIModel };
@@ -56,8 +57,18 @@ export const useAllTemplates = () => {
   return useQuery({
     queryKey: ["all-templates"],
     queryFn: async () => {
-      console.warn('useAllTemplates: content_templates table removed');
-      return [] as MergedTemplate[];
+      const { data: workflowTemplates, error } = await supabase
+        .from("workflow_templates")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+
+      if (error) throw error;
+
+      return (workflowTemplates || []).map(w => ({ 
+        ...w, 
+        template_type: 'workflow' as const,
+      }));
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -68,8 +79,17 @@ export const useAllTemplatesAdmin = () => {
   return useQuery({
     queryKey: ["all-templates-admin"],
     queryFn: async () => {
-      console.warn('useAllTemplatesAdmin: content_templates table removed');
-      return [] as MergedTemplate[];
+      const { data: workflowTemplates, error } = await supabase
+        .from("workflow_templates")
+        .select("*")
+        .order("display_order", { ascending: true });
+
+      if (error) throw error;
+
+      return (workflowTemplates || []).map(w => ({ 
+        ...w, 
+        template_type: 'workflow' as const,
+      }));
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,

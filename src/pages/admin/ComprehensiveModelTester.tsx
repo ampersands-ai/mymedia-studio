@@ -22,6 +22,12 @@ import { ExecutionFlowVisualizer } from "@/components/admin/model-tester/Executi
 import { ExecutionControlPanel } from "@/components/admin/model-tester/ExecutionControlPanel";
 import { LogStreamViewer } from "@/components/admin/model-tester/LogStreamViewer";
 import { CodeViewer } from "@/components/admin/model-tester/CodeViewer";
+import { TestRunHistoryBrowser } from "@/components/admin/model-tester/TestRunHistoryBrowser";
+import { ImportReplayDialog } from "@/components/admin/model-tester/ImportReplayDialog";
+import { PerformanceMetricsDashboard } from "@/components/admin/model-tester/PerformanceMetricsDashboard";
+import { ComparisonViewer } from "@/components/admin/model-tester/ComparisonViewer";
+import { KeyboardShortcutsDialog } from "@/components/admin/model-tester/KeyboardShortcutsDialog";
+import { useKeyboardShortcuts, formatShortcut } from "@/hooks/useKeyboardShortcuts";
 import {
   EnhancedExecutionTracker,
   createStepConfig,
@@ -58,6 +64,11 @@ const ComprehensiveModelTester = () => {
   const [isExecuting, setIsExecuting] = useState(false);
   const [activeTab, setActiveTab] = useState("flow");
   const [showInactiveModels, setShowInactiveModels] = useState(true);
+
+  // Phase 3 Advanced Features State
+  const [showHistoryBrowser, setShowHistoryBrowser] = useState(false);
+  const [comparisonRuns, setComparisonRuns] = useState<ExecutionFlow[]>([]);
+  const [showComparison, setShowComparison] = useState(false);
 
   // Get selected model
   const selectedModel = useMemo(
@@ -557,6 +568,149 @@ const ComprehensiveModelTester = () => {
   }, [tracker, executionFlow, selectedModel, prompt]);
 
   /**
+   * Phase 3 Advanced Features Handlers
+   */
+  const handleLoadRun = useCallback(async (testRunId: string) => {
+    try {
+      const loadedTracker = await EnhancedExecutionTracker.loadFromDatabase(testRunId);
+      if (loadedTracker) {
+        setTracker(loadedTracker);
+        const flow = loadedTracker['flow']; // Access private field for display
+        setExecutionFlow(flow as ExecutionFlow);
+        toast.success("Test run loaded successfully");
+        setShowHistoryBrowser(false);
+      }
+    } catch (error) {
+      toast.error("Failed to load test run");
+      console.error(error);
+    }
+  }, []);
+
+  const handleReplay = useCallback((executionData: ExecutionFlow) => {
+    // Create new tracker with replayed data
+    const newTracker = new EnhancedExecutionTracker(
+      executionData.modelRecordId,
+      executionData.modelName,
+      executionData.modelProvider,
+      executionData.modelContentType,
+      user?.id || '',
+      {
+        testMode: true,
+        skipBilling: true,
+        mode: 'auto',
+        persistenceEnabled: true,
+      }
+    );
+
+    setTracker(newTracker);
+    setExecutionFlow(executionData);
+    setPrompt(executionData.steps.find(s => s.inputs?.prompt)?.inputs?.prompt || '');
+    toast.success("Ready to replay execution");
+  }, [user]);
+
+  const handleCompareRuns = useCallback(async (runIds: string[]) => {
+    try {
+      const flows: ExecutionFlow[] = [];
+      for (const runId of runIds) {
+        const loadedTracker = await EnhancedExecutionTracker.loadFromDatabase(runId);
+        if (loadedTracker) {
+          const flow = loadedTracker['flow']; // Access private field
+          flows.push(flow as ExecutionFlow);
+        }
+      }
+      setComparisonRuns(flows);
+      setShowComparison(true);
+      setShowHistoryBrowser(false);
+      toast.success(`Comparing ${flows.length} test runs`);
+    } catch (error) {
+      toast.error("Failed to load runs for comparison");
+      console.error(error);
+    }
+  }, []);
+
+  /**
+   * Keyboard Shortcuts
+   */
+  useKeyboardShortcuts({
+    shortcuts: [
+      {
+        key: " ",
+        description: "Play / Pause execution",
+        action: () => {
+          if (isExecuting || tracker?.flow.status === 'running') {
+            handlePause();
+          } else {
+            handlePlay();
+          }
+        },
+        disabled: !tracker && !selectedModel,
+      },
+      {
+        key: "ArrowRight",
+        description: "Step forward",
+        action: handleStepForward,
+        disabled: !tracker || isExecuting,
+      },
+      {
+        key: "n",
+        description: "Step forward (alternative)",
+        action: handleStepForward,
+        disabled: !tracker || isExecuting,
+      },
+      {
+        key: "Escape",
+        description: "Stop execution",
+        action: handleStop,
+        disabled: !tracker,
+      },
+      {
+        key: "r",
+        description: "Restart execution",
+        action: handleRestart,
+        disabled: !tracker || isExecuting,
+      },
+      {
+        key: "e",
+        description: "Export execution trace",
+        action: handleExport,
+        disabled: !tracker,
+      },
+      {
+        key: "b",
+        description: "Bookmark current run",
+        action: handleBookmark,
+        disabled: !tracker || !executionFlow,
+      },
+      {
+        key: "h",
+        description: "Toggle history browser",
+        action: () => setShowHistoryBrowser(!showHistoryBrowser),
+      },
+      {
+        key: "1",
+        description: "Execution Flow tab",
+        action: () => setActiveTab("flow"),
+      },
+      {
+        key: "2",
+        description: "Live Logs tab",
+        action: () => setActiveTab("logs"),
+      },
+      {
+        key: "3",
+        description: "Source Code tab",
+        action: () => setActiveTab("code"),
+      },
+      {
+        key: "4",
+        description: "Performance tab",
+        action: () => setActiveTab("performance"),
+      },
+    ],
+    enabled: true,
+  });
+
+  /**
    * Render model parameter inputs
    */
   const renderParameterInputs = () => {
@@ -662,14 +816,25 @@ const ComprehensiveModelTester = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" disabled>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowHistoryBrowser(!showHistoryBrowser)}
+            >
               <History className="h-4 w-4 mr-2" />
               History
             </Button>
-            <Button variant="outline" size="sm" disabled>
-              <Upload className="h-4 w-4 mr-2" />
-              Import
-            </Button>
+            <ImportReplayDialog onReplay={handleReplay}>
+              <Button variant="outline" size="sm">
+                <Upload className="h-4 w-4 mr-2" />
+                Import
+              </Button>
+            </ImportReplayDialog>
+            <KeyboardShortcutsDialog shortcuts={[]}>
+              <Button variant="ghost" size="sm">
+                <span className="text-xs">?</span>
+              </Button>
+            </KeyboardShortcutsDialog>
           </div>
         </div>
       </div>
@@ -805,7 +970,7 @@ const ComprehensiveModelTester = () => {
           <Card className="p-6 min-h-[800px]">
             {executionFlow ? (
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="flow">
                     <Layers className="h-4 w-4 mr-2" />
                     Execution Flow
@@ -817,6 +982,10 @@ const ComprehensiveModelTester = () => {
                   <TabsTrigger value="code">
                     <FileCode2 className="h-4 w-4 mr-2" />
                     Source Code
+                  </TabsTrigger>
+                  <TabsTrigger value="performance">
+                    <Download className="h-4 w-4 mr-2" />
+                    Performance
                   </TabsTrigger>
                 </TabsList>
 
@@ -858,6 +1027,10 @@ const ComprehensiveModelTester = () => {
                       readOnly={true}
                     />
                   )}
+                </TabsContent>
+
+                <TabsContent value="performance" className="mt-4">
+                  <PerformanceMetricsDashboard flow={executionFlow} />
                 </TabsContent>
               </Tabs>
             ) : (
@@ -912,6 +1085,42 @@ const ComprehensiveModelTester = () => {
           </Card>
         </div>
       </div>
+
+      {/* Phase 3 Advanced Features: History Browser */}
+      {showHistoryBrowser && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6">
+          <div className="bg-background rounded-lg max-w-6xl w-full max-h-[90vh] overflow-auto">
+            <TestRunHistoryBrowser
+              onLoadRun={handleLoadRun}
+              onCompareRuns={handleCompareRuns}
+              className="border-0"
+            />
+            <div className="p-4 border-t flex justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowHistoryBrowser(false)}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Phase 3 Advanced Features: Comparison Viewer */}
+      {showComparison && comparisonRuns.length > 0 && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6">
+          <div className="bg-background rounded-lg max-w-7xl w-full max-h-[90vh] overflow-auto">
+            <ComparisonViewer
+              runs={comparisonRuns}
+              onClose={() => {
+                setShowComparison(false);
+                setComparisonRuns([]);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

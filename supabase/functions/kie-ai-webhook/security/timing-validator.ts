@@ -1,6 +1,10 @@
 /**
  * Security Layer 3: Dynamic Timing Validation
  * Detects impossibly fast webhooks (replay attacks) and late arrivals
+ *
+ * IMPORTANT: This function expects generation.ai_models to be pre-populated
+ * by verify-token-validator (Layer 2). The ai_models data comes from the
+ * model registry, not database JOINs.
  */
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";

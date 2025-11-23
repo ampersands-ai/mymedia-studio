@@ -57,7 +57,7 @@ export async function validateVerifyToken(
       try {
         const modelConfig = await getModelConfig(data.model_record_id);
         generation.ai_models = {
-          id: modelConfig.recordId,
+          id: modelConfig.modelId, // Provider's model ID (for Midjourney detection, etc.)
           model_name: modelConfig.modelName,
           estimated_time_seconds: modelConfig.estimatedTimeSeconds || 300
         };

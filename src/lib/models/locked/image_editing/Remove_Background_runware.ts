@@ -124,8 +124,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const { data: keyData } = await supabase.functions.invoke("get-api-key", {
     body: {
       provider: MODEL_CONFIG.provider,
-      modelId: MODEL_CONFIG.modelId,
-      recordId: MODEL_CONFIG.recordId,
+      use_api_key: MODEL_CONFIG.use_api_key,
     },
   });
 

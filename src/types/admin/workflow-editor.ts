@@ -33,7 +33,10 @@ export type CategoryCounts = Record<string, number>;
  * Template manager state
  */
 export interface TemplateManagerState {
-  contentTemplateDialog: DeprecatedTemplateDialogState;
+  contentTemplateDialog: {
+    open: boolean;
+    template: any | null;
+  };
   workflowDialog: WorkflowDialogState;
   testingWorkflow: WorkflowTemplate | null;
   testDialogOpen: boolean;

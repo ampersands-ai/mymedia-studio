@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import type { TemplatesDialogState } from '@/types/admin';
 import type { WorkflowTemplate } from '@/hooks/useWorkflowTemplates';
-/** @deprecated ContentTemplate removed - use MergedTemplate or WorkflowTemplate */
 import type { ContentTemplate } from '@/hooks/useTemplates';
 
 /**

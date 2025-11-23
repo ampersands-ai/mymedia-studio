@@ -102,18 +102,3 @@ export async function releaseCredits(generationId: string): Promise<void> {
     console.error("Failed to release reserved credits:", error);
   }
 }
-
-/**
- * Legacy refund function - kept for backward compatibility
- * @deprecated Use releaseCredits() instead
- */
-export async function refundCredits(userId: string, cost: number): Promise<void> {
-  const { error } = await supabase.rpc("increment_tokens", {
-    user_id_param: userId,
-    amount: cost
-  });
-
-  if (error) {
-    console.error("Failed to refund credits:", error);
-  }
-}

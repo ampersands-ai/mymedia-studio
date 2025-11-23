@@ -90,8 +90,10 @@ Deno.serve(async (req) => {
           provider = modelConfig.provider;
         } catch (e) {
           logger.error('Failed to load model from registry', e instanceof Error ? e : new Error(String(e)), {
-            generationId: gen.id,
-            model_record_id: gen.model_record_id
+            metadata: {
+              generation_id: gen.id,
+              model_record_id: gen.model_record_id
+            }
           });
         }
 

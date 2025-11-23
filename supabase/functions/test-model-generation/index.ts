@@ -60,10 +60,12 @@ serve(async (req) => {
     let modelModule;
     let modelId;
     let baseCost;
+    let modelConfig;
     try {
       modelModule = await getModel(modelRecordId);
-      modelId = modelModule.MODEL_CONFIG.modelId;
-      baseCost = modelModule.MODEL_CONFIG.baseCreditCost;
+      modelConfig = modelModule.MODEL_CONFIG;
+      modelId = modelConfig.id;
+      baseCost = modelConfig.baseCost;
     } catch (e) {
       throw new Error(`Model not found: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -125,9 +127,9 @@ serve(async (req) => {
       status: 'success',
       data: {
         payload: apiPayload,
-        endpoint: model.api_endpoint || 'default',
-        provider: model.provider,
-        content_type: model.content_type,
+        endpoint: 'default',
+        provider: modelConfig.provider,
+        content_type: modelConfig.contentType,
       }
     });
 
@@ -146,7 +148,7 @@ serve(async (req) => {
       status: 'success',
       data: {
         timestamp: requestSentTime,
-        provider_endpoint: model.api_endpoint,
+        provider_endpoint: 'default',
         http_method: 'POST',
         auth_type: 'Bearer Token',
       }
@@ -160,7 +162,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model_id: model.id,
+        model_id: modelId,
         prompt: prompt,
         parameters: parameters || {},
         image_urls: imageUrls || [],
@@ -196,7 +198,7 @@ serve(async (req) => {
       data: {
         status_code: generateResponse.status,
         provider_task_id: taskId,
-        estimated_time: model.estimated_time_seconds || 30,
+        estimated_time: modelConfig.estimatedTimeSeconds || 30,
         latency_ms: firstResponseTime - requestSentTime,
         initial_status: generateResult.status || 'pending',
       }
@@ -281,7 +283,7 @@ serve(async (req) => {
         storage_bucket: 'generated-content',
         file_path: finalResult.storage_path,
         file_size_bytes: finalResult.file_size_bytes || 0,
-        mime_type: `${model.content_type}/*`,
+        mime_type: `${modelConfig.contentType}/*`,
       }
     });
 

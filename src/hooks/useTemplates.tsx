@@ -7,14 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 export type { AIModel };
 
 /**
- * DEPRECATED: content_templates table removed (ADR 007)
- * Templates moved to file-based registry system
- * 
- * MIGRATION PATH:
- * - Use WorkflowTemplate for new code
- * - Use MergedTemplate for backward compatibility
- * 
- * This interface is kept only for legacy code that hasn't been migrated yet.
+ * Legacy interface for backward compatibility
+ * Use WorkflowTemplate or MergedTemplate for new code
  */
 export interface ContentTemplate {
   id: string;
@@ -30,7 +24,7 @@ export interface ContentTemplate {
   enhancement_instruction: string | null;
   display_order: number;
   is_active: boolean;
-  ai_models?: AIModel;
+  modelMetadata?: AIModel;
   estimated_time_seconds?: number | null;
 }
 

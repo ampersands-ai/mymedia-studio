@@ -1,13 +1,10 @@
 import type { ContentTemplate } from "@/hooks/useTemplates";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
- * DEPRECATED - content_templates table deleted
- *
- * Popular templates feature disabled as part of database elimination.
- * Users should select models directly from .ts registry instead.
+ * Popular template IDs
+ * Templates reference models from .ts registry via model_record_id
  */
-
-// Popular template IDs - DEPRECATED (no longer used)
 export const POPULAR_TEMPLATE_IDS = [
   'portrait-headshots',
   'product-photos',
@@ -15,6 +12,17 @@ export const POPULAR_TEMPLATE_IDS = [
 ];
 
 export const getPopularTemplates = async (): Promise<ContentTemplate[]> => {
-  // content_templates table deleted - return empty array
-  return [];
+  const { data, error } = await supabase
+    .from('content_templates')
+    .select('*')
+    .in('id', POPULAR_TEMPLATE_IDS)
+    .eq('is_active', true)
+    .order('display_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching popular templates:', error);
+    return [];
+  }
+
+  return (data || []) as ContentTemplate[];
 };

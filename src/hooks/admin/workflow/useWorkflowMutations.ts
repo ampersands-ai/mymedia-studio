@@ -26,21 +26,17 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
   const queryClient = useQueryClient();
 
   /**
-   * Toggle active status of a workflow (content templates deprecated)
+   * Toggle active status of a template or workflow
    */
   const handleToggleActive = useCallback(async (item: MergedTemplate) => {
     const requestId = generateRequestId();
-
-    // content_templates table deleted - only workflows supported
-    if (item.template_type === 'template') {
-      toast.error("Content templates are no longer supported");
-      mutationsLogger.warn('Attempted to toggle content_template from deleted table', { requestId, templateId: item.id });
-      return;
-    }
+    const table = item.template_type === 'template'
+      ? 'content_templates'
+      : 'workflow_templates';
 
     try {
       const { error } = await supabase
-        .from('workflow_templates')
+        .from(table)
         .update({ is_active: !item.is_active })
         .eq('id', item.id);
 
@@ -54,8 +50,8 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
         throw handledError;
       }
 
-      mutationsLogger.info('Workflow toggled', { requestId, templateId: item.id, newState: !item.is_active });
-      toast.success(`Workflow ${!item.is_active ? "enabled" : "disabled"}`);
+      mutationsLogger.info('Template toggled', { requestId, templateId: item.id, newState: !item.is_active });
+      toast.success(`Template ${!item.is_active ? "enabled" : "disabled"}`);
       queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
     } catch (error) {
       const handledError = handleError(error, {
@@ -66,37 +62,34 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
         operation: 'handleToggleActive'
       });
 
-      mutationsLogger.error('Workflow toggle failed', handledError, { requestId });
-      toast.error("Failed to update workflow status");
+      mutationsLogger.error('Template toggle failed', handledError, { requestId });
+      toast.error("Failed to update template status");
     }
   }, [queryClient]);
 
   /**
-   * Delete a workflow (content templates deprecated)
+   * Delete a template or workflow
    */
   const handleDelete = useCallback(async (item: MergedTemplate) => {
-    // content_templates table deleted - only workflows supported
-    if (item.template_type === 'template') {
-      toast.error("Content templates are no longer supported");
-      mutationsLogger.warn('Attempted to delete content_template from deleted table', { templateId: item.id });
-      return;
-    }
-
-    if (!confirm("Are you sure you want to delete this workflow? This cannot be undone.")) {
+    if (!confirm("Are you sure you want to delete this template? This cannot be undone.")) {
       return;
     }
 
     const requestId = generateRequestId();
+    const table = item.template_type === 'template'
+      ? 'content_templates'
+      : 'workflow_templates';
 
-    mutationsLogger.debug('Workflow deletion initiated', {
+    mutationsLogger.debug('Template deletion initiated', {
       requestId,
       templateType: item.template_type,
-      templateId: item.id
+      templateId: item.id,
+      table
     });
 
     try {
       const { error } = await supabase
-        .from('workflow_templates')
+        .from(table)
         .delete()
         .eq('id', item.id)
         .select();
@@ -112,8 +105,8 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
         throw handledError;
       }
 
-      mutationsLogger.info('Workflow deleted successfully', { requestId, templateId: item.id });
-      toast.success("Workflow deleted successfully");
+      mutationsLogger.info('Template deleted successfully', { requestId, templateId: item.id });
+      toast.success("Template deleted successfully");
       queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
     } catch (error) {
       const handledError = handleError(error, {
@@ -123,63 +116,98 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
         operation: 'handleDelete'
       });
 
-      mutationsLogger.error('Workflow deletion error', handledError, { requestId });
-      toast.error(`Failed to delete workflow: ${handledError.message || 'Unknown error'}`);
+      mutationsLogger.error('Template deletion error', handledError, { requestId });
+      toast.error(`Failed to delete template: ${handledError.message || 'Unknown error'}`);
     }
   }, [queryClient]);
 
   /**
-   * Duplicate a workflow (content templates deprecated)
+   * Duplicate a template or workflow
    */
   const handleDuplicate = useCallback(async (item: MergedTemplate) => {
-    // content_templates table deleted - only workflows supported
-    if (item.template_type === 'template') {
-      toast.error("Content templates are no longer supported");
-      mutationsLogger.warn('Attempted to duplicate content_template from deleted table', { templateId: item.id });
-      return;
-    }
-
     const timestamp = Date.now();
 
-    if (!item.category || !item.name) {
-      toast.error("Cannot duplicate: missing required fields");
-      return;
+    if (item.template_type === 'template') {
+
+      if (!item.category || !item.name) {
+        toast.error("Cannot duplicate: missing required fields");
+        return;
+      }
+
+      const newTemplate = {
+        id: `${item.id}-copy-${timestamp}`,
+        name: `${item.name} (Copy)`,
+        category: item.category!,
+        description: item.description || null,
+        model_id: item.model_id || null,
+        preset_parameters: item.preset_parameters as any || {},
+        enhancement_instruction: item.enhancement_instruction || null,
+        thumbnail_url: item.thumbnail_url || null,
+        is_active: false,
+        display_order: item.display_order || 0,
+        estimated_time_seconds: item.estimated_time_seconds || null,
+        user_editable_fields: item.user_editable_fields as any || [],
+        hidden_field_defaults: item.hidden_field_defaults as any || {},
+        is_custom_model: item.is_custom_model || false,
+        model_record_id: ('model_record_id' in item ? item.model_record_id as string : null) || null,
+        before_image_url: item.before_image_url || null,
+        after_image_url: item.after_image_url || null,
+      };
+
+      const { error } = await supabase
+        .from('content_templates')
+        .insert([newTemplate]);
+
+      if (error) {
+        toast.error("Failed to duplicate template: " + error.message);
+        return;
+      }
+
+      toast.success("Template duplicated - now editing copy");
+      queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
+
+      options.onEditContentTemplate({ open: true, template: newTemplate as any });
+    } else {
+      if (!item.category || !item.name) {
+        toast.error("Cannot duplicate: missing required fields");
+        return;
+      }
+
+      const newWorkflow = {
+        id: `${item.id}-copy-${timestamp}`,
+        name: `${item.name} (Copy)`,
+        category: item.category!,
+        description: item.description || null,
+        thumbnail_url: item.thumbnail_url || null,
+        before_image_url: item.before_image_url || null,
+        after_image_url: item.after_image_url || null,
+        is_active: false,
+        display_order: item.display_order || 0,
+        estimated_time_seconds: item.estimated_time_seconds || null,
+        workflow_steps: item.workflow_steps as any || [],
+        user_input_fields: item.user_input_fields as any || [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('workflow_templates')
+        .insert([newWorkflow]);
+
+      if (error) {
+        toast.error("Failed to duplicate workflow: " + error.message);
+        return;
+      }
+
+      toast.success("Workflow duplicated - now editing copy");
+      queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
+
+      options.onEditWorkflow({
+        open: true,
+        workflow: newWorkflow as any,
+        isNew: false
+      });
     }
-
-    const newWorkflow = {
-      id: `${item.id}-copy-${timestamp}`,
-      name: `${item.name} (Copy)`,
-      category: item.category!,
-      description: item.description || null,
-      thumbnail_url: item.thumbnail_url || null,
-      before_image_url: item.before_image_url || null,
-      after_image_url: item.after_image_url || null,
-      is_active: false,
-      display_order: item.display_order || 0,
-      estimated_time_seconds: item.estimated_time_seconds || null,
-      workflow_steps: item.workflow_steps as any || [],
-      user_input_fields: item.user_input_fields as any || [],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    const { error } = await supabase
-      .from('workflow_templates')
-      .insert([newWorkflow]);
-
-    if (error) {
-      toast.error("Failed to duplicate workflow: " + error.message);
-      return;
-    }
-
-    toast.success("Workflow duplicated - now editing copy");
-    queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
-
-    options.onEditWorkflow({
-      open: true,
-      workflow: newWorkflow as any,
-      isNew: false
-    });
   }, [queryClient, options]);
 
   /**
@@ -189,29 +217,28 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
     if (item.template_type === 'template') {
       options.onEditContentTemplate({ open: true, template: item });
     } else {
-      options.onEditWorkflow({ 
-        open: true, 
-        workflow: item as WorkflowTemplate, 
-        isNew: false 
+      options.onEditWorkflow({
+        open: true,
+        workflow: item as WorkflowTemplate,
+        isNew: false
       });
     }
   }, [options]);
 
   /**
-   * Enable all workflows (content templates deprecated)
+   * Enable all templates and workflows
    */
   const handleEnableAll = useCallback(async () => {
     const requestId = generateRequestId();
 
     try {
-      // content_templates table deleted - only update workflows
-      await supabase
-        .from('workflow_templates')
-        .update({ is_active: true })
-        .neq('is_active', true);
+      await Promise.all([
+        supabase.from('content_templates').update({ is_active: true }).neq('is_active', true),
+        supabase.from('workflow_templates').update({ is_active: true }).neq('is_active', true),
+      ]);
 
-      mutationsLogger.info('All workflows enabled', { requestId });
-      toast.success("All workflows enabled");
+      mutationsLogger.info('All templates enabled', { requestId });
+      toast.success("All templates enabled");
       queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
     } catch (error) {
       const handledError = handleError(error, {
@@ -220,32 +247,31 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
         operation: 'handleEnableAll'
       });
 
-      mutationsLogger.error('Enable all workflows failed', handledError, { requestId });
-      toast.error("Failed to enable all workflows");
+      mutationsLogger.error('Enable all templates failed', handledError, { requestId });
+      toast.error("Failed to enable all templates");
     }
   }, [queryClient]);
 
   /**
-   * Disable all workflows (content templates deprecated)
+   * Disable all templates and workflows
    */
   const handleDisableAll = useCallback(async () => {
-    if (!confirm("Are you sure you want to disable all workflows?")) return;
+    if (!confirm("Are you sure you want to disable all templates?")) return;
 
     try {
-      // content_templates table deleted - only update workflows
-      await supabase
-        .from('workflow_templates')
-        .update({ is_active: false })
-        .eq('is_active', true);
+      await Promise.all([
+        supabase.from('content_templates').update({ is_active: false }).eq('is_active', true),
+        supabase.from('workflow_templates').update({ is_active: false }).eq('is_active', true),
+      ]);
 
-      toast.success("All workflows disabled");
+      toast.success("All templates disabled");
       queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
     } catch (error) {
-      logger.error('Disable all workflows failed', error, {
+      logger.error('Disable all templates failed', error, {
         component: 'useWorkflowMutations',
         operation: 'handleDisableAll'
       });
-      toast.error("Failed to disable all workflows");
+      toast.error("Failed to disable all templates");
     }
   }, [queryClient]);
 

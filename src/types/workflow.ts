@@ -77,10 +77,13 @@ export const MergedTemplateSchema = z.object({
   preset_parameters: z.unknown().optional(),
   enhancement_instruction: z.string().optional(),
   is_custom_model: z.boolean().optional(),
+  // Client-side enriched model metadata from registry (NOT from database)
+  // Populated by frontend hooks using model_record_id from workflow steps
   ai_models: z.object({
     id: z.string(),
     name: z.string(),
     base_token_cost: z.number(),
+    content_type: z.string().optional(),
   }).optional(),
   // Workflow template fields
   workflow_steps: z.unknown().optional(),

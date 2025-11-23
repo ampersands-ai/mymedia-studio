@@ -127,11 +127,16 @@ export const ModelSchema = z.object({
   is_async: z.boolean().optional(),
 });
 
+/**
+ * DEPRECATED: content_templates table removed (ADR 007)
+ * Templates moved to workflow_templates table with model metadata from registry
+ * This schema kept for backward compatibility in edge functions
+ */
 export const TemplateSchema = z.object({
   id: z.string().uuid(),
   preset_parameters: z.record(z.unknown()).optional(),
   enhancement_instruction: z.string().nullable().optional(),
-  ai_models: ModelSchema,
+  ai_models: ModelSchema, // Would be enriched from registry if still used
 });
 
 export const UserSchema = z.object({

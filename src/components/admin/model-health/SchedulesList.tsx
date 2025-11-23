@@ -24,17 +24,17 @@ export const SchedulesList = () => {
 
       // ADR 007: Enrich with model metadata from registry
       return (data || []).map((schedule: any) => {
-        let modelName = "Unknown";
+        let model_name = "Unknown";
         try {
           const model = getModel(schedule.model_record_id);
-          modelName = model.MODEL_CONFIG.modelName;
+          model_name = model.MODEL_CONFIG.modelName;
         } catch (e) {
           console.warn(`Failed to load model from registry:`, schedule.model_record_id, e);
         }
 
         return {
           ...schedule,
-          ai_models: { model_name: modelName }
+          model_name
         };
       });
     }
@@ -118,7 +118,7 @@ export const SchedulesList = () => {
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {schedule.ai_models?.model_name} • {schedule.cron_expression}
+                    {schedule.model_name} • {schedule.cron_expression}
                   </p>
                   {schedule.last_run_at && (
                     <p className="text-xs text-muted-foreground flex items-center gap-1">

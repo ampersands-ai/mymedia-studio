@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import type { WorkflowTemplate } from "./useWorkflowTemplates";
 import type { AIModel } from "./useModels";
+import { supabase } from "@/integrations/supabase/client";
+import { getModel } from "@/lib/models/registry";
 
 // Re-export AIModel for backward compatibility
 export type { AIModel };
@@ -56,8 +58,44 @@ export const useAllTemplates = () => {
   return useQuery({
     queryKey: ["all-templates"],
     queryFn: async () => {
-      console.warn('useAllTemplates: content_templates table removed');
-      return [] as MergedTemplate[];
+      // ADR 007: Query workflow_templates and enrich with model metadata from registry
+      const { data: workflowTemplates, error } = await supabase
+        .from("workflow_templates")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+
+      if (error) {
+        console.error('Failed to fetch workflow templates:', error);
+        return [];
+      }
+
+      // Enrich with model metadata from registry
+      return (workflowTemplates || []).map(w => {
+        const steps = w.workflow_steps as any[];
+        const firstModelRecordId = steps?.[0]?.model_record_id;
+
+        let ai_models = undefined;
+        if (firstModelRecordId) {
+          try {
+            const model = getModel(firstModelRecordId);
+            ai_models = {
+              id: model.MODEL_CONFIG.modelId,
+              name: model.MODEL_CONFIG.modelName,
+              base_token_cost: model.MODEL_CONFIG.baseCreditCost,
+              content_type: model.MODEL_CONFIG.contentType,
+            };
+          } catch (e) {
+            console.warn('Failed to load model from registry:', firstModelRecordId, e);
+          }
+        }
+
+        return {
+          ...w,
+          template_type: 'workflow' as const,
+          ai_models,
+        };
+      }) as MergedTemplate[];
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -68,8 +106,43 @@ export const useAllTemplatesAdmin = () => {
   return useQuery({
     queryKey: ["all-templates-admin"],
     queryFn: async () => {
-      console.warn('useAllTemplatesAdmin: content_templates table removed');
-      return [] as MergedTemplate[];
+      // ADR 007: Query workflow_templates (including inactive) and enrich with model metadata
+      const { data: workflowTemplates, error } = await supabase
+        .from("workflow_templates")
+        .select("*")
+        .order("display_order", { ascending: true });
+
+      if (error) {
+        console.error('Failed to fetch workflow templates:', error);
+        return [];
+      }
+
+      // Enrich with model metadata from registry
+      return (workflowTemplates || []).map(w => {
+        const steps = w.workflow_steps as any[];
+        const firstModelRecordId = steps?.[0]?.model_record_id;
+
+        let ai_models = undefined;
+        if (firstModelRecordId) {
+          try {
+            const model = getModel(firstModelRecordId);
+            ai_models = {
+              id: model.MODEL_CONFIG.modelId,
+              name: model.MODEL_CONFIG.modelName,
+              base_token_cost: model.MODEL_CONFIG.baseCreditCost,
+              content_type: model.MODEL_CONFIG.contentType,
+            };
+          } catch (e) {
+            console.warn('Failed to load model from registry:', firstModelRecordId, e);
+          }
+        }
+
+        return {
+          ...w,
+          template_type: 'workflow' as const,
+          ai_models,
+        };
+      }) as MergedTemplate[];
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,

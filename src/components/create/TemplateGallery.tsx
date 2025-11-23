@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TemplateCard } from "@/components/TemplateCard";
-import type { MergedTemplate } from "@/hooks/useTemplates";
+import type { TemplatePreview } from "@/types/templates";
 
 // Lazy load Carousel components
 const Carousel = lazy(() => import("@/components/ui/carousel").then(m => ({ default: m.Carousel })));
@@ -12,12 +12,9 @@ const CarouselItem = lazy(() => import("@/components/ui/carousel").then(m => ({ 
 const CarouselNext = lazy(() => import("@/components/ui/carousel").then(m => ({ default: m.CarouselNext })));
 const CarouselPrevious = lazy(() => import("@/components/ui/carousel").then(m => ({ default: m.CarouselPrevious })));
 
-/**
- * Props for TemplateGallery component
- */
 interface TemplateGalleryProps {
-  templatesByCategory: Record<string, MergedTemplate[]> | undefined;
-  onTemplateSelect: (template: MergedTemplate) => void;
+  templatesByCategory: Record<string, TemplatePreview[]> | undefined;
+  onTemplateSelect: (template: TemplatePreview) => void;
   isLoading: boolean;
 }
 
@@ -93,7 +90,7 @@ export const TemplateGallery = ({
                           className="w-full h-full"
                         />
                         <div className="absolute top-2 left-2 bg-black/80 text-white px-2 py-1 rounded text-xs font-black z-10">
-                          {template.ai_models?.content_type?.toUpperCase() || "AI"}
+                          {template.primaryContentType.toUpperCase()}
                         </div>
                       </div>
                       <CardContent className="p-2">

@@ -82,12 +82,19 @@ export const GenerationDialog = ({
                 />
               </div>
               
-              {/* Token Cost Preview */}
-              <TokenCostPreview
-                baseCost={selectedTemplate?.ai_models?.base_token_cost || 0}
-                totalCost={selectedTemplate?.ai_models?.base_token_cost || 0}
-                userTokens={userTokens}
-              />
+              {/* Token Cost Preview - using explicit base cost from preview */}
+              {(() => {
+                const baseCost = selectedTemplate?.estimatedBaseCost || 2;
+                const totalCost = baseCost;
+                
+                return (
+                  <TokenCostPreview
+                    baseCost={baseCost}
+                    totalCost={totalCost}
+                    userTokens={userTokens}
+                  />
+                );
+              })()}
               
               <div className="flex gap-2">
                 <Button
@@ -129,7 +136,7 @@ export const GenerationDialog = ({
           {/* Output Console */}
           <GenerationConsole
             generationState={generationState}
-            contentType={selectedTemplate?.ai_models?.content_type || "image"}
+            contentType={selectedTemplate?.primaryContentType || "image"}
             isPolling={isPolling}
             onDownload={onDownload}
             onViewHistory={onViewHistory}

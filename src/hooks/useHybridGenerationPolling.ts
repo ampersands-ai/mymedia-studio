@@ -5,6 +5,7 @@ import type { GenerationOutput } from "./useGenerationState";
 import { logger } from "@/lib/logger";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { getModel } from "@/lib/models/registry";
 
 type ConnectionTier = 'realtime' | 'polling' | 'disconnected';
 
@@ -75,27 +76,25 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
       // Fetch parent and children
       const { data: parentData, error } = await supabase
         .from('generations')
-        .select(`
-          id,
-          status,
-          storage_path,
-          type,
-          created_at,
-          provider_task_id,
-          model_id,
-          model_record_id,
-          provider_response,
-          ai_models!inner(provider)
-        `)
+        .select("id, status, storage_path, type, created_at, provider_task_id, model_id, model_record_id, provider_response")
         .eq('id', generationId)
         .single();
 
       if (error) throw error;
 
+      // ADR 007: Get provider from registry
+      let parentProvider = '';
+      try {
+        const model = getModel(parentData.model_record_id);
+        parentProvider = model.MODEL_CONFIG.provider;
+      } catch (e) {
+        console.warn(`Failed to load model from registry:`, parentData.model_record_id, e);
+      }
+
       if (parentData.status === 'completed') {
         const { data: childrenData } = await supabase
           .from('generations')
-          .select(`id, storage_path, output_index, provider_task_id, model_id, ai_models!inner(provider)`)
+          .select("id, storage_path, output_index, provider_task_id, model_id, model_record_id")
           .eq('parent_generation_id', parentData.id)
           .order('output_index');
 
@@ -105,15 +104,26 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
         if (childrenData && childrenData.length > 0) {
           outputs.push(...childrenData
             .filter((child: any) => child.storage_path) // Only include children with valid storage_path
-            .map((child: any) => ({
-              id: child.id,
-              storage_path: child.storage_path,
-              type: parentData.type,
-              output_index: child.output_index || 0,
-              provider_task_id: child.provider_task_id || '',
-              model_id: child.model_id || '',
-              provider: child.ai_models?.provider || '',
-            })));
+            .map((child: any) => {
+              // ADR 007: Get provider from registry for each child
+              let childProvider = '';
+              try {
+                const model = getModel(child.model_record_id);
+                childProvider = model.MODEL_CONFIG.provider;
+              } catch (e) {
+                console.warn(`Failed to load model from registry:`, child.model_record_id, e);
+              }
+
+              return {
+                id: child.id,
+                storage_path: child.storage_path,
+                type: parentData.type,
+                output_index: child.output_index || 0,
+                provider_task_id: child.provider_task_id || '',
+                model_id: child.model_id || '',
+                provider: childProvider,
+              };
+            }));
         }
 
         // Also add parent if it has output (single output models)
@@ -125,7 +135,7 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
             output_index: 0,
             provider_task_id: parentData.provider_task_id || '',
             model_id: parentData.model_id || '',
-            provider: '', // Provider info no longer available from join
+            provider: parentProvider,
           });
         }
 

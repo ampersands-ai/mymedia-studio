@@ -456,26 +456,6 @@ const CustomCreation = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.pollingGenerationId, stopPolling, updateState, progress, updateProgress, setFirstGeneration, state.generateCaption]);
 
-  // Realtime subscription for ai_models updates (schema changes from admin)
-  useEffect(() => {
-    const channel = supabase
-      .channel('ai-models-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'ai_models' 
-      }, () => {
-        console.log('🔄 AI Models schema updated, refreshing...');
-        queryClient.invalidateQueries({ queryKey: ['ai-models'] });
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
-
-
   // Image upload
   const {
     uploadedImages,

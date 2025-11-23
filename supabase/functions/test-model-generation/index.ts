@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getModel } from "../_shared/registry/index.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -55,15 +56,16 @@ serve(async (req) => {
     
     steps.push(inputValidationStep);
 
-    // Get model details
-    const { data: model, error: modelError } = await supabase
-      .from('ai_models')
-      .select('*')
-      .eq('record_id', modelRecordId)
-      .single();
-
-    if (modelError || !model) {
-      throw new Error(`Model not found: ${modelError?.message}`);
+    // ADR 007: Get model details from registry
+    let modelModule;
+    let modelId;
+    let baseCost;
+    try {
+      modelModule = await getModel(modelRecordId);
+      modelId = modelModule.MODEL_CONFIG.modelId;
+      baseCost = modelModule.MODEL_CONFIG.baseCreditCost;
+    } catch (e) {
+      throw new Error(`Model not found: ${e instanceof Error ? e.message : String(e)}`);
     }
 
     // Step 2: Credit Check
@@ -74,7 +76,7 @@ serve(async (req) => {
       .eq('user_id', userId)
       .single();
 
-    const creditsRequired = model.base_token_cost || 2;
+    const creditsRequired = baseCost || 2;
     const creditsAvailable = subscription?.tokens_remaining || 0;
     
     steps.push({
@@ -108,7 +110,7 @@ serve(async (req) => {
     // Step 4: API Request Prepared
     console.log('Step 4: Preparing API request...');
     const apiPayload = {
-      model_id: model.id,
+      model_id: modelId,
       prompt: prompt,
       ...parameters,
     };

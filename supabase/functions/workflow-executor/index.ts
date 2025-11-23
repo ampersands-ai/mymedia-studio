@@ -1,9 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
-import { 
-  processImageUploads, 
-  sanitizeParametersForProviders 
+import { getModel } from "../_shared/registry/index.ts";
+import {
+  processImageUploads,
+  sanitizeParametersForProviders
 } from "./helpers/image-upload.ts";
 import {
   replaceTemplateVariables,
@@ -133,19 +134,13 @@ Deno.serve(async (req) => {
     // Merge static parameters with resolved mappings
     const allParameters = { ...firstStep.parameters, ...resolvedMappings };
 
-    // Load model input schema to coerce parameters
+    // ADR 007: Load model input schema from registry to coerce parameters
     let coercedParameters = allParameters;
     try {
       if (firstStep.model_record_id) {
-        const { data: modelData, error: modelLoadError } = await supabase
-          .from('ai_models')
-          .select('input_schema')
-          .eq('record_id', firstStep.model_record_id)
-          .single();
-        if (modelLoadError) {
-          logger.warn('Could not load model schema', { metadata: { error: modelLoadError.message } });
-        } else if (modelData?.input_schema) {
-          coercedParameters = coerceParametersToSchema(allParameters, modelData.input_schema);
+        const model = await getModel(firstStep.model_record_id);
+        if (model.SCHEMA) {
+          coercedParameters = coerceParametersToSchema(allParameters, model.SCHEMA);
         }
       }
     } catch (e) {

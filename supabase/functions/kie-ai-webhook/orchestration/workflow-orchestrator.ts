@@ -1,9 +1,12 @@
 /**
  * Multi-step workflow orchestration
+ *
+ * ADR 007: Uses model registry for schema instead of database
  */
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../../_shared/edge-logger.ts";
+import { getModel } from "../../_shared/registry/index.ts";
 import {
   replaceTemplateVariables,
   resolveInputMappings,
@@ -112,18 +115,15 @@ export async function orchestrateWorkflow(
       let coercedParameters = allParameters;
       try {
         if (nextStep.model_record_id) {
-          const { data: modelData } = await supabase
-            .from('ai_models')
-            .select('input_schema')
-            .eq('record_id', nextStep.model_record_id)
-            .single();
-          if (modelData?.input_schema) {
-            coercedParameters = coerceParametersToSchema(allParameters, modelData.input_schema);
+          // ADR 007: Get schema from model registry instead of database
+          const model = await getModel(nextStep.model_record_id);
+          if (model.SCHEMA) {
+            coercedParameters = coerceParametersToSchema(allParameters, model.SCHEMA);
           }
         }
       } catch (e) {
-        logger.warn('Schema coercion skipped', { 
-          metadata: { error: e instanceof Error ? e.message : String(e) } 
+        logger.warn('Schema coercion skipped', {
+          metadata: { error: e instanceof Error ? e.message : String(e) }
         });
       }
 

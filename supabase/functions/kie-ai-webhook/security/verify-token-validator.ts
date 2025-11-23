@@ -1,9 +1,12 @@
 /**
  * Security Layer 2: Verify Token Validation
  * Validates per-generation verify token and retrieves generation data
+ *
+ * ADR 007: Uses model registry for metadata instead of database JOINs
  */
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getModelConfig } from "../../_shared/registry/index.ts";
 
 export interface VerifyTokenResult {
   success: boolean;
@@ -41,19 +44,36 @@ export async function validateVerifyToken(
   while (retryCount <= maxRetries) {
     const { data, error } = await supabase
       .from('generations')
-      .select('*, ai_models(id, model_name, estimated_time_seconds)')
+      .select('*')
       .eq('provider_task_id', taskId)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    
+
     if (data) {
       generation = data;
+
+      // ADR 007: Enrich generation with model metadata from registry
+      try {
+        const modelConfig = await getModelConfig(data.model_record_id);
+        generation.ai_models = {
+          id: modelConfig.recordId,
+          model_name: modelConfig.modelName,
+          estimated_time_seconds: modelConfig.estimatedTimeSeconds || 300
+        };
+      } catch (registryError) {
+        webhookLogger.error('Failed to load model from registry', String(registryError), {
+          model_record_id: data.model_record_id,
+          taskId
+        });
+        // Continue without model metadata - validation will catch if needed
+      }
+
       break;
     }
-    
+
     findError = error;
-    
+
     if (retryCount < maxRetries) {
       webhookLogger.info(`Generation not found, retry ${retryCount + 1}/${maxRetries} after delay`, {
         taskId,
@@ -62,7 +82,7 @@ export async function validateVerifyToken(
       });
       await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
     }
-    
+
     retryCount++;
   }
 

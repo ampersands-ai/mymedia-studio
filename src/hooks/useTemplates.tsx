@@ -7,8 +7,14 @@ import { supabase } from "@/integrations/supabase/client";
 export type { AIModel };
 
 /**
- * DEPRECATED: content_templates table removed
- * Templates moved to file-based system
+ * DEPRECATED: content_templates table removed (ADR 007)
+ * Templates moved to file-based registry system
+ * 
+ * MIGRATION PATH:
+ * - Use WorkflowTemplate for new code
+ * - Use MergedTemplate for backward compatibility
+ * 
+ * This interface is kept only for legacy code that hasn't been migrated yet.
  */
 export interface ContentTemplate {
   id: string;
@@ -43,7 +49,7 @@ export const useTemplates = () => {
 export const useTemplatesByCategory = () => {
   const { data: templates, ...rest } = useTemplates();
 
-  const templatesByCategory = {} as Record<string, ContentTemplate[]>;
+  const templatesByCategory = {} as Record<string, MergedTemplate[]>;
 
   return { templatesByCategory, templates, ...rest };
 };

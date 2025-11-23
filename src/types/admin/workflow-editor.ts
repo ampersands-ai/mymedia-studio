@@ -1,9 +1,11 @@
 import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 
 /**
- * Dialog state for content template editing
+ * DEPRECATED: Dialog state for content template editing
+ * Content templates have been removed (ADR 007)
+ * This interface is kept only for legacy admin UI
  */
-export interface ContentTemplateDialogState {
+export interface DeprecatedTemplateDialogState {
   open: boolean;
   template: any | null;
 }
@@ -31,7 +33,7 @@ export type CategoryCounts = Record<string, number>;
  * Template manager state
  */
 export interface TemplateManagerState {
-  contentTemplateDialog: ContentTemplateDialogState;
+  contentTemplateDialog: DeprecatedTemplateDialogState;
   workflowDialog: WorkflowDialogState;
   testingWorkflow: WorkflowTemplate | null;
   testDialogOpen: boolean;

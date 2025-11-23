@@ -2,44 +2,32 @@
 
 ## Decision: TypeScript Registry as Single Source of Truth
 
-As of this migration, the platform uses **TypeScript model files in `src/lib/models/locked/`** as the single source of truth for all AI model metadata and execution logic.
+The platform uses **TypeScript model files in `src/lib/models/locked/`** as the single source of truth for all AI model metadata and execution logic.
 
-## Before: Confusing Dual-Source Architecture
+## Architecture: Registry-Only System
 
-Previously, the system had two conflicting sources for model information:
+The system has ONE source for model information:
 
-### 1. TypeScript Registry Files (`src/lib/models/locked/`)
-- **Contains**: Execution logic + metadata
-- **Used by**: Main application for actual AI generation
+### TypeScript Registry Files (`src/lib/models/locked/`)
+- **Contains**: Complete execution logic + metadata
+- **Used by**: All parts of the application
 - **Examples**:
   - `prompt_to_video/Google_Veo_3_1_HQ.ts`
   - `prompt_to_image/runware_flux_1_1_pro.ts`
 - **Characteristics**:
   - Static TypeScript files
   - Contains `MODEL_CONFIG` and `generate()` function
-  - Cannot be edited at runtime
+  - Version controlled in Git
+  - Type-safe at compile time
 
-### 2. Database Table (`ai_models`)
-- **Contains**: Metadata copy only (NO execution logic)
-- **Used by**: Some admin tools (ModelAlerts, testing pages, templates)
-- **Problem**: Edits to database had NO EFFECT on actual generation
+## Registry Architecture
 
-### The Problem
-
-The `/admin/models-db` page allowed editing the database, which gave a **false impression of control**:
-- Admins could edit model metadata in the database
-- But the main app IGNORED those changes
-- Changes didn't affect actual AI generation
-- Created confusion and inconsistency
-
-## After: Single Source of Truth
-
-### What Changed
+### What Was Removed
 
 **Removed:**
-- `/admin/models-db` page (990 lines) - confusing database-backed admin UI
-- `useAIModelsDB` hooks - database CRUD operations
-- All database queries to `ai_models` table in admin components
+- Database-backed model management
+- Dual-source confusion
+- Runtime model editing capabilities
 
 **Updated Components to Use Registry:**
 1. `AdminDashboard.tsx` - Model counts from registry
@@ -49,17 +37,9 @@ The `/admin/models-db` page allowed editing the database, which gave a **false i
 5. `TemplateFormDialog.tsx` - Model selection from registry
 6. `WorkflowTestDialog.tsx` - Model details from registry
 
-### How to Read Models Now
+### How to Read Models
 
-**Old Pattern (Database):**
-```typescript
-const { data, error } = await supabase
-  .from("ai_models")
-  .select("id, model_name")
-  .order("model_name");
-```
-
-**New Pattern (Registry):**
+**Registry Pattern:**
 ```typescript
 import { getAllModels } from "@/lib/models/registry";
 
@@ -129,30 +109,18 @@ const model = getAllModels()
   .find(m => m.MODEL_CONFIG.modelId === 'runware:flux-1.1-pro');
 ```
 
-## What About Schema Editing?
+## Model Editing
 
-**Note for ComprehensiveModelTestPage:**
+All model changes must be made by:
+1. Editing the TypeScript file in `src/lib/models/locked/`
+2. Committing changes to version control
+3. Deploying the updated code
 
-The schema editing functionality in `ComprehensiveModelTestPage.tsx` still attempts to update the database. This functionality is **currently ineffective** because:
-- The registry reads from static TypeScript files
-- Database edits don't affect the registry
-- The main app ignores database changes
-
-**Options for future:**
-1. Remove schema editing UI entirely
-2. Build a system to generate/update TypeScript files programmatically
-3. Accept that schema editing only works for truly "unlocked" models (if any exist)
-
-For now, the schema editing code remains but has no effect on actual generation.
-
-## Database Table Status
-
-The `ai_models` database table still exists but is **no longer used** by the application for:
-- Model selection
-- Model metadata
-- Generation execution
-
-It may be safely dropped or kept for historical purposes.
+There is no runtime editing capability by design. This ensures:
+- Type safety
+- Version control
+- Predictable behavior
+- No configuration drift
 
 ## Migration Summary
 

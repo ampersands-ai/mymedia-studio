@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import type { TemplatesDialogState } from '@/types/admin';
 import type { WorkflowTemplate } from '@/hooks/useWorkflowTemplates';
-import type { ContentTemplate } from '@/hooks/useTemplates';
 
 /**
  * Custom hook to manage all dialog and filter state for TemplatesManager
@@ -9,10 +8,6 @@ import type { ContentTemplate } from '@/hooks/useTemplates';
  */
 export function useTemplatesState() {
   const [state, setState] = useState<TemplatesDialogState & { sortBy: string; selectedCategories: string[] }>({
-    contentTemplateDialog: {
-      open: false,
-      template: null,
-    },
     workflowDialog: {
       open: false,
       workflow: null,
@@ -23,19 +18,6 @@ export function useTemplatesState() {
     sortBy: 'display_order',
     selectedCategories: ['All'],
   });
-
-  /**
-   * Open content template dialog for creating or editing
-   */
-  const openContentDialog = (template: Partial<ContentTemplate> | null) => {
-    setState(prev => ({
-      ...prev,
-      contentTemplateDialog: {
-        open: true,
-        template,
-      },
-    }));
-  };
 
   /**
    * Open workflow template dialog for creating or editing
@@ -68,10 +50,6 @@ export function useTemplatesState() {
   const closeDialogs = () => {
     setState(prev => ({
       ...prev,
-      contentTemplateDialog: {
-        open: false,
-        template: null,
-      },
       workflowDialog: {
         open: false,
         workflow: null,
@@ -98,7 +76,6 @@ export function useTemplatesState() {
 
   return {
     state,
-    openContentDialog,
     openWorkflowDialog,
     openTestDialog,
     closeDialogs,

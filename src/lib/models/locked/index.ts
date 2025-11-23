@@ -121,6 +121,42 @@ import * as SeedreamV1Pro_PromptToVideo from "./prompt_to_video/Seedream_V1_Pro"
 import * as Sora2OpenAI_PromptToVideo from "./prompt_to_video/Sora_2_by_OpenAI_Watermarked";
 import * as WAN22Turbo_PromptToVideo from "./prompt_to_video/WAN_2_2_Turbo";
 
+/**
+ * Generation execution parameters
+ */
+export interface ExecuteGenerationParams {
+  prompt: string;
+  modelParameters: Record<string, unknown>;
+  userId: string;
+  startPolling: (generationId: string) => void;
+}
+
+/**
+ * Validation result from model validation
+ */
+export interface ValidationResult {
+  valid: boolean;
+  error?: string;
+}
+
+/**
+ * Cost multiplier configuration
+ */
+export type CostMultipliers = Record<string, number | Record<string, number>> | null;
+
+/**
+ * JSON Schema for model input parameters (flexible for compatibility)
+ */
+export interface ModelJsonSchema {
+  type: 'object';
+  properties: Record<string, unknown>;
+  required?: string[] | readonly string[];
+  [key: string]: unknown;
+}
+
+/**
+ * Complete model module interface with explicit types
+ */
 export interface ModelModule {
   MODEL_CONFIG: {
     // Core model identification
@@ -128,12 +164,12 @@ export interface ModelModule {
     recordId: string;
     modelName: string;
     provider: string;
-    contentType: string; // Maps to CreationGroup: "image", "video", "audio"
+    contentType: string;
 
     // Cost and performance
     baseCreditCost: number;
     estimatedTimeSeconds: number;
-    costMultipliers: any;
+    costMultipliers: CostMultipliers;
     defaultOutputs: number;
 
     // API configuration
@@ -141,22 +177,22 @@ export interface ModelModule {
     payloadStructure: string;
     maxImages: number | null;
 
-    // UI metadata (NEW - migrated from database)
+    // UI metadata
     isActive: boolean;
     logoUrl?: string | null;
-    modelFamily?: string | null;     // Brand/family grouping (e.g., "Google", "FLUX", "Kling")
-    variantName?: string | null;     // Specific variant (e.g., "Imagen 4 Fast", "V2 Pro")
-    displayOrderInFamily?: number;   // Sort order within family (lower numbers first)
+    modelFamily?: string | null;
+    variantName?: string | null;
+    displayOrderInFamily?: number;
 
-    // Lock system (NEW - for file-based architecture)
-    isLocked: boolean;              // Always true for locked files
-    lockedFilePath: string;         // Path to this file in src/lib/models/locked/
+    // Lock system
+    isLocked: boolean;
+    lockedFilePath: string;
   };
-  SCHEMA: any;
-  validate: (inputs: Record<string, any>) => { valid: boolean; error?: string };
-  preparePayload: (inputs: Record<string, any>) => Record<string, any>;
-  calculateCost: (inputs: Record<string, any>) => number;
-  execute: (params: any) => Promise<string>; // Required per ADR 007
+  SCHEMA: ModelJsonSchema;
+  validate: (inputs: Record<string, unknown>) => ValidationResult;
+  preparePayload: (inputs: Record<string, unknown>) => Record<string, unknown> | unknown[];
+  calculateCost: (inputs: Record<string, unknown>) => number;
+  execute: (params: any) => Promise<string>;
 }
 
 /**

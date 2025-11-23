@@ -71,6 +71,7 @@ const EmailSettings = lazy(() => import("./pages/admin/EmailSettings"));
 const EmailHistory = lazy(() => import("./pages/admin/EmailHistory").then(m => ({ default: m.EmailHistory })));
 const AdvancedAnalytics = lazy(() => import("./pages/admin/AdvancedAnalytics").then(m => ({ default: m.AdvancedAnalytics })));
 const CreateBlog = lazy(() => import("./pages/admin/CreateBlog"));
+const ComprehensiveModelTester = lazy(() => import("./pages/admin/ComprehensiveModelTester"));
 const DebugPanel = lazy(() => import("./components/dev/DebugPanel").then(m => ({ default: m.DebugPanel })));
 const RouteErrorBoundary = lazy(() => import("./components/error/RouteErrorBoundary").then(m => ({ default: m.RouteErrorBoundary })));
 
@@ -157,6 +158,7 @@ const AppContent = () => {
               <Route path="threshold-breach" element={<RouteErrorBoundary routeName="Admin > Threshold Breach"><ThresholdBreach /></RouteErrorBoundary>} />
               <Route path="webhook-monitor" element={<RouteErrorBoundary routeName="Admin > Webhook Monitor"><WebhookMonitor /></RouteErrorBoundary>} />
               <Route path="test-model-group" element={<RouteErrorBoundary routeName="Admin > Test Model Group"><TestModelGroupPage /></RouteErrorBoundary>} />
+              <Route path="comprehensive-model-tester" element={<RouteErrorBoundary routeName="Admin > Comprehensive Model Tester"><ComprehensiveModelTester /></RouteErrorBoundary>} />
               <Route path="video-jobs" element={<RouteErrorBoundary routeName="Admin > Video Jobs"><VideoJobs /></RouteErrorBoundary>} />
               <Route path="template-landing" element={<RouteErrorBoundary routeName="Admin > Template Landing"><TemplateLandingManager /></RouteErrorBoundary>} />
               <Route path="template-landing/:id" element={<RouteErrorBoundary routeName="Admin > Template Landing Editor"><TemplateLandingEditor /></RouteErrorBoundary>} />

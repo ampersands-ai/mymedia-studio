@@ -15,7 +15,6 @@ export const useWorkflowTokenCost = (
       setIsCalculating(true);
 
       try {
-        // Get model record IDs from workflow steps
         const modelRecordIds = workflow.workflow_steps
           ?.map((step) => step.model_record_id)
           .filter(Boolean) || [];
@@ -26,13 +25,11 @@ export const useWorkflowTokenCost = (
           return;
         }
 
-        // Load models from .ts registry (database eliminated)
         let totalCost = 0;
 
         for (const step of workflow.workflow_steps || []) {
           if (!step.model_record_id) continue;
 
-          // Look up model from .ts registry
           let modelModule;
           try {
             modelModule = getModel(step.model_record_id);

@@ -30,19 +30,15 @@ type SortDirection = 'asc' | 'desc';
 export default function ModelHealthDashboard() {
   const navigate = useNavigate();
   
-  // Fetch health data from model_health_summary view
+  // Fetch health data from file-based registry (database removed)
   const { data: healthData, isLoading } = useQuery({
     queryKey: ["model-health-summary"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("model_health_summary")
-        .select("*")
-        .order("model_name", { ascending: true });
-      
-      if (error) throw error;
-      return data as ModelHealthSummary[];
+      // Model health monitoring deprecated after ai_models table removal
+      // Return empty array since model metadata now lives in file-based registry
+      return [] as ModelHealthSummary[];
     },
-    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    refetchInterval: 30000,
   });
 
   // Calculate metrics from health data

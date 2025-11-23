@@ -52,13 +52,12 @@ const Templates = () => {
       
       allTemplates.forEach(template => {
         if (template.template_type === 'workflow' && template.workflow_steps) {
-          template.workflow_steps.forEach((step: any) => {
+          const steps = template.workflow_steps as any[];
+          steps.forEach((step: any) => {
             if (step.model_record_id) {
               allModelRecordIds.add(step.model_record_id);
             }
           });
-        } else if (template.template_type === 'template' && 'model_record_id' in template && template.model_record_id) {
-          allModelRecordIds.add(template.model_record_id as string);
         }
       });
       
@@ -85,12 +84,11 @@ const Templates = () => {
       
       allTemplates.forEach(template => {
         if (template.template_type === 'workflow' && template.workflow_steps) {
-          const totalCost = template.workflow_steps.reduce((sum: number, step: any) => {
+          const steps = template.workflow_steps as any[];
+          const totalCost = steps.reduce((sum: number, step: any) => {
             return sum + (modelCostMap.get(step.model_record_id) || 0);
           }, 0);
           costs[template.id] = totalCost;
-        } else if (template.template_type === 'template' && 'model_record_id' in template && template.model_record_id) {
-          costs[template.id] = modelCostMap.get(template.model_record_id as string) || 0;
         }
       });
       

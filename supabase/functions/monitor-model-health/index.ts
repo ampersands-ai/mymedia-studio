@@ -23,7 +23,18 @@ Deno.serve(async (req) => {
 
     const logger = new EdgeLogger('monitor-model-health', requestId, supabase, true);
 
-    logger.info('Starting model health monitoring check');
+    logger.info('Model health monitoring deprecated - ai_models table removed');
+    
+    // Model health monitoring disabled since ai_models table was removed
+    // Model metadata now lives in file-based registry
+    return new Response(
+      JSON.stringify({ 
+        success: true,
+        message: 'Model health monitoring unavailable (database table removed)',
+        stats: { totalModels: 0, failingModels: 0, alertsSent: 0 }
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
     // Fetch alert settings
     const { data: settings } = await supabase

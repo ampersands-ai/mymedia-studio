@@ -43,59 +43,55 @@ export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, userId, uploadedImages, uploadImagesToStorage, startPolling } = params;
-  
+
   // Upload images to storage first
   const imageUrls = await uploadImagesToStorage(userId);
   if (!imageUrls || imageUrls.length === 0) throw new Error("Failed to upload images");
-  
-  const inputs: Record<string, any> = { 
-    prompt, 
+
+  const inputs: Record<string, any> = {
+    prompt,
     image_url: imageUrls[0],
     ...(imageUrls[1] && { mask_url: imageUrls[1] }),
-    ...modelParameters 
+    ...modelParameters
   };
-  
-  const validation = validate(inputs); 
+
+  const validation = validate(inputs);
   if (!validation.valid) throw new Error(validation.error);
-  
+
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
-  
-  const { data: gen, error } = await supabase.from("generations").insert({ 
-    user_id: userId, 
-    model_id: MODEL_CONFIG.modelId, 
-    model_record_id: MODEL_CONFIG.recordId, 
-    type: getGenerationType(MODEL_CONFIG.contentType), 
-    prompt, 
-    tokens_used: cost, 
-    status: "pending", 
-    settings: modelParameters 
+
+  // Create generation record with pending status (edge function will process)
+  const { data: gen, error } = await supabase.from("generations").insert({
+    user_id: userId,
+    model_id: MODEL_CONFIG.modelId,
+    model_record_id: MODEL_CONFIG.recordId,
+    type: getGenerationType(MODEL_CONFIG.contentType),
+    prompt,
+    tokens_used: cost,
+    status: "pending",
+    settings: modelParameters
   }).select().single();
-  
+
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
-  
-  const apiKey = await getKieApiKey();
-  const res = await fetch(`https://api.kie.ai${MODEL_CONFIG.apiEndpoint}`, { 
-    method: "POST", 
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` }, 
-    body: JSON.stringify(preparePayload(inputs)) 
+
+  // Call edge function to handle API call server-side
+  // This keeps API keys secure and avoids CORS issues
+  const { error: funcError } = await supabase.functions.invoke('generate-content', {
+    body: {
+      generationId: gen.id,
+      model_config: MODEL_CONFIG,
+      model_schema: SCHEMA,
+      prompt,
+      custom_parameters: preparePayload(inputs)
+    }
   });
-  
-  if (!res.ok) throw new Error(`API failed: ${res.statusText}`);
-  const result = await res.json();
-  
-  await supabase.from("generations").update({ 
-    provider_task_id: result.taskId || result.id, 
-    provider_request: preparePayload(inputs), 
-    provider_response: result 
-  }).eq("id", gen.id);
-  
+
+  if (funcError) {
+    await supabase.from('generations').update({ status: 'failed' }).eq('id', gen.id);
+    throw new Error(`Edge function failed: ${funcError.message}`);
+  }
+
   startPolling(gen.id);
   return gen.id;
-}
-
-import { getKieApiKey as getCentralKieApiKey } from "../getKieApiKey";
-
-async function getKieApiKey(): Promise<string> {
-  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
 }

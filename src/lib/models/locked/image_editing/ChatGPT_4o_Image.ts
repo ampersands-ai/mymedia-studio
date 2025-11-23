@@ -111,6 +111,8 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
+
+  // Create generation record with pending status (edge function will process)
   const { data: gen, error } = await supabase
     .from("generations")
     .insert({
@@ -126,25 +128,24 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
     .select()
     .single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
-  const { data: keyData } = await supabase.functions.invoke("get-api-key", {
-    body: { provider: MODEL_CONFIG.provider, modelId: MODEL_CONFIG.modelId, recordId: MODEL_CONFIG.recordId, use_api_key: MODEL_CONFIG.use_api_key },
+
+  // Call edge function to handle API call server-side
+  // This keeps API keys secure and avoids CORS issues
+  const { error: funcError } = await supabase.functions.invoke('generate-content', {
+    body: {
+      generationId: gen.id,
+      model_config: MODEL_CONFIG,
+      model_schema: SCHEMA,
+      prompt,
+      custom_parameters: preparePayload(inputs)
+    }
   });
-  if (!keyData?.apiKey) throw new Error("Failed to retrieve API key");
-  const res = await fetch(`https://api.kie.ai${MODEL_CONFIG.apiEndpoint}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${keyData.apiKey}` },
-    body: JSON.stringify(preparePayload(inputs)),
-  });
-  if (!res.ok) throw new Error(`API failed: ${res.statusText}`);
-  const result = await res.json();
-  await supabase
-    .from("generations")
-    .update({
-      provider_task_id: result.taskId || result.id,
-      provider_request: preparePayload(inputs),
-      provider_response: result,
-    })
-    .eq("id", gen.id);
+
+  if (funcError) {
+    await supabase.from('generations').update({ status: 'failed' }).eq('id', gen.id);
+    throw new Error(`Edge function failed: ${funcError.message}`);
+  }
+
   startPolling(gen.id);
   return gen.id;
 }

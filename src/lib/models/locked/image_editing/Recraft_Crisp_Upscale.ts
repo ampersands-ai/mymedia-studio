@@ -12,7 +12,6 @@ import { getGenerationType } from '@/lib/models/registry';
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { supabase } from "@/integrations/supabase/client";
 import { reserveCredits } from "@/lib/models/creditDeduction";
-import { getKieApiKey as getCentralKieApiKey } from "../getKieApiKey";
 
 export const MODEL_CONFIG = {
   modelId: "recraft/crisp-upscale",
@@ -61,7 +60,12 @@ export function validate(inputs: Record<string, any>): { valid: boolean; error?:
 }
 
 export function preparePayload(inputs: Record<string, any>): Record<string, any> {
-  return { image: inputs.image };
+  return {
+    modelId: MODEL_CONFIG.modelId,
+    input: {
+      image: inputs.image
+    }
+  };
 }
 
 export function calculateCost(inputs: Record<string, any>): number {
@@ -69,7 +73,7 @@ export function calculateCost(inputs: Record<string, any>): number {
 }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { prompt, modelParameters, userId, uploadedImageUrls } = params;
+  const { prompt, modelParameters, userId, uploadedImageUrls, startPolling } = params;
 
   // Map uploaded image URL to the image parameter
   const inputs = {
@@ -80,9 +84,11 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   const validation = validate(inputs);
   if (!validation.valid) throw new Error(validation.error);
-  
+
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
+
+  // Create generation record with pending status (edge function will process)
   const { data: generation, error: genError } = await supabase
     .from('generations')
     .insert({
@@ -91,7 +97,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       model_record_id: MODEL_CONFIG.recordId,
       prompt: prompt || "Upscale image",
       type: getGenerationType(MODEL_CONFIG.contentType),
-      status: 'processing',
+      status: 'pending',
       tokens_used: cost,
       settings: modelParameters
     })
@@ -100,32 +106,23 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   if (genError || !generation) throw new Error(`Failed to create generation: ${genError?.message}`);
 
-  const payload = { task: MODEL_CONFIG.modelId.split('/')[1], input: preparePayload(inputs) };
+  // Call edge function to handle API call server-side
+  // This keeps API keys secure and avoids CORS issues
+  const { error: funcError } = await supabase.functions.invoke('generate-content', {
+    body: {
+      generationId: generation.id,
+      model_config: MODEL_CONFIG,
+      model_schema: SCHEMA,
+      prompt: prompt || "Upscale image",
+      custom_parameters: preparePayload(inputs)
+    }
+  });
 
-  try {
-    const response = await fetch(`https://api.kie.ai${MODEL_CONFIG.apiEndpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${await getKieApiKey()}` },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) throw new Error(`API call failed: ${response.statusText}`);
-    const result = await response.json();
-    
-    await supabase.from('generations').update({
-      provider_task_id: result.taskId,
-      provider_request: payload,
-      provider_response: result
-    }).eq('id', generation.id);
-
-    params.startPolling(generation.id);
-    return generation.id;
-  } catch (error) {
+  if (funcError) {
     await supabase.from('generations').update({ status: 'failed' }).eq('id', generation.id);
-    throw error;
+    throw new Error(`Edge function failed: ${funcError.message}`);
   }
-}
 
-async function getKieApiKey(): Promise<string> {
-  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
+  startPolling(generation.id);
+  return generation.id;
 }

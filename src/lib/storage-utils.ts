@@ -59,25 +59,6 @@ export async function createSignedUrls(
   return signedUrls.filter((url): url is string => url !== null);
 }
 
-/**
- * @deprecated Use useAudioUrl hook from @/hooks/media instead
- * This function constructs public URLs which won't work for private buckets
- * 
- * Get the public URL for a voice preview from Supabase Storage
- * @param voiceId - ElevenLabs voice ID
- * @returns Public URL to the voice preview audio file
- */
-export function getVoicePreviewUrl(voiceId: string): string {
-  logger.warn('Deprecated function called', {
-    utility: 'storage-utils',
-    function: 'getVoicePreviewUrl',
-    voiceId,
-    recommendation: 'Use useAudioUrl hook from @/hooks/media instead',
-    operation: 'getVoicePreviewUrl'
-  });
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  return `${supabaseUrl}/storage/v1/object/public/voice-previews/${voiceId}.mp3`;
-}
 
 /**
  * Extract file path from a storage URL or path string

@@ -211,7 +211,6 @@ const Create = () => {
             onboardingFlow.setShowWelcome(false);
             onboardingFlow.dismiss();
           }}
-          onSelectTemplate={onboardingFlow.handleWelcomeSelectTemplate}
         />
         
         {onboardingFlow.progress && 

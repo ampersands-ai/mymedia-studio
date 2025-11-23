@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { ALL_CATEGORIES } from "@/lib/admin/template-filtering";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -30,9 +31,10 @@ import {
 import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { useModels } from "@/hooks/useModels";
 import { WorkflowEditorDialog } from "@/components/admin/workflow/WorkflowEditorDialog";
-import { useWorkflowMutations } from "@/hooks/admin/workflow/useWorkflowMutations";
 import type { TemplateSortBy } from "@/types/admin/workflow-editor";
 import { useAllTemplatesAdmin } from "@/hooks/useTemplates";
+import { supabase } from "@/integrations/supabase/client";
+import { useMutation } from "@tanstack/react-query";
 
 export default function TemplatesManager() {
   const queryClient = useQueryClient();
@@ -53,17 +55,118 @@ export default function TemplatesManager() {
   const [sortBy, setSortBy] = useState<TemplateSortBy>("display_order");
   const [selectedCategories, setSelectedCategories] = useState<string[]>(['All']);
   
-  // Mutations hook
-  const {
-    handleToggleActive,
-    handleDelete,
-    handleDuplicate,
-    handleEdit,
-    handleEnableAll,
-    handleDisableAll,
-  } = useWorkflowMutations({
-    onEditWorkflow: (state) => setWorkflowDialog(state as any),
+  // Workflow mutations (inline since useWorkflowMutations hook was removed)
+  const toggleActiveMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: string, isActive: boolean }) => {
+      const { error } = await supabase
+        .from("workflow_templates")
+        .update({ is_active: isActive })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["all-templates-admin"] });
+      toast.success("Template updated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to update template", {
+        description: error.message
+      });
+    }
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("workflow_templates")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["all-templates-admin"] });
+      toast.success("Template deleted successfully");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to delete template", {
+        description: error.message
+      });
+    }
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: async (template: WorkflowTemplate) => {
+      const newTemplate = {
+        ...template,
+        id: `${template.id}-copy-${Date.now()}`,
+        name: `${template.name} (Copy)`,
+        is_active: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      // Remove the created_at field since it's auto-generated
+      delete (newTemplate as any).created_at;
+      
+      const { error } = await supabase
+        .from("workflow_templates")
+        .insert(newTemplate as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["all-templates-admin"] });
+      toast.success("Template duplicated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to duplicate template", {
+        description: error.message
+      });
+    }
+  });
+
+  const handleToggleActive = (template: any) => {
+    toggleActiveMutation.mutate({
+      id: template.id,
+      isActive: !template.is_active
+    });
+  };
+
+  const handleDelete = (template: any) => {
+    if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
+      deleteMutation.mutate(template.id);
+    }
+  };
+
+  const handleDuplicate = (template: any) => {
+    duplicateMutation.mutate(template as WorkflowTemplate);
+  };
+
+  const handleEdit = (template: any) => {
+    setWorkflowDialog({
+      open: true,
+      workflow: template,
+      isNew: false
+    });
+  };
+
+  const handleEnableAll = async () => {
+    const updates = templates.map(t => ({
+      id: t.id,
+      isActive: true
+    }));
+    for (const update of updates) {
+      await toggleActiveMutation.mutateAsync(update);
+    }
+  };
+
+  const handleDisableAll = async () => {
+    const updates = templates.map(t => ({
+      id: t.id,
+      isActive: false
+    }));
+    for (const update of updates) {
+      await toggleActiveMutation.mutateAsync(update);
+    }
+  };
   
   // Extract unique categories with counts
   const uniqueCategories = Array.from(new Set(templates.map(t => t.category))).sort();

@@ -7,14 +7,9 @@ import { ModelHealthHeader } from "@/components/admin/model-health/ModelHealthHe
 import { ModelHealthFilters } from "@/components/admin/model-health/ModelHealthFilters";
 import { ModelTestGrid } from "@/components/admin/model-health/ModelTestGrid";
 import { BulkTestControls } from "@/components/admin/model-health/BulkTestControls";
-import { TestConfigDialog } from "@/components/admin/model-health/TestConfigDialog";
-import { TestHistoryDialog } from "@/components/admin/model-health/TestHistoryDialog";
 import { PerformanceCharts } from "@/components/admin/model-health/PerformanceCharts";
 import { TestHistoryTable } from "@/components/admin/model-health/TestHistoryTable";
-import { ScheduleDialog } from "@/components/admin/model-health/ScheduleDialog";
-import { ModelAlertSettings } from "@/components/admin/model-health/ModelAlertSettings";
 import { logger } from "@/lib/logger";
-import { SchedulesList } from "@/components/admin/model-health/SchedulesList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -94,9 +89,6 @@ export default function ModelHealthDashboard() {
   const [testingModelIds] = useState<Set<string>>(new Set());
   const [isBulkTesting, setIsBulkTesting] = useState(false);
   const [bulkProgress, setBulkProgress] = useState(0);
-  const [configDialogModel, setConfigDialogModel] = useState<ModelHealthSummary | null>(null);
-  const [historyDialogModel, setHistoryDialogModel] = useState<ModelHealthSummary | null>(null);
-  const [scheduleDialogModel, setScheduleDialogModel] = useState<ModelHealthSummary | null>(null);
 
   const providers = useMemo(() => {
     if (!healthData) return [];
@@ -304,9 +296,9 @@ export default function ModelHealthDashboard() {
         <ModelTestGrid
           models={filteredAndSortedModels}
           onTest={handleTestModel}
-          onConfigure={setConfigDialogModel}
-          onViewHistory={setHistoryDialogModel}
-          onSchedule={setScheduleDialogModel}
+          onConfigure={() => {}}
+          onViewHistory={() => {}}
+          onSchedule={() => {}}
           testingModelIds={testingModelIds}
         />
       ) : (
@@ -454,36 +446,8 @@ export default function ModelHealthDashboard() {
         <>
           <PerformanceCharts models={filteredAndSortedModels} />
           <TestHistoryTable />
-          
-          <div className="grid gap-6 md:grid-cols-2">
-            <ModelAlertSettings />
-            <SchedulesList />
-          </div>
         </>
       )}
-
-      <TestConfigDialog
-        model={configDialogModel}
-        open={!!configDialogModel}
-        onOpenChange={(open) => !open && setConfigDialogModel(null)}
-        onSave={(config) => logger.debug('Config saved', {
-          component: 'ModelHealthDashboard',
-          operation: 'saveConfig',
-          config
-        })}
-      />
-
-      <TestHistoryDialog
-        model={historyDialogModel}
-        open={!!historyDialogModel}
-        onOpenChange={(open) => !open && setHistoryDialogModel(null)}
-      />
-
-      <ScheduleDialog
-        model={scheduleDialogModel}
-        open={!!scheduleDialogModel}
-        onOpenChange={(open) => !open && setScheduleDialogModel(null)}
-      />
     </div>
   );
 }

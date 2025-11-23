@@ -84,13 +84,6 @@ export async function settleCredits(userId: string, generationId: string, cost: 
   }
 }
 
-/**
- * Legacy function - kept for backward compatibility
- * @deprecated Use reserveCredits() + settleCredits() instead
- */
-export async function deductCredits(userId: string, cost: number): Promise<void> {
-  await reserveCredits(userId, cost);
-}
 
 /**
  * Release reserved credits - Called when generation fails

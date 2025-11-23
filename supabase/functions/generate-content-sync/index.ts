@@ -167,12 +167,12 @@ Deno.serve(async (req) => {
 
         // Convert registry format to expected Model format
         model = {
-          id: config.modelId,
+          id: config.id,
           record_id: config.recordId,
           provider: config.provider,
           content_type: config.contentType,
-          base_token_cost: config.baseCreditCost,
-          cost_multipliers: config.costMultipliers,
+          base_token_cost: config.baseCost,
+          cost_multipliers: undefined, // Cost multipliers moved to model files
           input_schema: modelModule.SCHEMA
         };
       } catch (e) {

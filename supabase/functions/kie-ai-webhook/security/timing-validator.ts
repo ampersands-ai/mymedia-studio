@@ -2,8 +2,8 @@
  * Security Layer 3: Dynamic Timing Validation
  * Detects impossibly fast webhooks (replay attacks) and late arrivals
  *
- * IMPORTANT: This function expects generation.ai_models to be pre-populated
- * by verify-token-validator (Layer 2). The ai_models data comes from the
+ * IMPORTANT: This function expects generation.modelMetadata to be pre-populated
+ * by verify-token-validator (Layer 2). The modelMetadata data comes from the
  * model registry, not database JOINs.
  */
 
@@ -21,7 +21,7 @@ export async function validateTiming(
   supabase: SupabaseClient,
   payload?: any
 ): Promise<TimingResult> {
-  const estimatedSeconds = generation.ai_models?.estimated_time_seconds || 300;
+  const estimatedSeconds = generation.modelMetadata?.estimated_time_seconds || 300;
   const MIN_PROCESSING_TIME = 2.85 * 1000; // 2.85 seconds (aggressive anti-replay)
   const MAX_PROCESSING_TIME = estimatedSeconds * 2.5 * 1000; // 2.5x multiplier
 
@@ -43,7 +43,7 @@ export async function validateTiming(
   webhookLogger.info('Timing analysis', {
     taskId: generation.provider_task_id,
     generationId: generation.id,
-    model: generation.ai_models?.model_name,
+    model: generation.modelMetadata?.model_name,
     estimated_seconds: estimatedSeconds,
     actual_processing_seconds: Math.round(processingTime / 1000),
     min_threshold_seconds: MIN_PROCESSING_TIME / 1000,
@@ -60,7 +60,7 @@ export async function validateTiming(
       generation_id: generation.id,
       processing_ms: processingTime,
       threshold_ms: MIN_PROCESSING_TIME,
-      model: generation.ai_models?.model_name,
+      model: generation.modelMetadata?.model_name,
       status: 'rejected_timing'
     });
     
@@ -93,7 +93,7 @@ export async function validateTiming(
       generation_id: generation.id,
       processing_seconds: Math.round(processingTime / 1000),
       max_threshold_seconds: Math.round(MAX_PROCESSING_TIME / 1000),
-      model: generation.ai_models?.model_name,
+      model: generation.modelMetadata?.model_name,
       severity: severityLevel,
       status: 'late_arrival'
     });

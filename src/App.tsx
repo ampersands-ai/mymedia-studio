@@ -64,8 +64,6 @@ const TemplateAnalytics = lazy(() => import("./pages/admin/TemplateAnalytics"));
 const MigrateStoryboards = lazy(() => import("./pages/admin/MigrateStoryboards"));
 const CinematicPromptsManager = lazy(() => import("./pages/admin/CinematicPromptsManager"));
 const WebhookMonitor = lazy(() => import("./pages/admin/WebhookMonitor"));
-const ModelHealthDashboard = lazy(() => import("./pages/admin/ModelHealthDashboard"));
-const ModelHealthTestPage = lazy(() => import("./pages/admin/ModelHealthTestPage"));
 const TestModelGroupPage = lazy(() => import("./pages/admin/TestModelGroupPage"));
 const SharedContent = lazy(() => import("./pages/SharedContent"));
 const UserLogs = lazy(() => import("./pages/admin/UserLogs"));
@@ -158,8 +156,6 @@ const AppContent = () => {
               <Route path="analytics" element={<RouteErrorBoundary routeName="Admin > Analytics"><AnalyticsDashboard /></RouteErrorBoundary>} />
               <Route path="threshold-breach" element={<RouteErrorBoundary routeName="Admin > Threshold Breach"><ThresholdBreach /></RouteErrorBoundary>} />
               <Route path="webhook-monitor" element={<RouteErrorBoundary routeName="Admin > Webhook Monitor"><WebhookMonitor /></RouteErrorBoundary>} />
-              <Route path="model-health" element={<RouteErrorBoundary routeName="Admin > Model Health"><ModelHealthDashboard /></RouteErrorBoundary>} />
-              <Route path="model-health/test/:recordId" element={<RouteErrorBoundary routeName="Admin > Model Health Test"><ModelHealthTestPage /></RouteErrorBoundary>} />
               <Route path="test-model-group" element={<RouteErrorBoundary routeName="Admin > Test Model Group"><TestModelGroupPage /></RouteErrorBoundary>} />
               <Route path="video-jobs" element={<RouteErrorBoundary routeName="Admin > Video Jobs"><VideoJobs /></RouteErrorBoundary>} />
               <Route path="template-landing" element={<RouteErrorBoundary routeName="Admin > Template Landing"><TemplateLandingManager /></RouteErrorBoundary>} />

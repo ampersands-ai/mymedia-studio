@@ -24,12 +24,25 @@ serve(async (req) => {
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('send-model-alert', requestId);
   const startTime = Date.now();
-  
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    logger.info("Model alert sending deprecated - model health monitoring disabled");
+
+    // Model alerts disabled since model_alert_configs table was removed
+    // Model metadata now lives in file-based registry
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: 'Model alert sending unavailable (model health monitoring disabled)',
+        error: 'Model health monitoring has been disabled - alerts no longer sent'
+      }),
+      { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+
     const {
       to,
       userName,

@@ -31,6 +31,19 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Model documentation analysis deprecated - model_documentation table removed
+    // Model metadata now lives in file-based registry
+    console.log('analyze-model-docs: Function deprecated - model_documentation table removed');
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: 'Model documentation analysis unavailable (database table removed)',
+        error: 'model_documentation table has been removed - use file-based registry instead'
+      }),
+      { status: 410, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
     const { model_record_id, regenerate = false }: AnalyzeRequest = await req.json();
 
     if (!model_record_id) {

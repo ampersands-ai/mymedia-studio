@@ -5,6 +5,7 @@ import { calculateTokenCost } from "./utils/token-calculator.ts";
 import { uploadToStorage } from "./utils/storage.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { getModel } from "../_shared/registry/index.ts";
 
 // Type definitions
 interface EdgeFunctionUser {
@@ -150,57 +151,48 @@ Deno.serve(async (req) => {
       metadata: { model_record_id, model_id }
     });
 
-    // Load model configuration
+    // ADR 007: Load model configuration from registry
     let model: Model;
-    
+
     if (model_record_id) {
       // Use record_id - guaranteed unique
-      const { data: modelData, error: modelError } = await supabase
-        .from('ai_models')
-        .select('*')
-        .eq('record_id', model_record_id)
-        .eq('is_active', true)
-        .single();
+      try {
+        const modelModule = await getModel(model_record_id);
+        const config = modelModule.MODEL_CONFIG;
 
-      if (modelError || !modelData) {
-        throw new Error('Model not found or inactive');
+        // Check if model is active
+        if (!config.isActive) {
+          throw new Error('Model is inactive');
+        }
+
+        // Convert registry format to expected Model format
+        model = {
+          id: config.modelId,
+          record_id: config.recordId,
+          provider: config.provider,
+          content_type: config.contentType,
+          base_token_cost: config.baseCreditCost,
+          cost_multipliers: config.costMultipliers,
+          input_schema: modelModule.SCHEMA
+        };
+      } catch (e) {
+        throw new Error(`Model not found or inactive: ${e instanceof Error ? e.message : String(e)}`);
       }
-
-      model = modelData;
     } else if (model_id) {
-      // Legacy model_id path - check for duplicates
-      const { data: models, error: modelError, count } = await supabase
-        .from('ai_models')
-        .select('*', { count: 'exact' })
-        .eq('id', model_id)
-        .eq('is_active', true);
-
-      if (modelError) {
-        throw new Error(`Model lookup failed: ${modelError.message}`);
-      }
-
-      if (!models || models.length === 0) {
-        throw new Error('Model not found or inactive');
-      }
-
-      if (count && count > 1) {
-        logger.warn('Duplicate model_id detected', {
-          metadata: { model_id, duplicate_count: count }
-        });
-        return new Response(
-          JSON.stringify({ 
-            error: `Duplicate model id found. Multiple active models share id "${model_id}". Please use model_record_id instead.`,
-            code: 'DUPLICATE_MODEL_ID',
-            duplicated_id: model_id,
-            duplicate_count: count
-          }),
-          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      model = models[0];
+      // Legacy model_id path - not supported with registry
+      logger.warn('Legacy model_id usage detected', {
+        metadata: { model_id }
+      });
+      return new Response(
+        JSON.stringify({
+          error: 'model_id is deprecated. Please use model_record_id instead.',
+          code: 'DEPRECATED_MODEL_ID',
+          deprecated_id: model_id
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     } else {
-      throw new Error('Must provide model_id or model_record_id');
+      throw new Error('Must provide model_record_id');
     }
 
     // Verify this is a runware model

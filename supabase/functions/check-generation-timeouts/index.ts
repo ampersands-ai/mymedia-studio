@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getModelConfig } from "../_shared/registry/index.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,21 +26,10 @@ Deno.serve(async (req) => {
 
     // Find generations that have been processing for more than 5 minutes
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-    
+
     const { data: stuckGenerations, error: queryError } = await supabase
       .from('generations')
-      .select(`
-        id, 
-        user_id, 
-        status, 
-        created_at, 
-        prompt,
-        model_record_id,
-        ai_models!inner(
-          model_name,
-          provider
-        )
-      `)
+      .select('id, user_id, status, created_at, prompt, model_record_id')
       .eq('status', 'processing')
       .lt('created_at', fiveMinutesAgo);
 
@@ -91,11 +81,25 @@ Deno.serve(async (req) => {
           (Date.now() - new Date(gen.created_at).getTime()) / (60 * 1000)
         );
 
+        // ADR 007: Get model metadata from registry
+        let modelName = 'Unknown';
+        let provider = 'Unknown';
+        try {
+          const modelConfig = await getModelConfig(gen.model_record_id);
+          modelName = modelConfig.modelName;
+          provider = modelConfig.provider;
+        } catch (e) {
+          logger.error('Failed to load model from registry', e instanceof Error ? e : new Error(String(e)), {
+            generationId: gen.id,
+            model_record_id: gen.model_record_id
+          });
+        }
+
         logger.info(`Sending timeout alert for generation`, {
-          metadata: { 
-            generationId: gen.id, 
+          metadata: {
+            generationId: gen.id,
             elapsedMinutes,
-            userId: gen.user_id 
+            userId: gen.user_id
           }
         });
 
@@ -104,8 +108,8 @@ Deno.serve(async (req) => {
             generation_id: gen.id,
             user_id: gen.user_id,
             elapsed_minutes: elapsedMinutes,
-            model_name: (gen as any).ai_models?.model_name || 'Unknown',
-            provider: (gen as any).ai_models?.provider || 'Unknown',
+            model_name: modelName,
+            provider: provider,
             user_email: emailMap.get(gen.user_id),
             prompt: gen.prompt,
           }

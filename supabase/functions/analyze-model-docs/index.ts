@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getModel } from "../_shared/registry/index.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -64,25 +65,28 @@ serve(async (req) => {
       }
     }
 
-    // Fetch model information
-    const { data: model, error: modelError } = await supabaseClient
-      .from('ai_models')
-      .select('*')
-      .eq('record_id', model_record_id)
-      .single();
-
-    if (modelError || !model) {
-      console.error('Model not found', { model_record_id, error: modelError });
+    // ADR 007: Fetch model information from registry
+    let modelModule;
+    let modelId;
+    let provider;
+    let contentType;
+    try {
+      modelModule = await getModel(model_record_id);
+      modelId = modelModule.MODEL_CONFIG.modelId;
+      provider = modelModule.MODEL_CONFIG.provider;
+      contentType = modelModule.MODEL_CONFIG.contentType;
+    } catch (e) {
+      console.error('Model not found', { model_record_id, error: e });
       return new Response(
         JSON.stringify({ error: 'Model not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Analyzing model', { 
-      model_id: model.id, 
-      provider: model.provider, 
-      content_type: model.content_type 
+    console.log('Analyzing model', {
+      model_id: modelId,
+      provider: provider,
+      content_type: contentType
     });
 
     // Fetch successful generations for this model (last 100)

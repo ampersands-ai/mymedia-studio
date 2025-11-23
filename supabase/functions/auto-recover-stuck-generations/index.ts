@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { webhookLogger } from "../_shared/logger.ts";
 import { getProviderConfig } from "../_shared/providers/registry.ts";
+import { getModelConfig } from "../_shared/registry/index.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,19 +23,10 @@ Deno.serve(async (req) => {
 
     // Find generations stuck in 'processing' for more than 3 minutes
     const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
-    
+
     const { data: stuckGenerations, error } = await supabase
       .from('generations')
-      .select(`
-        id, 
-        provider_task_id, 
-        created_at,
-        model_record_id,
-        ai_models!inner(
-          provider,
-          model_name
-        )
-      `)
+      .select('id, provider_task_id, created_at, model_record_id')
       .eq('status', 'processing')
       .not('provider_task_id', 'is', null)
       .lt('created_at', threeMinutesAgo)
@@ -52,7 +44,7 @@ Deno.serve(async (req) => {
     if (!stuckGenerations || stuckGenerations.length === 0) {
       webhookLogger.info('No stuck generations found', {});
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           message: 'No stuck generations found',
           checked_at: new Date().toISOString()
         }),
@@ -73,7 +65,17 @@ Deno.serve(async (req) => {
 
     // Process each stuck generation using unified recovery
     for (const generation of stuckGenerations) {
-      const provider = (generation as any).ai_models?.provider || 'unknown';
+      // ADR 007: Get provider from model registry
+      let provider = 'unknown';
+      try {
+        const modelConfig = await getModelConfig(generation.model_record_id);
+        provider = modelConfig.provider;
+      } catch (e) {
+        webhookLogger.error('Failed to load model from registry', e instanceof Error ? e : new Error(String(e)), {
+          generationId: generation.id,
+          model_record_id: generation.model_record_id
+        });
+      }
       
       webhookLogger.info('Attempting recovery', { 
         generationId: generation.id,

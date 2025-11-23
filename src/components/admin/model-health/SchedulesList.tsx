@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Loader2, Trash2, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { getModel } from "@/lib/models/registry";
 
 export const SchedulesList = () => {
   const queryClient = useQueryClient();
@@ -16,14 +17,26 @@ export const SchedulesList = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("model_test_schedules")
-        .select(`
-          *,
-          ai_models!inner(model_name, provider)
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+
+      // ADR 007: Enrich with model metadata from registry
+      return (data || []).map((schedule: any) => {
+        let modelName = "Unknown";
+        try {
+          const model = getModel(schedule.model_record_id);
+          modelName = model.MODEL_CONFIG.modelName;
+        } catch (e) {
+          console.warn(`Failed to load model from registry:`, schedule.model_record_id, e);
+        }
+
+        return {
+          ...schedule,
+          ai_models: { model_name: modelName }
+        };
+      });
     }
   });
 

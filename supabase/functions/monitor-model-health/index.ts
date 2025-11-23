@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getModelConfig } from "../_shared/registry/index.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -94,13 +95,22 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get model details
-    const { data: models } = await supabase
-      .from('ai_models')
-      .select('record_id, model_name, provider')
-      .in('record_id', failingModelIds);
-
-    const modelMap = new Map(models?.map(m => [m.record_id, m]) || []);
+    // ADR 007: Get model details from registry
+    const modelMap = new Map();
+    for (const recordId of failingModelIds) {
+      try {
+        const modelConfig = await getModelConfig(recordId);
+        modelMap.set(recordId, {
+          record_id: recordId,
+          model_name: modelConfig.modelName,
+          provider: modelConfig.provider
+        });
+      } catch (e) {
+        logger.error('Failed to load model from registry', e instanceof Error ? e : new Error(String(e)), {
+          model_record_id: recordId
+        });
+      }
+    }
 
     // Send alerts for each failing model
     const alerts = [];

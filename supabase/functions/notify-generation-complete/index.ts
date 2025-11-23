@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getModelConfig } from "../_shared/registry/index.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -78,12 +79,26 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Get generation details
     const { data: generation, error: genError } = await supabase
       .from("generations")
-      .select("*, ai_models!inner(model_name, provider)")
+      .select("*")
       .eq("id", generation_id)
       .single();
 
     if (genError || !generation) {
       throw new Error("Generation not found");
+    }
+
+    // ADR 007: Get model metadata from registry
+    let modelName = 'Unknown';
+    let provider = 'Unknown';
+    try {
+      const modelConfig = await getModelConfig(generation.model_record_id);
+      modelName = modelConfig.modelName;
+      provider = modelConfig.provider;
+    } catch (e) {
+      logger.error('Failed to load model from registry', e instanceof Error ? e : new Error(String(e)), {
+        generationId: generation.id,
+        model_record_id: generation.model_record_id
+      });
     }
 
     // Get user profile
@@ -129,8 +144,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
               
               <div class="preview">
                 <h3 style="margin-top: 0;">Generation Details</h3>
-                <p class="meta"><strong>Model:</strong> ${generation.ai_models?.model_name || 'Unknown'}</p>
-                <p class="meta"><strong>Provider:</strong> ${generation.ai_models?.provider || 'Unknown'}</p>
+                <p class="meta"><strong>Model:</strong> ${modelName}</p>
+                <p class="meta"><strong>Provider:</strong> ${provider}</p>
                 <p class="meta"><strong>Prompt:</strong> ${generation.prompt?.substring(0, 100)}${(generation.prompt?.length || 0) > 100 ? '...' : ''}</p>
                 <p class="meta"><strong>Duration:</strong> ${Math.floor(generation_duration_seconds / 60)}m ${generation_duration_seconds % 60}s</p>
                 <p class="meta"><strong>Tokens Used:</strong> ${generation.tokens_used || 0}</p>

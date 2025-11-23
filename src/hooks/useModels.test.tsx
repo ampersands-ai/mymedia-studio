@@ -1,3 +1,8 @@
+/**
+ * @deprecated These tests are outdated and test the old database-based approach.
+ * useModels hook has been migrated to use the registry (file-based system).
+ * Tests should be updated to test registry functionality instead of database queries.
+ */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';

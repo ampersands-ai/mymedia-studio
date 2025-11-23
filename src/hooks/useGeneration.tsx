@@ -105,15 +105,16 @@ export const useGeneration = () => {
       let { data, error } = await supabase.functions.invoke(functionName, {
         body: bodyToSend,
       });
-      
+
       // Retry logic for token concurrency errors (409)
-      if (error && (error.message?.includes("409") || error.message?.includes("TOKEN_CONCURRENCY"))) {
+      const getErrorStatus = (err: any) => err?.status || err?.context?.status;
+      if (error && (getErrorStatus(error) === 409 || error.message?.includes("TOKEN_CONCURRENCY"))) {
         const MAX_CLIENT_RETRIES = 3;
         let attempt = 0;
         generationLogger.warn("Token concurrency detected, applying client retries", { requestId, MAX_CLIENT_RETRIES });
         while (
           attempt < MAX_CLIENT_RETRIES &&
-          (error && (error.message?.includes("409") || error.message?.includes("TOKEN_CONCURRENCY")))
+          (error && (getErrorStatus(error) === 409 || error.message?.includes("TOKEN_CONCURRENCY")))
         ) {
           attempt++;
           const base = 120; // ms
@@ -137,9 +138,11 @@ export const useGeneration = () => {
           component: 'useGeneration'
         });
         generationLogger.error("Edge function error", handledError, { requestId });
-        
+
+        const errorStatus = getErrorStatus(error);
+
         // Handle 401 specifically (shouldn't happen after refresh, but defensive)
-        if (error.message?.includes("401") || error.message?.toLowerCase().includes("unauthorized")) {
+        if (errorStatus === 401 || error.message?.toLowerCase().includes("unauthorized")) {
           generationLogger.warn("Unauthorized error after refresh, forcing logout", { requestId });
           localStorage.setItem('pending_generation', JSON.stringify({
             params,
@@ -153,9 +156,9 @@ export const useGeneration = () => {
             { recoverable: true }
           );
         }
-        
+
         // Enhanced 402 handling with structured error
-        if (error.message?.includes("402") || error.message?.toLowerCase().includes("insufficient")) {
+        if (errorStatus === 402 || error.message?.toLowerCase().includes("insufficient")) {
           const creditDetails: { required?: number; available?: number } = {};
           try {
             // Try to parse error context from edge function response
@@ -177,16 +180,16 @@ export const useGeneration = () => {
           
           throw new Error(JSON.stringify(creditsError));
         }
-        
-        if (error.message?.includes("429")) {
+
+        if (errorStatus === 429) {
           throw new GenerationError(
             GenerationErrorCode.RATE_LIMITED,
             "Rate limit exceeded. Please try again later.",
             { recoverable: true }
           );
         }
-        
-        if (error.message?.includes("400")) {
+
+        if (errorStatus === 400) {
           // Try to extract specific error and details from edge function response
           try {
             const errorMatch = error.message.match(/error['":\s]+([^"'}]+)/i);

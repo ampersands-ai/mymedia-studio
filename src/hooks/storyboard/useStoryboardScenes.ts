@@ -297,7 +297,8 @@ export const useStoryboardScenes = (
         
         if (error) {
           // Better error handling for auth issues
-          if (error.message?.includes('Unauthorized') || error.message?.includes('401')) {
+          const errorStatus = (error as any)?.status || (error as any)?.context?.status;
+          if (error.message?.includes('Unauthorized') || errorStatus === 401) {
             throw new Error('Authentication failed. Please try logging out and back in.');
           }
           throw error;

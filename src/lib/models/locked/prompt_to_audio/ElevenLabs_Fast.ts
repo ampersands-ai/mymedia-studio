@@ -147,7 +147,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const payload = { task: MODEL_CONFIG.modelId.split('/')[1], input: preparePayload({ ...modelParameters, text: prompt }) };
 
   try {
-    const response = await fetch(`https://api.klingai.com${MODEL_CONFIG.apiEndpoint}`, {
+    const response = await fetch(`https://api.kie.ai${MODEL_CONFIG.apiEndpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${await getKieApiKey()}` },
       body: JSON.stringify(payload)

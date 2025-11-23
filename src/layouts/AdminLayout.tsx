@@ -49,7 +49,6 @@ export const AdminLayout = () => {
               { path: "/admin/generations", label: "All Generations", icon: Image },
               { path: "/admin/disputes", label: "Token Disputes", icon: Flag },
               { path: "/admin/threshold-breach", label: "Threshold Breach", icon: AlertTriangle },
-              { path: "/admin/model-health", label: "Model Health", icon: HeartPulse },
               { path: "/admin/test-model-group", label: "Test Model Group", icon: TestTube2 },
               { path: "/admin/webhook-monitor", label: "Webhook Monitor", icon: Activity },
               { path: "/admin/user-logs", label: "User Logs", icon: Activity },

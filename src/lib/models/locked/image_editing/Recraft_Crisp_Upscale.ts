@@ -61,7 +61,12 @@ export function validate(inputs: Record<string, any>): { valid: boolean; error?:
 }
 
 export function preparePayload(inputs: Record<string, any>): Record<string, any> {
-  return { image: inputs.image };
+  return {
+    modelId: MODEL_CONFIG.modelId,
+    input: {
+      image: inputs.image
+    }
+  };
 }
 
 export function calculateCost(inputs: Record<string, any>): number {
@@ -100,7 +105,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   if (genError || !generation) throw new Error(`Failed to create generation: ${genError?.message}`);
 
-  const payload = { task: MODEL_CONFIG.modelId.split('/')[1], input: preparePayload(inputs) };
+  const payload = preparePayload(inputs);
 
   try {
     const response = await fetch(`https://api.kie.ai${MODEL_CONFIG.apiEndpoint}`, {

@@ -12,7 +12,6 @@ import { getGenerationType } from '@/lib/models/registry';
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { supabase } from "@/integrations/supabase/client";
 import { reserveCredits } from "@/lib/models/creditDeduction";
-import { getKieApiKey as getCentralKieApiKey } from "../getKieApiKey";
 
 export const MODEL_CONFIG = {
   modelId: "elevenlabs/text-to-speech-turbo-2-5",
@@ -124,12 +123,14 @@ export function calculateCost(inputs: Record<string, any>): number {
 }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { prompt, modelParameters, userId } = params;
+  const { prompt, modelParameters, userId, startPolling } = params;
   const validation = validate({ ...modelParameters, text: prompt });
   if (!validation.valid) throw new Error(validation.error);
-  
+
   const cost = calculateCost({ ...modelParameters, prompt });
   await reserveCredits(userId, cost);
+
+  // Create generation record with pending status (edge function will process)
   const { data: generation, error: genError } = await supabase
     .from('generations')
     .insert({
@@ -138,7 +139,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       model_record_id: MODEL_CONFIG.recordId,
       prompt,
       type: getGenerationType(MODEL_CONFIG.contentType),
-      status: 'processing',
+      status: 'pending',
       tokens_used: cost,
       settings: modelParameters
     })
@@ -147,32 +148,23 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   if (genError || !generation) throw new Error(`Failed to create generation: ${genError?.message}`);
 
-  const payload = preparePayload({ ...modelParameters, text: prompt });
+  // Call edge function to handle API call server-side
+  // This keeps API keys secure and avoids CORS issues
+  const { error: funcError } = await supabase.functions.invoke('generate-content', {
+    body: {
+      generationId: generation.id,
+      model_config: MODEL_CONFIG,
+      model_schema: SCHEMA,
+      prompt,
+      custom_parameters: preparePayload({ ...modelParameters, text: prompt })
+    }
+  });
 
-  try {
-    const response = await fetch(`https://api.kie.ai${MODEL_CONFIG.apiEndpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${await getKieApiKey()}` },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) throw new Error(`API call failed: ${response.statusText}`);
-    const result = await response.json();
-    
-    await supabase.from('generations').update({
-      provider_task_id: result.taskId,
-      provider_request: payload,
-      provider_response: result
-    }).eq('id', generation.id);
-
-    params.startPolling(generation.id);
-    return generation.id;
-  } catch (error) {
+  if (funcError) {
     await supabase.from('generations').update({ status: 'failed' }).eq('id', generation.id);
-    throw error;
+    throw new Error(`Edge function failed: ${funcError.message}`);
   }
-}
 
-async function getKieApiKey(): Promise<string> {
-  return getCentralKieApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
+  startPolling(generation.id);
+  return generation.id;
 }

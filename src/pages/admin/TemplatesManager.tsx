@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ALL_CATEGORIES } from "@/lib/admin/template-filtering";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,66 +27,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { MergedTemplate } from "@/hooks/useTemplates";
 import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { useModels } from "@/hooks/useModels";
 import { WorkflowEditorDialog } from "@/components/admin/workflow/WorkflowEditorDialog";
 import { useWorkflowMutations } from "@/hooks/admin/workflow/useWorkflowMutations";
 import type { TemplateSortBy } from "@/types/admin/workflow-editor";
+import { useAllTemplatesAdmin } from "@/hooks/useTemplates";
 
 export default function TemplatesManager() {
   const queryClient = useQueryClient();
   const { data: models = [] } = useModels();
-  
-  // Fetch ALL templates for admin (not just active ones)
-  const { data: templates = [] } = useQuery({
-    queryKey: ["all-templates-admin"],
-    queryFn: async () => {
-      // Fetch content templates
-      const { data: contentTemplates, error: templatesError } = await supabase
-        .from("content_templates")
-        .select("*")
-        .order("display_order", { ascending: true });
 
-      if (templatesError) throw templatesError;
+  // Fetch ALL templates for admin (workflow templates only - content_templates deleted)
+  const { data: templates = [] } = useAllTemplatesAdmin();
 
-      // Fetch workflow templates
-      const { data: workflowTemplates, error: workflowsError } = await supabase
-        .from("workflow_templates")
-        .select("*")
-        .order("display_order", { ascending: true });
-
-      if (workflowsError) throw workflowsError;
-
-      // Merge and mark type
-      const mergedTemplates = [
-        ...(contentTemplates || []).map(t => ({ 
-          ...t, 
-          template_type: 'template' as const,
-        })),
-        ...(workflowTemplates || []).map(w => ({ 
-          ...w, 
-          template_type: 'workflow' as const,
-        })),
-      ] as MergedTemplate[];
-
-      // Sort by display_order
-      mergedTemplates.sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
-
-      return mergedTemplates;
-    },
-  });
-  
   // State management
-  const [contentTemplateDialog, setContentTemplateDialog] = useState({ 
-    open: false, 
-    template: null 
-  });
-  
-  const [workflowDialog, setWorkflowDialog] = useState({ 
-    open: false, 
-    workflow: null, 
-    isNew: false 
+  const [workflowDialog, setWorkflowDialog] = useState({
+    open: false,
+    workflow: null,
+    isNew: false
   });
   
   const [testingWorkflow, setTestingWorkflow] = useState<WorkflowTemplate | null>(null);
@@ -104,7 +62,6 @@ export default function TemplatesManager() {
     handleEnableAll,
     handleDisableAll,
   } = useWorkflowMutations({
-    onEditContentTemplate: (state) => setContentTemplateDialog(state as any),
     onEditWorkflow: (state) => setWorkflowDialog(state as any),
   });
   
@@ -150,14 +107,9 @@ export default function TemplatesManager() {
         display_order: templates.length,
         workflow_steps: [],
         user_input_fields: [],
-      }, 
-      isNew: true 
+      },
+      isNew: true
     });
-  };
-
-  const handleContentSuccess = () => {
-    setContentTemplateDialog({ open: false, template: null });
-    queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
   };
 
   // Filter by category

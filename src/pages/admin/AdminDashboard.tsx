@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Zap, TrendingUp, Users } from "lucide-react";
+import { Database, FileText, Zap, TrendingUp, Users } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -33,13 +33,13 @@ export default function AdminDashboard() {
         const totalModels = allModels.length;
         const activeModels = allModels.filter(m => m.MODEL_CONFIG.isActive).length;
 
-        // Fetch templates count
+        // Fetch templates count (workflow_templates only - content_templates deleted)
         const { count: totalTemplates } = await supabase
-          .from("content_templates")
+          .from("workflow_templates")
           .select("*", { count: "exact", head: true });
 
         const { count: activeTemplates } = await supabase
-          .from("content_templates")
+          .from("workflow_templates")
           .select("*", { count: "exact", head: true })
           .eq("is_active", true);
 
@@ -212,8 +212,7 @@ export default function AdminDashboard() {
             </p>
             <ul className="list-disc list-inside space-y-2 text-sm">
               <li>
-                <strong>AI Models:</strong> Add, edit, or disable AI models and
-                configure their credit costs
+                <strong>AI Models:</strong> Models are managed via TypeScript registry files
               </li>
               <li>
                 <strong>Templates:</strong> Create and manage content templates

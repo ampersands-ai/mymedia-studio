@@ -121,56 +121,21 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
     throw new Error(`Failed: ${error?.message}`);
   }
 
-  const { data: keyData } = await supabase.functions.invoke("get-api-key", {
+  // Call edge function to handle API call server-side
+  // This keeps API keys secure and avoids CORS issues
+  const { error: funcError } = await supabase.functions.invoke('generate-content', {
     body: {
-      provider: MODEL_CONFIG.provider,
-      use_api_key: MODEL_CONFIG.use_api_key,
-    },
+      generationId: gen.id,
+      model_config: MODEL_CONFIG,
+      model_schema: SCHEMA,
+      prompt: prompt || "Remove background",
+      custom_parameters: preparePayload(inputs)
+    }
   });
 
-  if (!keyData?.apiKey) {
-    throw new Error("Failed to retrieve API key");
-  }
-
-  const apiPayload = [
-    {
-      taskType: "authentication",
-      apiKey: keyData.apiKey,
-    },
-    {
-      ...preparePayload(inputs),
-      taskUUID: gen.id,
-    },
-  ];
-
-  const res = await fetch(MODEL_CONFIG.apiEndpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(apiPayload),
-  });
-
-  if (!res.ok) {
-    throw new Error(`API failed: ${res.statusText}`);
-  }
-
-  const result = await res.json();
-
-  await supabase
-    .from("generations")
-    .update({
-      provider_task_id: result[0]?.taskUUID || gen.id,
-      provider_request: apiPayload,
-      provider_response: result,
-    })
-    .eq("id", gen.id);
-
-  // Process the response immediately (Runware is synchronous)
-  const { error: processError } = await supabase.functions.invoke("process-runware-response", {
-    body: { generation_id: gen.id },
-  });
-
-  if (processError) {
-    console.error("Failed to process response:", processError);
+  if (funcError) {
+    await supabase.from('generations').update({ status: 'failed' }).eq('id', gen.id);
+    throw new Error(`Edge function failed: ${funcError.message}`);
   }
 
   startPolling(gen.id);

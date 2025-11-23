@@ -96,39 +96,29 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
     type: getGenerationType(MODEL_CONFIG.contentType),
     prompt,
     tokens_used: cost,
-    status: "pending",
+    status: "pending", // (edge function will process)
     settings: modelParameters
   }).select().single();
-  
+
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
-  
-  const apiKey = await getRunwareApiKey();
-  
-  const res = await fetch(MODEL_CONFIG.apiEndpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`
-    },
-    body: JSON.stringify([preparePayload(inputs)])
+
+  // Call edge function to handle API call server-side
+  // This keeps API keys secure and avoids CORS issues
+  const { error: funcError } = await supabase.functions.invoke('generate-content', {
+    body: {
+      generationId: gen.id,
+      model_config: MODEL_CONFIG,
+      model_schema: SCHEMA,
+      prompt: inputs.positivePrompt,
+      custom_parameters: preparePayload(inputs)
+    }
   });
-  
-  if (!res.ok) throw new Error(`API failed: ${res.statusText}`);
-  
-  const result = await res.json();
-  
-  await supabase.from("generations").update({
-    provider_task_id: result[0]?.taskUUID,
-    provider_request: preparePayload(inputs),
-    provider_response: result
-  }).eq("id", gen.id);
-  
+
+  if (funcError) {
+    await supabase.from('generations').update({ status: 'failed' }).eq('id', gen.id);
+    throw new Error(`Edge function failed: ${funcError.message}`);
+  }
+
   startPolling(gen.id);
   return gen.id;
-}
-
-import { getRunwareApiKey as getCentralRunwareApiKey } from "../getRunwareApiKey";
-
-async function getRunwareApiKey(): Promise<string> {
-  return getCentralRunwareApiKey(MODEL_CONFIG.modelId, MODEL_CONFIG.recordId, MODEL_CONFIG.use_api_key);
 }

@@ -13,14 +13,26 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('check-model-health', requestId);
-  
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    logger.info("Starting model health check");
+    logger.info("Model health check deprecated - model_alert_configs table removed");
+
+    // Model health checking disabled since model_alert_configs table was removed
+    // Model metadata now lives in file-based registry
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: 'Model health checking unavailable (database table removed)',
+        error: 'model_alert_configs table has been removed',
+        checked: 0
+      }),
+      { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
 
     // Get all active alert configurations
     const { data: configs, error: configError } = await supabase

@@ -33,13 +33,13 @@ export default function AdminDashboard() {
         const totalModels = allModels.length;
         const activeModels = allModels.filter(m => m.MODEL_CONFIG.isActive).length;
 
-        // Fetch templates count
+        // Fetch templates count (workflow_templates only - content_templates deleted)
         const { count: totalTemplates } = await supabase
-          .from("content_templates")
+          .from("workflow_templates")
           .select("*", { count: "exact", head: true });
 
         const { count: activeTemplates } = await supabase
-          .from("content_templates")
+          .from("workflow_templates")
           .select("*", { count: "exact", head: true })
           .eq("is_active", true);
 

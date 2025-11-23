@@ -7,14 +7,12 @@ import { handleError } from "@/lib/errors";
 import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import {
   MergedTemplate,
-  ContentTemplateDialogState,
   WorkflowDialogState,
 } from "@/types/workflow";
 
 const mutationsLogger = logger.child({ component: 'useWorkflowMutations' });
 
 interface UseWorkflowMutationsOptions {
-  onEditContentTemplate: (state: ContentTemplateDialogState) => void;
   onEditWorkflow: (state: WorkflowDialogState) => void;
 }
 
@@ -26,13 +24,12 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
   const queryClient = useQueryClient();
 
   /**
-   * Toggle active status of a template or workflow
+   * Toggle active status of a template (workflow only - content_templates deleted)
    */
   const handleToggleActive = useCallback(async (item: MergedTemplate) => {
     const requestId = generateRequestId();
-    const table = item.template_type === 'template'
-      ? 'content_templates'
-      : 'workflow_templates';
+    // All templates are now in workflow_templates (content_templates deleted)
+    const table = 'workflow_templates';
 
     try {
       const { error } = await supabase
@@ -68,7 +65,7 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
   }, [queryClient]);
 
   /**
-   * Delete a template or workflow
+   * Delete a template (workflow only - content_templates deleted)
    */
   const handleDelete = useCallback(async (item: MergedTemplate) => {
     if (!confirm("Are you sure you want to delete this template? This cannot be undone.")) {
@@ -76,9 +73,8 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
     }
 
     const requestId = generateRequestId();
-    const table = item.template_type === 'template'
-      ? 'content_templates'
-      : 'workflow_templates';
+    // All templates are now in workflow_templates (content_templates deleted)
+    const table = 'workflow_templates';
 
     mutationsLogger.debug('Template deletion initiated', {
       requestId,
@@ -122,120 +118,74 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
   }, [queryClient]);
 
   /**
-   * Duplicate a template or workflow
+   * Duplicate a template (workflow only - content_templates deleted)
    */
   const handleDuplicate = useCallback(async (item: MergedTemplate) => {
     const timestamp = Date.now();
 
-    if (item.template_type === 'template') {
-
-      if (!item.category || !item.name) {
-        toast.error("Cannot duplicate: missing required fields");
-        return;
-      }
-
-      const newTemplate = {
-        id: `${item.id}-copy-${timestamp}`,
-        name: `${item.name} (Copy)`,
-        category: item.category!,
-        description: item.description || null,
-        model_id: item.model_id || null,
-        preset_parameters: item.preset_parameters as any || {},
-        enhancement_instruction: item.enhancement_instruction || null,
-        thumbnail_url: item.thumbnail_url || null,
-        is_active: false,
-        display_order: item.display_order || 0,
-        estimated_time_seconds: item.estimated_time_seconds || null,
-        user_editable_fields: item.user_editable_fields as any || [],
-        hidden_field_defaults: item.hidden_field_defaults as any || {},
-        is_custom_model: item.is_custom_model || false,
-        model_record_id: ('model_record_id' in item ? item.model_record_id as string : null) || null,
-        before_image_url: item.before_image_url || null,
-        after_image_url: item.after_image_url || null,
-      };
-
-      const { error } = await supabase
-        .from('content_templates')
-        .insert([newTemplate]);
-
-      if (error) {
-        toast.error("Failed to duplicate template: " + error.message);
-        return;
-      }
-
-      toast.success("Template duplicated - now editing copy");
-      queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
-
-      options.onEditContentTemplate({ open: true, template: newTemplate as any });
-    } else {
-      if (!item.category || !item.name) {
-        toast.error("Cannot duplicate: missing required fields");
-        return;
-      }
-
-      const newWorkflow = {
-        id: `${item.id}-copy-${timestamp}`,
-        name: `${item.name} (Copy)`,
-        category: item.category!,
-        description: item.description || null,
-        thumbnail_url: item.thumbnail_url || null,
-        before_image_url: item.before_image_url || null,
-        after_image_url: item.after_image_url || null,
-        is_active: false,
-        display_order: item.display_order || 0,
-        estimated_time_seconds: item.estimated_time_seconds || null,
-        workflow_steps: item.workflow_steps as any || [],
-        user_input_fields: item.user_input_fields as any || [],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      const { error } = await supabase
-        .from('workflow_templates')
-        .insert([newWorkflow]);
-
-      if (error) {
-        toast.error("Failed to duplicate workflow: " + error.message);
-        return;
-      }
-
-      toast.success("Workflow duplicated - now editing copy");
-      queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
-
-      options.onEditWorkflow({
-        open: true,
-        workflow: newWorkflow as any,
-        isNew: false
-      });
+    if (!item.category || !item.name) {
+      toast.error("Cannot duplicate: missing required fields");
+      return;
     }
+
+    // All templates are now in workflow_templates (content_templates deleted)
+    const newWorkflow = {
+      id: `${item.id}-copy-${timestamp}`,
+      name: `${item.name} (Copy)`,
+      category: item.category!,
+      description: item.description || null,
+      thumbnail_url: item.thumbnail_url || null,
+      before_image_url: item.before_image_url || null,
+      after_image_url: item.after_image_url || null,
+      is_active: false,
+      display_order: item.display_order || 0,
+      estimated_time_seconds: item.estimated_time_seconds || null,
+      workflow_steps: item.workflow_steps as any || [],
+      user_input_fields: item.user_input_fields as any || [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
+      .from('workflow_templates')
+      .insert([newWorkflow]);
+
+    if (error) {
+      toast.error("Failed to duplicate workflow: " + error.message);
+      return;
+    }
+
+    toast.success("Workflow duplicated - now editing copy");
+    queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });
+
+    options.onEditWorkflow({
+      open: true,
+      workflow: newWorkflow as any,
+      isNew: false
+    });
   }, [queryClient, options]);
 
   /**
-   * Edit a template or workflow
+   * Edit a template (workflow only - content_templates deleted)
    */
   const handleEdit = useCallback((item: MergedTemplate) => {
-    if (item.template_type === 'template') {
-      options.onEditContentTemplate({ open: true, template: item });
-    } else {
-      options.onEditWorkflow({
-        open: true,
-        workflow: item as WorkflowTemplate,
-        isNew: false
-      });
-    }
+    // All templates are now workflows (content_templates deleted)
+    options.onEditWorkflow({
+      open: true,
+      workflow: item as WorkflowTemplate,
+      isNew: false
+    });
   }, [options]);
 
   /**
-   * Enable all templates and workflows
+   * Enable all templates (workflow only - content_templates deleted)
    */
   const handleEnableAll = useCallback(async () => {
     const requestId = generateRequestId();
 
     try {
-      await Promise.all([
-        supabase.from('content_templates').update({ is_active: true }).neq('is_active', true),
-        supabase.from('workflow_templates').update({ is_active: true }).neq('is_active', true),
-      ]);
+      // All templates are now in workflow_templates (content_templates deleted)
+      await supabase.from('workflow_templates').update({ is_active: true }).neq('is_active', true);
 
       mutationsLogger.info('All templates enabled', { requestId });
       toast.success("All templates enabled");
@@ -253,16 +203,14 @@ export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
   }, [queryClient]);
 
   /**
-   * Disable all templates and workflows
+   * Disable all templates (workflow only - content_templates deleted)
    */
   const handleDisableAll = useCallback(async () => {
     if (!confirm("Are you sure you want to disable all templates?")) return;
 
     try {
-      await Promise.all([
-        supabase.from('content_templates').update({ is_active: false }).eq('is_active', true),
-        supabase.from('workflow_templates').update({ is_active: false }).eq('is_active', true),
-      ]);
+      // All templates are now in workflow_templates (content_templates deleted)
+      await supabase.from('workflow_templates').update({ is_active: false }).eq('is_active', true);
 
       toast.success("All templates disabled");
       queryClient.invalidateQueries({ queryKey: ['all-templates-admin'] });

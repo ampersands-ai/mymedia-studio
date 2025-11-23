@@ -29,15 +29,13 @@ export function useWorkflowEditor({
     const initializeDialog = async () => {
       if (!open) return;
 
-      // Fetch existing categories from both tables
-      const [workflowRes, contentRes] = await Promise.all([
-        supabase.from('workflow_templates').select('category'),
-        supabase.from('content_templates').select('category')
-      ]);
+      // Fetch existing categories from workflow_templates only (content_templates deleted)
+      const { data: workflowRes } = await supabase
+        .from('workflow_templates')
+        .select('category');
 
       const allCategories = new Set<string>();
-      workflowRes.data?.forEach(t => allCategories.add(t.category));
-      contentRes.data?.forEach(t => allCategories.add(t.category));
+      workflowRes?.forEach(t => allCategories.add(t.category));
 
       setExistingCategories(Array.from(allCategories).sort());
       

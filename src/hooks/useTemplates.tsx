@@ -26,20 +26,15 @@ export interface ContentTemplate {
 
 /**
  * Fetch active content templates
- * Templates reference models from .ts registry via model_record_id
+ * NOTE: content_templates table has been deleted - returning empty array
+ * All templates are now in workflow_templates table
  */
 export const useTemplates = () => {
   return useQuery({
     queryKey: ["templates"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("content_templates")
-        .select("*")
-        .eq("is_active", true)
-        .order("display_order", { ascending: true });
-
-      if (error) throw error;
-      return (data || []) as ContentTemplate[];
+      // content_templates table deleted - return empty array
+      return [] as ContentTemplate[];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
@@ -66,20 +61,12 @@ export interface MergedTemplate extends Partial<ContentTemplate>, Partial<Workfl
   template_type: 'template' | 'workflow';
 }
 
-// Hook to fetch all templates (content templates + workflows)
+// Hook to fetch all templates (workflow templates only - content_templates deleted)
 export const useAllTemplates = () => {
   return useQuery({
     queryKey: ["all-templates"],
     queryFn: async () => {
-      // Fetch both content templates and workflows
-      const { data: contentTemplates, error: contentError } = await supabase
-        .from("content_templates")
-        .select("*")
-        .eq("is_active", true)
-        .order("display_order", { ascending: true });
-
-      if (contentError) throw contentError;
-
+      // Fetch workflow templates only (content_templates table deleted)
       const { data: workflowTemplates, error: workflowsError } = await supabase
         .from("workflow_templates")
         .select("*")
@@ -88,22 +75,13 @@ export const useAllTemplates = () => {
 
       if (workflowsError) throw workflowsError;
 
-      // Merge both types
-      const mergedTemplates = [
-        ...(contentTemplates || []).map(t => ({
-          ...t,
-          template_type: 'template' as const,
-        })),
-        ...(workflowTemplates || []).map(w => ({
-          ...w,
-          template_type: 'workflow' as const,
-          user_input_fields: (w.user_input_fields as any) || [],
-          workflow_steps: (w.workflow_steps as any) || [],
-        })),
-      ] as MergedTemplate[];
-
-      // Sort by display_order
-      mergedTemplates.sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+      // Map to MergedTemplate format
+      const mergedTemplates = (workflowTemplates || []).map(w => ({
+        ...w,
+        template_type: 'workflow' as const,
+        user_input_fields: (w.user_input_fields as any) || [],
+        workflow_steps: (w.workflow_steps as any) || [],
+      })) as MergedTemplate[];
 
       return mergedTemplates;
     },
@@ -117,15 +95,8 @@ export const useAllTemplatesAdmin = () => {
   return useQuery({
     queryKey: ["all-templates-admin"],
     queryFn: async () => {
-      // Fetch ALL content templates (including inactive)
-      const { data: contentTemplates, error: contentError } = await supabase
-        .from("content_templates")
-        .select("*")
-        .order("display_order", { ascending: true });
-
-      if (contentError) throw contentError;
-
       // Fetch ALL workflow templates (including inactive)
+      // content_templates table deleted
       const { data: workflowTemplates, error: workflowsError } = await supabase
         .from("workflow_templates")
         .select("*")
@@ -133,22 +104,13 @@ export const useAllTemplatesAdmin = () => {
 
       if (workflowsError) throw workflowsError;
 
-      // Merge both types
-      const mergedTemplates = [
-        ...(contentTemplates || []).map(t => ({
-          ...t,
-          template_type: 'template' as const,
-        })),
-        ...(workflowTemplates || []).map(w => ({
-          ...w,
-          template_type: 'workflow' as const,
-          user_input_fields: (w.user_input_fields as any) || [],
-          workflow_steps: (w.workflow_steps as any) || [],
-        })),
-      ] as MergedTemplate[];
-
-      // Sort by display_order
-      mergedTemplates.sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+      // Map to MergedTemplate format
+      const mergedTemplates = (workflowTemplates || []).map(w => ({
+        ...w,
+        template_type: 'workflow' as const,
+        user_input_fields: (w.user_input_fields as any) || [],
+        workflow_steps: (w.workflow_steps as any) || [],
+      })) as MergedTemplate[];
 
       return mergedTemplates;
     },

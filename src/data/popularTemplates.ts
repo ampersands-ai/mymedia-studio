@@ -12,17 +12,7 @@ export const POPULAR_TEMPLATE_IDS = [
 ];
 
 export const getPopularTemplates = async (): Promise<ContentTemplate[]> => {
-  const { data, error } = await supabase
-    .from('content_templates')
-    .select('*')
-    .in('id', POPULAR_TEMPLATE_IDS)
-    .eq('is_active', true)
-    .order('display_order', { ascending: true });
-
-  if (error) {
-    console.error('Error fetching popular templates:', error);
-    return [];
-  }
-
-  return (data || []) as ContentTemplate[];
+  // content_templates table deleted - return empty array
+  // Popular templates are now in workflow_templates table
+  return [];
 };

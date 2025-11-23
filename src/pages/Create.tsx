@@ -16,7 +16,7 @@ import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist
 import { SuccessConfetti } from "@/components/onboarding/SuccessConfetti";
 import { CREATE_PAGE_SEO } from "@/constants/seo";
 import { TOAST_IDS } from "@/constants/generation";
-import type { ContentTemplate } from "@/hooks/useTemplates";
+import type { MergedTemplate } from "@/hooks/useTemplates";
 import { clientLogger } from "@/lib/logging/client-logger";
 
 /**
@@ -139,7 +139,7 @@ const Create = () => {
   }, [onboardingFlow.progress, onboardingFlow.updateProgress]);
   
   // Handlers
-  const handleTemplateSelect = (template: ContentTemplate) => {
+  const handleTemplateSelect = (template: MergedTemplate) => {
     setTemplate(template);
     resetGenerationState();
     setDialogOpen(true);

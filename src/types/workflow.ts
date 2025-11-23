@@ -97,7 +97,7 @@ export type UserInputField = z.infer<typeof UserInputFieldSchema>;
 /**
  * Dialog state schemas for admin workflows
  */
-export const ContentTemplateDialogStateSchema = z.object({
+export const DeprecatedTemplateDialogStateSchema = z.object({
   open: z.boolean(),
   template: z.any().nullable(),
 });
@@ -108,5 +108,6 @@ export const WorkflowDialogStateSchema = z.object({
   isNew: z.boolean(),
 });
 
-export type ContentTemplateDialogState = z.infer<typeof ContentTemplateDialogStateSchema>;
+/** @deprecated Content templates removed (ADR 007) */
+export type DeprecatedTemplateDialogState = z.infer<typeof DeprecatedTemplateDialogStateSchema>;
 export type WorkflowDialogState = z.infer<typeof WorkflowDialogStateSchema>;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useOnboarding } from "./useOnboarding";
-import type { ContentTemplate } from "./useTemplates";
+import type { MergedTemplate } from "./useTemplates";
 
 /**
  * Hook to orchestrate onboarding flow for Create page
@@ -9,9 +9,9 @@ import type { ContentTemplate } from "./useTemplates";
  * @param onTemplateSelect - Callback when template is selected
  */
 export const useOnboardingFlow = (
-  selectedTemplate: ContentTemplate | null,
+  selectedTemplate: MergedTemplate | null,
   prompt: string,
-  onTemplateSelect: (template: ContentTemplate, prompt: string) => void
+  onTemplateSelect: (template: MergedTemplate, prompt: string) => void
 ) => {
   const { 
     progress, 
@@ -43,7 +43,7 @@ export const useOnboardingFlow = (
   /**
    * Handle template selection from welcome modal
    */
-  const handleWelcomeSelectTemplate = (template: ContentTemplate, examplePrompt: string) => {
+  const handleWelcomeSelectTemplate = (template: MergedTemplate, examplePrompt: string) => {
     onTemplateSelect(template, examplePrompt);
   };
   

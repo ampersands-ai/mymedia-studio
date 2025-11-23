@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import type { ContentTemplate } from "./useTemplates";
+import type { MergedTemplate } from "./useTemplates";
 
 /**
  * Single generation output structure
@@ -23,7 +23,7 @@ export interface GenerationState {
   startTime: number | null;         // Generation start timestamp
   completeTime: number | null;      // Generation complete timestamp
   pollingId: string | null;         // Currently polling generation ID
-  selectedTemplate: ContentTemplate | null;
+  selectedTemplate: MergedTemplate | null;
   prompt: string;
 }
 
@@ -68,7 +68,7 @@ export const useGenerationState = () => {
   /**
    * Set selected template and optional prompt
    */
-  const setTemplate = useCallback((template: ContentTemplate | null, examplePrompt?: string) => {
+  const setTemplate = useCallback((template: MergedTemplate | null, examplePrompt?: string) => {
     setState(prev => ({
       ...prev,
       selectedTemplate: template,

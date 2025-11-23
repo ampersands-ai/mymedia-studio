@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TemplateCard } from "@/components/TemplateCard";
-import type { ContentTemplate } from "@/hooks/useTemplates";
+import type { MergedTemplate } from "@/hooks/useTemplates";
 
 // Lazy load Carousel components
 const Carousel = lazy(() => import("@/components/ui/carousel").then(m => ({ default: m.Carousel })));
@@ -16,8 +16,8 @@ const CarouselPrevious = lazy(() => import("@/components/ui/carousel").then(m =>
  * Props for TemplateGallery component
  */
 interface TemplateGalleryProps {
-  templatesByCategory: Record<string, ContentTemplate[]> | undefined;
-  onTemplateSelect: (template: ContentTemplate) => void;
+  templatesByCategory: Record<string, MergedTemplate[]> | undefined;
+  onTemplateSelect: (template: MergedTemplate) => void;
   isLoading: boolean;
 }
 

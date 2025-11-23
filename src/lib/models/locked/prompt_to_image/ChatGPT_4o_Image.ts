@@ -129,7 +129,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   // Call KIE.ai API
   try {
-    const response = await fetch(`https://api.klingai.com${MODEL_CONFIG.apiEndpoint}`, {
+    const response = await fetch(`https://api.kie.ai${MODEL_CONFIG.apiEndpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

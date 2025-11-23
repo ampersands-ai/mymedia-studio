@@ -136,7 +136,7 @@ export const TemplateSchema = z.object({
   id: z.string().uuid(),
   preset_parameters: z.record(z.unknown()).optional(),
   enhancement_instruction: z.string().nullable().optional(),
-  ai_models: ModelSchema, // Would be enriched from registry if still used
+  ai_models: ModelSchema, // Client-side enriched field from registry
 });
 
 export const UserSchema = z.object({

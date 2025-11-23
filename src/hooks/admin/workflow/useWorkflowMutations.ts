@@ -17,7 +17,7 @@ interface UseWorkflowMutationsOptions {
 
 /**
  * DEPRECATED: Template mutations disabled
- * content_templates and ai_models tables removed - file-based system now
+ * Legacy database tables removed - now using file-based registry system
  */
 export const useWorkflowMutations = (options: UseWorkflowMutationsOptions) => {
   const queryClient = useQueryClient();

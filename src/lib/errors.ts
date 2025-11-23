@@ -74,13 +74,12 @@ export function handleError(error: unknown, context?: Record<string, unknown>): 
     }
   }
 
-  // Standard Error object - use improved detection
+  // Standard Error object - use explicit error type detection only
   if (error instanceof Error) {
     const msg = error.message;
-    const msgLower = msg.toLowerCase();
-
-    // Check error constructor name first (more reliable than message)
     const errorType = error.constructor.name;
+
+    // Explicit error type detection via constructor name
     if (errorType === 'AuthError' || errorType === 'AuthenticationError') {
       return new AuthenticationError(msg, { ...context, errorType });
     }
@@ -91,29 +90,9 @@ export function handleError(error: unknown, context?: Record<string, unknown>): 
       return new NetworkError(msg, { ...context, errorType });
     }
 
-    // Fallback to message parsing (log warning for debugging)
-    if (msgLower.includes('401') || msgLower.includes('403') || msgLower.includes('unauthorized')) {
-      console.warn('[Error Classification] Using message inference for auth error:', msg.substring(0, 100));
-      return new AuthenticationError(msg, { ...context, inferredFrom: 'message' });
-    }
-    if (msgLower.includes('network') || msgLower.includes('fetch failed')) {
-      console.warn('[Error Classification] Using message inference for network error:', msg.substring(0, 100));
-      return new NetworkError(msg, { ...context, inferredFrom: 'message' });
-    }
-    if (msgLower.includes('invalid') || (msgLower.includes('validation') && !msgLower.includes('auth'))) {
-      console.warn('[Error Classification] Using message inference for validation error:', msg.substring(0, 100));
-      return new ValidationError(msg, { ...context, inferredFrom: 'message' });
-    }
-    if (msgLower.includes('storage') || msgLower.includes('bucket')) {
-      console.warn('[Error Classification] Using message inference for storage error:', msg.substring(0, 100));
-      return new StorageError('ERROR', msg, { ...context, inferredFrom: 'message' });
-    }
-    if (msgLower.includes('generation') || msgLower.includes('timeout')) {
-      console.warn('[Error Classification] Using message inference for generation error:', msg.substring(0, 100));
-      return new GenerationError('ERROR', msg, { ...context, inferredFrom: 'message' });
-    }
-
-    // Unknown error - wrap with full context
+    // Unclassified error - return as generic AppError
+    // Log for monitoring to help identify gaps in error handling
+    console.warn('[Error Classification] Unclassified error type:', errorType, '- returning UNKNOWN_ERROR');
     return new AppError('UNKNOWN_ERROR', msg, 'medium', false, {
       ...context,
       originalError: errorType,

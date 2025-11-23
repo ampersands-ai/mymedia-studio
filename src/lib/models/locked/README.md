@@ -43,11 +43,8 @@ The same model name can appear in multiple groups with different capabilities:
 
 ### Database Constraint
 
-A unique index enforces this at the database level:
-```sql
-CREATE UNIQUE INDEX ai_models_unique_identifier_idx 
-ON ai_models (model_name, ((groups->0)::text), provider);
-```
+Uniqueness is enforced at the registry level through the file-based model system.
+Each model is uniquely identified by its `recordId` and must have a unique combination of `modelName`, `group`, and `provider`.
 
 ## 📁 File Naming Convention
 

@@ -34,8 +34,8 @@ export default function ModelHealthDashboard() {
   const { data: healthData, isLoading } = useQuery({
     queryKey: ["model-health-summary"],
     queryFn: async () => {
-      // Model health monitoring deprecated after ai_models table removal
-      // Return empty array since model metadata now lives in file-based registry
+      // Model health monitoring deprecated - feature has been removed
+      // Model metadata now managed through file-based registry
       return [] as ModelHealthSummary[];
     },
     refetchInterval: 30000,

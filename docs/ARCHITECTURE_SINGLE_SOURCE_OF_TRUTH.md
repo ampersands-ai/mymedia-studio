@@ -19,12 +19,13 @@ Previously, the system had two conflicting sources for model information:
   - Contains `MODEL_CONFIG` and `generate()` function
   - Cannot be edited at runtime
 
-### 2. Database Table (`ai_models`)
-- **Contains**: Metadata copy only (NO execution logic)
-- **Used by**: Some admin tools (ModelAlerts, testing pages, templates)
+### 2. Database Table (REMOVED)
+- **Previously contained**: Metadata copy only (NO execution logic)
+- **Was used by**: Some admin tools (ModelAlerts, testing pages, templates)
 - **Problem**: Edits to database had NO EFFECT on actual generation
+- **Status**: ✅ **REMOVED** - Migration complete
 
-### The Problem
+### The Problem (Historical)
 
 The `/admin/models-db` page allowed editing the database, which gave a **false impression of control**:
 - Admins could edit model metadata in the database
@@ -39,7 +40,8 @@ The `/admin/models-db` page allowed editing the database, which gave a **false i
 **Removed:**
 - `/admin/models-db` page (990 lines) - confusing database-backed admin UI
 - `useAIModelsDB` hooks - database CRUD operations
-- All database queries to `ai_models` table in admin components
+- All database queries for model metadata in admin components
+- Legacy database tables (migration complete)
 
 **Updated Components to Use Registry:**
 1. `AdminDashboard.tsx` - Model counts from registry
@@ -51,10 +53,11 @@ The `/admin/models-db` page allowed editing the database, which gave a **false i
 
 ### How to Read Models Now
 
-**Old Pattern (Database):**
+**Old Pattern (DEPRECATED - Database):**
 ```typescript
+// ❌ NO LONGER WORKS - Table removed
 const { data, error } = await supabase
-  .from("ai_models")
+  .from("model_table")
   .select("id, model_name")
   .order("model_name");
 ```
@@ -147,12 +150,12 @@ For now, the schema editing code remains but has no effect on actual generation.
 
 ## Database Table Status
 
-The `ai_models` database table still exists but is **no longer used** by the application for:
-- Model selection
-- Model metadata
-- Generation execution
+The legacy database tables for model metadata have been **completely removed**:
+- Model selection now uses file-based registry
+- Model metadata stored in TypeScript files
+- Generation execution uses registry lookups
 
-It may be safely dropped or kept for historical purposes.
+All model data is now managed through the file-based registry system.
 
 ## Migration Summary
 
@@ -180,7 +183,7 @@ It may be safely dropped or kept for historical purposes.
 1. **Model Addition**: New models must be added as TypeScript files in `src/lib/models/locked/`
 2. **Model Updates**: Model configuration changes require code changes and deployment
 3. **Dynamic Models**: If truly dynamic models are needed, consider a hybrid approach with clear separation
-4. **Database Cleanup**: The `ai_models` table can be dropped after verifying no other code depends on it
+4. **Version Control**: All model metadata is now tracked in git, providing full audit history
 
 ## Related Documentation
 

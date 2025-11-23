@@ -19,7 +19,7 @@ import {
  * This edge function uses model definitions EXCLUSIVELY from .ts files.
  *
  * ⚠️ DATABASE DEPENDENCY ELIMINATED ⚠️
- * No ai_models or content_templates table lookups.
+ * No database table lookups for model metadata.
  * Model data comes ONLY from .ts registry.
  *
  * HOW IT WORKS:

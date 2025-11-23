@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 /**
  * DEPRECATED: Model health widget disabled
- * Depends on ai_models table which has been removed
+ * Feature has been removed as part of registry migration
  */
 export const ModelHealthWidget = () => {
   return (
@@ -16,7 +16,7 @@ export const ModelHealthWidget = () => {
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Model health monitoring is currently unavailable. The ai_models table has been migrated to a file-based system.
+            Model health monitoring is currently unavailable. Model metadata has been migrated to a file-based registry system.
           </AlertDescription>
         </Alert>
       </CardContent>

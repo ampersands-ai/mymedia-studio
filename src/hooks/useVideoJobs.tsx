@@ -238,8 +238,9 @@ export function useVideoJobs() {
           return data;
         } catch (err: any) {
           const errorMsg = err?.message || String(err);
+          const errorStatus = err?.status || err?.context?.status;
           // Retry once on "Failed to send" or 503 errors
-          if (attempt === 1 && (errorMsg.includes('Failed to send a request to the Edge Function') || errorMsg.includes('503'))) {
+          if (attempt === 1 && (errorMsg.includes('Failed to send a request to the Edge Function') || errorStatus === 503)) {
             logger.debug('Retrying after transient error', {
               component: 'useVideoJobs',
               operation: 'approveScript',
@@ -342,6 +343,7 @@ export function useVideoJobs() {
           return data;
         } catch (err: any) {
           const errorMsg = err?.message || String(err);
+          const errorStatus = err?.status || err?.context?.status;
           logger.error('Attempt failed', err as Error, {
             component: 'useVideoJobs',
             operation: 'approveVoiceover',
@@ -349,9 +351,9 @@ export function useVideoJobs() {
             attempt,
             errorMsg
           });
-          
+
           // Retry once on "Failed to send" or 503 errors
-          if (attempt === 1 && (errorMsg.includes('Failed to send a request to the Edge Function') || errorMsg.includes('503'))) {
+          if (attempt === 1 && (errorMsg.includes('Failed to send a request to the Edge Function') || errorStatus === 503)) {
             logger.debug('Retrying after transient error', {
               component: 'useVideoJobs',
               operation: 'approveVoiceover',

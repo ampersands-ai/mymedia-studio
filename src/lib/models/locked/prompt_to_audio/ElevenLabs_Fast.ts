@@ -106,13 +106,16 @@ export function validate(inputs: Record<string, any>): { valid: boolean; error?:
 
 export function preparePayload(inputs: Record<string, any>): Record<string, any> {
   return {
-    text: inputs.text,
-    voice: inputs.voice || "Rachel",
-    stability: inputs.stability ?? 0.5,
-    similarity_boost: inputs.similarity_boost ?? 0.75,
-    style: inputs.style ?? 0,
-    speed: inputs.speed ?? 1,
-    timestamps: inputs.timestamps ?? false
+    modelId: MODEL_CONFIG.modelId,
+    input: {
+      text: inputs.text,
+      voice: inputs.voice || "Rachel",
+      stability: inputs.stability ?? 0.5,
+      similarity_boost: inputs.similarity_boost ?? 0.75,
+      style: inputs.style ?? 0,
+      speed: inputs.speed ?? 1,
+      timestamps: inputs.timestamps ?? false
+    }
   };
 }
 
@@ -144,7 +147,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   if (genError || !generation) throw new Error(`Failed to create generation: ${genError?.message}`);
 
-  const payload = { task: MODEL_CONFIG.modelId.split('/')[1], input: preparePayload({ ...modelParameters, text: prompt }) };
+  const payload = preparePayload({ ...modelParameters, text: prompt });
 
   try {
     const response = await fetch(`https://api.kie.ai${MODEL_CONFIG.apiEndpoint}`, {

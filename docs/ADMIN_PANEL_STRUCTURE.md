@@ -23,7 +23,6 @@ The admin panel provides comprehensive management tools for ARTIFIO.AI's AI mode
 - Generation stats (today, all-time)
 - API quota monitoring
 - Community settings toggle
-- Model health widget
 
 #### Analytics.tsx
 **Route**: `/admin/analytics`
@@ -82,40 +81,6 @@ The admin panel provides comprehensive management tools for ARTIFIO.AI's AI mode
 3. Run script locally → Updates TypeScript model files
 4. Commit to git → Changes version controlled
 
-#### ModelHealthDashboard.tsx
-**Route**: `/admin/model-health`
-**Purpose**: Monitor health and performance of all models
-**Features**:
-- Grid/list view of all models with health status
-- Filter by provider, content type, status
-- Individual model testing (navigates to `/admin/model-health/test/:recordId`)
-- Comprehensive testing (navigates to `/admin/model-health/comprehensive-test`)
-- Bulk testing controls
-- Performance metrics
-- Test history
-
-#### ModelHealthTestPage.tsx
-**Route**: `/admin/model-health/test/:recordId`
-**Purpose**: Test individual model with execution flow tracking
-**Features**:
-- Execute model with custom parameters
-- Real-time flow tracking (API calls, responses)
-- Parameter inspection
-- Test result visualization
-- Media preview for outputs
-
-#### ComprehensiveModelTestPage.tsx
-**Route**: `/admin/model-health/comprehensive-test`
-**Purpose**: Advanced model testing with schema editing
-**Features**:
-- All features of ModelHealthTestPage
-- Schema editor for modifying input parameters
-- Documentation generation
-- Parameter metadata inspection
-- Bulk testing capabilities
-
-**🔧 NOTE**: Both testing pages serve different purposes and are actively used from ModelHealthDashboard.
-
 #### TestModelGroupPage.tsx
 **Route**: `/admin/test-model-group`
 **Sidebar**: ✅ Linked
@@ -124,16 +89,6 @@ The admin panel provides comprehensive management tools for ARTIFIO.AI's AI mode
 - Test all models in a content type group
 - Batch execution
 - Group performance metrics
-
-#### ModelAlerts.tsx
-**Route**: `/admin/model-alerts`
-**Purpose**: Configure email alerts for model failures
-**Features**:
-- Set failure thresholds per model
-- Email notification configuration
-- Alert history
-
-**🔧 RECOMMENDATION**: Integrate as tab in ModelHealthDashboard
 
 ---
 
@@ -339,27 +294,6 @@ The admin panel provides comprehensive management tools for ARTIFIO.AI's AI mode
 
 ## Admin Components Structure
 
-### Model Health Components (25 components)
-**Location**: `src/components/admin/model-health/`
-**Purpose**: Comprehensive model testing and monitoring UI
-
-**✅ WELL ORGANIZED**: Logically grouped and clearly named
-
-**Components**:
-- `BulkTestControls.tsx` - Bulk testing interface
-- `ExecutionFlowVisualizer.tsx` - API execution visualization
-- `FlowStepTooltip.tsx`, `FlowTimeline.tsx`, `FlowTrackingDialog.tsx` - Flow tracking UI
-- `InspectionReviewCard.tsx`, `InspectionStepsDisplay.tsx` - Test inspection
-- `MediaPreview.tsx` - Preview generated outputs
-- `ModelAlertSettings.tsx` - Alert configuration
-- `ModelHealthFilters.tsx`, `ModelHealthHeader.tsx`, `ModelHealthWidget.tsx` - Dashboard UI
-- `ModelTestCard.tsx`, `ModelTestGrid.tsx` - Model display cards
-- `ParameterMetadataCard.tsx`, `ParametersInspector.tsx` - Parameter inspection
-- `PerformanceCharts.tsx` - Performance visualization
-- `ScheduleDialog.tsx`, `SchedulesList.tsx` - Test scheduling
-- `TestConfigDialog.tsx`, `TestFlowTimeline.tsx` - Test configuration
-- `TestHistoryDialog.tsx`, `TestHistoryTable.tsx`, `TestResultsCard.tsx`, `TestStatusHeader.tsx` - Test history
-
 ### Webhook Components (13 components)
 **Location**: `src/components/admin/webhook/`
 **Purpose**: Webhook monitoring and analytics
@@ -454,7 +388,6 @@ The admin panel provides comprehensive management tools for ARTIFIO.AI's AI mode
 ### ✅ Well-Structured Areas
 
 - **Webhook monitoring** - 13 components, excellently organized
-- **Model health** - 25 components, logical grouping
 - **AI Models Manager** - Registry-based architecture is elegant
 
 ---
@@ -474,20 +407,18 @@ Current sidebar order:
 8. All Generations
 9. Token Disputes
 10. Threshold Breach
-11. Model Health
-12. Test Model Group
-13. Webhook Monitor
-14. User Logs
-15. Email Settings
-16. Video Jobs
-17. Landing Pages
-18. Categories
-19. **Template Analytics**
-20. Cinematic Prompts
+11. Test Model Group
+12. Webhook Monitor
+13. User Logs
+14. Email Settings
+15. Video Jobs
+16. Landing Pages
+17. Categories
+18. **Template Analytics**
+19. Cinematic Prompts
 
 **Missing from sidebar**:
 - Advanced Analytics (`/admin/advanced-analytics`)
-- Model Alerts (`/admin/model-alerts`)
 - API Health (`/admin/api-health`)
 - Email History (`/admin/email-history`)
 
@@ -513,8 +444,7 @@ Admin Panel
 │  └─ Token Disputes
 │
 ├─ Monitoring
-│  ├─ Model Health
-│  ├─ Model Alerts
+│  ├─ Test Model Group
 │  ├─ API Health
 │  ├─ Webhook Monitor
 │  └─ Video Jobs
@@ -536,7 +466,6 @@ Admin Panel
 ### ✅ Connected and Functional
 - AdminDashboard
 - AIModelsManager (registry-based)
-- ModelHealthDashboard
 - UsersManager
 - WebhookMonitor
 
@@ -581,13 +510,13 @@ Admin Panel
 
 ## Summary Statistics
 
-- **26 Active Admin Pages** (3 removed: ErrorDashboard, EnhancedErrorDashboard, EnhancedErrorDashboard.disabled)
-- **67 Admin Components** across 6 categories
-- **20 Sidebar Links** (4 pages accessible only by direct route)
+- **23 Active Admin Pages** (6 removed: ErrorDashboard, EnhancedErrorDashboard, EnhancedErrorDashboard.disabled, ModelHealthDashboard, ModelHealthTestPage, ComprehensiveModelTestPage)
+- **42 Admin Components** across 5 categories (25 Model Health components removed)
+- **19 Sidebar Links** (4 pages accessible only by direct route)
 - **71 AI Models** managed via registry
 - **5 Main Feature Areas**: Dashboard, Models, Templates, Users, Monitoring
 
 **Potential Optimizations**:
-- **30% page reduction possible** (26 → ~18 pages) via consolidation
+- **30% page reduction possible** (23 → ~16 pages) via consolidation
 - **Improved navigation** with hierarchical sidebar
 - **Better discoverability** by exposing hidden pages

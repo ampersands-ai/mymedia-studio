@@ -127,17 +127,6 @@ export const ModelSchema = z.object({
   is_async: z.boolean().optional(),
 });
 
-/**
- * DEPRECATED: content_templates table removed (ADR 007)
- * Templates moved to workflow_templates table with model metadata from registry
- * This schema kept for backward compatibility in edge functions
- */
-export const TemplateSchema = z.object({
-  id: z.string().uuid(),
-  preset_parameters: z.record(z.unknown()).optional(),
-  enhancement_instruction: z.string().nullable().optional(),
-  ai_models: ModelSchema, // Client-side enriched field from registry
-});
 
 export const UserSchema = z.object({
   id: z.string().uuid(),
@@ -169,6 +158,5 @@ export type GenerateCaptionRequest = z.infer<typeof GenerateCaptionRequestSchema
 export type CaptionResponse = z.infer<typeof CaptionResponseSchema>;
 export type GenerateContentRequest = z.infer<typeof GenerateContentRequestSchema>;
 export type Model = z.infer<typeof ModelSchema>;
-export type Template = z.infer<typeof TemplateSchema>;
 export type User = z.infer<typeof UserSchema>;
 export type GenerationRecord = z.infer<typeof GenerationRecordSchema>;

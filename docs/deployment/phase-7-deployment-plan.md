@@ -24,7 +24,6 @@ This phase covers deploying the new model execution system to production and set
 - ✅ Keys properly scoped (IMAGE_TO_VIDEO vs PROMPT_TO_VIDEO)
 
 ### 3. Database State
-- ✅ Legacy model metadata tables removed (migration to registry complete)
 - ✅ `generations` table schema supports new flow
 - ✅ RLS policies allow model registry access
 - ✅ No breaking changes to existing records

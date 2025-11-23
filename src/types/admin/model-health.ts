@@ -66,46 +66,6 @@ export interface ModelTestResult {
   step_metadata?: StepMetadata;
 }
 
-export interface ModelTestConfig {
-  id: string;
-  model_record_id: string;
-  prompt_template: string;
-  custom_parameters: ModelParameters;
-  num_outputs: number;
-  deduct_credits: boolean;
-  test_user_id: string | null;
-  timeout_seconds: number;
-  retry_on_failure: boolean;
-  max_retries: number;
-  save_outputs: boolean;
-  expected_format: 'image' | 'video' | 'audio' | 'text' | null;
-  max_latency_threshold: number;
-  validate_file_accessible: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ModelHealthSummary {
-  record_id: string;
-  model_id: string;
-  model_name: string;
-  provider: string;
-  content_type: string;
-  is_active: boolean;
-  groups: string[] | null;
-  total_tests_24h: number;
-  successful_tests_24h: number;
-  failed_tests_24h: number;
-  success_rate_percent_24h: number | null;
-  avg_latency_ms: number | null;
-  max_latency_ms: number | null;
-  min_latency_ms: number | null;
-  last_test_at: string | null;
-  recent_error_codes: string[] | null;
-  deduct_credits: boolean | null;
-  timeout_seconds: number | null;
-}
-
 export interface ModelHealthFilter {
   provider?: string;
   contentType?: string;
@@ -127,6 +87,31 @@ export interface TestExecutionProgress {
   error?: string;
 }
 
+/**
+ * Simplified model health summary for registry-based models
+ * Used by model testing UI components
+ */
+export interface ModelHealthSummary {
+  record_id: string;
+  model_id: string;
+  model_name: string;
+  provider: string;
+  content_type: string;
+  is_active: boolean;
+  groups: string[] | null;
+  total_tests_24h: number;
+  successful_tests_24h: number;
+  failed_tests_24h: number;
+  success_rate_percent_24h: number | null;
+  avg_latency_ms: number | null;
+  max_latency_ms: number | null;
+  min_latency_ms: number | null;
+  last_test_at: string | null;
+  recent_error_codes: string[] | null;
+  deduct_credits: boolean | null;
+  timeout_seconds: number | null;
+}
+
 export interface SystemHealthMetrics {
   totalModels: number;
   activeModels: number;
@@ -135,3 +120,4 @@ export interface SystemHealthMetrics {
   avgLatency: number;
   failedModels: number;
 }
+

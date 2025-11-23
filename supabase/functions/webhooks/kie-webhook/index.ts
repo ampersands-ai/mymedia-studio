@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
     let items: any[] = [];
     let normalizedUrls: string[] = [];
     try {
-      normalizedUrls = normalizeResultUrls(payload, resultJson, generation.type, generation.ai_models?.id);
+      normalizedUrls = normalizeResultUrls(payload, resultJson, generation.type, generation.modelMetadata?.id);
       
       if (normalizedUrls.length > 0) {
         items = mapUrlsToItems(normalizedUrls, generation.type);
@@ -267,7 +267,7 @@ Deno.serve(async (req) => {
     }
 
     // === HANDLE SUCCESS ===
-    const hasMjResults = hasMidjourneyResults(payload, generation.ai_models?.id);
+    const hasMjResults = hasMidjourneyResults(payload, generation.modelMetadata?.id);
     
     if (isSuccess && (resultJson || payload.data?.info || hasMjResults || video_url || (Array.isArray(items) && items.length > 0))) {
       // Extract result URLs - reuse normalized URLs if available
@@ -277,7 +277,7 @@ Deno.serve(async (req) => {
       if (resultUrls.length === 0) {
         if (video_url) {
           resultUrls = [video_url];
-        } else if (isMidjourneyModel(generation.ai_models?.id) && payload.data?.resultUrls) {
+        } else if (isMidjourneyModel(generation.modelMetadata?.id) && payload.data?.resultUrls) {
           resultUrls = extractMidjourneyUrls(payload);
         } else if (resultJson) {
           const result = JSON.parse(resultJson);

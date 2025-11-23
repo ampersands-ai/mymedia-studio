@@ -79,7 +79,7 @@ export const MergedTemplateSchema = z.object({
   is_custom_model: z.boolean().optional(),
   // Client-side enriched model metadata from registry (NOT from database)
   // Populated by frontend hooks using model_record_id from workflow steps
-  ai_models: z.object({
+  modelMetadata: z.object({
     id: z.string(),
     name: z.string(),
     base_token_cost: z.number(),
@@ -97,16 +97,10 @@ export type UserInputField = z.infer<typeof UserInputFieldSchema>;
 /**
  * Dialog state schemas for admin workflows
  */
-export const ContentTemplateDialogStateSchema = z.object({
-  open: z.boolean(),
-  template: z.any().nullable(),
-});
-
 export const WorkflowDialogStateSchema = z.object({
   open: z.boolean(),
   workflow: z.any().nullable(),
   isNew: z.boolean(),
 });
 
-export type ContentTemplateDialogState = z.infer<typeof ContentTemplateDialogStateSchema>;
 export type WorkflowDialogState = z.infer<typeof WorkflowDialogStateSchema>;

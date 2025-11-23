@@ -2,46 +2,32 @@
 
 ## Decision: TypeScript Registry as Single Source of Truth
 
-As of this migration, the platform uses **TypeScript model files in `src/lib/models/locked/`** as the single source of truth for all AI model metadata and execution logic.
+The platform uses **TypeScript model files in `src/lib/models/locked/`** as the single source of truth for all AI model metadata and execution logic.
 
-## Before: Confusing Dual-Source Architecture
+## Architecture: Registry-Only System
 
-Previously, the system had two conflicting sources for model information:
+The system has ONE source for model information:
 
-### 1. TypeScript Registry Files (`src/lib/models/locked/`)
-- **Contains**: Execution logic + metadata
-- **Used by**: Main application for actual AI generation
+### TypeScript Registry Files (`src/lib/models/locked/`)
+- **Contains**: Complete execution logic + metadata
+- **Used by**: All parts of the application
 - **Examples**:
   - `prompt_to_video/Google_Veo_3_1_HQ.ts`
   - `prompt_to_image/runware_flux_1_1_pro.ts`
 - **Characteristics**:
   - Static TypeScript files
   - Contains `MODEL_CONFIG` and `generate()` function
-  - Cannot be edited at runtime
+  - Version controlled in Git
+  - Type-safe at compile time
 
-### 2. Database Table (REMOVED)
-- **Previously contained**: Metadata copy only (NO execution logic)
-- **Was used by**: Some admin tools (ModelAlerts, testing pages, templates)
-- **Problem**: Edits to database had NO EFFECT on actual generation
-- **Status**: ✅ **REMOVED** - Migration complete
+## Registry Architecture
 
-### The Problem (Historical)
-
-The `/admin/models-db` page allowed editing the database, which gave a **false impression of control**:
-- Admins could edit model metadata in the database
-- But the main app IGNORED those changes
-- Changes didn't affect actual AI generation
-- Created confusion and inconsistency
-
-## After: Single Source of Truth
-
-### What Changed
+### What Was Removed
 
 **Removed:**
-- `/admin/models-db` page (990 lines) - confusing database-backed admin UI
-- `useAIModelsDB` hooks - database CRUD operations
-- All database queries for model metadata in admin components
-- Legacy database tables (migration complete)
+- Database-backed model management
+- Dual-source confusion
+- Runtime model editing capabilities
 
 **Updated Components to Use Registry:**
 1. `AdminDashboard.tsx` - Model counts from registry
@@ -51,18 +37,9 @@ The `/admin/models-db` page allowed editing the database, which gave a **false i
 5. `TemplateFormDialog.tsx` - Model selection from registry
 6. `WorkflowTestDialog.tsx` - Model details from registry
 
-### How to Read Models Now
+### How to Read Models
 
-**Old Pattern (DEPRECATED - Database):**
-```typescript
-// ❌ NO LONGER WORKS - Table removed
-const { data, error } = await supabase
-  .from("model_table")
-  .select("id, model_name")
-  .order("model_name");
-```
-
-**New Pattern (Registry):**
+**Registry Pattern:**
 ```typescript
 import { getAllModels } from "@/lib/models/registry";
 
@@ -132,30 +109,18 @@ const model = getAllModels()
   .find(m => m.MODEL_CONFIG.modelId === 'runware:flux-1.1-pro');
 ```
 
-## What About Schema Editing?
+## Model Editing
 
-**Note for ComprehensiveModelTestPage:**
+All model changes must be made by:
+1. Editing the TypeScript file in `src/lib/models/locked/`
+2. Committing changes to version control
+3. Deploying the updated code
 
-The schema editing functionality in `ComprehensiveModelTestPage.tsx` still attempts to update the database. This functionality is **currently ineffective** because:
-- The registry reads from static TypeScript files
-- Database edits don't affect the registry
-- The main app ignores database changes
-
-**Options for future:**
-1. Remove schema editing UI entirely
-2. Build a system to generate/update TypeScript files programmatically
-3. Accept that schema editing only works for truly "unlocked" models (if any exist)
-
-For now, the schema editing code remains but has no effect on actual generation.
-
-## Database Table Status
-
-The legacy database tables for model metadata have been **completely removed**:
-- Model selection now uses file-based registry
-- Model metadata stored in TypeScript files
-- Generation execution uses registry lookups
-
-All model data is now managed through the file-based registry system.
+There is no runtime editing capability by design. This ensures:
+- Type safety
+- Version control
+- Predictable behavior
+- No configuration drift
 
 ## Migration Summary
 
@@ -183,7 +148,7 @@ All model data is now managed through the file-based registry system.
 1. **Model Addition**: New models must be added as TypeScript files in `src/lib/models/locked/`
 2. **Model Updates**: Model configuration changes require code changes and deployment
 3. **Dynamic Models**: If truly dynamic models are needed, consider a hybrid approach with clear separation
-4. **Version Control**: All model metadata is now tracked in git, providing full audit history
+4. **Database Cleanup**: The `ai_models` table can be dropped after verifying no other code depends on it
 
 ## Related Documentation
 

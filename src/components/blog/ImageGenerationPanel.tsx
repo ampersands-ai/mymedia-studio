@@ -100,11 +100,11 @@ export const ImageGenerationPanel = ({
       const generationId = await modelModule.execute({
         userId: user.id,
         prompt: customPrompt,
-        customParameters: {
-          // Add any model-specific parameters here
+        modelParameters: {
           width: 1024,
           height: 1024,
         },
+        startPolling: () => {},
       });
 
       // Poll for completion

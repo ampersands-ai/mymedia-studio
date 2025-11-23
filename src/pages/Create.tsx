@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useTemplatesByCategory } from "@/hooks/useTemplates";
+import { useTemplatePreviewsByCategory } from "@/hooks/useEnrichedTemplates";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { useGenerationState } from "@/hooks/useGenerationState";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
@@ -16,7 +16,7 @@ import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist
 import { SuccessConfetti } from "@/components/onboarding/SuccessConfetti";
 import { CREATE_PAGE_SEO } from "@/constants/seo";
 import { TOAST_IDS } from "@/constants/generation";
-import type { ContentTemplate } from "@/hooks/useTemplates";
+import type { TemplatePreview } from "@/types/templates";
 import { clientLogger } from "@/lib/logging/client-logger";
 
 /**
@@ -27,7 +27,7 @@ const Create = () => {
   const navigate = useNavigate();
   
   // Data fetching
-  const { templatesByCategory, isLoading } = useTemplatesByCategory();
+  const { templatesByCategory, isLoading } = useTemplatePreviewsByCategory();
   const { data: userTokenData } = useUserTokens();
   const userTokens = userTokenData?.tokens_remaining || 0;
   
@@ -139,7 +139,7 @@ const Create = () => {
   }, [onboardingFlow.progress, onboardingFlow.updateProgress]);
   
   // Handlers
-  const handleTemplateSelect = (template: ContentTemplate) => {
+  const handleTemplateSelect = (template: TemplatePreview) => {
     setTemplate(template);
     resetGenerationState();
     setDialogOpen(true);
@@ -211,7 +211,6 @@ const Create = () => {
             onboardingFlow.setShowWelcome(false);
             onboardingFlow.dismiss();
           }}
-          onSelectTemplate={onboardingFlow.handleWelcomeSelectTemplate}
         />
         
         {onboardingFlow.progress && 

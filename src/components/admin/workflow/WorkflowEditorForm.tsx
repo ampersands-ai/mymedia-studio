@@ -3,7 +3,7 @@ import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useWorkflowEditor } from "@/hooks/admin/useWorkflowEditor";
+import { useState } from "react";
 import { useWorkflowImageUpload } from "@/hooks/admin/useWorkflowImageUpload";
 import { WorkflowBasicInfo } from "./WorkflowBasicInfo";
 import { WorkflowBeforeAfterImages } from "./WorkflowBeforeAfterImages";
@@ -34,15 +34,19 @@ export function WorkflowEditorForm({
 }: WorkflowEditorFormProps) {
   const queryClient = useQueryClient();
 
-  // State management hooks
-  const {
-    localWorkflow,
-    setLocalWorkflow,
-    originalWorkflowId,
-    categoryState,
-    stepOperations,
-    fieldOperations,
-  } = useWorkflowEditor({ workflow, open: true, isNew, models });
+  // State management
+  const [localWorkflow, setLocalWorkflow] = useState<Partial<WorkflowTemplate>>(
+    workflow || {
+      id: '',
+      name: '',
+      description: '',
+      category: '',
+      workflow_steps: [],
+      user_input_fields: [],
+      is_active: true,
+    }
+  );
+  const [originalWorkflowId] = useState(workflow?.id || null);
 
   const {
     beforeImage,
@@ -181,9 +185,9 @@ export function WorkflowEditorForm({
         onWorkflowChange={(updates) => setLocalWorkflow({ ...localWorkflow, ...updates })}
         isNew={isNew}
         originalWorkflowId={originalWorkflowId}
-        existingCategories={categoryState.existingCategories}
-        showCustomCategory={categoryState.showCustomCategory}
-        onToggleCustomCategory={categoryState.setShowCustomCategory}
+        existingCategories={[]}
+        showCustomCategory={false}
+        onToggleCustomCategory={() => {}}
       />
 
       <WorkflowBeforeAfterImages
@@ -195,18 +199,65 @@ export function WorkflowEditorForm({
 
       <WorkflowUserFields
         userInputFields={localWorkflow.user_input_fields || []}
-        onAddField={fieldOperations.addUserField}
-        onUpdateField={fieldOperations.updateUserField}
-        onDeleteField={fieldOperations.deleteUserField}
+        onAddField={() => {
+          const newField = {
+            name: '',
+            label: '',
+            type: 'text',
+            required: false,
+            placeholder: ''
+          };
+          setLocalWorkflow({
+            ...localWorkflow,
+            user_input_fields: [...(localWorkflow.user_input_fields || []), newField]
+          });
+        }}
+        onUpdateField={(index, updates) => {
+          const fields = [...(localWorkflow.user_input_fields || [])];
+          fields[index] = { ...fields[index], ...updates };
+          setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
+        }}
+        onDeleteField={(index) => {
+          const fields = [...(localWorkflow.user_input_fields || [])];
+          fields.splice(index, 1);
+          setLocalWorkflow({ ...localWorkflow, user_input_fields: fields });
+        }}
       />
 
       <WorkflowStepsManager
         workflowSteps={localWorkflow.workflow_steps || []}
         userInputFields={localWorkflow.user_input_fields || []}
         models={models}
-        onAddStep={stepOperations.addStep}
-        onUpdateStep={stepOperations.updateStep}
-        onDeleteStep={stepOperations.deleteStep}
+        onAddStep={() => {
+          const newStep = {
+            step_number: (localWorkflow.workflow_steps || []).length + 1,
+            step_name: '',
+            model_id: '',
+            model_record_id: '',
+            prompt_template: '',
+            parameters: {},
+            input_mappings: {},
+            output_key: ''
+          };
+          setLocalWorkflow({
+            ...localWorkflow,
+            workflow_steps: [...(localWorkflow.workflow_steps || []), newStep]
+          });
+        }}
+        onUpdateStep={(index, updates) => {
+          const steps = [...(localWorkflow.workflow_steps || [])];
+          steps[index] = { ...steps[index], ...updates };
+          setLocalWorkflow({ ...localWorkflow, workflow_steps: steps });
+        }}
+        onDeleteStep={(index) => {
+          const steps = [...(localWorkflow.workflow_steps || [])];
+          steps.splice(index, 1);
+          // Renumber subsequent steps
+          steps.slice(index).forEach((step, i) => {
+            step.step_number = index + i + 1;
+          });
+          setLocalWorkflow({ ...localWorkflow, workflow_steps: steps });
+        }}
       />
 
       <div className="flex justify-end gap-2 pt-4">

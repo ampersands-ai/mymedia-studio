@@ -70,3 +70,59 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 export function isNonEmptyArray<T>(arr: T[] | null | undefined): arr is [T, ...T[]] {
   return Array.isArray(arr) && arr.length > 0;
 }
+
+/**
+ * Type guard: Check if generation has complete metadata
+ */
+export interface GenerationWithMetadata {
+  id: string;
+  modelMetadata: {
+    id: string;
+    model_name: string;
+    provider: string;
+    content_type: string;
+  };
+}
+
+export function hasGenerationMetadata(generation: unknown): generation is GenerationWithMetadata {
+  if (!isRecord(generation)) return false;
+  
+  return (
+    typeof generation.id === 'string' &&
+    isRecord(generation.modelMetadata) &&
+    typeof generation.modelMetadata.id === 'string' &&
+    typeof generation.modelMetadata.model_name === 'string' &&
+    typeof generation.modelMetadata.provider === 'string' &&
+    typeof generation.modelMetadata.content_type === 'string'
+  );
+}
+
+/**
+ * Type guard: Check if cost multipliers are valid
+ */
+export interface ModelConfigWithMultipliers {
+  costMultipliers: Record<string, number>;
+}
+
+export function hasValidCostMultipliers(config: unknown): config is ModelConfigWithMultipliers {
+  if (!isRecord(config)) return false;
+  
+  return (
+    isRecord(config.costMultipliers) &&
+    Object.values(config.costMultipliers).every(v => typeof v === 'number')
+  );
+}
+
+/**
+ * Type guard: Check if value is a valid number (not NaN or Infinity)
+ */
+export function isValidNumber(value: unknown): value is number {
+  return typeof value === 'number' && !isNaN(value) && isFinite(value);
+}
+
+/**
+ * Type guard: Check if value is a non-empty string
+ */
+export function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0;
+}

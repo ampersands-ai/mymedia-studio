@@ -4,10 +4,6 @@ import type { WorkflowTemplate } from '@/hooks/useWorkflowTemplates';
  * Dialog state management for template and workflow editors
  */
 export interface TemplatesDialogState {
-  contentTemplateDialog: {
-    open: boolean;
-    template: any | null;
-  };
   /** Workflow template dialog state */
   workflowDialog: {
     open: boolean;

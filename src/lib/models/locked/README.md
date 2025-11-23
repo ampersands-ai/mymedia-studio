@@ -41,14 +41,6 @@ The same model name can appear in multiple groups with different capabilities:
 - `Google Veo 3.1 HQ | image_to_video | kie_ai` → Different from `Google Veo 3.1 HQ | prompt_to_video | kie_ai`
 - `Remove Background | image_editing | runware` → Different from `Remove Background | image_editing | kie_ai`
 
-### Database Constraint
-
-A unique index enforces this at the database level:
-```sql
-CREATE UNIQUE INDEX ai_models_unique_identifier_idx 
-ON ai_models (model_name, ((groups->0)::text), provider);
-```
-
 ## 📁 File Naming Convention
 
 Files are named using the pattern: `{Model_Name}_{group}_{provider}.ts` when disambiguation is needed:

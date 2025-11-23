@@ -17,10 +17,7 @@ import {
  * .TS REGISTRY ARCHITECTURE (Source of Truth)
  * --------------------------------------------
  * This edge function uses model definitions EXCLUSIVELY from .ts files.
- *
- * ⚠️ DATABASE DEPENDENCY ELIMINATED ⚠️
- * No ai_models or content_templates table lookups.
- * Model data comes ONLY from .ts registry.
+ * Model data comes ONLY from file-based registry.
  *
  * HOW IT WORKS:
  * 1. Client loads model from .ts registry using getModel(recordId)

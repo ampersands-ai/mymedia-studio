@@ -9,6 +9,7 @@ export interface ExecuteGenerationParams {
   prompt: string;
   modelParameters: Record<string, any>;
   uploadedImages: File[];
+  uploadedImageUrls?: string[];
   userId: string;
   uploadImagesToStorage: (userId: string) => Promise<string[]>;
   generate: (params: any) => Promise<any>;

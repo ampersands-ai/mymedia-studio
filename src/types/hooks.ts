@@ -1,7 +1,6 @@
 import type { UseMutationResult } from '@tanstack/react-query';
 import type { 
   Generation, 
-  Model, 
   WorkflowTemplate, 
   VideoJob, 
   WorkflowExecution,
@@ -28,7 +27,7 @@ export interface GenerationParams {
 }
 
 export interface UseModelsReturn {
-  models: Model[];
+  models: any[];
   isLoading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;

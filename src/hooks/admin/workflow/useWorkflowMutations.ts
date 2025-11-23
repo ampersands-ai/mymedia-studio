@@ -12,7 +12,6 @@ import {
 const mutationsLogger = logger.child({ component: 'useWorkflowMutations' });
 
 interface UseWorkflowMutationsOptions {
-  onEditContentTemplate: (state: ContentTemplateDialogState) => void;
   onEditWorkflow: (state: WorkflowDialogState) => void;
 }
 

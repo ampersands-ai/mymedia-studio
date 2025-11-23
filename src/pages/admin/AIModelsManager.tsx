@@ -15,6 +15,22 @@ import {
   Plus, Edit, Power, PowerOff, ArrowUpDown, Copy, Filter, X,
   FileText, Download, Lock, Unlock, AlertCircle, RefreshCw
 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { getAllModels, type ModelModule } from "@/lib/models/registry";
+import { 
+  generateNewModelScript, 
+  generateLockToggleScript, 
+  generateModelUpdateScript, 
+  downloadScript,
+  getLockStatuses,
+  type ModelUpdatePayload
+} from "@/lib/admin/modelFileEditor";
+import type { ModelConfiguration } from "@/types/schema";
 
 const CREATION_GROUPS = [
   { id: "image_editing", label: "Image Editing" },

@@ -216,10 +216,7 @@ const ComprehensiveModelTester = () => {
 
       newTracker.startStep(step2.id, { modelParameters });
       const inputs = { ...modelParameters };
-      // Support both 'prompt' and 'positivePrompt' conventions
-      if (inputs.prompt && !inputs.positivePrompt) {
-        inputs.positivePrompt = inputs.prompt;
-      }
+      // No hardcoded prompt transformations - use parameters as-is
       newTracker.completeStep(step2.id, { mergedInputs: inputs }, { inputs });
 
       // ====== STEP 3: Validate Inputs ======
@@ -232,8 +229,8 @@ const ComprehensiveModelTester = () => {
         {
           canEdit: false,
           canRerun: true,
-          stepType: 'main',
-          executionContext: 'client',
+          stepType: STEP_TYPE.MAIN,
+          executionContext: EXECUTION_CONTEXT.CLIENT,
           sourceCode: modelModule.validate ? modelModule.validate.toString() : undefined,
         }
       ));
@@ -784,7 +781,7 @@ const ComprehensiveModelTester = () => {
                     <SelectItem value="false">No</SelectItem>
                   </SelectContent>
                 </Select>
-              ) : key === 'prompt' || key === 'positivePrompt' ? (
+              ) : (prop.type === 'string' && ((prop.maxLength && prop.maxLength > 200) || prop.renderer === 'textarea')) ? (
                 <Textarea
                   id={key}
                   value={value ?? prop.default ?? ''}
@@ -795,7 +792,7 @@ const ComprehensiveModelTester = () => {
                   rows={4}
                   disabled={isExecuting}
                 />
-              ) : (
+              ) : prop.type === 'string' ? (
                 <Input
                   id={key}
                   type="text"
@@ -804,7 +801,7 @@ const ComprehensiveModelTester = () => {
                     setModelParameters(prev => ({ ...prev, [key]: e.target.value }))
                   }
                 />
-              )}
+              ) : null}
             </div>
           );
         })}

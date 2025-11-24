@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { validateJsonbSize, MAX_JSONB_SIZE } from "../_shared/jsonb-validation-schemas.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -113,6 +114,17 @@ Deno.serve(async (req) => {
         duration
       }
     });
+
+    // Validate caption_style JSONB if provided (DoS prevention)
+    if (caption_style && !validateJsonbSize(caption_style)) {
+      logger.error('Caption style exceeds size limit', undefined, {
+        userId: user.id,
+        metadata: { size: JSON.stringify(caption_style).length, limit: MAX_JSONB_SIZE }
+      });
+      throw new Error('Caption style exceeds maximum size (50KB)');
+    }
+
+    logger.debug('JSONB validation passed', { userId: user.id });
 
     // Create video job
     const { data: job, error: jobError } = await supabaseClient

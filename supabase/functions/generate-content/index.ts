@@ -164,36 +164,9 @@ Deno.serve(async (req) => {
 
     let { prompt } = validatedRequest;
     
-    // CRITICAL FIX: Extract prompt from parameters if not provided at top level
-    // Some UIs send prompt inside custom_parameters instead of as a separate field
-    if (!prompt && custom_parameters.prompt) {
-      prompt = custom_parameters.prompt as string;
-      delete custom_parameters.prompt; // Remove from parameters to avoid duplication
-      logger.debug('Extracted prompt from parameters', { 
-        userId: user?.id, 
-        metadata: { prompt_length: prompt?.length } 
-      });
-    }
-    
-    // Also check for positivePrompt (Runware models)
-    if (!prompt && custom_parameters.positivePrompt) {
-      prompt = custom_parameters.positivePrompt as string;
-      delete custom_parameters.positivePrompt;
-      logger.debug('Extracted positivePrompt from parameters', { 
-        userId: user?.id, 
-        metadata: { prompt_length: prompt?.length } 
-      });
-    }
-    
-    // Also check for positive_prompt (snake_case alias)
-    if (!prompt && custom_parameters.positive_prompt) {
-      prompt = custom_parameters.positive_prompt as string;
-      delete custom_parameters.positive_prompt;
-      logger.debug('Extracted positive_prompt from parameters', { 
-        userId: user?.id, 
-        metadata: { prompt_length: prompt?.length } 
-      });
-    }
+    // Schema-driven approach: NO hardcoded prompt extraction
+    // Prompt should be provided at top level or remain in custom_parameters
+    // The schema validation will handle whether prompts are required
     
     // If service role, require user_id in body
     if (isServiceRole) {
@@ -291,21 +264,34 @@ Deno.serve(async (req) => {
       }
     });
 
-    // Check if model has prompt field in schema (handle 'prompt', 'positivePrompt', 'positive_prompt')
-    const hasPromptField = Boolean(
-      model.input_schema?.properties?.prompt || 
-      model.input_schema?.properties?.positivePrompt ||
-      model.input_schema?.properties?.positive_prompt
-    );
-    const promptFieldName = model.input_schema?.properties?.prompt ? 'prompt' : 
-                            model.input_schema?.properties?.positivePrompt ? 'positivePrompt' :
-                            model.input_schema?.properties?.positive_prompt ? 'positive_prompt' :
-                            null;
+    // Log model schema information for debugging
+    logger.debug('Model schema loaded', {
+      userId: user?.id,
+      metadata: { 
+        model_id: model.id,
+        has_schema: !!model.input_schema,
+        schema_fields: model.input_schema?.properties ? Object.keys(model.input_schema.properties) : []
+      }
+    });
+
+    // Schema-driven prompt field detection
+    const promptFieldNames = ['prompt', 'positivePrompt', 'positive_prompt'];
+    const promptFieldName = model.input_schema?.properties 
+      ? promptFieldNames.find(name => name in (model.input_schema?.properties || {}))
+      : null;
+    const hasPromptField = !!promptFieldName;
     const promptRequired = hasPromptField && 
       Array.isArray(model.input_schema?.required) && 
-      (model.input_schema.required.includes('prompt') || 
-       model.input_schema.required.includes('positivePrompt') ||
-       model.input_schema.required.includes('positive_prompt'));
+      model.input_schema.required.includes(promptFieldName!);
+
+    logger.debug('Prompt field analysis', {
+      userId: user?.id,
+      metadata: { 
+        has_prompt_field: hasPromptField,
+        prompt_field_name: promptFieldName,
+        prompt_required: promptRequired
+      }
+    });
 
     // Phase 4: Check generation rate limits (skip for test mode)
     if (!isTestMode) {
@@ -380,6 +366,19 @@ Deno.serve(async (req) => {
           JSON.stringify({ error: 'image_urls is required for this model' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
+      }
+    }
+
+    // Schema-driven prompt resolution
+    // Extract prompt from parameters if model schema defines a prompt field
+    if (!prompt && hasPromptField && promptFieldName) {
+      if (parameters[promptFieldName]) {
+        prompt = String(parameters[promptFieldName]);
+        delete parameters[promptFieldName]; // Remove to avoid duplication
+        logger.debug('Extracted prompt from schema field', { 
+          userId: user?.id, 
+          metadata: { field: promptFieldName } 
+        });
       }
     }
 
@@ -502,29 +501,6 @@ Deno.serve(async (req) => {
         normalized_count: Object.keys(parameters || {}).length
       }
     });
-
-    // Infer prompt from normalized parameters if still missing (all aliases)
-    if (!prompt && typeof parameters.prompt === 'string' && parameters.prompt.trim().length > 0) {
-      prompt = parameters.prompt as string;
-      logger.debug('Inferred prompt from parameters.prompt', {
-        userId: user?.id,
-        metadata: { prompt_length: prompt.length }
-      });
-    }
-    if (!prompt && typeof parameters.positivePrompt === 'string' && parameters.positivePrompt.trim().length > 0) {
-      prompt = parameters.positivePrompt as string;
-      logger.debug('Inferred prompt from parameters.positivePrompt', {
-        userId: user?.id,
-        metadata: { prompt_length: prompt.length }
-      });
-    }
-    if (!prompt && typeof parameters.positive_prompt === 'string' && parameters.positive_prompt.trim().length > 0) {
-      prompt = parameters.positive_prompt as string;
-      logger.debug('Inferred prompt from parameters.positive_prompt', {
-        userId: user?.id,
-        metadata: { prompt_length: prompt.length }
-      });
-    }
 
     // Provider-specific parameter mappings have been moved to provider preprocessing functions
     // See preprocessKieAiParameters() and preprocessRunwareParameters() in providers/

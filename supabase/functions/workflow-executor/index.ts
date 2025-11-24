@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getModel } from "../_shared/registry/index.ts";
+import { validateWorkflowInputs } from "../_shared/jsonb-validation-schemas.ts";
 import {
   processImageUploads,
   sanitizeParametersForProviders
@@ -63,6 +64,18 @@ Deno.serve(async (req) => {
 
     // Process any image uploads to generate signed URLs
     const processedInputs = await processImageUploads(user_inputs, user.id, supabase);
+
+    // Validate user inputs JSONB before storing (DoS prevention + schema validation)
+    const inputValidation = validateWorkflowInputs(processedInputs);
+    if (!inputValidation.success) {
+      logger.error('Workflow inputs validation failed', undefined, {
+        userId: user.id,
+        metadata: { error: inputValidation.error }
+      });
+      throw new Error(`Invalid workflow inputs: ${inputValidation.error}`);
+    }
+
+    logger.debug('User inputs validated successfully', { userId: user.id });
 
     // 1. Load workflow template
     const { data: workflow, error: workflowError } = await supabase

@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
+import { validateJsonbSize, MAX_JSONB_SIZE } from "../_shared/jsonb-validation-schemas.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -312,6 +313,33 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
       userId: user.id,
       metadata: { total: originalCharacterCount, intro: introChars, scenes: sceneChars }
     });
+
+    // Validate JSONB settings before insertion (DoS prevention)
+    if (subtitleSettings && !validateJsonbSize(subtitleSettings)) {
+      logger.error('Subtitle settings exceed size limit', undefined, {
+        userId: user.id,
+        metadata: { size: JSON.stringify(subtitleSettings).length, limit: MAX_JSONB_SIZE }
+      });
+      throw new Error('Subtitle settings exceed maximum size (50KB)');
+    }
+
+    if (musicSettings && !validateJsonbSize(musicSettings)) {
+      logger.error('Music settings exceed size limit', undefined, {
+        userId: user.id,
+        metadata: { size: JSON.stringify(musicSettings).length, limit: MAX_JSONB_SIZE }
+      });
+      throw new Error('Music settings exceed maximum size (50KB)');
+    }
+
+    if (imageAnimationSettings && !validateJsonbSize(imageAnimationSettings)) {
+      logger.error('Image animation settings exceed size limit', undefined, {
+        userId: user.id,
+        metadata: { size: JSON.stringify(imageAnimationSettings).length, limit: MAX_JSONB_SIZE }
+      });
+      throw new Error('Image animation settings exceed maximum size (50KB)');
+    }
+
+    logger.debug('JSONB validation passed', { userId: user.id });
 
     // Create storyboard record (no credit deduction - charged at render time)
     const { data: storyboard, error: storyboardError } = await supabaseClient

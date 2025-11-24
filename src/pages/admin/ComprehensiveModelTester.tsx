@@ -312,7 +312,7 @@ const ComprehensiveModelTester = () => {
           model_id: selectedModel.record_id,
           model_record_id: selectedModel.record_id,
           type: getGenerationType(selectedModel.content_type || ''),
-          prompt: inputs.prompt || inputs.positivePrompt || '',
+          prompt: inputs.prompt || inputs.positivePrompt || null,
           tokens_used: cost,
           status: "pending",
           settings: modelParameters,
@@ -333,7 +333,7 @@ const ComprehensiveModelTester = () => {
           model_id: selectedModel.record_id,
           model_record_id: selectedModel.record_id,
           type: getGenerationType(selectedModel.content_type || ''),
-          prompt: inputs.prompt || inputs.positivePrompt || '',
+          prompt: inputs.prompt || inputs.positivePrompt || null,
           tokens_used: cost,
           status: "pending",
           settings: modelParameters,
@@ -402,7 +402,7 @@ const ComprehensiveModelTester = () => {
           generationId: gen.id,
           model_config: modelModule.MODEL_CONFIG,
           model_schema: modelModule.SCHEMA,
-          prompt: inputs.prompt || inputs.positivePrompt || '',
+          prompt: inputs.prompt || inputs.positivePrompt || null,
           custom_parameters: payload,
           test_mode: true, // TEST MODE FLAG
         },
@@ -422,7 +422,7 @@ const ComprehensiveModelTester = () => {
             generationId: gen.id,
             model_config: modelModule.MODEL_CONFIG,
             model_schema: modelModule.SCHEMA,
-            prompt: inputs.prompt || inputs.positivePrompt || '',
+            prompt: inputs.prompt || inputs.positivePrompt || null,
             custom_parameters: payload,
             test_mode: true,
           },
@@ -558,11 +558,12 @@ const ComprehensiveModelTester = () => {
     if (tracker && executionFlow) {
       const name = window.prompt("Enter bookmark name:");
       if (name) {
-        await tracker.bookmark(name, [selectedModel?.provider || ''], prompt);
+        const promptValue = modelParameters.prompt || modelParameters.positivePrompt || '';
+        await tracker.bookmark(name, [selectedModel?.provider || ''], promptValue);
         toast.success("Test run bookmarked");
       }
     }
-  }, [tracker, executionFlow, selectedModel, prompt]);
+  }, [tracker, executionFlow, selectedModel, modelParameters]);
 
   /**
    * Phase 3 Advanced Features Handlers

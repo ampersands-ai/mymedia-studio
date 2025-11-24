@@ -15,6 +15,7 @@ import { signupSchema, loginSchema } from "@/lib/validation-schemas";
 import { Footer } from "@/components/Footer";
 import logo from "@/assets/logo.png";
 import { logger } from "@/lib/logger";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 
 const countryCodes = [
@@ -135,6 +136,7 @@ const countryCodes = [
 const Auth = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { execute } = useErrorHandler();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -161,6 +163,8 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      await execute(
+        async () => {
       // Validate inputs
       if (isLogin) {
         const result = loginSchema.safeParse({ email, password });
@@ -356,27 +360,43 @@ const Auth = () => {
         }
         navigate("/dashboard/custom-creation");
       }
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      toast.error(error.message || "An error occurred");
+        },
+        {
+          showSuccessToast: false,
+          showErrorToast: true,
+          context: {
+            component: 'Auth',
+            operation: isLogin ? 'login' : 'signup',
+            email: email.toLowerCase()
+          }
+        }
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleSocialAuth = async (provider: 'google' | 'apple') => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/dashboard/custom-creation`,
-        },
-      });
-      if (error) throw error;
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      toast.error(error.message || "An error occurred");
-    }
+    await execute(
+      async () => {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: {
+            redirectTo: `${window.location.origin}/dashboard/custom-creation`,
+          },
+        });
+        if (error) throw error;
+      },
+      {
+        showSuccessToast: false,
+        errorMessage: "Social authentication failed",
+        context: {
+          component: 'Auth',
+          operation: 'social_auth',
+          provider
+        }
+      }
+    );
   };
 
   return (

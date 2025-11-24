@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,11 +10,21 @@ import type { BlogPost as BlogPostType } from "@/types/blog";
 import { Share2, Clock, Eye, Calendar, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
+import DOMPurify from "dompurify";
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const [post, setPost] = useState<BlogPostType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Sanitize blog content to prevent XSS attacks
+  const sanitizedContent = useMemo(() => {
+    if (!post?.content) return '';
+    return DOMPurify.sanitize(post.content, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'code', 'pre'],
+      ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'id']
+    });
+  }, [post?.content]);
 
   useEffect(() => {
     if (slug) {
@@ -194,10 +204,10 @@ export default function BlogPost() {
             </div>
           </header>
 
-          {/* Content */}
+          {/* Content - Sanitized to prevent XSS */}
           <div
             className="prose prose-lg max-w-none prose-headings:font-bold prose-h2:text-3xl prose-h3:text-2xl prose-p:text-foreground prose-strong:text-foreground prose-a:text-primary hover:prose-a:underline prose-img:rounded-lg prose-img:shadow-lg"
-            dangerouslySetInnerHTML={{ __html: post.content }}
+            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           />
 
           {/* Share Button at Bottom */}

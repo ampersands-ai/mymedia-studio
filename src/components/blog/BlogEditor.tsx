@@ -14,6 +14,7 @@ import {
   Quote,
   Code
 } from "lucide-react";
+import DOMPurify from "dompurify";
 
 interface BlogEditorProps {
   content: string;
@@ -26,13 +27,23 @@ export const BlogEditor = ({ content, onChange, onImageInsert }: BlogEditorProps
 
   useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML !== content) {
-      editorRef.current.innerHTML = content;
+      // Sanitize content before setting innerHTML to prevent XSS
+      const sanitized = DOMPurify.sanitize(content, {
+        ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'code', 'pre'],
+        ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'id']
+      });
+      editorRef.current.innerHTML = sanitized;
     }
   }, [content]);
 
   const handleInput = () => {
     if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
+      // Sanitize output to ensure clean HTML
+      const sanitized = DOMPurify.sanitize(editorRef.current.innerHTML, {
+        ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'code', 'pre'],
+        ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'id']
+      });
+      onChange(sanitized);
     }
   };
 

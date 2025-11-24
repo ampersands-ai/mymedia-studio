@@ -11,6 +11,7 @@ import {
   type GenerateContentRequest
 } from "../_shared/schemas.ts";
 import { validateGenerationSettings } from "../_shared/jsonb-validation-schemas.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 /**
  * GENERATE CONTENT EDGE FUNCTION
@@ -334,7 +335,7 @@ Deno.serve(async (req) => {
         .from('generations')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
-        .eq('status', 'pending');
+        .eq('status', GENERATION_STATUS.PENDING);
 
       if (tierLimits && concurrentCount !== null && concurrentCount >= tierLimits.max_concurrent_generations) {
         logger.error('Concurrent generation limit exceeded', undefined, {

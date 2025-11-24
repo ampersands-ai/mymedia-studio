@@ -70,3 +70,21 @@ export const ALERT_SEVERITY = {
   HIGH: 'high',
   CRITICAL: 'critical'
 } as const;
+
+// Log levels for logging
+export const LOG_LEVELS = {
+  DEBUG: 'debug',
+  INFO: 'info',
+  WARN: 'warn',
+  ERROR: 'error',
+  CRITICAL: 'critical'
+} as const;
+
+// Email delivery statuses
+export const DELIVERY_STATUS = {
+  SENT: 'sent',
+  DELIVERED: 'delivered',
+  FAILED: 'failed',
+  BOUNCED: 'bounced',
+  OPENED: 'opened'
+} as const;

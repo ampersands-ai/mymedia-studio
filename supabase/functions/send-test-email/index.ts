@@ -10,17 +10,58 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 Deno.serve(async (req: Request): Promise<Response> => {
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('send-test-email', requestId);
-  
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);
   }
 
   try {
-    // Initialize Supabase client
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    // 🔒 SECURITY: Verify authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
+        status: 401,
+        headers: { ...responseHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Initialize Supabase clients
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Verify user is authenticated
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...responseHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 🔒 SECURITY: Verify user is an admin
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || profile?.role !== "admin") {
+      logger.warn("Non-admin user attempted to send test email", { metadata: { userId: user.id } });
+      return new Response(JSON.stringify({ error: "Forbidden: Admin access required" }), {
+        status: 403,
+        headers: { ...responseHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    logger.info("Admin sending test email", { metadata: { userId: user.id } });
 
     // Fetch admin email from settings
     const { data: settings, error: settingsError } = await supabase

@@ -65,13 +65,34 @@ export const options = {
 const BASE_URL = __ENV.BASE_URL || 'https://artifio.ai';
 const API_BASE = `${BASE_URL}/functions/v1`;
 
-// Test data
-const TEST_USERS = [
-  { email: 'loadtest1@artifio.ai', password: 'LoadTest123!' },
-  { email: 'loadtest2@artifio.ai', password: 'LoadTest123!' },
-  { email: 'loadtest3@artifio.ai', password: 'LoadTest123!' },
-  // Add more test users...
-];
+// 🔒 SECURITY: Load test credentials from environment variables
+// Set these in your environment or k6 cloud config:
+// - K6_TEST_USER_EMAIL_1, K6_TEST_USER_PASSWORD_1
+// - K6_TEST_USER_EMAIL_2, K6_TEST_USER_PASSWORD_2
+// - K6_TEST_USER_EMAIL_3, K6_TEST_USER_PASSWORD_3
+const TEST_USERS = [];
+
+// Load users from environment variables
+for (let i = 1; i <= 10; i++) {
+  const email = __ENV[`K6_TEST_USER_EMAIL_${i}`];
+  const password = __ENV[`K6_TEST_USER_PASSWORD_${i}`];
+
+  if (email && password) {
+    TEST_USERS.push({ email, password });
+  }
+}
+
+// Fallback to default test users if no env vars provided (LOCAL TESTING ONLY)
+if (TEST_USERS.length === 0) {
+  console.warn('⚠️  No K6_TEST_USER_EMAIL_* environment variables found. Using default test users for local testing only.');
+  TEST_USERS.push(
+    { email: 'loadtest1@artifio.ai', password: 'LoadTest123!' },
+    { email: 'loadtest2@artifio.ai', password: 'LoadTest123!' },
+    { email: 'loadtest3@artifio.ai', password: 'LoadTest123!' }
+  );
+}
+
+console.log(`Loaded ${TEST_USERS.length} test users for load testing`);
 
 const PROMPTS = [
   'A beautiful sunset over mountains',

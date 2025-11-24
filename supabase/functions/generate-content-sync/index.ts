@@ -6,6 +6,7 @@ import { uploadToStorage } from "./utils/storage.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { getModel } from "../_shared/registry/index.ts";
+import { GENERATION_STATUS, AUDIT_ACTIONS } from "../_shared/constants.ts";
 
 // Type definitions
 interface EdgeFunctionUser {
@@ -367,7 +368,7 @@ Deno.serve(async (req) => {
       // Log to audit_logs
       await supabase.from('audit_logs').insert({
         user_id: user.id,
-        action: 'tokens_deducted',
+        action: AUDIT_ACTIONS.TOKENS_DEDUCTED,
         metadata: {
           tokens_deducted: tokenCost,
           tokens_remaining: updateResult[0]?.tokens_remaining,
@@ -390,7 +391,7 @@ Deno.serve(async (req) => {
         settings: parameters,
         tokens_used: tokenCost,
         actual_token_cost: tokenCost,
-        status: 'pending',
+        status: GENERATION_STATUS.PENDING,
         workflow_execution_id: workflow_execution_id || null,
         workflow_step_number: workflow_step_number || null
       })
@@ -477,7 +478,7 @@ Deno.serve(async (req) => {
       await supabase
         .from('generations')
         .update({
-          status: 'completed',
+          status: GENERATION_STATUS.COMPLETED,
           output_url: publicUrl,
           storage_path: storagePath,
           file_size_bytes: fileSize,
@@ -488,7 +489,7 @@ Deno.serve(async (req) => {
 
       await supabase.from('audit_logs').insert({
         user_id: user.id,
-        action: 'generation_completed',
+        action: AUDIT_ACTIONS.GENERATION_COMPLETED,
         resource_type: 'generation',
         resource_id: generation.id,
         metadata: {

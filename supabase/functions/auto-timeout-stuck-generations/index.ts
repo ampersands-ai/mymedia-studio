@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -29,7 +30,7 @@ Deno.serve(async (req) => {
     const { data: stuckGenerations, error: fetchError } = await supabase
       .from('generations')
       .select('id, user_id, tokens_used, model_id, prompt')
-      .eq('status', 'processing')
+      .eq('status', GENERATION_STATUS.PROCESSING)
       .lt('created_at', tenMinutesAgo);
 
     if (fetchError) {
@@ -58,7 +59,7 @@ Deno.serve(async (req) => {
         const { error: updateError } = await supabase
           .from('generations')
           .update({
-            status: 'failed',
+            status: GENERATION_STATUS.FAILED,
             provider_response: {
               error: 'Generation timed out after 10 minutes. Your tokens have been automatically refunded.',
               auto_timeout: true,

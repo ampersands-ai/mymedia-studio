@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { GENERATION_STATUS, AUDIT_ACTIONS } from "../_shared/constants.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -29,7 +30,7 @@ Deno.serve(async (req) => {
     const { data: stuckGenerations, error: fetchError } = await supabase
       .from('generations')
       .select('id, user_id, model_id, prompt, status, created_at, tokens_used')
-      .in('status', ['pending', 'processing'])
+      .in('status', [GENERATION_STATUS.PENDING, GENERATION_STATUS.PROCESSING])
       .lt('created_at', thirtyMinutesAgo);
 
     if (fetchError) {
@@ -60,7 +61,7 @@ Deno.serve(async (req) => {
     const { error: updateError } = await supabase
       .from('generations')
       .update({
-        status: 'failed',
+        status: GENERATION_STATUS.FAILED,
       })
       .in('id', stuckGenerations.map(g => g.id));
 
@@ -99,7 +100,7 @@ Deno.serve(async (req) => {
     const { error: logError } = await supabase
       .from('audit_logs')
       .insert({
-        action: 'cleanup_stuck_generations',
+        action: AUDIT_ACTIONS.CLEANUP_STUCK_GENERATIONS,
         resource_type: 'generation',
         metadata: {
           cleaned_count: stuckGenerations.length,

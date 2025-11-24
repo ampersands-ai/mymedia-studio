@@ -1,23 +1,12 @@
 /** Grok Imagine (prompt_to_video) - Record: 0643a43b-4995-4c5b-ac1d-76ea257a93a0 */
+import { getGenerationType } from '@/lib/models/registry';
+import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { executeModelGeneration } from "@/lib/models/shared/executeModelGeneration";
-import { validatePrompt, validateEnum, combineValidations } from "@/lib/models/shared/validation";
+import { reserveCredits } from "@/lib/models/creditDeduction";
+import { GENERATION_STATUS } from "@/constants/generation-status";
 
-export const MODEL_CONFIG = { 
-  modelId: "grok-imagine/text-to-video", 
-  recordId: "0643a43b-4995-4c5b-ac1d-76ea257a93a0", 
-  modelName: "Grok Imagine", 
-  provider: "kie_ai", 
-  contentType: "prompt_to_video",
-  use_api_key: "KIE_AI_API_KEY_PROMPT_TO_VIDEO", 
-  baseCreditCost: 10, 
-  estimatedTimeSeconds: 45, 
-  costMultipliers: {}, 
-  apiEndpoint: "/api/v1/jobs/createTask", 
-  payloadStructure: "wrapper", 
-  maxImages: 0, 
-  defaultOutputs: 1, 
-  
+export const MODEL_CONFIG = { modelId: "grok-imagine/text-to-video", recordId: "0643a43b-4995-4c5b-ac1d-76ea257a93a0", modelName: "Grok Imagine", provider: "kie_ai", contentType: "prompt_to_video",
+  use_api_key: "KIE_AI_API_KEY_PROMPT_TO_VIDEO", baseCreditCost: 10, estimatedTimeSeconds: 45, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/grok.png",
@@ -27,68 +16,41 @@ export const MODEL_CONFIG = {
 
   // Lock system
   isLocked: true,
-  lockedFilePath: "src/lib/models/locked/prompt_to_video/Grok_Imagine.ts" 
-} as const;
+  lockedFilePath: "src/lib/models/locked/prompt_to_video/Grok_Imagine.ts" } as const;
 
-export const SCHEMA = { 
-  properties: { 
-    mode: { 
-      default: "normal", 
-      enum: ["fun", "normal", "spicy"], 
-      type: "string" 
-    }, 
-    prompt: { 
-      maxLength: 5000, 
-      renderer: "prompt", 
-      type: "string" 
-    } 
-  }, 
-  required: ["prompt"], 
-  type: "object" 
-} as const;
+export const SCHEMA = { properties: { mode: { default: "normal", enum: ["fun", "normal", "spicy"], type: "string" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" } }, required: ["prompt"], type: "object" } as const;
 
-/**
- * Enhanced validation with comprehensive security checks
- * Phase 1: Strengthen validation across all models
- */
-export function validate(inputs: Record<string, any>) {
-  return combineValidations(
-    validatePrompt(inputs.prompt, {
-      required: true,
-      minLength: 3,
-      maxLength: 5000,
-      fieldName: "Prompt"
-    }),
-    validateEnum(inputs.mode, ["fun", "normal", "spicy"], {
-      required: false,
-      fieldName: "Mode"
-    })
-  );
-}
+export function validate(inputs: Record<string, any>) { return inputs.prompt ? { valid: true } : { valid: false, error: "Prompt required" }; }
+export function preparePayload(inputs: Record<string, any>) { return { modelId: MODEL_CONFIG.modelId, input: { prompt: inputs.prompt, mode: inputs.mode || "normal" } }; }
+export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
 
-export function preparePayload(inputs: Record<string, any>) { 
-  return { 
-    modelId: MODEL_CONFIG.modelId, 
-    input: { 
-      prompt: inputs.prompt, 
-      mode: inputs.mode || "normal" 
-    } 
-  }; 
-}
-
-export function calculateCost(inputs: Record<string, any>) { 
-  return MODEL_CONFIG.baseCreditCost; 
-}
-
-/**
- * Unified execution using shared logic
- * Phase 1: Extract duplicate model execution logic
- */
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  return executeModelGeneration(params, MODEL_CONFIG, SCHEMA, {
-    validate,
-    preparePayload,
-    calculateCost
+  const { prompt, modelParameters, userId, startPolling } = params;
+  const inputs: Record<string, any> = { prompt, ...modelParameters };
+  const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
+  const cost = calculateCost(inputs);
+  await reserveCredits(userId, cost);
+  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: GENERATION_STATUS.PENDING, settings: modelParameters }).select().single(); // (edge function will process)
+  if (error || !gen) throw new Error(`Failed: ${error?.message}`);
+
+  // Call edge function to handle API call server-side
+  // This keeps API keys secure and avoids CORS issues
+  const { error: funcError } = await supabase.functions.invoke('generate-content', {
+    body: {
+      generationId: gen.id,
+      model_config: MODEL_CONFIG,
+      model_schema: SCHEMA,
+      prompt,
+      custom_parameters: preparePayload(inputs)
+    }
   });
+
+  if (funcError) {
+    await supabase.from('generations').update({ status: GENERATION_STATUS.FAILED }).eq('id', gen.id);
+    throw new Error(`Edge function failed: ${funcError.message}`);
+  }
+
+  startPolling(gen.id);
+  return gen.id;
 }
 

@@ -7,6 +7,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { webhookLogger } from "../../_shared/logger.ts";
 import { createSafeErrorResponse } from "../../_shared/error-handler.ts";
 import { validateUrlToken } from "../../kie-ai-webhook/security/url-token-validator.ts";
+import { validateSignature } from "../../kie-ai-webhook/security/signature-validator.ts";
 import { validateVerifyToken } from "../../kie-ai-webhook/security/verify-token-validator.ts";
 import { validateTiming } from "../../kie-ai-webhook/security/timing-validator.ts";
 import { validateIdempotency } from "../../kie-ai-webhook/security/idempotency-validator.ts";
@@ -43,7 +44,24 @@ Deno.serve(async (req) => {
       });
     }
 
-    const payload = await req.json();
+    // Layer 5: HMAC Signature Validation (must be before JSON parsing)
+    const rawBody = await req.text();
+    const signature = req.headers.get('X-Kie-Signature');
+    const signatureResult = validateSignature(rawBody, signature);
+    
+    if (!signatureResult.success) {
+      webhookLogger.security('signature', false, { 
+        provider: 'midjourney',
+        error: signatureResult.error 
+      });
+      return new Response('Forbidden', {
+        status: 403,
+        headers: corsHeaders
+      });
+    }
+    webhookLogger.security('signature', true, { provider: 'midjourney' });
+
+    const payload = JSON.parse(rawBody);
     const { taskId: payloadTaskId, state, resultJson } = payload;
     taskId = payloadTaskId;
 

@@ -1,17 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { EdgeLogger } from '../_shared/edge-logger.ts';
+import { AUDIT_ACTIONS, ALERT_TYPES, ALERT_SEVERITY } from '../_shared/constants.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-// Thresholds for suspicious activity
-const THRESHOLDS = {
-  FAILED_LOGINS_WINDOW: 15 * 60 * 1000, // 15 minutes
-  FAILED_LOGINS_COUNT: 5,
-  RAPID_SIGNUPS_WINDOW: 60 * 60 * 1000, // 1 hour
-  RAPID_SIGNUPS_COUNT: 3,
 };
 
 Deno.serve(async (req) => {
@@ -74,12 +67,28 @@ Deno.serve(async (req) => {
     const now = new Date();
     const alerts: Array<{ type: string; message: string; severity: string }> = [];
 
+    // Fetch security thresholds from database (configurable)
+    const { data: securityConfig } = await supabaseAdmin
+      .from('security_config')
+      .select('config_key, config_value');
+
+    // Build thresholds object with defaults as fallback
+    const thresholds = (securityConfig || []).reduce((acc, row) => {
+      acc[row.config_key] = row.config_value;
+      return acc;
+    }, {} as Record<string, any>);
+
+    // Extract values with defaults
+    const failedLoginConfig = thresholds.failed_login_threshold || { window_minutes: 15, count: 5 };
+    const rapidSignupConfig = thresholds.rapid_signup_threshold || { window_hours: 1, count: 3 };
+    const tokenUsageConfig = thresholds.token_usage_threshold || { window_hours: 1, tokens: 1000 };
+
     // Check for multiple failed login attempts from same IP
-    const failedLoginWindow = new Date(now.getTime() - THRESHOLDS.FAILED_LOGINS_WINDOW);
+    const failedLoginWindow = new Date(now.getTime() - failedLoginConfig.window_minutes * 60 * 1000);
     const { data: failedLogins } = await supabaseAdmin
       .from('audit_logs')
       .select('ip_address, count')
-      .eq('action', 'login_failed')
+      .eq('action', AUDIT_ACTIONS.LOGIN_FAILED)
       .gte('created_at', failedLoginWindow.toISOString());
 
     if (failedLogins) {
@@ -89,19 +98,19 @@ Deno.serve(async (req) => {
       }, {});
 
       for (const [ip, count] of Object.entries(ipCounts)) {
-        if (count >= THRESHOLDS.FAILED_LOGINS_COUNT) {
+        if (count >= failedLoginConfig.count) {
           alerts.push({
-            type: 'MULTIPLE_FAILED_LOGINS',
-            message: `${count} failed login attempts from IP ${ip} in the last 15 minutes`,
-            severity: 'high',
+            type: ALERT_TYPES.MULTIPLE_FAILED_LOGINS,
+            message: `${count} failed login attempts from IP ${ip} in the last ${failedLoginConfig.window_minutes} minutes`,
+            severity: ALERT_SEVERITY.HIGH,
           });
 
           // Log the security alert
           await supabaseAdmin.from('audit_logs').insert({
             user_id: null,
-            action: 'security_alert',
+            action: AUDIT_ACTIONS.SECURITY_ALERT,
             metadata: {
-              alert_type: 'MULTIPLE_FAILED_LOGINS',
+              alert_type: ALERT_TYPES.MULTIPLE_FAILED_LOGINS,
               ip_address: ip,
               attempt_count: count,
             },
@@ -111,11 +120,11 @@ Deno.serve(async (req) => {
     }
 
     // Check for rapid account creation from same IP
-    const rapidSignupWindow = new Date(now.getTime() - THRESHOLDS.RAPID_SIGNUPS_WINDOW);
+    const rapidSignupWindow = new Date(now.getTime() - rapidSignupConfig.window_hours * 60 * 60 * 1000);
     const { data: recentSignups } = await supabaseAdmin
       .from('audit_logs')
       .select('ip_address, count')
-      .eq('action', 'signup_success')
+      .eq('action', AUDIT_ACTIONS.SIGNUP_SUCCESS)
       .gte('created_at', rapidSignupWindow.toISOString());
 
     if (recentSignups) {
@@ -125,19 +134,19 @@ Deno.serve(async (req) => {
       }, {});
 
       for (const [ip, count] of Object.entries(signupIpCounts)) {
-        if (count >= THRESHOLDS.RAPID_SIGNUPS_COUNT) {
+        if (count >= rapidSignupConfig.count) {
           alerts.push({
-            type: 'RAPID_ACCOUNT_CREATION',
-            message: `${count} accounts created from IP ${ip} in the last hour`,
-            severity: 'medium',
+            type: ALERT_TYPES.RAPID_ACCOUNT_CREATION,
+            message: `${count} accounts created from IP ${ip} in the last ${rapidSignupConfig.window_hours} hour(s)`,
+            severity: ALERT_SEVERITY.MEDIUM,
           });
 
           // Log the security alert
           await supabaseAdmin.from('audit_logs').insert({
             user_id: null,
-            action: 'security_alert',
+            action: AUDIT_ACTIONS.SECURITY_ALERT,
             metadata: {
-              alert_type: 'RAPID_ACCOUNT_CREATION',
+              alert_type: ALERT_TYPES.RAPID_ACCOUNT_CREATION,
               ip_address: ip,
               account_count: count,
             },
@@ -147,10 +156,11 @@ Deno.serve(async (req) => {
     }
 
     // Check for unusual token usage patterns
+    const tokenUsageWindow = new Date(now.getTime() - tokenUsageConfig.window_hours * 60 * 60 * 1000);
     const { data: tokenUsage } = await supabaseAdmin
       .from('generations')
       .select('user_id, tokens_used, created_at')
-      .gte('created_at', new Date(now.getTime() - 60 * 60 * 1000).toISOString());
+      .gte('created_at', tokenUsageWindow.toISOString());
 
     if (tokenUsage) {
       const userTokens = tokenUsage.reduce((acc: Record<string, number>, gen: any) => {
@@ -159,21 +169,21 @@ Deno.serve(async (req) => {
       }, {});
 
       for (const [userId, tokens] of Object.entries(userTokens)) {
-        if (tokens > 1000) {
+        if (tokens > tokenUsageConfig.tokens) {
           alerts.push({
-            type: 'UNUSUAL_TOKEN_USAGE',
-            message: `User ${userId} used ${tokens} tokens in the last hour`,
-            severity: 'medium',
+            type: ALERT_TYPES.UNUSUAL_TOKEN_USAGE,
+            message: `User ${userId} used ${tokens} tokens in the last ${tokenUsageConfig.window_hours} hour(s)`,
+            severity: ALERT_SEVERITY.MEDIUM,
           });
 
           // Log the security alert
           await supabaseAdmin.from('audit_logs').insert({
             user_id: userId,
-            action: 'security_alert',
+            action: AUDIT_ACTIONS.SECURITY_ALERT,
             metadata: {
-              alert_type: 'UNUSUAL_TOKEN_USAGE',
+              alert_type: ALERT_TYPES.UNUSUAL_TOKEN_USAGE,
               tokens_used: tokens,
-              time_window: '1 hour',
+              time_window: `${tokenUsageConfig.window_hours} hour(s)`,
             },
           });
         }

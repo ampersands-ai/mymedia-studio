@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { webhookLogger } from "../_shared/logger.ts";
 import { getProviderConfig } from "../_shared/providers/registry.ts";
 import { getModelConfig } from "../_shared/registry/index.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,7 +28,7 @@ Deno.serve(async (req) => {
     const { data: stuckGenerations, error } = await supabase
       .from('generations')
       .select('id, provider_task_id, created_at, model_record_id')
-      .eq('status', 'processing')
+      .eq('status', GENERATION_STATUS.PROCESSING)
       .not('provider_task_id', 'is', null)
       .lt('created_at', threeMinutesAgo)
       .order('created_at', { ascending: true })

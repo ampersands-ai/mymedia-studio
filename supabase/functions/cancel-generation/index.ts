@@ -12,6 +12,7 @@ import {
   createErrorResponse,
   corsHeaders
 } from "../_shared/cors-headers.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -77,7 +78,7 @@ Deno.serve(async (req) => {
     }
 
     // Only allow canceling if still processing
-    if (generation.status !== 'processing') {
+    if (generation.status !== GENERATION_STATUS.PROCESSING) {
       logger.warn('Cannot cancel generation with current status', {
         userId: user.id,
         requestId,
@@ -102,7 +103,7 @@ Deno.serve(async (req) => {
     const { error: updateError } = await supabase
       .from('generations')
       .update({
-        status: 'failed',
+        status: GENERATION_STATUS.FAILED,
         provider_response: {
           error: 'Generation canceled by user',
           canceled_at: new Date().toISOString(),

@@ -3,6 +3,7 @@ import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getModel } from "../_shared/registry/index.ts";
 import { validateWorkflowInputs } from "../_shared/jsonb-validation-schemas.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import {
   processImageUploads,
   sanitizeParametersForProviders
@@ -13,20 +14,20 @@ import {
   coerceParametersToSchema
 } from "./helpers/parameter-resolver.ts";
 import {
+import { GENERATION_STATUS } from "../_shared/constants.ts";
   WorkflowExecutorRequestSchema,
   WorkflowStepSchema,
   type WorkflowExecutorRequest,
   type WorkflowStep
 } from "../_shared/schemas.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const startTime = Date.now();
@@ -100,7 +101,7 @@ Deno.serve(async (req) => {
         user_id: user.id,
         total_steps: totalSteps,
         user_inputs: processedInputs,
-        status: 'processing',
+        status: GENERATION_STATUS.PROCESSING,
       })
       .select()
       .single();
@@ -214,9 +215,9 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         execution_id: execution.id,
-        status: 'processing',
+        status: GENERATION_STATUS.PROCESSING,
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {

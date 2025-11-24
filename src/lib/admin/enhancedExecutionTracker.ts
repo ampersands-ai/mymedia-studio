@@ -11,6 +11,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { logger } from "@/lib/logger";
 
 export type ExecutionStepStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'paused' | 'edited';
 export type ExecutionStepType = 'main' | 'sub' | 'log' | 'error' | 'warning';
@@ -33,12 +34,12 @@ export interface ExecutionStep {
   status: ExecutionStepStatus;
 
   // State management
-  stateBeforeStep: Record<string, any>;
-  stateAfterStep: Record<string, any>;
+  stateBeforeStep: Record<string, unknown>;
+  stateAfterStep: Record<string, unknown>;
 
   // Inputs and outputs
-  inputs: Record<string, any>;
-  outputs: any;
+  inputs: Record<string, unknown>;
+  outputs: unknown;
   error?: string;
   errorStack?: string;
 
@@ -51,7 +52,7 @@ export interface ExecutionStep {
   canEdit: boolean;
   canRerun: boolean;
   isEdited: boolean;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 
   // Context
   executionContext: ExecutionContext;
@@ -69,8 +70,8 @@ export interface ExecutionLog {
   stepType: ExecutionStepType;
   logLevel: LogLevel;
   message: string;
-  data?: any;
-  metadata?: any;
+  data?: unknown;
+  metadata?: unknown;
   functionName?: string;
   filePath?: string;
   lineNumber?: number;
@@ -207,11 +208,11 @@ export class EnhancedExecutionTracker {
       });
 
       if (error) {
-        console.error('Failed to initialize test execution run:', error);
+        logger.error('Failed to initialize test execution run', error);
         this.persistenceEnabled = false;
       }
     } catch (error) {
-      console.error('Failed to initialize persistence:', error);
+      logger.error('Failed to initialize persistence', error);
       this.persistenceEnabled = false;
     }
   }
@@ -283,7 +284,7 @@ export class EnhancedExecutionTracker {
         })
         .eq('test_run_id', this.flow.testRunId);
     } catch (error) {
-      console.error('Failed to save to database:', error);
+      logger.error('Failed to save to database', error);
     }
   }
 
@@ -347,7 +348,7 @@ export class EnhancedExecutionTracker {
         },
       });
     } catch (error) {
-      console.error('Failed to save step snapshot:', error);
+      logger.error('Failed to save step snapshot', error);
     }
   }
 
@@ -382,9 +383,9 @@ export class EnhancedExecutionTracker {
    */
   completeStep(
     stepId: string,
-    outputs: any,
-    stateAfterStep?: Record<string, any>,
-    metadata?: Record<string, any>
+    outputs: unknown,
+    stateAfterStep?: Record<string, unknown>,
+    metadata?: Record<string, unknown>
   ): void {
     const step = this.flow.steps.find(s => s.id === stepId);
     if (!step) return;
@@ -521,7 +522,7 @@ export class EnhancedExecutionTracker {
   /**
    * Update step inputs (for edit capability)
    */
-  updateStepInputs(stepId: string, newInputs: Record<string, any>): void {
+  updateStepInputs(stepId: string, newInputs: Record<string, unknown>): void {
     const step = this.flow.steps.find(s => s.id === stepId);
     if (!step) return;
 
@@ -544,8 +545,8 @@ export class EnhancedExecutionTracker {
     stepType: ExecutionStepType;
     logLevel: LogLevel;
     message: string;
-    data?: any;
-    metadata?: any;
+    data?: unknown;
+    metadata?: unknown;
     functionName?: string;
     filePath?: string;
     lineNumber?: number;
@@ -589,14 +590,14 @@ export class EnhancedExecutionTracker {
         timestamp: new Date(log.timestamp).toISOString(),
       });
     } catch (error) {
-      console.error('Failed to save log:', error);
+      logger.error('Failed to save log', error);
     }
   }
 
   /**
    * Convert database log to ExecutionLog
    */
-  private convertDbLogToExecutionLog(dbLog: any): ExecutionLog {
+  private convertDbLogToExecutionLog(dbLog: Record<string, unknown>): ExecutionLog {
     return {
       id: dbLog.id,
       testRunId: dbLog.test_run_id,
@@ -795,7 +796,7 @@ export class EnhancedExecutionTracker {
         .single();
 
       if (runError || !runData) {
-        console.error('Failed to load test run:', runError);
+        logger.error('Failed to load test run', runError);
         return null;
       }
 
@@ -883,7 +884,7 @@ export class EnhancedExecutionTracker {
 
       return tracker;
     } catch (error) {
-      console.error('Failed to load from database:', error);
+      logger.error('Failed to load from database', error);
       return null;
     }
   }
@@ -892,7 +893,7 @@ export class EnhancedExecutionTracker {
 /**
  * Helper function to mask sensitive data (API keys, tokens, etc.)
  */
-export function maskSensitiveData(data: any, keysToMask: string[] = ['apiKey', 'api_key', 'token', 'password', 'secret']): any {
+export function maskSensitiveData(data: unknown, keysToMask: string[] = ['apiKey', 'api_key', 'token', 'password', 'secret']): unknown {
   if (typeof data !== 'object' || data === null) {
     return data;
   }
@@ -901,7 +902,7 @@ export function maskSensitiveData(data: any, keysToMask: string[] = ['apiKey', '
     return data.map(item => maskSensitiveData(item, keysToMask));
   }
 
-  const masked: any = {};
+  const masked: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     const keyLower = key.toLowerCase();
     const shouldMask = keysToMask.some(maskKey => keyLower.includes(maskKey.toLowerCase()));
@@ -927,7 +928,7 @@ export function createStepConfig(
   description: string,
   functionPath: string,
   functionName: string,
-  inputs: Record<string, any>,
+  inputs: Record<string, unknown>,
   options: {
     canEdit?: boolean;
     canRerun?: boolean;

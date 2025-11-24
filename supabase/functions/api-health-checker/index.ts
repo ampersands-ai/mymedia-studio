@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { EdgeLogger } from '../_shared/edge-logger.ts'
 
 /**
  * API Health Checker Edge Function
@@ -19,13 +20,16 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
  */
 
 serve(async () => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('api-health-checker', requestId);
+
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    console.log('🏥 Starting API health checks...')
+    logger.info('Starting API health checks');
 
     // Fetch all enabled API configs
     const { data: apiConfigs, error: configError } = await supabaseClient
@@ -37,13 +41,13 @@ serve(async () => {
       throw new Error(`Failed to fetch API configs: ${configError.message}`)
     }
 
-    console.log(`Found ${apiConfigs.length} APIs to check`)
+    logger.info('Found APIs to check', { metadata: { count: apiConfigs.length } })
 
     const results = []
 
     // Perform health checks
     for (const config of apiConfigs) {
-      console.log(`Checking ${config.display_name}...`)
+      logger.info('Checking API', { metadata: { displayName: config.display_name } });
 
       const startTime = Date.now()
       let status = 'healthy'
@@ -86,7 +90,9 @@ serve(async () => {
           errorMessage = `Client error: ${response.status}`
         }
 
-        console.log(`✅ ${config.display_name}: ${status} (${responseTime}ms)`)
+        logger.info('API check complete', {
+          metadata: { displayName: config.display_name, status, responseTimeMs: responseTime }
+        });
       } catch (error: any) {
         responseTime = Date.now() - startTime
 
@@ -98,7 +104,9 @@ serve(async () => {
           errorMessage = error.message || 'Unknown error'
         }
 
-        console.log(`❌ ${config.display_name}: ${status} - ${errorMessage}`)
+        logger.warn('API check failed', {
+          metadata: { displayName: config.display_name, status, errorMessage }
+        });
       }
 
       // Record health check result
@@ -113,7 +121,9 @@ serve(async () => {
         })
 
       if (insertError) {
-        console.error(`Failed to record health check for ${config.name}:`, insertError)
+        logger.error('Failed to record health check', insertError as Error, {
+          metadata: { configName: config.name }
+        });
       }
 
       // Check if we need to create an alert
@@ -128,7 +138,7 @@ serve(async () => {
       })
     }
 
-    console.log('✅ Health checks completed')
+    logger.info('Health checks completed');
 
     return new Response(
       JSON.stringify({
@@ -141,7 +151,7 @@ serve(async () => {
       }
     )
   } catch (error) {
-    console.error('❌ Health check error:', error)
+    logger.error('Health check error', error instanceof Error ? error : new Error(String(error)));
     const errorMessage = error instanceof Error ? error.message : 'Health check failed';
     return new Response(
       JSON.stringify({ error: errorMessage }),
@@ -165,6 +175,9 @@ async function handleUnhealthyAPI(
   status: string,
   errorMessage: string | null
 ) {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('api-health-alert', requestId);
+
   // Get recent health checks to count consecutive failures
   const { data: recentChecks } = await supabase
     .from('api_health_checks')
@@ -185,7 +198,9 @@ async function handleUnhealthyAPI(
     }
   }
 
-  console.log(`${config.display_name}: ${consecutiveFailures} consecutive failures`)
+  logger.warn('Consecutive failures detected', {
+    metadata: { displayName: config.display_name, consecutiveFailures }
+  });
 
   // Check if threshold exceeded
   if (consecutiveFailures >= config.alert_threshold) {
@@ -210,9 +225,9 @@ async function handleUnhealthyAPI(
         })
 
       if (alertError) {
-        console.error('Failed to create alert:', alertError)
+        logger.error('Failed to create alert', alertError as Error);
       } else {
-        console.log(`🚨 Alert created for ${config.display_name}`)
+        logger.warn('Alert created', { metadata: { displayName: config.display_name } });
 
         // TODO: Send notification (email/webhook)
         // This would integrate with your notification system

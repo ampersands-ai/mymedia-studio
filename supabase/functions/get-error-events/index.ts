@@ -1,17 +1,22 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors-headers.ts'
+import { EdgeLogger } from '../_shared/edge-logger.ts'
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts"
 
 serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return handleCorsPreflight(req);
   }
 
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+  const logger = new EdgeLogger('get-error-events', crypto.randomUUID(), supabaseClient);
+
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
 
     // Verify authentication
     const authHeader = req.headers.get('Authorization')!
@@ -21,7 +26,7 @@ serve(async (req) => {
     if (authError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -35,7 +40,7 @@ serve(async (req) => {
     if (!roles || roles.role !== 'admin') {
       return new Response(
         JSON.stringify({ error: 'Forbidden - Admin access required' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 403, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -142,16 +147,16 @@ serve(async (req) => {
         },
         stats: aggregatedStats,
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
-    console.error('Error fetching error events:', error)
+    logger.error('Error fetching error events', error instanceof Error ? error : undefined);
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : String(error) || 'Internal server error'
       }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })

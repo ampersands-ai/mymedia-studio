@@ -1,11 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getModel } from "../_shared/registry/index.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 interface TestStep {
   step: string;
@@ -16,8 +16,11 @@ interface TestStep {
 }
 
 serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('test-model-generation', requestId);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -27,12 +30,12 @@ serve(async (req) => {
     );
 
     const { modelRecordId, prompt, parameters, userId, imageUrls } = await req.json();
-    
+
     const steps: TestStep[] = [];
     const testStartTime = Date.now();
 
     // Step 1: User Input Validation
-    console.log('Step 1: Validating user input...');
+    logger.info('Step 1: Validating user input');
     const inputValidationStep: TestStep = {
       step: 'input_validation',
       timestamp: Date.now(),
@@ -71,7 +74,7 @@ serve(async (req) => {
     }
 
     // Step 2: Credit Check
-    console.log('Step 2: Checking credits...');
+    logger.info('Step 2: Checking credits');
     const { data: subscription } = await supabase
       .from('user_subscriptions')
       .select('tokens_remaining, tokens_total')
@@ -80,7 +83,7 @@ serve(async (req) => {
 
     const creditsRequired = baseCost || 2;
     const creditsAvailable = subscription?.tokens_remaining || 0;
-    
+
     steps.push({
       step: 'credit_check',
       timestamp: Date.now(),
@@ -95,7 +98,7 @@ serve(async (req) => {
     });
 
     // Step 3: Credit Deduction (for testing, we'll simulate or skip)
-    console.log('Step 3: Credit deduction (test mode - skipped)...');
+    logger.info('Step 3: Credit deduction (test mode - skipped)');
     steps.push({
       step: 'credit_deduction',
       timestamp: Date.now(),
@@ -110,7 +113,7 @@ serve(async (req) => {
     });
 
     // Step 4: API Request Prepared
-    console.log('Step 4: Preparing API request...');
+    logger.info('Step 4: Preparing API request');
     const apiPayload = {
       model_id: modelId,
       prompt: prompt,
@@ -134,10 +137,10 @@ serve(async (req) => {
     });
 
     // Step 5: API Request Sent
-    console.log('Step 5: Sending API request...');
+    logger.info('Step 5: Sending API request');
     const requestSentTime = Date.now();
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-    
+
     if (!lovableApiKey) {
       throw new Error('LOVABLE_API_KEY not configured');
     }
@@ -170,7 +173,7 @@ serve(async (req) => {
     });
 
     // Step 6: First API Response Received
-    console.log('Step 6: Received first API response...');
+    logger.info('Step 6: Received first API response');
     const firstResponseTime = Date.now();
     
     if (!generateResponse.ok) {
@@ -205,18 +208,18 @@ serve(async (req) => {
     });
 
     // Step 7: Generation Polling (if async)
-    console.log('Step 7: Starting polling...');
+    logger.info('Step 7: Starting polling');
     let pollCount = 0;
     let finalResult = null;
     const maxPolls = 60; // 5 minutes max
     const pollInterval = 5000; // 5 seconds
 
     const pollingStartTime = Date.now();
-    
+
     while (pollCount < maxPolls) {
       pollCount++;
       await new Promise(resolve => setTimeout(resolve, pollInterval));
-      
+
       // Check generation status via Supabase
       const { data: generation } = await supabase
         .from('generations')
@@ -224,17 +227,19 @@ serve(async (req) => {
         .eq('provider_task_id', taskId)
         .single();
 
-      if (generation && generation.status === 'completed') {
+      if (generation && generation.status === GENERATION_STATUS.COMPLETED) {
         finalResult = generation;
-        console.log('✅ Generation completed, provider_response keys:', Object.keys(generation.provider_response || {}));
+        logger.info('Generation completed', {
+          metadata: { providerResponseKeys: Object.keys(generation.provider_response || {}) }
+        });
         break;
       }
-      
-      if (generation && generation.status === 'failed') {
+
+      if (generation && generation.status === GENERATION_STATUS.FAILED) {
         throw new Error('Generation failed');
       }
 
-      console.log(`Poll ${pollCount}: Status = ${generation?.status || 'pending'}`);
+      logger.debug(`Poll ${pollCount}`, { metadata: { status: generation?.status || 'pending' } });
     }
 
     const pollingEndTime = Date.now();
@@ -256,9 +261,11 @@ serve(async (req) => {
     }
 
     // Step 8: Final API Response Received
-    console.log('Step 8: Final response received...');
-    console.log('📦 Provider response data:', JSON.stringify(finalResult.provider_response, null, 2));
-    
+    logger.info('Step 8: Final response received');
+    logger.debug('Provider response data', {
+      metadata: { providerResponse: JSON.stringify(finalResult.provider_response).substring(0, 500) }
+    });
+
     steps.push({
       step: 'final_api_response',
       timestamp: Date.now(),
@@ -274,7 +281,7 @@ serve(async (req) => {
     });
 
     // Step 9: Media Storage Operation
-    console.log('Step 9: Media storage...');
+    logger.info('Step 9: Media storage');
     steps.push({
       step: 'media_storage',
       timestamp: Date.now(),
@@ -288,7 +295,7 @@ serve(async (req) => {
     });
 
     // Step 10: Media Validation
-    console.log('Step 10: Validating media...');
+    logger.info('Step 10: Validating media');
     const validationStartTime = Date.now();
     let mediaAccessible = false;
     
@@ -324,7 +331,7 @@ serve(async (req) => {
     }
 
     // Step 11: Media Delivered to User
-    console.log('Step 11: Delivering media to user...');
+    logger.info('Step 11: Delivering media to user');
     steps.push({
       step: 'media_delivered',
       timestamp: Date.now(),
@@ -345,14 +352,14 @@ serve(async (req) => {
         generation_id: finalResult.id,
         output_url: finalResult.output_url,
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      {
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     );
 
   } catch (error) {
-    console.error('Test generation error:', error);
+    logger.error('Test generation error', error instanceof Error ? error : new Error(String(error)));
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
     return new Response(
@@ -362,7 +369,7 @@ serve(async (req) => {
         steps: [],
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
         status: 500,
       }
     );

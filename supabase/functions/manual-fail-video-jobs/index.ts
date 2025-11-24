@@ -1,11 +1,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { 
   ManualFailSchema,
   validateRequest,
   createValidationErrorResponse 
 } from "../_shared/validation.ts";
 import {
+import { GENERATION_STATUS } from "../_shared/constants.ts";
   handleOptionsRequest,
   createJsonResponse,
   createErrorResponse,
@@ -13,6 +15,8 @@ import {
 } from "../_shared/cors-headers.ts";
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return handleOptionsRequest();
   }
@@ -56,7 +60,7 @@ Deno.serve(async (req) => {
     const { data: updatedJobs, error: updateError } = await supabaseClient
       .from('video_jobs')
       .update({
-        status: 'failed',
+        status: GENERATION_STATUS.FAILED,
         error_message: 'Video assembly timed out after extended period',
         updated_at: new Date().toISOString()
       })

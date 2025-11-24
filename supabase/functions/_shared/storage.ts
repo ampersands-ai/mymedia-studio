@@ -28,7 +28,7 @@ export async function uploadToStorage(
     });
 
   if (uploadError) {
-    console.error(JSON.stringify({ event: 'storage_upload_error', message: uploadError.message, error: uploadError }));
+    // Error details are included in the thrown error message
     throw new Error(`Failed to upload to storage: ${uploadError.message}`);
   }
 

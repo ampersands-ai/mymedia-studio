@@ -15,15 +15,16 @@ import { downloadContent } from "../../kie-ai-webhook/storage/content-downloader
 import { uploadToStorage } from "../../kie-ai-webhook/storage/content-uploader.ts";
 import { determineFileExtension } from "../../kie-ai-webhook/storage/mime-utils.ts";
 import { orchestrateWorkflow } from "../../kie-ai-webhook/orchestration/workflow-orchestrator.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../../_shared/constants.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const webhookStartTime = Date.now();
@@ -40,7 +41,7 @@ Deno.serve(async (req) => {
     if (!layer1.success) {
       return new Response(layer1.shouldReturn404 ? 'Not Found' : JSON.stringify({ error: layer1.error }), {
         status: layer1.shouldReturn404 ? 404 : 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -56,7 +57,7 @@ Deno.serve(async (req) => {
       });
       return new Response('Forbidden', {
         status: 403,
-        headers: corsHeaders
+        headers: responseHeaders
       });
     }
     webhookLogger.security('signature', true, { provider: 'midjourney' });
@@ -69,7 +70,7 @@ Deno.serve(async (req) => {
       webhookLogger.error('Missing taskId in webhook payload', new Error('No taskId'), { provider: 'midjourney' });
       return new Response(
         JSON.stringify({ error: 'Missing taskId in payload' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -90,7 +91,7 @@ Deno.serve(async (req) => {
     if (!layer2.success) {
       return new Response(JSON.stringify({ error: layer2.error }), {
         status: layer2.statusCode || 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -103,7 +104,7 @@ Deno.serve(async (req) => {
     if (!layer3.success) {
       return new Response(JSON.stringify({ error: layer3.error }), {
         status: layer3.statusCode || 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -117,7 +118,7 @@ Deno.serve(async (req) => {
         generation_id: generationId 
       }), {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -134,7 +135,7 @@ Deno.serve(async (req) => {
       await supabase
         .from('generations')
         .update({
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           error_message: errorMessage,
           completed_at: new Date().toISOString()
         })
@@ -156,10 +157,10 @@ Deno.serve(async (req) => {
 
       return new Response(JSON.stringify({ 
         success: true,
-        status: 'failed',
+        status: GENERATION_STATUS.FAILED,
         error: errorMessage 
       }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -168,7 +169,7 @@ Deno.serve(async (req) => {
       await supabase
         .from('generations')
         .update({ 
-          status: 'processing',
+          status: GENERATION_STATUS.PROCESSING,
           provider_response: payload 
         })
         .eq('id', generationId);
@@ -180,9 +181,9 @@ Deno.serve(async (req) => {
 
       return new Response(JSON.stringify({ 
         success: true,
-        status: 'processing' 
+        status: GENERATION_STATUS.PROCESSING 
       }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -219,7 +220,7 @@ Deno.serve(async (req) => {
     await supabase
       .from('generations')
       .update({
-        status: 'completed',
+        status: GENERATION_STATUS.COMPLETED,
         output_url: uploadResult.publicUrl,
         storage_path: uploadResult.storagePath,
         completed_at: new Date().toISOString(),
@@ -253,9 +254,9 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ 
       success: true,
       generation_id: generationId,
-      status: 'completed'
+      status: GENERATION_STATUS.COMPLETED
     }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...responseHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error: any) {

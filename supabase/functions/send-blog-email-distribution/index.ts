@@ -1,14 +1,17 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('send-blog-email', requestId);
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -35,7 +38,7 @@ Deno.serve(async (req) => {
 
     const { blogPostId } = await req.json();
 
-    console.log('Sending blog email distribution for post:', blogPostId);
+    logger.info('Sending blog email distribution', { metadata: { blogPostId } });
 
     // Fetch blog post with full details
     const { data: post, error: postError } = await supabase
@@ -67,7 +70,7 @@ Deno.serve(async (req) => {
       throw new Error('No recipients found');
     }
 
-    console.log(`Sending to ${recipients.length} recipients`);
+    logger.info('Sending to recipients', { metadata: { recipientCount: recipients.length } });
 
     // Generate blog URL
     const blogUrl = `${supabaseUrl.replace('https://', 'https://app.')}/blog/${post.slug}`;
@@ -135,7 +138,7 @@ Deno.serve(async (req) => {
         );
 
         if (error) {
-          console.error('Batch send error:', error);
+          logger.error('Batch send error', error as Error);
           continue;
         }
 
@@ -144,7 +147,7 @@ Deno.serve(async (req) => {
           emailServiceIds.push(...data.data.map((d: any) => d.id));
         }
       } catch (batchError) {
-        console.error('Error sending batch:', batchError);
+        logger.error('Error sending batch', batchError instanceof Error ? batchError : new Error(String(batchError)));
       }
     }
 
@@ -160,10 +163,12 @@ Deno.serve(async (req) => {
       });
 
     if (insertError) {
-      console.error('Failed to record distribution:', insertError);
+      logger.error('Failed to record distribution', insertError as Error);
     }
 
-    console.log(`Successfully sent to ${totalSent}/${recipients.length} recipients`);
+    logger.info('Email distribution complete', {
+      metadata: { totalSent, totalRecipients: recipients.length }
+    });
 
     return new Response(
       JSON.stringify({
@@ -174,16 +179,16 @@ Deno.serve(async (req) => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
       }
     );
   } catch (error: any) {
-    console.error('Error sending blog emails:', error);
+    logger.error('Error sending blog emails', error instanceof Error ? error : new Error(String(error)));
     return new Response(
       JSON.stringify({ error: error?.message || 'Unknown error' }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
       }
     );
   }

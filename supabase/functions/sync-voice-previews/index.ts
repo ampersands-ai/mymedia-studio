@@ -1,10 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 const TOP_VOICES = [
   { id: '9BWtsMINqrJLrRacOk9x', name: 'Aria' },
@@ -30,11 +29,13 @@ const TOP_VOICES = [
 ];
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('sync-voice-previews', requestId);
   
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -115,14 +116,14 @@ Deno.serve(async (req) => {
         results.push({
           voice_id: topVoice.id,
           name: topVoice.name,
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           error: error.message
         });
       }
     }
 
     const successCount = results.filter(r => r.status === 'success').length;
-    const failedCount = results.filter(r => r.status === 'failed').length;
+    const failedCount = results.filter(r => r.status === GENERATION_STATUS.FAILED).length;
 
     logger.info('Sync complete', { 
       metadata: { total: results.length, successful: successCount, failed: failedCount } 
@@ -138,7 +139,7 @@ Deno.serve(async (req) => {
         },
         results 
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
     logger.error('Error in sync-voice-previews', error);
@@ -149,7 +150,7 @@ Deno.serve(async (req) => {
       }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }

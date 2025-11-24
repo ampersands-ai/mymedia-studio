@@ -9,6 +9,23 @@ import { getModel } from "@/lib/models/registry";
 
 type ConnectionTier = 'realtime' | 'polling' | 'disconnected';
 
+interface ChildGeneration {
+  id: string;
+  storage_path: string | null;
+  output_index: number | null;
+  provider_task_id: string | null;
+  model_id: string | null;
+  model_record_id: string;
+}
+
+interface RealtimePayload {
+  new: {
+    id: string;
+    status: string;
+    storage_path?: string;
+  };
+}
+
 interface UseHybridGenerationPollingOptions {
   onComplete: (outputs: GenerationOutput[], parentId: string) => void;
   onError?: (error: string) => void;
@@ -88,7 +105,7 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
         const model = getModel(parentData.model_record_id);
         parentProvider = model.MODEL_CONFIG.provider;
       } catch (e) {
-        console.warn(`Failed to load model from registry:`, parentData.model_record_id, e);
+        logger.warn('Failed to load model from registry', { modelRecordId: parentData.model_record_id, error: e });
       }
 
       if (parentData.status === 'completed') {
@@ -103,20 +120,20 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
         // Add child generations (batch outputs)
         if (childrenData && childrenData.length > 0) {
           outputs.push(...childrenData
-            .filter((child: any) => child.storage_path) // Only include children with valid storage_path
-            .map((child: any) => {
+            .filter((child: ChildGeneration) => child.storage_path) // Only include children with valid storage_path
+            .map((child: ChildGeneration) => {
               // ADR 007: Get provider from registry for each child
               let childProvider = '';
               try {
                 const model = getModel(child.model_record_id);
                 childProvider = model.MODEL_CONFIG.provider;
               } catch (e) {
-                console.warn(`Failed to load model from registry:`, child.model_record_id, e);
+                logger.warn('Failed to load model from registry', { modelRecordId: child.model_record_id, error: e });
               }
 
               return {
                 id: child.id,
-                storage_path: child.storage_path,
+                storage_path: child.storage_path!,
                 type: parentData.type,
                 output_index: child.output_index || 0,
                 provider_task_id: child.provider_task_id || '',
@@ -147,8 +164,9 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
 
         optionsRef.current.onComplete(outputs, parentData.id);
       } else if (parentData.status === 'failed' || parentData.status === 'error') {
-        const pr: any = parentData.provider_response || {};
-        const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || (pr?.error && pr?.error?.message);
+        const pr = (parentData.provider_response || {}) as Record<string, unknown>;
+        const errorObj = pr.error as { message?: string } | undefined;
+        const detailed = pr.error || pr.message || pr.error_message || pr.detail || errorObj?.message;
         const errorMsg = detailed ? String(detailed) : `Generation ${parentData.status}`;
         optionsRef.current.onError?.(errorMsg);
       }
@@ -226,10 +244,10 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
           table: 'generations',
           filter: `user_id=eq.${userId}`
         },
-        (payload: any) => {
-          logger.info('Realtime update received', { 
+        (payload: RealtimePayload) => {
+          logger.info('Realtime update received', {
             generationId: payload.new.id,
-            status: payload.new.status 
+            status: payload.new.status
           } as any);
 
           if (payload.new.id === generationId && 
@@ -246,10 +264,10 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
           table: 'generations',
           filter: `parent_generation_id=eq.${generationId}`
         },
-        (payload: any) => {
-          logger.info('Child generation event', { 
+        (payload: RealtimePayload) => {
+          logger.info('Child generation event', {
             childId: payload.new?.id,
-            hasStoragePath: !!payload.new?.storage_path 
+            hasStoragePath: !!payload.new?.storage_path
           } as any);
 
           // If child has output, parent might be complete soon

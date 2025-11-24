@@ -23,19 +23,19 @@ import { determineFileExtension } from "./storage/mime-utils.ts";
 
 // Orchestration
 import { orchestrateWorkflow } from "./orchestration/workflow-orchestrator.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('kie-ai-webhook', requestId);
   const webhookStartTime = Date.now();
   
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
       logger.warn('URL token validation failed', { metadata: { url: url.toString() } });
       return new Response(urlTokenResult.shouldReturn404 ? 'Not Found' : 'Bad Request', {
         status: urlTokenResult.shouldReturn404 ? 404 : 400,
-        headers: corsHeaders
+        headers: responseHeaders
       });
     }
 
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       });
       return new Response('Forbidden', {
         status: 403,
-        headers: corsHeaders
+        headers: responseHeaders
       });
     }
 
@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
       logger.error('Invalid payload: missing taskId/task_id');
       return new Response(
         JSON.stringify({ error: 'Missing taskId in payload' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
         }),
         { 
           status: verifyResult.statusCode || 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
         }
       );
     }
@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
     if (!timingResult.success) {
       return new Response(
         JSON.stringify({ error: timingResult.error }),
-        { status: timingResult.statusCode || 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: timingResult.statusCode || 429, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
@@ -121,14 +121,24 @@ Deno.serve(async (req) => {
     if (!idempotencyResult.success || idempotencyResult.isDuplicate) {
       return new Response(
         JSON.stringify({ success: true, message: idempotencyResult.error || 'Already processed' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
     logger.info('All security layers passed - processing webhook');
 
     // Parse items from payload
-    let items: any[] = [];
+    interface ResultItem {
+      audio_url?: string;
+      source_audio_url?: string;
+      stream_audio_url?: string;
+      image_url?: string;
+      source_image_url?: string;
+      video_url?: string;
+      source_video_url?: string;
+      url?: string;
+    }
+    let items: ResultItem[] = [];
     let normalizedUrls: string[] = [];
     try {
       normalizedUrls = normalizeResultUrls(payload, resultJson, generation.type, generation.modelMetadata?.id);
@@ -219,7 +229,7 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, message: 'Generation marked as failed' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -232,7 +242,7 @@ Deno.serve(async (req) => {
         await supabase.from('generations').update({ status: GENERATION_STATUS.PROCESSING, provider_response: payload }).eq('id', generation.id);
         return new Response(
           JSON.stringify({ success: true, message: `Partial webhook acknowledged` }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
     } else if (generation.type === 'audio') {
@@ -243,7 +253,7 @@ Deno.serve(async (req) => {
         await supabase.from('generations').update({ status: GENERATION_STATUS.PROCESSING, provider_response: payload }).eq('id', generation.id);
         return new Response(
           JSON.stringify({ success: true, message: `Partial webhook acknowledged` }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
     } else if (generation.type === 'video') {
@@ -254,7 +264,7 @@ Deno.serve(async (req) => {
         await supabase.from('generations').update({ status: GENERATION_STATUS.PROCESSING, provider_response: payload }).eq('id', generation.id);
         return new Response(
           JSON.stringify({ success: true, message: `Partial webhook acknowledged` }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
     }
@@ -284,11 +294,11 @@ Deno.serve(async (req) => {
           resultUrls = payload.data.info.resultUrls || payload.data.info.result_urls || [];
         } else if (Array.isArray(items) && items.length > 0) {
           if (generation.type === 'audio') {
-            resultUrls = items.map((item: any) => item?.audio_url || item?.source_audio_url || item?.stream_audio_url).filter(Boolean);
+            resultUrls = items.map((item) => item?.audio_url || item?.source_audio_url || item?.stream_audio_url).filter(Boolean) as string[];
           } else if (generation.type === 'image') {
-            resultUrls = items.map((item: any) => item?.image_url || item?.source_image_url).filter(Boolean);
+            resultUrls = items.map((item) => item?.image_url || item?.source_image_url).filter(Boolean) as string[];
           } else {
-            resultUrls = items.map((item: any) => item?.video_url || item?.source_video_url || item?.url).filter(Boolean);
+            resultUrls = items.map((item) => item?.video_url || item?.source_video_url || item?.url).filter(Boolean) as string[];
           }
         }
       } else {
@@ -326,7 +336,7 @@ Deno.serve(async (req) => {
           
           return new Response(
             JSON.stringify({ success: true, message: 'Download failed - user refunded' }),
-            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
           );
         }
         
@@ -356,7 +366,7 @@ Deno.serve(async (req) => {
           
           return new Response(
             JSON.stringify({ success: true, message: 'Storage failed - user refunded' }),
-            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
           );
         }
         
@@ -449,12 +459,12 @@ Deno.serve(async (req) => {
               is_batch_output: true
             });
             
-            logger.info(`Output ${i + 1} child generation created`, { 
-              metadata: { generationId: generation.id, childId, outputIndex: i + 1 } 
+            logger.info(`Output ${i + 1} child generation created`, {
+              metadata: { generationId: generation.id, childId, outputIndex: i + 1 }
             });
-          } catch (error: any) {
-            logger.error(`Output ${i + 1} child creation failed`, error, { 
-              metadata: { generationId: generation.id, outputIndex: i + 1 } 
+          } catch (error) {
+            logger.error(`Output ${i + 1} child creation failed`, error instanceof Error ? error : new Error(String(error)), {
+              metadata: { generationId: generation.id, outputIndex: i + 1 }
             });
           }
         }
@@ -536,19 +546,20 @@ Deno.serve(async (req) => {
           message: 'Generation completed',
           outputs_processed: resultUrls.length
         }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    logger.warn('Unknown webhook state received', { 
-      metadata: { state, taskId, callbackType, generationId: generation.id } 
+    logger.warn('Unknown webhook state received', {
+      metadata: { state, taskId, callbackType, generationId: generation.id }
     });
     return new Response(
       JSON.stringify({ success: true, message: 'Webhook received but state unknown' }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
-    return createSafeErrorResponse(error, 'kie-ai-webhook', corsHeaders);
+  } catch (error) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    return createSafeErrorResponse(errorObj, 'kie-ai-webhook', responseHeaders);
   }
 });

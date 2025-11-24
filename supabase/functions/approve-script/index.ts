@@ -1,26 +1,23 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from '../_shared/edge-logger.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 // Inlined helper: sanitize sensitive data
-function sanitizeData(data: any): any {
-  if (!data) return data;
-  const sanitized = { ...data };
+function sanitizeData(data: unknown): unknown {
+  if (!data || typeof data !== 'object') return data;
+  const sanitized = { ...(data as Record<string, unknown>) };
   const sensitiveKeys = ['api_key', 'authorization', 'token', 'secret', 'apiKey', 'xi-api-key'];
   sensitiveKeys.forEach(key => delete sanitized[key]);
-  if (sanitized.headers) {
-    sensitiveKeys.forEach(key => delete sanitized.headers[key]);
+  if (sanitized.headers && typeof sanitized.headers === 'object') {
+    const headers = sanitized.headers as Record<string, unknown>;
+    sensitiveKeys.forEach(key => delete headers[key]);
   }
   return sanitized;
 }
 
 // Inlined helper: log API call with EdgeLogger integration
 async function logApiCall(
-  supabase: any,
+  supabase: SupabaseClient,
   logger: EdgeLogger,
   request: {
     videoJobId: string;
@@ -29,13 +26,13 @@ async function logApiCall(
     endpoint: string;
     httpMethod: string;
     stepName: string;
-    requestPayload?: any;
-    additionalMetadata?: any;
+    requestPayload?: unknown;
+    additionalMetadata?: Record<string, unknown>;
   },
   requestSentAt: Date,
   response: {
     statusCode: number;
-    payload?: any;
+    payload?: unknown;
     isError: boolean;
     errorMessage?: string;
   }
@@ -105,10 +102,10 @@ async function fetchWithRetry(
           continue;
         }
       }
-      
+
       return response;
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('Request timeout after 30 seconds');
       }
       if (attempt < maxRetries - 1) {
@@ -124,8 +121,10 @@ async function fetchWithRetry(
 }
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const startTime = Date.now();
@@ -444,26 +443,27 @@ Deno.serve(async (req) => {
     });
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message: 'Voiceover generated successfully',
         status: 'awaiting_voice_approval'
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
+  } catch (error) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
     const logger = new EdgeLogger('approve-script', requestId, supabaseClient, true);
-    
-    logger.error('approve-script failed', error, { metadata: { jobId: job_id, errorMessage: error?.message } });
-    
+
+    logger.error('approve-script failed', errorObj, { metadata: { jobId: job_id, errorMessage: errorObj.message } });
+
     return new Response(
-      JSON.stringify({ error: error?.message || 'Unknown error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: errorObj.message || 'Unknown error' }),
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

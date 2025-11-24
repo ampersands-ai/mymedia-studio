@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { logger } from "@/lib/logger";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { GlobalHeader } from "@/components/GlobalHeader";
@@ -44,7 +45,7 @@ export default function BlogList() {
       setPosts(data as BlogPost[] || []);
       setFilteredPosts(data as BlogPost[] || []);
     } catch (error) {
-      console.error('Error fetching blog posts:', error);
+      logger.error('Error fetching blog posts', error);
     } finally {
       setIsLoading(false);
     }

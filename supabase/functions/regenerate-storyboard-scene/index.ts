@@ -1,26 +1,25 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const startTime = Date.now();
   const requestId = crypto.randomUUID();
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+  const logger = new EdgeLogger('regenerate-storyboard-scene', requestId, supabaseClient, true);
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    const logger = new EdgeLogger('regenerate-storyboard-scene', requestId, supabaseClient, true);
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -55,7 +54,7 @@ Deno.serve(async (req) => {
     if (subscription.tokens_remaining < tokenCost) {
       return new Response(
         JSON.stringify({ error: 'Insufficient credits' }),
-        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 402, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -216,15 +215,15 @@ Create a scene that bridges these naturally.`;
         scene: updatedScene,
         tokensUsed: tokenCost
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('[regenerate-storyboard-scene] Function error:', error);
+    logger.error('Regenerate storyboard scene error', error instanceof Error ? error : undefined);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

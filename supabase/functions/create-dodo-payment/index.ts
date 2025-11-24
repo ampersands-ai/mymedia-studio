@@ -1,10 +1,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 // Retry helper with exponential backoff and IP fallback
 async function fetchWithRetry(url: string, options: RequestInit, maxAttempts = 3): Promise<Response> {
@@ -95,13 +92,16 @@ const PLAN_PRODUCT_IDS = {
 };
 
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('create-dodo-payment', requestId);
 
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -233,7 +233,7 @@ Deno.serve(async (req) => {
           }),
           { 
             status: 503, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
           }
         );
       }
@@ -271,7 +271,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
@@ -281,7 +281,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: errorMessage }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
       }
     );
   }

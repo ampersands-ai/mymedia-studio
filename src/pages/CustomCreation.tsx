@@ -88,7 +88,7 @@ const CustomCreation = () => {
   // Generation polling
   const { startPolling, stopPolling, isPolling, connectionTier, realtimeConnected } = useGenerationPolling({
     onComplete: (outputs, parentId) => {
-      console.log('✅ Polling onComplete called', { outputCount: outputs.length, parentId });
+      logger.info('Polling onComplete called', { outputCount: outputs.length, parentId });
       updateState({
         generatedOutputs: outputs,
         generatedOutput: outputs[0]?.storage_path || null,
@@ -159,7 +159,7 @@ const CustomCreation = () => {
     if (!state.pollingGenerationId) return;
 
     const setupRealtimeAndCheckStatus = async () => {
-      console.log('🔴 Setting up realtime subscription', { generationId: state.pollingGenerationId });
+      logger.info('Setting up realtime subscription', { generationId: state.pollingGenerationId });
 
       // IMMEDIATE STATUS CHECK (fixes race condition for fast completions)
       const { data: currentGen } = await supabase
@@ -169,13 +169,13 @@ const CustomCreation = () => {
         .single();
 
       if (currentGen?.status === 'completed') {
-        console.log('🎉 Generation already completed! Handling immediately...');
+        logger.info('Generation already completed, handling immediately');
         
         let outputs: GenerationOutput[] = [];
 
         // Handle batch outputs (multiple images/audio)
         if (currentGen.is_batch_output) {
-          console.log('📦 Fetching batch child outputs...');
+          logger.info('Fetching batch child outputs');
           const { data: children } = await supabase
             .from('generations')
             .select('id, storage_path, output_index, model_id, type, provider_task_id')
@@ -193,7 +193,7 @@ const CustomCreation = () => {
                 provider_task_id: child.provider_task_id,
                 type: child.type,
               }));
-            console.log(`✅ Found ${outputs.length} batch outputs (filtered out ${children.length - outputs.length} without storage_path)`);
+            logger.info('Found batch outputs', { outputCount: outputs.length, filteredCount: children.length - outputs.length });
           }
         } else if (currentGen.storage_path) {
           // Single output
@@ -203,7 +203,7 @@ const CustomCreation = () => {
             output_index: currentGen.output_index || 0,
             type: currentGen.type,
           }];
-          console.log('✅ Found single output');
+          logger.info('Found single output');
         }
 
         if (outputs.length > 0) {
@@ -236,7 +236,7 @@ const CustomCreation = () => {
         generateCaption(outputs);
           }
         } else {
-          console.warn('⚠️ Generation completed but no outputs found');
+          logger.warn('Generation completed but no outputs found');
           updateState({
             localGenerating: false,
             pollingGenerationId: null,
@@ -247,7 +247,7 @@ const CustomCreation = () => {
         return; // Don't set up subscription
       } else if (currentGen.status === 'failed' || currentGen.status === 'error') {
         // Handle immediate failure (job failed before page load)
-        console.log('❌ Generation was already failed');
+        logger.error('Generation was already failed');
         
         try {
           const pr: any = currentGen.provider_response || {};
@@ -271,7 +271,7 @@ const CustomCreation = () => {
             action: { label: 'View History', onClick: () => navigate('/dashboard/history') }
           });
         } catch (e) {
-          console.warn('Failed to display error details for pre-failed generation', e);
+          logger.warn('Failed to display error details for pre-failed generation', { error: e });
           updateState({ 
             localGenerating: false, 
             pollingGenerationId: null,
@@ -303,12 +303,12 @@ const CustomCreation = () => {
             filter: `id=eq.${state.pollingGenerationId}`
           },
           async (payload) => {
-            console.log('🔴 Realtime update received', payload);
-            
+            logger.info('Realtime update received', { payload });
+
             const newStatus = payload.new.status;
-            
+
             if (newStatus === 'completed') {
-              console.log('🎉 Generation completed via realtime!');
+              logger.info('Generation completed via realtime');
               
               // Stop polling
               stopPolling();
@@ -324,7 +324,7 @@ const CustomCreation = () => {
 
               // Handle batch outputs (multiple images/audio)
               if (generationData?.is_batch_output) {
-                console.log('📦 Fetching batch child outputs...');
+                logger.info('Fetching batch child outputs');
                 const { data: children } = await supabase
                   .from('generations')
                   .select('id, storage_path, output_index, model_id, type, provider_task_id')
@@ -342,7 +342,7 @@ const CustomCreation = () => {
                       provider_task_id: child.provider_task_id,
                       type: child.type,
                     }));
-                  console.log(`✅ Found ${outputs.length} batch outputs via realtime (filtered out ${children.length - outputs.length} without storage_path)`);
+                  logger.info('Found batch outputs via realtime', { outputCount: outputs.length, filteredCount: children.length - outputs.length });
                 }
               } else if (generationData?.storage_path) {
                 // Single output
@@ -352,11 +352,11 @@ const CustomCreation = () => {
                   output_index: generationData.output_index || 0,
                   type: generationData.type,
                 }];
-                console.log('✅ Found single output via realtime');
+                logger.info('Found single output via realtime');
               }
-              
+
               if (outputs.length > 0) {
-                console.log('🎉 Updating UI with realtime data', { outputs });
+                logger.info('Updating UI with realtime data', { outputs });
                 
                 // Update state immediately
                 updateState({
@@ -387,7 +387,7 @@ const CustomCreation = () => {
         generateCaption(outputs);
                 }
               } else {
-                console.warn('⚠️ Generation completed but no outputs found');
+                logger.warn('Generation completed but no outputs found');
                 updateState({
                   localGenerating: false,
                   pollingGenerationId: null,
@@ -395,7 +395,7 @@ const CustomCreation = () => {
                 toast.error('Generation completed but no outputs were found');
               }
               } else if (newStatus === 'failed' || newStatus === 'error') {
-                console.log('❌ Generation failed via realtime');
+                logger.error('Generation failed via realtime');
                 stopPolling();
 
                 // Fetch latest provider details for a meaningful error message
@@ -426,7 +426,7 @@ const CustomCreation = () => {
                     action: { label: 'View History', onClick: () => navigate('/dashboard/history') }
                   });
                 } catch (e) {
-                  console.warn('Failed to fetch provider details for error toast', e);
+                  logger.warn('Failed to fetch provider details for error toast', { error: e });
                   updateState({ 
                     localGenerating: false, 
                     pollingGenerationId: null,
@@ -447,7 +447,7 @@ const CustomCreation = () => {
         .subscribe();
 
       return () => {
-        console.log('🔴 Cleaning up realtime subscription');
+        logger.info('Cleaning up realtime subscription');
         supabase.removeChannel(channel);
       };
     };

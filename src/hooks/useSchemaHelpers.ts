@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import type { ModelConfiguration } from "@/types/schema";
 import { isKieAiAudioModel } from "@/lib/custom-creation-utils";
+import { logger } from "@/lib/logger";
 
 // Type stub for backward compatibility - models now loaded from registry
 type AIModel = ModelConfiguration;
@@ -40,9 +41,9 @@ export const useSchemaHelpers = () => {
     
     const properties = (model.input_schema as any).properties || {};
     const fieldSchema = properties[imageFieldName];
-    
+
     if (!fieldSchema) {
-      console.warn(`Image field '${imageFieldName}' declared in schema but not found in properties`);
+      logger.warn(`Image field '${imageFieldName}' declared in schema but not found in properties`);
       return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
     }
     

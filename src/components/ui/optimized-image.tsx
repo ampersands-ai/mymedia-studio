@@ -3,6 +3,7 @@ import { useInView } from 'react-intersection-observer';
 import { cn } from "@/lib/utils";
 import { Skeleton } from "./skeleton";
 import { getOptimizedImageUrl, getResponsiveSrcSet, getBlurPlaceholder, getPublicImageUrl } from '@/lib/supabase-images';
+import { logger } from "@/lib/logger";
 
 interface OptimizedImageProps extends ImgHTMLAttributes<HTMLImageElement> {
   src: string;
@@ -135,7 +136,7 @@ export const OptimizedImage = ({
             )}
             onLoad={() => setIsLoading(false)}
             onError={() => {
-              console.error('❌ Fallback image failed', { src: fallbackUrl });
+              logger.error('Fallback image failed', { src: fallbackUrl });
               setIsLoading(false);
               setHasError(true);
             }}
@@ -172,10 +173,10 @@ export const OptimizedImage = ({
               )}
               onLoad={() => setIsLoading(false)}
               onError={() => {
-                console.error('❌ Optimized image load failed', { src: isSupabaseImage ? jpegUrl : src });
+                logger.error('Optimized image load failed', { src: isSupabaseImage ? jpegUrl : src });
                 // Try fallback to public URL for Supabase images
                 if (isSupabaseImage && !fallbackUrl) {
-                  console.log('🔄 Falling back to public URL');
+                  logger.info('Falling back to public URL', { src });
                   const publicUrl = getPublicImageUrl(src);
                   setFallbackUrl(publicUrl);
                   setIsLoading(true);

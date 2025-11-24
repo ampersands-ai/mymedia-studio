@@ -2,15 +2,16 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const requestId = crypto.randomUUID();
@@ -37,7 +38,7 @@ Deno.serve(async (req) => {
           error: 'Authentication required', 
           details: 'Missing bearer token' 
         }), 
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -50,7 +51,7 @@ Deno.serve(async (req) => {
           error: 'Authentication failed',
           details: 'Invalid or expired token'
         }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
@@ -62,7 +63,7 @@ Deno.serve(async (req) => {
       logger.error('Missing generation_id in request');
       return new Response(
         JSON.stringify({ error: 'generation_id is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -82,7 +83,7 @@ Deno.serve(async (req) => {
       logger.error('Generation not found', fetchError instanceof Error ? fetchError : new Error(String(fetchError) || 'Database error'), { metadata: { generation_id } });
       return new Response(
         JSON.stringify({ error: 'Generation not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 404, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -93,7 +94,7 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({ error: 'Unauthorized - generation belongs to another user' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 403, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -104,18 +105,18 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({ error: 'Generation must be of type "audio"' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Validate generation is completed
-    if (audioGen.status !== 'completed') {
+    if (audioGen.status !== GENERATION_STATUS.COMPLETED) {
       logger.error('Audio not completed', undefined, { 
         metadata: { generation_id, status: audioGen.status } 
       });
       return new Response(
         JSON.stringify({ error: `Audio generation must be completed (current status: ${audioGen.status})` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -141,7 +142,7 @@ Deno.serve(async (req) => {
       logger.error('Missing taskId', undefined, { metadata: { generation_id, providerResponse } });
       return new Response(
         JSON.stringify({ error: 'Missing taskId in audio generation response' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -151,7 +152,7 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({ error: `Invalid output_index ${output_index} (available: 0-${items.length - 1})` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -162,7 +163,7 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({ error: `Missing audioId for output ${output_index}` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -186,7 +187,7 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({ error: 'Insufficient credits', required: MP4_TOKEN_COST }),
-        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 402, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -200,7 +201,7 @@ Deno.serve(async (req) => {
         user_id: user.id,
         type: 'video',
         prompt: `MP4 video from audio track #${output_index + 1}`,
-        status: 'pending',
+        status: GENERATION_STATUS.PENDING,
         tokens_used: MP4_TOKEN_COST,
         parent_generation_id: generation_id,
         output_index: output_index,
@@ -220,7 +221,7 @@ Deno.serve(async (req) => {
       logger.error('Failed to create video generation', createError instanceof Error ? createError : new Error(String(createError) || 'Database error'));
       return new Response(
         JSON.stringify({ error: 'Failed to create video generation record' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -303,7 +304,7 @@ Deno.serve(async (req) => {
       await supabaseClient
         .from('generations')
         .update({ 
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           provider_response: { error: kieData, request: kiePayload }
         })
         .eq('id', videoGen.id);
@@ -315,7 +316,7 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ error: 'Kie.ai API failed', details: kieData }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -327,7 +328,7 @@ Deno.serve(async (req) => {
       await supabaseClient
         .from('generations')
         .update({ 
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           provider_response: kieData 
         })
         .eq('id', videoGen.id);
@@ -339,7 +340,7 @@ Deno.serve(async (req) => {
       
       return new Response(
         JSON.stringify({ error: `Invalid API response: ${kieData.msg || 'Missing taskId'}` }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -350,7 +351,7 @@ Deno.serve(async (req) => {
       .update({ 
         provider_task_id: mp4TaskId,
         provider_response: kieData,
-        status: 'processing'
+        status: GENERATION_STATUS.PROCESSING
       })
       .eq('id', videoGen.id);
 
@@ -364,7 +365,7 @@ Deno.serve(async (req) => {
         mp4_task_id: mp4TaskId,
         message: 'MP4 generation started successfully'
       }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {

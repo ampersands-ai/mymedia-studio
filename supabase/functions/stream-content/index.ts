@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 const corsHeaders: HeadersInit = {
   "Access-Control-Allow-Origin": "*",
@@ -9,8 +10,10 @@ const corsHeaders: HeadersInit = {
 };
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  const responseHeaders = getResponseHeaders(req);
+
+  if (req.method === 'OPTIONS') {
+    return handleCorsPreflight(req);
   }
 
   const requestId = crypto.randomUUID();
@@ -23,7 +26,7 @@ Deno.serve(async (req) => {
     if (!path) {
       return new Response(JSON.stringify({ error: "Missing 'path' query parameter" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...responseHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -46,7 +49,7 @@ Deno.serve(async (req) => {
       logger.error("Failed to create signed URL", error ?? undefined, { metadata: { bucket, path } });
       return new Response(JSON.stringify({ error: "File not found or not accessible" }), {
         status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...responseHeaders, "Content-Type": "application/json" },
       });
     }
 

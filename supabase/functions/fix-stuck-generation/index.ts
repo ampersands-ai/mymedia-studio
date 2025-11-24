@@ -1,16 +1,17 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const startTime = Date.now();
   const requestId = crypto.randomUUID();
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -26,7 +27,7 @@ Deno.serve(async (req) => {
       logger.error('Missing authorization header');
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -38,7 +39,7 @@ Deno.serve(async (req) => {
       logger.error('Authentication failed', authError || undefined);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -54,7 +55,7 @@ Deno.serve(async (req) => {
       logger.warn('Non-admin user attempted access', { userId: user.id });
       return new Response(
         JSON.stringify({ error: 'Forbidden: Admin access required' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 403, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -65,7 +66,7 @@ Deno.serve(async (req) => {
     if (!genId) {
       return new Response(
         JSON.stringify({ error: 'Missing generation_id or generationId' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -97,7 +98,7 @@ Deno.serve(async (req) => {
       const { error: updateError } = await supabase
         .from('generations')
         .update({
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           provider_response: {
             error: errorMessage,
             terminated_by: forceTerminate ? user.id : null,
@@ -145,7 +146,7 @@ Deno.serve(async (req) => {
           message: forceTerminate ? 'Generation terminated successfully and tokens refunded' : 'Generation marked as failed and tokens refunded',
           tokens_refunded: generation.tokens_used
         }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -270,7 +271,7 @@ Deno.serve(async (req) => {
               template_id: generation.template_id,
               settings: generation.settings,
               tokens_used: 0,
-              status: 'completed',
+              status: GENERATION_STATUS.COMPLETED,
               storage_path: storagePath,
               file_size_bytes: data.length,
               provider_task_id: generation.provider_task_id,
@@ -303,7 +304,7 @@ Deno.serve(async (req) => {
       const { error: updateError } = await supabase
         .from('generations')
         .update({
-          status: 'completed',
+          status: GENERATION_STATUS.COMPLETED,
           is_batch_output: true,
           output_index: 0
         })
@@ -324,7 +325,7 @@ Deno.serve(async (req) => {
           message: `Generation fixed successfully - ${urls.length} outputs created`,
           total_outputs: urls.length
         }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     } else {
       // Single output - process as before
@@ -366,7 +367,7 @@ Deno.serve(async (req) => {
       const { error: updateError } = await supabase
         .from('generations')
         .update({
-          status: 'completed',
+          status: GENERATION_STATUS.COMPLETED,
           storage_path: mainStoragePath,
           file_size_bytes: data.length
         })
@@ -387,7 +388,7 @@ Deno.serve(async (req) => {
           message: 'Generation fixed successfully',
           storage_path: mainStoragePath 
         }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -399,7 +400,7 @@ Deno.serve(async (req) => {
     errorLogger.error('Fix generation error', error instanceof Error ? error : undefined);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

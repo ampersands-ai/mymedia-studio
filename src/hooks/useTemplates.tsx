@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { WorkflowTemplate } from "./useWorkflowTemplates";
 import type { AIModel } from "./useModels";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 
 // Re-export AIModel for backward compatibility
 export type { AIModel };
@@ -32,7 +33,7 @@ export const useTemplates = () => {
   return useQuery({
     queryKey: ["templates"],
     queryFn: async () => {
-      console.warn('useTemplates: content_templates table removed');
+      logger.warn('useTemplates: content_templates table removed');
       return [] as ContentTemplate[];
     },
     staleTime: 5 * 60 * 1000,

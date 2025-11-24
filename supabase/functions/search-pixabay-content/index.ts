@@ -1,10 +1,8 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 serve(async (req) => {
   const requestId = crypto.randomUUID();
@@ -12,7 +10,7 @@ serve(async (req) => {
   const startTime = Date.now();
   
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -87,7 +85,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ items, total: data.total }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
     logger.error('Error in search-pixabay-content', error as Error);
@@ -95,7 +93,7 @@ serve(async (req) => {
       JSON.stringify({ error: error.message }),
       { 
         status: error.message === 'Unauthorized' ? 401 : 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }

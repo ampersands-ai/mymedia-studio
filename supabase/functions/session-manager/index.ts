@@ -1,10 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { EdgeLogger } from '../_shared/edge-logger.ts';
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 interface SessionRequest {
   action: 'create' | 'list' | 'revoke' | 'update_activity';
@@ -12,12 +10,14 @@ interface SessionRequest {
 }
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('session-manager', requestId);
   
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     if (userError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ success: true, session_id: sessionId }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ sessions }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
         if (!session_id) {
           return new Response(
             JSON.stringify({ error: 'Missing session_id' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ success: true }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
         if (!session_id) {
           return new Response(
             JSON.stringify({ error: 'Missing session_id' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -184,14 +184,14 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ success: true }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
       default:
         return new Response(
           JSON.stringify({ error: 'Invalid action' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
     }
 
@@ -199,7 +199,7 @@ Deno.serve(async (req) => {
     logger.error('Error in session-manager function', error instanceof Error ? error : new Error(String(error)));
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

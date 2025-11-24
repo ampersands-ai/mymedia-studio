@@ -1,18 +1,18 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('get-shared-content', requestId);
   const startTime = Date.now();
   
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     if (tokenError || !shareToken) {
       return new Response(
         JSON.stringify({ error: 'Invalid or expired share link' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 404, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     if (new Date(shareToken.expires_at) < new Date()) {
       return new Response(
         JSON.stringify({ error: 'This share link has expired' }),
-        { status: 410, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 410, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
         content_type: shareToken.content_type,
         expires_in: 3600 // seconds
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     const message = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
       JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

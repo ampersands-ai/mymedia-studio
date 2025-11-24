@@ -1,11 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 const tokenManagementSchema = z.object({
   user_id: z.string().uuid(),
@@ -18,8 +14,12 @@ Deno.serve(async (req) => {
   const logger = new EdgeLogger('manage-user-tokens', requestId);
   const startTime = Date.now();
 
+  // Get response headers (includes CORS + security headers)
+  const responseHeaders = getResponseHeaders(req);
+
+  // Handle CORS preflight with secure origin validation
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   let body: any;
@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
         tokens_remaining: newTokensRemaining,
         tokens_total: newTokensTotal
       }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     logger.error('Token management failed', error as Error, {
@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
     
     return new Response(
       JSON.stringify({ error: message }),
-      { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

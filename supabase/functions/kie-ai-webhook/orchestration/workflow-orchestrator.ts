@@ -8,6 +8,7 @@ import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../../_shared/edge-logger.ts";
 import { getModel } from "../../_shared/registry/index.ts";
 import {
+import { GENERATION_STATUS } from "../../_shared/constants.ts";
   replaceTemplateVariables,
   resolveInputMappings,
   coerceParametersToSchema,
@@ -167,7 +168,7 @@ export async function orchestrateWorkflow(
         await supabase
           .from('workflow_executions')
           .update({
-            status: 'failed',
+            status: GENERATION_STATUS.FAILED,
             error_message: `Step ${nextStepNumber} failed to start: ${generateResponse.error.message}`,
           })
           .eq('id', generation.workflow_execution_id);
@@ -190,7 +191,7 @@ export async function orchestrateWorkflow(
       await supabase
         .from('workflow_executions')
         .update({
-          status: 'completed',
+          status: GENERATION_STATUS.COMPLETED,
           step_outputs: updatedOutputs,
           tokens_used: newTokens,
           final_output_url: finalOutputUrl,

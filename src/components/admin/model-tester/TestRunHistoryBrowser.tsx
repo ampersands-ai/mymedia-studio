@@ -34,6 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecutionFlow } from "@/lib/admin/enhancedExecutionTracker";
+import { logger } from "@/lib/logger";
 
 interface TestRunRecord {
   id: string;
@@ -130,7 +131,7 @@ export function TestRunHistoryBrowser({
 
       setRuns(filteredData);
     } catch (error) {
-      console.error("Error loading test runs:", error);
+      logger.error("Error loading test runs", error);
     } finally {
       setLoading(false);
     }
@@ -171,7 +172,7 @@ export function TestRunHistoryBrowser({
         )
       );
     } catch (error) {
-      console.error("Error toggling bookmark:", error);
+      logger.error("Error toggling bookmark", error);
     }
   };
 
@@ -205,7 +206,7 @@ export function TestRunHistoryBrowser({
       selectedRuns.delete(testRunId);
       setSelectedRuns(new Set(selectedRuns));
     } catch (error) {
-      console.error("Error deleting test run:", error);
+      logger.error("Error deleting test run", error);
     }
   };
 

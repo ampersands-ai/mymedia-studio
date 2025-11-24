@@ -15,6 +15,8 @@
  */
 
 import { createHmac } from 'https://deno.land/std@0.177.0/node/crypto.ts';
+import { EdgeLogger } from '../../_shared/edge-logger.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 export interface SignatureResult {
   success: boolean;
@@ -32,11 +34,17 @@ export function validateSignature(
   payload: string,
   receivedSignature: string | null
 ): SignatureResult {
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+  const logger = new EdgeLogger('signature-validator', crypto.randomUUID(), supabaseClient);
+
   const secret = Deno.env.get('KIE_WEBHOOK_SECRET');
 
   // Check if secret is configured
   if (!secret) {
-    console.error('SECURITY CRITICAL: KIE_WEBHOOK_SECRET not configured');
+    logger.error('SECURITY CRITICAL: KIE_WEBHOOK_SECRET not configured');
     return {
       success: false,
       error: 'Webhook secret not configured - contact system administrator',
@@ -45,8 +53,8 @@ export function validateSignature(
 
   // Check if signature header is present
   if (!receivedSignature) {
-    console.error('SECURITY LAYER 5 FAILED: Missing X-Kie-Signature header', {
-      timestamp: new Date().toISOString(),
+    logger.error('SECURITY LAYER 5 FAILED: Missing X-Kie-Signature header', undefined, {
+      metadata: { timestamp: new Date().toISOString() }
     });
     return {
       success: false,
@@ -63,11 +71,13 @@ export function validateSignature(
   const match = constantTimeCompare(receivedSignature, expectedSignature);
 
   if (!match) {
-    console.error('SECURITY LAYER 5 FAILED: Invalid signature', {
-      receivedPrefix: receivedSignature.substring(0, 12) + '...',
-      expectedPrefix: expectedSignature.substring(0, 12) + '...',
-      payloadSize: payload.length,
-      timestamp: new Date().toISOString(),
+    logger.error('SECURITY LAYER 5 FAILED: Invalid signature', undefined, {
+      metadata: {
+        receivedPrefix: receivedSignature.substring(0, 12) + '...',
+        expectedPrefix: expectedSignature.substring(0, 12) + '...',
+        payloadSize: payload.length,
+        timestamp: new Date().toISOString()
+      }
     });
     return {
       success: false,
@@ -75,9 +85,11 @@ export function validateSignature(
     };
   }
 
-  console.log('✓ Layer 5 passed: HMAC signature validated', {
-    algorithm: 'SHA256',
-    payloadSize: payload.length,
+  logger.info('Layer 5 passed: HMAC signature validated', {
+    metadata: {
+      algorithm: 'SHA256',
+      payloadSize: payload.length
+    }
   });
 
   return { success: true };

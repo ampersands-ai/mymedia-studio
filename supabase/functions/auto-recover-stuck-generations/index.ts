@@ -3,15 +3,15 @@ import { webhookLogger } from "../_shared/logger.ts";
 import { getProviderConfig } from "../_shared/providers/registry.ts";
 import { getModelConfig } from "../_shared/registry/index.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
       webhookLogger.error('Query failed', error, {});
       return new Response(
         JSON.stringify({ error: 'Failed to query stuck generations' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
           message: 'No stuck generations found',
           checked_at: new Date().toISOString()
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify(results),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error: any) {
@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
         error: 'Auto-recovery failed',
         message: error.message 
       }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

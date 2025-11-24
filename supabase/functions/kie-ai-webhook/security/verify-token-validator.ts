@@ -16,6 +16,7 @@ export interface VerifyTokenResult {
 }
 
 import { webhookLogger } from "../../_shared/logger.ts";
+import { GENERATION_STATUS } from "../../_shared/constants.ts";
 
 export async function validateVerifyToken(
   url: URL,
@@ -127,11 +128,11 @@ export async function validateVerifyToken(
   }
   
   // Check if generation was cancelled
-  if (generation.status === 'cancelled') {
+  if (generation.status === GENERATION_STATUS.CANCELLED) {
     webhookLogger.info('Generation was cancelled by user - ignoring webhook', {
       generation_id: generation.id,
       task_id: taskId,
-      status: 'cancelled'
+      status: GENERATION_STATUS.CANCELLED
     });
     return {
       success: false,
@@ -141,7 +142,7 @@ export async function validateVerifyToken(
   }
   
   // Check if already processed
-  if (generation.status !== 'pending' && generation.status !== 'processing') {
+  if (generation.status !== GENERATION_STATUS.PENDING && generation.status !== GENERATION_STATUS.PROCESSING) {
     webhookLogger.error('Security: Rejected webhook for already processed task', `Status: ${generation.status}`, {
       taskId,
       generation_id: generation.id,

@@ -5,6 +5,7 @@ import { useNativeCamera } from "@/hooks/useNativeCamera";
 import { IMAGE_UPLOAD_CONFIG } from "@/constants/custom-creation";
 import { getImageFieldInfo } from "@/lib/custom-creation-utils";
 import type { ModelConfiguration } from "@/types/schema";
+import { logger } from "@/lib/logger";
 
 // Type stub for backward compatibility - models now loaded from registry
 type AIModel = ModelConfiguration;
@@ -79,9 +80,9 @@ export const useImageUpload = (currentModel: AIModel | null) => {
         const parsed = JSON.parse(stored);
         const files = parsed.map(storableToFile);
         setUploadedImages(files);
-        console.log(`Restored ${files.length} images from sessionStorage`);
+        logger.info(`Restored ${files.length} images from sessionStorage`);
       } catch (err) {
-        console.error('Failed to restore images:', err);
+        logger.error('Failed to restore images', err);
         sessionStorage.removeItem(storageKey);
       }
     } else {
@@ -98,10 +99,10 @@ export const useImageUpload = (currentModel: AIModel | null) => {
       Promise.all(uploadedImages.map(fileToStorable))
         .then(storable => {
           sessionStorage.setItem(storageKey, JSON.stringify(storable));
-          console.log(`Persisted ${storable.length} images to sessionStorage`);
+          logger.info(`Persisted ${storable.length} images to sessionStorage`);
         })
         .catch(err => {
-          console.error('Failed to persist images:', err);
+          logger.error('Failed to persist images', err);
         });
     } else {
       sessionStorage.removeItem(storageKey);

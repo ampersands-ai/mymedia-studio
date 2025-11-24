@@ -1,26 +1,27 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const startTime = Date.now();
   const requestId = crypto.randomUUID();
 
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
-  try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  );
+  const logger = new EdgeLogger('monitor-video-jobs', requestId, supabase, true);
 
-    const logger = new EdgeLogger('monitor-video-jobs', requestId, supabase, true);
+  try {
 
     logger.info('Starting video job timeout monitoring');
 
@@ -53,7 +54,7 @@ Deno.serve(async (req) => {
           monitored: 0,
           message: 'No stuck jobs found' 
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -72,7 +73,7 @@ Deno.serve(async (req) => {
       const { error: updateError } = await supabase
         .from('video_jobs')
         .update({
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           error_message: 'Video generation exceeded 4 hours. Credits refunded automatically.',
           error_details: {
             timeout: true,
@@ -149,16 +150,16 @@ Deno.serve(async (req) => {
         refunded_jobs: refundedJobs,
         success_count: refundedJobs.length
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error in monitor-video-jobs', error instanceof Error ? error.message : String(error));
+    logger.error('Error in monitor-video-jobs', error instanceof Error ? error : undefined);
     return new Response(
       JSON.stringify({ error: (error as Error).message || 'Unknown error' }),
-      { 
+      {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       }
     );
   }

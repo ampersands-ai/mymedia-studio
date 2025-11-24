@@ -1,14 +1,15 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const requestId = crypto.randomUUID();
@@ -74,7 +75,7 @@ Deno.serve(async (req) => {
           details: [],
           message: 'No storyboards found needing migration'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -151,7 +152,7 @@ Deno.serve(async (req) => {
           details.push({
             storyboardId: storyboard.id,
             topic: storyboard.topic,
-            status: 'failed',
+            status: GENERATION_STATUS.FAILED,
             error: downloadResult.error.message,
           });
         } else {
@@ -169,7 +170,7 @@ Deno.serve(async (req) => {
         details.push({
           storyboardId: storyboard.id,
           topic: storyboard.topic,
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
@@ -191,7 +192,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify(response),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
@@ -202,7 +203,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: errorMessage }),
       { 
         status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }

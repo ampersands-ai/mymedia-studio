@@ -1,18 +1,19 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('recover-stuck-jobs', requestId);
   const startTime = Date.now();
 
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -38,7 +39,7 @@ Deno.serve(async (req) => {
         logger.error('Job not found for force sync', jobError instanceof Error ? jobError : new Error(String(jobError) || 'Not found'), { metadata: { jobId: forceJobId } });
         return new Response(
           JSON.stringify({ error: 'Job not found' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 404, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -107,7 +108,7 @@ Deno.serve(async (req) => {
                     user_id: job.user_id,
                     type: 'video',
                     prompt: `Faceless Video: ${job.topic}`,
-                    status: 'completed',
+                    status: GENERATION_STATUS.COMPLETED,
                     tokens_used: 15,
                     storage_path: videoPath,
                     model_id: 'faceless-video-generator',
@@ -120,7 +121,7 @@ Deno.serve(async (req) => {
                   });
                   
                   await supabaseClient.from('video_jobs').update({
-                    status: 'completed',
+                    status: GENERATION_STATUS.COMPLETED,
                     final_video_url: videoUrl,
                     completed_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
@@ -133,7 +134,7 @@ Deno.serve(async (req) => {
                   continue;
                 } else if (renderStatus === 'failed') {
                   await supabaseClient.from('video_jobs').update({
-                    status: 'failed',
+                    status: GENERATION_STATUS.FAILED,
                     error_message: 'Shotstack rendering failed',
                     updated_at: new Date().toISOString()
                   }).eq('id', job.id);
@@ -189,18 +190,19 @@ Deno.serve(async (req) => {
             await supabaseClient
               .from('video_jobs')
               .update({ 
-                status: 'failed',
+                status: GENERATION_STATUS.FAILED,
                 error_message: `Auto-failed: stuck in ${job.status} for >5 minutes`,
                 updated_at: new Date().toISOString()
               })
               .eq('id', job.id);
             recoveredJobs.push({ id: job.id, action: 'marked_failed' });
           }
-        } catch (err: any) {
-          logger.error('Job recovery failed', err, { 
+        } catch (err) {
+          const errorObj = err instanceof Error ? err : new Error(String(err));
+          logger.error('Job recovery failed', errorObj, {
             metadata: { jobId: job.id }
           });
-          recoveredJobs.push({ id: job.id, action: 'recovery_failed', error: err.message || 'Unknown error' });
+          recoveredJobs.push({ id: job.id, action: 'recovery_failed', error: errorObj.message || 'Unknown error' });
         }
       }
 
@@ -215,7 +217,7 @@ Deno.serve(async (req) => {
           recovered: recoveredJobs.length,
           jobs: recoveredJobs
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -246,7 +248,7 @@ Deno.serve(async (req) => {
           recovered: 0,
           message: 'No stuck jobs found'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -324,7 +326,7 @@ Deno.serve(async (req) => {
                   user_id: job.user_id,
                   type: 'video',
                   prompt: `Faceless Video: ${job.topic}`,
-                  status: 'completed',
+                  status: GENERATION_STATUS.COMPLETED,
                   tokens_used: 15,
                   storage_path: videoPath,
                   model_id: 'faceless-video-generator',
@@ -338,7 +340,7 @@ Deno.serve(async (req) => {
                 
                 // Mark job as completed
                 await supabaseClient.from('video_jobs').update({
-                  status: 'completed',
+                  status: GENERATION_STATUS.COMPLETED,
                   final_video_url: videoUrl,
                   completed_at: new Date().toISOString(),
                   updated_at: new Date().toISOString()
@@ -352,7 +354,7 @@ Deno.serve(async (req) => {
               } else if (renderStatus === 'failed') {
                 // Shotstack render failed
                 await supabaseClient.from('video_jobs').update({
-                  status: 'failed',
+                  status: GENERATION_STATUS.FAILED,
                   error_message: 'Shotstack rendering failed',
                   updated_at: new Date().toISOString()
                 }).eq('id', job.id);
@@ -364,8 +366,8 @@ Deno.serve(async (req) => {
               }
               // If still rendering, leave it alone
             }
-          } catch (shotstackError: any) {
-            logger.error('Shotstack check failed', shotstackError, { 
+          } catch (shotstackError) {
+            logger.error('Shotstack check failed', shotstackError instanceof Error ? shotstackError : new Error(String(shotstackError)), {
               metadata: { jobId: job.id }
             });
           }
@@ -411,22 +413,23 @@ Deno.serve(async (req) => {
           await supabaseClient
             .from('video_jobs')
             .update({ 
-              status: 'failed',
+              status: GENERATION_STATUS.FAILED,
               error_message: `Auto-failed: stuck in ${job.status} for >5 minutes`,
               updated_at: new Date().toISOString()
             })
             .eq('id', job.id);
           recoveredJobs.push({ id: job.id, action: 'marked_failed' });
         }
-      } catch (err: any) {
-        logger.error('Job recovery failed', err, { 
+      } catch (err) {
+        const errorObj = err instanceof Error ? err : new Error(String(err));
+        logger.error('Job recovery failed', errorObj, {
           metadata: { jobId: job.id }
         });
-        recoveredJobs.push({ id: job.id, action: 'recovery_failed', error: err.message || 'Unknown error' });
+        recoveredJobs.push({ id: job.id, action: 'recovery_failed', error: errorObj.message || 'Unknown error' });
       }
     }
 
-    logger.info('Recovery complete', { 
+    logger.info('Recovery complete', {
       metadata: { 
         totalScanned: stuckJobs.length,
         recoveredCount: recoveredJobs.length 
@@ -440,16 +443,17 @@ Deno.serve(async (req) => {
         recovered: recoveredJobs.length,
         jobs: recoveredJobs
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
-    logger.error('Fatal error in recovery', error);
-    
+  } catch (error) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Fatal error in recovery', errorObj);
+
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
+      JSON.stringify({ error: errorObj.message }),
+      {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       }
     );
   }

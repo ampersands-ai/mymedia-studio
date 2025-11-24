@@ -123,24 +123,24 @@ export default function TemplatesManager() {
     }
   });
 
-  const handleToggleActive = (template: any) => {
+  const handleToggleActive = (template: WorkflowTemplate) => {
     toggleActiveMutation.mutate({
       id: template.id,
       isActive: !template.is_active
     });
   };
 
-  const handleDelete = (template: any) => {
+  const handleDelete = (template: WorkflowTemplate) => {
     if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
       deleteMutation.mutate(template.id);
     }
   };
 
-  const handleDuplicate = (template: any) => {
+  const handleDuplicate = (template: WorkflowTemplate) => {
     duplicateMutation.mutate(template as WorkflowTemplate);
   };
 
-  const handleEdit = (template: any) => {
+  const handleEdit = (template: WorkflowTemplate) => {
     setWorkflowDialog({
       open: true,
       workflow: template,

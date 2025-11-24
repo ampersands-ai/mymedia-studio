@@ -1,21 +1,23 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { settleCredits, releaseCredits } from './creditSettlement.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  );
+  const logger = new EdgeLogger('settle-generation-credits', crypto.randomUUID(), supabase);
+
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
 
     const { generationId, status } = await req.json();
 
@@ -36,32 +38,32 @@ Deno.serve(async (req) => {
     // Already settled
     if (generation.tokens_charged > 0) {
       return new Response(JSON.stringify({ message: 'Already settled' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    if (status === 'completed') {
+    if (status === GENERATION_STATUS.COMPLETED) {
       await settleCredits(generation.user_id, generationId, generation.tokens_used);
       return new Response(JSON.stringify({ success: true, charged: generation.tokens_used }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       });
-    } else if (status === 'failed') {
+    } else if (status === GENERATION_STATUS.FAILED) {
       await releaseCredits(generationId);
       return new Response(JSON.stringify({ success: true, charged: 0 }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     return new Response(JSON.stringify({ message: 'No action needed' }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...responseHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error('Settlement error:', error);
+    logger.error('Settlement error', error instanceof Error ? error : undefined);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...responseHeaders, 'Content-Type': 'application/json' }
     });
   }
 });

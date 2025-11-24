@@ -24,8 +24,7 @@ export async function callProvider(
   provider: string,
   request: ProviderRequest
 ): Promise<ProviderResponse> {
-  console.log(JSON.stringify({ event: 'calling_provider', provider }));
-
+  // Provider routing
   switch (provider) {
     case 'runware':
       return await callRunware(request);

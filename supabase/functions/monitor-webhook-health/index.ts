@@ -1,25 +1,27 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const startTime = Date.now();
   const requestId = crypto.randomUUID();
 
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return handleCorsPreflight(req);
   }
 
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const logger = new EdgeLogger('monitor-webhook-health', requestId, supabase, true);
+
   try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const logger = new EdgeLogger('monitor-webhook-health', requestId, supabase, true);
 
     logger.info('Starting webhook health monitoring check');
 
@@ -38,7 +40,7 @@ Deno.serve(async (req) => {
       logger.info('Alerts are disabled, skipping check');
       return new Response(
         JSON.stringify({ message: 'Alerts disabled' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -57,8 +59,8 @@ Deno.serve(async (req) => {
     if (webhookError) throw webhookError;
 
     const totalWebhooks = webhooks.length;
-    const completedCount = webhooks.filter(g => g.status === 'completed').length;
-    const failedCount = webhooks.filter(g => g.status === 'failed').length;
+    const completedCount = webhooks.filter(g => g.status === GENERATION_STATUS.COMPLETED).length;
+    const failedCount = webhooks.filter(g => g.status === GENERATION_STATUS.FAILED).length;
     const failureRate = totalWebhooks > 0 ? (failedCount / totalWebhooks) * 100 : 0;
 
     logger.info('Webhook statistics calculated', { 
@@ -71,7 +73,7 @@ Deno.serve(async (req) => {
 
     // Count storage failures
     const storageFailures = webhooks.filter(g => {
-      if (g.status !== 'failed') return false;
+      if (g.status !== GENERATION_STATUS.FAILED) return false;
       const response = g.provider_response as any;
       const errorMsg = (response?.error || response?.storage_error || '').toLowerCase();
       return errorMsg.includes('storage') || errorMsg.includes('upload') || errorMsg.includes('bucket');
@@ -175,17 +177,17 @@ Deno.serve(async (req) => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
       }
     );
 
   } catch (error: any) {
-    console.error('Error in monitor-webhook-health', error instanceof Error ? error.message : String(error));
+    logger.error('Error in monitor-webhook-health', error instanceof Error ? error : undefined);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
       }
     );
   }

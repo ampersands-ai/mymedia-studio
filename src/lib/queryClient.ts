@@ -3,17 +3,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 
-function isAuthError(error: any): boolean {
-  const errorMessage = error?.message?.toLowerCase() || '';
-  const errorCode = error?.code || '';
-  
+function isAuthError(error: unknown): boolean {
+  if (!(error instanceof Error) && typeof error !== 'object') {
+    return false;
+  }
+
+  const errorObj = error as { message?: string; code?: string; status?: number };
+  const errorMessage = errorObj.message?.toLowerCase() || '';
+  const errorCode = errorObj.code || '';
+
   return (
     errorMessage.includes('jwt') ||
     errorMessage.includes('session') ||
     errorMessage.includes('unauthorized') ||
     errorMessage.includes('not authenticated') ||
     errorCode === 'PGRST301' || // PostgREST auth required
-    error?.status === 401
+    errorObj.status === 401
   );
 }
 
@@ -55,7 +60,7 @@ export const queryClient = new QueryClient({
       gcTime: 10 * 60 * 1000, // 10 minutes (prevent infinite cache growth)
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error: Error) => {
         // Don't retry on auth errors
         if (isAuthError(error)) {
           return false;
@@ -66,13 +71,13 @@ export const queryClient = new QueryClient({
       refetchOnMount: false,
     },
     mutations: {
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error: Error) => {
         if (isAuthError(error)) {
           return false;
         }
         return failureCount < 1;
       },
-      onError: (error: any) => {
+      onError: (error: Error) => {
         if (isAuthError(error)) {
           handleAuthError();
         }

@@ -7,15 +7,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const logger = new EdgeLogger('process-runware-response', crypto.randomUUID());
@@ -33,7 +32,7 @@ serve(async (req) => {
     if (!generation_id) {
       return new Response(
         JSON.stringify({ error: 'generation_id is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -50,12 +49,12 @@ serve(async (req) => {
       logger.error('Generation not found', genError || new Error('Not found'));
       return new Response(
         JSON.stringify({ error: 'Generation not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 404, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Check if already processed
-    if (generation.status === 'completed' && generation.storage_path) {
+    if (generation.status === GENERATION_STATUS.COMPLETED && generation.storage_path) {
       logger.info('Already processed', { metadata: { generationId: generation_id } });
       return new Response(
         JSON.stringify({ 
@@ -63,7 +62,7 @@ serve(async (req) => {
           message: 'Generation already completed',
           storage_path: generation.storage_path
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -82,7 +81,7 @@ serve(async (req) => {
           error: 'No media URL found in provider response',
           provider_response: providerResponse
         }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -137,7 +136,7 @@ serve(async (req) => {
     const { error: updateError } = await supabase
       .from('generations')
       .update({
-        status: 'completed',
+        status: GENERATION_STATUS.COMPLETED,
         storage_path: storagePath,
         output_url: urlData.publicUrl,
         file_size_bytes: buffer.length,
@@ -152,7 +151,7 @@ serve(async (req) => {
     await supabase.functions.invoke('settle-generation-credits', {
       body: {
         generationId: generation_id,
-        status: 'completed'
+        status: GENERATION_STATUS.COMPLETED
       }
     });
 
@@ -172,7 +171,7 @@ serve(async (req) => {
         output_url: urlData.publicUrl,
         file_size: buffer.length
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error: any) {
@@ -184,7 +183,7 @@ serve(async (req) => {
         await supabase.functions.invoke('settle-generation-credits', {
           body: {
             generationId: generation_id,
-            status: 'failed'
+            status: GENERATION_STATUS.FAILED
           }
         });
       } catch (settlementError) {
@@ -197,7 +196,7 @@ serve(async (req) => {
         error: 'Processing failed',
         message: error.message 
       }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

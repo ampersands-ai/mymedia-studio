@@ -1,28 +1,46 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { VIDEO_JOB_STATUS } from "../_shared/constants.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Type definitions
+interface SanitizedData {
+  [key: string]: unknown;
+}
+
+interface PixabayVideo {
+  videos?: {
+    large?: { url?: string; width?: number; height?: number };
+    medium?: { url?: string; width?: number; height?: number };
+    small?: { url?: string; width?: number; height?: number };
+  };
+  duration?: number;
+  id?: number;
+}
+
+interface PixabayVideoResponse {
+  hits?: PixabayVideo[];
+}
 
 // Inlined helper: sanitize sensitive data
-function sanitizeData(data: any): any {
-  if (!data) return data;
-  const sanitized = { ...data };
+function sanitizeData(data: unknown): SanitizedData {
+  if (!data) return {};
+  if (typeof data !== 'object' || data === null) return {};
+  const sanitized = { ...data as Record<string, unknown> };
   const sensitiveKeys = ['api_key', 'authorization', 'token', 'secret', 'apiKey'];
   sensitiveKeys.forEach(key => delete sanitized[key]);
-  if (sanitized.headers) {
-    sensitiveKeys.forEach(key => delete sanitized.headers[key]);
+  if (sanitized.headers && typeof sanitized.headers === 'object') {
+    const headers = sanitized.headers as Record<string, unknown>;
+    sensitiveKeys.forEach(key => delete headers[key]);
   }
   return sanitized;
 }
 
 // Inlined helper: log API call with EdgeLogger integration
 async function logApiCall(
-  supabase: any,
-  logger: any,
+  supabase: SupabaseClient,
+  logger: EdgeLogger,
   request: {
     videoJobId: string;
     userId: string;
@@ -30,13 +48,13 @@ async function logApiCall(
     endpoint: string;
     httpMethod: string;
     stepName: string;
-    requestPayload?: any;
-    additionalMetadata?: any;
+    requestPayload?: unknown;
+    additionalMetadata?: Record<string, unknown>;
   },
   requestSentAt: Date,
   response: {
     statusCode: number;
-    payload?: any;
+    payload?: unknown;
     isError: boolean;
     errorMessage?: string;
   }
@@ -78,8 +96,10 @@ async function logApiCall(
 }
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const requestId = crypto.randomUUID();
@@ -127,7 +147,7 @@ Deno.serve(async (req) => {
       logger.info('Job already completed, skipping', { userId: job.user_id, metadata: { job_id } });
       return new Response(
         JSON.stringify({ success: true, status: 'already_completed' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -135,7 +155,7 @@ Deno.serve(async (req) => {
       logger.info('Job already failed, skipping', { userId: job.user_id, metadata: { job_id } });
       return new Response(
         JSON.stringify({ success: false, status: 'already_failed' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
@@ -146,7 +166,7 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({ success: true, status: job.status }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -173,18 +193,18 @@ Deno.serve(async (req) => {
         status: 'awaiting_script_approval',
         message: 'Script ready for review'
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
+  } catch (error) {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
     const logger = new EdgeLogger('process-video-job', requestId, supabaseClient, true);
-    
-    const errorMessage = error.message || 'Unknown error occurred';
-    
-    logger.error('Fatal error during processing', error, { metadata: { job_id: job_id || 'unknown' } });
+
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+
+    logger.error('Fatal error during processing', error instanceof Error ? error : new Error(String(error)), { metadata: { job_id: job_id || 'unknown' } });
     
     // Update job as failed if we have a job_id
     if (job_id) {
@@ -194,9 +214,9 @@ Deno.serve(async (req) => {
           .update({
             status: VIDEO_JOB_STATUS.FAILED,
             error_message: errorMessage,
-            error_details: { 
+            error_details: {
               error: errorMessage,
-              stack: error.stack,
+              stack: error instanceof Error ? error.stack : undefined,
               timestamp: new Date().toISOString()
             }
           })
@@ -213,7 +233,7 @@ Deno.serve(async (req) => {
       }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }
@@ -221,13 +241,13 @@ Deno.serve(async (req) => {
 
 // Helper functions
 
-async function updateJobStatus(supabase: any, jobId: string, status: string) {
+async function updateJobStatus(supabase: SupabaseClient, jobId: string, status: string) {
   await supabase.from('video_jobs').update({ status }).eq('id', jobId);
 }
 
 async function generateScript(
-  supabase: any,
-  logger: any,
+  supabase: SupabaseClient,
+  logger: EdgeLogger,
   topic: string,
   duration: number,
   style: string,
@@ -325,8 +345,8 @@ function extractSearchTerms(topic: string): string {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function _getBackgroundVideo(
-  supabase: any,
-  logger: any,
+  supabase: SupabaseClient,
+  logger: EdgeLogger,
   style: string,
   duration: number,
   videoJobId: string,
@@ -338,7 +358,7 @@ async function _getBackgroundVideo(
   if (topic && topic.trim()) {
     // Extract key terms from topic (remove filler words, limit length)
     searchQuery = extractSearchTerms(topic);
-    console.log('Using topic-based search', { jobId: videoJobId, searchQuery, topic });
+    logger.debug('Using topic-based search', { userId, metadata: { jobId: videoJobId, searchQuery, topic } });
   } else {
     // Fallback to style-based queries
     const queries: Record<string, string> = {
@@ -348,17 +368,17 @@ async function _getBackgroundVideo(
       dramatic: 'cinematic nature dramatic'
     };
     searchQuery = queries[style] || 'abstract motion background';
-    console.log('Using style-based search', { jobId: videoJobId, searchQuery, style });
+    logger.debug('Using style-based search', { userId, metadata: { jobId: videoJobId, searchQuery, style } });
   }
   const pixabayApiKey = Deno.env.get('PIXABAY_API_KEY');
   const endpoint = `https://pixabay.com/api/videos/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&per_page=20`;
   const requestSentAt = new Date();
 
-  console.log('Searching Pixabay', { userId, jobId: videoJobId, searchQuery });
+  logger.info('Searching Pixabay', { userId, metadata: { jobId: videoJobId, searchQuery } });
 
   const response = await fetch(endpoint);
 
-  const data = response.ok ? await response.json() : null;
+  const data: PixabayVideoResponse | null = response.ok ? await response.json() : null;
 
   // Log the API call
   logApiCall(
@@ -381,7 +401,7 @@ async function _getBackgroundVideo(
       isError: !response.ok,
       errorMessage: response.ok ? undefined : `Pixabay returned ${response.status}`
     }
-  ).catch(e => console.error('Failed to log Pixabay API call', e));
+  ).catch(e => logger.error('Failed to log Pixabay API call', e instanceof Error ? e : undefined));
 
   if (!response.ok) {
     throw new Error(`Pixabay API error: ${response.status}`);
@@ -391,13 +411,13 @@ async function _getBackgroundVideo(
     throw new Error('No background videos found');
   }
 
-  console.log('Pixabay search results', { userId, jobId: videoJobId, hitCount: data.hits.length, searchQuery });
+  logger.info('Pixabay search results', { userId, metadata: { jobId: videoJobId, hitCount: data.hits.length, searchQuery } });
 
   // Filter landscape videos (width > height) longer than required duration
-  const landscapeVideos = data.hits.filter((v: any) => {
+  const landscapeVideos = data.hits.filter((v: PixabayVideo) => {
     const width = v.videos?.large?.width || v.videos?.medium?.width || 1920;
     const height = v.videos?.large?.height || v.videos?.medium?.height || 1080;
-    return width > height && v.duration >= duration;
+    return width > height && (v.duration || 0) >= duration;
   });
   
   const video = landscapeVideos.length 
@@ -410,15 +430,15 @@ async function _getBackgroundVideo(
   if (!videoUrl) {
     throw new Error('No video URL found');
   }
-  
-  console.log('Selected Pixabay video', { userId, jobId: videoJobId, videoId: video.id, duration: video.duration });
+
+  logger.info('Selected Pixabay video', { userId, metadata: { jobId: videoJobId, videoId: video.id, duration: video.duration } });
   return videoUrl;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function _assembleVideo(
-  supabase: any,
-  logger: any,
+  supabase: SupabaseClient,
+  logger: EdgeLogger,
   assets: {
     script: string;
     voiceoverUrl: string;
@@ -571,7 +591,7 @@ async function _assembleVideo(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function _pollRenderStatus(supabase: any, logger: any, jobId: string, renderId: string, userId: string) {
+async function _pollRenderStatus(supabase: SupabaseClient, logger: EdgeLogger, jobId: string, renderId: string, userId: string) {
   const maxAttempts = 120; // 10 minutes max (5s interval)
   let attempts = 0;
 
@@ -727,7 +747,7 @@ async function _pollRenderStatus(supabase: any, logger: any, jobId: string, rend
               user_id: job.user_id,
               type: 'video',
               prompt: `Faceless Video: ${job.topic}`,
-              status: 'completed',
+              status: GENERATION_STATUS.COMPLETED,
               tokens_used: job.cost_tokens,
               storage_path: videoPath,
               model_id: 'faceless-video-generator',
@@ -776,7 +796,7 @@ async function _pollRenderStatus(supabase: any, logger: any, jobId: string, rend
       }
       
       await supabase.from('video_jobs').update({
-        status: 'completed',
+        status: GENERATION_STATUS.COMPLETED,
         final_video_url: finalVideoUrl,
         storage_path: videoPath,
         completed_at: new Date().toISOString()

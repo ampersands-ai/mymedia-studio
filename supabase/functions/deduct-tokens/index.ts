@@ -2,14 +2,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 // Inline helper: create standardized error response
-function createErrorResponse(error: any, headers: any): Response {
+function createErrorResponse(error: unknown, headers: HeadersInit): Response {
   const message = error?.message || 'An error occurred';
   const status = message.includes('Unauthorized') || message.includes('authorization') ? 401
     : message.includes('Forbidden') ? 403
@@ -28,16 +24,17 @@ const deductTokensSchema = z.object({
 });
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
+  if (req.method === 'OPTIONS') {
+    return handleCorsPreflight(req);
+  }
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('deduct-tokens', requestId);
 
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  let body: any;
-  let user: any;
+  let body: Record<string, unknown> | undefined;
+  let user: { id: string } | undefined;
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -70,7 +67,7 @@ Deno.serve(async (req) => {
 
     // Deduct tokens using optimistic locking with retry logic
     // This prevents race conditions under high concurrency
-    let updatedSubscriptionFinal: any;
+    let updatedSubscriptionFinal: { tokens_remaining: number } | undefined;
     let retries = 3;
     
     while (retries > 0) {
@@ -144,14 +141,14 @@ Deno.serve(async (req) => {
     logger.info(`[SUCCESS] Deducted ${tokens_to_deduct} credits for user ${user.id}`);
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
         tokens_remaining: updatedSubscriptionFinal.tokens_remaining,
         tokens_deducted: tokens_to_deduct
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    return createErrorResponse(error, corsHeaders);
+    return createErrorResponse(error, responseHeaders);
   }
 });

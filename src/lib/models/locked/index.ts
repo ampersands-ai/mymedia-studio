@@ -15,6 +15,8 @@
  * before checking payload_structure to ensure proper array formatting.
  */
 
+import { logger } from "@/lib/logger";
+
 /**
  * Helper function: Convert contentType to database generation type
  * Database expects: 'image' | 'video' | 'audio' | 'text'
@@ -34,7 +36,7 @@ export function getGenerationType(contentType: string): 'image' | 'video' | 'aud
   const type = typeMap[contentType];
 
   if (!type) {
-    console.warn(`Unknown contentType: "${contentType}", defaulting to 'text'`);
+    logger.warn(`Unknown contentType: "${contentType}", defaulting to 'text'`, { contentType });
     return 'text';
   }
 

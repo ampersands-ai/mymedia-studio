@@ -1,19 +1,20 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getModelConfig } from "../_shared/registry/index.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('check-generation-timeouts', requestId);
   const startTime = Date.now();
 
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -30,7 +31,7 @@ Deno.serve(async (req) => {
     const { data: stuckGenerations, error: queryError } = await supabase
       .from('generations')
       .select('id, user_id, status, created_at, prompt, model_record_id')
-      .eq('status', 'processing')
+      .eq('status', GENERATION_STATUS.PROCESSING)
       .lt('created_at', fiveMinutesAgo);
 
     if (queryError) {
@@ -45,7 +46,7 @@ Deno.serve(async (req) => {
       logger.logDuration('Timeout check completed', startTime);
       return new Response(
         JSON.stringify({ message: 'No stuck generations found', count: 0 }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -136,13 +137,13 @@ Deno.serve(async (req) => {
         alerts_sent: successCount,
         failures: failureCount
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
     logger.error('Fatal error in timeout check', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

@@ -1,18 +1,19 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
   
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const logger = new EdgeLogger('download-storyboard-video', requestId);
@@ -120,7 +121,7 @@ Deno.serve(async (req) => {
         user_id: userId,
         type: 'video',
         prompt: `Storyboard: ${storyboard.topic}`,
-        status: 'completed',
+        status: GENERATION_STATUS.COMPLETED,
         tokens_used: storyboard.estimated_render_cost || 0,
         storage_path: storagePath,
         model_id: 'storyboard-video-generator',
@@ -147,7 +148,7 @@ Deno.serve(async (req) => {
         storagePath,
         fileSize: videoSize,
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
@@ -161,7 +162,7 @@ Deno.serve(async (req) => {
       }),
       { 
         status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }

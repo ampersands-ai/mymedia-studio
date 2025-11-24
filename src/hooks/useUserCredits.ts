@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { logger } from "@/lib/logger";
 
 interface UserCreditsData {
   user_id: string;
@@ -30,7 +31,7 @@ export const useUserCredits = () => {
         .single();
 
       if (error) {
-        console.error('Error fetching user credits:', error);
+        logger.error('Error fetching user credits', error);
         throw error;
       }
 

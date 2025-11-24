@@ -38,6 +38,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getGenerationType } from "@/lib/models/registry";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import {
   Layers,
   Play,
@@ -142,7 +143,7 @@ const ComprehensiveModelTester = () => {
     });
 
     const unsubscribeLogs = newTracker.subscribeToLogs((log) => {
-      console.log('New log:', log);
+      logger.debug('New log received', log);
     });
 
     try {
@@ -492,7 +493,7 @@ const ComprehensiveModelTester = () => {
         },
       });
     } catch (error) {
-      console.error("Execution failed:", error);
+      logger.error("Execution failed", error);
       toast.error(error instanceof Error ? error.message : "Execution failed");
     } finally {
       setIsExecuting(false);
@@ -578,7 +579,7 @@ const ComprehensiveModelTester = () => {
       }
     } catch (error) {
       toast.error("Failed to load test run");
-      console.error(error);
+      logger.error("Failed to load test run", error);
     }
   }, []);
 
@@ -621,7 +622,7 @@ const ComprehensiveModelTester = () => {
       toast.success(`Comparing ${flows.length} test runs`);
     } catch (error) {
       toast.error("Failed to load runs for comparison");
-      console.error(error);
+      logger.error("Failed to load runs for comparison", error);
     }
   }, []);
 

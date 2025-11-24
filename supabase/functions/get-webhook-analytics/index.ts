@@ -1,14 +1,14 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const startTime = Date.now();
@@ -17,10 +17,11 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
+
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Missing env vars', { hasUrl: !!supabaseUrl, hasServiceKey: !!supabaseServiceKey });
-      logger.error('Missing required environment variables', new Error('Configuration error'));
+      logger.error('Missing required environment variables', new Error('Configuration error'), {
+        metadata: { hasUrl: !!supabaseUrl, hasServiceKey: !!supabaseServiceKey }
+      });
       throw new Error('Server configuration error');
     }
     
@@ -93,9 +94,8 @@ Deno.serve(async (req) => {
     const { data: events, error: eventsError } = await query;
 
     if (eventsError) {
-      console.error('DB query failed', { error: eventsError, timeRange, provider });
       logger.error('Database query failed', new Error(eventsError?.message || 'Unknown error'), {
-        metadata: { timeRange, provider, startDate: startDate.toISOString(), endDate: endDate.toISOString() }
+        metadata: { error: eventsError, timeRange, provider, startDate: startDate.toISOString(), endDate: endDate.toISOString() }
       });
       throw new Error(`Database query failed: ${eventsError.message}`);
     }
@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
         byProvider: [],
         errorAnalysis: [],
       }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
       });
     }
 
@@ -242,7 +242,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify(analytics), {
       status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...responseHeaders, 'Content-Type': 'application/json' }
     });
   } catch (error) {
     logger.error('Failed to fetch analytics', error as Error, {
@@ -253,7 +253,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Failed to fetch analytics' 
       }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

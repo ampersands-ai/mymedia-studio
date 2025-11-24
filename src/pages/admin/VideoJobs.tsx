@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Loader2, Video, TrendingUp, Clock, AlertCircle } from 'lucide-react';
 import { VideoJob } from '@/types/video';
 import { format } from 'date-fns';
+import { VIDEO_JOB_STATUS } from '@/constants/generation-status';
 
 export default function VideoJobs() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -40,22 +41,22 @@ export default function VideoJobs() {
 
   const stats = {
     total: jobs?.length || 0,
-    completed: jobs?.filter(j => j.status === 'completed').length || 0,
-    failed: jobs?.filter(j => j.status === 'failed').length || 0,
-    processing: jobs?.filter(j => !['completed', 'failed'].includes(j.status)).length || 0,
+    completed: jobs?.filter(j => j.status === VIDEO_JOB_STATUS.COMPLETED).length || 0,
+    failed: jobs?.filter(j => j.status === VIDEO_JOB_STATUS.FAILED).length || 0,
+    processing: jobs?.filter(j => ![VIDEO_JOB_STATUS.COMPLETED, VIDEO_JOB_STATUS.FAILED].includes(j.status as any)).length || 0,
   };
 
   const getStatusColor = (status: VideoJob['status']) => {
-    const colors = {
-      pending: 'bg-gray-500',
-      generating_script: 'bg-blue-500',
-      awaiting_script_approval: 'bg-orange-500',
-      generating_voice: 'bg-purple-500',
-      awaiting_voice_approval: 'bg-amber-500',
-      fetching_video: 'bg-indigo-500',
-      assembling: 'bg-yellow-500',
-      completed: 'bg-green-500',
-      failed: 'bg-red-500'
+    const colors: Record<string, string> = {
+      [VIDEO_JOB_STATUS.PENDING]: 'bg-gray-500',
+      [VIDEO_JOB_STATUS.GENERATING_SCRIPT]: 'bg-blue-500',
+      'awaiting_script_approval': 'bg-orange-500',
+      [VIDEO_JOB_STATUS.GENERATING_VOICE]: 'bg-purple-500',
+      'awaiting_voice_approval': 'bg-amber-500',
+      [VIDEO_JOB_STATUS.FETCHING_VIDEO]: 'bg-indigo-500',
+      [VIDEO_JOB_STATUS.ASSEMBLING]: 'bg-yellow-500',
+      [VIDEO_JOB_STATUS.COMPLETED]: 'bg-green-500',
+      [VIDEO_JOB_STATUS.FAILED]: 'bg-red-500'
     };
     return colors[status] || 'bg-gray-500';
   };
@@ -146,15 +147,15 @@ export default function VideoJobs() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="generating_script">Generating Script</SelectItem>
+              <SelectItem value={VIDEO_JOB_STATUS.PENDING}>Pending</SelectItem>
+              <SelectItem value={VIDEO_JOB_STATUS.GENERATING_SCRIPT}>Generating Script</SelectItem>
               <SelectItem value="awaiting_script_approval">Review Script</SelectItem>
-              <SelectItem value="generating_voice">Generating Voice</SelectItem>
+              <SelectItem value={VIDEO_JOB_STATUS.GENERATING_VOICE}>Generating Voice</SelectItem>
               <SelectItem value="awaiting_voice_approval">Review Voiceover</SelectItem>
-              <SelectItem value="fetching_video">Fetching Video</SelectItem>
-              <SelectItem value="assembling">Assembling</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="failed">Failed</SelectItem>
+              <SelectItem value={VIDEO_JOB_STATUS.FETCHING_VIDEO}>Fetching Video</SelectItem>
+              <SelectItem value={VIDEO_JOB_STATUS.ASSEMBLING}>Assembling</SelectItem>
+              <SelectItem value={VIDEO_JOB_STATUS.COMPLETED}>Completed</SelectItem>
+              <SelectItem value={VIDEO_JOB_STATUS.FAILED}>Failed</SelectItem>
             </SelectContent>
           </Select>
         </CardContent>

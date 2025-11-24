@@ -33,7 +33,7 @@ interface Generation {
   status: string;
   output_url: string | null;
   storage_path: string | null;
-  settings: any;
+  settings: Record<string, unknown>;
   created_at: string;
   tokens_used: number;
   file_size_bytes: number | null;
@@ -201,7 +201,7 @@ export default function AllGenerations() {
       });
       queryClient.invalidateQueries({ queryKey: ['admin-all-generations'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Failed to share",
         description: error.message,
@@ -226,7 +226,7 @@ export default function AllGenerations() {
       });
       queryClient.invalidateQueries({ queryKey: ['admin-all-generations'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Failed to remove",
         description: error.message,
@@ -250,7 +250,7 @@ export default function AllGenerations() {
       });
       queryClient.invalidateQueries({ queryKey: ['admin-all-generations'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Failed to check status",
         description: error.message,

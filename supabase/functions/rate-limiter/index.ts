@@ -1,34 +1,31 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 // Inline helper: sanitize errors before logging
-function sanitizeError(error: any): any {
+function sanitizeError(error: unknown): unknown {
   if (error && typeof error === 'object') {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { authorization, token, api_key, apiKey, secret, ...safe } = error;
+    const { authorization, token, api_key, apiKey, secret, ...safe } = error as Record<string, unknown>;
     return safe;
   }
   return error;
 }
 
 // Inline helper: log errors using EdgeLogger
-function logError(context: string, error: any, metadata?: any, logger?: EdgeLogger): void {
+function logError(context: string, error: unknown, metadata?: Record<string, unknown>, logger?: EdgeLogger): void {
   const sanitized = sanitizeError(error);
   if (logger) {
     logger.error(context, new Error(JSON.stringify(sanitized)), { metadata });
-  } else {
-    console.error(`[ERROR] ${context}:`, sanitized, metadata);
   }
+  // EdgeLogger should always be provided in production
 }
 
 // Inline helper: create standardized error response
-function createErrorResponse(error: any, headers: any, context: string, metadata?: any, logger?: EdgeLogger): Response {
+function createErrorResponse(error: unknown, headers: HeadersInit, context: string, metadata?: Record<string, unknown>, logger?: EdgeLogger): Response {
   logError(context, error, metadata, logger);
   const message = error?.message || 'An error occurred';
   const status = message.includes('Unauthorized') || message.includes('authorization') ? 401
@@ -73,16 +70,18 @@ const rateLimitSchema = z.object({
 });
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
   
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const logger = new EdgeLogger('rate-limiter', requestId);
-  let body: any;
+  let body: Record<string, unknown> | undefined;
 
   try {
     body = await req.json();
@@ -133,7 +132,7 @@ Deno.serve(async (req) => {
             error: `Too many attempts. Please try again in ${minutesRemaining} minute(s).`,
             blockedUntil: blockedUntil.toISOString(),
           }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 429, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
     }
@@ -157,7 +156,7 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ allowed: true, remainingAttempts: config.maxAttempts - 1 }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -185,7 +184,7 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ allowed: true, remainingAttempts: config.maxAttempts - 1 }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -243,7 +242,7 @@ Deno.serve(async (req) => {
           error: `Too many attempts. Please try again later.`,
       blockedUntil: updateData.blocked_until,
         }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 429, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -254,7 +253,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ allowed: true, remainingAttempts: config.maxAttempts - newAttemptCount }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {

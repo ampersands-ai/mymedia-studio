@@ -1,26 +1,84 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Type definitions
+interface SanitizedData {
+  [key: string]: unknown;
+}
+
+interface PixabayImage {
+  largeImageURL?: string;
+  webformatURL?: string;
+}
+
+interface PixabayVideo {
+  videos?: {
+    large?: { url?: string; width?: number; height?: number };
+    medium?: { url?: string; width?: number; height?: number };
+    small?: { url?: string; width?: number; height?: number };
+  };
+  duration?: number;
+  id?: number;
+}
+
+interface PixabayImageResponse {
+  hits?: PixabayImage[];
+}
+
+interface PixabayVideoResponse {
+  hits?: PixabayVideo[];
+}
+
+interface VideoJob {
+  user_id: string;
+  script: string;
+  voiceover_url: string;
+  style: string;
+  duration: number;
+  aspect_ratio: string;
+  caption_style?: CaptionStyle;
+  custom_background_video?: string;
+  status: string;
+  topic?: string;
+  actual_audio_duration?: number;
+  background_media_type?: string;
+}
+
+interface CaptionStyle {
+  position?: string;
+  horizontalAlignment?: string;
+  verticalAlignment?: string;
+  backgroundPadding?: number;
+  backgroundColor?: string;
+  backgroundBorderRadius?: number;
+  backgroundOpacity?: number;
+  lineHeight?: number;
+  fontFamily?: string;
+  fontSize?: number;
+  textColor?: string;
+  fontUrl?: string;
+  offsetY?: number;
+}
 
 // Inlined helper: sanitize sensitive data
-function sanitizeData(data: any): any {
-  if (!data) return data;
-  const sanitized = { ...data };
+function sanitizeData(data: unknown): SanitizedData {
+  if (!data) return {};
+  if (typeof data !== 'object' || data === null) return {};
+  const sanitized = { ...data as Record<string, unknown> };
   const sensitiveKeys = ['api_key', 'authorization', 'token', 'secret', 'apiKey'];
   sensitiveKeys.forEach(key => delete sanitized[key]);
-  if (sanitized.headers) {
-    sensitiveKeys.forEach(key => delete sanitized.headers[key]);
+  if (sanitized.headers && typeof sanitized.headers === 'object') {
+    const headers = sanitized.headers as Record<string, unknown>;
+    sensitiveKeys.forEach(key => delete headers[key]);
   }
   return sanitized;
 }
 
 // Inlined helper: log API call
 async function logApiCall(
-  supabase: any,
+  supabase: SupabaseClient,
   request: {
     videoJobId: string;
     userId: string;
@@ -28,13 +86,13 @@ async function logApiCall(
     endpoint: string;
     httpMethod: string;
     stepName: string;
-    requestPayload?: any;
-    additionalMetadata?: any;
+    requestPayload?: unknown;
+    additionalMetadata?: Record<string, unknown>;
   },
   requestSentAt: Date,
   response: {
     statusCode: number;
-    payload?: any;
+    payload?: unknown;
     isError: boolean;
     errorMessage?: string;
   }
@@ -62,8 +120,10 @@ async function logApiCall(
 }
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const requestId = crypto.randomUUID();
@@ -124,14 +184,14 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized: not your job');
     }
 
-    if (job.status !== 'awaiting_voice_approval' && job.status !== 'failed') {
+    if (job.status !== 'awaiting_voice_approval' && job.status !== GENERATION_STATUS.FAILED) {
       logger.error("Invalid job status for approval", undefined, { 
         metadata: { jobId: job_id, status: job.status }
       });
       throw new Error(`Job cannot be approved from status: ${job.status}`);
     }
 
-    if (job.status === 'failed') {
+    if (job.status === GENERATION_STATUS.FAILED) {
       logger.info("Resetting failed job for retry", { metadata: { jobId: job_id } });
       await updateJobStatus(supabaseClient, job_id, 'awaiting_voice_approval', logger);
     }
@@ -148,7 +208,7 @@ Deno.serve(async (req) => {
       }
     });
 
-    const backgroundMediaType = (job as any).background_media_type || 'video';
+    const backgroundMediaType = (job.background_media_type as string | undefined) || 'video';
     logger.info("Background media type determined", { metadata: { backgroundMediaType } });
 
     // Step 3: Fetch multiple background videos or images
@@ -242,10 +302,10 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, job_id }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
-    logger.error("Error in approve-voiceover", error, { metadata: { jobId: job_id } });
+  } catch (error) {
+    logger.error("Error in approve-voiceover", error instanceof Error ? error : new Error(String(error)), { metadata: { jobId: job_id } });
     
     // Revert job to awaiting_voice_approval so user can retry
     if (job_id) {
@@ -260,10 +320,10 @@ Deno.serve(async (req) => {
           .update({
             status: 'awaiting_voice_approval',
             error_details: {
-              message: error.message || 'Video rendering failed',
+              message: error instanceof Error ? error.message : 'Video rendering failed',
               timestamp: new Date().toISOString(),
               step: 'approve_voiceover',
-              error_type: error.name || 'UnknownError'
+              error_type: error instanceof Error ? error.name : 'UnknownError'
             },
             updated_at: new Date().toISOString()
           })
@@ -274,17 +334,17 @@ Deno.serve(async (req) => {
     }
     
     return new Response(
-      JSON.stringify({ error: error.message || 'Unknown error occurred' }),
-      { 
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error occurred' }),
+      {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
 });
 
 // Helper functions
-async function updateJobStatus(supabase: any, jobId: string, status: string, logger?: EdgeLogger) {
+async function updateJobStatus(supabase: SupabaseClient, jobId: string, status: string, logger?: EdgeLogger) {
   await supabase.from('video_jobs').update({ status }).eq('id', jobId);
   logger?.debug("Job status updated", { metadata: { jobId, status } });
 }
@@ -305,7 +365,7 @@ function extractSearchTerms(topic: string): string {
 
 // Fetch background images from Pixabay for automatic background
 async function getBackgroundImages(
-  supabase: any,
+  supabase: SupabaseClient,
   style: string,
   videoJobId: string,
   userId: string,
@@ -355,7 +415,7 @@ async function getBackgroundImages(
   const requestSentAt = new Date();
 
   const response = await fetch(endpoint);
-  const data = response.ok ? await response.json() : null;
+  const data: PixabayImageResponse | null = response.ok ? await response.json() : null;
 
   // Log the API call
   logApiCall(
@@ -390,8 +450,8 @@ async function getBackgroundImages(
   // CRITICAL: Use only largeImageURL or webformatURL for automatic backgrounds (Pixabay policy)
   // Premium URLs (fullHDURL, imageURL, vectorURL) are only for user-selected content
   const imageUrls = data.hits
-    .map((hit: any) => hit.largeImageURL || hit.webformatURL)
-    .filter(Boolean);
+    .map((hit: PixabayImage) => hit.largeImageURL || hit.webformatURL)
+    .filter((url): url is string => Boolean(url));
 
   logger?.debug(`Selected background images from Pixabay`, { 
     metadata: { count: imageUrls.length, usedPermittedUrls: true } 
@@ -400,7 +460,7 @@ async function getBackgroundImages(
 }
 
 async function getBackgroundVideos(
-  supabase: any,
+  supabase: SupabaseClient,
   style: string,
   duration: number,
   videoJobId: string,
@@ -450,7 +510,7 @@ async function getBackgroundVideos(
 
   const response = await fetch(endpoint);
 
-  const data = response.ok ? await response.json() : null;
+  const data: PixabayVideoResponse | null = response.ok ? await response.json() : null;
 
   // Log the API call
   logApiCall(
@@ -483,7 +543,7 @@ async function getBackgroundVideos(
   }
 
   // Filter videos by orientation based on aspect ratio
-  const filterByOrientation = (video: any) => {
+  const filterByOrientation = (video: PixabayVideo) => {
     const videoWidth = video.videos?.large?.width || video.videos?.medium?.width || 1920;
     const videoHeight = video.videos?.large?.height || video.videos?.medium?.height || 1080;
     const videoRatio = videoWidth / videoHeight;
@@ -497,7 +557,7 @@ async function getBackgroundVideos(
   };
 
   // Select video URL based on aspect ratio and availability
-  const selectVideoUrl = (video: any) => {
+  const selectVideoUrl = (video: PixabayVideo): string | undefined => {
     const videos = video.videos;
     
     if (targetOrientation === 'portrait') {
@@ -511,7 +571,7 @@ async function getBackgroundVideos(
 
   // Filter videos that match orientation and are long enough (at least 10s for variety)
   const orientationFiltered = data.hits.filter(filterByOrientation);
-  const suitable = orientationFiltered.filter((v: any) => v.duration >= 10);
+  const suitable = orientationFiltered.filter((v: PixabayVideo) => (v.duration || 0) >= 10);
   const videosToUse = suitable.length >= 5 ? suitable : (orientationFiltered.length ? orientationFiltered : data.hits);
   
   // Calculate how many clips we need (aim for 8-12 second clips)
@@ -545,7 +605,7 @@ async function getBackgroundVideos(
 }
 
 async function assembleVideo(
-  supabase: any,
+  supabase: SupabaseClient,
   assets: {
     script: string;
     voiceoverUrl: string;
@@ -556,7 +616,7 @@ async function assembleVideo(
   videoJobId: string,
   userId: string,
   aspectRatio: string = '4:5',
-  captionStyle?: any,
+  captionStyle?: CaptionStyle,
   backgroundMediaType: 'video' | 'image' = 'video',
   logger?: EdgeLogger
 ): Promise<string> {
@@ -576,7 +636,7 @@ async function assembleVideo(
   const style = captionStyle || defaultStyle;
   
   // Get dimensions from aspect ratio
-  const dimensions: Record<string, any> = {
+  const dimensions: Record<string, { width: number; height: number }> = {
     '16:9': { width: 1920, height: 1080 },
     '9:16': { width: 1080, height: 1920 },
     '4:5': { width: 1080, height: 1350 },
@@ -592,11 +652,24 @@ async function assembleVideo(
     }
   });
 
+  interface ShotstackEdit {
+    timeline: {
+      background: string;
+      tracks: unknown[];
+      fonts?: Array<{ src: string }>;
+    };
+    output: {
+      format: string;
+      fps: number;
+      size: { width: number; height: number };
+    };
+  }
+
   // Build Shotstack JSON using official format
-  const edit: any = {
+  const edit: ShotstackEdit = {
     timeline: {
       background: '#000000',
-      tracks: [] as any[]
+      tracks: []
     },
     output: {
       format: 'mp4',
@@ -630,7 +703,7 @@ async function assembleVideo(
   });
 
   // Track 1: Rich caption with custom styling
-  const captionClip: any = {
+  const captionClip: Record<string, unknown> = {
     start: 0,
     length: 'auto',
     position: style?.position || 'bottom',
@@ -702,9 +775,12 @@ async function assembleVideo(
   // Debug: Log track order before submission
   logger?.debug("Track order and caption asset", {
     metadata: {
-      trackOrder: edit.timeline.tracks.map((t: any) => t.clips?.[0]?.asset?.type),
-      captionAsset: edit.timeline.tracks[1]?.clips?.[0]?.asset
-    } 
+      trackOrder: edit.timeline.tracks.map((t: Record<string, unknown>) => {
+        const clips = (t.clips as Array<{ asset?: { type?: string } }>) || [];
+        return clips[0]?.asset?.type;
+      }),
+      captionAsset: (edit.timeline.tracks[1] as Record<string, unknown>)
+    }
   });
 
   // Submit to Shotstack API
@@ -769,7 +845,7 @@ async function assembleVideo(
     if (result?.response?.message) {
       errorMessage = result.response.message;
     } else if (result?.response?.errors && Array.isArray(result.response.errors)) {
-      errorMessage = result.response.errors.map((e: any) => e.message || e.code).join(', ');
+      errorMessage = result.response.errors.map((e: { message?: string; code?: string }) => e.message || e.code).join(', ');
     } else if (result?.message) {
       errorMessage = result.message;
     }
@@ -778,12 +854,14 @@ async function assembleVideo(
 
     if (isCaptionValidation) {
       logger?.info("Retrying with minimal caption asset and auto length...");
-      const fallbackEdit: any = JSON.parse(JSON.stringify(edit));
+      const fallbackEdit = JSON.parse(JSON.stringify(edit)) as ShotstackEdit;
       try {
         // Dynamically find caption track instead of using hardcoded index
-        const captionTrackIndex = fallbackEdit.timeline.tracks.findIndex((t: any) => 
-          t.clips?.[0]?.asset?.type === 'caption' || t.clips?.[0]?.asset?.type === 'captions'
-        );
+        const captionTrackIndex = fallbackEdit.timeline.tracks.findIndex((t: unknown) => {
+          const track = t as Record<string, unknown>;
+          const clips = (track.clips as Array<{ asset?: { type?: string } }>) || [];
+          return clips[0]?.asset?.type === 'caption' || clips[0]?.asset?.type === 'captions';
+        });
         if (captionTrackIndex !== -1 && fallbackEdit.timeline.tracks[captionTrackIndex]?.clips?.[0]) {
           fallbackEdit.timeline.tracks[captionTrackIndex].clips[0].asset = { type: 'caption', src: 'alias://VOICEOVER' };
           fallbackEdit.timeline.tracks[captionTrackIndex].clips[0].length = 'auto';
@@ -838,12 +916,14 @@ async function assembleVideo(
         });
 
         logger?.info("Retrying with asset type 'captions'...");
-        const fallbackEdit2: any = JSON.parse(JSON.stringify(fallbackEdit));
+        const fallbackEdit2 = JSON.parse(JSON.stringify(fallbackEdit)) as ShotstackEdit;
         try {
           // Dynamically find caption track for second retry
-          const captionTrackIndex2 = fallbackEdit2.timeline.tracks.findIndex((t: any) => 
-            t.clips?.[0]?.asset?.type === 'caption' || t.clips?.[0]?.asset?.type === 'captions'
-          );
+          const captionTrackIndex2 = fallbackEdit2.timeline.tracks.findIndex((t: unknown) => {
+            const track = t as Record<string, unknown>;
+            const clips = (track.clips as Array<{ asset?: { type?: string } }>) || [];
+            return clips[0]?.asset?.type === 'caption' || clips[0]?.asset?.type === 'captions';
+          });
           if (captionTrackIndex2 !== -1 && fallbackEdit2.timeline.tracks[captionTrackIndex2]?.clips?.[0]) {
             fallbackEdit2.timeline.tracks[captionTrackIndex2].clips[0].asset = { type: 'captions', src: 'alias://VOICEOVER' };
           }
@@ -888,7 +968,9 @@ async function assembleVideo(
         ).catch(e => logger?.error('Failed to log API call (retry captions type)', e as Error));
 
         if (!retryRes2.ok) {
-          const retryMsg = retryResult2?.response?.message || (retryResult2?.response?.errors ? retryResult2.response.errors.map((e: any) => e.message || e.code).join(', ') : '') || retryResult2?.message || errorMessage;
+          const errors = retryResult2?.response?.errors;
+          const errorList = Array.isArray(errors) ? errors.map((e: { message?: string; code?: string }) => e.message || e.code).join(', ') : '';
+          const retryMsg = retryResult2?.response?.message || errorList || retryResult2?.message || errorMessage;
           throw new Error(`Shotstack error: ${retryMsg}`);
         }
         logger?.info('Shotstack render submitted successfully (captions type fallback)', { 
@@ -912,7 +994,7 @@ async function assembleVideo(
   return result.response.id;
 }
 
-async function pollRenderStatus(supabase: any, jobId: string, renderId: string, userId: string, logger?: EdgeLogger) {
+async function pollRenderStatus(supabase: SupabaseClient, jobId: string, renderId: string, userId: string, logger?: EdgeLogger) {
   const maxAttempts = 120;
   let attempts = 0;
 
@@ -1001,7 +1083,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
             user_id: job.user_id,
             type: 'video',
             prompt: `Faceless Video: ${job.topic}`,
-            status: 'completed',
+            status: GENERATION_STATUS.COMPLETED,
             tokens_used: 15,
             storage_path: videoPath,
             model_id: 'faceless-video-generator',
@@ -1036,31 +1118,31 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
           
           // Update job with permanent storage URL instead of temporary Shotstack URL
           await supabase.from('video_jobs').update({
-            status: 'completed',
+            status: GENERATION_STATUS.COMPLETED,
             final_video_url: videoPublicUrl,
             completed_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }).eq('id', jobId);
           
           return; // Exit after successful completion
-        } catch (uploadError: any) {
-          logger?.error("Error during video download/upload", uploadError, { 
+        } catch (uploadError) {
+          logger?.error("Error during video download/upload", uploadError instanceof Error ? uploadError : new Error(String(uploadError)), { 
             metadata: { jobId, renderId } 
           });
           
           // Update job status to failed with detailed error
           await supabase.from('video_jobs').update({
-            status: 'failed',
+            status: GENERATION_STATUS.FAILED,
             error_message: 'Failed to save final video',
-            error_details: { 
-              error: uploadError.message,
+            error_details: {
+              error: uploadError instanceof Error ? uploadError.message : String(uploadError),
               step: 'video_upload',
               render_id: renderId
             },
             updated_at: new Date().toISOString()
           }).eq('id', jobId);
           
-          throw new Error(`Video upload failed: ${uploadError.message}`);
+          throw new Error(`Video upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`);
         }
       }
       

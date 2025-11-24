@@ -193,7 +193,69 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 }
 
 export function validate(inputs: Record<string, any>): { valid: boolean; error?: string } {
-  // TODO: Implement validation logic
+  // Basic validation - check for required fields and types
+  if (!inputs || typeof inputs !== 'object') {
+    return { valid: false, error: 'Inputs must be a non-null object' };
+  }
+
+  // Validate prompt if present (common across most models)
+  if ('prompt' in inputs) {
+    if (typeof inputs.prompt !== 'string') {
+      return { valid: false, error: 'Prompt must be a string' };
+    }
+    if (inputs.prompt.length < 3) {
+      return { valid: false, error: 'Prompt must be at least 3 characters' };
+    }
+    if (inputs.prompt.length > 10000) {
+      return { valid: false, error: 'Prompt must not exceed 10,000 characters' };
+    }
+  }
+
+  // Validate numeric parameters
+  const numericFields = ['width', 'height', 'duration', 'fps', 'seed', 'num_inference_steps'];
+  for (const field of numericFields) {
+    if (field in inputs) {
+      if (typeof inputs[field] !== 'number' || !Number.isFinite(inputs[field])) {
+        return { valid: false, error: \`\${field} must be a finite number\` };
+      }
+      if (inputs[field] < 0) {
+        return { valid: false, error: \`\${field} must be non-negative\` };
+      }
+    }
+  }
+
+  // Validate URLs if present
+  const urlFields = ['image_url', 'image_urls', 'input_image', 'startFrame', 'endFrame'];
+  for (const field of urlFields) {
+    if (field in inputs) {
+      const value = inputs[field];
+      if (Array.isArray(value)) {
+        for (const url of value) {
+          if (typeof url !== 'string' || !url.startsWith('http')) {
+            return { valid: false, error: \`\${field} must contain valid HTTP(S) URLs\` };
+          }
+        }
+      } else if (value !== null && value !== undefined) {
+        if (typeof value !== 'string' || !value.startsWith('http')) {
+          return { valid: false, error: \`\${field} must be a valid HTTP(S) URL\` };
+        }
+      }
+    }
+  }
+
+  // Check for suspicious patterns (SQL injection, XSS)
+  const stringValues = Object.values(inputs).filter(v => typeof v === 'string');
+  for (const value of stringValues) {
+    // Check for SQL injection patterns
+    if (/(\b(union|select|insert|update|delete|drop|create|alter|exec|script)\b)/i.test(value)) {
+      return { valid: false, error: 'Invalid characters detected in input' };
+    }
+    // Check for script tags
+    if (/<script|javascript:|onerror=/i.test(value)) {
+      return { valid: false, error: 'Invalid characters detected in input' };
+    }
+  }
+
   return { valid: true };
 }
 

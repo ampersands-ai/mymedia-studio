@@ -1,19 +1,16 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createSafeErrorResponse } from '../_shared/error-handler.ts';
 import { EdgeLogger } from "../_shared/edge-logger.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('cancel-render', requestId);
-  
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -36,7 +33,7 @@ Deno.serve(async (req) => {
     if (authError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -46,7 +43,7 @@ Deno.serve(async (req) => {
     if (!storyboardId) {
       return new Response(
         JSON.stringify({ error: 'storyboardId is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -63,7 +60,7 @@ Deno.serve(async (req) => {
       logger.error("Storyboard not found", fetchError instanceof Error ? fetchError : new Error(String(fetchError) || 'Database error'));
       return new Response(
         JSON.stringify({ error: 'Storyboard not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 404, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -75,7 +72,7 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 403, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -86,7 +83,7 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({ error: `Cannot cancel: storyboard is in ${storyboard.status} status` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -121,10 +118,10 @@ Deno.serve(async (req) => {
         success: true,
         message: 'Render canceled. Status updated to draft.',
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     logger.error("Error canceling render", error as Error);
-    return createSafeErrorResponse(error, 'cancel-render', corsHeaders);
+    return createSafeErrorResponse(error, 'cancel-render', responseHeaders);
   }
 });

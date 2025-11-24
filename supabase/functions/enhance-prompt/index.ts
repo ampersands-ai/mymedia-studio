@@ -2,15 +2,13 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { EdgeLogger } from '../_shared/edge-logger.ts';
 import { HttpClients } from '../_shared/http-client.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const requestId = crypto.randomUUID();
@@ -26,7 +24,7 @@ Deno.serve(async (req) => {
       logger.warn('Missing prompt in request');
       return new Response(
         JSON.stringify({ error: 'Missing required field: prompt' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -36,7 +34,7 @@ Deno.serve(async (req) => {
       logger.warn('Missing authorization header');
       return new Response(
         JSON.stringify({ error: 'No authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -47,7 +45,7 @@ Deno.serve(async (req) => {
       logger.error('Authentication failed', authError || undefined);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -76,7 +74,7 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({ error: 'Insufficient credits. You need 0.1 credits to enhance prompts.' }),
-        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 402, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -183,7 +181,7 @@ Original prompt: "${prompt}"`;
       JSON.stringify({
         enhanced_prompt: cleanedPrompt
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error: any) {
@@ -196,7 +194,7 @@ Original prompt: "${prompt}"`;
       
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

@@ -7,6 +7,7 @@ import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { getModel } from "../_shared/registry/index.ts";
 import { GENERATION_STATUS, AUDIT_ACTIONS } from "../_shared/constants.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 // Type definitions
 interface EdgeFunctionUser {
@@ -43,18 +44,15 @@ const GenerateContentSyncRequestSchema = z.object({
 
 type GenerateContentSyncRequest = z.infer<typeof GenerateContentSyncRequestSchema>;
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 /**
  * Synchronous generation endpoint for immediate-response providers (Runware)
  * This is completely separate from the async webhook-based generate-content endpoint
  */
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const startTime = Date.now();
@@ -105,7 +103,7 @@ Deno.serve(async (req) => {
           error: 'Invalid request parameters',
           details: error.message
         }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -143,7 +141,7 @@ Deno.serve(async (req) => {
     if (effectivePrompt.length < 2) {
       return new Response(
         JSON.stringify({ error: 'Prompt is required and must be at least 2 characters.' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -190,7 +188,7 @@ Deno.serve(async (req) => {
           code: 'DEPRECATED_MODEL_ID',
           deprecated_id: model_id
         }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     } else {
       throw new Error('Must provide model_record_id');
@@ -230,12 +228,12 @@ Deno.serve(async (req) => {
 
     if (tierLimits && hourlyCount !== null && hourlyCount >= tierLimits.max_generations_per_hour) {
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: 'Hourly generation limit reached',
           limit: tierLimits.max_generations_per_hour,
           current: hourlyCount,
         }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 429, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -326,13 +324,13 @@ Deno.serve(async (req) => {
 
       if (subscription.tokens_remaining < tokenCost) {
         return new Response(
-          JSON.stringify({ 
+          JSON.stringify({
             error: 'Insufficient credits',
             type: 'INSUFFICIENT_TOKENS',
             required: tokenCost,
             available: subscription.tokens_remaining,
           }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 402, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -519,7 +517,7 @@ Deno.serve(async (req) => {
           tokens_used: tokenCost,
           content_type: model.content_type
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
 
     } catch (providerError: any) {
@@ -569,6 +567,6 @@ Deno.serve(async (req) => {
     }
 
   } catch (error: any) {
-    return createSafeErrorResponse(error, 'generate-content-sync', corsHeaders);
+    return createSafeErrorResponse(error, 'generate-content-sync', responseHeaders);
   }
 });

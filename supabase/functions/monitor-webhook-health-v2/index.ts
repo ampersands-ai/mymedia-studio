@@ -9,7 +9,7 @@
  * 4. No successful webhook in 30+ minutes
  */
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
@@ -28,7 +28,7 @@ interface HealthIssue {
   provider: string;
   alert_type: string;
   severity: 'warning' | 'critical';
-  details: Record<string, any>;
+  details: Record<string, unknown>;
 }
 
 Deno.serve(async (req) => {
@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
 });
 
 async function checkProviderHealth(
-  supabase: any,
+  supabase: SupabaseClient,
   config: AlertConfig,
   logger: EdgeLogger
 ): Promise<HealthIssue[]> {
@@ -170,9 +170,15 @@ async function checkProviderHealth(
       return issues;
     }
 
+    interface WebhookAnalytic {
+      status: string;
+      duration_ms?: number;
+      [key: string]: unknown;
+    }
+
     const totalEvents = events.length;
-    const successfulEvents = events.filter((e: any) => e.status === 'success').length;
-    const failedEvents = events.filter((e: any) => e.status === 'failure').length;
+    const successfulEvents = events.filter((e: WebhookAnalytic) => e.status === 'success').length;
+    const failedEvents = events.filter((e: WebhookAnalytic) => e.status === 'failure').length;
     const successRate = totalEvents > 0 ? successfulEvents / totalEvents : 0;
 
     logger.info(`${config.provider} metrics`, {
@@ -204,11 +210,11 @@ async function checkProviderHealth(
           consecutive_failures: consecutiveFailures,
           threshold: config.failure_threshold,
           recent_errors: events
-            .filter((e: any) => e.status === 'failure')
+            .filter((e: WebhookAnalytic) => e.status === 'failure')
             .slice(0, 5)
-            .map((e: any) => ({
-              error_code: e.error_code,
-              created_at: e.created_at
+            .map((e: WebhookAnalytic) => ({
+              error_code: (e as { error_code?: string }).error_code,
+              created_at: (e as { created_at?: string }).created_at
             }))
         }
       });
@@ -233,13 +239,13 @@ async function checkProviderHealth(
     }
 
     // CHECK 3: High latency
-    const successfulWithDuration = events.filter((e: any) => 
+    const successfulWithDuration = events.filter((e: WebhookAnalytic) =>
       e.status === 'success' && e.duration_ms != null
     );
-    
+
     if (successfulWithDuration.length > 0) {
       const avgDuration = successfulWithDuration.reduce(
-        (sum: number, e: any) => sum + e.duration_ms, 
+        (sum: number, e: WebhookAnalytic) => sum + (e.duration_ms || 0),
         0
       ) / successfulWithDuration.length;
 
@@ -259,10 +265,10 @@ async function checkProviderHealth(
     }
 
     // CHECK 4: No successful webhooks in last 30 minutes (but there is activity)
-    const recentSuccessfulEvents = events.filter((e: any) => 
-      e.status === 'success' && 
-      new Date(e.created_at) >= thirtyMinutesAgo
-    );
+    const recentSuccessfulEvents = events.filter((e: WebhookAnalytic) => {
+      const createdAt = (e as { created_at?: string }).created_at;
+      return e.status === 'success' && createdAt && new Date(createdAt) >= thirtyMinutesAgo;
+    });
 
     if (totalEvents > 0 && recentSuccessfulEvents.length === 0) {
       logger.warn(`${config.provider}: No successful webhooks in 30 minutes`);
@@ -286,7 +292,7 @@ async function checkProviderHealth(
 }
 
 async function sendHealthAlerts(
-  supabase: any,
+  supabase: SupabaseClient,
   issues: HealthIssue[],
   logger: EdgeLogger
 ): Promise<void> {

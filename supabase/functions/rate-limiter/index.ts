@@ -6,17 +6,17 @@ import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 
 // Inline helper: sanitize errors before logging
-function sanitizeError(error: any): any {
+function sanitizeError(error: unknown): unknown {
   if (error && typeof error === 'object') {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { authorization, token, api_key, apiKey, secret, ...safe } = error;
+    const { authorization, token, api_key, apiKey, secret, ...safe } = error as Record<string, unknown>;
     return safe;
   }
   return error;
 }
 
 // Inline helper: log errors using EdgeLogger
-function logError(context: string, error: any, metadata?: any, logger?: EdgeLogger): void {
+function logError(context: string, error: unknown, metadata?: Record<string, unknown>, logger?: EdgeLogger): void {
   const sanitized = sanitizeError(error);
   if (logger) {
     logger.error(context, new Error(JSON.stringify(sanitized)), { metadata });
@@ -25,7 +25,7 @@ function logError(context: string, error: any, metadata?: any, logger?: EdgeLogg
 }
 
 // Inline helper: create standardized error response
-function createErrorResponse(error: any, headers: any, context: string, metadata?: any, logger?: EdgeLogger): Response {
+function createErrorResponse(error: unknown, headers: HeadersInit, context: string, metadata?: Record<string, unknown>, logger?: EdgeLogger): Response {
   logError(context, error, metadata, logger);
   const message = error?.message || 'An error occurred';
   const status = message.includes('Unauthorized') || message.includes('authorization') ? 401
@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
   }
 
   const logger = new EdgeLogger('rate-limiter', requestId);
-  let body: any;
+  let body: Record<string, unknown> | undefined;
 
   try {
     body = await req.json();

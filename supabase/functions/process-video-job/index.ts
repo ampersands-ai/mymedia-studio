@@ -1,27 +1,46 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { VIDEO_JOB_STATUS } from "../_shared/constants.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
 
+// Type definitions
+interface SanitizedData {
+  [key: string]: unknown;
+}
 
+interface PixabayVideo {
+  videos?: {
+    large?: { url?: string; width?: number; height?: number };
+    medium?: { url?: string; width?: number; height?: number };
+    small?: { url?: string; width?: number; height?: number };
+  };
+  duration?: number;
+  id?: number;
+}
+
+interface PixabayVideoResponse {
+  hits?: PixabayVideo[];
+}
 
 // Inlined helper: sanitize sensitive data
-function sanitizeData(data: any): any {
-  if (!data) return data;
-  const sanitized = { ...data };
+function sanitizeData(data: unknown): SanitizedData {
+  if (!data) return {};
+  if (typeof data !== 'object' || data === null) return {};
+  const sanitized = { ...data as Record<string, unknown> };
   const sensitiveKeys = ['api_key', 'authorization', 'token', 'secret', 'apiKey'];
   sensitiveKeys.forEach(key => delete sanitized[key]);
-  if (sanitized.headers) {
-    sensitiveKeys.forEach(key => delete sanitized.headers[key]);
+  if (sanitized.headers && typeof sanitized.headers === 'object') {
+    const headers = sanitized.headers as Record<string, unknown>;
+    sensitiveKeys.forEach(key => delete headers[key]);
   }
   return sanitized;
 }
 
 // Inlined helper: log API call with EdgeLogger integration
 async function logApiCall(
-  supabase: any,
-  logger: any,
+  supabase: SupabaseClient,
+  logger: EdgeLogger,
   request: {
     videoJobId: string;
     userId: string;
@@ -29,13 +48,13 @@ async function logApiCall(
     endpoint: string;
     httpMethod: string;
     stepName: string;
-    requestPayload?: any;
-    additionalMetadata?: any;
+    requestPayload?: unknown;
+    additionalMetadata?: Record<string, unknown>;
   },
   requestSentAt: Date,
   response: {
     statusCode: number;
-    payload?: any;
+    payload?: unknown;
     isError: boolean;
     errorMessage?: string;
   }
@@ -176,16 +195,16 @@ Deno.serve(async (req) => {
       }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
+  } catch (error) {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
     const logger = new EdgeLogger('process-video-job', requestId, supabaseClient, true);
-    
-    const errorMessage = error.message || 'Unknown error occurred';
-    
-    logger.error('Fatal error during processing', error, { metadata: { job_id: job_id || 'unknown' } });
+
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+
+    logger.error('Fatal error during processing', error instanceof Error ? error : new Error(String(error)), { metadata: { job_id: job_id || 'unknown' } });
     
     // Update job as failed if we have a job_id
     if (job_id) {
@@ -195,9 +214,9 @@ Deno.serve(async (req) => {
           .update({
             status: VIDEO_JOB_STATUS.FAILED,
             error_message: errorMessage,
-            error_details: { 
+            error_details: {
               error: errorMessage,
-              stack: error.stack,
+              stack: error instanceof Error ? error.stack : undefined,
               timestamp: new Date().toISOString()
             }
           })
@@ -222,13 +241,13 @@ Deno.serve(async (req) => {
 
 // Helper functions
 
-async function updateJobStatus(supabase: any, jobId: string, status: string) {
+async function updateJobStatus(supabase: SupabaseClient, jobId: string, status: string) {
   await supabase.from('video_jobs').update({ status }).eq('id', jobId);
 }
 
 async function generateScript(
-  supabase: any,
-  logger: any,
+  supabase: SupabaseClient,
+  logger: EdgeLogger,
   topic: string,
   duration: number,
   style: string,
@@ -326,8 +345,8 @@ function extractSearchTerms(topic: string): string {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function _getBackgroundVideo(
-  supabase: any,
-  logger: any,
+  supabase: SupabaseClient,
+  logger: EdgeLogger,
   style: string,
   duration: number,
   videoJobId: string,
@@ -359,7 +378,7 @@ async function _getBackgroundVideo(
 
   const response = await fetch(endpoint);
 
-  const data = response.ok ? await response.json() : null;
+  const data: PixabayVideoResponse | null = response.ok ? await response.json() : null;
 
   // Log the API call
   logApiCall(
@@ -395,10 +414,10 @@ async function _getBackgroundVideo(
   logger.info('Pixabay search results', { userId, metadata: { jobId: videoJobId, hitCount: data.hits.length, searchQuery } });
 
   // Filter landscape videos (width > height) longer than required duration
-  const landscapeVideos = data.hits.filter((v: any) => {
+  const landscapeVideos = data.hits.filter((v: PixabayVideo) => {
     const width = v.videos?.large?.width || v.videos?.medium?.width || 1920;
     const height = v.videos?.large?.height || v.videos?.medium?.height || 1080;
-    return width > height && v.duration >= duration;
+    return width > height && (v.duration || 0) >= duration;
   });
   
   const video = landscapeVideos.length 
@@ -418,8 +437,8 @@ async function _getBackgroundVideo(
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function _assembleVideo(
-  supabase: any,
-  logger: any,
+  supabase: SupabaseClient,
+  logger: EdgeLogger,
   assets: {
     script: string;
     voiceoverUrl: string;
@@ -572,7 +591,7 @@ async function _assembleVideo(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function _pollRenderStatus(supabase: any, logger: any, jobId: string, renderId: string, userId: string) {
+async function _pollRenderStatus(supabase: SupabaseClient, logger: EdgeLogger, jobId: string, renderId: string, userId: string) {
   const maxAttempts = 120; // 10 minutes max (5s interval)
   let attempts = 0;
 

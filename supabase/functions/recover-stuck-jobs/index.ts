@@ -197,11 +197,12 @@ Deno.serve(async (req) => {
               .eq('id', job.id);
             recoveredJobs.push({ id: job.id, action: 'marked_failed' });
           }
-        } catch (err: any) {
-          logger.error('Job recovery failed', err, { 
+        } catch (err) {
+          const errorObj = err instanceof Error ? err : new Error(String(err));
+          logger.error('Job recovery failed', errorObj, {
             metadata: { jobId: job.id }
           });
-          recoveredJobs.push({ id: job.id, action: 'recovery_failed', error: err.message || 'Unknown error' });
+          recoveredJobs.push({ id: job.id, action: 'recovery_failed', error: errorObj.message || 'Unknown error' });
         }
       }
 
@@ -365,8 +366,8 @@ Deno.serve(async (req) => {
               }
               // If still rendering, leave it alone
             }
-          } catch (shotstackError: any) {
-            logger.error('Shotstack check failed', shotstackError, { 
+          } catch (shotstackError) {
+            logger.error('Shotstack check failed', shotstackError instanceof Error ? shotstackError : new Error(String(shotstackError)), {
               metadata: { jobId: job.id }
             });
           }
@@ -419,15 +420,16 @@ Deno.serve(async (req) => {
             .eq('id', job.id);
           recoveredJobs.push({ id: job.id, action: 'marked_failed' });
         }
-      } catch (err: any) {
-        logger.error('Job recovery failed', err, { 
+      } catch (err) {
+        const errorObj = err instanceof Error ? err : new Error(String(err));
+        logger.error('Job recovery failed', errorObj, {
           metadata: { jobId: job.id }
         });
-        recoveredJobs.push({ id: job.id, action: 'recovery_failed', error: err.message || 'Unknown error' });
+        recoveredJobs.push({ id: job.id, action: 'recovery_failed', error: errorObj.message || 'Unknown error' });
       }
     }
 
-    logger.info('Recovery complete', { 
+    logger.info('Recovery complete', {
       metadata: { 
         totalScanned: stuckJobs.length,
         recoveredCount: recoveredJobs.length 
@@ -443,14 +445,15 @@ Deno.serve(async (req) => {
       }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
-    logger.error('Fatal error in recovery', error);
-    
+  } catch (error) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Fatal error in recovery', errorObj);
+
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
+      JSON.stringify({ error: errorObj.message }),
+      {
         status: 500,
-        headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       }
     );
   }

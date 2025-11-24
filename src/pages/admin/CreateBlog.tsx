@@ -25,6 +25,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+interface TopicSuggestion {
+  title: string;
+  description: string;
+  keywords?: string[];
+  seoScore: number;
+}
+
+interface SuggestedImage {
+  url: string;
+  alt_text: string;
+}
+
 export default function CreateBlog() {
   const navigate = useNavigate();
   const [isGeneratingTopics, setIsGeneratingTopics] = useState(false);
@@ -39,7 +51,7 @@ export default function CreateBlog() {
   const [keywordInput, setKeywordInput] = useState("");
   const [topicTone, setTopicTone] = useState<"professional" | "casual" | "technical" | "conversational">("professional");
   const [targetAudience, setTargetAudience] = useState("general audience");
-  const [suggestedTopics, setSuggestedTopics] = useState<any[]>([]);
+  const [suggestedTopics, setSuggestedTopics] = useState<TopicSuggestion[]>([]);
   const [selectedAIModel, setSelectedAIModel] = useState("claude-3-5-sonnet-20241022");
 
   // Blog post state
@@ -53,7 +65,7 @@ export default function CreateBlog() {
   const [seoMetadata, setSeoMetadata] = useState<SEOMetadata>({});
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [suggestedImages, setSuggestedImages] = useState<any[]>([]);
+  const [suggestedImages, setSuggestedImages] = useState<SuggestedImage[]>([]);
 
   // Backlinks state
   const [backlinks, setBacklinks] = useState<Array<{ url: string; anchor_text: string; is_internal: boolean }>>([]);
@@ -77,15 +89,15 @@ export default function CreateBlog() {
 
       setSuggestedTopics(data.topics);
       toast.success(`Generated ${data.topics.length} topic ideas!`);
-    } catch (error: any) {
-      logger.error('Error generating topics', error);
-      toast.error(error.message || 'Failed to generate topics');
+    } catch (error) {
+      logger.error('Error generating topics', error as Error);
+      toast.error((error as Error).message || 'Failed to generate topics');
     } finally {
       setIsGeneratingTopics(false);
     }
   };
 
-  const handleSelectTopic = (topic: any) => {
+  const handleSelectTopic = (topic: TopicSuggestion) => {
     setTitle(topic.title);
     setSlug(topic.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
     toast.success('Topic selected! Click "Generate Blog Post" to create content.');
@@ -135,9 +147,9 @@ export default function CreateBlog() {
       setSuggestedImages(data.suggested_images || []);
 
       toast.success('Blog post generated successfully! Review and edit as needed.');
-    } catch (error: any) {
-      logger.error('Error generating blog post', error);
-      toast.error(error.message || 'Failed to generate blog post');
+    } catch (error) {
+      logger.error('Error generating blog post', error as Error);
+      toast.error((error as Error).message || 'Failed to generate blog post');
     } finally {
       setIsGeneratingPost(false);
     }
@@ -239,9 +251,9 @@ export default function CreateBlog() {
 
       toast.success(saveStatus === 'published' ? 'Blog post published!' : 'Draft saved!');
       return post.id;
-    } catch (error: any) {
-      logger.error('Error saving blog post', error);
-      toast.error(error.message || 'Failed to save blog post');
+    } catch (error) {
+      logger.error('Error saving blog post', error as Error);
+      toast.error((error as Error).message || 'Failed to save blog post');
       return null;
     } finally {
       setIsSaving(false);
@@ -260,9 +272,9 @@ export default function CreateBlog() {
       toast.success(`Email sent to ${data.sent} users!`, {
         description: data.failed > 0 ? `${data.failed} failed to send` : undefined,
       });
-    } catch (error: any) {
-      logger.error('Error sending emails', error);
-      toast.error(error.message || 'Failed to send emails');
+    } catch (error) {
+      logger.error('Error sending emails', error as Error);
+      toast.error((error as Error).message || 'Failed to send emails');
     } finally {
       setIsSendingEmail(false);
     }
@@ -386,7 +398,7 @@ export default function CreateBlog() {
           </div>
           <div>
             <Label>Tone</Label>
-            <Select value={topicTone} onValueChange={(v: any) => setTopicTone(v)}>
+            <Select value={topicTone} onValueChange={(v) => setTopicTone(v as typeof topicTone)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

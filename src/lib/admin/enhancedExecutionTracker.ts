@@ -34,12 +34,12 @@ export interface ExecutionStep {
   status: ExecutionStepStatus;
 
   // State management
-  stateBeforeStep: Record<string, any>;
-  stateAfterStep: Record<string, any>;
+  stateBeforeStep: Record<string, unknown>;
+  stateAfterStep: Record<string, unknown>;
 
   // Inputs and outputs
-  inputs: Record<string, any>;
-  outputs: any;
+  inputs: Record<string, unknown>;
+  outputs: unknown;
   error?: string;
   errorStack?: string;
 
@@ -52,7 +52,7 @@ export interface ExecutionStep {
   canEdit: boolean;
   canRerun: boolean;
   isEdited: boolean;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 
   // Context
   executionContext: ExecutionContext;
@@ -70,8 +70,8 @@ export interface ExecutionLog {
   stepType: ExecutionStepType;
   logLevel: LogLevel;
   message: string;
-  data?: any;
-  metadata?: any;
+  data?: unknown;
+  metadata?: unknown;
   functionName?: string;
   filePath?: string;
   lineNumber?: number;
@@ -383,9 +383,9 @@ export class EnhancedExecutionTracker {
    */
   completeStep(
     stepId: string,
-    outputs: any,
-    stateAfterStep?: Record<string, any>,
-    metadata?: Record<string, any>
+    outputs: unknown,
+    stateAfterStep?: Record<string, unknown>,
+    metadata?: Record<string, unknown>
   ): void {
     const step = this.flow.steps.find(s => s.id === stepId);
     if (!step) return;
@@ -522,7 +522,7 @@ export class EnhancedExecutionTracker {
   /**
    * Update step inputs (for edit capability)
    */
-  updateStepInputs(stepId: string, newInputs: Record<string, any>): void {
+  updateStepInputs(stepId: string, newInputs: Record<string, unknown>): void {
     const step = this.flow.steps.find(s => s.id === stepId);
     if (!step) return;
 
@@ -545,8 +545,8 @@ export class EnhancedExecutionTracker {
     stepType: ExecutionStepType;
     logLevel: LogLevel;
     message: string;
-    data?: any;
-    metadata?: any;
+    data?: unknown;
+    metadata?: unknown;
     functionName?: string;
     filePath?: string;
     lineNumber?: number;
@@ -597,7 +597,7 @@ export class EnhancedExecutionTracker {
   /**
    * Convert database log to ExecutionLog
    */
-  private convertDbLogToExecutionLog(dbLog: any): ExecutionLog {
+  private convertDbLogToExecutionLog(dbLog: Record<string, unknown>): ExecutionLog {
     return {
       id: dbLog.id,
       testRunId: dbLog.test_run_id,
@@ -893,7 +893,7 @@ export class EnhancedExecutionTracker {
 /**
  * Helper function to mask sensitive data (API keys, tokens, etc.)
  */
-export function maskSensitiveData(data: any, keysToMask: string[] = ['apiKey', 'api_key', 'token', 'password', 'secret']): any {
+export function maskSensitiveData(data: unknown, keysToMask: string[] = ['apiKey', 'api_key', 'token', 'password', 'secret']): unknown {
   if (typeof data !== 'object' || data === null) {
     return data;
   }
@@ -902,7 +902,7 @@ export function maskSensitiveData(data: any, keysToMask: string[] = ['apiKey', '
     return data.map(item => maskSensitiveData(item, keysToMask));
   }
 
-  const masked: any = {};
+  const masked: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     const keyLower = key.toLowerCase();
     const shouldMask = keysToMask.some(maskKey => keyLower.includes(maskKey.toLowerCase()));
@@ -928,7 +928,7 @@ export function createStepConfig(
   description: string,
   functionPath: string,
   functionName: string,
-  inputs: Record<string, any>,
+  inputs: Record<string, unknown>,
   options: {
     canEdit?: boolean;
     canRerun?: boolean;

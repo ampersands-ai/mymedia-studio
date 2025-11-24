@@ -5,31 +5,48 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SmartLoader } from "@/components/ui/smart-loader";
 import { Eye, MousePointerClick, TrendingUp, Award } from "lucide-react";
 
+interface TemplateLandingPage {
+  id: string;
+  title: string;
+  category_slug: string;
+  view_count: number;
+  use_count: number;
+  is_published: boolean;
+}
+
+interface TemplateCategory {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  sort_order: number;
+}
+
 export default function TemplateAnalytics() {
-  const { data: templates, isLoading } = useQuery({
+  const { data: templates, isLoading } = useQuery<TemplateLandingPage[]>({
     queryKey: ["template-analytics"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("template_landing_pages")
         .select("*")
         .eq("is_published", true)
         .order("view_count", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return (data || []) as TemplateLandingPage[];
     },
   });
 
-  const { data: categories } = useQuery({
+  const { data: categories } = useQuery<TemplateCategory[]>({
     queryKey: ["category-analytics"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("template_categories")
         .select("*")
         .order("sort_order");
 
       if (error) throw error;
-      return data;
+      return (data || []) as TemplateCategory[];
     },
   });
 
@@ -37,9 +54,9 @@ export default function TemplateAnalytics() {
     return <SmartLoader message="Loading analytics..." />;
   }
 
-  const totalViews = templates?.reduce((sum: number, t: any) => sum + t.view_count, 0) || 0;
-  const totalUses = templates?.reduce((sum: number, t: any) => sum + t.use_count, 0) || 0;
-  const avgConversion = templates?.reduce((sum: number, t: any) => {
+  const totalViews = templates?.reduce((sum: number, t: TemplateLandingPage) => sum + t.view_count, 0) || 0;
+  const totalUses = templates?.reduce((sum: number, t: TemplateLandingPage) => sum + t.use_count, 0) || 0;
+  const avgConversion = templates?.reduce((sum: number, t: TemplateLandingPage) => {
     const rate = t.view_count > 0 ? (t.use_count / t.view_count) * 100 : 0;
     return sum + rate;
   }, 0) / (templates?.length || 1);
@@ -111,7 +128,7 @@ export default function TemplateAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {topTemplates.map((template: any, index: number) => {
+                {topTemplates.map((template: TemplateLandingPage, index: number) => {
                   const conversionRate = template.view_count > 0 
                     ? ((template.use_count / template.view_count) * 100).toFixed(1)
                     : "0.0";
@@ -156,10 +173,10 @@ export default function TemplateAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {categories?.map((category: any) => {
-                  const categoryTemplates = templates?.filter((t: any) => t.category_slug === category.slug) || [];
-                  const categoryViews = categoryTemplates.reduce((sum: number, t: any) => sum + t.view_count, 0);
-                  const categoryUses = categoryTemplates.reduce((sum: number, t: any) => sum + t.use_count, 0);
+                {categories?.map((category: TemplateCategory) => {
+                  const categoryTemplates = templates?.filter((t: TemplateLandingPage) => t.category_slug === category.slug) || [];
+                  const categoryViews = categoryTemplates.reduce((sum: number, t: TemplateLandingPage) => sum + t.view_count, 0);
+                  const categoryUses = categoryTemplates.reduce((sum: number, t: TemplateLandingPage) => sum + t.use_count, 0);
                   const categoryConversion = categoryViews > 0 
                     ? ((categoryUses / categoryViews) * 100).toFixed(1)
                     : "0.0";

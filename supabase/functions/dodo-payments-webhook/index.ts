@@ -1,5 +1,5 @@
 // Dodo Payments Webhook Handler - v2.0 - Enhanced Diagnostics
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Webhook } from "https://esm.sh/svix@1";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
@@ -7,6 +7,35 @@ import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 const WEBHOOK_VERSION = "2.0-svix-dual-headers";
+
+// Type definitions
+interface WebhookEvent {
+  type?: string;
+  event_type?: string;
+  data?: WebhookEventData;
+  [key: string]: unknown;
+}
+
+interface WebhookEventData {
+  payment_id?: string;
+  subscription_id?: string;
+  customer_id?: string;
+  metadata?: {
+    user_id?: string;
+    plan?: string;
+    billing_period?: string;
+    new_plan?: string;
+    [key: string]: unknown;
+  };
+  customer?: {
+    email?: string;
+  };
+  amount?: number;
+  currency?: string;
+  current_period_start?: string;
+  current_period_end?: string;
+  [key: string]: unknown;
+}
 
 
 
@@ -112,7 +141,7 @@ Deno.serve(async (req) => {
       };
       
       // Step 2: Verify the webhook payload using Svix library
-      const event = wh.verify(bodyText, headersNormalized) as any;
+      const event = wh.verify(bodyText, headersNormalized) as WebhookEvent;
       const eventType = event.type || event.event_type;
       
       logger.info('Svix signature verified', {
@@ -179,9 +208,9 @@ Deno.serve(async (req) => {
   }
 });
 
-async function handleWebhookEvent(supabase: any, event: any) {
+async function handleWebhookEvent(supabase: SupabaseClient, event: WebhookEvent) {
   const eventType = event.type || event.event_type;
-  const eventData = event.data || event;
+  const eventData = event.data || (event as unknown as WebhookEventData);
 
   // Processing webhook event
 
@@ -273,7 +302,7 @@ async function handleWebhookEvent(supabase: any, event: any) {
   }
 }
 
-async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
+async function handlePaymentSucceeded(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
   const userId = metadata.user_id;
   const planName = metadata.plan || 'freemium';
   const planKey = planName.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
@@ -325,8 +354,8 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
   }
 }
 
-async function handlePaymentFailed(supabase: any, data: any, metadata: any) {
-  const userId = metadata.user_id;
+async function handlePaymentFailed(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+  const userId = metadata?.user_id;
 
   await supabase
     .from('user_subscriptions')
@@ -334,8 +363,8 @@ async function handlePaymentFailed(supabase: any, data: any, metadata: any) {
     .eq('user_id', userId);
 }
 
-async function handleSubscriptionActive(supabase: any, data: any, metadata: any) {
-  const userId = metadata.user_id;
+async function handleSubscriptionActive(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+  const userId = metadata?.user_id;
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('subscription-handler', requestId);
 
@@ -352,8 +381,8 @@ async function handleSubscriptionActive(supabase: any, data: any, metadata: any)
     .eq('user_id', userId);
 }
 
-async function handleSubscriptionCancelled(supabase: any, data: any, metadata: any) {
-  const userId = metadata.user_id;
+async function handleSubscriptionCancelled(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+  const userId = metadata?.user_id;
 
   // Don't remove tokens immediately - let them use until period ends
   await supabase
@@ -362,8 +391,8 @@ async function handleSubscriptionCancelled(supabase: any, data: any, metadata: a
     .eq('user_id', userId);
 }
 
-async function handleSubscriptionExpired(supabase: any, data: any, metadata: any) {
-  const userId = metadata.user_id;
+async function handleSubscriptionExpired(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+  const userId = metadata?.user_id;
 
   // Downgrade to freemium
   await supabase
@@ -379,9 +408,9 @@ async function handleSubscriptionExpired(supabase: any, data: any, metadata: any
     .eq('user_id', userId);
 }
 
-async function handleSubscriptionRenewed(supabase: any, data: any, metadata: any) {
-  const userId = metadata.user_id;
-  const planName = metadata.plan || 'freemium';
+async function handleSubscriptionRenewed(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+  const userId = metadata?.user_id;
+  const planName = metadata?.plan || 'freemium';
   const planKey = planName.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
   const requestId = crypto.randomUUID();
@@ -408,9 +437,9 @@ async function handleSubscriptionRenewed(supabase: any, data: any, metadata: any
     .eq('user_id', userId);
 }
 
-async function handleSubscriptionPlanChanged(supabase: any, data: any, metadata: any) {
-  const userId = metadata.user_id;
-  const newPlan = metadata.new_plan || metadata.plan;
+async function handleSubscriptionPlanChanged(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+  const userId = metadata?.user_id;
+  const newPlan = metadata?.new_plan || metadata?.plan;
   const planKey = newPlan.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
   const requestId = crypto.randomUUID();
@@ -429,8 +458,8 @@ async function handleSubscriptionPlanChanged(supabase: any, data: any, metadata:
     .eq('user_id', userId);
 }
 
-async function handleSubscriptionOnHold(supabase: any, data: any, metadata: any) {
-  const userId = metadata.user_id;
+async function handleSubscriptionOnHold(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+  const userId = metadata?.user_id;
 
   await supabase
     .from('user_subscriptions')
@@ -438,8 +467,8 @@ async function handleSubscriptionOnHold(supabase: any, data: any, metadata: any)
     .eq('user_id', userId);
 }
 
-async function handleRefundSucceeded(supabase: any, data: any, metadata: any) {
-  const userId = metadata.user_id;
+async function handleRefundSucceeded(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+  const userId = metadata?.user_id;
   const refundAmount = data.amount || 0;
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('refund-handler', requestId);

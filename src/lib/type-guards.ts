@@ -8,8 +8,10 @@ import type { WorkflowTemplate, WorkflowStep } from '@/hooks/useWorkflowTemplate
 /**
  * Type guard: Check if template has workflow steps
  */
-export function hasWorkflowSteps(template: any): template is WorkflowTemplate & { workflow_steps: WorkflowStep[] } {
-  return Array.isArray(template?.workflow_steps) && template.workflow_steps.length > 0;
+export function hasWorkflowSteps(template: unknown): template is WorkflowTemplate & { workflow_steps: WorkflowStep[] } {
+  if (typeof template !== 'object' || template === null) return false;
+  const t = template as { workflow_steps?: unknown };
+  return Array.isArray(t.workflow_steps) && t.workflow_steps.length > 0;
 }
 
 /**
@@ -23,8 +25,10 @@ export interface GenerationWithModel {
   };
 }
 
-export function hasModelMetadata(generation: any): generation is GenerationWithModel {
-  return generation?.modelMetadata !== null && generation?.modelMetadata !== undefined;
+export function hasModelMetadata(generation: unknown): generation is GenerationWithModel {
+  if (typeof generation !== 'object' || generation === null) return false;
+  const g = generation as { modelMetadata?: unknown };
+  return g.modelMetadata !== null && g.modelMetadata !== undefined;
 }
 
 /**
@@ -35,11 +39,13 @@ export interface StepWithModel {
   model_record_id: string;
 }
 
-export function hasModelConfig(step: any): step is StepWithModel {
-  return typeof step?.model_id === 'string' && 
-         step.model_id.length > 0 &&
-         typeof step?.model_record_id === 'string' &&
-         step.model_record_id.length > 0;
+export function hasModelConfig(step: unknown): step is StepWithModel {
+  if (typeof step !== 'object' || step === null) return false;
+  const s = step as { model_id?: unknown; model_record_id?: unknown };
+  return typeof s.model_id === 'string' &&
+         s.model_id.length > 0 &&
+         typeof s.model_record_id === 'string' &&
+         s.model_record_id.length > 0;
 }
 
 /**
@@ -51,9 +57,11 @@ export interface CompleteTemplate {
   workflow_steps: WorkflowStep[];
 }
 
-export function isCompleteTemplate(template: any): template is CompleteTemplate {
-  return typeof template?.id === 'string' &&
-         typeof template?.name === 'string' &&
+export function isCompleteTemplate(template: unknown): template is CompleteTemplate {
+  if (typeof template !== 'object' || template === null) return false;
+  const t = template as { id?: unknown; name?: unknown };
+  return typeof t.id === 'string' &&
+         typeof t.name === 'string' &&
          hasWorkflowSteps(template);
 }
 

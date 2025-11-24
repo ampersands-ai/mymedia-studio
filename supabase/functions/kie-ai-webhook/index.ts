@@ -128,7 +128,17 @@ Deno.serve(async (req) => {
     logger.info('All security layers passed - processing webhook');
 
     // Parse items from payload
-    let items: any[] = [];
+    interface ResultItem {
+      audio_url?: string;
+      source_audio_url?: string;
+      stream_audio_url?: string;
+      image_url?: string;
+      source_image_url?: string;
+      video_url?: string;
+      source_video_url?: string;
+      url?: string;
+    }
+    let items: ResultItem[] = [];
     let normalizedUrls: string[] = [];
     try {
       normalizedUrls = normalizeResultUrls(payload, resultJson, generation.type, generation.modelMetadata?.id);
@@ -284,11 +294,11 @@ Deno.serve(async (req) => {
           resultUrls = payload.data.info.resultUrls || payload.data.info.result_urls || [];
         } else if (Array.isArray(items) && items.length > 0) {
           if (generation.type === 'audio') {
-            resultUrls = items.map((item: any) => item?.audio_url || item?.source_audio_url || item?.stream_audio_url).filter(Boolean);
+            resultUrls = items.map((item) => item?.audio_url || item?.source_audio_url || item?.stream_audio_url).filter(Boolean) as string[];
           } else if (generation.type === 'image') {
-            resultUrls = items.map((item: any) => item?.image_url || item?.source_image_url).filter(Boolean);
+            resultUrls = items.map((item) => item?.image_url || item?.source_image_url).filter(Boolean) as string[];
           } else {
-            resultUrls = items.map((item: any) => item?.video_url || item?.source_video_url || item?.url).filter(Boolean);
+            resultUrls = items.map((item) => item?.video_url || item?.source_video_url || item?.url).filter(Boolean) as string[];
           }
         }
       } else {
@@ -449,12 +459,12 @@ Deno.serve(async (req) => {
               is_batch_output: true
             });
             
-            logger.info(`Output ${i + 1} child generation created`, { 
-              metadata: { generationId: generation.id, childId, outputIndex: i + 1 } 
+            logger.info(`Output ${i + 1} child generation created`, {
+              metadata: { generationId: generation.id, childId, outputIndex: i + 1 }
             });
-          } catch (error: any) {
-            logger.error(`Output ${i + 1} child creation failed`, error, { 
-              metadata: { generationId: generation.id, outputIndex: i + 1 } 
+          } catch (error) {
+            logger.error(`Output ${i + 1} child creation failed`, error instanceof Error ? error : new Error(String(error)), {
+              metadata: { generationId: generation.id, outputIndex: i + 1 }
             });
           }
         }
@@ -540,15 +550,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    logger.warn('Unknown webhook state received', { 
-      metadata: { state, taskId, callbackType, generationId: generation.id } 
+    logger.warn('Unknown webhook state received', {
+      metadata: { state, taskId, callbackType, generationId: generation.id }
     });
     return new Response(
       JSON.stringify({ success: true, message: 'Webhook received but state unknown' }),
       { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
-    return createSafeErrorResponse(error, 'kie-ai-webhook', corsHeaders);
+  } catch (error) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    return createSafeErrorResponse(errorObj, 'kie-ai-webhook', responseHeaders);
   }
 });

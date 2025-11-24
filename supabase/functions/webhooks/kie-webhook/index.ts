@@ -143,7 +143,17 @@ Deno.serve(async (req) => {
     });
 
     // Parse items from payload
-    let items: any[] = [];
+    interface ResultItem {
+      audio_url?: string;
+      source_audio_url?: string;
+      stream_audio_url?: string;
+      image_url?: string;
+      source_image_url?: string;
+      video_url?: string;
+      source_video_url?: string;
+      url?: string;
+    }
+    let items: ResultItem[] = [];
     let normalizedUrls: string[] = [];
     try {
       normalizedUrls = normalizeResultUrls(payload, resultJson, generation.type, generation.modelMetadata?.id);
@@ -287,11 +297,11 @@ Deno.serve(async (req) => {
           resultUrls = payload.data.info.resultUrls || payload.data.info.result_urls || [];
         } else if (Array.isArray(items) && items.length > 0) {
           if (generation.type === 'audio') {
-            resultUrls = items.map((item: any) => item?.audio_url || item?.source_audio_url || item?.stream_audio_url).filter(Boolean);
+            resultUrls = items.map((item) => item?.audio_url || item?.source_audio_url || item?.stream_audio_url).filter(Boolean) as string[];
           } else if (generation.type === 'image') {
-            resultUrls = items.map((item: any) => item?.image_url || item?.source_image_url).filter(Boolean);
+            resultUrls = items.map((item) => item?.image_url || item?.source_image_url).filter(Boolean) as string[];
           } else {
-            resultUrls = items.map((item: any) => item?.video_url || item?.source_video_url || item?.url).filter(Boolean);
+            resultUrls = items.map((item) => item?.video_url || item?.source_video_url || item?.url).filter(Boolean) as string[];
           }
         }
       }
@@ -467,8 +477,8 @@ Deno.serve(async (req) => {
               taskId,
               childId
             });
-          } catch (error: any) {
-            webhookLogger.error(`Failed to process output ${i + 1}`, error, {
+          } catch (error) {
+            webhookLogger.error(`Failed to process output ${i + 1}`, error instanceof Error ? error : new Error(String(error)), {
               provider: 'kie_ai',
               generationId,
               taskId
@@ -478,7 +488,17 @@ Deno.serve(async (req) => {
       }
 
       // === UPDATE PARENT ===
-      const updateData: any = {
+      interface GenerationUpdate {
+        status: string;
+        file_size_bytes: number | null;
+        provider_response: Record<string, unknown>;
+        output_index: number;
+        is_batch_output: boolean;
+        storage_path?: string;
+        output_url?: string | null;
+      }
+
+      const updateData: GenerationUpdate = {
         status: GENERATION_STATUS.COMPLETED,
         file_size_bytes: fileSize,
         provider_response: {
@@ -492,7 +512,7 @@ Deno.serve(async (req) => {
         output_index: 0,
         is_batch_output: isMultiOutput
       };
-      
+
       if (!isMultiOutput && storagePath) {
         updateData.storage_path = storagePath;
         updateData.output_url = publicUrl;
@@ -512,8 +532,8 @@ Deno.serve(async (req) => {
       // Trigger post-processing
       try {
         await orchestrateWorkflow(generation, storagePath, isMultiOutput, supabase);
-      } catch (error: any) {
-        webhookLogger.error('Post-processing orchestration failed', error, {
+      } catch (error) {
+        webhookLogger.error('Post-processing orchestration failed', error instanceof Error ? error : new Error(String(error)), {
           provider: 'kie_ai',
           generationId,
           taskId
@@ -555,8 +575,9 @@ Deno.serve(async (req) => {
       { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
-    webhookLogger.error('Webhook processing error', error, {
+  } catch (error) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    webhookLogger.error('Webhook processing error', errorObj, {
       provider: 'kie_ai',
       generationId,
       taskId
@@ -567,18 +588,18 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
-    
+
     await supabase.from('webhook_analytics').insert({
       provider: 'kie-ai',
       event_type: 'generation_complete',
       status: 'failure',
       duration_ms: Date.now() - webhookStartTime,
-      error_code: error.code || 'UNKNOWN_ERROR',
-      metadata: { generation_id: generationId, task_id: taskId, error: error.message }
+      error_code: (error && typeof error === 'object' && 'code' in error ? error.code as string : null) || 'UNKNOWN_ERROR',
+      metadata: { generation_id: generationId, task_id: taskId, error: errorObj.message }
     }).then(({ error: analyticsError }) => {
       if (analyticsError) webhookLogger.error('Failed to track analytics', analyticsError);
     });
-    
-    return createSafeErrorResponse(error, 'kie-webhook', corsHeaders);
+
+    return createSafeErrorResponse(errorObj, 'kie-webhook', responseHeaders);
   }
 });

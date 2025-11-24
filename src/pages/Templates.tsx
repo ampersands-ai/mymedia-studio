@@ -18,6 +18,22 @@ import { LoadingTransition } from "@/components/ui/loading-transition";
 import { useImagePreloader } from "@/hooks/useImagePreloader";
 import { createSignedUrl } from "@/lib/storage-utils";
 
+interface WorkflowStep {
+  model_id: string;
+  model_record_id: string;
+}
+
+interface WorkflowTemplate {
+  id: string;
+  name: string;
+  category: string;
+  template_type: string;
+  display_order: number;
+  workflow_steps?: WorkflowStep[];
+  thumbnail_url?: string;
+  before_image_url?: string;
+  after_image_url?: string;
+}
 
 const Templates = () => {
   const { user } = useAuth();
@@ -52,8 +68,8 @@ const Templates = () => {
       
       allTemplates.forEach(template => {
         if (template.template_type === 'workflow' && template.workflow_steps) {
-          const steps = template.workflow_steps as any[];
-          steps.forEach((step: any) => {
+          const steps = template.workflow_steps as WorkflowStep[];
+          steps.forEach((step: WorkflowStep) => {
             if (step.model_record_id) {
               allModelRecordIds.add(step.model_record_id);
             }
@@ -84,8 +100,8 @@ const Templates = () => {
       
       allTemplates.forEach(template => {
         if (template.template_type === 'workflow' && template.workflow_steps) {
-          const steps = template.workflow_steps as any[];
-          const totalCost = steps.reduce((sum: number, step: any) => {
+          const steps = template.workflow_steps as WorkflowStep[];
+          const totalCost = steps.reduce((sum: number, step: WorkflowStep) => {
             return sum + (modelCostMap.get(step.model_record_id) || 0);
           }, 0);
           costs[template.id] = totalCost;
@@ -185,14 +201,14 @@ const Templates = () => {
     }
   };
 
-  const getWorkflowContentType = (template: any): "Video" | "Image" => {
+  const getWorkflowContentType = (template: WorkflowTemplate): "Video" | "Image" => {
     // Check if template has workflow_steps to determine output type
     if (template.workflow_steps && Array.isArray(template.workflow_steps)) {
       const lastStep = template.workflow_steps[template.workflow_steps.length - 1];
       if (lastStep?.model_id) {
         const modelId = lastStep.model_id.toLowerCase();
         // Check for video model keywords
-        if (modelId.includes("video") || modelId.includes("sora") || modelId.includes("runway") || 
+        if (modelId.includes("video") || modelId.includes("sora") || modelId.includes("runway") ||
             modelId.includes("kling") || modelId.includes("luma") || modelId.includes("veo") ||
             modelId.includes("hailuo") || modelId.includes("wan")) {
           return "Video";
@@ -210,7 +226,7 @@ const Templates = () => {
   const templates = (allTemplates || []).sort((a, b) => a.display_order - b.display_order);
   
   // Filter templates by search query and content type
-  const filterTemplates = (templates: any[]) => {
+  const filterTemplates = (templates: WorkflowTemplate[]) => {
     let filtered = templates;
     
     // Apply search filter
@@ -293,12 +309,12 @@ const Templates = () => {
     minLoadedPercentage: 70
   });
 
-  const handleUseTemplate = (template: any) => {
+  const handleUseTemplate = (template: WorkflowTemplate) => {
     if (!user) {
       navigate('/auth');
       return;
     }
-    
+
     // Track activity
     import('@/lib/logging/client-logger').then(({ clientLogger }) => {
       clientLogger.activity({
@@ -313,7 +329,7 @@ const Templates = () => {
         },
       });
     });
-    
+
     // Navigate based on template type
     if (template.template_type === 'workflow') {
       navigate(`/dashboard/create-workflow?workflow=${template.id}`);
@@ -322,7 +338,7 @@ const Templates = () => {
     }
   };
 
-  const renderCarousel = (categoryTemplates: any[], categoryName: string, isFirstCarousel: boolean = false) => {
+  const renderCarousel = (categoryTemplates: WorkflowTemplate[], categoryName: string, isFirstCarousel: boolean = false) => {
     if (categoryTemplates.length === 0) return null;
 
     return (

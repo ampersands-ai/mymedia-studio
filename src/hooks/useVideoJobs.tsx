@@ -224,7 +224,7 @@ export function useVideoJobs() {
       }
 
       // Retry helper for transient failures
-      const invokeWithRetry = async (attempt = 1): Promise<any> => {
+      const invokeWithRetry = async (attempt = 1): Promise<unknown> => {
         try {
           const { data, error } = await supabase.functions.invoke('approve-script', {
             body: { job_id: jobId, edited_script: editedScript },
@@ -236,9 +236,10 @@ export function useVideoJobs() {
           if (error) throw error;
           if (data?.error) throw new Error(data.error);
           return data;
-        } catch (err: any) {
-          const errorMsg = err?.message || String(err);
-          const errorStatus = err?.status || err?.context?.status;
+        } catch (err) {
+          const error = err as { message?: string; status?: number; context?: { status?: number } };
+          const errorMsg = error.message || String(err);
+          const errorStatus = error.status || error.context?.status;
           // Retry once on "Failed to send" or 503 errors
           if (attempt === 1 && (errorMsg.includes('Failed to send a request to the Edge Function') || errorStatus === 503)) {
             logger.debug('Retrying after transient error', {
@@ -260,9 +261,9 @@ export function useVideoJobs() {
       // Force immediate refetch to update UI
       await queryClient.refetchQueries({ queryKey: ['video-jobs'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       const message = error.message || 'Failed to approve script';
-      
+
       // Surface helpful messages
       if (message.includes('sign in')) {
         toast.error('Please sign in to continue');
@@ -300,7 +301,7 @@ export function useVideoJobs() {
       });
       
       // Retry helper for transient failures
-      const invokeWithRetry = async (attempt = 1): Promise<any> => {
+      const invokeWithRetry = async (attempt = 1): Promise<unknown> => {
         try {
           const { data, error } = await supabase.functions.invoke('approve-voiceover', {
             body: { job_id: jobId },
@@ -317,7 +318,7 @@ export function useVideoJobs() {
             hasData: !!data,
             hasError: !!error
           });
-          
+
           if (error) {
             logger.error('Function invocation error', error as Error, {
               component: 'useVideoJobs',
@@ -334,16 +335,17 @@ export function useVideoJobs() {
             });
             throw new Error(data.error);
           }
-          
+
           logger.debug('Voiceover approval successful', {
             component: 'useVideoJobs',
             operation: 'approveVoiceover',
             jobId
           });
           return data;
-        } catch (err: any) {
-          const errorMsg = err?.message || String(err);
-          const errorStatus = err?.status || err?.context?.status;
+        } catch (err) {
+          const error = err as { message?: string; status?: number; context?: { status?: number } };
+          const errorMsg = error.message || String(err);
+          const errorStatus = error.status || error.context?.status;
           logger.error('Attempt failed', err as Error, {
             component: 'useVideoJobs',
             operation: 'approveVoiceover',
@@ -377,13 +379,13 @@ export function useVideoJobs() {
       // Force immediate refetch to update UI
       await queryClient.refetchQueries({ queryKey: ['video-jobs'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       logger.error('Mutation error', error as Error, {
         component: 'useVideoJobs',
         operation: 'approveVoiceover'
       });
       const message = error.message || 'Failed to approve voiceover';
-      
+
       // Parse specific error types for better user feedback
       if (message.includes('sign in')) {
         toast.error('Please sign in to continue');
@@ -398,7 +400,7 @@ export function useVideoJobs() {
       } else {
         toast.error(message);
       }
-      
+
       // Refresh job data to show updated error state
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
     },
@@ -440,7 +442,7 @@ export function useVideoJobs() {
       
       return { previous };
     },
-    onError: (error: any, _jobId, context) => {
+    onError: (error: Error, _jobId, context) => {
       // Rollback on error
       if (context?.previous) {
         queryClient.setQueryData(['video-jobs'], context.previous);
@@ -482,7 +484,7 @@ export function useVideoJobs() {
       const remainingCredits = tokenData?.tokens_remaining?.toFixed(2) || '0.00';
       toast.success(`Caption generated! 0.1 credits used. Balance: ${remainingCredits} credits`);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       logger.error('Caption generation error', error as Error, {
         component: 'useVideoJobs',
         operation: 'generateCaption'
@@ -519,7 +521,7 @@ export function useVideoJobs() {
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
       toast.success('Job status synced successfully');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       logger.error('Recovery error', error as Error, {
         component: 'useVideoJobs',
         operation: 'recoverJob'
@@ -542,7 +544,7 @@ export function useVideoJobs() {
       toast.success('Error dismissed');
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to dismiss error');
     },
   });

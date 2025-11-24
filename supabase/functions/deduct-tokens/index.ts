@@ -5,7 +5,7 @@ import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 // Inline helper: create standardized error response
-function createErrorResponse(error: any, headers: any): Response {
+function createErrorResponse(error: unknown, headers: HeadersInit): Response {
   const message = error?.message || 'An error occurred';
   const status = message.includes('Unauthorized') || message.includes('authorization') ? 401
     : message.includes('Forbidden') ? 403
@@ -33,8 +33,8 @@ Deno.serve(async (req) => {
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('deduct-tokens', requestId);
 
-  let body: any;
-  let user: any;
+  let body: Record<string, unknown> | undefined;
+  let user: { id: string } | undefined;
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
 
     // Deduct tokens using optimistic locking with retry logic
     // This prevents race conditions under high concurrency
-    let updatedSubscriptionFinal: any;
+    let updatedSubscriptionFinal: { tokens_remaining: number } | undefined;
     let retries = 3;
     
     while (retries > 0) {

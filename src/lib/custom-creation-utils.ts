@@ -2,10 +2,28 @@ import { toast } from "sonner";
 import type { NavigateFunction } from "react-router-dom";
 import { logger } from "@/lib/logger";
 
+interface ModelSchema {
+  input_schema?: {
+    required?: string[];
+    imageInputField?: string;
+    properties?: Record<string, {
+      type?: string;
+      maxItems?: number;
+    }>;
+    conditionalFields?: Record<string, {
+      dependsOn?: string;
+      value?: unknown;
+    }>;
+  };
+  max_images?: number;
+  provider: string;
+  content_type: string;
+}
+
 /**
  * Get required fields from model schema
  */
-export const getSchemaRequiredFields = (model: any): string[] => {
+export const getSchemaRequiredFields = (model: ModelSchema): string[] => {
   return model?.input_schema?.required || [];
 };
 
@@ -13,7 +31,7 @@ export const getSchemaRequiredFields = (model: any): string[] => {
  * Detect image field info from schema
  */
 // Detect image upload field from model schema using explicit imageInputField flag
-export const getImageFieldInfo = (model: any): {
+export const getImageFieldInfo = (model: ModelSchema): {
   fieldName: string | null;
   isRequired: boolean;
   isArray: boolean;
@@ -59,7 +77,7 @@ export const isKieAiAudioModel = (model: { provider: string; content_type: strin
 /**
  * Get max prompt length based on model and customMode
  */
-export const getMaxPromptLength = (model: any, customMode: boolean | undefined): number => {
+export const getMaxPromptLength = (model: ModelSchema, customMode: boolean | undefined): number => {
   if (!model) return 5000;
 
   // Kie.ai audio in non-custom mode has 500 char limit
@@ -75,10 +93,10 @@ export const getMaxPromptLength = (model: any, customMode: boolean | undefined):
  * Build custom parameters, filtering out conditional fields
  */
 export const buildCustomParameters = (
-  modelParameters: Record<string, any>,
-  inputSchema: any
-): Record<string, any> => {
-  const customParameters: Record<string, any> = {};
+  modelParameters: Record<string, unknown>,
+  inputSchema: ModelSchema['input_schema']
+): Record<string, unknown> => {
+  const customParameters: Record<string, unknown> = {};
   const conditionalFields = inputSchema?.conditionalFields || {};
 
   for (const [key, value] of Object.entries(modelParameters)) {
@@ -105,7 +123,7 @@ export const buildCustomParameters = (
  * Image validation is now handled by schema-driven validation in executeGeneration
  */
 export const validateGenerationInputs = (
-  model: any,
+  model: ModelSchema,
   prompt: string,
   uploadedImages: File[],
   isPromptRequired: boolean,
@@ -128,7 +146,7 @@ export const validateGenerationInputs = (
 /**
  * Handle generation error with navigation
  */
-export const handleGenerationError = (error: any, navigate: NavigateFunction): boolean => {
+export const handleGenerationError = (error: Error, navigate: NavigateFunction): boolean => {
   if (error.message === "SESSION_EXPIRED") {
     toast.error("Session expired", {
       description: "Please log in again. Your work has been saved.",
@@ -137,17 +155,23 @@ export const handleGenerationError = (error: any, navigate: NavigateFunction): b
     setTimeout(() => navigate("/auth"), 2000);
     return true;
   }
-  
+
   if (error.message?.includes("INSUFFICIENT_TOKENS")) {
-    let parsedError: any = {};
+    interface InsufficientTokensError {
+      type: string;
+      required?: number;
+      available?: number;
+    }
+
+    let parsedError: InsufficientTokensError = { type: "INSUFFICIENT_TOKENS" };
     try {
-      parsedError = JSON.parse(error.message.replace("INSUFFICIENT_TOKENS: ", ""));
+      parsedError = JSON.parse(error.message.replace("INSUFFICIENT_TOKENS: ", "")) as InsufficientTokensError;
     } catch {
       parsedError = { type: "INSUFFICIENT_TOKENS" };
     }
-    
+
     toast.error("Insufficient tokens", {
-      description: parsedError.required 
+      description: parsedError.required
         ? `You need ${parsedError.required} tokens but only have ${parsedError.available || 0}. Upgrade to continue creating.`
         : "You don't have enough tokens. Upgrade your plan to continue creating amazing content.",
       duration: 10000,
@@ -158,6 +182,6 @@ export const handleGenerationError = (error: any, navigate: NavigateFunction): b
     });
     return true;
   }
-  
+
   return false;
 };

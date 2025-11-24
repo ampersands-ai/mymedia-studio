@@ -18,8 +18,8 @@ interface AlertPayload {
   failureRate?: number;
   storageFailures?: number;
   threshold?: number;
-  details?: any;
-  metadata?: any;
+  details?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }
 
 serve(async (req) => {
@@ -42,7 +42,7 @@ serve(async (req) => {
 
     if (settingsError) throw settingsError;
 
-    const settings = settingsData?.setting_value as any;
+    const settings = settingsData?.setting_value as Record<string, unknown>;
 
     if (!settings?.enabled && req.method !== 'POST') {
       return new Response(
@@ -253,16 +253,17 @@ serve(async (req) => {
       { status: 405, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
-    logger.error('Error in send-webhook-alert', error);
+  } catch (error) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Error in send-webhook-alert', errorObj);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorObj.message }),
       { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
 
-function generateEmailHTML(payload: AlertPayload, settings: any): string {
+function generateEmailHTML(payload: AlertPayload, settings: Record<string, unknown>): string {
   if (payload.type === 'test') {
     return `
       <!DOCTYPE html>

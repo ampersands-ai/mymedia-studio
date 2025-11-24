@@ -415,19 +415,25 @@ Deno.serve(async (req) => {
 
     // Validate and filter parameters against schema, applying defaults for missing values
     function validateAndFilterParameters(
-      parameters: Record<string, any>,
-      schema: any
-    ): Record<string, any> {
+      parameters: Record<string, unknown>,
+      schema: { properties?: Record<string, unknown> }
+    ): Record<string, unknown> {
       if (!schema?.properties) return parameters;
-      
+
       const allowedKeys = Object.keys(schema.properties);
-      const filtered: Record<string, any> = {};
+      const filtered: Record<string, unknown> = {};
       const appliedDefaults: string[] = [];
-      
+
+
       for (const key of allowedKeys) {
-        const schemaProperty = schema.properties[key];
+        const schemaProperty = schema.properties[key] as {
+          enum?: unknown[];
+          default?: unknown;
+          type?: string;
+          [key: string]: unknown;
+        };
         const candidateValue = parameters[key];
-        
+
         // Validate enum values
         if (schemaProperty?.enum && Array.isArray(schemaProperty.enum)) {
           // If candidate is empty, undefined, or null
@@ -484,8 +490,8 @@ Deno.serve(async (req) => {
     }
 
     // Normalize parameter keys by stripping "input." prefix if present
-    function normalizeParameterKeys(params: Record<string, any>): Record<string, any> {
-      const normalized: Record<string, any> = {};
+    function normalizeParameterKeys(params: Record<string, unknown>): Record<string, unknown> {
+      const normalized: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(params || {})) {
         const normalizedKey = key.startsWith('input.') ? key.substring(6) : key;
         normalized[normalizedKey] = value;
@@ -512,11 +518,11 @@ Deno.serve(async (req) => {
     );
 
     // Coerce parameter types based on schema (e.g., "true" -> true for booleans)
-    function coerceParametersBySchema(params: Record<string, any>, schema: any) {
+    function coerceParametersBySchema(params: Record<string, unknown>, schema: { properties?: Record<string, unknown> }) {
       if (!schema?.properties) return params;
-      const coerced: Record<string, any> = {};
+      const coerced: Record<string, unknown> = {};
       for (const [key, val] of Object.entries(params)) {
-        const prop: any = schema.properties[key];
+        const prop = schema.properties[key] as { type?: string } | undefined;
         if (!prop) { coerced[key] = val; continue; }
         const t = prop.type;
         if (t === 'boolean') {
@@ -564,6 +570,7 @@ Deno.serve(async (req) => {
       user_id: string;
       model_id: string;
       status: string;
+      settings?: Record<string, unknown>;
       [key: string]: unknown;
     } | null = null;
 
@@ -573,7 +580,7 @@ Deno.serve(async (req) => {
       user_id: string;
       model_id: string;
       status: string;
-      settings?: any;
+      settings?: Record<string, unknown>;
       [key: string]: unknown;
     };
 
@@ -906,8 +913,8 @@ Deno.serve(async (req) => {
 
     // Track request in queue
     const requestPromise = (async () => {
-      let providerRequest: any = null; // Declare outside try block for error handling access
-      
+      let providerRequest: Record<string, unknown> | null = null; // Declare outside try block for error handling access
+
       try {
         // Call provider with timeout
         const TIMEOUT_MS = 600000; // 600 seconds
@@ -938,7 +945,7 @@ Deno.serve(async (req) => {
         }
         
         // Filter to only allowed parameters
-        const allowedParams: Record<string, any> = {};
+        const allowedParams: Record<string, unknown> = {};
         const unknownKeys: string[] = [];
         
         for (const [key, value] of Object.entries(parametersWithPrompt)) {
@@ -1005,7 +1012,7 @@ Deno.serve(async (req) => {
         });
 
         // Get webhookToken from generation settings for Kie.ai provider
-        const webhookToken = (createdGeneration.settings as any)?._webhook_token;
+        const webhookToken = createdGeneration.settings?._webhook_token as string | undefined;
 
         // Log provider API call if in test mode
         const apiCallStartTime = Date.now();
@@ -1014,10 +1021,22 @@ Deno.serve(async (req) => {
           await testLogger.logProviderApiCall(model.provider, providerRequest, apiCallStartTime);
         }
 
-        const providerResponse: any = await Promise.race([
+        interface ProviderResponse {
+          metadata?: {
+            task_id?: string;
+            [key: string]: unknown;
+          };
+          storage_path?: string;
+          output_data?: unknown;
+          file_extension?: string;
+          file_size?: number;
+          [key: string]: unknown;
+        }
+
+        const providerResponse = await Promise.race([
           callProvider(model.provider, providerRequest, webhookToken),
           timeoutPromise
-        ]);
+        ]) as ProviderResponse;
 
         if (timeoutId) clearTimeout(timeoutId);
 
@@ -1235,8 +1254,8 @@ Deno.serve(async (req) => {
           { status: 202, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
 
-      } catch (providerError: any) {
-        logger.error('Provider error', providerError, {
+      } catch (providerError) {
+        logger.error('Provider error', providerError instanceof Error ? providerError : new Error(String(providerError)), {
           userId: user.id,
           metadata: { generation_id: createdGeneration.id }
         });
@@ -1245,10 +1264,11 @@ Deno.serve(async (req) => {
         CIRCUIT_BREAKER.failures++;
         CIRCUIT_BREAKER.lastFailure = Date.now();
 
-        const isTimeout = providerError.message?.includes('timed out');
+        const errorMessage = providerError instanceof Error ? providerError.message : String(providerError);
+        const isTimeout = errorMessage.includes('timed out');
 
         // Sanitize error for database storage (remove sensitive details)
-        const sanitizedError = providerError.message?.substring(0, 200) || 'Generation failed';
+        const sanitizedError = errorMessage.substring(0, 200) || 'Generation failed';
 
         await supabase
           .from('generations')
@@ -1287,7 +1307,7 @@ Deno.serve(async (req) => {
           resource_type: 'generation',
           resource_id: createdGeneration.id,
           metadata: {
-            error: providerError.message,
+            error: errorMessage,
             model_id: model.id,
             tokens_refunded: tokenCost,
             reason: isTimeout ? 'timeout' : 'provider_error',
@@ -1295,7 +1315,7 @@ Deno.serve(async (req) => {
           }
         });
 
-        logger.error('Generation failed', providerError, {
+        logger.error('Generation failed', providerError instanceof Error ? providerError : new Error(String(providerError)), {
           userId: user.id,
           duration: Date.now() - startTime,
           metadata: {
@@ -1318,7 +1338,7 @@ Deno.serve(async (req) => {
       activeRequests.delete(requestId);
     }
 
-  } catch (error: any) {
+  } catch (error) {
     return createSafeErrorResponse(error, 'generate-content', responseHeaders);
   }
 });

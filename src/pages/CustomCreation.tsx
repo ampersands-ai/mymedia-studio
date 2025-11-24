@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback, useMemo } from "react";
 import { logger } from "@/lib/logger";
 import { useAuth } from "@/contexts/AuthContext";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { GenerationErrorBoundary } from "@/components/error/GenerationErrorBoundary";
 import { useNavigate } from "react-router-dom";
 import { SessionWarning } from "@/components/SessionWarning";
@@ -32,6 +33,7 @@ import type { JsonSchemaProperty, ModelJsonSchema } from "@/types/model-schema";
 import { initializeParameters } from "@/types/model-schema";
 
 const CustomCreation = () => {
+  const { execute } = useErrorHandler();
   const { user } = useAuth();
   const navigate = useNavigate();
   const outputSectionRef = useRef<HTMLDivElement>(null);
@@ -140,32 +142,30 @@ const CustomCreation = () => {
 
       // Proactively check provider status and recover/refund if needed
       if (state.pollingGenerationId) {
-        try {
-          const { data, error } = await supabase.functions.invoke('poll-kie-status', {
-            body: { generation_id: state.pollingGenerationId }
-          });
+        await execute(
+          async () => {
+            const { data, error } = await supabase.functions.invoke('poll-kie-status', {
+              body: { generation_id: state.pollingGenerationId }
+            });
 
-          if (error) {
-            logger.error('Failed to check provider status on timeout', error as Error, {
+            if (error) throw error;
+
+            if (data?.status === 'failed') {
+              toast.error('Generation failed on provider side. Credits refunded.');
+            } else if (data?.status === 'completed') {
+              toast.success('Generation completed in background. Check History.');
+            }
+          },
+          {
+            showSuccessToast: false,
+            showErrorToast: false,
+            context: {
               component: 'CustomCreation',
               operation: 'pollKieStatus',
               generationId: state.pollingGenerationId
-            });
-            return;
+            }
           }
-
-          if (data?.status === 'failed') {
-            toast.error('Generation failed on provider side. Credits refunded.');
-          } else if (data?.status === 'completed') {
-            toast.success('Generation completed in background. Check History.');
-          }
-        } catch (err) {
-          logger.error('Error checking provider status on timeout', err as Error, {
-            component: 'CustomCreation',
-            operation: 'pollKieStatus',
-            generationId: state.pollingGenerationId
-          });
-        }
+        );
       }
     }
   });
@@ -264,46 +264,42 @@ const CustomCreation = () => {
       } else if (currentGen.status === 'failed' || currentGen.status === 'error') {
         // Handle immediate failure (job failed before page load)
         logger.error('Generation was already failed');
-        
-        try {
-          const pr: Record<string, unknown> = (currentGen.provider_response as Record<string, unknown>) || {};
-          const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || ((pr?.error as Record<string, unknown>)?.message);
-          const msg = detailed ? String(detailed) : `Generation ${currentGen.status}`;
-          
-          // Store error in state for persistent display
-          updateState({ 
-            localGenerating: false, 
-            pollingGenerationId: null,
-            failedGenerationError: {
-              message: msg,
+
+        await execute(
+          async () => {
+            const pr: Record<string, unknown> = (currentGen.provider_response as Record<string, unknown>) || {};
+            const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || ((pr?.error as Record<string, unknown>)?.message);
+            const msg = detailed ? String(detailed) : `Generation ${currentGen.status}`;
+
+            // Store error in state for persistent display
+            updateState({
+              localGenerating: false,
+              pollingGenerationId: null,
+              failedGenerationError: {
+                message: msg,
+                generationId: currentGen.id,
+                timestamp: Date.now(),
+                providerResponse: currentGen.provider_response
+              }
+            });
+
+            toast.error(msg, {
+              description: 'Your credits will be refunded automatically if nothing was produced.',
+              action: { label: 'View History', onClick: () => navigate('/dashboard/history') }
+            });
+          },
+          {
+            showSuccessToast: false,
+            showErrorToast: false,
+            context: {
+              component: 'CustomCreation',
+              operation: 'displayPreFailedGeneration',
               generationId: currentGen.id,
-              timestamp: Date.now(),
-              providerResponse: currentGen.provider_response
+              status: currentGen.status
             }
-          });
-          
-          toast.error(msg, {
-            description: 'Your credits will be refunded automatically if nothing was produced.',
-            action: { label: 'View History', onClick: () => navigate('/dashboard/history') }
-          });
-        } catch (e) {
-          logger.warn('Failed to display error details for pre-failed generation', { error: e });
-          updateState({ 
-            localGenerating: false, 
-            pollingGenerationId: null,
-            failedGenerationError: {
-              message: 'Generation failed',
-              generationId: currentGen.id,
-              timestamp: Date.now(),
-              providerResponse: currentGen.provider_response
-            }
-          });
-          toast.error('Generation failed', {
-            description: 'Your credits will be refunded automatically if nothing was produced.',
-            action: { label: 'View History', onClick: () => navigate('/dashboard/history') }
-          });
-        }
-        
+          }
+        );
+
         return; // Don't set up subscription
       }
 
@@ -415,48 +411,45 @@ const CustomCreation = () => {
                 stopPolling();
 
                 // Fetch latest provider details for a meaningful error message
-                try {
-                  const { data: gen } = await supabase
-                    .from('generations')
-                    .select('provider_response, status')
-                    .eq('id', payload.new.id)
-                    .single();
-                  const pr: Record<string, unknown> = (gen?.provider_response as Record<string, unknown>) || {};
-                  const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || ((pr?.error as Record<string, unknown>)?.message);
-                  const msg = detailed ? String(detailed) : `Generation ${newStatus}`;
+                await execute(
+                  async () => {
+                    const { data: gen } = await supabase
+                      .from('generations')
+                      .select('provider_response, status')
+                      .eq('id', payload.new.id)
+                      .single();
+                    const pr: Record<string, unknown> = (gen?.provider_response as Record<string, unknown>) || {};
+                    const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || ((pr?.error as Record<string, unknown>)?.message);
+                    const msg = detailed ? String(detailed) : `Generation ${newStatus}`;
 
-                  // Store error in state for persistent display
-                  updateState({ 
-                    localGenerating: false, 
-                    pollingGenerationId: null,
-                    failedGenerationError: {
-                      message: msg,
-                      generationId: payload.new.id,
-                      timestamp: Date.now(),
-                      providerResponse: gen?.provider_response
-                    }
-                  });
+                    // Store error in state for persistent display
+                    updateState({
+                      localGenerating: false,
+                      pollingGenerationId: null,
+                      failedGenerationError: {
+                        message: msg,
+                        generationId: payload.new.id,
+                        timestamp: Date.now(),
+                        providerResponse: gen?.provider_response
+                      }
+                    });
 
-                  toast.error(msg, {
-                    description: 'Your credits will be refunded automatically if nothing was produced.',
-                    action: { label: 'View History', onClick: () => navigate('/dashboard/history') }
-                  });
-                } catch (e) {
-                  logger.warn('Failed to fetch provider details for error toast', { error: e });
-                  updateState({ 
-                    localGenerating: false, 
-                    pollingGenerationId: null,
-                    failedGenerationError: {
-                      message: 'Generation failed',
+                    toast.error(msg, {
+                      description: 'Your credits will be refunded automatically if nothing was produced.',
+                      action: { label: 'View History', onClick: () => navigate('/dashboard/history') }
+                    });
+                  },
+                  {
+                    showSuccessToast: false,
+                    showErrorToast: false,
+                    context: {
+                      component: 'CustomCreation',
+                      operation: 'fetchProviderDetailsForError',
                       generationId: payload.new.id,
-                      timestamp: Date.now()
+                      status: newStatus
                     }
-                  });
-                  toast.error('Generation failed', {
-                    description: 'Your credits will be refunded automatically if nothing was produced.',
-                    action: { label: 'View History', onClick: () => navigate('/dashboard/history') }
-                  });
-                }
+                  }
+                );
               }
           }
         )

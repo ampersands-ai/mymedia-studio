@@ -3,12 +3,6 @@ import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders: HeadersInit = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, range, if-none-match, if-modified-since",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-};
-
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
 
@@ -19,6 +13,37 @@ Deno.serve(async (req) => {
   const requestId = crypto.randomUUID();
 
   try {
+    // 🔒 SECURITY: Verify authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
+        status: 401,
+        headers: { ...responseHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // Create client with user's token for auth validation
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Verify user is authenticated
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...responseHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Create service client for storage operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const logger = new EdgeLogger('stream-content', requestId, supabase, false);
+
     const url = new URL(req.url);
     const bucket = url.searchParams.get("bucket") || "generated-content";
     const path = url.searchParams.get("path");
@@ -30,9 +55,31 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // 🔒 SECURITY: Validate bucket is allowed
+    const allowedBuckets = ["generated-content", "generations", "storyboards"];
+    if (!allowedBuckets.includes(bucket)) {
+      logger.warn("Unauthorized bucket access attempt", { metadata: { bucket, path, userId: user.id } });
+      return new Response(JSON.stringify({ error: "Access denied to bucket" }), {
+        status: 403,
+        headers: { ...responseHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 🔒 SECURITY: Verify user owns the content
+    // Extract generation ID or storyboard ID from path
+    const pathParts = path.split('/');
+    const resourceId = pathParts[0]; // First part is usually the user_id or generation_id
+
+    // For user-specific paths, verify ownership
+    if (bucket === "generated-content" && !path.startsWith(`${user.id}/`)) {
+      logger.warn("Unauthorized path access attempt", { metadata: { bucket, path, userId: user.id } });
+      return new Response(JSON.stringify({ error: "Access denied to this resource" }), {
+        status: 403,
+        headers: { ...responseHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    logger.debug('Stream request', { metadata: { bucket, path, userId: user.id, hasRange: !!req.headers.get("range") } });
 
     // Forward Range header for proper streaming support
     const range = req.headers.get("range");
@@ -71,12 +118,12 @@ Deno.serve(async (req) => {
     if (upstreamRes.status === 304) {
       return new Response(null, {
         status: 304,
-        headers: new Headers(corsHeaders),
+        headers: new Headers(responseHeaders),
       });
     }
 
     // Copy essential headers for media streaming
-    const headers = new Headers(corsHeaders);
+    const headers = new Headers(responseHeaders);
     const passthroughHeaders = [
       "content-type",
       "content-length",
@@ -129,6 +176,7 @@ Deno.serve(async (req) => {
       headers,
     });
   } catch (err) {
-    return createSafeErrorResponse(err, "stream-content", corsHeaders);
+    const responseHeaders = getResponseHeaders(req);
+    return createSafeErrorResponse(err, "stream-content", responseHeaders);
   }
 });

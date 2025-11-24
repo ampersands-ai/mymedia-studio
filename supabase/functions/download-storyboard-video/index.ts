@@ -45,8 +45,59 @@ Deno.serve(async (req) => {
       throw new Error('Storyboard not found or unauthorized');
     }
 
+    // 🔒 SECURITY: Validate videoUrl to prevent SSRF attacks
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(videoUrl);
+    } catch {
+      throw new Error('Invalid video URL format');
+    }
+
+    // Whitelist of allowed domains for video downloads
+    const allowedDomains = [
+      'json2video.com',
+      'cdn.json2video.com',
+      'storage.googleapis.com', // Google Cloud Storage
+      's3.amazonaws.com',       // AWS S3
+      'cloudflare.com',         // Cloudflare
+      // Add other trusted video provider domains here
+    ];
+
+    const isAllowedDomain = allowedDomains.some(domain =>
+      parsedUrl.hostname === domain || parsedUrl.hostname.endsWith(`.${domain}`)
+    );
+
+    if (!isAllowedDomain) {
+      logger.warn('SSRF attempt blocked - untrusted domain', {
+        metadata: {
+          requestedDomain: parsedUrl.hostname,
+          userId,
+          storyboardId
+        }
+      });
+      throw new Error(`Video URL domain not allowed: ${parsedUrl.hostname}. Only trusted provider domains are permitted.`);
+    }
+
+    // Prevent access to private IP ranges
+    const hostname = parsedUrl.hostname;
+    const privateIpPatterns = [
+      /^127\./,           // Loopback
+      /^10\./,            // Private class A
+      /^172\.(1[6-9]|2\d|3[01])\./,  // Private class B
+      /^192\.168\./,      // Private class C
+      /^169\.254\./,      // Link-local
+      /^localhost$/i,     // Localhost
+    ];
+
+    if (privateIpPatterns.some(pattern => pattern.test(hostname))) {
+      logger.warn('SSRF attempt blocked - private IP', {
+        metadata: { hostname, userId, storyboardId }
+      });
+      throw new Error('Access to private IP ranges is not allowed');
+    }
+
     // Download video from JSON2Video with timeout
-    logger.info('Downloading video', { metadata: { videoUrl: videoUrl.substring(0, 100) } });
+    logger.info('Downloading video from trusted source', { metadata: { domain: parsedUrl.hostname } });
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout

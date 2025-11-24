@@ -245,13 +245,17 @@ export function LogStreamViewer({
               >
                 {/* Timestamp */}
                 <span className="text-gray-500 shrink-0 w-[160px]">
-                  {new Date(log.timestamp).toLocaleTimeString("en-US", {
-                    hour12: false,
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    fractionalSecondDigits: 3,
-                  })}
+                  {(() => {
+                    const date = new Date(log.timestamp);
+                    const time = date.toLocaleTimeString("en-US", {
+                      hour12: false,
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    });
+                    const ms = String(date.getMilliseconds()).padStart(3, '0');
+                    return `${time}.${ms}`;
+                  })()}
                 </span>
 
                 {/* Log Level */}

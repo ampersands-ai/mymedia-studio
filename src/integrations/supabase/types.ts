@@ -1819,6 +1819,187 @@ export type Database = {
           },
         ]
       }
+      test_execution_logs: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          execution_context: string
+          file_path: string | null
+          function_name: string | null
+          generation_id: string | null
+          id: string
+          line_number: number | null
+          log_level: string
+          message: string
+          metadata: Json | null
+          parent_step_number: number | null
+          step_number: number
+          step_type: string
+          test_run_id: string
+          timestamp: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          execution_context: string
+          file_path?: string | null
+          function_name?: string | null
+          generation_id?: string | null
+          id?: string
+          line_number?: number | null
+          log_level: string
+          message: string
+          metadata?: Json | null
+          parent_step_number?: number | null
+          step_number: number
+          step_type: string
+          test_run_id: string
+          timestamp?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          execution_context?: string
+          file_path?: string | null
+          function_name?: string | null
+          generation_id?: string | null
+          id?: string
+          line_number?: number | null
+          log_level?: string
+          message?: string
+          metadata?: Json | null
+          parent_step_number?: number | null
+          step_number?: number
+          step_type?: string
+          test_run_id?: string
+          timestamp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_execution_logs_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_execution_runs: {
+        Row: {
+          admin_user_id: string | null
+          bookmark_name: string | null
+          bookmarked: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          duration_ms: number | null
+          error_message: string | null
+          error_stack: string | null
+          execution_data: Json
+          generation_id: string | null
+          id: string
+          model_name: string
+          model_provider: string
+          model_record_id: string
+          notes: string | null
+          skip_billing: boolean | null
+          started_at: string | null
+          status: string
+          steps_completed: number | null
+          steps_total: number | null
+          tags: string[] | null
+          test_mode_enabled: boolean | null
+          test_run_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_user_id?: string | null
+          bookmark_name?: string | null
+          bookmarked?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          error_stack?: string | null
+          execution_data: Json
+          generation_id?: string | null
+          id?: string
+          model_name: string
+          model_provider: string
+          model_record_id: string
+          notes?: string | null
+          skip_billing?: boolean | null
+          started_at?: string | null
+          status: string
+          steps_completed?: number | null
+          steps_total?: number | null
+          tags?: string[] | null
+          test_mode_enabled?: boolean | null
+          test_run_id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_user_id?: string | null
+          bookmark_name?: string | null
+          bookmarked?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          error_stack?: string | null
+          execution_data?: Json
+          generation_id?: string | null
+          id?: string
+          model_name?: string
+          model_provider?: string
+          model_record_id?: string
+          notes?: string | null
+          skip_billing?: boolean | null
+          started_at?: string | null
+          status?: string
+          steps_completed?: number | null
+          steps_total?: number | null
+          tags?: string[] | null
+          test_mode_enabled?: boolean | null
+          test_run_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_execution_runs_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_execution_snapshots: {
+        Row: {
+          created_at: string | null
+          id: string
+          snapshot_type: string
+          state_data: Json
+          step_number: number
+          test_run_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          snapshot_type: string
+          state_data: Json
+          step_number: number
+          test_run_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          snapshot_type?: string
+          state_data?: Json
+          step_number?: number
+          test_run_id?: string
+        }
+        Relationships: []
+      }
       token_dispute_history: {
         Row: {
           admin_notes: string | null

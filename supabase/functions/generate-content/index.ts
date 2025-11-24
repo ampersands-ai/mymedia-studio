@@ -158,6 +158,7 @@ Deno.serve(async (req) => {
       workflow_step_number,
       user_id, // For service role calls (test mode)
       test_mode = false, // Flag to skip billing for admin tests
+      test_run_id, // For linking test execution logs
     } = validatedRequest;
 
     let { prompt } = validatedRequest;

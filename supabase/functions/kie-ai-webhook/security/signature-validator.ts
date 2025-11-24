@@ -15,7 +15,6 @@
  */
 
 import { createHmac } from 'https://deno.land/std@0.177.0/node/crypto.ts';
-import { webhookLogger } from "../../../_shared/logger.ts";
 
 export interface SignatureResult {
   success: boolean;
@@ -37,7 +36,7 @@ export function validateSignature(
 
   // Check if secret is configured
   if (!secret) {
-    webhookLogger.error('SECURITY CRITICAL: KIE_WEBHOOK_SECRET not configured');
+    console.error('SECURITY CRITICAL: KIE_WEBHOOK_SECRET not configured');
     return {
       success: false,
       error: 'Webhook secret not configured - contact system administrator',
@@ -46,7 +45,7 @@ export function validateSignature(
 
   // Check if signature header is present
   if (!receivedSignature) {
-    webhookLogger.error('SECURITY LAYER 5 FAILED: Missing X-Kie-Signature header', {
+    console.error('SECURITY LAYER 5 FAILED: Missing X-Kie-Signature header', {
       timestamp: new Date().toISOString(),
     });
     return {
@@ -64,7 +63,7 @@ export function validateSignature(
   const match = constantTimeCompare(receivedSignature, expectedSignature);
 
   if (!match) {
-    webhookLogger.error('SECURITY LAYER 5 FAILED: Invalid signature', {
+    console.error('SECURITY LAYER 5 FAILED: Invalid signature', {
       receivedPrefix: receivedSignature.substring(0, 12) + '...',
       expectedPrefix: expectedSignature.substring(0, 12) + '...',
       payloadSize: payload.length,
@@ -76,7 +75,7 @@ export function validateSignature(
     };
   }
 
-  webhookLogger.info('✓ Layer 5 passed: HMAC signature validated', {
+  console.log('✓ Layer 5 passed: HMAC signature validated', {
     algorithm: 'SHA256',
     payloadSize: payload.length,
   });

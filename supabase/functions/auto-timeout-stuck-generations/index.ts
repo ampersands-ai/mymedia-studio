@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
         successCount++;
 
       } catch (error) {
-        logger.error("Error processing generation", error, { 
+        logger.error("Error processing generation", error as Error, { 
           metadata: { generationId: gen.id } 
         });
         errorCount++;
@@ -110,9 +110,10 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    logger.error("Auto-timeout error", error);
+    logger.error("Auto-timeout error", error as Error);
+    const err = error as Error;
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: err.message || String(error) }),
       { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }

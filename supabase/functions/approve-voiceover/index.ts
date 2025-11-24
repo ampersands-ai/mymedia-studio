@@ -168,7 +168,7 @@ Deno.serve(async (req) => {
     // Get job and verify ownership
     const { data: job, error: jobError} = await supabaseClient
       .from('video_jobs')
-      .select('user_id, script, voiceover_url, style, duration, aspect_ratio, caption_style, custom_background_video, status, topic, actual_audio_duration')
+      .select('user_id, script, voiceover_url, style, duration, aspect_ratio, caption_style, custom_background_video, status, topic, actual_audio_duration, background_media_type')
       .eq('id', job_id)
       .single();
 
@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
       }
     });
 
-    const backgroundMediaType = (job.background_media_type as string | undefined) || 'video';
+    const backgroundMediaType = (job.background_media_type || 'video') as 'video' | 'image';
     logger.info("Background media type determined", { metadata: { backgroundMediaType } });
 
     // Step 3: Fetch multiple background videos or images
@@ -683,11 +683,12 @@ async function assembleVideo(
   };
 
   // Add fonts array if custom font URL provided
-  if (style?.fontUrl) {
+  const styleTyped = style as CaptionStyle | undefined;
+  if (styleTyped?.fontUrl) {
     edit.timeline.fonts = [{
-      src: style.fontUrl
+      src: styleTyped.fontUrl
     }];
-    logger?.info("Added custom font", { metadata: { fontUrl: style.fontUrl } });
+    logger?.info("Added custom font", { metadata: { fontUrl: styleTyped.fontUrl } });
   }
 
   // Track 0: Audio with alias (for caption sync)
@@ -704,33 +705,34 @@ async function assembleVideo(
   });
 
   // Track 1: Rich caption with custom styling
+  const styleAny = style as any; // Safe cast for mixed property access
   const captionClip: Record<string, unknown> = {
     start: 0,
     length: 'auto',
-    position: style?.position || 'bottom',
+    position: styleTyped?.position || styleAny?.position || 'bottom',
     asset: {
       type: 'caption',
       trim: 0,
       src: 'alias://VOICEOVER',
       alignment: {
-        horizontal: style?.horizontalAlignment || 'center',
-        vertical: style?.verticalAlignment || 'center'
+        horizontal: styleTyped?.horizontalAlignment || 'center',
+        vertical: styleTyped?.verticalAlignment || 'center'
       },
       background: {
-        padding: style?.backgroundPadding ?? 15,
-        color: style?.backgroundColor || '#FF9947',
-        borderRadius: style?.backgroundBorderRadius ?? 8,
-        opacity: style?.backgroundOpacity ?? 0.95
+        padding: styleTyped?.backgroundPadding ?? 15,
+        color: styleAny?.backgroundColor || '#FF9947',
+        borderRadius: styleTyped?.backgroundBorderRadius ?? 8,
+        opacity: styleTyped?.backgroundOpacity ?? 0.95
       },
       font: {
-        lineHeight: style?.lineHeight ?? 1.3,
-        family: style?.fontFamily || 'Space Grotesk Bold',
-        size: style?.fontSize || 55,
-        color: style?.textColor || '#000000'
+        lineHeight: styleTyped?.lineHeight ?? 1.3,
+        family: styleAny?.fontFamily || 'Space Grotesk Bold',
+        size: styleAny?.fontSize || 55,
+        color: styleAny?.textColor || '#000000'
       }
     },
     offset: {
-      y: style?.offsetY ?? 0.15
+      y: styleTyped?.offsetY ?? 0.15
     }
   };
 
@@ -776,7 +778,7 @@ async function assembleVideo(
   // Debug: Log track order before submission
   logger?.debug("Track order and caption asset", {
     metadata: {
-      trackOrder: edit.timeline.tracks.map((t: Record<string, unknown>) => {
+      trackOrder: edit.timeline.tracks.map((t: any) => {
         const clips = (t.clips as Array<{ asset?: { type?: string } }>) || [];
         return clips[0]?.asset?.type;
       }),
@@ -863,10 +865,10 @@ async function assembleVideo(
           const clips = (track.clips as Array<{ asset?: { type?: string } }>) || [];
           return clips[0]?.asset?.type === 'caption' || clips[0]?.asset?.type === 'captions';
         });
-        if (captionTrackIndex !== -1 && fallbackEdit.timeline.tracks[captionTrackIndex]?.clips?.[0]) {
-          fallbackEdit.timeline.tracks[captionTrackIndex].clips[0].asset = { type: 'caption', src: 'alias://VOICEOVER' };
-          fallbackEdit.timeline.tracks[captionTrackIndex].clips[0].length = 'auto';
-        }
+      if (captionTrackIndex !== -1 && (fallbackEdit.timeline.tracks[captionTrackIndex] as any)?.clips?.[0]) {
+        (fallbackEdit.timeline.tracks[captionTrackIndex] as any).clips[0].asset = { type: 'caption', src: 'alias://VOICEOVER' };
+        (fallbackEdit.timeline.tracks[captionTrackIndex] as any).clips[0].length = 'auto';
+      }
       } catch {
         // Ignore errors when trying to modify caption track
       }
@@ -925,9 +927,9 @@ async function assembleVideo(
             const clips = (track.clips as Array<{ asset?: { type?: string } }>) || [];
             return clips[0]?.asset?.type === 'caption' || clips[0]?.asset?.type === 'captions';
           });
-          if (captionTrackIndex2 !== -1 && fallbackEdit2.timeline.tracks[captionTrackIndex2]?.clips?.[0]) {
-            fallbackEdit2.timeline.tracks[captionTrackIndex2].clips[0].asset = { type: 'captions', src: 'alias://VOICEOVER' };
-          }
+      if (captionTrackIndex2 !== -1 && (fallbackEdit2.timeline.tracks[captionTrackIndex2] as any)?.clips?.[0]) {
+        (fallbackEdit2.timeline.tracks[captionTrackIndex2] as any).clips[0].asset = { type: 'captions', src: 'alias://VOICEOVER' };
+      }
         } catch {
           // Ignore errors when trying to modify caption track
         }

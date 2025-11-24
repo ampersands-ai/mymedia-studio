@@ -75,7 +75,7 @@ function renderSection(section: EmailSection): string {
       return `
         <div class="section">
           ${section.title ? `<div class="section-title">${section.title}</div>` : ''}
-          <div class="code-block">${escapeHtml(section.content)}</div>
+          <div class="code-block">${escapeHtml(String(section.content))}</div>
         </div>
       `;
     

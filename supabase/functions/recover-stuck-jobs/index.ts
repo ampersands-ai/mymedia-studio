@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
+import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 
 
 
@@ -63,7 +64,7 @@ Deno.serve(async (req) => {
             
             try {
               const shotstackResponse = await fetch(
-                `https://api.shotstack.io/v1/render/${job.shotstack_render_id}`,
+                `${API_ENDPOINTS.SHOTSTACK.BASE}${API_ENDPOINTS.SHOTSTACK.VERSION}/render/${job.shotstack_render_id}`,
                 { headers: { 'x-api-key': Deno.env.get('SHOTSTACK_API_KEY') ?? '' } }
               );
               
@@ -278,7 +279,7 @@ Deno.serve(async (req) => {
           
           try {
             const shotstackResponse = await fetch(
-              `https://api.shotstack.io/v1/render/${job.shotstack_render_id}`,
+              `${API_ENDPOINTS.SHOTSTACK.BASE}${API_ENDPOINTS.SHOTSTACK.VERSION}/render/${job.shotstack_render_id}`,
               { headers: { 'x-api-key': Deno.env.get('SHOTSTACK_API_KEY') ?? '' } }
             );
             

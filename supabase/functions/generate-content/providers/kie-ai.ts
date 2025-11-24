@@ -1,6 +1,7 @@
 import { ProviderRequest, ProviderResponse } from "./index.ts";
 import { EdgeLogger } from "../../_shared/edge-logger.ts";
 import { GENERATION_STATUS } from "../../_shared/constants.ts";
+import { API_ENDPOINTS } from "../../_shared/api-endpoints.ts";
 
 // API key mapping logic for KIE AI
 function getKieApiKey(modelId: string, recordId: string): string {
@@ -59,15 +60,16 @@ export async function callKieAI(
   const logger = new EdgeLogger('kie-ai-provider', crypto.randomUUID());
   const KIE_AI_API_KEY = getKieApiKey(request.model, request.model_record_id || '');
 
-  const baseUrl = 'https://api.kie.ai';
-  const createTaskEndpoint = request.api_endpoint || '/api/v1/jobs/createTask';
-  
-  logger.info('Calling Kie.ai API', { 
-    metadata: { 
-      model: request.model, 
-      payloadStructure: request.payload_structure || 'wrapper', 
-      endpoint: createTaskEndpoint 
-    } 
+  const createTaskUrl = request.api_endpoint
+    ? `${API_ENDPOINTS.KIE_AI.BASE}${request.api_endpoint}`
+    : API_ENDPOINTS.KIE_AI.createTaskUrl;
+
+  logger.info('Calling Kie.ai API', {
+    metadata: {
+      model: request.model,
+      payloadStructure: request.payload_structure || 'wrapper',
+      endpoint: createTaskUrl
+    }
   });
 
   // Build request payload with callback URL including security tokens
@@ -132,8 +134,8 @@ export async function callKieAI(
   try {
     // Step 1: Create the task
     logger.info('Creating Kie.ai task', { metadata: { model: request.model } });
-    
-    const createResponse = await fetch(`${baseUrl}${createTaskEndpoint}`, {
+
+    const createResponse = await fetch(createTaskUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${KIE_AI_API_KEY}`,
@@ -164,7 +166,7 @@ export async function callKieAI(
     // Immediate status check to catch fast completions
     try {
       logger.debug('Checking immediate task status');
-      const statusResponse = await fetch('https://api.kie.ai/api/v1/jobs/queryTask', {
+      const statusResponse = await fetch(API_ENDPOINTS.KIE_AI.queryTaskUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${KIE_AI_API_KEY}`,

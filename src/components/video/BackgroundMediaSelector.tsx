@@ -248,7 +248,7 @@ export function BackgroundMediaSelector({
             {/* Left Side - Controls */}
             <div className="lg:col-span-1 space-y-4">
             {/* Media Type Toggle */}
-            <Tabs value={mediaType} onValueChange={handleMediaTypeChange as any}>
+            <Tabs value={mediaType} onValueChange={(value) => handleMediaTypeChange(value as 'video' | 'image')}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="video" className="flex items-center gap-2">
                   <Video className="h-4 w-4" />

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 
 
 
@@ -27,7 +28,7 @@ serve(async (req) => {
     logger.info('Searching Pixabay audio', { metadata: { query, per_page } });
 
     // Build Pixabay Audio API URL
-    const url = new URL('https://pixabay.com/api/');
+    const url = new URL(API_ENDPOINTS.PIXABAY.apiUrl);
     url.searchParams.append('key', PIXABAY_API_KEY);
     url.searchParams.append('q', query);
     url.searchParams.append('per_page', per_page.toString());

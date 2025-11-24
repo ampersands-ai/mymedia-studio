@@ -1,6 +1,7 @@
 /** FLUX.1 Pro prompt_to_image - Record: 7a2f8c3e-4b5d-6e9a-1f8c-2d4b6e9a3f5c */
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { executeModelGeneration } from "@/lib/models/shared/executeModelGeneration";
+import { API_ENDPOINTS } from "@/lib/config/api-endpoints";
 
 export const MODEL_CONFIG = {
   modelId: "runware:100@1",
@@ -12,7 +13,7 @@ export const MODEL_CONFIG = {
   baseCreditCost: 0.2,
   estimatedTimeSeconds: 15,
   costMultipliers: {},
-  apiEndpoint: "https://api.runware.ai/v1",
+  apiEndpoint: API_ENDPOINTS.RUNWARE.fullUrl,
   payloadStructure: "flat",
   maxImages: 0,
   defaultOutputs: 1,

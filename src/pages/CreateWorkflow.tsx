@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useWorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { WorkflowInputPanel } from "@/components/generation/WorkflowInputPanel";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
@@ -16,11 +17,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { logger } from "@/lib/logger";
 
 const CreateWorkflow = () => {
+  const { execute } = useErrorHandler();
   const [searchParams] = useSearchParams();
   const workflowId = searchParams.get("workflow");
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  
+
   const { data: workflow, isLoading } = useWorkflowTemplate(workflowId || "");
   const { executeWorkflow, isExecuting } = useWorkflowExecution();
   const { downloadFile } = useNativeDownload();
@@ -58,41 +60,46 @@ const CreateWorkflow = () => {
       }
       
       setIsLoadingPreview(true);
-      
-      try {
-        const beforePath = workflow.before_image_url ? extractStoragePath(workflow.before_image_url) : null;
-        const afterPath = workflow.after_image_url ? extractStoragePath(workflow.after_image_url) : null;
-        
-        logger.debug('Extracted storage paths', {
-          component: 'CreateWorkflow',
-          operation: 'loadTemplateImages',
-          beforePath,
-          afterPath
-        });
-        
-        const [beforeUrl, afterUrl] = await Promise.all([
-          beforePath ? createSignedUrl('generated-content', beforePath) : null,
-          afterPath ? createSignedUrl('generated-content', afterPath) : null,
-        ]);
-        
-        logger.debug('Created signed URLs', {
-          component: 'CreateWorkflow',
-          operation: 'loadTemplateImages',
-          hasBeforeUrl: !!beforeUrl,
-          hasAfterUrl: !!afterUrl
-        });
-        
-        setTemplateBeforeImage(beforeUrl);
-        setTemplateAfterImage(afterUrl);
-      } catch (error) {
-        logger.error('Failed to load template images', error instanceof Error ? error : new Error(String(error)), {
-          component: 'CreateWorkflow',
-          operation: 'loadTemplateImages',
-          workflowId: workflow?.id
-        });
-      } finally {
-        setIsLoadingPreview(false);
-      }
+
+      await execute(
+        async () => {
+          const beforePath = workflow.before_image_url ? extractStoragePath(workflow.before_image_url) : null;
+          const afterPath = workflow.after_image_url ? extractStoragePath(workflow.after_image_url) : null;
+
+          logger.debug('Extracted storage paths', {
+            component: 'CreateWorkflow',
+            operation: 'loadTemplateImages',
+            beforePath,
+            afterPath
+          });
+
+          const [beforeUrl, afterUrl] = await Promise.all([
+            beforePath ? createSignedUrl('generated-content', beforePath) : null,
+            afterPath ? createSignedUrl('generated-content', afterPath) : null,
+          ]);
+
+          logger.debug('Created signed URLs', {
+            component: 'CreateWorkflow',
+            operation: 'loadTemplateImages',
+            hasBeforeUrl: !!beforeUrl,
+            hasAfterUrl: !!afterUrl
+          });
+
+          setTemplateBeforeImage(beforeUrl);
+          setTemplateAfterImage(afterUrl);
+        },
+        {
+          showSuccessToast: false,
+          showErrorToast: false,
+          context: {
+            component: 'CreateWorkflow',
+            operation: 'loadTemplateImages',
+            workflowId: workflow?.id
+          }
+        }
+      );
+
+      setIsLoadingPreview(false);
     };
     
     loadTemplateImages();
@@ -154,62 +161,61 @@ const CreateWorkflow = () => {
 
   const handleCancelExecution = async () => {
     if (!executionId) return;
-    
-    try {
-      const { supabase } = await import('@/integrations/supabase/client');
-      const { error } = await supabase
-        .from('workflow_executions')
-        .update({ status: 'cancelled' })
-        .eq('id', executionId)
-        .in('status', ['pending', 'processing']);
-      
-      if (error) {
-        logger.error('Failed to cancel workflow', error instanceof Error ? error : new Error(String(error)), {
-          component: 'CreateWorkflow',
-          operation: 'handleCancelExecution',
-          executionId
-        });
-        toast.error('Failed to cancel workflow');
-      } else {
+
+    await execute(
+      async () => {
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { error } = await supabase
+          .from('workflow_executions')
+          .update({ status: 'cancelled' })
+          .eq('id', executionId)
+          .in('status', ['pending', 'processing']);
+
+        if (error) throw error;
+
         logger.info('Workflow cancelled', {
           component: 'CreateWorkflow',
           operation: 'handleCancelExecution',
           executionId
         });
-        toast.success('Workflow cancelled');
         generationStartTimeRef.current = null;
         setExecutionId(null);
+      },
+      {
+        successMessage: 'Workflow cancelled',
+        errorMessage: 'Failed to cancel workflow',
+        context: {
+          component: 'CreateWorkflow',
+          operation: 'handleCancelExecution',
+          executionId
+        }
       }
-    } catch (error) {
-      logger.error('Error cancelling workflow', error instanceof Error ? error : new Error(String(error)), {
-        component: 'CreateWorkflow',
-        operation: 'handleCancelExecution',
-        executionId
-      });
-      toast.error('Error cancelling workflow');
-    }
+    );
   };
 
   const handleDownload = async () => {
     if (!result?.url) return;
-    
-    try {
-      const signedUrl = await createSignedUrl('generated-content', result.url);
-      if (!signedUrl) {
-        toast.error('Failed to create download link');
-        return;
-      }
 
-      const extension = result.url.split('.').pop() || 'jpg';
-      await downloadFile(signedUrl, `workflow-${Date.now()}.${extension}`);
-    } catch (error) {
-      logger.error('Download error', error instanceof Error ? error : new Error(String(error)), {
-        component: 'CreateWorkflow',
-        operation: 'handleDownload',
-        resultUrl: result?.url
-      });
-      toast.error('Failed to download file');
-    }
+    await execute(
+      async () => {
+        const signedUrl = await createSignedUrl('generated-content', result.url);
+        if (!signedUrl) {
+          throw new Error('Failed to create signed URL');
+        }
+
+        const extension = result.url.split('.').pop() || 'jpg';
+        await downloadFile(signedUrl, `workflow-${Date.now()}.${extension}`);
+      },
+      {
+        showSuccessToast: false,
+        errorMessage: 'Failed to download file',
+        context: {
+          component: 'CreateWorkflow',
+          operation: 'handleDownload',
+          resultUrl: result?.url
+        }
+      }
+    );
   };
 
   if (isLoading) {

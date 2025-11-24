@@ -117,7 +117,7 @@ export function SchemaBuilder({ schema, onChange, modelRecordId, onSave, disable
   };
 
   const generatedJson = JSON.stringify(generateSchema(parameters, originalSchema), null, 2);
-  const currentImageField = (schema as any).imageInputField || null;
+  const currentImageField = schema.imageInputField || null;
 
   const handleImageFieldChange = (value: string) => {
     if (disabled) return;

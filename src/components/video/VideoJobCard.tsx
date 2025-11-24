@@ -1,65 +1,29 @@
 import { VideoJob } from '@/types/video';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Loader2, Download, Eye, Clock, AlertCircle, Play, XCircle, Volume2, Edit, Pause, RotateCcw, CheckCircle, Sparkles, Coins } from 'lucide-react';
+import { Loader2, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useUserCredits } from '@/hooks/useUserCredits';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { toast } from 'sonner';
-import { useVideoUrl, useAudioUrl } from '@/hooks/media';
-import { Slider } from '@/components/ui/slider';
-import { GenerationProgress } from '@/components/generation/GenerationProgress';
-import { cn } from '@/lib/utils';
-import { logger } from '@/lib/logger';
-
-const componentLogger = logger.child({ component: 'VideoJobCard' });
-
+import { VideoJobScript } from './VideoJobScript';
+import { VideoJobVoiceover } from './VideoJobVoiceover';
+import { VideoJobProgress } from './VideoJobProgress';
+import { VideoJobDetails } from './VideoJobDetails';
+import { VideoJobActions } from './VideoJobActions';
 
 interface VideoJobCardProps {
   job: VideoJob;
   onPreview?: (job: VideoJob) => void;
 }
 
-// Step Indicator Component for Progress Visualization
-const StepIndicator = ({ 
-  completed, 
-  active, 
-  label 
-}: { 
-  completed?: boolean; 
-  active?: boolean; 
-  label: string;
-}) => (
-  <div className="flex items-center gap-3">
-    <div className={cn(
-      "flex items-center justify-center w-6 h-6 rounded-full shrink-0",
-      completed ? "bg-green-500" : active ? "bg-primary" : "bg-muted"
-    )}>
-      {completed ? (
-        <CheckCircle className="w-4 h-4 text-white" />
-      ) : active ? (
-        <Loader2 className="w-4 h-4 text-white animate-spin" />
-      ) : (
-        <Clock className="w-4 h-4 text-muted-foreground" />
-      )}
-    </div>
-    <span className={cn(
-      "text-sm font-medium",
-      completed ? "text-foreground" : active ? "text-primary" : "text-muted-foreground"
-    )}>
-      {label}
-    </span>
-  </div>
-);
-
-
 export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
+  const [timeoutCountdown, setTimeoutCountdown] = useState<number | null>(null);
+  const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling, recoverJob, isRecoveringJob, generateCaption, isGeneratingCaption } = useVideoJobs();
+  const { availableCredits } = useUserCredits();
+
+  const voiceoverRegenerationCost = Math.ceil((job.script?.length || 0) / 1000 * 144);
+
   const getStatusColor = (status: VideoJob['status']) => {
     const colors = {
       pending: 'bg-gray-500',
@@ -101,55 +65,13 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   };
 
   const isProcessing = ['pending', 'generating_script', 'generating_voice', 'fetching_video', 'assembling'].includes(job.status);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [isEditingScript, setIsEditingScript] = useState(false);
-  const [isEditingVoiceoverScript, setIsEditingVoiceoverScript] = useState(false);
-  const [editedScript, setEditedScript] = useState(job.script || '');
-  const [editedVoiceoverScript, setEditedVoiceoverScript] = useState(job.script || '');
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [showCaptionConfirm, setShowCaptionConfirm] = useState(false);
-  const [timeoutCountdown, setTimeoutCountdown] = useState<number | null>(null);
-  const [videoError, setVideoError] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling, recoverJob, isRecoveringJob, dismissError, isDismissingError, generateCaption, isGeneratingCaption } = useVideoJobs();
-  const { availableCredits } = useUserCredits();
-  
-  // Calculate voiceover regeneration cost (144 credits per 1000 chars)
-  const voiceoverRegenerationCost = Math.ceil((editedVoiceoverScript.length / 1000) * 144);
-  const canAffordVoiceoverRegeneration = availableCredits >= voiceoverRegenerationCost;
-  
-  const handleGenerateCaption = () => {
-    if (!job.script) {
-      toast.error('Script is required to generate caption');
-      return;
-    }
-    
-    // Check if user has enough credits
-    if (availableCredits < 0.1) {
-      toast.error('Insufficient credits. You need at least 0.1 credits.');
-      return;
-    }
-    
-    setShowCaptionConfirm(true);
-  };
-
-  const confirmGenerateCaption = () => {
-    generateCaption.mutate({
-      jobId: job.id,
-      topic: job.topic,
-      script: job.script || ''
-    });
-    setShowCaptionConfirm(false);
-  };
-  
-  // Check if job is approaching 5-minute timeout
   const isApproachingTimeout = ['assembling', 'fetching_video'].includes(job.status);
   const elapsedMs = Date.now() - new Date(job.created_at).getTime();
-  const timeoutMs = 5 * 60 * 1000; // 5 minutes
-  const isNearTimeout = isApproachingTimeout && elapsedMs > 4 * 60 * 1000; // After 4 minutes
+  const timeoutMs = 5 * 60 * 1000;
+  const isNearTimeout = isApproachingTimeout && elapsedMs > 4 * 60 * 1000;
+  const isStuckAssembling = job.status === 'assembling' &&
+    (Date.now() - new Date(job.updated_at).getTime()) > 5 * 60 * 1000;
 
-  // Update countdown every second when near timeout
   useEffect(() => {
     if (!isNearTimeout) {
       setTimeoutCountdown(null);
@@ -164,265 +86,48 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
 
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
-    
+
     return () => clearInterval(interval);
   }, [job.created_at, isNearTimeout, timeoutMs]);
-  
-  // Reset video error when job changes
+
   useEffect(() => {
-    setVideoError(false);
     setTimeoutCountdown(null);
   }, [job.id, job.status]);
-  
-  // Check if job is stuck in assembling for >5 minutes
-  const isStuckAssembling = job.status === 'assembling' && 
-    (Date.now() - new Date(job.updated_at).getTime()) > 5 * 60 * 1000;
 
-  // Fetch audio URL for voiceover using new architecture
-  const { url: voiceoverSignedUrl, isLoading: isLoadingVoiceUrl, error: voiceUrlError } = useAudioUrl(
-    job.status === 'awaiting_voice_approval' ? job.voiceover_url : null,
-    { strategy: 'public-direct', bucket: 'generated-content' }
-  );
-
-  // Fetch video URL for completed video using new architecture
-  const { url: videoSignedUrl, isLoading: isLoadingVideoUrl, error: videoUrlError } = useVideoUrl(
-    job.status === 'completed' ? job.final_video_url : null,
-    { strategy: 'public-direct', bucket: 'generated-content' }
-  );
-
-  // Diagnostic logging for voiceover review
-  useEffect(() => {
-    if (job.status === 'awaiting_voice_approval') {
-      componentLogger.debug('Voiceover review debug', {
-        jobStatus: job.status,
-        voiceoverUrl: job.voiceover_url,
-        signedUrl: voiceoverSignedUrl,
-        isLoading: isLoadingVoiceUrl,
-        jobId: job.id
-      } as any);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [job.status, job.voiceover_url, voiceoverSignedUrl, isLoadingVoiceUrl]);
-
-  // Reset editing state when script changes
-  useEffect(() => {
-    setEditedScript(job.script || '');
-    setEditedVoiceoverScript(job.script || '');
-  }, [job.script]);
-
-  // Cleanup audio on unmount or job change
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
-  }, [job.id]);
-
-  // Cleanup states when job becomes failed (cancelled or error)
-  useEffect(() => {
-    if (job.status === 'failed') {
-      // Stop audio if playing
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      setIsPlayingAudio(false);
-      setCurrentTime(0);
-      setDuration(0);
-      
-      // Reset editing states
-      setIsEditingScript(false);
-      setIsEditingVoiceoverScript(false);
-      
-      // Clear countdown
-      setTimeoutCountdown(null);
-    }
-  }, [job.status]);
-
-  const handleToggleVoiceover = async () => {
-    if (!voiceoverSignedUrl) {
-      toast.error('Voiceover URL not ready yet');
-      return;
-    }
-    
-    // If audio is playing, pause it
-    if (isPlayingAudio && audioRef.current) {
-      audioRef.current.pause();
-      setIsPlayingAudio(false);
-      return;
-    }
-    
-    // If audio exists but is paused, resume it
-    if (audioRef.current && !isPlayingAudio) {
-      audioRef.current.play();
-      setIsPlayingAudio(true);
-      return;
-    }
-    
-    // Verify URL is accessible before creating audio instance
-    componentLogger.debug('Validating voiceover URL', { url: voiceoverSignedUrl, jobId: job.id } as any);
-    try {
-      const testResponse = await fetch(voiceoverSignedUrl, { method: 'HEAD' });
-      if (!testResponse.ok) {
-        componentLogger.error('Voiceover URL not accessible', new Error(`HTTP ${testResponse.status}`), { jobId: job.id, status: testResponse.status } as any);
-        toast.error(`Voiceover file is not accessible (HTTP ${testResponse.status}). Please try again.`);
-        return;
-      }
-      componentLogger.debug('Voiceover URL validation passed', { jobId: job.id } as any);
-    } catch (err) {
-      componentLogger.error('Failed to validate voiceover URL', err as Error, { jobId: job.id } as any);
-      toast.error('Unable to validate voiceover file. Please check your connection.');
-      return;
-    }
-    
-    // Create new audio instance
-    const audio = new Audio(voiceoverSignedUrl);
-    audioRef.current = audio;
-    setIsPlayingAudio(true);
-    
-    audio.onloadedmetadata = () => {
-      setDuration(audio.duration);
-    };
-    
-    audio.ontimeupdate = () => {
-      setCurrentTime(audio.currentTime);
-    };
-    
-    audio.onended = () => {
-      setIsPlayingAudio(false);
-      setCurrentTime(0);
-    };
-    
-    audio.onerror = (e) => {
-      componentLogger.error('Audio playback error', new Error('Audio playback failed'), { jobId: job.id, event: e } as any);
-      setIsPlayingAudio(false);
-      audioRef.current = null;
-      toast.error('Failed to play voiceover. The file may be corrupted or inaccessible.');
-    };
-    
-    audio.play().catch(err => {
-      componentLogger.error('Failed to start audio playback', err as Error, { jobId: job.id } as any);
-      toast.error('Failed to start playback. Please try again.');
-      setIsPlayingAudio(false);
-    });
-  };
-
-  const handleRestartAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      setCurrentTime(0);
-      if (!isPlayingAudio) {
-        audioRef.current.play();
-        setIsPlayingAudio(true);
-      }
-    }
-  };
-
-  const handleSeek = (value: number[]) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = value[0];
-      setCurrentTime(value[0]);
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const getEstimatedTime = (status: VideoJob['status']): number => {
-    const estimates = {
-      generating_voice: 180, // 3 minutes
-      fetching_video: 60,    // 1 minute
-      assembling: 120        // 2 minutes
-    };
-    return estimates[status as keyof typeof estimates] || 180;
-  };
-
-  const getStageDescription = (status: VideoJob['status']): string => {
-    const descriptions = {
-      generating_voice: '🎙️ Creating natural-sounding voiceover with AI voice synthesis...',
-      fetching_video: '🎬 Searching for relevant background videos and images...',
-      assembling: '✨ Combining voiceover, visuals, and captions into final video...'
-    };
-    return descriptions[status as keyof typeof descriptions] || 'Processing...';
-  };
-
-  const handleApproveScript = () => {
+  const handleApproveScript = (editedScript?: string) => {
     approveScript.mutate({
       jobId: job.id,
-      editedScript: isEditingScript && editedScript !== job.script ? editedScript : undefined
+      editedScript
     });
-    setIsEditingScript(false);
   };
 
   const handleApproveVoiceover = () => {
-    componentLogger.info('Approving voiceover', { jobId: job.id, voiceoverUrl: job.voiceover_url } as any);
     approveVoiceover.mutate(job.id);
   };
 
   const handleCancel = () => {
     if (confirm('Are you sure you want to cancel this video? This action cannot be undone.')) {
-      // Stop and cleanup audio immediately
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      setIsPlayingAudio(false);
-      setCurrentTime(0);
-      setDuration(0);
-      
-      // Reset all editing states
-      setIsEditingScript(false);
-      setIsEditingVoiceoverScript(false);
-      setEditedScript(job.script || '');
-      setEditedVoiceoverScript(job.script || '');
-      
-      // Clear countdown
-      setTimeoutCountdown(null);
-      
-      // Now cancel the job
       cancelJob.mutate(job.id);
     }
   };
 
-  const handleDownload = async () => {
-    toast.loading('Preparing download...', { id: 'video-download' });
-    
-    try {
-      if (!videoSignedUrl) {
-        componentLogger.error('Download failed: No signed URL available', new Error('No signed URL'), { jobId: job.id } as any);
-        toast.error('Download unavailable - video URL not ready', { id: 'video-download' });
-        return;
+  const handleRegenerateVoiceover = (editedScript: string) => {
+    approveScript.mutate(
+      { jobId: job.id, editedScript },
+      {
+        onSuccess: () => {
+          // Success handled by the hook
+        }
       }
-      
-      componentLogger.info('Downloading video', { jobId: job.id, url: videoSignedUrl } as any);
-      const response = await fetch(videoSignedUrl);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = `artifio-${job.topic.slice(0, 30)}-${Date.now()}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(blobUrl);
-      document.body.removeChild(a);
-      toast.success('Download started!', { id: 'video-download' });
-    } catch (error) {
-      componentLogger.error('Download error', error as Error, { jobId: job.id } as any);
-      toast.error(
-        `Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 
-        { id: 'video-download' }
-      );
-    }
+    );
+  };
+
+  const handleGenerateCaption = () => {
+    generateCaption.mutate({
+      jobId: job.id,
+      topic: job.topic,
+      script: job.script || ''
+    });
   };
 
   return (
@@ -456,615 +161,48 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
           Created {formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}
         </div>
 
-        {/* Script Approval UI */}
-        {job.status === 'awaiting_script_approval' && job.script && (
-          <div className="space-y-3 pt-2 border-t">
-            <div className="flex items-center gap-2 text-sm font-semibold text-orange-600">
-              <AlertCircle className="h-4 w-4" />
-              Review Script
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <label className="text-xs font-medium text-muted-foreground">Generated Script:</label>
-                  <Badge variant="secondary" className="text-xs">
-                    {(isEditingScript ? editedScript : job.script || '').length} chars
-                  </Badge>
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 text-xs"
-                  onClick={() => setIsEditingScript(!isEditingScript)}
-                >
-                  <Edit className="w-3 h-3 mr-1" />
-                  {isEditingScript ? 'Cancel Edit' : 'Edit Script'}
-                </Button>
-              </div>
-              
-              {isEditingScript ? (
-                <Textarea
-                  value={editedScript}
-                  onChange={(e) => setEditedScript(e.target.value)}
-                  className="min-h-[150px] text-sm font-mono"
-                  placeholder="Edit the script here..."
-                />
-              ) : (
-                <ScrollArea className="h-32 rounded-md border bg-muted/30 p-3">
-                  <p className="text-sm whitespace-pre-wrap">{job.script}</p>
-                </ScrollArea>
-              )}
-            </div>
+        <VideoJobScript
+          job={job}
+          onApprove={handleApproveScript}
+          onCancel={handleCancel}
+          isApproving={isApprovingScript}
+          isCancelling={isCancelling}
+        />
 
-            <div className="flex gap-2 pt-2">
-              <Button 
-                size="sm" 
-                className="flex-1"
-                onClick={handleApproveScript}
-                disabled={isApprovingScript || isCancelling}
-              >
-                {isApprovingScript ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Volume2 className="w-4 h-4 mr-2" />
-                    Generate Voiceover
-                  </>
-                )}
-              </Button>
-              <Button 
-                size="sm" 
-                variant="destructive"
-                onClick={handleCancel}
-                disabled={isApprovingScript || isCancelling}
-              >
-                {isCancelling ? (
-                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                ) : (
-                  <XCircle className="w-4 h-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
+        <VideoJobVoiceover
+          job={job}
+          onApprove={handleApproveVoiceover}
+          onCancel={handleCancel}
+          onRegenerate={handleRegenerateVoiceover}
+          isApproving={isApprovingVoiceover}
+          isCancelling={isCancelling}
+          isRegenerating={isApprovingScript}
+          availableCredits={availableCredits}
+          voiceoverRegenerationCost={voiceoverRegenerationCost}
+        />
 
-        {/* Voiceover Approval UI */}
-        {job.status === 'awaiting_voice_approval' && job.script && job.voiceover_url && (
-          <div className="space-y-3 pt-2 border-t">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-semibold text-amber-600">
-                <AlertCircle className="h-4 w-4" />
-                Review Voiceover
-              </div>
-              {!isEditingVoiceoverScript && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 text-xs"
-                  onClick={() => setIsEditingVoiceoverScript(true)}
-                >
-                  <Edit className="w-3 h-3 mr-1" />
-                  Edit Script
-                </Button>
-              )}
-            </div>
-            
-            {isEditingVoiceoverScript ? (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs font-medium text-muted-foreground">Edit Script to Regenerate Voiceover:</label>
-                    <Badge variant="secondary" className="text-xs">
-                      {editedVoiceoverScript.length} chars
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs">
-                    <Coins className="w-3 h-3 text-primary" />
-                    <span className="font-medium text-primary">{voiceoverRegenerationCost} credits</span>
-                  </div>
-                </div>
-                <Textarea
-                  value={editedVoiceoverScript}
-                  onChange={(e) => setEditedVoiceoverScript(e.target.value)}
-                  className="min-h-[150px] text-sm font-mono"
-                  placeholder="Edit the script here..."
-                />
-                {!canAffordVoiceoverRegeneration && (
-                  <p className="text-xs text-destructive font-medium">
-                    Insufficient credits. You need {Number(voiceoverRegenerationCost).toFixed(2)} credits to regenerate this voiceover.
-                  </p>
-                )}
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setIsEditingVoiceoverScript(false);
-                      setEditedVoiceoverScript(job.script || '');
-                    }}
-                    className="flex-1"
-                    disabled={isApprovingScript}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      // Stop audio if playing
-                      if (audioRef.current) {
-                        audioRef.current.pause();
-                        audioRef.current = null;
-                      }
-                      setIsPlayingAudio(false);
-                      setCurrentTime(0);
-                      setDuration(0);
-                      
-                      approveScript.mutate(
-                        { jobId: job.id, editedScript: editedVoiceoverScript },
-                        {
-                  onSuccess: () => {
-                    setIsEditingVoiceoverScript(false);
-                  },
-                        }
-                      );
-                    }}
-                    className="flex-1"
-                    disabled={isApprovingScript || !editedVoiceoverScript.trim() || !canAffordVoiceoverRegeneration}
-                  >
-                    {isApprovingScript ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Regenerating...
-                      </>
-                    ) : (
-                      <>
-                        <Volume2 className="w-4 h-4 mr-2" />
-                        Regenerate Voiceover ({voiceoverRegenerationCost} credits)
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-muted-foreground">Script:</label>
-                  <ScrollArea className="h-72 rounded-md border bg-muted/30 p-3">
-                    <p className="text-xs whitespace-pre-wrap">{job.script}</p>
-                  </ScrollArea>
-                </div>
+        <VideoJobProgress
+          job={job}
+          onCancel={handleCancel}
+          isCancelling={isCancelling}
+        />
 
-                {voiceUrlError && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error Loading Audio</AlertTitle>
-                    <AlertDescription>
-                      Could not load voiceover preview. You can still proceed with rendering the video.
-                    </AlertDescription>
-                  </Alert>
-                )}
+        <VideoJobDetails
+          job={job}
+          onPreview={onPreview}
+          onGenerateCaption={handleGenerateCaption}
+          isGeneratingCaption={isGeneratingCaption}
+          availableCredits={availableCredits}
+        />
 
-                <div className="space-y-3">
-                  <label className="text-xs font-medium text-muted-foreground">Voiceover Preview:</label>
-                  
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleToggleVoiceover}
-                      disabled={isLoadingVoiceUrl || !voiceoverSignedUrl || voiceUrlError}
-                      className="shrink-0"
-                    >
-                      {isLoadingVoiceUrl ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : isPlayingAudio ? (
-                        <Pause className="w-4 h-4" />
-                      ) : (
-                        <Play className="w-4 h-4" />
-                      )}
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleRestartAudio}
-                      disabled={!audioRef.current}
-                      className="shrink-0"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                    </Button>
-
-                    <div className="flex-1 flex items-center gap-2">
-                      <span className="text-xs font-mono tabular-nums shrink-0">
-                        {formatTime(currentTime)}
-                      </span>
-                      <Slider
-                        value={[currentTime]}
-                        max={duration || 100}
-                        step={0.1}
-                        onValueChange={handleSeek}
-                        disabled={!audioRef.current}
-                        className="flex-1"
-                      />
-                      <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
-                        {formatTime(duration)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Error Display - Positioned Before Render Button */}
-                {job.error_details && (
-                  <Alert variant="destructive" className="border-2 animate-in fade-in slide-in-from-top-2">
-                    <AlertCircle className="h-5 w-5" />
-                    <AlertTitle className="text-base font-semibold">Video Rendering Failed</AlertTitle>
-                    <AlertDescription className="space-y-3 mt-2">
-                      <p className="text-sm leading-relaxed">{job.error_details.message}</p>
-                      
-                      {job.error_details.step && (
-                        <p className="text-xs text-muted-foreground">
-                          Failed during: <span className="font-medium">{job.error_details.step}</span>
-                        </p>
-                      )}
-                      
-                      {job.error_details.timestamp && (
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(job.error_details.timestamp).toLocaleString()}
-                        </p>
-                      )}
-
-                      <div className="flex gap-2 mt-3">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => dismissError.mutate(job.id)}
-                          disabled={isDismissingError}
-                        >
-                          {isDismissingError ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            'Dismiss'
-                          )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => approveVoiceover.mutate(job.id)}
-                          disabled={isApprovingVoiceover}
-                        >
-                          {isApprovingVoiceover ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Retrying...
-                            </>
-                          ) : (
-                            'Try Again'
-                          )}
-                        </Button>
-                      </div>
-
-                      <p className="text-xs text-muted-foreground mt-2">
-                        💡 If the issue persists, try editing the script or selecting a different background.
-                      </p>
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="flex gap-2 pt-2">
-                  <Button 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={handleApproveVoiceover}
-                    disabled={isApprovingVoiceover || isCancelling}
-                  >
-                    {isApprovingVoiceover ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Starting...
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="w-4 h-4 mr-2" />
-                        Render Video
-                      </>
-                    )}
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="destructive"
-                    onClick={handleCancel}
-                    disabled={isApprovingVoiceover || isCancelling}
-                  >
-                    {isCancelling ? (
-                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                    ) : (
-                      <XCircle className="w-4 h-4" />
-                    )}
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Processing States - Expanded Progress View */}
-        {['generating_voice', 'fetching_video', 'assembling'].includes(job.status) && (
-          <div className="space-y-4 pt-3 border-t">
-            {/* Progress Timeline */}
-            <div className="space-y-3">
-              <StepIndicator completed={true} label="Script Generated" />
-              <StepIndicator 
-                active={job.status === 'generating_voice'} 
-                completed={['fetching_video', 'assembling'].includes(job.status)}
-                label="Voiceover Generation" 
-              />
-              <StepIndicator 
-                active={job.status === 'fetching_video'} 
-                completed={job.status === 'assembling'}
-                label="Finding Background Media" 
-              />
-              <StepIndicator 
-                active={job.status === 'assembling'} 
-                label="Assembling Final Video" 
-              />
-            </div>
-
-            {/* Progress Bar */}
-            <GenerationProgress
-              startTime={new Date(job.updated_at).getTime()}
-              isComplete={false}
-              estimatedTimeSeconds={getEstimatedTime(job.status)}
-            />
-
-            {/* Current Stage Description */}
-            <Alert>
-              <AlertDescription className="text-sm">
-                {getStageDescription(job.status)}
-              </AlertDescription>
-            </Alert>
-
-            {/* Cancel Button */}
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={handleCancel}
-              disabled={isCancelling}
-              className="w-full"
-            >
-              {isCancelling ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Cancelling...
-                </>
-              ) : (
-                <>
-                  <XCircle className="w-4 w-4 mr-2" />
-                  Cancel Generation
-                </>
-              )}
-            </Button>
-          </div>
-        )}
-
-        {/* Completed Video */}
-        {job.status === 'completed' && job.final_video_url && (
-          <div className="rounded-lg border-2 border-green-500 bg-green-500/5 p-4 space-y-3">
-            <div className="flex items-center gap-2 mb-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <span className="font-bold text-green-500">Video Completed!</span>
-            </div>
-            
-            {/* Inline Video Player */}
-            <div className="rounded-lg overflow-hidden bg-black">
-              {isLoadingVideoUrl ? (
-                <div className="flex items-center justify-center bg-muted h-48">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : videoUrlError || videoError || !videoSignedUrl ? (
-                <div className="flex flex-col items-center justify-center bg-muted/50 h-48 p-4 text-center">
-                  <AlertCircle className="h-12 w-12 text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Video Preview Unavailable
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDownload}
-                    disabled={!videoSignedUrl}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Video
-                  </Button>
-                </div>
-              ) : (
-                <video
-                  src={videoSignedUrl}
-                  controls
-                  controlsList="nodownload"
-                  className="w-full"
-                  playsInline
-                  onError={(e) => {
-                    componentLogger.error('Video playback failed', new Error('Video playback error'), {
-                      operation: 'videoPlayback',
-                      videoUrl: videoSignedUrl,
-                      eventType: e.type
-                    });
-                    setVideoError(true);
-                  }}
-                  onLoadedData={() => {
-                    componentLogger.debug('Video loaded successfully', {
-                      operation: 'videoPlayback',
-                      videoUrl: videoSignedUrl
-                    });
-                    setVideoError(false);
-                  }}
-                >
-                  Your browser does not support the video tag.
-                </video>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="flex-1 text-xs sm:text-sm"
-                  onClick={handleDownload}
-                >
-                  <Download className="h-4 w-4 mr-1 sm:mr-2" />
-                  Download
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 text-xs sm:text-sm"
-                  onClick={() => onPreview?.(job)}
-                >
-                  <Play className="h-4 w-4 mr-1 sm:mr-2" />
-                  Full View
-                </Button>
-              </div>
-              
-              {/* Generate Caption Button */}
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleGenerateCaption}
-                disabled={isGeneratingCaption || !job.script}
-                className="w-full text-xs sm:text-sm"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">
-                  {isGeneratingCaption ? 'Generating...' : 'Generate Caption & Hashtags (0.1 credits)'}
-                </span>
-                <span className="sm:hidden">
-                  {isGeneratingCaption ? 'Generating...' : 'Caption & Tags (0.1)'}
-                </span>
-              </Button>
-
-              {/* Caption Generation Confirmation Dialog */}
-              <AlertDialog open={showCaptionConfirm} onOpenChange={setShowCaptionConfirm}>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Generate Caption & Hashtags?</AlertDialogTitle>
-                    <AlertDialogDescription className="space-y-2">
-                      <p>This will cost <strong>0.1 credits</strong>.</p>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Coins className="w-4 h-4" />
-                        <span>Your current balance: <strong>{availableCredits.toFixed(2)} credits</strong></span>
-                      </div>
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={confirmGenerateCaption}>
-                      Generate (0.1 credits)
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-
-            {/* Display AI Caption if available */}
-            {job.ai_caption && (
-              <div className="rounded-lg border p-3 bg-muted/30 space-y-2">
-                <h4 className="font-bold text-sm flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  Caption:
-                </h4>
-                <p className="text-sm text-foreground/80 whitespace-pre-wrap">
-                  {job.ai_caption}
-                </p>
-              </div>
-            )}
-
-            {/* Display AI Hashtags if available */}
-            {job.ai_hashtags && job.ai_hashtags.length > 0 && (
-              <div className="rounded-lg border p-3 bg-muted/30 space-y-2">
-                <h4 className="font-bold text-sm flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  Hashtags ({job.ai_hashtags.length}):
-                </h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {job.ai_hashtags.map((tag, idx) => (
-                    <Badge key={idx} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {job.status === 'failed' && (
-          <div className="rounded-md border border-destructive/50 bg-destructive/10 p-2 md:p-3">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-              <div className="text-xs md:text-sm">
-                <p className="font-medium text-destructive">Generation Failed</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {job.error_message || 'An unknown error occurred'}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {isStuckAssembling && (
-          <div className="pt-2 border-t">
-            <Alert className="bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900">
-              <AlertCircle className="h-4 w-4 text-orange-600" />
-              <AlertTitle className="text-sm font-semibold text-orange-700 dark:text-orange-400">
-                Video Assembly Taking Longer Than Expected
-              </AlertTitle>
-              <AlertDescription className="text-xs text-orange-600 dark:text-orange-400 mt-1">
-                This job has been assembling for over 5 minutes. Try force syncing to check status.
-              </AlertDescription>
-              <Button
-                size="sm"
-                variant="outline"
-                className="mt-2 h-7 text-xs border-orange-300 dark:border-orange-800"
-                onClick={() => recoverJob.mutate(job.id)}
-                disabled={isRecoveringJob}
-              >
-                {isRecoveringJob ? (
-                  <>
-                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                    Syncing...
-                  </>
-                ) : (
-                  'Force Sync'
-                )}
-              </Button>
-            </Alert>
-          </div>
-        )}
-
-        {isNearTimeout && timeoutCountdown !== null && timeoutCountdown > 0 && (
-          <div className="pt-2 border-t">
-            <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
-              <Clock className="h-4 w-4 text-amber-600" />
-              <AlertTitle className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                Approaching Timeout
-              </AlertTitle>
-              <AlertDescription className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                This generation is taking longer than expected. It will automatically move to My Creations in {timeoutCountdown} seconds.
-              </AlertDescription>
-            </Alert>
-          </div>
-        )}
-
-        {isProcessing && !['generating_voice', 'fetching_video', 'assembling'].includes(job.status) && !isStuckAssembling && !isNearTimeout && (
-          <div className="text-xs text-muted-foreground italic">
-            ⏳ Processing... This usually takes 3-5 minutes
-          </div>
-        )}
+        <VideoJobActions
+          job={job}
+          isStuckAssembling={isStuckAssembling}
+          isNearTimeout={isNearTimeout}
+          timeoutCountdown={timeoutCountdown}
+          onRecoverJob={() => recoverJob.mutate(job.id)}
+          isRecoveringJob={isRecoveringJob}
+        />
       </CardContent>
     </Card>
   );

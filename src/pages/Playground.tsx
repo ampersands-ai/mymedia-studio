@@ -11,10 +11,12 @@ import { ImageIcon, Upload, Coins, LogOut, Sparkles, Download, History, Play } f
 
 import { SessionWarning } from "@/components/SessionWarning";
 import { logger } from "@/lib/logger";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 const Playground = () => {
   const navigate = useNavigate();
   const { user, session, loading } = useAuth();
+  const { execute } = useErrorHandler();
   const [tokensRemaining, setTokensRemaining] = useState(0);
   const [prompt, setPrompt] = useState("");
   const [contentType, setContentType] = useState<"image" | "video" | "music" | "text">("image");
@@ -143,15 +145,24 @@ const Playground = () => {
       toast.error("Please enter a prompt");
       return;
     }
-    
+
     setIsGenerating(true);
     try {
-      // Simulate generation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setGeneratedOutput("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=600&fit=crop");
-      toast.success("Image generated successfully!");
-    } catch {
-      toast.error("Generation failed");
+      await execute(
+        async () => {
+          // Simulate generation
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          setGeneratedOutput("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=600&fit=crop");
+        },
+        {
+          successMessage: "Image generated successfully!",
+          context: {
+            component: 'Playground',
+            operation: 'handleGenerate',
+            contentType,
+          }
+        }
+      );
     } finally {
       setIsGenerating(false);
     }
@@ -162,16 +173,25 @@ const Playground = () => {
       toast.error("Please enter a prompt first");
       return;
     }
-    
+
     setIsEnhancing(true);
     try {
-      // Simulate AI enhancement
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      const enhanced = `${prompt}. Ultra high quality, professional lighting, cinematic composition, 8K resolution, highly detailed`;
-      setPrompt(enhanced);
-      toast.success("Prompt enhanced!");
-    } catch {
-      toast.error("Failed to enhance prompt");
+      await execute(
+        async () => {
+          // Simulate AI enhancement
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          const enhanced = `${prompt}. Ultra high quality, professional lighting, cinematic composition, 8K resolution, highly detailed`;
+          setPrompt(enhanced);
+        },
+        {
+          successMessage: "Prompt enhanced!",
+          context: {
+            component: 'Playground',
+            operation: 'handleEnhancePrompt',
+            promptLength: prompt.length,
+          }
+        }
+      );
     } finally {
       setIsEnhancing(false);
     }

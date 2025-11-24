@@ -43,8 +43,8 @@ export class GenerationErrorBoundary extends Component<Props, State> {
     } as any);
 
     // Send to PostHog if available
-    if (typeof window !== 'undefined' && (window as any).posthog) {
-      (window as any).posthog.capture('generation_error_boundary', {
+    if (typeof window !== 'undefined' && window.posthog) {
+      window.posthog.capture('generation_error_boundary', {
         error: error.message,
         componentStack: errorInfo.componentStack,
       });

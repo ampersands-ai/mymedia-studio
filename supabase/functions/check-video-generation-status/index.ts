@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
+import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 
 
 
@@ -97,7 +98,7 @@ Deno.serve(async (req) => {
     }
 
     const kieResponse = await fetch(
-      `https://api.kie.ai/api/v1/mp4/record-info?taskId=${kieTaskId}`,
+      `${API_ENDPOINTS.KIE_AI.BASE}${API_ENDPOINTS.KIE_AI.MP4_RECORD_INFO}?taskId=${kieTaskId}`,
       {
         method: 'GET',
         headers: {

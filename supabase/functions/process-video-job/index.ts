@@ -3,6 +3,7 @@ import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { VIDEO_JOB_STATUS } from "../_shared/constants.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
+import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 
 // Type definitions
 interface SanitizedData {
@@ -278,7 +279,7 @@ Script:`
     }]
   };
 
-  const endpoint = 'https://api.anthropic.com/v1/messages';
+  const endpoint = `${API_ENDPOINTS.ANTHROPIC.fullUrl}/messages`;
   const requestSentAt = new Date();
 
   const response = await fetch(endpoint, {
@@ -371,7 +372,7 @@ async function _getBackgroundVideo(
     logger.debug('Using style-based search', { userId, metadata: { jobId: videoJobId, searchQuery, style } });
   }
   const pixabayApiKey = Deno.env.get('PIXABAY_API_KEY');
-  const endpoint = `https://pixabay.com/api/videos/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&per_page=20`;
+  const endpoint = `${API_ENDPOINTS.PIXABAY.apiUrl}/videos/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&per_page=20`;
   const requestSentAt = new Date();
 
   logger.info('Searching Pixabay', { userId, metadata: { jobId: videoJobId, searchQuery } });
@@ -514,7 +515,7 @@ async function _assembleVideo(
     }
   };
 
-  const endpoint = 'https://api.shotstack.io/v1/render';
+  const endpoint = API_ENDPOINTS.SHOTSTACK.renderUrl;
   const requestSentAt = new Date();
 
   logger.info('Submitting render to Shotstack', { 
@@ -604,7 +605,7 @@ async function _pollRenderStatus(supabase: SupabaseClient, logger: EdgeLogger, j
     await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
     attempts++;
 
-    const endpoint = `https://api.shotstack.io/v1/render/${renderId}`;
+    const endpoint = API_ENDPOINTS.SHOTSTACK.getRenderStatusUrl(renderId);
     const requestSentAt = new Date();
 
     logger.debug('Polling render status', { 

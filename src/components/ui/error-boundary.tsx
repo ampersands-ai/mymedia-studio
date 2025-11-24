@@ -31,8 +31,8 @@ export class ErrorBoundary extends Component<Props, State> {
     });
     
     // Send to error tracking service
-    if (typeof window !== 'undefined' && (window as any).posthog) {
-      (window as any).posthog.capture('error', {
+    if (typeof window !== 'undefined' && window.posthog) {
+      window.posthog.capture('error', {
         error: error.message,
         stack: error.stack,
         componentStack: errorInfo.componentStack

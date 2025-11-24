@@ -10,6 +10,7 @@ import { Loader2, Video, TrendingUp, Clock, AlertCircle } from 'lucide-react';
 import { VideoJob } from '@/types/video';
 import { format } from 'date-fns';
 import { VIDEO_JOB_STATUS } from '@/constants/generation-status';
+import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 
 export default function VideoJobs() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -31,7 +32,17 @@ export default function VideoJobs() {
       if (error) throw error;
       return data as VideoJob[];
     },
-    refetchInterval: 10000, // Refetch every 10s
+    // REMOVED: refetchInterval: 10000 (polling every 10s)
+    // REPLACED WITH: Realtime subscription below (instant updates)
+    staleTime: 60000, // Data stays fresh for 60s (Realtime keeps it updated)
+  });
+
+  // Subscribe to real-time updates for video jobs
+  // Replaces 10-second polling with instant push notifications
+  useRealtimeSubscription({
+    table: 'video_jobs',
+    queryKey: ['admin-video-jobs', statusFilter],
+    event: '*', // Listen for INSERT, UPDATE, DELETE
   });
 
   const filteredJobs = jobs?.filter(job =>

@@ -5,6 +5,17 @@
 
 import { cinematicPortraitPrompts } from './cinematicPortraitPrompts';
 
+/**
+ * Calculate current day of year (1-365/366)
+ * More efficient than redundant Date constructors
+ */
+function getDayOfYear(): number {
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 0);
+  const diff = now.getTime() - startOfYear.getTime();
+  return Math.floor(diff / 86400000);
+}
+
 // Image Generation Prompts (250+ curated cinematic portrait prompts)
 export const imagePrompts = cinematicPortraitPrompts;
 
@@ -97,15 +108,13 @@ export const workflowPrompts: Record<string, string[]> = {
  * Get random prompt for workflow templates based on category
  */
 export function getWorkflowSurpriseMePrompt(category: string): string {
-  const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
-  );
+  const dayOfYear = getDayOfYear();
   const randomOffset = Math.floor(Math.random() * 30);
-  
+
   // Get prompts for this category, fallback to image prompts
   const prompts = workflowPrompts[category] || imagePrompts;
   const index = (dayOfYear * 7 + randomOffset) % prompts.length;
-  
+
   return prompts[index];
 }
 
@@ -113,9 +122,7 @@ export function getWorkflowSurpriseMePrompt(category: string): string {
  * Get random prompt based on creation type
  */
 export function getSurpriseMePrompt(creationType: 'image_editing' | 'prompt_to_image' | 'prompt_to_video' | 'image_to_video' | 'prompt_to_audio'): string {
-  const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
-  );
+  const dayOfYear = getDayOfYear();
   const randomOffset = Math.floor(Math.random() * 30);
   
   let prompts: string[];

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,11 +10,23 @@ import type { BlogPost as BlogPostType } from "@/types/blog";
 import { Share2, Clock, Eye, Calendar, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
+import DOMPurify from "dompurify";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
+  const { execute } = useErrorHandler();
   const [post, setPost] = useState<BlogPostType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Sanitize blog content to prevent XSS attacks
+  const sanitizedContent = useMemo(() => {
+    if (!post?.content) return '';
+    return DOMPurify.sanitize(post.content, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'code', 'pre'],
+      ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'id']
+    });
+  }, [post?.content]);
 
   useEffect(() => {
     if (slug) {
@@ -24,23 +36,33 @@ export default function BlogPost() {
 
   const fetchPost = async () => {
     try {
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('slug', slug)
-        .eq('status', 'published')
-        .single();
+      await execute(
+        async () => {
+          const { data, error } = await supabase
+            .from('blog_posts')
+            .select('*')
+            .eq('slug', slug)
+            .eq('status', 'published')
+            .single();
 
-      if (error) throw error;
-      
-      setPost(data as BlogPostType);
+          if (error) throw error;
 
-      // Increment view count
-      if (data) {
-        await supabase.rpc('increment_blog_view_count', { post_id: data.id });
-      }
-    } catch (error) {
-      logger.error('Error fetching blog post', error);
+          setPost(data as BlogPostType);
+
+          // Increment view count
+          if (data) {
+            await supabase.rpc('increment_blog_view_count', { post_id: data.id });
+          }
+        },
+        {
+          showSuccessToast: false,
+          context: {
+            component: 'BlogPost',
+            operation: 'fetchPost',
+            slug,
+          }
+        }
+      );
     } finally {
       setIsLoading(false);
     }
@@ -49,23 +71,31 @@ export default function BlogPost() {
   const handleShare = async () => {
     if (!post) return;
 
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: post.title,
-          text: post.excerpt || '',
-          url: window.location.href,
-        });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast.success('Link copied to clipboard!');
-      }
+    await execute(
+      async () => {
+        if (navigator.share) {
+          await navigator.share({
+            title: post.title,
+            text: post.excerpt || '',
+            url: window.location.href,
+          });
+        } else {
+          await navigator.clipboard.writeText(window.location.href);
+          toast.success('Link copied to clipboard!');
+        }
 
-      // Increment share count
-      await supabase.rpc('increment_blog_share_count', { post_id: post.id });
-    } catch (error) {
-      logger.error('Error sharing', error);
-    }
+        // Increment share count
+        await supabase.rpc('increment_blog_share_count', { post_id: post.id });
+      },
+      {
+        showSuccessToast: false, // We show custom toast for clipboard
+        context: {
+          component: 'BlogPost',
+          operation: 'handleShare',
+          postId: post.id,
+        }
+      }
+    );
   };
 
   if (isLoading) {
@@ -194,10 +224,10 @@ export default function BlogPost() {
             </div>
           </header>
 
-          {/* Content */}
+          {/* Content - Sanitized to prevent XSS */}
           <div
             className="prose prose-lg max-w-none prose-headings:font-bold prose-h2:text-3xl prose-h3:text-2xl prose-p:text-foreground prose-strong:text-foreground prose-a:text-primary hover:prose-a:underline prose-img:rounded-lg prose-img:shadow-lg"
-            dangerouslySetInnerHTML={{ __html: post.content }}
+            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           />
 
           {/* Share Button at Bottom */}

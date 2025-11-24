@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { getAllModels, type ModelModule } from "@/lib/models/registry";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { 
   generateNewModelScript, 
   generateLockToggleScript, 
@@ -76,6 +77,7 @@ function moduleToModel(module: ModelModule): AIModel {
 }
 
 export default function AIModelsManager() {
+  const { execute } = useErrorHandler();
   const [models, setModels] = useState<AIModel[]>([]);
   const [lockStatuses, setLockStatuses] = useState<Record<string, boolean>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -99,27 +101,38 @@ export default function AIModelsManager() {
   }, []);
 
   const fetchModels = () => {
-    try {
-      const modules = getAllModels();
-      const modelConfigs = modules.map(moduleToModel);
-      setModels(modelConfigs);
-      logger.debug(`Loaded ${modelConfigs.length} models from registry`);
-    } catch (error) {
-      logger.error("Failed to load models from registry", error as Error, {
-        component: 'AIModelsManager',
-        operation: 'fetchModels'
-      });
-      toast.error("Failed to load AI models from registry");
-    }
+    execute(
+      () => {
+        const modules = getAllModels();
+        const modelConfigs = modules.map(moduleToModel);
+        setModels(modelConfigs);
+        logger.debug(`Loaded ${modelConfigs.length} models from registry`);
+      },
+      {
+        showSuccessToast: false,
+        errorMessage: "Failed to load AI models from registry",
+        context: {
+          component: 'AIModelsManager',
+          operation: 'fetchModels'
+        }
+      }
+    );
   };
 
   const fetchLockStatuses = () => {
-    try {
-      const statuses = getLockStatuses();
-      setLockStatuses(statuses);
-    } catch (error) {
-      logger.error("Failed to fetch lock statuses", error as Error);
-    }
+    execute(
+      () => {
+        const statuses = getLockStatuses();
+        setLockStatuses(statuses);
+      },
+      {
+        showSuccessToast: false,
+        context: {
+          component: 'AIModelsManager',
+          operation: 'fetchLockStatuses'
+        }
+      }
+    );
   };
 
   const handleRefresh = () => {

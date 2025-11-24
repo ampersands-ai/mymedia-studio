@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
+import { API_ENDPOINTS } from "@/lib/config/api-endpoints";
 
 export const MODEL_CONFIG = {
   modelId: "runware:110@1",
@@ -15,7 +16,7 @@ export const MODEL_CONFIG = {
   baseCreditCost: 0.06,
   estimatedTimeSeconds: 15,
   costMultipliers: {},
-  apiEndpoint: "https://api.runware.ai/v1",
+  apiEndpoint: API_ENDPOINTS.RUNWARE.fullUrl,
   payloadStructure: "flat",
   maxImages: 1,
   defaultOutputs: 1,

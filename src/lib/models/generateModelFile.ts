@@ -116,13 +116,13 @@ export const MODEL_CONFIG = {
 
 export const SCHEMA = ${JSON.stringify({
   ...model.input_schema,
-  usePromptRenderer: (model.input_schema as any).usePromptRenderer ?? true,
-  useImageRenderer: (model.input_schema as any).useImageRenderer ?? true,
-  useVoiceRenderer: (model.input_schema as any).useVoiceRenderer ?? false,
-  useDurationRenderer: (model.input_schema as any).useDurationRenderer ?? false,
-  useIncrementRenderer: (model.input_schema as any).useIncrementRenderer ?? true,
-  useOutputFormatRenderer: (model.input_schema as any).useOutputFormatRenderer ?? false,
-  imageInputField: (model.input_schema as any).imageInputField ?? null,
+  usePromptRenderer: model.input_schema.usePromptRenderer ?? true,
+  useImageRenderer: model.input_schema.useImageRenderer ?? true,
+  useVoiceRenderer: model.input_schema.useVoiceRenderer ?? false,
+  useDurationRenderer: model.input_schema.useDurationRenderer ?? false,
+  useIncrementRenderer: model.input_schema.useIncrementRenderer ?? true,
+  useOutputFormatRenderer: model.input_schema.useOutputFormatRenderer ?? false,
+  imageInputField: model.input_schema.imageInputField ?? null,
 }, null, 2)} as const;
 
 // ============================================================================
@@ -235,7 +235,7 @@ export function calculateCost(inputs: Record<string, any>): number {
  */
 export function validate(inputs: Record<string, any>): { valid: boolean; error?: string } {
   // Check required fields from schema
-  const requiredFields = (SCHEMA as any).required || [];
+  const requiredFields = SCHEMA.required || [];
   
   for (const field of requiredFields) {
     if (!inputs[field] || inputs[field] === "") {

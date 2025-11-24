@@ -11,7 +11,7 @@ export function useAdminTemplates() {
   const { data: templates, isLoading } = useQuery({
     queryKey: ["admin-templates"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("template_landing_pages")
         .select("*")
         .order("created_at", { ascending: false });
@@ -23,7 +23,7 @@ export function useAdminTemplates() {
 
   const createTemplate = useMutation({
     mutationFn: async (template: Partial<TemplateLandingPage>) => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("template_landing_pages")
         .insert([template])
         .select()
@@ -43,7 +43,7 @@ export function useAdminTemplates() {
 
   const updateTemplate = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<TemplateLandingPage> }) => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("template_landing_pages")
         .update(updates)
         .eq("id", id)
@@ -64,7 +64,7 @@ export function useAdminTemplates() {
 
   const deleteTemplate = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("template_landing_pages")
         .delete()
         .eq("id", id);
@@ -82,7 +82,7 @@ export function useAdminTemplates() {
 
   const togglePublish = useMutation({
     mutationFn: async ({ id, isPublished }: { id: string; isPublished: boolean }) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("template_landing_pages")
         .update({ 
           is_published: isPublished,
@@ -116,7 +116,7 @@ export function useAdminCategories() {
   const { data: categories, isLoading } = useQuery({
     queryKey: ["admin-categories"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("template_categories")
         .select("*")
         .order("sort_order");
@@ -128,7 +128,7 @@ export function useAdminCategories() {
 
   const createCategory = useMutation({
     mutationFn: async (category: Partial<TemplateCategory>) => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("template_categories")
         .insert([category])
         .select()
@@ -149,7 +149,7 @@ export function useAdminCategories() {
 
   const updateCategory = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<TemplateCategory> }) => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("template_categories")
         .update(updates)
         .eq("id", id)
@@ -171,7 +171,7 @@ export function useAdminCategories() {
 
   const deleteCategory = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("template_categories")
         .delete()
         .eq("id", id);

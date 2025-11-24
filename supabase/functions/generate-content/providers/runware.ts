@@ -1,6 +1,7 @@
 import { ProviderRequest, ProviderResponse } from "./index.ts";
 import { GENERATION_STATUS } from "../../_shared/constants.ts";
 import { EdgeLogger } from "../../_shared/edge-logger.ts";
+import { API_ENDPOINTS } from "../../_shared/api-endpoints.ts";
 
 function uint8ArrayToBase64(bytes: Uint8Array): string {
   let binary = '';
@@ -138,7 +139,7 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
     throw new Error('RUNWARE_API_KEY not configured');
   }
 
-  const apiUrl = 'https://api.runware.ai/v1';
+  const apiUrl = API_ENDPOINTS.RUNWARE.fullUrl;
 
   // Generate unique task UUID
   const taskUUID = crypto.randomUUID();

@@ -144,12 +144,25 @@ export function generateSchema(parameters: Parameter[], existingSchema?: JsonSch
     if (existingSchema.imageInputField) {
       newSchema.imageInputField = existingSchema.imageInputField;
     }
-    // Preserve any other custom root-level properties
-    Object.keys(existingSchema).forEach(key => {
-      if (!['type', 'required', 'properties', 'x-order'].includes(key)) {
-        (newSchema as any)[key] = (existingSchema as any)[key];
-      }
-    });
+    // Preserve renderer flags
+    if (existingSchema.usePromptRenderer !== undefined) {
+      newSchema.usePromptRenderer = existingSchema.usePromptRenderer;
+    }
+    if (existingSchema.useImageRenderer !== undefined) {
+      newSchema.useImageRenderer = existingSchema.useImageRenderer;
+    }
+    if (existingSchema.useVoiceRenderer !== undefined) {
+      newSchema.useVoiceRenderer = existingSchema.useVoiceRenderer;
+    }
+    if (existingSchema.useDurationRenderer !== undefined) {
+      newSchema.useDurationRenderer = existingSchema.useDurationRenderer;
+    }
+    if (existingSchema.useIncrementRenderer !== undefined) {
+      newSchema.useIncrementRenderer = existingSchema.useIncrementRenderer;
+    }
+    if (existingSchema.useOutputFormatRenderer !== undefined) {
+      newSchema.useOutputFormatRenderer = existingSchema.useOutputFormatRenderer;
+    }
   }
 
   return newSchema;

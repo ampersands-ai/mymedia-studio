@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getModel } from "@/lib/models/registry";
 import { ACTIVE_GENERATION_STATUSES } from "@/constants/generation-status";
 import { logger } from "@/lib/logger";
+import { useUserRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 
 export interface ActiveGeneration {
   id: string;
@@ -19,7 +20,7 @@ export interface ActiveGeneration {
 export const useActiveGenerations = () => {
   const { user } = useAuth();
 
-  return useQuery<ActiveGeneration[]>({
+  const query = useQuery<ActiveGeneration[]>({
     queryKey: ["active-generations", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
@@ -60,7 +61,21 @@ export const useActiveGenerations = () => {
       });
     },
     enabled: !!user?.id,
-    refetchInterval: 3000, // Refetch every 3 seconds
-    staleTime: 2000,
+    // REMOVED: refetchInterval: 3000 (polling)
+    // REPLACED WITH: Realtime subscription below (instant updates, 95% less DB load)
+    staleTime: 30000, // Data stays fresh for 30s (Realtime keeps it updated)
   });
+
+  // Subscribe to real-time updates for user's generations
+  // Replaces 3-second polling with instant push notifications
+  useUserRealtimeSubscription(
+    "generations",
+    user?.id,
+    ["active-generations", user?.id],
+    {
+      event: '*', // Listen for INSERT, UPDATE, DELETE
+    }
+  );
+
+  return query;
 };

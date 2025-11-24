@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { logger } from "@/lib/logger";
 import { toast } from "sonner";
 import { Shield, Coins, Crown } from "lucide-react";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 interface UserWithSubscription {
   id: string;
@@ -30,6 +31,7 @@ interface UserWithSubscription {
 }
 
 export default function UsersManager() {
+  const { execute } = useErrorHandler();
   const [users, setUsers] = useState<UserWithSubscription[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserWithSubscription | null>(null);
   const [tokenAmount, setTokenAmount] = useState("");
@@ -40,48 +42,52 @@ export default function UsersManager() {
   }, []);
 
   const fetchUsers = async () => {
-    try {
-      // Fetch profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, email, full_name, created_at")
-        .order("created_at", { ascending: false });
+    await execute(
+      async () => {
+        // Fetch profiles
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, email, full_name, created_at")
+          .order("created_at", { ascending: false });
 
-      if (profilesError) throw profilesError;
+        if (profilesError) throw profilesError;
 
-      // Fetch subscriptions
-      const { data: subscriptions, error: subsError } = await supabase
-        .from("user_subscriptions")
-        .select("user_id, tokens_remaining, plan");
+        // Fetch subscriptions
+        const { data: subscriptions, error: subsError } = await supabase
+          .from("user_subscriptions")
+          .select("user_id, tokens_remaining, plan");
 
-      if (subsError) throw subsError;
+        if (subsError) throw subsError;
 
-      // Fetch roles
-      const { data: roles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id, role");
+        // Fetch roles
+        const { data: roles, error: rolesError } = await supabase
+          .from("user_roles")
+          .select("user_id, role");
 
-      if (rolesError) throw rolesError;
+        if (rolesError) throw rolesError;
 
-      // Combine data
-      const usersWithData = profiles?.map(profile => {
-        const userSub = subscriptions?.find(s => s.user_id === profile.id);
-        const userRoles = roles?.filter(r => r.user_id === profile.id);
-        return {
-          ...profile,
-          subscription: userSub,
-          roles: userRoles,
-        };
-      });
+        // Combine data
+        const usersWithData = profiles?.map(profile => {
+          const userSub = subscriptions?.find(s => s.user_id === profile.id);
+          const userRoles = roles?.filter(r => r.user_id === profile.id);
+          return {
+            ...profile,
+            subscription: userSub,
+            roles: userRoles,
+          };
+        });
 
-      setUsers(usersWithData || []);
-    } catch (error) {
-      logger.error('Error fetching users', error as Error, {
-        component: 'UsersManager',
-        operation: 'fetchUsers'
-      });
-      toast.error("Failed to load users");
-    }
+        setUsers(usersWithData || []);
+      },
+      {
+        showSuccessToast: false,
+        errorMessage: "Failed to load users",
+        context: {
+          component: 'UsersManager',
+          operation: 'fetchUsers'
+        }
+      }
+    );
   };
 
   const handleAddTokens = async () => {
@@ -93,57 +99,63 @@ export default function UsersManager() {
       return;
     }
 
-    try {
-      // Use edge function for secure token management with audit trail
-      const { error } = await supabase.functions.invoke('manage-user-tokens', {
-        body: {
-          user_id: selectedUser.id,
-          amount: amount,
-          action: 'add'
+    await execute(
+      async () => {
+        // Use edge function for secure token management with audit trail
+        const { error } = await supabase.functions.invoke('manage-user-tokens', {
+          body: {
+            user_id: selectedUser.id,
+            amount: amount,
+            action: 'add'
+          }
+        });
+
+        if (error) throw error;
+
+        setDialogOpen(false);
+        setTokenAmount("");
+        fetchUsers();
+      },
+      {
+        successMessage: `Added ${amount} credits to ${selectedUser.email}`,
+        errorMessage: "Failed to add tokens",
+        context: {
+          component: 'UsersManager',
+          operation: 'handleAddTokens',
+          userId: selectedUser.id,
+          amount
         }
-      });
-
-      if (error) throw error;
-
-      toast.success(`Added ${amount} credits to ${selectedUser.email}`);
-      setDialogOpen(false);
-      setTokenAmount("");
-      fetchUsers();
-    } catch (error) {
-      logger.error('Error adding tokens', error as Error, {
-        component: 'UsersManager',
-        operation: 'handleAddTokens',
-        userId: selectedUser.id,
-        amount: tokenAmount
-      });
-      toast.error("Failed to add tokens");
-    }
+      }
+    );
   };
 
   const handleToggleAdmin = async (userId: string, currentlyAdmin: boolean) => {
-    try {
-      // Use edge function for secure role management with audit trail
-      const { error } = await supabase.functions.invoke('manage-user-role', {
-        body: {
-          user_id: userId,
-          role: 'admin',
-          action: currentlyAdmin ? 'revoke' : 'grant'
+    await execute(
+      async () => {
+        // Use edge function for secure role management with audit trail
+        const { error } = await supabase.functions.invoke('manage-user-role', {
+          body: {
+            user_id: userId,
+            role: 'admin',
+            action: currentlyAdmin ? 'revoke' : 'grant'
+          }
+        });
+
+        if (error) throw error;
+
+        fetchUsers();
+      },
+      {
+        successMessage: currentlyAdmin ? "Admin role removed" : "Admin role granted",
+        errorMessage: "Failed to update admin role",
+        context: {
+          component: 'UsersManager',
+          operation: 'handleToggleAdmin',
+          userId,
+          currentlyAdmin
         }
-      });
-
-      if (error) throw error;
-
-      toast.success(currentlyAdmin ? "Admin role removed" : "Admin role granted");
-      fetchUsers();
-    } catch (error) {
-      logger.error('Error toggling admin role', error as Error, {
-        component: 'UsersManager',
-        operation: 'handleToggleAdmin',
-        userId,
-        currentlyAdmin
-      });
-      toast.error("Failed to update admin role");
-    }
+      }
+    );
   };
 
   // No loading state - render immediately

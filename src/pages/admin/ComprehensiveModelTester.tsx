@@ -2,32 +2,14 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModels } from "@/hooks/useModels";
 import { useModelSchema } from "@/hooks/useModelSchema";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { ExecutionFlowVisualizer } from "@/components/admin/model-tester/ExecutionFlowVisualizer";
 import { ExecutionControlPanel } from "@/components/admin/model-tester/ExecutionControlPanel";
-import { LogStreamViewer } from "@/components/admin/model-tester/LogStreamViewer";
-import { CodeViewer } from "@/components/admin/model-tester/CodeViewer";
-import { TestRunHistoryBrowser } from "@/components/admin/model-tester/TestRunHistoryBrowser";
 import { ImportReplayDialog } from "@/components/admin/model-tester/ImportReplayDialog";
-import { PerformanceMetricsDashboard } from "@/components/admin/model-tester/PerformanceMetricsDashboard";
-import { ComparisonViewer } from "@/components/admin/model-tester/ComparisonViewer";
 import { KeyboardShortcutsDialog } from "@/components/admin/model-tester/KeyboardShortcutsDialog";
-import { useKeyboardShortcuts, formatShortcut } from "@/hooks/useKeyboardShortcuts";
+import { TestConfiguration } from "@/components/admin/model-tester/TestConfiguration";
+import { TestResults } from "@/components/admin/model-tester/TestResults";
+import { TestHistory } from "@/components/admin/model-tester/TestHistory";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import {
   EnhancedExecutionTracker,
   createStepConfig,
@@ -36,21 +18,11 @@ import {
 import { getModel } from "@/lib/models/registry";
 import { supabase } from "@/integrations/supabase/client";
 import { getGenerationType } from "@/lib/models/registry";
-import { reserveCredits } from "@/lib/models/creditDeduction";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
-import {
-  Layers,
-  Play,
-  Download,
-  Upload,
-  History,
-  Bookmark,
-  FileCode2,
-  Terminal,
-} from "lucide-react";
+import { Layers, Upload, History } from "lucide-react";
 import { initializeParameters } from "@/types/model-schema";
-import { loadModelSourceCode, getModelFilePath } from "@/lib/admin/codeAnalysis";
+import { loadModelSourceCode } from "@/lib/admin/codeAnalysis";
 import {
   EXECUTION_CONTEXT,
   STEP_TYPE,
@@ -92,7 +64,7 @@ const ComprehensiveModelTester = () => {
 
   // Get model schema
   const { schema: modelSchema, loading: schemaLoading } = useModelSchema(
-    selectedModel as any || null
+    selectedModel || null
   );
 
   // Initialize parameters when model changes
@@ -708,107 +680,9 @@ const ComprehensiveModelTester = () => {
     enabled: true,
   });
 
-  /**
-   * Render model parameter inputs
-   */
-  const renderParameterInputs = () => {
-    if (!modelSchema || !modelSchema.properties) return null;
-
-    const properties = modelSchema.properties;
-
-    return (
-      <div className="space-y-3">
-        {Object.entries(properties).map(([key, prop]: [string, any]) => {
-          // Skip properties marked as showToUser: false
-          if (prop.showToUser === false) return null;
-
-          const value = modelParameters[key];
-
-          return (
-            <div key={key} className="space-y-1.5">
-              <Label htmlFor={key} className="text-sm">
-                {prop.title || key}
-                {prop.description && (
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    {prop.description}
-                  </span>
-                )}
-              </Label>
-
-              {prop.enum ? (
-                <Select
-                  value={value}
-                  onValueChange={(val) =>
-                    setModelParameters(prev => ({ ...prev, [key]: val }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {prop.enum.map((option: string) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : prop.type === 'number' || prop.type === 'integer' ? (
-                <Input
-                  id={key}
-                  type="number"
-                  value={value ?? prop.default ?? ''}
-                  onChange={(e) =>
-                    setModelParameters(prev => ({
-                      ...prev,
-                      [key]: parseFloat(e.target.value),
-                    }))
-                  }
-                  min={prop.minimum}
-                  max={prop.maximum}
-                />
-              ) : prop.type === 'boolean' ? (
-                <Select
-                  value={String(value ?? prop.default ?? false)}
-                  onValueChange={(val) =>
-                    setModelParameters(prev => ({ ...prev, [key]: val === 'true' }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="true">Yes</SelectItem>
-                    <SelectItem value="false">No</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (prop.type === 'string' && ((prop.maxLength && prop.maxLength > 200) || prop.renderer === 'textarea')) ? (
-                <Textarea
-                  id={key}
-                  value={value ?? prop.default ?? ''}
-                  onChange={(e) =>
-                    setModelParameters(prev => ({ ...prev, [key]: e.target.value }))
-                  }
-                  placeholder={`Enter ${prop.title || key}...`}
-                  rows={4}
-                  disabled={isExecuting}
-                />
-              ) : prop.type === 'string' ? (
-                <Input
-                  id={key}
-                  type="text"
-                  value={value ?? prop.default ?? ''}
-                  onChange={(e) =>
-                    setModelParameters(prev => ({ ...prev, [key]: e.target.value }))
-                  }
-                />
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
+  const handleParameterChange = useCallback((key: string, value: any) => {
+    setModelParameters(prev => ({ ...prev, [key]: value }));
+  }, []);
 
   return (
     <div className="container mx-auto p-6 max-w-[1800px]">
@@ -852,76 +726,22 @@ const ComprehensiveModelTester = () => {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Left Panel: Input & Controls (2 columns) */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Model Selection */}
-          <Card className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Model Selection</h2>
-                <div className="flex items-center gap-2">
-                  <label className="text-xs text-muted-foreground flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={showInactiveModels}
-                      onChange={(e) => setShowInactiveModels(e.target.checked)}
-                      className="rounded"
-                    />
-                    Show inactive
-                  </label>
-                  <Badge variant="secondary">
-                    {filteredModels?.length || 0} models
-                  </Badge>
-                </div>
-              </div>
+          <TestConfiguration
+            filteredModels={filteredModels}
+            selectedModelId={selectedModelId}
+            selectedModel={selectedModel}
+            onModelChange={handleModelChange}
+            modelParameters={modelParameters}
+            onParameterChange={handleParameterChange}
+            modelSchema={modelSchema}
+            schemaLoading={schemaLoading}
+            modelsLoading={modelsLoading}
+            showInactiveModels={showInactiveModels}
+            onToggleInactive={setShowInactiveModels}
+            onExecute={executeWithInstrumentation}
+            isExecuting={isExecuting}
+          />
 
-              <div className="space-y-2">
-                <Label htmlFor="model-select">Select Model</Label>
-                <Select
-                  value={selectedModelId}
-                  onValueChange={handleModelChange}
-                  disabled={modelsLoading}
-                >
-                  <SelectTrigger id="model-select">
-                    <SelectValue placeholder="Choose a model to test..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredModels?.map(model => (
-                      <SelectItem key={model.record_id} value={model.record_id}>
-                        <div className="flex items-center gap-2">
-                          <span>{model.model_name}</span>
-                          {!model.is_active && (
-                            <Badge variant="destructive" className="text-xs">
-                              Inactive
-                            </Badge>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectedModel && (
-                <div className="pt-3 border-t space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Provider:</span>
-                    <span className="font-medium">{selectedModel.provider}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Type:</span>
-                    <span className="font-medium">{selectedModel.content_type}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Cost:</span>
-                    <span className="font-medium">
-                      {selectedModel.base_token_cost} credits
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </Card>
-
-          {/* Execution Controls */}
           {executionFlow && (
             <ExecutionControlPanel
               flow={executionFlow}
@@ -935,190 +755,41 @@ const ComprehensiveModelTester = () => {
               disabled={isExecuting}
             />
           )}
-
-          {/* Input Parameters */}
-          {selectedModel && (
-            <Card className="p-6">
-              <div className="space-y-4">
-                <h2 className="text-lg font-semibold flex items-center gap-2">
-                  <FileCode2 className="h-5 w-5" />
-                  Input Parameters
-                </h2>
-
-                <div className="space-y-4">
-                  {!schemaLoading && renderParameterInputs()}
-                </div>
-
-                <Button
-                  className="w-full"
-                  size="lg"
-                  onClick={executeWithInstrumentation}
-                  disabled={isExecuting || !selectedModel}
-                >
-                  <Play className="mr-2 h-5 w-5" />
-                  {isExecuting ? "Executing..." : "Execute with Full Tracking"}
-                </Button>
-              </div>
-            </Card>
-          )}
         </div>
 
         {/* Right Panel: Execution Visualization (3 columns) */}
         <div className="lg:col-span-3">
-          <Card className="p-6 min-h-[800px]">
-            {executionFlow ? (
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="flow">
-                    <Layers className="h-4 w-4 mr-2" />
-                    Execution Flow
-                  </TabsTrigger>
-                  <TabsTrigger value="logs">
-                    <Terminal className="h-4 w-4 mr-2" />
-                    Live Logs
-                  </TabsTrigger>
-                  <TabsTrigger value="code">
-                    <FileCode2 className="h-4 w-4 mr-2" />
-                    Source Code
-                  </TabsTrigger>
-                  <TabsTrigger value="performance">
-                    <Download className="h-4 w-4 mr-2" />
-                    Performance
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="flow" className="mt-4">
-                  <ExecutionFlowVisualizer
-                    flow={executionFlow}
-                    onEditStep={(stepId, newInputs) => {
-                      if (tracker) {
-                        tracker.updateStepInputs(stepId, newInputs);
-                        toast.success("Step inputs updated");
-                      }
-                    }}
-                    onRerunFromStep={(stepId) => {
-                      toast.info("Rerun from step coming soon");
-                    }}
-                  />
-                </TabsContent>
-
-                <TabsContent value="logs" className="mt-4">
-                  <LogStreamViewer
-                    logs={executionFlow.logs}
-                    autoScroll={true}
-                    maxHeight="700px"
-                    showFilters={true}
-                  />
-                </TabsContent>
-
-                <TabsContent value="code" className="mt-4">
-                  {selectedModel && (
-                    <CodeViewer
-                      code={executionFlow.steps[0]?.sourceCode || '// Loading source code...'}
-                      language="typescript"
-                      title={`${selectedModel.model_name} Source`}
-                      filePath={getModelFilePath(
-                        selectedModel.content_type || '',
-                        selectedModel.model_name,
-                        selectedModel.is_locked || false
-                      )}
-                      readOnly={true}
-                    />
-                  )}
-                </TabsContent>
-
-                <TabsContent value="performance" className="mt-4">
-                  <PerformanceMetricsDashboard flow={executionFlow} />
-                </TabsContent>
-              </Tabs>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                <Layers className="h-24 w-24 text-muted-foreground/20 mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No Execution Yet</h3>
-                <p className="text-sm text-muted-foreground max-w-md mb-6">
-                  Select a model, configure inputs, and click "Execute with Full Tracking"
-                  to see the complete execution flow with database persistence, real-time
-                  logs, and source code visualization.
-                </p>
-                <div className="grid grid-cols-2 gap-4 text-left text-sm">
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5" />
-                    <div>
-                      <div className="font-medium">Database Persistence</div>
-                      <div className="text-muted-foreground text-xs">
-                        Auto-saved every 2 seconds
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5" />
-                    <div>
-                      <div className="font-medium">Real-Time Logs</div>
-                      <div className="text-muted-foreground text-xs">
-                        Stream from edge functions
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 rounded-full bg-purple-500 mt-1.5" />
-                    <div>
-                      <div className="font-medium">Code Inspection</div>
-                      <div className="text-muted-foreground text-xs">
-                        View actual TypeScript source
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 rounded-full bg-orange-500 mt-1.5" />
-                    <div>
-                      <div className="font-medium">Test Mode</div>
-                      <div className="text-muted-foreground text-xs">
-                        No billing, safe testing
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </Card>
+          <TestResults
+            executionFlow={executionFlow}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            tracker={tracker}
+            selectedModel={selectedModel}
+            onUpdateStepInputs={(stepId, newInputs) => {
+              if (tracker) {
+                tracker.updateStepInputs(stepId, newInputs);
+                toast.success("Step inputs updated");
+              }
+            }}
+            onRerunFromStep={(stepId) => {
+              toast.info("Rerun from step coming soon");
+            }}
+          />
         </div>
       </div>
 
-      {/* Phase 3 Advanced Features: History Browser */}
-      {showHistoryBrowser && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6">
-          <div className="bg-background rounded-lg max-w-6xl w-full max-h-[90vh] overflow-auto">
-            <TestRunHistoryBrowser
-              onLoadRun={handleLoadRun}
-              onCompareRuns={handleCompareRuns}
-              className="border-0"
-            />
-            <div className="p-4 border-t flex justify-end">
-              <Button
-                variant="outline"
-                onClick={() => setShowHistoryBrowser(false)}
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Phase 3 Advanced Features: Comparison Viewer */}
-      {showComparison && comparisonRuns.length > 0 && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6">
-          <div className="bg-background rounded-lg max-w-7xl w-full max-h-[90vh] overflow-auto">
-            <ComparisonViewer
-              runs={comparisonRuns}
-              onClose={() => {
-                setShowComparison(false);
-                setComparisonRuns([]);
-              }}
-            />
-          </div>
-        </div>
-      )}
+      <TestHistory
+        showHistoryBrowser={showHistoryBrowser}
+        showComparison={showComparison}
+        comparisonRuns={comparisonRuns}
+        onCloseHistory={() => setShowHistoryBrowser(false)}
+        onCloseComparison={() => {
+          setShowComparison(false);
+          setComparisonRuns([]);
+        }}
+        onLoadRun={handleLoadRun}
+        onCompareRuns={handleCompareRuns}
+      />
     </div>
   );
 };

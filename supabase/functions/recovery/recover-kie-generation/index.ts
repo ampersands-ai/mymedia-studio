@@ -6,6 +6,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { webhookLogger } from "../../_shared/logger.ts";
+import { API_ENDPOINTS } from "../../_shared/api-endpoints.ts";
 
 // API key mapping logic for KIE AI
 function getKieApiKey(modelId: string, recordId: string): string {
@@ -105,7 +106,7 @@ serve(async (req) => {
     const kieApiKey = getKieApiKey(generation.model_id || '', generation.model_record_id || '');
 
     // Query KIE AI status
-    const kieResponse = await fetch('https://api.kie.ai/api/v1/jobs/queryTask', {
+    const kieResponse = await fetch(API_ENDPOINTS.KIE_AI.queryTaskUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -39,8 +39,8 @@ export class RouteErrorBoundary extends Component<Props, State> {
     });
     
     // Log to PostHog
-    if (typeof window !== 'undefined' && (window as any).posthog) {
-      (window as any).posthog.capture('route_error', {
+    if (typeof window !== 'undefined' && window.posthog) {
+      window.posthog.capture('route_error', {
         route_name: routeName,
         error_message: error.message,
         error_stack: error.stack,

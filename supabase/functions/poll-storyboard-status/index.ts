@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
+import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 
 
 
@@ -103,9 +104,9 @@ serve(async (req) => {
 
       try {
         logger.info('Checking JSON2Video status', { metadata: { renderJobId: storyboard.render_job_id } });
-        
+
         const statusResponse = await fetch(
-          `https://api.json2video.com/v2/movies?project=${storyboard.render_job_id}`,
+          API_ENDPOINTS.JSON2VIDEO.getMovieStatusUrl(storyboard.render_job_id),
           {
             headers: {
               'x-api-key': json2videoApiKey

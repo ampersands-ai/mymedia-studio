@@ -1,6 +1,7 @@
 
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 
 
 
@@ -21,7 +22,7 @@ Deno.serve(async (req) => {
       throw new Error('render_id is required');
     }
 
-    const response = await fetch(`https://api.shotstack.io/v1/render/${render_id}`, {
+    const response = await fetch(`${API_ENDPOINTS.SHOTSTACK.BASE}${API_ENDPOINTS.SHOTSTACK.VERSION}/render/${render_id}`, {
       headers: { 'x-api-key': Deno.env.get('SHOTSTACK_API_KEY') ?? '' }
     });
 

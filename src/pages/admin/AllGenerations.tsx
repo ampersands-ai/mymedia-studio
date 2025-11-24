@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { useImageUrl, useVideoUrl } from "@/hooks/media";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 
 interface Generation {
   id: string;
@@ -143,39 +145,77 @@ export default function AllGenerations() {
   const queryClient = useQueryClient();
   const [selectedGeneration, setSelectedGeneration] = useState<Generation | null>(null);
 
-  const { data: generations, isLoading } = useQuery({
-    queryKey: ['admin-all-generations'],
+  // Pagination state
+  const pagination = usePagination({
+    pageSize: 50,
+    initialPage: 1,
+  });
+
+  const { data: queryResult, isLoading } = useQuery({
+    queryKey: ['admin-all-generations', pagination.page, pagination.pageSize],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Get paginated generations with count
+      const { data, error, count } = await supabase
         .from('generations')
-        .select(`
-          *,
+        .select(
+          `
+          id,
+          user_id,
+          model_id,
+          model_record_id,
+          type,
+          prompt,
+          original_prompt,
+          status,
+          output_url,
+          storage_path,
+          settings,
+          created_at,
+          tokens_used,
+          file_size_bytes,
+          workflow_execution_id,
           profiles:user_id (
             email,
             full_name,
             phone_number
           )
-        `)
+        `,
+          { count: 'exact' }
+        )
         .in('status', ['completed', 'processing', 'pending'])
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(pagination.from, pagination.to);
 
       if (error) throw error;
 
-      // Check which generations are already shared
-      const generationIds = data.map(g => g.id);
+      // Update pagination total count
+      if (count !== null) {
+        pagination.setTotalCount(count);
+      }
+
+      // Check which generations are already shared (only for current page)
+      const generationIds = (data || []).map((g) => g.id);
       const { data: sharedData } = await supabase
         .from('community_creations')
         .select('generation_id')
         .in('generation_id', generationIds);
 
-      const sharedIds = new Set(sharedData?.map(s => s.generation_id) || []);
+      const sharedIds = new Set(sharedData?.map((s) => s.generation_id) || []);
 
-      return data.map(gen => ({
+      const generations = (data || []).map((gen) => ({
         ...gen,
-        is_shared: sharedIds.has(gen.id)
+        is_shared: sharedIds.has(gen.id),
       }));
-    }
+
+      return {
+        generations,
+        totalCount: count || 0,
+      };
+    },
   });
+
+  const generations = queryResult?.generations || [];
+  const totalCount = queryResult?.totalCount || 0;
 
   const shareToCommunity = useMutation({
     mutationFn: async (generation: Generation) => {
@@ -305,7 +345,14 @@ export default function AllGenerations() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Total Generations: {generations?.length || 0}</CardTitle>
+          <CardTitle>
+            Total Generations: {totalCount.toLocaleString()}
+            {generations.length > 0 && (
+              <span className="text-sm font-normal text-muted-foreground ml-2">
+                (Showing {generations.length} on this page)
+              </span>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
@@ -324,7 +371,7 @@ export default function AllGenerations() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {generations?.map((gen) => (
+                {generations.map((gen) => (
                   <TableRow key={gen.id}>
                     <TableCell>
                       <PreviewCell gen={gen} onClick={() => setSelectedGeneration(gen)} />
@@ -416,6 +463,21 @@ export default function AllGenerations() {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination Controls */}
+          {totalCount > pagination.pageSize && (
+            <PaginationControls
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              totalCount={totalCount}
+              pageSize={pagination.pageSize}
+              hasPrevious={pagination.hasPrevious}
+              hasNext={pagination.hasNext}
+              onPageChange={pagination.goToPage}
+              onFirstPage={pagination.firstPage}
+              onLastPage={pagination.lastPage}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

@@ -98,9 +98,8 @@ export async function runPerformanceAudit(): Promise<PerformanceReport> {
   }
 
   // Check memory (if available)
-  if ('memory' in performance) {
-    const memory = (performance as any).memory;
-    report.performance.memory = Math.round(memory.usedJSHeapSize / 1048576);
+  if (performance.memory) {
+    report.performance.memory = Math.round(performance.memory.usedJSHeapSize / 1048576);
   }
 
   // Check will-change usage

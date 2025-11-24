@@ -11,24 +11,26 @@ import { useTemplates } from "@/hooks/useTemplates";
 import { useModels } from "@/hooks/useModels";
 import { useGeneration } from "@/hooks/useGeneration";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
-import { supabase } from "@/integrations/supabase/client";
 import { OptimizedGenerationPreview } from "@/components/generation/OptimizedGenerationPreview";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { logger } from "@/lib/logger";
+import { downloadFromStorage } from "@/lib/downloads/downloadManager";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 export default function CreateMinimal() {
   const navigate = useNavigate();
   const { data: templates } = useTemplates();
   const { data: models } = useModels();
   const { generate, isGenerating } = useGeneration();
-  
+  const { execute } = useErrorHandler();
+
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [selectedModel, setSelectedModel] = useState<any>(null);
   const [prompt, setPrompt] = useState("");
   const [generatedOutput, setGeneratedOutput] = useState<string | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  
+
   // Use realtime + polling hook
   const { startPolling, isPolling } = useGenerationPolling({
     onComplete: (outputs) => {
@@ -75,25 +77,43 @@ export default function CreateMinimal() {
       return;
     }
 
-    try {
-      setGeneratedOutput(null);
-      
-      const customParameters: Record<string, any> = {};
-      
-      if (selectedTemplate?.hidden_field_defaults) {
-        Object.assign(customParameters, selectedTemplate.hidden_field_defaults);
-      }
-      
-      if (selectedTemplate?.preset_parameters) {
-        Object.assign(customParameters, selectedTemplate.preset_parameters);
-      }
+    setGeneratedOutput(null);
 
-      const result = await generate({
+    const customParameters: Record<string, any> = {};
+
+    if (selectedTemplate?.hidden_field_defaults) {
+      Object.assign(customParameters, selectedTemplate.hidden_field_defaults);
+    }
+
+    if (selectedTemplate?.preset_parameters) {
+      Object.assign(customParameters, selectedTemplate.preset_parameters);
+    }
+
+    const result = await execute(
+      () => generate({
         template_id: selectedTemplate.id,
         prompt: prompt.trim(),
         custom_parameters: Object.keys(customParameters).length > 0 ? customParameters : undefined,
-      });
-      
+      }),
+      {
+        context: {
+          component: 'CreateMinimal',
+          operation: 'generate',
+          templateId: selectedTemplate.id,
+        },
+        // Don't show auto success - we handle it with polling
+        showSuccessToast: false,
+        onError: (error) => {
+          // Handle session expiration specially
+          if (error.message === "SESSION_EXPIRED") {
+            toast.error("Session expired. Please log in again.");
+            setTimeout(() => navigate("/auth"), 2000);
+          }
+        }
+      }
+    );
+
+    if (result) {
       const genId = result?.id || result?.generation_id;
       if (genId) {
         startPolling(genId);
@@ -103,46 +123,16 @@ export default function CreateMinimal() {
         setGeneratedOutput(result.storage_path);
         toast.success('Generation complete!');
       }
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      if (error.message === "SESSION_EXPIRED") {
-        toast.error("Session expired. Please log in again.");
-        setTimeout(() => navigate("/auth"), 2000);
-      }
     }
   };
 
   const handleDownload = async (storagePath: string) => {
-    try {
-      const { data, error } = await supabase.storage
-        .from('generated-content')
-        .createSignedUrl(storagePath, 60);
-      
-      if (error || !data?.signedUrl) {
-        toast.error('Failed to create download link');
-        return;
-      }
-
-      const response = await fetch(data.signedUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const extension = storagePath.split('.').pop() || 'file';
-      a.download = `generation-${Date.now()}.${extension}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      toast.success('Download started!');
-    } catch (error) {
-      logger.error('Download error', error instanceof Error ? error : new Error(String(error)), {
-        component: 'CreateMinimal',
-        operation: 'handleDownload',
-        outputUrl: generatedOutput
-      });
-      toast.error('Failed to download file');
-    }
+    const extension = storagePath.split('.').pop() || 'file';
+    await downloadFromStorage(storagePath, {
+      filename: `generation-${Date.now()}.${extension}`,
+      successMessage: 'Download started!',
+      bucket: 'generated-content'
+    });
   };
 
   return (

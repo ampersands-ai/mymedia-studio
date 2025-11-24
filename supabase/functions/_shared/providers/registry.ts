@@ -3,6 +3,8 @@
  * Central configuration for all AI providers
  */
 
+import { API_ENDPOINTS } from './api-endpoints.ts';
+
 export interface ProviderConfig {
   name: string;
   webhook: string;
@@ -17,7 +19,7 @@ export const PROVIDERS: Record<string, ProviderConfig> = {
     name: 'KIE AI',
     webhook: '/functions/v1/webhooks/kie-webhook',
     recovery: '/functions/v1/recovery/recover-kie-generation',
-    statusEndpoint: 'https://api.kie.ai/api/v1/jobs/queryTask',
+    statusEndpoint: API_ENDPOINTS.KIE_AI.queryTaskUrl,
     supports: ['image', 'video', 'audio'],
     requiresWebhook: true
   },

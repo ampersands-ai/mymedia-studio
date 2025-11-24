@@ -1,6 +1,7 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from '../_shared/edge-logger.ts';
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 
 // Inlined helper: sanitize sensitive data
 function sanitizeData(data: unknown): unknown {
@@ -287,7 +288,7 @@ Deno.serve(async (req) => {
       },
     };
 
-    const endpoint = `https://api.elevenlabs.io/v1/text-to-speech/${job.voice_id}`;
+    const endpoint = `${API_ENDPOINTS.ELEVENLABS.fullUrl}/text-to-speech/${job.voice_id}`;
     const requestSentAt = new Date();
 
     const voiceResponse = await fetchWithRetry(endpoint, {

@@ -6,6 +6,17 @@ import { logger } from "@/lib/logger";
 type CreationType = 'image_editing' | 'prompt_to_image' | 'prompt_to_video' | 'image_to_video' | 'prompt_to_audio';
 
 /**
+ * Calculate current day of year (1-365/366)
+ * More efficient than redundant Date constructors
+ */
+function getDayOfYear(): number {
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 0);
+  const diff = now.getTime() - startOfYear.getTime();
+  return Math.floor(diff / 86400000);
+}
+
+/**
  * Map creation types to database categories
  */
 const categoryMap: Record<CreationType, string> = {
@@ -60,13 +71,11 @@ export const getSurpriseMePromptFromDb = (
   if (filteredPrompts.length === 0) {
     return getHardcodedPrompt(creationType);
   }
-  
+
   // Select a random prompt with some consistency (day-based + random offset)
-  const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
-  );
+  const dayOfYear = getDayOfYear();
   const randomOffset = Math.floor(Math.random() * 30);
   const index = (dayOfYear * 7 + randomOffset) % filteredPrompts.length;
-  
+
   return filteredPrompts[index].prompt;
 };

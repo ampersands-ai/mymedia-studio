@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useMemo } from "react";
 import { useTemplateLanding, useRelatedTemplates, useIncrementTemplateUse } from "@/hooks/useTemplateLanding";
 import { useAuth } from "@/contexts/AuthContext";
 import { GlobalHeader } from "@/components/GlobalHeader";
@@ -15,6 +16,7 @@ import { TemplateSEOHead } from "@/components/template-landing/TemplateSEOHead";
 import { SmartLoader } from "@/components/ui/smart-loader";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import DOMPurify from "dompurify";
 
 export default function TemplateLanding() {
   const { category, slug } = useParams<{ category: string; slug: string }>();
@@ -24,6 +26,15 @@ export default function TemplateLanding() {
 
   const { data: template, isLoading, error } = useTemplateLanding(category!, slug!);
   const { data: relatedTemplates } = useRelatedTemplates(template?.related_template_ids);
+
+  // Sanitize long description to prevent XSS attacks
+  const sanitizedLongDescription = useMemo(() => {
+    if (!template?.long_description) return '';
+    return DOMPurify.sanitize(template.long_description, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'code', 'pre'],
+      ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'id']
+    });
+  }, [template?.long_description]);
 
   const handleTryTemplate = async () => {
     if (!template) return;
@@ -94,27 +105,28 @@ export default function TemplateLanding() {
           onTryTemplate={handleTryTemplate}
         />
 
-        <TemplateExampleGallery examples={(template.example_images as any) || []} />
+        <TemplateExampleGallery examples={(template.example_images as unknown as Array<{url: string; caption?: string}>) || []} />
 
         <TemplateHowItWorks
-          steps={(template.steps as any) || []}
+          steps={(template.steps as unknown as Array<{title: string; description: string; icon?: string}>) || []}
           demoVideoUrl={template.demo_video_url}
         />
 
         <TemplateUseCases
-          useCases={(template.use_cases as any) || []}
+          useCases={(template.use_cases as unknown as Array<{title: string; description: string}>) || []}
           targetAudience={template.target_audience}
         />
 
         {template.long_description && (
           <section className="py-16 px-4">
             <div className="container max-w-4xl mx-auto prose prose-gray dark:prose-invert">
-              <div dangerouslySetInnerHTML={{ __html: template.long_description }} />
+              {/* Sanitized to prevent XSS */}
+              <div dangerouslySetInnerHTML={{ __html: sanitizedLongDescription }} />
             </div>
           </section>
         )}
 
-        <TemplateFAQ faqs={(template.faqs as any) || []} />
+        <TemplateFAQ faqs={(template.faqs as unknown as Array<{question: string; answer: string}>) || []} />
 
         <TemplateRelatedCards templates={relatedTemplates || []} />
 

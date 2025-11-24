@@ -24,8 +24,8 @@ function sendToAnalytics(metric: { name: string; value: number; rating: string }
   });
   
   // Send to PostHog if available
-  if (typeof window !== 'undefined' && (window as any).posthog) {
-    (window as any).posthog.capture('web_vital', {
+  if (typeof window !== 'undefined' && window.posthog) {
+    window.posthog.capture('web_vital', {
       metric_name: metric.name,
       value: metric.value,
       rating: metric.rating

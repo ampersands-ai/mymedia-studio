@@ -172,7 +172,7 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
                             ? "border-primary bg-primary/10" 
                             : "hover:border-primary/50"
                         )}
-                        onClick={() => updateSetting('style', styleOption.value as any)}
+                        onClick={() => updateSetting('style', styleOption.value)}
                       >
                         <div className="text-xs font-semibold">{styleOption.label}</div>
                         <div className="text-[10px] text-muted-foreground mt-1">
@@ -189,7 +189,7 @@ export function SubtitleCustomizer({ open, onOpenChange, initialSettings, onSave
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-xs">Transcription Model</Label>
-                    <Select value={settings.subtitlesModel} onValueChange={(v) => updateSetting('subtitlesModel', v as any)}>
+                    <Select value={settings.subtitlesModel} onValueChange={(v) => updateSetting('subtitlesModel', v)}>
                       <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {SUBTITLES_MODELS.map(m => (

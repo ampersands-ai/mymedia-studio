@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 
 
 
@@ -34,12 +35,12 @@ serve(async (req) => {
     });
 
     if (type === 'video') {
-      apiUrl = 'https://pixabay.com/api/videos/';
+      apiUrl = `${API_ENDPOINTS.PIXABAY.apiUrl}/videos/`;
       if (orientation) {
         params.append('video_type', orientation);
       }
     } else {
-      apiUrl = 'https://pixabay.com/api/';
+      apiUrl = API_ENDPOINTS.PIXABAY.apiUrl;
       if (orientation) {
         params.append('orientation', orientation);
       }

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { logger } from "@/lib/logger";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 interface CommunityCreation {
   id: string;
@@ -27,6 +28,7 @@ interface CommunityCreation {
 }
 
 const Community = () => {
+  const { execute } = useErrorHandler();
   const [creations, setCreations] = useState<CommunityCreation[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "image" | "video" | "audio">("all");
@@ -60,54 +62,59 @@ const Community = () => {
   }, [filter, sort]);
 
   const fetchCommunityCreations = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      
-      let query = supabase
-        .from("community_creations_public")
-        .select(`
-          *,
-          generations!inner(storage_path, workflow_execution_id)
-        `);
+      await execute(
+        async () => {
+          let query = supabase
+            .from("community_creations_public")
+            .select(`
+              *,
+              generations!inner(storage_path, workflow_execution_id)
+            `);
 
-      // Apply filter
-      if (filter !== "all") {
-        query = query.eq("content_type", filter);
-      }
-
-      // Apply sort
-      if (sort === "popular") {
-        query = query.order("likes_count", { ascending: false });
-      } else {
-        query = query.order("shared_at", { ascending: false });
-      }
-
-      const { data, error } = await query.limit(50);
-
-      if (error) throw error;
-
-      // Fetch signed URLs for all creations using storage_path from generations
-      const creationsWithUrls = await Promise.all(
-        (data || []).map(async (creation: { id: string; name: string; description: string; created_at: string; category: string; view_count: number; generations?: { storage_path?: string; workflow_execution_id?: string } }) => {
-          const storagePath = creation.generations?.storage_path;
-          const workflowExecutionId = creation.generations?.workflow_execution_id;
-          if (storagePath) {
-            const signedUrl = await createSignedUrl("generated-content", storagePath);
-            return { ...creation, storage_path: storagePath, output_url: signedUrl, workflow_execution_id: workflowExecutionId };
+          // Apply filter
+          if (filter !== "all") {
+            query = query.eq("content_type", filter);
           }
-          return { ...creation, storage_path: null, output_url: null, workflow_execution_id: workflowExecutionId };
-        })
-      );
 
-      setCreations(creationsWithUrls);
-    } catch (error) {
-      logger.error("Error fetching community creations", error instanceof Error ? error : new Error(String(error)), {
-        component: 'Community',
-        operation: 'fetchCreations',
-        filter,
-        sort
-      });
-      toast.error("Failed to load community creations");
+          // Apply sort
+          if (sort === "popular") {
+            query = query.order("likes_count", { ascending: false });
+          } else {
+            query = query.order("shared_at", { ascending: false });
+          }
+
+          const { data, error } = await query.limit(50);
+
+          if (error) throw error;
+
+          // Fetch signed URLs for all creations using storage_path from generations
+          const creationsWithUrls = await Promise.all(
+            (data || []).map(async (creation: { id: string; name: string; description: string; created_at: string; category: string; view_count: number; generations?: { storage_path?: string; workflow_execution_id?: string } }) => {
+              const storagePath = creation.generations?.storage_path;
+              const workflowExecutionId = creation.generations?.workflow_execution_id;
+              if (storagePath) {
+                const signedUrl = await createSignedUrl("generated-content", storagePath);
+                return { ...creation, storage_path: storagePath, output_url: signedUrl, workflow_execution_id: workflowExecutionId };
+              }
+              return { ...creation, storage_path: null, output_url: null, workflow_execution_id: workflowExecutionId };
+            })
+          );
+
+          setCreations(creationsWithUrls);
+        },
+        {
+          showSuccessToast: false,
+          errorMessage: "Failed to load community creations",
+          context: {
+            component: 'Community',
+            operation: 'fetchCreations',
+            filter,
+            sort,
+          }
+        }
+      );
     } finally {
       setLoading(false);
     }

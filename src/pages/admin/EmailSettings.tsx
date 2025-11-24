@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -20,6 +21,7 @@ interface AdminNotificationSettings {
 }
 
 export default function EmailSettings() {
+  const { execute } = useErrorHandler();
   const [loading, setLoading] = useState(false);
   const [testingEmail, setTestingEmail] = useState(false);
   const [settings, setSettings] = useState<{ admin_notifications: AdminNotificationSettings }>({
@@ -38,47 +40,55 @@ export default function EmailSettings() {
   }, []);
 
   const loadSettings = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('app_settings')
-        .select('setting_value')
-        .eq('setting_key', 'admin_notifications')
-        .single();
+    await execute(
+      async () => {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('setting_value')
+          .eq('setting_key', 'admin_notifications')
+          .single();
 
-      if (error) throw error;
-      if (data?.setting_value) {
-        setSettings({ admin_notifications: data.setting_value as AdminNotificationSettings });
+        if (error) throw error;
+        if (data?.setting_value) {
+          setSettings({ admin_notifications: data.setting_value as AdminNotificationSettings });
+        }
+      },
+      {
+        showSuccessToast: false,
+        errorMessage: 'Failed to load email settings',
+        context: {
+          component: 'EmailSettings',
+          operation: 'loadSettings'
+        }
       }
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('Failed to load email settings', err, {
-        component: 'EmailSettings',
-        operation: 'loadSettings'
-      });
-      toast.error('Failed to load email settings');
-    }
+    );
   };
 
   const handleSave = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('app_settings')
-        .update({
-          setting_value: settings.admin_notifications,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('setting_key', 'admin_notifications');
+      await execute(
+        async () => {
+          const { error } = await supabase
+            .from('app_settings')
+            .update({
+              setting_value: settings.admin_notifications,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('setting_key', 'admin_notifications');
 
-      if (error) throw error;
-      toast.success('Email settings saved successfully');
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('Failed to save email settings', err, {
-        component: 'EmailSettings',
-        operation: 'handleSave'
-      });
-      toast.error('Failed to save email settings');
+          if (error) throw error;
+        },
+        {
+          successMessage: 'Email settings saved successfully',
+          errorMessage: 'Failed to save email settings',
+          context: {
+            component: 'EmailSettings',
+            operation: 'handleSave',
+            hasRecipient: !!settings.admin_notifications.recipient_email
+          }
+        }
+      );
     } finally {
       setLoading(false);
     }
@@ -87,24 +97,29 @@ export default function EmailSettings() {
   const handleTestEmail = async () => {
     setTestingEmail(true);
     try {
-      const { error } = await supabase.functions.invoke('send-error-alert', {
-        body: {
-          subject: 'Test Email',
-          error_summary: 'This is a test email from the admin panel.',
-          error_count: 1,
-          severity: 'low',
-        },
-      });
+      await execute(
+        async () => {
+          const { error } = await supabase.functions.invoke('send-error-alert', {
+            body: {
+              subject: 'Test Email',
+              error_summary: 'This is a test email from the admin panel.',
+              error_count: 1,
+              severity: 'low',
+            },
+          });
 
-      if (error) throw error;
-      toast.success('Test email sent! Check your inbox.');
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('Failed to send test email', err, {
-        component: 'EmailSettings',
-        operation: 'handleTestEmail'
-      });
-      toast.error('Failed to send test email');
+          if (error) throw error;
+        },
+        {
+          successMessage: 'Test email sent! Check your inbox.',
+          errorMessage: 'Failed to send test email',
+          context: {
+            component: 'EmailSettings',
+            operation: 'handleTestEmail',
+            recipient: settings.admin_notifications.recipient_email
+          }
+        }
+      );
     } finally {
       setTestingEmail(false);
     }

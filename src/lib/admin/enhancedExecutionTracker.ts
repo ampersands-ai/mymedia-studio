@@ -324,22 +324,27 @@ export class EnhancedExecutionTracker {
   private async saveStepSnapshot(step: ExecutionStep): Promise<void> {
     try {
       await supabase.from('test_execution_snapshots').insert({
-        test_run_id: this.flow.testRunId,
+        test_run_id: this.flow.testRunId!,
         step_number: step.stepNumber,
-        step_name: step.stepName,
-        state_before: step.stateBeforeStep,
-        state_after: step.stateAfterStep,
-        inputs: step.inputs,
-        outputs: step.outputs,
-        function_name: step.functionName,
-        file_path: step.functionPath,
-        source_code: step.sourceCode,
-        can_edit: step.canEdit,
-        can_rerun: step.canRerun,
-        is_edited: step.isEdited,
-        started_at: step.startTime ? new Date(step.startTime).toISOString() : null,
-        completed_at: step.endTime ? new Date(step.endTime).toISOString() : null,
-        duration_ms: step.duration,
+        snapshot_type: 'after' as const,
+        state_data: {
+          step_name: step.stepName,
+          description: step.description,
+          state_before: step.stateBeforeStep,
+          state_after: step.stateAfterStep,
+          inputs: step.inputs,
+          outputs: step.outputs,
+          function_name: step.functionName,
+          file_path: step.functionPath,
+          source_code: step.sourceCode,
+          status: step.status,
+          can_edit: step.canEdit,
+          can_rerun: step.canRerun,
+          is_edited: step.isEdited,
+          started_at: step.startTime ? new Date(step.startTime).toISOString() : null,
+          completed_at: step.endTime ? new Date(step.endTime).toISOString() : null,
+          duration_ms: step.duration,
+        },
       });
     } catch (error) {
       console.error('Failed to save step snapshot:', error);
@@ -794,12 +799,17 @@ export class EnhancedExecutionTracker {
         return null;
       }
 
+      // Parse execution_data to get model content type
+      const executionData = typeof runData.execution_data === 'string' 
+        ? JSON.parse(runData.execution_data) 
+        : runData.execution_data;
+      
       // Create tracker instance
       const tracker = new EnhancedExecutionTracker(
         runData.model_record_id,
         runData.model_name,
         runData.model_provider || '',
-        runData.model_content_type || '',
+        executionData?.modelContentType || 'image',
         runData.admin_user_id,
         {
           testMode: runData.test_mode_enabled,
@@ -810,11 +820,11 @@ export class EnhancedExecutionTracker {
 
       // Restore flow state
       tracker.flow.testRunId = runData.test_run_id;
-      tracker.flow.status = runData.status;
-      tracker.flow.startTime = new Date(runData.started_at).getTime();
+      tracker.flow.status = runData.status as "pending" | "running" | "completed" | "failed" | "cancelled";
+      tracker.flow.startTime = runData.started_at ? new Date(runData.started_at).getTime() : Date.now();
       if (runData.completed_at) {
         tracker.flow.endTime = new Date(runData.completed_at).getTime();
-        tracker.flow.totalDuration = runData.total_duration_ms;
+        tracker.flow.totalDuration = runData.duration_ms || undefined;
       }
       tracker.flow.generationId = runData.generation_id;
       tracker.flow.bookmarked = runData.bookmarked;
@@ -830,28 +840,34 @@ export class EnhancedExecutionTracker {
         .order('step_number');
 
       if (snapshots) {
-        tracker.flow.steps = snapshots.map(s => ({
-          id: crypto.randomUUID(),
-          stepNumber: s.step_number,
-          stepType: 'main',
-          stepName: s.step_name,
-          description: '',
-          functionPath: s.file_path || '',
-          functionName: s.function_name || '',
-          sourceCode: s.source_code,
-          status: 'completed',
-          stateBeforeStep: s.state_before,
-          stateAfterStep: s.state_after,
-          inputs: s.inputs,
-          outputs: s.outputs,
-          startTime: s.started_at ? new Date(s.started_at).getTime() : undefined,
-          endTime: s.completed_at ? new Date(s.completed_at).getTime() : undefined,
-          duration: s.duration_ms,
-          canEdit: s.can_edit,
-          canRerun: s.can_rerun,
-          isEdited: s.is_edited,
-          executionContext: 'client',
-        }));
+        tracker.flow.steps = snapshots.map(s => {
+          const stateData = typeof s.state_data === 'string' 
+            ? JSON.parse(s.state_data) 
+            : s.state_data as any;
+          
+          return {
+            id: crypto.randomUUID(),
+            stepNumber: s.step_number,
+            stepType: 'main' as const,
+            stepName: stateData.step_name || '',
+            description: stateData.description || '',
+            functionPath: stateData.file_path || '',
+            functionName: stateData.function_name || '',
+            sourceCode: stateData.source_code,
+            status: stateData.status || 'completed' as const,
+            stateBeforeStep: stateData.state_before,
+            stateAfterStep: stateData.state_after,
+            inputs: stateData.inputs,
+            outputs: stateData.outputs,
+            startTime: stateData.started_at ? new Date(stateData.started_at).getTime() : undefined,
+            endTime: stateData.completed_at ? new Date(stateData.completed_at).getTime() : undefined,
+            duration: stateData.duration_ms,
+            canEdit: stateData.can_edit || false,
+            canRerun: stateData.can_rerun || false,
+            isEdited: stateData.is_edited || false,
+            executionContext: 'client' as const,
+          };
+        });
       }
 
       // Load logs

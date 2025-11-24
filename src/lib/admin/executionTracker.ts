@@ -5,7 +5,7 @@
  * including function calls, payloads, responses, and timing information.
  */
 
-export type ExecutionStepStatus = 'pending' | 'running' | 'completed' | 'failed' | 'edited';
+export type ExecutionStepStatus = 'pending' | 'running' | 'completed' | 'failed' | 'edited' | 'cancelled' | 'paused';
 
 export interface ExecutionStep {
   id: string;
@@ -38,7 +38,7 @@ export interface ExecutionFlow {
   modelName: string;
   startTime: number;
   endTime?: number;
-  status: 'running' | 'completed' | 'failed';
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
   steps: ExecutionStep[];
 
   // Context
@@ -201,10 +201,13 @@ export class ExecutionTracker {
  */
 export async function instrumentedExecution<T>(
   tracker: ExecutionTracker,
-  stepConfig: Omit<ExecutionStep, 'id' | 'stepNumber' | 'status' | 'outputs'>,
+  stepConfig: Omit<ExecutionStep, 'id' | 'stepNumber' | 'status'>,
   executor: (inputs: Record<string, any>) => Promise<T>
 ): Promise<T> {
-  const step = tracker.addStep(stepConfig);
+  const step = tracker.addStep({
+    ...stepConfig,
+    outputs: undefined,
+  });
 
   try {
     tracker.startStep(step.id);

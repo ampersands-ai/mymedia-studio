@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { validateJsonbSize, MAX_JSONB_SIZE } from "../_shared/jsonb-validation-schemas.ts";
+import { STORYBOARD_STATUS } from "../_shared/constants.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -355,7 +356,7 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
         intro_image_prompt: introImagePrompt,
         intro_voiceover_text: introVoiceoverText,
         tokens_cost: tokenCost,
-        status: 'draft',
+        status: STORYBOARD_STATUS.DRAFT,
         media_type: mediaType,
         video_search_query: mediaType === 'video' ? topic : null,
         background_music_url: backgroundMusicUrl || null,

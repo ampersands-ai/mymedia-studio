@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { validateJsonbSize, MAX_JSONB_SIZE } from "../_shared/jsonb-validation-schemas.ts";
+import { VIDEO_JOB_STATUS } from "../_shared/constants.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -140,7 +141,7 @@ Deno.serve(async (req) => {
         caption_style: caption_style || null,
         custom_background_video: background_video_url || null,
         background_video_thumbnail: background_video_thumbnail || null,
-        status: 'pending',
+        status: VIDEO_JOB_STATUS.PENDING,
       })
       .select()
       .single();
@@ -175,7 +176,7 @@ Deno.serve(async (req) => {
           await supabaseClient
             .from('video_jobs')
             .update({ 
-              status: 'failed', 
+              status: VIDEO_JOB_STATUS.FAILED, 
               error_message: `Failed to start processing: ${error.message}` 
             })
             .eq('id', job.id);

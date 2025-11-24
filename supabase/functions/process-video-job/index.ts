@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { VIDEO_JOB_STATUS } from "../_shared/constants.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -122,7 +123,7 @@ Deno.serve(async (req) => {
     });
 
     // Idempotency: Resume from current status
-    if (job.status === 'completed') {
+    if (job.status === VIDEO_JOB_STATUS.COMPLETED) {
       logger.info('Job already completed, skipping', { userId: job.user_id, metadata: { job_id } });
       return new Response(
         JSON.stringify({ success: true, status: 'already_completed' }),
@@ -130,7 +131,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (job.status === 'failed') {
+    if (job.status === VIDEO_JOB_STATUS.FAILED) {
       logger.info('Job already failed, skipping', { userId: job.user_id, metadata: { job_id } });
       return new Response(
         JSON.stringify({ success: false, status: 'already_failed' }),
@@ -138,7 +139,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (job.status === 'awaiting_script_approval' || job.status === 'awaiting_voice_approval') {
+    if (job.status === VIDEO_JOB_STATUS.AWAITING_SCRIPT_APPROVAL || job.status === VIDEO_JOB_STATUS.AWAITING_VOICE_APPROVAL) {
       logger.info('Awaiting user approval, skipping auto-processing', { 
         userId: job.user_id, 
         metadata: { job_id, status: job.status } 
@@ -153,7 +154,7 @@ Deno.serve(async (req) => {
     let script = job.script;
     if (!script) {
       logger.info('Generating script', { userId: job.user_id, metadata: { job_id } });
-      await updateJobStatus(supabaseClient, job_id, 'generating_script');
+      await updateJobStatus(supabaseClient, job_id, VIDEO_JOB_STATUS.GENERATING_SCRIPT);
       script = await generateScript(supabaseClient, logger, job.topic, job.duration, job.style, job_id, job.user_id);
       await supabaseClient.from('video_jobs').update({ script }).eq('id', job_id);
       logger.info('Script generated successfully', { userId: job.user_id, metadata: { job_id } });
@@ -163,7 +164,7 @@ Deno.serve(async (req) => {
 
     // Pause for user approval of script
     logger.info('Script ready for review', { userId: job.user_id, metadata: { job_id } });
-    await updateJobStatus(supabaseClient, job_id, 'awaiting_script_approval');
+    await updateJobStatus(supabaseClient, job_id, VIDEO_JOB_STATUS.AWAITING_SCRIPT_APPROVAL);
 
     return new Response(
       JSON.stringify({ 
@@ -191,7 +192,7 @@ Deno.serve(async (req) => {
         await supabaseClient
           .from('video_jobs')
           .update({
-            status: 'failed',
+            status: VIDEO_JOB_STATUS.FAILED,
             error_message: errorMessage,
             error_details: { 
               error: errorMessage,

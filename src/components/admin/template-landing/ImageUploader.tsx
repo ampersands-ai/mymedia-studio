@@ -50,7 +50,7 @@ export function ImageUploader({ value, onChange, label, bucket = "generated-cont
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const filePath = `template-assets/${fileName}`;
 
-      const { error: uploadError } = await (supabase as any).storage
+      const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(filePath, file, {
           cacheControl: "3600",
@@ -60,7 +60,7 @@ export function ImageUploader({ value, onChange, label, bucket = "generated-cont
       if (uploadError) throw uploadError;
 
       // Get public URL
-      const { data: urlData } = (supabase as any).storage
+      const { data: urlData } = supabase.storage
         .from(bucket)
         .getPublicUrl(filePath);
 

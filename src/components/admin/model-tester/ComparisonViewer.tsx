@@ -104,7 +104,7 @@ export function ComparisonViewer({ runs, onClose }: ComparisonViewerProps) {
       </div>
 
       {/* Tabs */}
-      <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as any)}>
+      <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as "overview" | "steps" | "performance")}>
         <div className="border-b px-4">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>

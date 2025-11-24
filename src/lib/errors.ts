@@ -55,7 +55,7 @@ export function handleError(error: unknown, context?: Record<string, unknown>): 
 
   // Check for HTTP fetch errors with status codes
   if (error && typeof error === 'object' && 'status' in error) {
-    const status = (error as any).status;
+    const status = (error as {status: number}).status;
     if (status === 401 || status === 403) {
       return new AuthenticationError(
         error instanceof Error ? error.message : 'Authentication failed',

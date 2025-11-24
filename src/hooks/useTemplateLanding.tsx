@@ -57,7 +57,7 @@ export function useTemplateLanding(category: string, slug: string) {
   return useQuery({
     queryKey: ["template-landing", category, slug],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("template_landing_pages_public")
         .select("*")
         .eq("category_slug", category)
@@ -67,14 +67,13 @@ export function useTemplateLanding(category: string, slug: string) {
       if (error) throw error;
 
       // Fire-and-forget view increment
-      (supabase as any).rpc("increment_template_view_count", {
+      supabase.rpc("increment_template_view_count", {
         template_id: data.id,
       });
 
       // Track page view
-      const ph = posthog as any;
-      if (ph?.capture) {
-        ph.capture("template_page_viewed", {
+      if (posthog?.capture) {
+        posthog.capture("template_page_viewed", {
           template_id: data.id,
           template_slug: data.slug,
           category: data.category_slug,
@@ -93,14 +92,14 @@ export function useRelatedTemplates(templateIds: string[] | null) {
     queryFn: async () => {
       if (!templateIds || templateIds.length === 0) return [];
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("template_landing_pages_public")
         .select("id, slug, category_slug, title, subtitle, thumbnail_url, token_cost")
         .in("id", templateIds)
         .limit(4);
 
       if (error) throw error;
-      return data as any[];
+      return data;
     },
     enabled: !!templateIds && templateIds.length > 0,
     staleTime: 10 * 60 * 1000,
@@ -111,14 +110,14 @@ export function useTemplateCategories() {
   return useQuery({
     queryKey: ["template-categories"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("template_categories")
         .select("*")
         .eq("is_visible", true)
         .order("sort_order");
 
       if (error) throw error;
-      return data as unknown as TemplateCategory[];
+      return data;
     },
     staleTime: 30 * 60 * 1000,
   });
@@ -130,16 +129,15 @@ export function useIncrementTemplateUse() {
 
   return useMutation({
     mutationFn: async (templateId: string) => {
-      const { error } = await (supabase as any).rpc("increment_template_use_count", {
+      const { error } = await supabase.rpc("increment_template_use_count", {
         template_id: templateId,
       });
 
       if (error) throw error;
 
       // Track usage
-      const ph = posthog as any;
-      if (ph?.capture) {
-        ph.capture("template_try_clicked", {
+      if (posthog?.capture) {
+        posthog.capture("template_try_clicked", {
           template_id: templateId,
         });
       }

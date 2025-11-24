@@ -19,7 +19,7 @@ const Settings = () => {
   const { user } = useAuth();
   const { execute } = useErrorHandler();
   const location = useLocation();
-  const defaultTab = (location.state as any)?.defaultTab || 'profile';
+  const defaultTab = (location.state as {defaultTab?: string})?.defaultTab || 'profile';
   const [profileData, setProfileData] = useState({
     full_name: "",
     phone_number: "",

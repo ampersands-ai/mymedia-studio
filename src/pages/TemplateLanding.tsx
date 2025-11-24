@@ -105,15 +105,15 @@ export default function TemplateLanding() {
           onTryTemplate={handleTryTemplate}
         />
 
-        <TemplateExampleGallery examples={(template.example_images as any) || []} />
+        <TemplateExampleGallery examples={(template.example_images as unknown as Array<{url: string; caption?: string}>) || []} />
 
         <TemplateHowItWorks
-          steps={(template.steps as any) || []}
+          steps={(template.steps as unknown as Array<{title: string; description: string; icon?: string}>) || []}
           demoVideoUrl={template.demo_video_url}
         />
 
         <TemplateUseCases
-          useCases={(template.use_cases as any) || []}
+          useCases={(template.use_cases as unknown as Array<{title: string; description: string}>) || []}
           targetAudience={template.target_audience}
         />
 
@@ -126,7 +126,7 @@ export default function TemplateLanding() {
           </section>
         )}
 
-        <TemplateFAQ faqs={(template.faqs as any) || []} />
+        <TemplateFAQ faqs={(template.faqs as unknown as Array<{question: string; answer: string}>) || []} />
 
         <TemplateRelatedCards templates={relatedTemplates || []} />
 

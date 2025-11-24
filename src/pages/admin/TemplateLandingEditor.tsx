@@ -35,7 +35,7 @@ export default function TemplateLandingEditor() {
     queryKey: ["template-landing", id],
     queryFn: async () => {
       if (isNew) return null;
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("template_landing_pages")
         .select("*")
         .eq("id", id)

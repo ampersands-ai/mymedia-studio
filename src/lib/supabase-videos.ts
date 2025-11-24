@@ -233,23 +233,20 @@ export type ConnectionSpeed = 'slow' | 'medium' | 'fast';
  */
 export function detectConnectionSpeed(): ConnectionSpeed {
   // Check if Network Information API is available
-  if ('connection' in navigator) {
-    const connection = (navigator as any).connection;
-    
-    if (connection) {
-      // effectiveType: 'slow-2g', '2g', '3g', '4g'
-      const effectiveType = connection.effectiveType;
-      
-      if (effectiveType === 'slow-2g' || effectiveType === '2g') {
-        return 'slow';
-      } else if (effectiveType === '3g') {
-        return 'medium';
-      } else {
-        return 'fast'; // 4g or better
-      }
+  if (navigator.connection) {
+    const connection = navigator.connection;
+    // effectiveType: 'slow-2g', '2g', '3g', '4g'
+    const effectiveType = connection.effectiveType;
+
+    if (effectiveType === 'slow-2g' || effectiveType === '2g') {
+      return 'slow';
+    } else if (effectiveType === '3g') {
+      return 'medium';
+    } else {
+      return 'fast'; // 4g or better
     }
   }
-  
+
   // Fallback: assume medium if API not available
   return 'medium';
 }

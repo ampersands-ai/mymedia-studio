@@ -31,7 +31,7 @@ export function useAlertConfig() {
     queryKey: ['alert-configs'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('webhook_alert_config' as any)
+        .from('webhook_alert_config')
         .select('*')
         .order('provider');
 
@@ -43,7 +43,7 @@ export function useAlertConfig() {
   const createConfig = useMutation({
     mutationFn: async (input: AlertConfigInput) => {
       const { data, error } = await supabase
-        .from('webhook_alert_config' as any)
+        .from('webhook_alert_config')
         .insert(input)
         .select()
         .single();
@@ -70,7 +70,7 @@ export function useAlertConfig() {
   const updateConfig = useMutation({
     mutationFn: async ({ id, input }: { id: string; input: Partial<AlertConfigInput> }) => {
       const { data, error } = await supabase
-        .from('webhook_alert_config' as any)
+        .from('webhook_alert_config')
         .update(input)
         .eq('id', id)
         .select()
@@ -98,7 +98,7 @@ export function useAlertConfig() {
   const deleteConfig = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('webhook_alert_config' as any)
+        .from('webhook_alert_config')
         .delete()
         .eq('id', id);
 

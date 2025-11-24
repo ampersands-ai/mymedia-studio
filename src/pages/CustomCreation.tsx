@@ -69,7 +69,7 @@ const CustomCreation = () => {
   const currentModel = filteredModels.find(m => m.record_id === state.selectedModel);
 
   // Get model schema (locked models load from file, unlocked from database)
-  const { schema: modelSchema, loading: schemaLoading } = useModelSchema(currentModel as any || null);
+  const { schema: modelSchema, loading: schemaLoading } = useModelSchema(currentModel || null);
 
   // Initialize model parameters with schema defaults when model changes
   useEffect(() => {
@@ -85,7 +85,7 @@ const CustomCreation = () => {
 
   // Schema helpers
   const schemaHelpers = useSchemaHelpers();
-  const imageFieldInfo = schemaHelpers.getImageFieldInfo(currentModel as any);
+  const imageFieldInfo = schemaHelpers.getImageFieldInfo(currentModel || null);
 
   // Generation polling
   const { startPolling, stopPolling, isPolling, connectionTier, realtimeConnected } = useGenerationPolling({
@@ -476,7 +476,7 @@ const CustomCreation = () => {
     handleNativeCameraPick,
     cameraLoading,
     isNative
-  } = useImageUpload(currentModel as any);
+  } = useImageUpload(currentModel || null);
 
   // Caption generation
   const {

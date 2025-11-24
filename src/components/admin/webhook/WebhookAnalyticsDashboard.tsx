@@ -63,7 +63,7 @@ export const WebhookAnalyticsDashboard = () => {
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="text-sm font-medium mb-2 block">Time Range</label>
-              <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as any)}>
+              <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as '1h' | '24h' | '7d' | '30d' | 'custom')}>
                 <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="1h">1 Hour</TabsTrigger>
                   <TabsTrigger value="24h">24 Hours</TabsTrigger>

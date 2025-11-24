@@ -64,7 +64,7 @@ const ComprehensiveModelTester = () => {
 
   // Get model schema
   const { schema: modelSchema, loading: schemaLoading } = useModelSchema(
-    selectedModel as any || null
+    selectedModel || null
   );
 
   // Initialize parameters when model changes

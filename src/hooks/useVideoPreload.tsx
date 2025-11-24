@@ -33,16 +33,16 @@ export function useVideoPreload({
     setConnectionSpeed(speed);
     
     // Listen for connection changes if supported
-    if ('connection' in navigator) {
-      const connection = (navigator as any).connection;
-      
+    if (navigator.connection) {
+      const connection = navigator.connection;
+
       const handleChange = () => {
         const newSpeed = detectConnectionSpeed();
         setConnectionSpeed(newSpeed);
       };
-      
-      connection?.addEventListener('change', handleChange);
-      return () => connection?.removeEventListener('change', handleChange);
+
+      connection.addEventListener('change', handleChange);
+      return () => connection.removeEventListener('change', handleChange);
     }
   }, []);
   

@@ -8,8 +8,10 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { getAllModels } from "@/lib/models/registry";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 export default function AdminDashboard() {
+  const { execute } = useErrorHandler();
   const [stats, setStats] = useState({
     totalModels: 0,
     activeModels: 0,
@@ -20,107 +22,117 @@ export default function AdminDashboard() {
     totalStoryboards: 0,
     latestQuotaRemaining: null as number | null,
   });
-  
+
   const [communityEnabled, setCommunityEnabled] = useState(false);
   const [loadingCommunityToggle, setLoadingCommunityToggle] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
-      try {
-        // Fetch models count from registry (not database)
-        const allModels = getAllModels();
-        const totalModels = allModels.length;
-        const activeModels = allModels.filter(m => m.MODEL_CONFIG.isActive).length;
+      await execute(
+        async () => {
+          // Fetch models count from registry (not database)
+          const allModels = getAllModels();
+          const totalModels = allModels.length;
+          const activeModels = allModels.filter(m => m.MODEL_CONFIG.isActive).length;
 
-        // Fetch templates count (workflow_templates only - content_templates deleted)
-        const { count: totalTemplates } = await supabase
-          .from("workflow_templates")
-          .select("*", { count: "exact", head: true });
+          // Fetch templates count (workflow_templates only - content_templates deleted)
+          const { count: totalTemplates } = await supabase
+            .from("workflow_templates")
+            .select("*", { count: "exact", head: true });
 
-        const { count: activeTemplates } = await supabase
-          .from("workflow_templates")
-          .select("*", { count: "exact", head: true })
-          .eq("is_active", true);
+          const { count: activeTemplates } = await supabase
+            .from("workflow_templates")
+            .select("*", { count: "exact", head: true })
+            .eq("is_active", true);
 
-        // Fetch generations count
-        const { count: totalGenerations } = await supabase
-          .from("generations")
-          .select("*", { count: "exact", head: true });
+          // Fetch generations count
+          const { count: totalGenerations } = await supabase
+            .from("generations")
+            .select("*", { count: "exact", head: true });
 
-        const today = new Date().toISOString().split("T")[0];
-        const { count: todayGenerations } = await supabase
-          .from("generations")
-          .select("*", { count: "exact", head: true })
-          .gte("created_at", today);
+          const today = new Date().toISOString().split("T")[0];
+          const { count: todayGenerations } = await supabase
+            .from("generations")
+            .select("*", { count: "exact", head: true })
+            .gte("created_at", today);
 
-        // Fetch storyboards count
-        const { count: totalStoryboards } = await supabase
-          .from("storyboards")
-          .select("*", { count: "exact", head: true });
+          // Fetch storyboards count
+          const { count: totalStoryboards } = await supabase
+            .from("storyboards")
+            .select("*", { count: "exact", head: true });
 
-        // Fetch latest API quota remaining
-        const { data: latestStoryboard } = await supabase
-          .from("storyboards")
-          .select("api_quota_remaining")
-          .not("api_quota_remaining", "is", null)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
+          // Fetch latest API quota remaining
+          const { data: latestStoryboard } = await supabase
+            .from("storyboards")
+            .select("api_quota_remaining")
+            .not("api_quota_remaining", "is", null)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
 
-        // Fetch community settings
-        const { data: communitySettings } = await supabase
-          .from("app_settings")
-          .select("setting_value")
-          .eq("setting_key", "community_enabled")
-          .single();
+          // Fetch community settings
+          const { data: communitySettings } = await supabase
+            .from("app_settings")
+            .select("setting_value")
+            .eq("setting_key", "community_enabled")
+            .single();
 
-        setStats({
-          totalModels,
-          activeModels,
-          totalTemplates: totalTemplates || 0,
-          activeTemplates: activeTemplates || 0,
-          todayGenerations: todayGenerations || 0,
-          totalGenerations: totalGenerations || 0,
-          totalStoryboards: totalStoryboards || 0,
-          latestQuotaRemaining: latestStoryboard?.api_quota_remaining || null,
-        });
-        
-        if (communitySettings && typeof communitySettings.setting_value === 'object' && communitySettings.setting_value !== null) {
-          setCommunityEnabled((communitySettings.setting_value as { enabled: boolean }).enabled === true);
+          setStats({
+            totalModels,
+            activeModels,
+            totalTemplates: totalTemplates || 0,
+            activeTemplates: activeTemplates || 0,
+            todayGenerations: todayGenerations || 0,
+            totalGenerations: totalGenerations || 0,
+            totalStoryboards: totalStoryboards || 0,
+            latestQuotaRemaining: latestStoryboard?.api_quota_remaining || null,
+          });
+
+          if (communitySettings && typeof communitySettings.setting_value === 'object' && communitySettings.setting_value !== null) {
+            setCommunityEnabled((communitySettings.setting_value as { enabled: boolean }).enabled === true);
+          }
+        },
+        {
+          showSuccessToast: false,
+          errorMessage: "Failed to fetch dashboard stats",
+          context: {
+            component: 'AdminDashboard',
+            operation: 'fetchStats'
+          }
         }
-      } catch (error) {
-        logger.error("Failed to fetch dashboard stats", error as Error, {
-          component: 'AdminDashboard',
-          operation: 'fetchStats'
-        });
-      }
+      );
     };
 
     fetchStats();
-  }, []);
+  }, [execute]);
 
   const handleCommunityToggle = async (checked: boolean) => {
     setLoadingCommunityToggle(true);
     try {
-      const { error } = await supabase
-        .from("app_settings")
-        .update({ 
-          setting_value: { enabled: checked },
-          updated_at: new Date().toISOString()
-        })
-        .eq("setting_key", "community_enabled");
+      await execute(
+        async () => {
+          const { error } = await supabase
+            .from("app_settings")
+            .update({
+              setting_value: { enabled: checked },
+              updated_at: new Date().toISOString()
+            })
+            .eq("setting_key", "community_enabled");
 
-      if (error) throw error;
+          if (error) throw error;
 
-      setCommunityEnabled(checked);
-      toast.success(`Community ${checked ? 'enabled' : 'disabled'} successfully`);
-    } catch (error) {
-      logger.error("Failed to update community setting", error as Error, { 
-        component: 'AdminDashboard',
-        operation: 'handleCommunityToggle',
-        checked
-      });
-      toast.error("Failed to update community setting");
+          setCommunityEnabled(checked);
+        },
+        {
+          successMessage: `Community ${checked ? 'enabled' : 'disabled'} successfully`,
+          errorMessage: "Failed to update community setting",
+          context: {
+            component: 'AdminDashboard',
+            operation: 'handleCommunityToggle',
+            checked
+          }
+        }
+      );
     } finally {
       setLoadingCommunityToggle(false);
     }

@@ -618,8 +618,8 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     );
   }
 
-  // Special handling for duration field - use increment/decrement buttons
-  if (name === "duration" && (schema.type === "number" || schema.type === "integer")) {
+  // Special handling for duration renderer - use increment/decrement buttons
+  if (schema.renderer === "duration" && (schema.type === "number" || schema.type === "integer")) {
     const defaultVal = typeof schema.default === 'number' ? schema.default : (typeof schema.minimum === 'number' ? schema.minimum : 1);
     const numericValue = (value === "" || value === undefined || value === null) 
       ? Math.round(defaultVal)

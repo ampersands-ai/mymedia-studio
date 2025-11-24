@@ -39,6 +39,34 @@ export interface TimingResult {
   statusCode?: number;
 }
 
+/**
+ * Extract HTTP status code from webhook payload
+ * Handles both number and string types from payload.code or payload.status
+ */
+function extractHttpCode(payload?: WebhookPayload): number | null {
+  if (!payload) return null;
+
+  // Check payload.code first
+  if (typeof payload.code === 'number') {
+    return payload.code;
+  }
+  if (typeof payload.code === 'string') {
+    const parsed = parseInt(payload.code, 10);
+    return isNaN(parsed) ? null : parsed;
+  }
+
+  // Fallback to payload.status
+  if (typeof payload.status === 'number') {
+    return payload.status;
+  }
+  if (typeof payload.status === 'string') {
+    const parsed = parseInt(payload.status, 10);
+    return isNaN(parsed) ? null : parsed;
+  }
+
+  return null;
+}
+
 export async function validateTiming(
   generation: GenerationRecord,
   supabase: SupabaseClient,
@@ -49,13 +77,10 @@ export async function validateTiming(
   const MAX_PROCESSING_TIME = estimatedSeconds * 2.5 * 1000; // 2.5x multiplier
 
   const processingTime = Date.now() - new Date(generation.created_at).getTime();
-  
+
   // Determine if this is a failure callback
   const state = payload?.data?.state;
-  const httpCode = typeof payload?.code === 'number' ? payload.code : 
-                   typeof payload?.status === 'number' ? payload.status : 
-                   (typeof payload?.code === 'string' ? parseInt(payload.code, 10) : 
-                    (typeof payload?.status === 'string' ? parseInt(payload.status, 10) : null));
+  const httpCode = extractHttpCode(payload);
   const msgStr = String(payload?.msg || payload?.data?.failMsg || '').toLowerCase();
   const failurePatterns = ['error', 'fail', 'exceed', 'retry', 'timeout', 'invalid', 
                            '超过', '失败', '错误', '錯誤', '失敗', 'erreur', 'fehler'];

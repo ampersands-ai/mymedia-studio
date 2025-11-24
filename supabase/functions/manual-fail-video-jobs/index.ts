@@ -7,6 +7,7 @@ import {
   createValidationErrorResponse 
 } from "../_shared/validation.ts";
 import {
+import { GENERATION_STATUS } from "../_shared/constants.ts";
   handleOptionsRequest,
   createJsonResponse,
   createErrorResponse,
@@ -59,7 +60,7 @@ Deno.serve(async (req) => {
     const { data: updatedJobs, error: updateError } = await supabaseClient
       .from('video_jobs')
       .update({
-        status: 'failed',
+        status: GENERATION_STATUS.FAILED,
         error_message: 'Video assembly timed out after extended period',
         updated_at: new Date().toISOString()
       })

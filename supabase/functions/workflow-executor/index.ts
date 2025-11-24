@@ -14,6 +14,7 @@ import {
   coerceParametersToSchema
 } from "./helpers/parameter-resolver.ts";
 import {
+import { GENERATION_STATUS } from "../_shared/constants.ts";
   WorkflowExecutorRequestSchema,
   WorkflowStepSchema,
   type WorkflowExecutorRequest,
@@ -100,7 +101,7 @@ Deno.serve(async (req) => {
         user_id: user.id,
         total_steps: totalSteps,
         user_inputs: processedInputs,
-        status: 'processing',
+        status: GENERATION_STATUS.PROCESSING,
       })
       .select()
       .single();
@@ -214,7 +215,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         execution_id: execution.id,
-        status: 'processing',
+        status: GENERATION_STATUS.PROCESSING,
       }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );

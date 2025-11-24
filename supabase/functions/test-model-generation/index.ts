@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getModel } from "../_shared/registry/index.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 
@@ -222,13 +223,13 @@ serve(async (req) => {
         .eq('provider_task_id', taskId)
         .single();
 
-      if (generation && generation.status === 'completed') {
+      if (generation && generation.status === GENERATION_STATUS.COMPLETED) {
         finalResult = generation;
         console.log('✅ Generation completed, provider_response keys:', Object.keys(generation.provider_response || {}));
         break;
       }
       
-      if (generation && generation.status === 'failed') {
+      if (generation && generation.status === GENERATION_STATUS.FAILED) {
         throw new Error('Generation failed');
       }
 

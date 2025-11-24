@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 
@@ -97,7 +98,7 @@ Deno.serve(async (req) => {
       const { error: updateError } = await supabase
         .from('generations')
         .update({
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           provider_response: {
             error: errorMessage,
             terminated_by: forceTerminate ? user.id : null,
@@ -270,7 +271,7 @@ Deno.serve(async (req) => {
               template_id: generation.template_id,
               settings: generation.settings,
               tokens_used: 0,
-              status: 'completed',
+              status: GENERATION_STATUS.COMPLETED,
               storage_path: storagePath,
               file_size_bytes: data.length,
               provider_task_id: generation.provider_task_id,
@@ -303,7 +304,7 @@ Deno.serve(async (req) => {
       const { error: updateError } = await supabase
         .from('generations')
         .update({
-          status: 'completed',
+          status: GENERATION_STATUS.COMPLETED,
           is_batch_output: true,
           output_index: 0
         })
@@ -366,7 +367,7 @@ Deno.serve(async (req) => {
       const { error: updateError } = await supabase
         .from('generations')
         .update({
-          status: 'completed',
+          status: GENERATION_STATUS.COMPLETED,
           storage_path: mainStoragePath,
           file_size_bytes: data.length
         })

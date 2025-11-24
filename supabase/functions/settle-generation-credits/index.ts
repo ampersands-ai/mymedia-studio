@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { settleCredits, releaseCredits } from './creditSettlement.ts';
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 
@@ -40,12 +41,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (status === 'completed') {
+    if (status === GENERATION_STATUS.COMPLETED) {
       await settleCredits(generation.user_id, generationId, generation.tokens_used);
       return new Response(JSON.stringify({ success: true, charged: generation.tokens_used }), {
         headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       });
-    } else if (status === 'failed') {
+    } else if (status === GENERATION_STATUS.FAILED) {
       await releaseCredits(generationId);
       return new Response(JSON.stringify({ success: true, charged: 0 }), {
         headers: { ...responseHeaders, 'Content-Type': 'application/json' }

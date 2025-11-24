@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 
@@ -115,14 +116,14 @@ Deno.serve(async (req) => {
         results.push({
           voice_id: topVoice.id,
           name: topVoice.name,
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           error: error.message
         });
       }
     }
 
     const successCount = results.filter(r => r.status === 'success').length;
-    const failedCount = results.filter(r => r.status === 'failed').length;
+    const failedCount = results.filter(r => r.status === GENERATION_STATUS.FAILED).length;
 
     logger.info('Sync complete', { 
       metadata: { total: results.length, successful: successCount, failed: failedCount } 

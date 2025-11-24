@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { validateSignature } from "./security/signature-validator.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 Deno.serve(async (req) => {
   const webhookStartTime = Date.now();

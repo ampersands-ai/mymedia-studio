@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 
@@ -107,7 +108,7 @@ Deno.serve(async (req) => {
                     user_id: job.user_id,
                     type: 'video',
                     prompt: `Faceless Video: ${job.topic}`,
-                    status: 'completed',
+                    status: GENERATION_STATUS.COMPLETED,
                     tokens_used: 15,
                     storage_path: videoPath,
                     model_id: 'faceless-video-generator',
@@ -120,7 +121,7 @@ Deno.serve(async (req) => {
                   });
                   
                   await supabaseClient.from('video_jobs').update({
-                    status: 'completed',
+                    status: GENERATION_STATUS.COMPLETED,
                     final_video_url: videoUrl,
                     completed_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
@@ -133,7 +134,7 @@ Deno.serve(async (req) => {
                   continue;
                 } else if (renderStatus === 'failed') {
                   await supabaseClient.from('video_jobs').update({
-                    status: 'failed',
+                    status: GENERATION_STATUS.FAILED,
                     error_message: 'Shotstack rendering failed',
                     updated_at: new Date().toISOString()
                   }).eq('id', job.id);
@@ -189,7 +190,7 @@ Deno.serve(async (req) => {
             await supabaseClient
               .from('video_jobs')
               .update({ 
-                status: 'failed',
+                status: GENERATION_STATUS.FAILED,
                 error_message: `Auto-failed: stuck in ${job.status} for >5 minutes`,
                 updated_at: new Date().toISOString()
               })
@@ -324,7 +325,7 @@ Deno.serve(async (req) => {
                   user_id: job.user_id,
                   type: 'video',
                   prompt: `Faceless Video: ${job.topic}`,
-                  status: 'completed',
+                  status: GENERATION_STATUS.COMPLETED,
                   tokens_used: 15,
                   storage_path: videoPath,
                   model_id: 'faceless-video-generator',
@@ -338,7 +339,7 @@ Deno.serve(async (req) => {
                 
                 // Mark job as completed
                 await supabaseClient.from('video_jobs').update({
-                  status: 'completed',
+                  status: GENERATION_STATUS.COMPLETED,
                   final_video_url: videoUrl,
                   completed_at: new Date().toISOString(),
                   updated_at: new Date().toISOString()
@@ -352,7 +353,7 @@ Deno.serve(async (req) => {
               } else if (renderStatus === 'failed') {
                 // Shotstack render failed
                 await supabaseClient.from('video_jobs').update({
-                  status: 'failed',
+                  status: GENERATION_STATUS.FAILED,
                   error_message: 'Shotstack rendering failed',
                   updated_at: new Date().toISOString()
                 }).eq('id', job.id);
@@ -411,7 +412,7 @@ Deno.serve(async (req) => {
           await supabaseClient
             .from('video_jobs')
             .update({ 
-              status: 'failed',
+              status: GENERATION_STATUS.FAILED,
               error_message: `Auto-failed: stuck in ${job.status} for >5 minutes`,
               updated_at: new Date().toISOString()
             })

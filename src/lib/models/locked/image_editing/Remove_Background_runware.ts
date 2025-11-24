@@ -3,6 +3,7 @@ import { getGenerationType } from "@/lib/models/registry";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
+import { GENERATION_STATUS } from "@/constants/generation-status";
 
 export const MODEL_CONFIG = {
   modelId: "runware:110@1",
@@ -111,7 +112,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       type: getGenerationType(MODEL_CONFIG.contentType),
       prompt: prompt || "Remove background",
       tokens_used: cost,
-      status: "pending",
+      status: GENERATION_STATUS.PENDING,
       settings: modelParameters,
     })
     .select()
@@ -134,7 +135,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   });
 
   if (funcError) {
-    await supabase.from('generations').update({ status: 'failed' }).eq('id', gen.id);
+    await supabase.from('generations').update({ status: GENERATION_STATUS.FAILED }).eq('id', gen.id);
     throw new Error(`Edge function failed: ${funcError.message}`);
   }
 

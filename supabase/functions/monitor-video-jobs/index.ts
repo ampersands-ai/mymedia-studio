@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 
@@ -72,7 +73,7 @@ Deno.serve(async (req) => {
       const { error: updateError } = await supabase
         .from('video_jobs')
         .update({
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           error_message: 'Video generation exceeded 4 hours. Credits refunded automatically.',
           error_details: {
             timeout: true,

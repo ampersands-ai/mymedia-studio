@@ -2,6 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 
@@ -120,7 +121,7 @@ Deno.serve(async (req) => {
         user_id: userId,
         type: 'video',
         prompt: `Storyboard: ${storyboard.topic}`,
-        status: 'completed',
+        status: GENERATION_STATUS.COMPLETED,
         tokens_used: storyboard.estimated_render_cost || 0,
         storage_path: storagePath,
         model_id: 'storyboard-video-generator',

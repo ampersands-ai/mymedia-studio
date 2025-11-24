@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 // Inlined helper: sanitize sensitive data
 function sanitizeData(data: any): any {
@@ -122,14 +123,14 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized: not your job');
     }
 
-    if (job.status !== 'awaiting_voice_approval' && job.status !== 'failed') {
+    if (job.status !== 'awaiting_voice_approval' && job.status !== GENERATION_STATUS.FAILED) {
       logger.error("Invalid job status for approval", undefined, { 
         metadata: { jobId: job_id, status: job.status }
       });
       throw new Error(`Job cannot be approved from status: ${job.status}`);
     }
 
-    if (job.status === 'failed') {
+    if (job.status === GENERATION_STATUS.FAILED) {
       logger.info("Resetting failed job for retry", { metadata: { jobId: job_id } });
       await updateJobStatus(supabaseClient, job_id, 'awaiting_voice_approval', logger);
     }
@@ -999,7 +1000,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
             user_id: job.user_id,
             type: 'video',
             prompt: `Faceless Video: ${job.topic}`,
-            status: 'completed',
+            status: GENERATION_STATUS.COMPLETED,
             tokens_used: 15,
             storage_path: videoPath,
             model_id: 'faceless-video-generator',
@@ -1034,7 +1035,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
           
           // Update job with permanent storage URL instead of temporary Shotstack URL
           await supabase.from('video_jobs').update({
-            status: 'completed',
+            status: GENERATION_STATUS.COMPLETED,
             final_video_url: videoPublicUrl,
             completed_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
@@ -1048,7 +1049,7 @@ async function pollRenderStatus(supabase: any, jobId: string, renderId: string, 
           
           // Update job status to failed with detailed error
           await supabase.from('video_jobs').update({
-            status: 'failed',
+            status: GENERATION_STATUS.FAILED,
             error_message: 'Failed to save final video',
             error_details: { 
               error: uploadError.message,

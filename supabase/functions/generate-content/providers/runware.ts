@@ -1,4 +1,5 @@
 import { ProviderRequest, ProviderResponse } from "./index.ts";
+import { GENERATION_STATUS } from "../../_shared/constants.ts";
 
 function uint8ArrayToBase64(bytes: Uint8Array): string {
   let binary = '';
@@ -88,7 +89,7 @@ async function pollForVideoResult(
           }
 
           // Still processing
-          if (item.status === "processing") {
+          if (item.status === GENERATION_STATUS.PROCESSING) {
             console.log('[Runware] Still processing', { taskUUID });
             break;
           }

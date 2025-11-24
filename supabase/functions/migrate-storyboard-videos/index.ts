@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 
@@ -151,7 +152,7 @@ Deno.serve(async (req) => {
           details.push({
             storyboardId: storyboard.id,
             topic: storyboard.topic,
-            status: 'failed',
+            status: GENERATION_STATUS.FAILED,
             error: downloadResult.error.message,
           });
         } else {
@@ -169,7 +170,7 @@ Deno.serve(async (req) => {
         details.push({
           storyboardId: storyboard.id,
           topic: storyboard.topic,
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           error: error instanceof Error ? error.message : 'Unknown error',
         });
       }

@@ -1,5 +1,6 @@
 import { ProviderRequest, ProviderResponse } from "./index.ts";
 import { EdgeLogger } from "../../_shared/edge-logger.ts";
+import { GENERATION_STATUS } from "../../_shared/constants.ts";
 
 // API key mapping logic for KIE AI
 function getKieApiKey(modelId: string, recordId: string): string {
@@ -180,7 +181,7 @@ export async function callKieAI(
         
         // If already completed, we could process it here instead of waiting for webhook
         // But for now, we'll let the webhook handler deal with it
-        if (statusData.data?.status === 'completed') {
+        if (statusData.data?.status === GENERATION_STATUS.COMPLETED) {
           logger.warn('Task completed immediately - webhook should arrive soon', { 
             metadata: { taskId } 
           });
@@ -201,7 +202,7 @@ export async function callKieAI(
       metadata: {
         model: request.model,
         task_id: taskId,
-        status: 'processing',
+        status: GENERATION_STATUS.PROCESSING,
         callback_url: callbackUrl
       }
     };

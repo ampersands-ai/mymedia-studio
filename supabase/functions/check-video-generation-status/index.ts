@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 
@@ -66,7 +67,7 @@ Deno.serve(async (req) => {
     }
 
     // If already completed or failed, return current status
-    if (generation.status === 'completed' || generation.status === 'failed') {
+    if (generation.status === GENERATION_STATUS.COMPLETED || generation.status === GENERATION_STATUS.FAILED) {
       logger.info('Generation already in final state', { metadata: { status: generation.status } });
       return new Response(
         JSON.stringify({ 
@@ -139,7 +140,7 @@ Deno.serve(async (req) => {
       const { error: updateError } = await supabase
         .from('generations')
         .update({
-          status: 'completed',
+          status: GENERATION_STATUS.COMPLETED,
           storage_path: storagePath,
           output_url: videoUrl,
           provider_response: kieData
@@ -156,7 +157,7 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ 
-          status: 'completed',
+          status: GENERATION_STATUS.COMPLETED,
           storage_path: storagePath,
           message: 'Video generation completed and recovered'
         }),
@@ -175,7 +176,7 @@ Deno.serve(async (req) => {
       const { error: updateError } = await supabase
         .from('generations')
         .update({
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           provider_response: kieData
         })
         .eq('id', generation_id);
@@ -192,7 +193,7 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ 
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           message: 'Video generation failed on provider side. Credits refunded.'
         }),
         { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
@@ -203,7 +204,7 @@ Deno.serve(async (req) => {
       logger.debug('Task still processing');
       return new Response(
         JSON.stringify({ 
-          status: 'processing',
+          status: GENERATION_STATUS.PROCESSING,
           message: 'Video generation is still in progress'
         }),
         { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }

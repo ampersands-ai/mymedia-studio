@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -57,8 +58,8 @@ Deno.serve(async (req) => {
     if (webhookError) throw webhookError;
 
     const totalWebhooks = webhooks.length;
-    const completedCount = webhooks.filter(g => g.status === 'completed').length;
-    const failedCount = webhooks.filter(g => g.status === 'failed').length;
+    const completedCount = webhooks.filter(g => g.status === GENERATION_STATUS.COMPLETED).length;
+    const failedCount = webhooks.filter(g => g.status === GENERATION_STATUS.FAILED).length;
     const failureRate = totalWebhooks > 0 ? (failedCount / totalWebhooks) * 100 : 0;
 
     logger.info('Webhook statistics calculated', { 
@@ -71,7 +72,7 @@ Deno.serve(async (req) => {
 
     // Count storage failures
     const storageFailures = webhooks.filter(g => {
-      if (g.status !== 'failed') return false;
+      if (g.status !== GENERATION_STATUS.FAILED) return false;
       const response = g.provider_response as any;
       const errorMsg = (response?.error || response?.storage_error || '').toLowerCase();
       return errorMsg.includes('storage') || errorMsg.includes('upload') || errorMsg.includes('bucket');

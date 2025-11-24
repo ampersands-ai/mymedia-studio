@@ -12,6 +12,7 @@ import { getGenerationType } from '@/lib/models/registry';
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { supabase } from "@/integrations/supabase/client";
 import { reserveCredits } from "@/lib/models/creditDeduction";
+import { GENERATION_STATUS } from "@/constants/generation-status";
 
 export const MODEL_CONFIG = {
   modelId: "elevenlabs/text-to-speech-turbo-2-5",
@@ -139,7 +140,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       model_record_id: MODEL_CONFIG.recordId,
       prompt,
       type: getGenerationType(MODEL_CONFIG.contentType),
-      status: 'pending',
+      status: GENERATION_STATUS.PENDING,
       tokens_used: cost,
       settings: modelParameters
     })
@@ -161,7 +162,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   });
 
   if (funcError) {
-    await supabase.from('generations').update({ status: 'failed' }).eq('id', generation.id);
+    await supabase.from('generations').update({ status: GENERATION_STATUS.FAILED }).eq('id', generation.id);
     throw new Error(`Edge function failed: ${funcError.message}`);
   }
 

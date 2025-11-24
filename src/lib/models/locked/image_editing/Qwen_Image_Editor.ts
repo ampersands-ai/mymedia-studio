@@ -3,6 +3,7 @@ import { getGenerationType } from '@/lib/models/registry';
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
+import { GENERATION_STATUS } from "@/constants/generation-status";
 
 export const MODEL_CONFIG = { modelId: "qwen/image-edit", recordId: "b6d430f1-e823-4192-bf72-0dba29079931", modelName: "Qwen Image Editor", provider: "kie_ai", contentType: "image_editing",
   use_api_key: "KIE_AI_API_KEY_IMAGE_EDITING", baseCreditCost: 1, estimatedTimeSeconds: 25, costMultipliers: { image_size: { landscape_16_9: 2, landscape_4_3: 2.5, portrait_16_9: 2, portrait_4_3: 2.5, square: 1, square_hd: 3.5 }, num_images: { "1": 1, "2": 2, "3": 3, "4": 4 } }, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
@@ -32,7 +33,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   await reserveCredits(userId, cost);
 
   // Create generation record with pending status (edge function will process)
-  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
+  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: GENERATION_STATUS.PENDING, settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
 
   // Call edge function to handle API call server-side
@@ -48,7 +49,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   });
 
   if (funcError) {
-    await supabase.from('generations').update({ status: 'failed' }).eq('id', gen.id);
+    await supabase.from('generations').update({ status: GENERATION_STATUS.FAILED }).eq('id', gen.id);
     throw new Error(`Edge function failed: ${funcError.message}`);
   }
 

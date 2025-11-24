@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 
@@ -146,7 +147,7 @@ Deno.serve(async (req) => {
         results.processed++;
 
         if (pollResult.success) {
-          if (pollResult.status === 'completed' && pollResult.result_urls?.length > 0) {
+          if (pollResult.status === GENERATION_STATUS.COMPLETED && pollResult.result_urls?.length > 0) {
             logger.info('Task completed', { metadata: { generationId: gen.id, resultCount: pollResult.result_urls.length } });
             results.completed++;
           } else {

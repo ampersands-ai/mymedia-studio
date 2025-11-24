@@ -4,6 +4,7 @@ import { Webhook } from "https://esm.sh/svix@1";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 const WEBHOOK_VERSION = "2.0-svix-dual-headers";
 
@@ -350,7 +351,7 @@ async function handleSubscriptionCancelled(supabase: any, data: any, metadata: a
   // Don't remove tokens immediately - let them use until period ends
   await supabase
     .from('user_subscriptions')
-    .update({ status: 'cancelled' })
+    .update({ status: GENERATION_STATUS.CANCELLED })
     .eq('user_id', userId);
 }
 

@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 
@@ -109,7 +110,7 @@ Deno.serve(async (req) => {
     }
 
     // Validate generation is completed
-    if (audioGen.status !== 'completed') {
+    if (audioGen.status !== GENERATION_STATUS.COMPLETED) {
       logger.error('Audio not completed', undefined, { 
         metadata: { generation_id, status: audioGen.status } 
       });
@@ -200,7 +201,7 @@ Deno.serve(async (req) => {
         user_id: user.id,
         type: 'video',
         prompt: `MP4 video from audio track #${output_index + 1}`,
-        status: 'pending',
+        status: GENERATION_STATUS.PENDING,
         tokens_used: MP4_TOKEN_COST,
         parent_generation_id: generation_id,
         output_index: output_index,
@@ -303,7 +304,7 @@ Deno.serve(async (req) => {
       await supabaseClient
         .from('generations')
         .update({ 
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           provider_response: { error: kieData, request: kiePayload }
         })
         .eq('id', videoGen.id);
@@ -327,7 +328,7 @@ Deno.serve(async (req) => {
       await supabaseClient
         .from('generations')
         .update({ 
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           provider_response: kieData 
         })
         .eq('id', videoGen.id);
@@ -350,7 +351,7 @@ Deno.serve(async (req) => {
       .update({ 
         provider_task_id: mp4TaskId,
         provider_response: kieData,
-        status: 'processing'
+        status: GENERATION_STATUS.PROCESSING
       })
       .eq('id', videoGen.id);
 

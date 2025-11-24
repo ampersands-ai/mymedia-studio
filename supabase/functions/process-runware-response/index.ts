@@ -8,6 +8,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 
@@ -53,7 +54,7 @@ serve(async (req) => {
     }
 
     // Check if already processed
-    if (generation.status === 'completed' && generation.storage_path) {
+    if (generation.status === GENERATION_STATUS.COMPLETED && generation.storage_path) {
       logger.info('Already processed', { metadata: { generationId: generation_id } });
       return new Response(
         JSON.stringify({ 
@@ -135,7 +136,7 @@ serve(async (req) => {
     const { error: updateError } = await supabase
       .from('generations')
       .update({
-        status: 'completed',
+        status: GENERATION_STATUS.COMPLETED,
         storage_path: storagePath,
         output_url: urlData.publicUrl,
         file_size_bytes: buffer.length,
@@ -150,7 +151,7 @@ serve(async (req) => {
     await supabase.functions.invoke('settle-generation-credits', {
       body: {
         generationId: generation_id,
-        status: 'completed'
+        status: GENERATION_STATUS.COMPLETED
       }
     });
 
@@ -182,7 +183,7 @@ serve(async (req) => {
         await supabase.functions.invoke('settle-generation-credits', {
           body: {
             generationId: generation_id,
-            status: 'failed'
+            status: GENERATION_STATUS.FAILED
           }
         });
       } catch (settlementError) {

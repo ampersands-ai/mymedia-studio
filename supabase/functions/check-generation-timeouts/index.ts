@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getModelConfig } from "../_shared/registry/index.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 
@@ -30,7 +31,7 @@ Deno.serve(async (req) => {
     const { data: stuckGenerations, error: queryError } = await supabase
       .from('generations')
       .select('id, user_id, status, created_at, prompt, model_record_id')
-      .eq('status', 'processing')
+      .eq('status', GENERATION_STATUS.PROCESSING)
       .lt('created_at', fiveMinutesAgo);
 
     if (queryError) {

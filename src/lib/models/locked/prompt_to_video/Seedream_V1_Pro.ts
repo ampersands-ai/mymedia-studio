@@ -3,6 +3,7 @@ import { getGenerationType } from '@/lib/models/registry';
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
+import { GENERATION_STATUS } from "@/constants/generation-status";
 
 export const MODEL_CONFIG = { modelId: "seedream/v1-pro", recordId: "d7c6b5a4-6e3f-2c1d-7a0f-4d6b7c8e5a9f", modelName: "Seedream V1 Pro", provider: "kie_ai", contentType: "prompt_to_video",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_VIDEO", baseCreditCost: 25, estimatedTimeSeconds: 200, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
@@ -29,7 +30,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
-  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single(); // (edge function will process)
+  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: GENERATION_STATUS.PENDING, settings: modelParameters }).select().single(); // (edge function will process)
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
 
   // Call edge function to handle API call server-side
@@ -45,7 +46,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   });
 
   if (funcError) {
-    await supabase.from('generations').update({ status: 'failed' }).eq('id', gen.id);
+    await supabase.from('generations').update({ status: GENERATION_STATUS.FAILED }).eq('id', gen.id);
     throw new Error(`Edge function failed: ${funcError.message}`);
   }
 

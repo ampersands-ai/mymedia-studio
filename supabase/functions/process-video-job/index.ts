@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { VIDEO_JOB_STATUS } from "../_shared/constants.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 
@@ -727,7 +728,7 @@ async function _pollRenderStatus(supabase: any, logger: any, jobId: string, rend
               user_id: job.user_id,
               type: 'video',
               prompt: `Faceless Video: ${job.topic}`,
-              status: 'completed',
+              status: GENERATION_STATUS.COMPLETED,
               tokens_used: job.cost_tokens,
               storage_path: videoPath,
               model_id: 'faceless-video-generator',
@@ -776,7 +777,7 @@ async function _pollRenderStatus(supabase: any, logger: any, jobId: string, rend
       }
       
       await supabase.from('video_jobs').update({
-        status: 'completed',
+        status: GENERATION_STATUS.COMPLETED,
         final_video_url: finalVideoUrl,
         storage_path: videoPath,
         completed_at: new Date().toISOString()

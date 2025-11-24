@@ -14,6 +14,7 @@ import { getGenerationType } from '@/lib/models/registry';
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
+import { GENERATION_STATUS } from "@/constants/generation-status";
 
 export const MODEL_CONFIG = {
   modelId: "flux-kontext-pro",
@@ -105,7 +106,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   await reserveCredits(userId, cost);
 
   // Create generation record with pending status (edge function will process)
-  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: "pending", settings: modelParameters }).select().single();
+  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: GENERATION_STATUS.PENDING, settings: modelParameters }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
 
   // Call edge function to handle API call server-side
@@ -121,7 +122,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   });
 
   if (funcError) {
-    await supabase.from('generations').update({ status: 'failed' }).eq('id', gen.id);
+    await supabase.from('generations').update({ status: GENERATION_STATUS.FAILED }).eq('id', gen.id);
     throw new Error(`Edge function failed: ${funcError.message}`);
   }
 

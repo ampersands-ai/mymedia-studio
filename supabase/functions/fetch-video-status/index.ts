@@ -2,6 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 
@@ -130,7 +131,7 @@ Deno.serve(async (req) => {
         { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
 
-    } else if (statusData.movie?.status === 'error' || statusData.movie?.status === 'failed') {
+    } else if (statusData.movie?.status === 'error' || statusData.movie?.status === GENERATION_STATUS.FAILED) {
       // Mark as failed and refund
       const tokenCost = storyboard.estimated_render_cost || 0;
       await supabaseClient.rpc('increment_tokens', {
@@ -141,7 +142,7 @@ Deno.serve(async (req) => {
       await supabaseClient
         .from('storyboards')
         .update({
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           updated_at: new Date().toISOString(),
           api_quota_remaining: statusData.remaining_quota?.time || null
         })
@@ -152,7 +153,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           error: statusData.movie?.message || statusData.movie?.error || 'Rendering failed'
         }),
         { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }

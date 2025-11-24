@@ -9,6 +9,7 @@
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { webhookLogger } from "../../_shared/logger.ts";
+import { GENERATION_STATUS } from "../../_shared/constants.ts";
 
 export interface TimingResult {
   success: boolean;

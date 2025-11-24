@@ -16,6 +16,7 @@ import { uploadToStorage } from "../../kie-ai-webhook/storage/content-uploader.t
 import { determineFileExtension } from "../../kie-ai-webhook/storage/mime-utils.ts";
 import { orchestrateWorkflow } from "../../kie-ai-webhook/orchestration/workflow-orchestrator.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../../_shared/constants.ts";
 
 
 
@@ -134,7 +135,7 @@ Deno.serve(async (req) => {
       await supabase
         .from('generations')
         .update({
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           error_message: errorMessage,
           completed_at: new Date().toISOString()
         })
@@ -156,7 +157,7 @@ Deno.serve(async (req) => {
 
       return new Response(JSON.stringify({ 
         success: true,
-        status: 'failed',
+        status: GENERATION_STATUS.FAILED,
         error: errorMessage 
       }), {
         headers: { ...responseHeaders, 'Content-Type': 'application/json' }
@@ -168,7 +169,7 @@ Deno.serve(async (req) => {
       await supabase
         .from('generations')
         .update({ 
-          status: 'processing',
+          status: GENERATION_STATUS.PROCESSING,
           provider_response: payload 
         })
         .eq('id', generationId);
@@ -180,7 +181,7 @@ Deno.serve(async (req) => {
 
       return new Response(JSON.stringify({ 
         success: true,
-        status: 'processing' 
+        status: GENERATION_STATUS.PROCESSING 
       }), {
         headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       });
@@ -219,7 +220,7 @@ Deno.serve(async (req) => {
     await supabase
       .from('generations')
       .update({
-        status: 'completed',
+        status: GENERATION_STATUS.COMPLETED,
         output_url: uploadResult.publicUrl,
         storage_path: uploadResult.storagePath,
         completed_at: new Date().toISOString(),
@@ -253,7 +254,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ 
       success: true,
       generation_id: generationId,
-      status: 'completed'
+      status: GENERATION_STATUS.COMPLETED
     }), {
       headers: { ...responseHeaders, 'Content-Type': 'application/json' }
     });

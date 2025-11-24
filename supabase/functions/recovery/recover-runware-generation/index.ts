@@ -7,6 +7,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { webhookLogger } from "../../_shared/logger.ts";
+import { GENERATION_STATUS } from "../../_shared/constants.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -52,7 +53,7 @@ serve(async (req) => {
 
     // Runware is synchronous - if stuck in processing, it likely failed
     // Mark as failed and refund tokens
-    if (generation.status === 'processing') {
+    if (generation.status === GENERATION_STATUS.PROCESSING) {
       webhookLogger.info('Marking stuck Runware generation as failed', { 
         generationId: generation_id 
       });
@@ -60,7 +61,7 @@ serve(async (req) => {
       await supabase
         .from('generations')
         .update({
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           error_message: 'Generation timed out - Runware sync call did not complete',
           completed_at: new Date().toISOString()
         })
@@ -88,7 +89,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           generation_id,
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           action: 'marked_as_failed_and_refunded',
           message: 'Runware sync generation timed out - marked as failed and refunded'
         }),

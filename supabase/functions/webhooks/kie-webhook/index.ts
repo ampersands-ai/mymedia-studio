@@ -21,6 +21,7 @@ import { determineFileExtension } from "../../kie-ai-webhook/storage/mime-utils.
 // Orchestration (reuse existing)
 import { orchestrateWorkflow } from "../../kie-ai-webhook/orchestration/workflow-orchestrator.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../../_shared/constants.ts";
 
 
 
@@ -198,7 +199,7 @@ Deno.serve(async (req) => {
       await supabase
         .from('generations')
         .update({
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           provider_response: {
             error: sanitizedError,
             error_type: 'provider_failure',
@@ -226,7 +227,7 @@ Deno.serve(async (req) => {
         kie_credits_remaining: remainedCredits,
         our_tokens_charged: generation.tokens_used,
         model_id: generation.model_id || 'unknown',
-        task_status: 'failed',
+        task_status: GENERATION_STATUS.FAILED,
         processing_time_seconds: 0
       });
 
@@ -240,7 +241,7 @@ Deno.serve(async (req) => {
     if (generation.type === 'image') {
       if (!hasImageResults(items, payload, resultJson) && callbackType && callbackType.toLowerCase() !== 'complete') {
         webhookLogger.info('Partial image callback', { provider: 'kie_ai', generationId, taskId, callbackType });
-        await supabase.from('generations').update({ status: 'processing', provider_response: payload }).eq('id', generationId);
+        await supabase.from('generations').update({ status: GENERATION_STATUS.PROCESSING, provider_response: payload }).eq('id', generationId);
         return new Response(
           JSON.stringify({ success: true, message: 'Partial webhook acknowledged' }),
           { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
@@ -249,7 +250,7 @@ Deno.serve(async (req) => {
     } else if (generation.type === 'audio') {
       if (!hasAudioResults(items, payload, resultJson) && callbackType && callbackType.toLowerCase() !== 'complete') {
         webhookLogger.info('Partial audio callback', { provider: 'kie_ai', generationId, taskId, callbackType });
-        await supabase.from('generations').update({ status: 'processing', provider_response: payload }).eq('id', generationId);
+        await supabase.from('generations').update({ status: GENERATION_STATUS.PROCESSING, provider_response: payload }).eq('id', generationId);
         return new Response(
           JSON.stringify({ success: true, message: 'Partial webhook acknowledged' }),
           { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
@@ -258,7 +259,7 @@ Deno.serve(async (req) => {
     } else if (generation.type === 'video') {
       if (!hasVideoResults(items, payload, resultJson) && callbackType && callbackType.toLowerCase() !== 'complete') {
         webhookLogger.info('Partial video callback', { provider: 'kie_ai', generationId, taskId, callbackType });
-        await supabase.from('generations').update({ status: 'processing', provider_response: payload }).eq('id', generationId);
+        await supabase.from('generations').update({ status: GENERATION_STATUS.PROCESSING, provider_response: payload }).eq('id', generationId);
         return new Response(
           JSON.stringify({ success: true, message: 'Partial webhook acknowledged' }),
           { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
@@ -321,7 +322,7 @@ Deno.serve(async (req) => {
         
         if (!downloadResult.success || !downloadResult.data) {
           await supabase.from('generations').update({
-            status: 'failed',
+            status: GENERATION_STATUS.FAILED,
             provider_response: { error: 'Failed to download from provider', timestamp: new Date().toISOString() }
           }).eq('id', generationId);
           
@@ -360,7 +361,7 @@ Deno.serve(async (req) => {
         
         if (!uploadResult.success) {
           await supabase.from('generations').update({
-            status: 'failed',
+            status: GENERATION_STATUS.FAILED,
             provider_response: { error: 'Storage upload failed', timestamp: new Date().toISOString() }
           }).eq('id', generationId);
           
@@ -448,7 +449,7 @@ Deno.serve(async (req) => {
               template_id: generation.template_id,
               settings: generation.settings,
               tokens_used: 0,
-              status: 'completed',
+              status: GENERATION_STATUS.COMPLETED,
               storage_path: uploadResult.storagePath,
               output_url: uploadResult.publicUrl,
               file_size_bytes: downloadResult.data.length,
@@ -478,7 +479,7 @@ Deno.serve(async (req) => {
 
       // === UPDATE PARENT ===
       const updateData: any = {
-        status: 'completed',
+        status: GENERATION_STATUS.COMPLETED,
         file_size_bytes: fileSize,
         provider_response: {
           ...payload,

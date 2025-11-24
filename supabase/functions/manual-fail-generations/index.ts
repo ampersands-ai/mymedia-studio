@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 
@@ -55,7 +56,7 @@ Deno.serve(async (req) => {
       const { error: updateError } = await supabase
         .from('generations')
         .update({
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           provider_response: {
             error: 'Manually failed due to timeout. Tokens have been refunded.',
             manual_fail_at: new Date().toISOString()

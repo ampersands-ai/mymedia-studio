@@ -11,11 +11,9 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 interface AlertConfig {
   provider: string;
@@ -34,8 +32,10 @@ interface HealthIssue {
 }
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const startTime = Date.now();
@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
           message: 'No enabled configurations',
           checks_performed: 0 
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
         issues: issues,
         timestamp: new Date().toISOString()
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
       }),
       { 
         status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }

@@ -1,19 +1,19 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('fetch-video-status', requestId);
   const startTime = Date.now();
   
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
           videoUrl: statusData.movie.url,
           storyboardId: storyboard.id
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
 
     } else if (statusData.movie?.status === 'error' || statusData.movie?.status === 'failed') {
@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
           status: 'failed',
           error: statusData.movie?.message || statusData.movie?.error || 'Rendering failed'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
 
     } else {
@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
           progress: statusData.movie?.progress || 50,
           message: 'Video is still being processed'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage, success: false }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

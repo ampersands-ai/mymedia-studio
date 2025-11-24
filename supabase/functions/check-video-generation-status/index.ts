@@ -1,18 +1,18 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('check-video-generation-status', requestId);
   const startTime = Date.now();
   
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     if (authError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
     if (!generation_id) {
       return new Response(
         JSON.stringify({ error: 'Missing generation_id' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     if (fetchError || !generation) {
       return new Response(
         JSON.stringify({ error: 'Generation not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 404, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
           storage_path: generation.storage_path,
           output_url: generation.output_url
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
       logger.error('No provider_task_id found', new Error('Missing task ID'));
       return new Response(
         JSON.stringify({ error: 'No task ID found for this generation' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
           storage_path: storagePath,
           message: 'Video generation completed and recovered'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
 
     } else if (
@@ -195,7 +195,7 @@ Deno.serve(async (req) => {
           status: 'failed',
           message: 'Video generation failed on provider side. Credits refunded.'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
 
     } else {
@@ -206,7 +206,7 @@ Deno.serve(async (req) => {
           status: 'processing',
           message: 'Video generation is still in progress'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -214,7 +214,7 @@ Deno.serve(async (req) => {
     logger.error('Error checking video status', error);
     return new Response(
       JSON.stringify({ error: error.message || 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

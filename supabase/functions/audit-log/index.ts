@@ -1,11 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { EdgeLogger } from "../_shared/edge-logger.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 // Input validation schema with strict limits
 const auditLogSchema = z.object({
@@ -36,12 +32,13 @@ const auditLogSchema = z.object({
 });
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
-  
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const logger = new EdgeLogger('audit-log', requestId);
@@ -52,7 +49,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -72,7 +69,7 @@ Deno.serve(async (req) => {
     if (userError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -83,7 +80,7 @@ Deno.serve(async (req) => {
     } catch {
       return new Response(
         JSON.stringify({ error: 'Invalid JSON in request body' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -97,11 +94,11 @@ Deno.serve(async (req) => {
           metadata: { errors: validationError.errors }
         });
         return new Response(
-          JSON.stringify({ 
-            error: 'Invalid input', 
+          JSON.stringify({
+            error: 'Invalid input',
             details: validationError.errors.map(e => e.message).join(', ')
           }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
       throw validationError;
@@ -140,7 +137,7 @@ Deno.serve(async (req) => {
       logger.error('Database error in audit-log', insertError instanceof Error ? insertError : new Error(String(insertError) || 'Database error'));
       return new Response(
         JSON.stringify({ error: 'Failed to create audit log' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -151,17 +148,17 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     // Log full error server-side for debugging
     logger.error('Error in audit-log function', error as any);
-    
+
     // Return generic error to client (no sensitive details)
     return new Response(
       JSON.stringify({ error: 'An error occurred while processing your request' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

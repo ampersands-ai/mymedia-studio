@@ -1,11 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 // Inline helper: sanitize errors before logging
 function sanitizeError(error: any): any {
@@ -73,12 +71,14 @@ const rateLimitSchema = z.object({
 });
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
   
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const logger = new EdgeLogger('rate-limiter', requestId);
@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
             error: `Too many attempts. Please try again in ${minutesRemaining} minute(s).`,
             blockedUntil: blockedUntil.toISOString(),
           }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 429, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
     }
@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ allowed: true, remainingAttempts: config.maxAttempts - 1 }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ allowed: true, remainingAttempts: config.maxAttempts - 1 }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -243,7 +243,7 @@ Deno.serve(async (req) => {
           error: `Too many attempts. Please try again later.`,
       blockedUntil: updateData.blocked_until,
         }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 429, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -254,7 +254,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ allowed: true, remainingAttempts: config.maxAttempts - newAttemptCount }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {

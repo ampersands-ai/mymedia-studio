@@ -1,14 +1,14 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
       }
     );
   } catch (error: any) {
@@ -183,7 +183,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: error?.message || 'Unknown error' }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
       }
     );
   }

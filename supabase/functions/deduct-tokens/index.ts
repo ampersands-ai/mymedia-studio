@@ -2,11 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 // Inline helper: create standardized error response
 function createErrorResponse(error: any, headers: any): Response {
@@ -28,13 +24,14 @@ const deductTokensSchema = z.object({
 });
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
+  if (req.method === 'OPTIONS') {
+    return handleCorsPreflight(req);
+  }
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('deduct-tokens', requestId);
-
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
 
   let body: any;
   let user: any;
@@ -144,14 +141,14 @@ Deno.serve(async (req) => {
     logger.info(`[SUCCESS] Deducted ${tokens_to_deduct} credits for user ${user.id}`);
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
         tokens_remaining: updatedSubscriptionFinal.tokens_remaining,
         tokens_deducted: tokens_to_deduct
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    return createErrorResponse(error, corsHeaders);
+    return createErrorResponse(error, responseHeaders);
   }
 });

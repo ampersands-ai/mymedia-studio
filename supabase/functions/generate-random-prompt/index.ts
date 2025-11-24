@@ -1,18 +1,18 @@
 
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('generate-random-prompt', requestId);
   const startTime = Date.now();
   
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -55,13 +55,13 @@ Deno.serve(async (req) => {
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 429, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
       if (response.status === 402) {
         return new Response(
           JSON.stringify({ error: 'AI service unavailable. Please contact support.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 402, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
       throw new Error(`AI gateway error: ${response.status}`);
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ prompt: generatedPrompt }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     logger.error('Prompt generation failed', error as Error);
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Failed to generate prompt'
       }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

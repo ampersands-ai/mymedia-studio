@@ -1,20 +1,20 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const startTime = Date.now();
   const requestId = crypto.randomUUID();
 
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
       logger.info('Alerts are disabled, skipping check');
       return new Response(
         JSON.stringify({ message: 'Alerts disabled' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
       }
     );
 
@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
       }
     );
   }

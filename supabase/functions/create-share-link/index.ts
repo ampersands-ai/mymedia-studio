@@ -1,18 +1,15 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('create-share-link', requestId);
   const startTime = Date.now();
-  
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -77,13 +74,13 @@ Deno.serve(async (req) => {
     logger.logDuration('Share link creation', startTime);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         share_url: shareUrl,
         token,
-        expires_at: shareToken.expires_at 
+        expires_at: shareToken.expires_at
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
@@ -91,7 +88,7 @@ Deno.serve(async (req) => {
     const message = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
       JSON.stringify({ error: message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

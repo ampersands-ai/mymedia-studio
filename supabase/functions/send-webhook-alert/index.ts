@@ -3,15 +3,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { generateSlackPayload, generateDiscordPayload } from "./_slack-discord.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+
 
 interface AlertPayload {
   type: 'failure_rate' | 'storage_spike' | 'test' | 'model_failure';
@@ -28,8 +26,8 @@ serve(async (req) => {
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('send-webhook-alert', requestId);
 
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -49,7 +47,7 @@ serve(async (req) => {
     if (!settings?.enabled && req.method !== 'POST') {
       return new Response(
         JSON.stringify({ message: 'Alerts are disabled' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -65,7 +63,7 @@ serve(async (req) => {
       if (!hasEmailChannel && !hasSlackChannel && !hasDiscordChannel) {
         return new Response(
           JSON.stringify({ error: 'No notification channels configured' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -85,7 +83,7 @@ serve(async (req) => {
           logger.info('Alert suppressed due to cooldown');
           return new Response(
             JSON.stringify({ message: 'Alert suppressed (cooldown period)' }),
-            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
           );
         }
       }
@@ -245,21 +243,21 @@ serve(async (req) => {
         }),
         { 
           status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
         }
       );
     }
 
     return new Response(
       JSON.stringify({ error: 'Method not allowed' }),
-      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 405, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error: any) {
     logger.error('Error in send-webhook-alert', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

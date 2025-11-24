@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { 
   DeleteStoryboardSchema, 
   validateRequest,
@@ -13,6 +14,8 @@ import {
 } from '../_shared/cors-headers.ts';
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return handleOptionsRequest();
   }

@@ -1,19 +1,19 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { GENERATION_STATUS, AUDIT_ACTIONS } from "../_shared/constants.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('cleanup-stuck-generations', requestId);
   const startTime = Date.now();
 
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
           message: 'No stuck generations found',
           cleaned: 0,
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
         cleaned: stuckGenerations.length,
         generation_ids: stuckGenerations.map(g => g.id),
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     logger.error('Fatal error in cleanup', error as Error);
@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
       }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }

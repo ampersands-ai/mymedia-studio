@@ -2,6 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import {
   GenerateCaptionRequestSchema,
   CaptionResponseSchema,
@@ -10,16 +11,13 @@ import {
   type CaptionResponse
 } from "../_shared/schemas.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 const CAPTION_COST = 0.1; // 0.1 credits per caption generation
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const startTime = Date.now();
@@ -318,10 +316,10 @@ HASHTAG REQUIREMENTS:
         hashtags: formattedHashtags,
         generated_at: now
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    return createSafeErrorResponse(error, 'generate-caption', corsHeaders);
+    return createSafeErrorResponse(error, 'generate-caption', responseHeaders);
   }
 });

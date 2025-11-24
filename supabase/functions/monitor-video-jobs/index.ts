@@ -1,17 +1,17 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const startTime = Date.now();
   const requestId = crypto.randomUUID();
 
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
           monitored: 0,
           message: 'No stuck jobs found' 
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
         refunded_jobs: refundedJobs,
         success_count: refundedJobs.length
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: (error as Error).message || 'Unknown error' }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }

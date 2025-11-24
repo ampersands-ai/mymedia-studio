@@ -1,18 +1,18 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('recover-stuck-jobs', requestId);
   const startTime = Date.now();
 
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
         logger.error('Job not found for force sync', jobError instanceof Error ? jobError : new Error(String(jobError) || 'Not found'), { metadata: { jobId: forceJobId } });
         return new Response(
           JSON.stringify({ error: 'Job not found' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 404, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -215,7 +215,7 @@ Deno.serve(async (req) => {
           recovered: recoveredJobs.length,
           jobs: recoveredJobs
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -246,7 +246,7 @@ Deno.serve(async (req) => {
           recovered: 0,
           message: 'No stuck jobs found'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -440,7 +440,7 @@ Deno.serve(async (req) => {
         recovered: recoveredJobs.length,
         jobs: recoveredJobs
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
     logger.error('Fatal error in recovery', error);
@@ -449,7 +449,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: error.message }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }

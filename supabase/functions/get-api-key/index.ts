@@ -1,4 +1,3 @@
-import { corsHeaders } from "../_shared/cors-headers.ts";
 
 /**
  * DEPRECATED EDGE FUNCTION
@@ -15,8 +14,10 @@ import { corsHeaders } from "../_shared/cors-headers.ts";
  */
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   console.warn('DEPRECATED: get-api-key function called. All models should use generate-content edge function instead.');
@@ -30,7 +31,7 @@ Deno.serve(async (req) => {
     }),
     {
       status: 410,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...responseHeaders, 'Content-Type': 'application/json' }
     }
   );
 });

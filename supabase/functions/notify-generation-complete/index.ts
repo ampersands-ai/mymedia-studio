@@ -2,13 +2,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getModelConfig } from "../_shared/registry/index.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 interface GenerationCompleteRequest {
   generation_id: string;
@@ -18,7 +16,7 @@ interface GenerationCompleteRequest {
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const requestId = crypto.randomUUID();
@@ -49,7 +47,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       logger.info('No notification preferences found for user, skipping notification', { userId: user_id });
       return new Response(
         JSON.stringify({ success: true, message: "No preferences set" }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -63,7 +61,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       });
       return new Response(
         JSON.stringify({ success: true, message: "Below threshold" }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -72,7 +70,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       logger.info('Email notifications disabled for this user', { userId: user_id });
       return new Response(
         JSON.stringify({ success: true, message: "Email disabled" }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -213,7 +211,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         message: "Notification sent",
         email_id: (emailResponse as any).data?.id || (emailResponse as any).id
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     const supabase = createClient(
@@ -226,7 +224,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       JSON.stringify({ success: false, error: (error as any).message || 'Unknown error' }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }

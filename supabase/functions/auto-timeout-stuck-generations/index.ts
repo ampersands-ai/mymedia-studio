@@ -1,22 +1,22 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 /**
  * Auto-timeout generations stuck in processing for more than 10 minutes
  * This function should be called periodically (every 5 minutes via cron)
  */
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('auto-timeout-stuck-generations', requestId);
   
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
       logger.info("No stuck generations found");
       return new Response(
         JSON.stringify({ message: 'No stuck generations found', count: 0 }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -106,14 +106,14 @@ Deno.serve(async (req) => {
         success: successCount,
         errors: errorCount
       }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error: any) {
     logger.error("Auto-timeout error", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

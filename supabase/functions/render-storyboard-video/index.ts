@@ -1,10 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 // Generate a unique random ID for JSON2Video project identifier
 const generateUniqueRenderJobId = (): string => {
@@ -23,8 +21,10 @@ const isVideoUrl = (url: string | null | undefined): boolean => {
 };
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const requestId = crypto.randomUUID();
@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
         }),
         { 
           status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
         }
       );
     }
@@ -305,7 +305,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ 
           error: `Insufficient credits. Need ${actualCost.toFixed(2)} credits to render video.` 
         }),
-        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 402, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
@@ -565,7 +565,7 @@ Deno.serve(async (req) => {
         webhookConfigured: true,
         message: 'Video rendering started. You will be notified when complete.'
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
@@ -573,7 +573,7 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

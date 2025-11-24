@@ -1,11 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { VIDEO_JOB_STATUS } from "../_shared/constants.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 // Inlined helper: sanitize sensitive data
 function sanitizeData(data: any): any {
@@ -78,8 +76,10 @@ async function logApiCall(
 }
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   const requestId = crypto.randomUUID();
@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
       logger.info('Job already completed, skipping', { userId: job.user_id, metadata: { job_id } });
       return new Response(
         JSON.stringify({ success: true, status: 'already_completed' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
       logger.info('Job already failed, skipping', { userId: job.user_id, metadata: { job_id } });
       return new Response(
         JSON.stringify({ success: false, status: 'already_failed' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({ success: true, status: job.status }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
         status: 'awaiting_script_approval',
         message: 'Script ready for review'
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
     const supabaseClient = createClient(
@@ -213,7 +213,7 @@ Deno.serve(async (req) => {
       }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }

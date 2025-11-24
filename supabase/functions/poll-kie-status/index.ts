@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 // API key mapping logic for KIE AI
 function getKieApiKey(modelId: string, recordId: string): string {
@@ -41,18 +42,17 @@ function getKieApiKey(modelId: string, recordId: string): string {
   return apiKey;
 }
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('poll-kie-status', requestId);
   const startTime = Date.now();
 
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
       logger.warn('Missing required parameters');
       return new Response(
         JSON.stringify({ error: 'Missing generation_id or task_id' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
             result_urls: resultUrls,
             fix_result: fixResult
           }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -215,7 +215,7 @@ Deno.serve(async (req) => {
           result_urls: resultUrls,
           message: 'Task completed on Kie.ai'
         }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -232,14 +232,14 @@ Deno.serve(async (req) => {
         message: `Task still ${taskStatus}`,
         result_urls: resultUrls
       }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error: any) {
     logger.error('Fatal error in poll-kie-status', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

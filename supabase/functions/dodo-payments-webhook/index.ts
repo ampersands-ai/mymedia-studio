@@ -3,13 +3,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Webhook } from "https://esm.sh/svix@1";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 const WEBHOOK_VERSION = "2.0-svix-dual-headers";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+
 
 const PLAN_TOKENS = {
   'freemium': 500,
@@ -20,11 +18,13 @@ const PLAN_TOKENS = {
 };
 
 Deno.serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('dodo-payments-webhook', requestId);
   
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
       logger.critical('DODO_WEBHOOK_KEY not configured', new Error('Missing webhook secret'));
       return new Response(
         JSON.stringify({ error: 'Webhook secret not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({ error: 'Missing webhook signature headers' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
         });
         return new Response(
           JSON.stringify({ error: 'Webhook timestamp expired or invalid' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
         });
         return new Response(JSON.stringify({ received: true, duplicate: true }), {
           status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...responseHeaders, 'Content-Type': 'application/json' },
         });
       }
       
@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
       
       return new Response(JSON.stringify({ received: true }), {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
       });
     } catch (verifyError) {
       logger.error('Svix verification failed', verifyError instanceof Error ? verifyError : new Error(String(verifyError)), {
@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({ error: 'Invalid signature' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
   } catch (error) {

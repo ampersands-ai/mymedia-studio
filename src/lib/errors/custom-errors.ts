@@ -1,0 +1,243 @@
+/**
+ * Custom Error Types
+ *
+ * Provides structured error handling with context and error codes.
+ * Used throughout the application for consistent error handling.
+ */
+
+export interface ErrorContext {
+  userId?: string;
+  resourceId?: string;
+  operation?: string;
+  component?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Base application error with context and error codes
+ */
+export class ApplicationError extends Error {
+  public readonly code: string;
+  public readonly context?: ErrorContext;
+  public readonly recoverable: boolean;
+  public readonly originalError?: Error;
+
+  constructor(
+    code: string,
+    message: string,
+    options: {
+      context?: ErrorContext;
+      recoverable?: boolean;
+      originalError?: Error | unknown;
+    } = {}
+  ) {
+    super(message);
+    this.name = this.constructor.name;
+    this.code = code;
+    this.context = options.context;
+    this.recoverable = options.recoverable ?? false;
+
+    // Handle both Error objects and other types
+    if (options.originalError instanceof Error) {
+      this.originalError = options.originalError;
+      this.stack = options.originalError.stack;
+    } else if (options.originalError) {
+      this.originalError = new Error(String(options.originalError));
+    }
+
+    // Maintains proper stack trace for where our error was thrown (only available on V8)
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
+    }
+  }
+
+  /**
+   * Convert error to JSON for logging/API responses
+   */
+  toJSON() {
+    return {
+      name: this.name,
+      code: this.code,
+      message: this.message,
+      recoverable: this.recoverable,
+      context: this.context,
+      stack: import.meta.env.DEV ? this.stack : undefined,
+    };
+  }
+}
+
+/**
+ * Database operation errors
+ */
+export class DatabaseError extends ApplicationError {
+  constructor(
+    message: string,
+    originalError?: Error | unknown,
+    context?: ErrorContext
+  ) {
+    super('DATABASE_ERROR', message, {
+      originalError,
+      context,
+      recoverable: true, // Most DB errors are transient
+    });
+  }
+}
+
+/**
+ * Network/API errors
+ */
+export class NetworkError extends ApplicationError {
+  public readonly statusCode?: number;
+
+  constructor(
+    message: string,
+    statusCode?: number,
+    originalError?: Error | unknown,
+    context?: ErrorContext
+  ) {
+    super('NETWORK_ERROR', message, {
+      originalError,
+      context: { ...context, statusCode },
+      recoverable: true,
+    });
+    this.statusCode = statusCode;
+  }
+}
+
+/**
+ * Validation errors
+ */
+export class ValidationError extends ApplicationError {
+  public readonly field?: string;
+
+  constructor(message: string, field?: string, context?: ErrorContext) {
+    super('VALIDATION_ERROR', message, {
+      context: { ...context, field },
+      recoverable: true,
+    });
+    this.field = field;
+  }
+}
+
+/**
+ * Authentication errors
+ */
+export class AuthenticationError extends ApplicationError {
+  constructor(message: string, originalError?: Error | unknown, context?: ErrorContext) {
+    super('AUTHENTICATION_ERROR', message, {
+      originalError,
+      context,
+      recoverable: false,
+    });
+  }
+}
+
+/**
+ * Authorization errors
+ */
+export class AuthorizationError extends ApplicationError {
+  constructor(message: string, context?: ErrorContext) {
+    super('AUTHORIZATION_ERROR', message, {
+      context,
+      recoverable: false,
+    });
+  }
+}
+
+/**
+ * Not found errors
+ */
+export class NotFoundError extends ApplicationError {
+  public readonly resourceType?: string;
+
+  constructor(resourceType: string, resourceId?: string, context?: ErrorContext) {
+    super(
+      'NOT_FOUND',
+      `${resourceType}${resourceId ? ` with ID ${resourceId}` : ''} not found`,
+      {
+        context: { ...context, resourceType, resourceId },
+        recoverable: false,
+      }
+    );
+    this.resourceType = resourceType;
+  }
+}
+
+/**
+ * Rate limit errors
+ */
+export class RateLimitError extends ApplicationError {
+  public readonly retryAfter?: number;
+
+  constructor(message: string, retryAfter?: number, context?: ErrorContext) {
+    super('RATE_LIMIT_ERROR', message, {
+      context: { ...context, retryAfter },
+      recoverable: true,
+    });
+    this.retryAfter = retryAfter;
+  }
+}
+
+/**
+ * Storage errors
+ */
+export class StorageError extends ApplicationError {
+  constructor(message: string, originalError?: Error | unknown, context?: ErrorContext) {
+    super('STORAGE_ERROR', message, {
+      originalError,
+      context,
+      recoverable: true,
+    });
+  }
+}
+
+/**
+ * Payment errors
+ */
+export class PaymentError extends ApplicationError {
+  constructor(message: string, originalError?: Error | unknown, context?: ErrorContext) {
+    super('PAYMENT_ERROR', message, {
+      originalError,
+      context,
+      recoverable: false,
+    });
+  }
+}
+
+/**
+ * Check if error is an ApplicationError
+ */
+export function isApplicationError(error: unknown): error is ApplicationError {
+  return error instanceof ApplicationError;
+}
+
+/**
+ * Get user-friendly error message
+ */
+export function getUserErrorMessage(error: unknown): string {
+  if (isApplicationError(error)) {
+    return error.message;
+  }
+
+  if (error instanceof Error) {
+    // Don't expose technical error details to users
+    return 'An unexpected error occurred. Please try again.';
+  }
+
+  return 'An unknown error occurred. Please try again.';
+}
+
+/**
+ * Get error code for logging/tracking
+ */
+export function getErrorCode(error: unknown): string {
+  if (isApplicationError(error)) {
+    return error.code;
+  }
+
+  if (error instanceof Error) {
+    return 'UNKNOWN_ERROR';
+  }
+
+  return 'INVALID_ERROR_TYPE';
+}

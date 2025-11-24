@@ -106,7 +106,8 @@ export function BackgroundMediaSelector({
       if (filteredItems.length === 0) {
         toast.info(`No ${type}s found matching your criteria. Try a different search.`);
       }
-    } catch (error: any) {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       logger.error('Error searching Pixabay', error instanceof Error ? error : new Error(String(error)), {
         component: 'BackgroundMediaSelector',
         operation: 'handleSearch',

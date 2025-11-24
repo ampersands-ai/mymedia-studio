@@ -88,7 +88,7 @@ const Community = () => {
 
       // Fetch signed URLs for all creations using storage_path from generations
       const creationsWithUrls = await Promise.all(
-        (data || []).map(async (creation: any) => {
+        (data || []).map(async (creation: { id: string; name: string; description: string; created_at: string; category: string; view_count: number; generations?: { storage_path?: string; workflow_execution_id?: string } }) => {
           const storagePath = creation.generations?.storage_path;
           const workflowExecutionId = creation.generations?.workflow_execution_id;
           if (storagePath) {

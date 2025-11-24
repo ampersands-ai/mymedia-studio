@@ -100,7 +100,8 @@ export function BackgroundMusicSelector({
       if ((data.items || []).length === 0) {
         toast.info('No music found. Try a different search.');
       }
-    } catch (error: any) {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       logger.error('Music search failed', error, {
         component: 'BackgroundMusicSelector',
         operation: 'searchMusic',

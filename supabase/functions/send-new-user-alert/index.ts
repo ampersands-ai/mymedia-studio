@@ -106,7 +106,7 @@ serve(async (req) => {
       JSON.stringify({ success: true }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
+  } catch (error) {
     logger.error("Error in send-new-user-alert function", error);
     return new Response(
       JSON.stringify({ error: error.message }),

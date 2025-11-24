@@ -49,7 +49,7 @@ interface GenerationConsoleProps {
     message: string;
     generationId: string;
     timestamp: number;
-    providerResponse?: any;
+    providerResponse?: Record<string, unknown>;
   } | null;
   onClearError?: () => void;
 }

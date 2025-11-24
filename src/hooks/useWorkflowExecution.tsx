@@ -110,21 +110,25 @@ export const useWorkflowExecution = () => {
                 
                 // Generate caption if requested (fire and forget)
                 if (shouldGenerateCaption && params.user_inputs.prompt) {
-                  supabase.functions.invoke('generate-caption', {
-                    body: {
-                      generation_id: executionId,
-                      prompt: params.user_inputs.prompt,
-                      content_type: 'image',
-                      model_name: 'workflow'
+                  (async () => {
+                    try {
+                      await supabase.functions.invoke('generate-caption', {
+                        body: {
+                          generation_id: executionId,
+                          prompt: params.user_inputs.prompt,
+                          content_type: 'image',
+                          model_name: 'workflow'
+                        }
+                      });
+                      workflowLogger.info('Caption generation initiated', { requestId, executionId });
+                    } catch (captionError) {
+                      workflowLogger.error('Caption generation failed', captionError as Error, {
+                        requestId,
+                        executionId
+                      });
+                      // Don't throw - caption is optional, don't fail workflow
                     }
-                  }).then(() => {
-                    workflowLogger.info('Caption generation initiated', { requestId, executionId });
-                  }).catch((captionError) => {
-                    workflowLogger.error('Caption generation failed', captionError as Error, { 
-                      requestId, 
-                      executionId 
-                    });
-                  });
+                  })();
                 }
                 
                 supabase.removeChannel(channel);

@@ -62,7 +62,7 @@ export const AdvancedAnalytics = () => {
       .gte('created_at', thirtyDaysAgo.toISOString());
 
     // Group by date and activity type
-    const grouped = (data || []).reduce((acc: any, log: any) => {
+    const grouped = (data || []).reduce((acc: Record<string, { date: string; downloads: number; shares: number; views: number; generations: number }>, log: { created_at: string; activity_type: string }) => {
       const date = format(new Date(log.created_at), 'MMM dd');
       if (!acc[date]) {
         acc[date] = { date, downloads: 0, shares: 0, views: 0, generations: 0 };
@@ -100,11 +100,11 @@ export const AdvancedAnalytics = () => {
       .gte('created_at', subDays(new Date(), 30).toISOString());
 
     // Group by model
-    const grouped = (data || []).reduce((acc: any, gen: any) => {
+    const grouped = (data || []).reduce((acc: Record<string, { model: string; tokens: number; count: number; success: number; failed: number }>, gen: { model_id: string; tokens_used: number; status: string }) => {
       if (!acc[gen.model_id]) {
-        acc[gen.model_id] = { 
-          model: gen.model_id, 
-          tokens: 0, 
+        acc[gen.model_id] = {
+          model: gen.model_id,
+          tokens: 0,
           count: 0,
           success: 0,
           failed: 0

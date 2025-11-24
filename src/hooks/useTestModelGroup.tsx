@@ -108,7 +108,7 @@ export const useTestModelGroup = () => {
 
           // Use EXACT SAME generation pipeline as CustomCreation.tsx
           const generationId = await executeGeneration({
-            model: model as { record_id: string; [key: string]: any },
+            model: model as { record_id: string; [key: string]: unknown },
             prompt: "", // Empty by default - will trigger validation errors same as production
             modelParameters: {}, // No default parameters - will trigger validation errors same as production
             uploadedImages: [],

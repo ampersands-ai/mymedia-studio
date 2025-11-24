@@ -10,10 +10,16 @@ interface WebVitalMetric {
   delta: number;
 }
 
+interface PostHogWindow extends Window {
+  posthog?: {
+    capture: (event: string, properties: Record<string, unknown>) => void;
+  };
+}
+
 function sendToAnalytics(metric: WebVitalMetric) {
   // Send to analytics service (PostHog, etc.)
-  if (typeof window !== 'undefined' && (window as any).posthog) {
-    (window as any).posthog.capture('web_vital', {
+  if (typeof window !== 'undefined' && (window as PostHogWindow).posthog) {
+    (window as PostHogWindow).posthog?.capture('web_vital', {
       name: metric.name,
       value: metric.value,
       rating: metric.rating
@@ -54,8 +60,8 @@ export function reportWebVitals() {
     try {
       const lcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        const lastEntry = entries[entries.length - 1] as any;
-        const value = lastEntry.renderTime || lastEntry.loadTime;
+        const lastEntry = entries[entries.length - 1] as PerformanceEntry & { renderTime?: number; loadTime?: number };
+        const value = lastEntry.renderTime || lastEntry.loadTime || 0;
         
         sendToAnalytics({
           name: 'LCP',
@@ -78,8 +84,8 @@ export function reportWebVitals() {
     try {
       const fidObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
-          const value = entry.processingStart - entry.startTime;
+        entries.forEach((entry: PerformanceEntry & { processingStart?: number }) => {
+          const value = (entry.processingStart || 0) - entry.startTime;
           
           sendToAnalytics({
             name: 'FID',
@@ -105,9 +111,9 @@ export function reportWebVitals() {
       
       const clsObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
+        entries.forEach((entry: PerformanceEntry & { hadRecentInput?: boolean; value?: number }) => {
           if (!entry.hadRecentInput) {
-            clsValue += entry.value;
+            clsValue += entry.value || 0;
           }
         });
         
@@ -132,7 +138,7 @@ export function reportWebVitals() {
     try {
       const fcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
+        entries.forEach((entry: PerformanceEntry) => {
           sendToAnalytics({
             name: 'FCP',
             value: entry.startTime,
@@ -156,8 +162,8 @@ export function reportWebVitals() {
   if ('performance' in window && 'getEntriesByType' in performance) {
     const navigationEntries = performance.getEntriesByType('navigation');
     if (navigationEntries.length > 0) {
-      const entry = navigationEntries[0] as any;
-      const ttfb = entry.responseStart - entry.requestStart;
+      const entry = navigationEntries[0] as PerformanceEntry & { responseStart?: number; requestStart?: number };
+      const ttfb = (entry.responseStart || 0) - (entry.requestStart || 0);
       
       sendToAnalytics({
         name: 'TTFB',

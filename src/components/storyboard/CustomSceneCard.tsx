@@ -81,14 +81,15 @@ export function CustomSceneCard({
         toast.success('Prompt enhanced! (0.1 credits used)');
         refetchCredits();
       }
-    } catch (error: any) {
-      logger.error('Scene prompt enhancement failed', error, {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Scene prompt enhancement failed', err, {
         component: 'CustomSceneCard',
         sceneIndex: index,
         promptLength: scene.imagePrompt.length,
         operation: 'handleEnhancePrompt'
       });
-      toast.error(error.message || 'Failed to enhance prompt');
+      toast.error(err.message || 'Failed to enhance prompt');
     } finally {
       setIsEnhancing(false);
     }
@@ -117,14 +118,15 @@ export function CustomSceneCard({
         toast.success('Image generated successfully!');
         refetchCredits();
       }
-    } catch (error: any) {
-      logger.error('Scene image generation failed', error, {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Scene image generation failed', err, {
         component: 'CustomSceneCard',
         sceneIndex: index,
         promptLength: scene.imagePrompt.length,
         operation: 'handleGenerateImage'
       });
-      toast.error(error.message || 'Failed to generate image');
+      toast.error(err.message || 'Failed to generate image');
     } finally {
       setIsGenerating(false);
     }
@@ -151,15 +153,16 @@ export function CustomSceneCard({
       onUpdate('imageUrl', publicUrl);
       toast.success('Image uploaded successfully!');
       setUploadDialogOpen(false);
-    } catch (error: any) {
-      logger.error('Scene image upload failed', error, {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Scene image upload failed', err, {
         component: 'CustomSceneCard',
         sceneIndex: index,
         fileName: file.name,
         fileSize: file.size,
         operation: 'handleUploadImage'
       });
-      toast.error(error.message || 'Failed to upload image');
+      toast.error(err.message || 'Failed to upload image');
     }
   };
 

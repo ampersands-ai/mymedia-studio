@@ -77,10 +77,10 @@ export default function AIModelsDashboard() {
         .single();
 
       if (data?.setting_value && typeof data.setting_value === 'object') {
-        const val = data.setting_value as any;
+        const val = data.setting_value as Record<string, unknown>;
         setSettings({
-          visible: val.visible || {},
-          deactivated: val.deactivated || {},
+          visible: (val.visible as Record<string, boolean>) || {},
+          deactivated: (val.deactivated as Record<string, boolean>) || {},
         });
       }
     };
@@ -115,7 +115,7 @@ export default function AIModelsDashboard() {
 
       // Aggregate by model
       const statsByModel: Record<string, ModelStats> = {};
-      (data || []).forEach((gen: any) => {
+      (data || []).forEach((gen: { model_record_id?: string; status?: string }) => {
         const id = gen.model_record_id;
         if (!id) return;
 
@@ -294,8 +294,8 @@ export default function AIModelsDashboard() {
     // Apply sorting
     if (sortField && sortDirection) {
       filtered = [...filtered].sort((a, b) => {
-        let aValue: any;
-        let bValue: any;
+        let aValue: string | number;
+        let bValue: string | number;
 
         switch (sortField) {
           case "model_name":

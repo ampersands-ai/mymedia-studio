@@ -103,7 +103,8 @@ export default function CreateMinimal() {
         setGeneratedOutput(result.storage_path);
         toast.success('Generation complete!');
       }
-    } catch (error: any) {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       if (error.message === "SESSION_EXPIRED") {
         toast.error("Session expired. Please log in again.");
         setTimeout(() => navigate("/auth"), 2000);

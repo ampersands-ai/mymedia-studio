@@ -6,7 +6,7 @@ import { Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PayloadViewerProps {
-  data: any;
+  data: unknown;
   title?: string;
   className?: string;
 }
@@ -20,7 +20,7 @@ export function PayloadViewer({ data, title, className }: PayloadViewerProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const getTypeColor = (value: any): string => {
+  const getTypeColor = (value: unknown): string => {
     if (value === null) return 'text-gray-500';
     if (typeof value === 'string') return 'text-green-600';
     if (typeof value === 'number') return 'text-blue-600';
@@ -30,7 +30,7 @@ export function PayloadViewer({ data, title, className }: PayloadViewerProps) {
     return 'text-gray-600';
   };
 
-  const renderValue = (value: any, indent: number = 0): JSX.Element => {
+  const renderValue = (value: unknown, indent: number = 0): JSX.Element => {
     const padding = indent * 16;
 
     if (value === null) {

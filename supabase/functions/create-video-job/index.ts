@@ -206,7 +206,7 @@ Deno.serve(async (req) => {
         status: 200 
       }
     );
-  } catch (error: any) {
+  } catch (error) {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''

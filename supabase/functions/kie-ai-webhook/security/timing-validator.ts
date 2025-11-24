@@ -11,6 +11,28 @@ import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { webhookLogger } from "../../_shared/logger.ts";
 import { GENERATION_STATUS } from "../../_shared/constants.ts";
 
+interface GenerationRecord {
+  id: string;
+  user_id: string;
+  provider_task_id: string;
+  created_at: string;
+  model_id?: string;
+  modelMetadata?: {
+    estimated_time_seconds?: number;
+    model_name?: string;
+  };
+}
+
+interface WebhookPayload {
+  data?: {
+    state?: string;
+    failMsg?: string;
+  };
+  code?: number | string;
+  status?: number | string;
+  msg?: string;
+}
+
 export interface TimingResult {
   success: boolean;
   error?: string;
@@ -18,9 +40,9 @@ export interface TimingResult {
 }
 
 export async function validateTiming(
-  generation: any,
+  generation: GenerationRecord,
   supabase: SupabaseClient,
-  payload?: any
+  payload?: WebhookPayload
 ): Promise<TimingResult> {
   const estimatedSeconds = generation.modelMetadata?.estimated_time_seconds || 300;
   const MIN_PROCESSING_TIME = 2.85 * 1000; // 2.85 seconds (aggressive anti-replay)

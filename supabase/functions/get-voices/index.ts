@@ -50,9 +50,15 @@ Deno.serve(async (req) => {
     logger.info('Successfully fetched voices', { metadata: { count: data.voices.length } });
     logger.logDuration('Fetch voices', startTime);
 
+    interface Voice {
+      voice_id: string;
+      preview_url?: string;
+      [key: string]: unknown;
+    }
+
     // Only add Supabase Storage preview URLs for voices that originally have previews
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-    const voicesWithLocalPreviews = data.voices.map((voice: any) => {
+    const voicesWithLocalPreviews = data.voices.map((voice: Voice) => {
       // Only replace preview URL if the voice originally had one
       if (voice.preview_url) {
         return {
@@ -71,7 +77,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ voices: voicesWithLocalPreviews }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error in get-voices function', error as Error);
     return new Response(
       JSON.stringify({

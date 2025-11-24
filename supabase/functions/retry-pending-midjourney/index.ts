@@ -166,7 +166,7 @@ Deno.serve(async (req) => {
         // Small delay to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 500));
 
-      } catch (error: any) {
+      } catch (error) {
         logger.error('Processing error', error, { metadata: { generationId: gen.id } });
         results.failed++;
         results.errors.push({
@@ -194,7 +194,7 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Retry pending Midjourney error', error);
     return new Response(
       JSON.stringify({ error: error.message }),

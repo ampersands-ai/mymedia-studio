@@ -150,29 +150,37 @@ const Templates = () => {
       };
       
       // Process all templates in parallel
-      const urlPromises = allTemplates
-        .filter(template => template.before_image_url || template.after_image_url || template.thumbnail_url)
-        .map(async (template) => {
-          const [beforeUrl, afterUrl, thumbnailUrl] = await Promise.all([
-            getSignedUrl(template.before_image_url || null),
-            getSignedUrl(template.after_image_url || null),
-            getSignedUrl(template.thumbnail_url || null)
-          ]);
-          
-          return {
-            id: template.id,
-            urls: { before: beforeUrl, after: afterUrl, thumbnail: thumbnailUrl }
-          };
+      try {
+        const urlPromises = allTemplates
+          .filter(template => template.before_image_url || template.after_image_url || template.thumbnail_url)
+          .map(async (template) => {
+            const [beforeUrl, afterUrl, thumbnailUrl] = await Promise.all([
+              getSignedUrl(template.before_image_url || null),
+              getSignedUrl(template.after_image_url || null),
+              getSignedUrl(template.thumbnail_url || null)
+            ]);
+
+            return {
+              id: template.id,
+              urls: { before: beforeUrl, after: afterUrl, thumbnail: thumbnailUrl }
+            };
+          });
+
+        const results = await Promise.all(urlPromises);
+
+        const urlsMap: Record<string, { before: string | null, after: string | null, thumbnail: string | null }> = {};
+        results.forEach(result => {
+          urlsMap[result.id] = result.urls as { before: string | null, after: string | null, thumbnail: string | null };
         });
-      
-      const results = await Promise.all(urlPromises);
-      
-      const urlsMap: Record<string, { before: string | null, after: string | null, thumbnail: string | null }> = {};
-      results.forEach(result => {
-        urlsMap[result.id] = result.urls as { before: string | null, after: string | null, thumbnail: string | null };
-      });
-      
-      setSignedUrls(urlsMap);
+
+        setSignedUrls(urlsMap);
+      } catch (err) {
+        logger.error('Failed to generate signed URLs for templates', err as Error, {
+          component: 'Templates',
+          operation: 'generateSignedUrls'
+        });
+        // Continue with empty URLs map - templates will show without images
+      }
     };
     
     generateSignedUrls();
@@ -309,14 +317,15 @@ const Templates = () => {
     minLoadedPercentage: 70
   });
 
-  const handleUseTemplate = (template: WorkflowTemplate) => {
+  const handleUseTemplate = async (template: WorkflowTemplate) => {
     if (!user) {
       navigate('/auth');
       return;
     }
 
     // Track activity
-    import('@/lib/logging/client-logger').then(({ clientLogger }) => {
+    try {
+      const { clientLogger } = await import('@/lib/logging/client-logger');
       clientLogger.activity({
         activityType: 'template',
         activityName: 'template_selected',
@@ -328,7 +337,14 @@ const Templates = () => {
           template_type: template.template_type,
         },
       });
-    });
+    } catch (err) {
+      logger.error('Failed to log template selection activity', err as Error, {
+        component: 'Templates',
+        operation: 'trackActivity',
+        templateId: template.id
+      });
+      // Don't throw - logging failure shouldn't break template selection
+    }
 
     // Navigate based on template type
     if (template.template_type === 'workflow') {

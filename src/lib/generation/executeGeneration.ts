@@ -4,15 +4,15 @@ import { getModel } from "@/lib/models/registry";
 export interface ExecuteGenerationParams {
   model: {
     record_id: string;
-    [key: string]: any; // Allow additional properties for backwards compatibility
+    [key: string]: unknown; // Allow additional properties for backwards compatibility
   };
   prompt: string;
-  modelParameters: Record<string, any>;
+  modelParameters: Record<string, unknown>;
   uploadedImages: File[];
   uploadedImageUrls?: string[];
   userId: string;
   uploadImagesToStorage: (userId: string) => Promise<string[]>;
-  generate: (params: any) => Promise<any>;
+  generate: (params: Record<string, unknown>) => Promise<unknown>;
   startPolling: (id: string) => void;
   navigate: NavigateFunction;
   maxPromptLength?: number;

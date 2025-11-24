@@ -35,16 +35,23 @@ export interface ValidationResult {
 export interface ExecuteParams {
   userId: string;
   prompt: string;
-  customParameters?: Record<string, any>;
+  customParameters?: Record<string, unknown>;
   imageInput?: string;
   audioInput?: string;
 }
 
+export interface JsonSchema {
+  type?: string | string[];
+  properties?: Record<string, unknown>;
+  required?: string[];
+  [key: string]: unknown;
+}
+
 export interface ModelModule {
   MODEL_CONFIG: ModelConfig;
-  SCHEMA: any; // JSON Schema
-  validate: (inputs: Record<string, any>) => ValidationResult;
-  preparePayload: (inputs: Record<string, any>) => any;
-  calculateCost: (inputs: Record<string, any>) => number;
+  SCHEMA: JsonSchema;
+  validate: (inputs: Record<string, unknown>) => ValidationResult;
+  preparePayload: (inputs: Record<string, unknown>) => Record<string, unknown>;
+  calculateCost: (inputs: Record<string, unknown>) => number;
   execute: (params: ExecuteParams) => Promise<string>; // Returns generation_id
 }

@@ -43,8 +43,8 @@ const DIMENSIONS_MAP: Record<string, { width: number; height: number }> = {
  */
 export function mapAspectRatioToModelParameters(
   storyboardAspectRatio: string | null | undefined,
-  modelInputSchema: any
-): Record<string, any> {
+  modelInputSchema: Record<string, unknown>
+): Record<string, unknown> {
   // If no aspect ratio provided, return empty
   if (!storyboardAspectRatio) {
     logger.debug('No aspect ratio provided for mapping', {

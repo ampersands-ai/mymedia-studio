@@ -7,7 +7,7 @@ import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
  */
 export interface DeprecatedTemplateDialogState {
   open: boolean;
-  template: any | null;
+  template: Record<string, unknown> | null;
 }
 
 /**
@@ -35,7 +35,7 @@ export type CategoryCounts = Record<string, number>;
 export interface TemplateManagerState {
   contentTemplateDialog: {
     open: boolean;
-    template: any | null;
+    template: Record<string, unknown> | null;
   };
   workflowDialog: WorkflowDialogState;
   testingWorkflow: WorkflowTemplate | null;

@@ -119,7 +119,7 @@ export default function UserLogs() {
             <div className="text-center py-12 text-muted-foreground">Loading error logs...</div>
           ) : filteredLogs && filteredLogs.length > 0 ? (
             <div className="space-y-4">
-              {filteredLogs.map((log: any) => (
+              {filteredLogs.map((log: { id: string; severity: string; route_name: string; message: string; created_at: string; stack_trace?: string; user_id?: string; context?: Record<string, unknown> }) => (
                 <div key={log.id} className="border rounded-lg p-4 space-y-2">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">

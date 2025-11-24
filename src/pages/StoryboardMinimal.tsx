@@ -76,7 +76,8 @@ export default function StoryboardMinimal() {
         mediaType: 'image',
       });
       toast.success('Storyboard generated!');
-    } catch (error: any) {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       logger.error('Failed to generate storyboard', error as Error, { 
         component: 'StoryboardMinimal',
         operation: 'handleGenerateStoryboard',
@@ -92,7 +93,8 @@ export default function StoryboardMinimal() {
     try {
       await renderVideo();
       toast.success('Video rendering started!');
-    } catch (error: any) {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       logger.error('Failed to render video', error as Error, { 
         component: 'StoryboardMinimal',
         operation: 'handleRenderVideo',

@@ -17,8 +17,8 @@ interface ThresholdBreach {
   kie_credits_consumed: number;
   our_tokens_charged: number;
   credit_multiplier: number;
-  api_request_payload: any;
-  api_callback_payload: any;
+  api_request_payload: Record<string, unknown>;
+  api_callback_payload: Record<string, unknown>;
   created_at: string;
   processing_time_seconds: number;
   task_status: string;

@@ -16,8 +16,8 @@ export interface TestLogEntry {
   step_type: "main" | "sub" | "log";
   log_level: LogLevel;
   message: string;
-  data?: Record<string, any>;
-  metadata?: Record<string, any>;
+  data?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
   execution_context: ExecutionContext;
   function_name?: string;
 }
@@ -174,7 +174,7 @@ export class TestExecutionLogger {
    */
   async logProviderApiCall(
     provider: string,
-    request: any,
+    request: unknown,
     startTime: number
   ): Promise<void> {
     // Mask sensitive data
@@ -197,7 +197,7 @@ export class TestExecutionLogger {
    */
   async logProviderApiResponse(
     provider: string,
-    response: any,
+    response: unknown,
     duration: number,
     success: boolean
   ): Promise<void> {
@@ -243,7 +243,7 @@ export class TestExecutionLogger {
     table: string,
     operation: string,
     recordId: string,
-    data?: any
+    data?: unknown
   ): Promise<void> {
     await this.log({
       step_number: this.stepNumber,
@@ -262,14 +262,14 @@ export class TestExecutionLogger {
   async logError(
     error: Error,
     context: string,
-    data?: any
+    data?: unknown
   ): Promise<void> {
     await this.log({
       step_number: this.stepNumber,
       step_type: "log",
       log_level: "error",
       message: `Error in ${context}: ${error.message}`,
-      data: { error: error.message, stack: error.stack, ...data },
+      data: { error: error.message, stack: error.stack, ...(data as Record<string, unknown> || {}) },
       execution_context: "edge_function",
       function_name: context,
     });
@@ -281,7 +281,7 @@ export class TestExecutionLogger {
   async logPerformance(
     operation: string,
     duration: number,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     await this.log({
       step_number: this.stepNumber,
@@ -297,7 +297,7 @@ export class TestExecutionLogger {
   /**
    * Mask sensitive data (API keys, tokens, etc.)
    */
-  private maskSensitiveData(data: any): any {
+  private maskSensitiveData(data: unknown): unknown {
     if (!data) return data;
     if (typeof data !== "object") return data;
 
@@ -312,7 +312,7 @@ export class TestExecutionLogger {
       "_webhook_token",
     ];
 
-    const masked = Array.isArray(data) ? [...data] : { ...data };
+    const masked = Array.isArray(data) ? [...data] : { ...data as Record<string, unknown> };
 
     for (const key in masked) {
       const lowerKey = key.toLowerCase();
@@ -323,7 +323,7 @@ export class TestExecutionLogger {
         } else {
           masked[key] = "***";
         }
-      } else if (typeof masked[key] === "object") {
+      } else if (typeof masked[key] === "object" && masked[key] !== null) {
         masked[key] = this.maskSensitiveData(masked[key]);
       }
     }

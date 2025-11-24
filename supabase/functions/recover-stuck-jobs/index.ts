@@ -145,8 +145,8 @@ Deno.serve(async (req) => {
                   continue;
                 }
               }
-            } catch (shotstackError: any) {
-              logger.error('Shotstack check failed', shotstackError, { 
+            } catch (shotstackError: unknown) {
+              logger.error('Shotstack check failed', shotstackError instanceof Error ? shotstackError : new Error(String(shotstackError)), {
                 metadata: { jobId: job.id }
               });
             }

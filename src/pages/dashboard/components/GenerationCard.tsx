@@ -1,0 +1,171 @@
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Download, Clock, Sparkles, Image as ImageIcon, Video, Music, FileText, AlertCircle } from "lucide-react";
+import { format } from "date-fns";
+import { OptimizedGenerationImage } from "@/components/generation/OptimizedGenerationImage";
+import { OptimizedVideoPreview } from "@/components/generation/OptimizedVideoPreview";
+import { AudioPlayer } from "./AudioPlayer";
+import type { Generation } from "../hooks/useGenerationHistory";
+
+interface GenerationCardProps {
+  generation: Generation;
+  index: number;
+  onView: (generation: Generation) => void;
+  onDownload: (storagePath: string | null, type: string, outputUrl?: string | null) => void;
+}
+
+const getTypeIcon = (type: string) => {
+  switch (type) {
+    case "image": return <ImageIcon className="h-4 w-4" />;
+    case "video": return <Video className="h-4 w-4" />;
+    case "audio": return <Music className="h-4 w-4" />;
+    case "text": return <FileText className="h-4 w-4" />;
+    default: return <Sparkles className="h-4 w-4" />;
+  }
+};
+
+const getStatusBadge = (status: string, createdAt?: string) => {
+  switch (status) {
+    case "completed":
+      return <Badge className="bg-green-500 text-white text-xs px-1.5 py-0">Done</Badge>;
+    case "failed":
+      return <Badge className="bg-red-500 text-white text-xs px-1.5 py-0">Failed</Badge>;
+    case "pending":
+    case "processing":
+      // Calculate time since creation for better status messages
+      if (createdAt) {
+        const minutesAgo = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
+        if (minutesAgo > 30) {
+          return <Badge className="bg-red-500 text-white text-xs px-1.5 py-0">Stuck</Badge>;
+        }
+        if (minutesAgo > 15) {
+          return <Badge className="bg-orange-500 text-white text-xs px-1.5 py-0">Long wait...</Badge>;
+        }
+      }
+      return (
+        <Badge className="bg-yellow-500 animate-pulse text-white text-xs px-1.5 py-0">
+          <Clock className="h-2.5 w-2.5 mr-0.5 inline" />
+          {status === 'processing' ? 'Processing' : 'Pending'}
+        </Badge>
+      );
+    default:
+      return null;
+  }
+};
+
+export const GenerationCard = ({ generation, index, onView, onDownload }: GenerationCardProps) => {
+  const versionedPath = generation.storage_path
+    ? `${generation.storage_path}${generation.storage_path.includes('?') ? '&' : '?'}v=${encodeURIComponent(generation.created_at)}`
+    : null;
+
+  return (
+    <Card
+      className="overflow-hidden cursor-pointer hover-lift"
+      onClick={() => onView(generation)}
+    >
+      <div className="aspect-square relative overflow-hidden bg-muted">
+        {generation.is_batch_output && generation.output_index !== undefined && (
+          <div className="absolute top-1 right-1 z-10">
+            <Badge className="text-[10px] px-1.5 py-0.5 bg-secondary text-secondary-foreground backdrop-blur-sm border border-secondary shadow-sm">
+              #{generation.output_index + 1}
+            </Badge>
+          </div>
+        )}
+        {generation.status === "failed" ? (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-red-500/10">
+            <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
+            <span className="text-xs text-red-500 font-medium">Generation Failed</span>
+          </div>
+        ) : ((generation.storage_path || (generation.is_video_job && generation.output_url)) && generation.status === "completed") ? (
+          <>
+            {generation.type === "video" ? (
+              <OptimizedVideoPreview
+                storagePath={generation.storage_path}
+                outputUrl={generation.output_url}
+                className="w-full h-full object-cover"
+                playOnHover={true}
+                priority={index < 6}
+                isExternalUrl={
+                  generation.is_video_job ||
+                  (generation.output_url !== null &&
+                    !/^(storyboard-videos|faceless-videos)\//.test(generation.output_url || ''))
+                }
+              />
+            ) : generation.type === "image" ? (
+              <OptimizedGenerationImage
+                storagePath={versionedPath!}
+                alt="Generated content"
+                className="w-full h-full object-cover"
+              />
+            ) : generation.type === "audio" ? (
+              <AudioPlayer
+                generation={generation}
+                className="w-full h-full"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                {getTypeIcon(generation.type)}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            {getTypeIcon(generation.type)}
+          </div>
+        )}
+      </div>
+
+      <CardContent className="p-2 space-y-1">
+        <div className="flex items-center justify-between flex-wrap gap-1">
+          <div className="flex items-center gap-1">
+            {getTypeIcon(generation.type)}
+            <span className="font-bold text-xs capitalize">{generation.type}</span>
+            {generation.ai_caption && (
+              <Sparkles className="h-3 w-3 text-primary" />
+            )}
+          </div>
+          {getStatusBadge(generation.status, generation.created_at)}
+        </div>
+
+        {!generation.workflow_execution_id && (
+          <p className="text-xs text-foreground/80 line-clamp-1">
+            {generation.enhanced_prompt || generation.prompt}
+          </p>
+        )}
+        {generation.workflow_execution_id && (
+          <p className="text-xs text-muted-foreground italic line-clamp-1">
+            Template Generation
+          </p>
+        )}
+
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>{format(new Date(generation.created_at), "MMM d")}</span>
+          {generation.is_batch_output && generation.tokens_used === 0 ? (
+            <span className="text-green-600 dark:text-green-400 font-medium">Batch output</span>
+          ) : (
+            <span>{Number(generation.tokens_used).toFixed(2)} credits</span>
+          )}
+        </div>
+
+        {/* Quick actions - Download without opening preview */}
+        {(generation.storage_path || generation.output_url) && generation.status === "completed" && (
+          <div className="flex gap-1 pt-1 border-t mt-1">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDownload(generation.storage_path, generation.type, generation.output_url);
+              }}
+              className="flex-1 h-7 text-xs"
+            >
+              <Download className="h-3 w-3 mr-1" />
+              Download
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};

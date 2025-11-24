@@ -132,7 +132,7 @@ const CustomCreation = () => {
         }
       });
     },
-    onTimeout: () => {
+    onTimeout: async () => {
       updateState({ localGenerating: false, pollingGenerationId: null });
       toast.warning('This is taking longer than usual', {
         description: 'We will check the provider and refund credits if it failed. You can navigate away; results will appear in History.',
@@ -140,16 +140,32 @@ const CustomCreation = () => {
 
       // Proactively check provider status and recover/refund if needed
       if (state.pollingGenerationId) {
-        supabase.functions.invoke('poll-kie-status', {
-          body: { generation_id: state.pollingGenerationId }
-        }).then(({ data, error }) => {
-          if (error) return;
+        try {
+          const { data, error } = await supabase.functions.invoke('poll-kie-status', {
+            body: { generation_id: state.pollingGenerationId }
+          });
+
+          if (error) {
+            logger.error('Failed to check provider status on timeout', error as Error, {
+              component: 'CustomCreation',
+              operation: 'pollKieStatus',
+              generationId: state.pollingGenerationId
+            });
+            return;
+          }
+
           if (data?.status === 'failed') {
             toast.error('Generation failed on provider side. Credits refunded.');
           } else if (data?.status === 'completed') {
             toast.success('Generation completed in background. Check History.');
           }
-        });
+        } catch (err) {
+          logger.error('Error checking provider status on timeout', err as Error, {
+            component: 'CustomCreation',
+            operation: 'pollKieStatus',
+            generationId: state.pollingGenerationId
+          });
+        }
       }
     }
   });
@@ -250,8 +266,8 @@ const CustomCreation = () => {
         logger.error('Generation was already failed');
         
         try {
-          const pr: any = currentGen.provider_response || {};
-          const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || (pr?.error && pr?.error?.message);
+          const pr: Record<string, unknown> = (currentGen.provider_response as Record<string, unknown>) || {};
+          const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || ((pr?.error as Record<string, unknown>)?.message);
           const msg = detailed ? String(detailed) : `Generation ${currentGen.status}`;
           
           // Store error in state for persistent display
@@ -405,8 +421,8 @@ const CustomCreation = () => {
                     .select('provider_response, status')
                     .eq('id', payload.new.id)
                     .single();
-                  const pr: any = gen?.provider_response || {};
-                  const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || (pr?.error && pr?.error?.message);
+                  const pr: Record<string, unknown> = (gen?.provider_response as Record<string, unknown>) || {};
+                  const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || ((pr?.error as Record<string, unknown>)?.message);
                   const msg = detailed ? String(detailed) : `Generation ${newStatus}`;
 
                   // Store error in state for persistent display

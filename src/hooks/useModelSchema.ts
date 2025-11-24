@@ -29,8 +29,9 @@ export const useModelSchema = (model: ModelConfiguration | null) => {
     }
 
     // Import directly from physical file via registry
-    import("@/lib/models/locked")
-      .then((registry) => {
+    (async () => {
+      try {
+        const registry = await import("@/lib/models/locked");
         const modelModule = registry.getModelModule(model.record_id, model.id);
 
         if (!modelModule) {
@@ -48,12 +49,16 @@ export const useModelSchema = (model: ModelConfiguration | null) => {
 
         setSchema(modelModule.SCHEMA as ModelJsonSchema);
         setLoading(false);
-      })
-      .catch((err) => {
-        logger.error(`Failed to load schema: ${err.message}`);
-        setError(err);
+      } catch (err) {
+        logger.error(`Failed to load schema: ${(err as Error).message}`, err as Error, {
+          component: 'useModelSchema',
+          operation: 'loadSchema',
+          modelName: model.model_name
+        });
+        setError(err as Error);
         setLoading(false);
-      });
+      }
+    })();
   }, [model?.record_id, model?.id]);
 
   return { schema, loading, error };

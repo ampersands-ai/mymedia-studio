@@ -137,7 +137,7 @@ const handler = async (req: Request): Promise<Response> => {
         ...corsHeaders,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     return createSafeErrorResponse(error, "send-welcome-email", corsHeaders);
   }
 };

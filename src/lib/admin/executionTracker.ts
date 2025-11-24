@@ -17,8 +17,8 @@ export interface ExecutionStep {
   status: ExecutionStepStatus;
 
   // Inputs and outputs
-  inputs: Record<string, any>;
-  outputs: any;
+  inputs: Record<string, unknown>;
+  outputs: unknown;
   error?: string;
 
   // Timing
@@ -97,7 +97,7 @@ export class ExecutionTracker {
   /**
    * Complete a step successfully
    */
-  completeStep(stepId: string, outputs: any, metadata?: Record<string, any>): void {
+  completeStep(stepId: string, outputs: unknown, metadata?: Record<string, unknown>): void {
     const step = this.flow.steps.find(s => s.id === stepId);
     if (!step) return;
 

@@ -1,5 +1,8 @@
 import { useEffect } from 'react';
 import { prefetchOnIdle } from '@/utils/routePreload';
+import { logger } from '@/lib/logger';
+
+const preloadHookLogger = logger.child({ component: 'useRoutePreload' });
 
 /**
  * Hook to prefetch critical routes on idle
@@ -25,12 +28,19 @@ export function usePrefetchOnHover(routePath: string) {
     '/video-studio': () => import('../pages/VideoStudio'),
   };
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = async () => {
     const importFn = routeMap[routePath];
     if (importFn) {
-      importFn().catch(() => {
-        // Ignore prefetch errors
-      });
+      try {
+        await importFn();
+      } catch (err) {
+        // Non-critical: prefetch failures are acceptable
+        preloadHookLogger.debug('Hover prefetch failed (non-critical)', {
+          routePath,
+          error: (err as Error).message,
+          operation: 'usePrefetchOnHover'
+        });
+      }
     }
   };
 

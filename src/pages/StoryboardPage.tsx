@@ -49,7 +49,8 @@ export default function StoryboardPage() {
       
       clearStoryboard();
       toast.success('Storyboard deleted', { id: 'storyboard-reset' });
-    } catch (error: any) {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       toast.error(error.message || 'Failed to delete storyboard', { id: 'delete-error' });
     }
     setShowResetDialog(false);

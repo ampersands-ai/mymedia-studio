@@ -184,7 +184,7 @@ Original prompt: "${prompt}"`;
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Prompt enhancement failed', error);
     
     const errorMessage = error instanceof Error ? error.message : 'Failed to enhance prompt';

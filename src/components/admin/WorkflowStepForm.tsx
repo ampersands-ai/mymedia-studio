@@ -24,7 +24,7 @@ interface AIModel {
   record_id: string;
   model_name: string;
   content_type: string;
-  input_schema: any;
+  input_schema: Record<string, unknown>;
 }
 
 interface WorkflowStepFormProps {

@@ -100,9 +100,10 @@ export function VideoCreator() {
       background_media_type: selectedBackgroundMedia[0]?.type || 'video',
       caption_style: customCaptionStyle,
     }, {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         // Track activity
-        import('@/lib/logging/client-logger').then(({ clientLogger }) => {
+        try {
+          const { clientLogger } = await import('@/lib/logging/client-logger');
           clientLogger.activity({
             activityType: 'video',
             activityName: 'video_job_created',
@@ -115,7 +116,14 @@ export function VideoCreator() {
               aspect_ratio: aspectRatio,
             },
           });
-        });
+        } catch (err) {
+          logger.error('Failed to log video job creation activity', err as Error, {
+            component: 'VideoCreator',
+            operation: 'trackActivity',
+            videoJobId: data.job.id
+          });
+          // Don't throw - logging failure shouldn't break video creation
+        }
       }
     });
 
@@ -254,7 +262,7 @@ export function VideoCreator() {
           <Label htmlFor="aspectRatio" className="text-sm font-bold">
             Aspect Ratio
           </Label>
-          <Select value={aspectRatio} onValueChange={(value: any) => setAspectRatio(value)} disabled={isDisabled}>
+          <Select value={aspectRatio} onValueChange={(value: string) => setAspectRatio(value)} disabled={isDisabled}>
             <SelectTrigger id="aspectRatio">
               <SelectValue />
             </SelectTrigger>

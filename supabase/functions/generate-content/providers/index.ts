@@ -2,21 +2,27 @@ import { callKieAI } from "./kie-ai.ts";
 import { callRunware } from "./runware.ts";
 import { callLovableAI } from "./lovable-ai.ts";
 import { webhookLogger } from "../../_shared/logger.ts";
+
+interface JsonSchema {
+  properties?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 export interface ProviderRequest {
   model: string;
   model_record_id?: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   api_endpoint?: string;
   payload_structure?: string;
   uploadEndpoint?: string; // For video direct upload (presigned URL)
-  input_schema?: any; // Model's JSON schema for dynamic validation
+  input_schema?: JsonSchema; // Model's JSON schema for dynamic validation
 }
 
 export interface ProviderResponse {
   output_data: Uint8Array;
   file_extension: string;
   file_size: number;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   storage_path?: string; // Optional: indicates content already uploaded to storage
 }
 

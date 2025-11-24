@@ -95,8 +95,9 @@ export default function APIHealthMonitor() {
       toast.success('Health check completed');
       queryClient.invalidateQueries({ queryKey: ['api-health-summary'] });
     },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to run health check');
+    onError: (error: Error | unknown) => {
+      const message = error instanceof Error ? error.message : 'Failed to run health check';
+      toast.error(message);
     },
   });
 
@@ -116,7 +117,7 @@ export default function APIHealthMonitor() {
     }
   };
 
-  const getStatusBadge = (status: string): any => {
+  const getStatusBadge = (status: string): { variant: 'default' | 'destructive' | 'outline'; className?: string } => {
     switch (status) {
       case 'healthy':
         return { variant: 'default', className: 'bg-green-100 text-green-800' };

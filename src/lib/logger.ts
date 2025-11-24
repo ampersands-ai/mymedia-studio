@@ -6,9 +6,13 @@ import { supabase } from '@/integrations/supabase/client';
  * Provides comprehensive logging with proper severity levels and backend integration
  */
 
+interface PostHogCapture {
+  capture: (event: string, properties?: Record<string, unknown>) => void;
+}
+
 declare global {
   interface Window {
-    posthog?: any;
+    posthog?: PostHogCapture;
   }
 }
 
@@ -37,7 +41,7 @@ async function getUserContext(): Promise<{ userId?: string; email?: string }> {
 }
 
 interface LogBatch {
-  logs: Array<{ level: string; message: string; context: any; timestamp: number }>;
+  logs: Array<{ level: string; message: string; context: Record<string, unknown>; timestamp: number }>;
   timeout: NodeJS.Timeout | null;
 }
 
@@ -61,9 +65,9 @@ async function flushLogs(): Promise<void> {
       const errorLogs = logsToSend.filter(log => ['error', 'critical'].includes(log.level));
       for (const log of errorLogs) {
         await clientLogger.error(new Error(log.message), {
-          routeName: log.context.route || 'unknown',
+          routeName: (log.context.route as string | undefined) || 'unknown',
           ...log.context
-        } as any);
+        });
       }
     } catch (e) {
       console.error('Failed to flush logs:', e);
@@ -74,7 +78,7 @@ async function flushLogs(): Promise<void> {
 /**
  * Add log to batch for efficient backend transmission
  */
-function batchLog(level: string, message: string, context: any): void {
+function batchLog(level: string, message: string, context: Record<string, unknown>): void {
   logBatch.logs.push({
     level,
     message,
@@ -100,9 +104,9 @@ function batchLog(level: string, message: string, context: any): void {
 export class PerformanceTimer {
   private startTime: number;
   private operation: string;
-  private context: any;
+  private context: Record<string, unknown>;
 
-  constructor(operation: string, context?: any) {
+  constructor(operation: string, context?: Record<string, unknown>) {
     this.operation = operation;
     this.context = context || {};
     this.startTime = performance.now();
@@ -111,7 +115,7 @@ export class PerformanceTimer {
   /**
    * End timing and log the duration
    */
-  end(additionalContext?: any): number {
+  end(additionalContext?: Record<string, unknown>): number {
     const duration = Math.round(performance.now() - this.startTime);
     logger.info(`${this.operation} completed`, {
       ...this.context,
@@ -150,7 +154,7 @@ class Logger {
     return new PerformanceTimer(operation, { ...this.context, ...context });
   }
 
-  private formatMessage(level: string, message: string, context?: any): string {
+  private formatMessage(level: string, message: string, context?: Record<string, unknown>): string {
     const ctx = { ...this.context, ...context };
     return `[${level.toUpperCase()}] ${message} ${JSON.stringify(ctx)}`;
   }
@@ -158,7 +162,7 @@ class Logger {
   /**
    * Debug logging - only in development
    */
-  debug(message: string, context?: any): void {
+  debug(message: string, context?: Record<string, unknown>): void {
     if (import.meta.env.DEV) {
       console.debug(this.formatMessage('debug', message, context));
     }
@@ -167,7 +171,7 @@ class Logger {
   /**
    * Info logging - only in development
    */
-  info(message: string, context?: any): void {
+  info(message: string, context?: Record<string, unknown>): void {
     if (import.meta.env.DEV) {
       console.log(this.formatMessage('info', message, context));
     }
@@ -176,7 +180,7 @@ class Logger {
   /**
    * Warning logging - always logged, sent to PostHog in production
    */
-  warn(message: string, context?: any): void {
+  warn(message: string, context?: Record<string, unknown>): void {
     console.warn(this.formatMessage('warn', message, context));
     
     if (!import.meta.env.DEV && typeof window !== 'undefined' && window.posthog) {
@@ -191,10 +195,10 @@ class Logger {
   /**
    * Error logging - always logged, sent to backend and PostHog
    */
-  error(message: string, error?: Error, context?: any): void {
+  error(message: string, error?: Error, context?: Record<string, unknown>): void {
     console.error(this.formatMessage('error', message, context), error);
-    
-    const errorContext: any = {
+
+    const errorContext: Record<string, unknown> = {
       message,
       errorName: error?.name,
       errorMessage: error?.message,
@@ -215,10 +219,10 @@ class Logger {
   /**
    * Critical error logging - highest priority, always sent to monitoring
    */
-  critical(message: string, error?: Error, context?: any): void {
+  critical(message: string, error?: Error, context?: Record<string, unknown>): void {
     console.error(this.formatMessage('critical', message, context), error);
-    
-    const errorContext: any = {
+
+    const errorContext: Record<string, unknown> = {
       message,
       severity: 'critical',
       errorName: error?.name,

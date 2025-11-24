@@ -25,7 +25,7 @@ import type { ImageAnimationSettings } from '@/types/media-settings';
 interface VoiceAndSettingsPanelProps {
   storyboard: Storyboard;
   isRendering: boolean;
-  onUpdateSettings: (settings: any) => void;
+  onUpdateSettings: (settings: Record<string, unknown>) => void;
   onOpenSubtitleCustomizer: () => void;
 }
 

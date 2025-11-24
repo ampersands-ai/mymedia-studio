@@ -114,18 +114,22 @@ export const OptimizedGenerationPreview = ({
 
     // Extract fresh poster frame (only for fast connections to save bandwidth)
     if (connectionSpeed === 'fast') {
-      extractPosterFrame(videoUrl, 0.5).then(posterDataUrl => {
-        if (posterDataUrl) {
-          setPosterUrl(posterDataUrl);
-          PosterCache.set(videoUrl, posterDataUrl);
-          previewLogger.debug('Poster frame extracted', { videoUrl: videoUrl.substring(0, 50) });
+      (async () => {
+        try {
+          const posterDataUrl = await extractPosterFrame(videoUrl, 0.5);
+          if (posterDataUrl) {
+            setPosterUrl(posterDataUrl);
+            PosterCache.set(videoUrl, posterDataUrl);
+            previewLogger.debug('Poster frame extracted', { videoUrl: videoUrl.substring(0, 50) });
+          }
+        } catch (error) {
+          previewLogger.warn('Failed to extract poster frame', {
+            error: (error as Error).message,
+            videoUrl: videoUrl.substring(0, 50)
+          });
+          // Don't throw - poster extraction is non-critical
         }
-      }).catch(error => {
-        previewLogger.warn('Failed to extract poster frame', {
-          error: (error as Error).message,
-          videoUrl: videoUrl.substring(0, 50)
-        });
-      });
+      })();
     }
   }, [videoUrl, contentType, connectionSpeed, effectiveType]);
 

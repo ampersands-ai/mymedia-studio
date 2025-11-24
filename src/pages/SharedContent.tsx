@@ -40,7 +40,7 @@ export default function SharedContent() {
         setContentUrl(data.signed_url);
         setContentType(data.content_type);
       }
-    } catch (err: any) {
+    } catch (err) {
       logger.error('Error fetching shared content', err instanceof Error ? err : new Error(String(err)), {
         component: 'SharedContent',
         operation: 'fetchSharedContent',

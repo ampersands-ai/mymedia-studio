@@ -10,7 +10,7 @@ import { EdgeLogger } from "../_shared/edge-logger.ts";
 interface TestStep {
   step: string;
   timestamp: number;
-  data: any;
+  data: Record<string, unknown>;
   status: 'success' | 'error' | 'pending';
   error?: string;
 }

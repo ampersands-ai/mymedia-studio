@@ -174,7 +174,7 @@ serve(async (req) => {
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Processing failed', error);
     
     // Release credits on failure

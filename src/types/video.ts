@@ -57,12 +57,12 @@ export interface VideoJob {
   renderer: string;
   cost_tokens: number;
   error_message?: string;
-  error_details?: any;
+  error_details?: Record<string, unknown>;
   created_at: string;
   completed_at?: string;
   updated_at: string;
   aspect_ratio?: string;
-  caption_style?: CaptionStyle | any; // Allow Json type from DB
+  caption_style?: CaptionStyle | Record<string, unknown>; // Allow Json type from DB
   custom_background_video?: string;
   background_video_thumbnail?: string;
   ai_caption?: string;

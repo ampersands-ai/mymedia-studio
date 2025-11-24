@@ -77,11 +77,12 @@ export const OutputLightbox = ({
     if (open && currentOutput && history.length === 0) {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const originalUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
-      
+
       // Fetch and add original to history
-      fetch(originalUrl)
-        .then(res => res.blob())
-        .then(blob => {
+      (async () => {
+        try {
+          const res = await fetch(originalUrl);
+          const blob = await res.blob();
           const url = URL.createObjectURL(blob);
           addToHistory({
             blob,
@@ -89,7 +90,15 @@ export const OutputLightbox = ({
             editType: 'original',
             description: 'Original image',
           });
-        });
+        } catch (err) {
+          logger.error('Failed to load original image', err as Error, {
+            component: 'OutputLightbox',
+            operation: 'loadOriginal',
+            generationId: currentOutput.id
+          });
+          toast.error('Failed to load original image');
+        }
+      })();
 
       trackEvent('output_lightbox_opened', {
         generation_id: currentOutput.id,

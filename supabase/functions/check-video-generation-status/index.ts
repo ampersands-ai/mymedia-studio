@@ -211,7 +211,7 @@ Deno.serve(async (req) => {
       );
     }
 
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error checking video status', error);
     return new Response(
       JSON.stringify({ error: error.message || 'Internal server error' }),

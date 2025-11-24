@@ -60,18 +60,39 @@ serve(async (req) => {
     logger.info('Pixabay search completed', { metadata: { total: data.total, type } });
     logger.logDuration('Pixabay search', startTime);
 
+    interface PixabayVideoHit {
+      id: number;
+      videos: {
+        tiny: { thumbnail: string };
+        large?: { url: string; width: number; height: number };
+        medium: { url: string; width: number; height: number };
+      };
+      duration: number;
+    }
+
+    interface PixabayImageHit {
+      id: number;
+      previewURL: string;
+      fullHDURL?: string;
+      imageURL: string;
+      largeImageURL: string;
+      vectorURL?: string;
+      imageWidth: number;
+      imageHeight: number;
+    }
+
     // Transform response to unified format
-    const items = type === 'video' 
-      ? data.hits.map((hit: any) => ({
+    const items = type === 'video'
+      ? data.hits.map((hit: PixabayVideoHit) => ({
           id: hit.id,
           type: 'video',
           preview: hit.videos.tiny.thumbnail,
-          videoURL: hit.videos.large.url || hit.videos.medium.url,
+          videoURL: hit.videos.large?.url || hit.videos.medium.url,
           duration: hit.duration,
-          width: hit.videos.large.width || hit.videos.medium.width,
-          height: hit.videos.large.height || hit.videos.medium.height,
+          width: hit.videos.large?.width || hit.videos.medium.width,
+          height: hit.videos.large?.height || hit.videos.medium.height,
         }))
-      : data.hits.map((hit: any) => ({
+      : data.hits.map((hit: PixabayImageHit) => ({
           id: hit.id,
           type: 'image',
           preview: hit.previewURL,
@@ -87,7 +108,7 @@ serve(async (req) => {
       JSON.stringify({ items, total: data.total }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error in search-pixabay-content', error as Error);
     return new Response(
       JSON.stringify({ error: error.message }),

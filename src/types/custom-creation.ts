@@ -101,7 +101,7 @@ export interface CustomCreationState {
     message: string;
     generationId: string;
     timestamp: number;
-    providerResponse?: any;
+    providerResponse?: Record<string, unknown>;
   } | null;
 }
 

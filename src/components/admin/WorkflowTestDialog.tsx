@@ -105,7 +105,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
 
         if (model) {
           models[step.step_number] = {
-            input_schema: model.SCHEMA as any,
+            input_schema: model.SCHEMA,
             max_images: model.MODEL_CONFIG.maxImages,
             content_type: model.MODEL_CONFIG.contentType as ContentType,
             provider: model.MODEL_CONFIG.provider
@@ -121,7 +121,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
     fetchModels();
   }, [workflow, open, initializeDefaults]);
 
-  const handleInputChange = (fieldName: string, value: any) => {
+  const handleInputChange = (fieldName: string, value: unknown) => {
     setInputs(prev => ({ ...prev, [fieldName]: value }));
   };
 
@@ -235,7 +235,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
   };
 
   // Render input field using SchemaInput for consistency with Custom Creation
-  const renderInputField = (field: any) => {
+  const renderInputField = (field: { name: string; label: string; type: string; required?: boolean }) => {
     const fieldInfo = getFieldSchemaInfo(field.name);
     if (!fieldInfo) {
       // Fallback for fields without schema info

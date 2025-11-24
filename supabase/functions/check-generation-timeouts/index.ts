@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
       }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Fatal error in timeout check', error);
     return new Response(
       JSON.stringify({ error: error.message }),

@@ -26,7 +26,7 @@ export interface BlogPost {
 
   // Schema.org
   schema_type?: string;
-  schema_data?: any;
+  schema_data?: Record<string, unknown>;
 
   // Publishing
   status: 'draft' | 'published' | 'scheduled' | 'archived';

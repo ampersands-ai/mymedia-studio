@@ -70,7 +70,8 @@ export function ImageUploader({ value, onChange, label, bucket = "generated-cont
         title: "Image uploaded",
         description: "Image uploaded successfully",
       });
-    } catch (error: any) {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       logger.error('Template landing image upload failed', error, {
         component: 'ImageUploader',
         bucket,

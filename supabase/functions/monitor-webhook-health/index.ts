@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
       }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error in monitor-webhook-health', error instanceof Error ? error : undefined);
     return new Response(
       JSON.stringify({ error: error.message }),

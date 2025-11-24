@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
           });
           webhookLogger.info('Still processing', { generationId: generation.id });
         }
-      } catch (err: any) {
+      } catch (err) {
         webhookLogger.error('Exception during recovery', err, { 
           generationId: generation.id 
         });
@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     webhookLogger.error('Auto-recovery failed', error, {});
     return new Response(
       JSON.stringify({ 

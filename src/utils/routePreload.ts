@@ -3,6 +3,10 @@
  * Preload critical chunks to avoid loading waterfalls
  */
 
+import { logger } from '@/lib/logger';
+
+const preloadLogger = logger.child({ component: 'routePreload' });
+
 export function preloadRoute(chunkName: string) {
   const link = document.createElement('link');
   link.rel = 'modulepreload';
@@ -28,17 +32,31 @@ export function preloadChunk(chunkPath: string) {
 export function prefetchOnIdle(importFn: () => Promise<any>, timeout = 2000) {
   if ('requestIdleCallback' in window) {
     requestIdleCallback(
-      () => {
-        importFn().catch(() => {
-          // Ignore prefetch errors
-        });
+      async () => {
+        try {
+          await importFn();
+        } catch (err) {
+          // Non-critical: prefetch failures are acceptable
+          preloadLogger.debug('Prefetch failed (non-critical)', {
+            error: (err as Error).message,
+            operation: 'prefetchOnIdle'
+          });
+        }
       },
       { timeout }
     );
   } else {
     // Fallback for browsers without requestIdleCallback
-    setTimeout(() => {
-      importFn().catch(() => {});
+    setTimeout(async () => {
+      try {
+        await importFn();
+      } catch (err) {
+        // Non-critical: prefetch failures are acceptable
+        preloadLogger.debug('Prefetch failed (non-critical)', {
+          error: (err as Error).message,
+          operation: 'prefetchOnIdle-fallback'
+        });
+      }
     }, timeout);
   }
 }
@@ -46,7 +64,7 @@ export function prefetchOnIdle(importFn: () => Promise<any>, timeout = 2000) {
 /**
  * Preload route on hover
  */
-export function preloadOnHover(routePath: string) {
+export async function preloadOnHover(routePath: string): Promise<void> {
   const routeMap: Record<string, () => Promise<any>> = {
     '/create': () => import('../pages/Create'),
     '/templates': () => import('../pages/Templates'),
@@ -57,8 +75,15 @@ export function preloadOnHover(routePath: string) {
 
   const importFn = routeMap[routePath];
   if (importFn) {
-    importFn().catch(() => {
-      // Ignore prefetch errors
-    });
+    try {
+      await importFn();
+    } catch (err) {
+      // Non-critical: preload failures are acceptable
+      preloadLogger.debug('Hover preload failed (non-critical)', {
+        routePath,
+        error: (err as Error).message,
+        operation: 'preloadOnHover'
+      });
+    }
   }
 }

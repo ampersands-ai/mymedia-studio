@@ -78,7 +78,7 @@ export async function uploadToStorage(
       storagePath,
       publicUrl: publicUrl || undefined
     };
-  } catch (error: any) {
+  } catch (error) {
     webhookLogger.upload('unknown', false, {
       error: error.message || 'Unknown upload error',
       generationId,

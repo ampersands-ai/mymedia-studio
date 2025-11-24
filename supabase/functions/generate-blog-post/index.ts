@@ -192,7 +192,7 @@ Format your response as JSON:
         headers: { ...responseHeaders, 'Content-Type': 'application/json' },
       }
     );
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error generating blog post', error instanceof Error ? error : undefined);
     return new Response(
       JSON.stringify({ error: error?.message || 'Unknown error' }),

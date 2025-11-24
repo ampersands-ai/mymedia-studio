@@ -1,9 +1,6 @@
 /** Midjourney (prompt_to_image) - Record: eff6c62e-c20e-4eed-9f5b-81e1a7f01529 */
-import { getGenerationType } from '@/lib/models/registry';
-import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { reserveCredits } from "@/lib/models/creditDeduction";
-import { GENERATION_STATUS } from "@/constants/generation-status";
+import { executeModelGeneration } from "@/lib/models/shared/executeModelGeneration";
 
 export const MODEL_CONFIG = { modelId: "midjourney/text-to-image", recordId: "eff6c62e-c20e-4eed-9f5b-81e1a7f01529", modelName: "Midjourney", provider: "kie_ai", contentType: "prompt_to_image",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_IMAGE", baseCreditCost: 3, estimatedTimeSeconds: 45, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
@@ -25,34 +22,11 @@ export function preparePayload(inputs: Record<string, any>) { return { modelId: 
 export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { prompt, modelParameters, userId, startPolling } = params;
-  const inputs: Record<string, any> = { prompt, ...modelParameters };
-  const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
-  const cost = calculateCost(inputs);
-  await reserveCredits(userId, cost);
-
-  // Create generation record with pending status (edge function will process)
-  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: GENERATION_STATUS.PENDING, settings: modelParameters }).select().single();
-  if (error || !gen) throw new Error(`Failed: ${error?.message}`);
-
-  // Call edge function to handle API call server-side
-  // This keeps API keys secure and avoids CORS issues
-  const { error: funcError } = await supabase.functions.invoke('generate-content', {
-    body: {
-      generationId: gen.id,
-      model_config: MODEL_CONFIG,
-      model_schema: SCHEMA,
-      prompt,
-      custom_parameters: preparePayload(inputs)
-    }
+  return executeModelGeneration({
+    modelConfig: MODEL_CONFIG,
+    modelSchema: SCHEMA,
+    modelFunctions: { validate, calculateCost, preparePayload },
+    params
   });
-
-  if (funcError) {
-    await supabase.from('generations').update({ status: GENERATION_STATUS.FAILED }).eq('id', gen.id);
-    throw new Error(`Edge function failed: ${funcError.message}`);
-  }
-
-  startPolling(gen.id);
-  return gen.id;
 }
 

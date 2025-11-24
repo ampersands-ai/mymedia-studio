@@ -42,7 +42,7 @@ export async function downloadContent(url: string): Promise<DownloadResult> {
       data,
       contentType
     };
-  } catch (error: any) {
+  } catch (error) {
     webhookLogger.download(url, false, {
       error: error.message || 'Unknown download error'
     });

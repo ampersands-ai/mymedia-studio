@@ -121,6 +121,12 @@ serve(async (req) => {
       .select('severity, category', { count: 'exact', head: false })
       .gte('created_at', since.toISOString())
 
+    interface ErrorEvent {
+      severity: string;
+      category: string;
+      resolved?: boolean;
+    }
+
     // Calculate stats
     const aggregatedStats = {
       total: count || 0,
@@ -130,11 +136,11 @@ serve(async (req) => {
         warning: stats?.filter(s => s.severity === 'warning').length || 0,
         info: stats?.filter(s => s.severity === 'info').length || 0,
       },
-      byCategory: stats?.reduce((acc: Record<string, number>, item: any) => {
+      byCategory: stats?.reduce((acc: Record<string, number>, item: ErrorEvent) => {
         acc[item.category] = (acc[item.category] || 0) + 1
         return acc
       }, {}) || {},
-      unresolved: stats?.filter((s: any) => s.resolved === false).length || 0,
+      unresolved: stats?.filter((s: ErrorEvent) => s.resolved === false).length || 0,
     }
 
     return new Response(

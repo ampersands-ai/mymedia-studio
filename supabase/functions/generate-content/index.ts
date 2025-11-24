@@ -12,6 +12,7 @@ import {
 } from "../_shared/schemas.ts";
 import { validateGenerationSettings } from "../_shared/jsonb-validation-schemas.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 /**
  * GENERATE CONTENT EDGE FUNCTION
@@ -69,11 +70,6 @@ interface Model {
   payload_structure?: string;
 }
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 // Phase 3: Request queuing and circuit breaker
 // Increased from 100 to 750 for better scalability under high load
 const CONCURRENT_LIMIT = 750;
@@ -87,9 +83,13 @@ const CIRCUIT_BREAKER = {
 };
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight with secure origin validation
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
+
+  // Get response headers (includes CORS + security headers)
+  const responseHeaders = getResponseHeaders(req);
 
   const startTime = Date.now();
   const requestId = crypto.randomUUID();
@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     if (activeRequests.size >= CONCURRENT_LIMIT) {
       return new Response(
         JSON.stringify({ error: 'System at capacity. Please try again in a moment.' }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 503, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
           error: 'Invalid request parameters',
           details: error.message
         }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
@@ -326,7 +326,7 @@ Deno.serve(async (req) => {
             current: hourlyCount,
             reset_in_seconds: 3600 - Math.floor((Date.now() - new Date(hourAgo).getTime()) / 1000)
           }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 429, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -351,7 +351,7 @@ Deno.serve(async (req) => {
             limit: tierLimits.max_concurrent_generations,
             current: concurrentCount
           }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 429, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
       } else {
@@ -365,7 +365,7 @@ Deno.serve(async (req) => {
       if (!parameters.image_urls || !Array.isArray(parameters.image_urls) || parameters.image_urls.length === 0) {
         return new Response(
           JSON.stringify({ error: 'image_urls is required for this model' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
     }
@@ -599,7 +599,7 @@ Deno.serve(async (req) => {
               available: subscription.tokens_remaining,
               message: `You need ${tokenCost} credits but only have ${subscription.tokens_remaining} credits available.`
             }),
-            { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 402, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -638,7 +638,7 @@ Deno.serve(async (req) => {
                 available: result.tokens_remaining || 0,
                 message: `You need ${tokenCost} credits but only have ${result.tokens_remaining || 0} credits available.`
               }),
-              { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              { status: 402, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
             );
           }
           
@@ -877,7 +877,7 @@ Deno.serve(async (req) => {
       const errorMessage = txError instanceof Error ? txError.message : 'Validation failed';
       return new Response(
         JSON.stringify({ error: errorMessage }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -898,7 +898,7 @@ Deno.serve(async (req) => {
             error: 'Provider temporarily unavailable. Please try again in a moment.',
             retry_after_seconds: Math.ceil((CIRCUIT_BREAKER.timeout - elapsed) / 1000)
           }),
-          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 503, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
       CIRCUIT_BREAKER.failures = 0; // Reset after cooldown
@@ -1083,7 +1083,7 @@ Deno.serve(async (req) => {
               is_async: true,
               message: 'Generation started. Check back soon for results.'
             }),
-            { status: 202, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 202, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -1232,7 +1232,7 @@ Deno.serve(async (req) => {
             enhanced: !!(enhance_prompt || enhancementInstruction),
             is_async: true
           }),
-          { status: 202, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 202, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
 
       } catch (providerError: any) {
@@ -1319,7 +1319,7 @@ Deno.serve(async (req) => {
     }
 
   } catch (error: any) {
-    return createSafeErrorResponse(error, 'generate-content', corsHeaders);
+    return createSafeErrorResponse(error, 'generate-content', responseHeaders);
   }
 });
 

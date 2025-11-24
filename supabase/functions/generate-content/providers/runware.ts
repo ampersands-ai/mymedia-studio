@@ -210,7 +210,7 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
     console.log('[Runware] Using uploadEndpoint for direct storage upload');
   }
 
-  console.log('[Runware] Final task payload', { 
+  console.log('[Runware] Final task payload', {
     model: cleanModel,
     taskUUID,
     parameterKeys: Object.keys(taskPayload),
@@ -220,7 +220,8 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
     providerSettingsType: typeof taskPayload.providerSettings,
     providerSettingsKeys: taskPayload.providerSettings ? Object.keys(taskPayload.providerSettings) : [],
     isVideo,
-    fullPayload: JSON.stringify(taskPayload, null, 2)
+    // SECURITY: Never log full payload as it may contain PII (user prompts, etc.)
+    payloadSize: JSON.stringify(taskPayload).length
   });
 
   // Build request payload with authentication and task

@@ -1,32 +1,33 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { validateSignature } from "./security/signature-validator.ts";
 
 Deno.serve(async (req) => {
   const webhookStartTime = Date.now();
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('json2video-webhook', requestId);
-  
+
+  // Get response headers (includes CORS + security headers)
+  const responseHeaders = getResponseHeaders(req);
+
   // Phase 3: Add health check endpoint for webhook diagnostics
   if (req.method === 'GET') {
     logger.info('Health check requested');
     return new Response(
-      JSON.stringify({ 
-        status: 'OK', 
+      JSON.stringify({
+        status: 'OK',
         service: 'json2video-webhook',
         timestamp: new Date().toISOString(),
         webhookUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/json2video-webhook`
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 
+  // Handle CORS preflight with secure origin validation
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -34,17 +35,30 @@ Deno.serve(async (req) => {
       metadata: {
         method: req.method,
         url: req.url,
-        headers: Object.fromEntries(req.headers.entries())
       }
     });
-    
+
+    // === SIGNATURE VALIDATION ===
+    // Validate signature on raw body before JSON parsing for integrity check
+    const rawBody = await req.text();
+    const signature = req.headers.get('X-Json2Video-Signature') || req.headers.get('X-Signature');
+    const signatureResult = validateSignature(rawBody, signature, logger);
+
+    if (!signatureResult.success) {
+      logger.error('Signature validation failed', new Error(signatureResult.error));
+      return new Response(
+        JSON.stringify({ error: 'Forbidden' }),
+        { status: 403, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const payload = await req.json();
-    logger.info('Payload received', { metadata: { payload } });
+    const payload = JSON.parse(rawBody);
+    logger.info('Payload received and validated');
 
     const { project, status, url, error, progress, id, success } = payload;
     logger.debug('Parsed webhook values', { 
@@ -62,7 +76,7 @@ Deno.serve(async (req) => {
       logger.error('Missing render job ID in payload');
       return new Response(
         JSON.stringify({ error: 'Missing render job ID' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -81,7 +95,7 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({ error: 'Storyboard not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 404, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -156,7 +170,7 @@ Deno.serve(async (req) => {
       logger.error('Failed to update storyboard', updateError instanceof Error ? updateError : new Error(String(updateError) || 'Database error'));
       return new Response(
         JSON.stringify({ error: 'Failed to update storyboard' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -165,7 +179,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, storyboardId: storyboard.id }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
@@ -193,7 +207,7 @@ Deno.serve(async (req) => {
         error: error instanceof Error ? error.message : 'Unknown error',
         code: 'WEBHOOK_ERROR'
       }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

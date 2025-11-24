@@ -110,7 +110,9 @@ export function CodeViewer({
             wordWrap: "on",
             folding: true,
             renderLineHighlight: "line",
-            highlightActiveIndentGuide: true,
+            guides: {
+              indentation: true,
+            },
             scrollbar: {
               vertical: "auto",
               horizontal: "auto",

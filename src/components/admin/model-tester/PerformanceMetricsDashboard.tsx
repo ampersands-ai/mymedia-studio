@@ -208,16 +208,22 @@ export function PerformanceMetricsDashboard({
                   <span className="font-mono">{formatDuration(metric.duration)}</span>
                 </div>
               </div>
-              <Progress
-                value={metric.percentage}
-                className={cn(
-                  "h-2",
-                  metric.isBottleneck && "bg-red-100"
-                )}
-                indicatorClassName={cn(
-                  metric.isBottleneck ? "bg-red-600" : "bg-blue-600"
-                )}
-              />
+              <div className="relative">
+                <Progress
+                  value={metric.percentage}
+                  className={cn(
+                    "h-2",
+                    metric.isBottleneck && "bg-red-100"
+                  )}
+                />
+                <div 
+                  className={cn(
+                    "absolute top-0 left-0 h-full rounded-full transition-all",
+                    metric.isBottleneck ? "bg-red-600" : "bg-blue-600"
+                  )}
+                  style={{ width: `${metric.percentage}%` }}
+                />
+              </div>
             </div>
           ))}
         </div>

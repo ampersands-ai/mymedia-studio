@@ -100,6 +100,8 @@ export interface ExecutionFlow {
   startTime: number;
   endTime?: number;
   totalDuration?: number;
+  duration?: number; // Alias for totalDuration (for compatibility)
+  startedAt?: Date; // Alias for startTime as Date (for compatibility)
 
   // Context
   userId: string;
@@ -167,6 +169,10 @@ export class EnhancedExecutionTracker {
       currentStepIndex: -1,
       breakpoints: [],
     };
+
+    // Set aliases immediately
+    this.flow.duration = undefined;
+    this.flow.startedAt = new Date(this.flow.startTime);
 
     this.persistenceEnabled = config?.persistenceEnabled ?? true;
 
@@ -611,6 +617,8 @@ export class EnhancedExecutionTracker {
     this.flow.status = 'completed';
     this.flow.endTime = Date.now();
     this.flow.totalDuration = this.flow.endTime - this.flow.startTime;
+    this.flow.duration = this.flow.totalDuration; // Set alias
+    this.flow.startedAt = new Date(this.flow.startTime); // Set alias
     this.notifyListeners();
 
     if (this.persistenceEnabled) {
@@ -633,6 +641,8 @@ export class EnhancedExecutionTracker {
     this.flow.status = 'cancelled';
     this.flow.endTime = Date.now();
     this.flow.totalDuration = this.flow.endTime - this.flow.startTime;
+    this.flow.duration = this.flow.totalDuration; // Set alias
+    this.flow.startedAt = new Date(this.flow.startTime); // Set alias
     this.notifyListeners();
 
     if (this.persistenceEnabled) {

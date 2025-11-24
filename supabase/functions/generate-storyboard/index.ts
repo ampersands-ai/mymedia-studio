@@ -274,12 +274,21 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     }
     
     // Validate required scene properties
-    const invalidScenes = scenes.filter((scene: any, index: number) => {
+    interface SceneData {
+      voiceOverText?: string;
+      voice_over_text?: string;
+      videoSearchQuery?: string;
+      video_search_query?: string;
+      imagePrompt?: string;
+      image_prompt?: string;
+    }
+
+    const invalidScenes = scenes.filter((scene: SceneData, index: number) => {
       const hasVoiceOver = scene.voiceOverText || scene.voice_over_text;
-      const hasMedia = mediaType === 'video' 
+      const hasMedia = mediaType === 'video'
         ? (scene.videoSearchQuery || scene.video_search_query)
         : (scene.imagePrompt || scene.image_prompt);
-      
+
       if (!hasVoiceOver || !hasMedia) {
         logger.error('Scene missing required fields', undefined, {
           userId: user.id,
@@ -302,7 +311,7 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     // Calculate original character count for pricing
     const countChars = (text: string) => text?.trim().length || 0;
     const introChars = countChars(introVoiceoverText || '');
-    const sceneChars = scenes.reduce((sum: number, scene: any) => {
+    const sceneChars = scenes.reduce((sum: number, scene: SceneData) => {
       const voiceText = scene.voiceOverText || scene.voice_over_text || '';
       return sum + countChars(voiceText);
     }, 0);
@@ -406,7 +415,7 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     }
 
     // Insert scenes
-    const scenesData = scenes.map((scene: any, index: number) => ({
+    const scenesData = scenes.map((scene: SceneData, index: number) => ({
       storyboard_id: storyboard.id,
       order_number: index + 1,
       voice_over_text: scene.voiceOverText,

@@ -1,5 +1,10 @@
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+interface SimpleLogger {
+  info: (msg: string, ctx?: unknown) => void;
+  error: (msg: string, err: Error, ctx?: unknown) => void;
+}
+
 export async function uploadToStorage(
   supabase: SupabaseClient,
   userId: string,
@@ -7,7 +12,7 @@ export async function uploadToStorage(
   fileData: Uint8Array,
   fileExtension: string,
   contentType: string,
-  logger?: { info: (msg: string, ctx?: any) => void; error: (msg: string, err: any, ctx?: any) => void }
+  logger?: SimpleLogger
 ): Promise<string> {
   // Create folder structure: {user_id}/{YYYY-MM-DD}/{generation_id}.ext
   const date = new Date();

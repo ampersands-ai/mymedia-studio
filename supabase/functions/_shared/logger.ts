@@ -11,7 +11,8 @@ export interface LogContext {
   status?: string;
   duration?: number;
   error?: string;
-  [key: string]: any;
+  metadata?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 export const webhookLogger = {
@@ -119,12 +120,14 @@ export const webhookLogger = {
   /**
    * Log error
    */
-  error: (message: string, error: any, context?: LogContext) => {
+  error: (message: string, error: Error | string | unknown, context?: LogContext) => {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
     console.error(JSON.stringify({
       event: 'error',
       message,
-      error: error?.message || String(error),
-      stack: error?.stack,
+      error: errorMessage,
+      stack: errorStack,
       timestamp: new Date().toISOString(),
       ...context
     }));

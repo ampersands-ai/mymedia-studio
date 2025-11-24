@@ -6,6 +6,11 @@
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { webhookLogger } from "../../_shared/logger.ts";
 
+interface GenerationRecord {
+  id: string;
+  user_id: string;
+}
+
 export interface IdempotencyResult {
   success: boolean;
   isDuplicate?: boolean;
@@ -15,7 +20,7 @@ export interface IdempotencyResult {
 export async function validateIdempotency(
   taskId: string,
   callbackType: string,
-  generation: any,
+  generation: GenerationRecord,
   supabase: SupabaseClient
 ): Promise<IdempotencyResult> {
   const idempotencyKey = `${taskId}-${callbackType}`;

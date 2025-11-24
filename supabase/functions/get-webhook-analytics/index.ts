@@ -130,6 +130,15 @@ Deno.serve(async (req) => {
     const sortedDurations = [...durations].sort((a, b) => a - b);
     const p95Duration = sortedDurations.length > 0 ? sortedDurations[Math.floor(sortedDurations.length * 0.95)] : 0;
 
+    interface WebhookEvent {
+      provider: string;
+      status: string;
+      duration_ms?: number;
+      created_at: string;
+      error_code?: string;
+      metadata?: { error?: string };
+    }
+
     // Group by provider
     const providerGroups = events.reduce((acc, event) => {
       if (!acc[event.provider]) {
@@ -137,14 +146,14 @@ Deno.serve(async (req) => {
       }
       acc[event.provider].push(event);
       return acc;
-    }, {} as Record<string, any[]>);
+    }, {} as Record<string, WebhookEvent[]>);
 
     const byProvider = Object.entries(providerGroups).map(([provider, providerEvents]) => {
-      const events = providerEvents as any[];
+      const events = providerEvents;
       const total = events.length;
-      const success = events.filter((e: any) => e.status === 'success').length;
-      const failure = events.filter((e: any) => e.status === 'failure').length;
-      const providerDurations = events.filter((e: any) => e.duration_ms).map((e: any) => e.duration_ms);
+      const success = events.filter((e) => e.status === 'success').length;
+      const failure = events.filter((e) => e.status === 'failure').length;
+      const providerDurations = events.filter((e) => e.duration_ms).map((e) => e.duration_ms!);
       const avgDur = providerDurations.length > 0 ? providerDurations.reduce((a: number, b: number) => a + b, 0) / providerDurations.length : 0;
       const sorted = [...providerDurations].sort((a, b) => a - b);
       const p95 = sorted.length > 0 ? sorted[Math.floor(sorted.length * 0.95)] : 0;
@@ -160,13 +169,22 @@ Deno.serve(async (req) => {
       };
     });
 
+    interface TimeSeriesEntry {
+      timestamp: string;
+      provider: string;
+      status: string;
+      eventCount: number;
+      totalDuration: number;
+      count: number;
+    }
+
     // Time series data - group by hour
-    const timeSeriesMap = new Map<string, any>();
-    
+    const timeSeriesMap = new Map<string, TimeSeriesEntry>();
+
     events.forEach(event => {
       const hour = new Date(event.created_at).toISOString().substring(0, 13) + ':00:00.000Z';
       const key = `${hour}-${event.provider}-${event.status}`;
-      
+
       if (!timeSeriesMap.has(key)) {
         timeSeriesMap.set(key, {
           timestamp: hour,
@@ -177,7 +195,7 @@ Deno.serve(async (req) => {
           count: 0
         });
       }
-      
+
       const entry = timeSeriesMap.get(key)!;
       entry.eventCount++;
       if (event.duration_ms) {
@@ -194,12 +212,19 @@ Deno.serve(async (req) => {
       avgDuration: entry.count > 0 ? Math.round(entry.totalDuration / entry.count) : 0
     })).sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 
+    interface ErrorEntry {
+      provider: string;
+      errorCode: string;
+      errorCount: number;
+      errorMessages: Set<string>;
+    }
+
     // Error breakdown
-    const errorMap = new Map<string, any>();
-    
+    const errorMap = new Map<string, ErrorEntry>();
+
     events.filter(e => e.status === 'failure').forEach(event => {
       const key = `${event.provider}-${event.error_code || 'UNKNOWN'}`;
-      
+
       if (!errorMap.has(key)) {
         errorMap.set(key, {
           provider: event.provider,
@@ -208,7 +233,7 @@ Deno.serve(async (req) => {
           errorMessages: new Set()
         });
       }
-      
+
       const entry = errorMap.get(key)!;
       entry.errorCount++;
       if (event.metadata?.error) {

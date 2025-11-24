@@ -1,7 +1,12 @@
+interface ActionButton {
+  label: string;
+  url: string;
+}
+
 export interface EmailSection {
   type: 'summary' | 'details' | 'list' | 'table' | 'actions';
   title?: string;
-  content: any;
+  content: string | string[] | ActionButton[];
 }
 
 export interface EmailConfig {
@@ -79,19 +84,20 @@ function renderSection(section: EmailSection): string {
         <div class="section">
           ${section.title ? `<div class="section-title">${section.title}</div>` : ''}
           <div>
-            ${section.content.map((item: string) => `<div class="list-item">${item}</div>`).join('')}
+            ${Array.isArray(section.content) ? section.content.map((item) => `<div class="list-item">${String(item)}</div>`).join('') : ''}
           </div>
         </div>
       `;
-    
+
     case 'actions':
       return `
         <div class="section" style="text-align: center;">
           ${section.title ? `<div class="section-title">${section.title}</div>` : ''}
           <div>
-            ${section.content.map((action: { label: string; url: string }) => 
-              `<a href="${action.url}" class="button">${action.label}</a>`
-            ).join('')}
+            ${Array.isArray(section.content) ? section.content.map((action) => {
+              const btn = action as ActionButton;
+              return `<a href="${btn.url}" class="button">${btn.label}</a>`;
+            }).join('') : ''}
           </div>
         </div>
       `;

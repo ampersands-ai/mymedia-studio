@@ -8,9 +8,25 @@
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getModelConfig } from "../../_shared/registry/index.ts";
 
+interface GenerationRecord {
+  id: string;
+  user_id: string;
+  provider_task_id: string;
+  status: string;
+  model_record_id: string;
+  settings?: {
+    _webhook_token?: string;
+  };
+  modelMetadata?: {
+    id: string;
+    model_name: string;
+    estimated_time_seconds: number;
+  };
+}
+
 export interface VerifyTokenResult {
   success: boolean;
-  generation?: any;
+  generation?: GenerationRecord;
   error?: string;
   statusCode?: number;
 }
@@ -37,8 +53,8 @@ export async function validateVerifyToken(
   }
   
   // Fetch generation with retry logic for race conditions
-  let generation: any = null;
-  let findError: any = null;
+  let generation: GenerationRecord | null = null;
+  let findError: Error | null = null;
   let retryCount = 0;
   const maxRetries = 3;
   

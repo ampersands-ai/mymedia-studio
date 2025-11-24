@@ -5,10 +5,25 @@
 import { isMidjourneyModel } from "./midjourney-handler.ts";
 import { webhookLogger } from "../../_shared/logger.ts";
 
+interface WebhookPayload {
+  data?: {
+    resultUrls?: string[];
+    info?: {
+      result_urls?: string[];
+      resultUrls?: string[];
+      resultImageUrl?: string;
+      result_image_url?: string;
+      resultUrl?: string;
+      result_url?: string;
+    };
+    data?: unknown[];
+  };
+}
+
 export function normalizeResultUrls(
-  payload: any, 
-  resultJson: string | null, 
-  generationType: string, 
+  payload: WebhookPayload,
+  resultJson: string | null,
+  generationType: string,
   modelId?: string
 ): string[] {
   const urls: string[] = [];
@@ -68,10 +83,19 @@ export function normalizeResultUrls(
   return urls;
 }
 
-export function mapUrlsToItems(urls: string[], generationType: string): any[] {
+interface GeneratedItem {
+  image_url?: string;
+  source_image_url?: string;
+  audio_url?: string;
+  source_audio_url?: string;
+  video_url?: string;
+  source_video_url?: string;
+}
+
+export function mapUrlsToItems(urls: string[], generationType: string): GeneratedItem[] {
   return urls.map((url: string) => {
-    const item: any = {};
-    
+    const item: GeneratedItem = {};
+
     if (generationType === 'image') {
       item.image_url = url;
       item.source_image_url = url;
@@ -82,7 +106,7 @@ export function mapUrlsToItems(urls: string[], generationType: string): any[] {
       item.video_url = url;
       item.source_video_url = url;
     }
-    
+
     return item;
   });
 }

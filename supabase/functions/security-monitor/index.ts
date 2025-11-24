@@ -72,11 +72,21 @@ Deno.serve(async (req) => {
       .from('security_config')
       .select('config_key, config_value');
 
+    interface SecurityConfigRow {
+      config_key: string;
+      config_value: {
+        window_minutes?: number;
+        window_hours?: number;
+        count?: number;
+        tokens?: number;
+      };
+    }
+
     // Build thresholds object with defaults as fallback
     const thresholds = (securityConfig || []).reduce((acc, row) => {
       acc[row.config_key] = row.config_value;
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, SecurityConfigRow['config_value']>);
 
     // Extract values with defaults
     const failedLoginConfig = thresholds.failed_login_threshold || { window_minutes: 15, count: 5 };
@@ -91,8 +101,13 @@ Deno.serve(async (req) => {
       .eq('action', AUDIT_ACTIONS.LOGIN_FAILED)
       .gte('created_at', failedLoginWindow.toISOString());
 
+    interface AuditLog {
+      ip_address: string;
+      count?: number;
+    }
+
     if (failedLogins) {
-      const ipCounts = failedLogins.reduce((acc: Record<string, number>, log: any) => {
+      const ipCounts = failedLogins.reduce((acc: Record<string, number>, log: AuditLog) => {
         acc[log.ip_address] = (acc[log.ip_address] || 0) + 1;
         return acc;
       }, {});
@@ -128,7 +143,7 @@ Deno.serve(async (req) => {
       .gte('created_at', rapidSignupWindow.toISOString());
 
     if (recentSignups) {
-      const signupIpCounts = recentSignups.reduce((acc: Record<string, number>, log: any) => {
+      const signupIpCounts = recentSignups.reduce((acc: Record<string, number>, log: AuditLog) => {
         acc[log.ip_address] = (acc[log.ip_address] || 0) + 1;
         return acc;
       }, {});
@@ -162,8 +177,14 @@ Deno.serve(async (req) => {
       .select('user_id, tokens_used, created_at')
       .gte('created_at', tokenUsageWindow.toISOString());
 
+    interface GenerationRecord {
+      user_id: string;
+      tokens_used: number;
+      created_at: string;
+    }
+
     if (tokenUsage) {
-      const userTokens = tokenUsage.reduce((acc: Record<string, number>, gen: any) => {
+      const userTokens = tokenUsage.reduce((acc: Record<string, number>, gen: GenerationRecord) => {
         acc[gen.user_id] = (acc[gen.user_id] || 0) + gen.tokens_used;
         return acc;
       }, {});

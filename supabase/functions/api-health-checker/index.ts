@@ -163,6 +163,13 @@ serve(async () => {
   }
 })
 
+interface ApiConfig {
+  id: string;
+  name: string;
+  display_name: string;
+  alert_threshold: number;
+}
+
 /**
  * Handle unhealthy API detection
  * - Check for consecutive failures
@@ -170,8 +177,8 @@ serve(async () => {
  * - Notify admins if needed
  */
 async function handleUnhealthyAPI(
-  supabase: any,
-  config: any,
+  supabase: ReturnType<typeof createClient>,
+  config: ApiConfig,
   status: string,
   errorMessage: string | null
 ) {

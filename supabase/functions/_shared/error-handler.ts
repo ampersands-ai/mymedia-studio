@@ -3,7 +3,7 @@
  * Returns generic messages to clients for security
  */
 export function createSafeErrorResponse(
-  error: any,
+  error: unknown,
   context: string,
   headers: Record<string, string>
 ): Response {
@@ -12,8 +12,8 @@ export function createSafeErrorResponse(
   // Map errors to safe client messages
   let safeMessage = 'An error occurred processing your request';
   let status = 500;
-  
-  const errorMsg = error?.message?.toLowerCase() || '';
+
+  const errorMsg = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
   
   if (errorMsg.includes('auth') || errorMsg.includes('unauthorized')) {
     safeMessage = 'Authentication failed';

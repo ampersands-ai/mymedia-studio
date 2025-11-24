@@ -5,6 +5,11 @@
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+interface SimpleLogger {
+  info: (msg: string, ctx?: unknown) => void;
+  error: (msg: string, err: Error, ctx?: unknown) => void;
+}
+
 /**
  * Upload a base64 image and return signed URL
  */
@@ -12,7 +17,7 @@ export async function uploadBase64Image(
   dataUrl: string,
   userId: string,
   supabaseClient: SupabaseClient,
-  logger?: { info: (msg: string, ctx?: any) => void; error: (msg: string, err: any, ctx?: any) => void }
+  logger?: SimpleLogger
 ): Promise<string> {
   const matches = dataUrl.match(/^data:(.+);base64,(.+)$/);
   if (!matches) {
@@ -58,11 +63,11 @@ export async function uploadBase64Image(
  * Process image uploads in user inputs and generate signed URLs
  */
 export async function processImageUploads(
-  inputs: Record<string, any>,
+  inputs: Record<string, unknown>,
   userId: string,
   supabaseClient: SupabaseClient,
-  logger?: { info: (msg: string, ctx?: any) => void; error: (msg: string, err: any, ctx?: any) => void }
-): Promise<Record<string, any>> {
+  logger?: SimpleLogger
+): Promise<Record<string, unknown>> {
   const processed = { ...inputs };
   
   for (const [key, value] of Object.entries(inputs)) {
@@ -103,11 +108,11 @@ export async function processImageUploads(
  * Sanitize parameters and convert base64 images to signed URLs
  */
 export async function sanitizeParametersForProviders(
-  params: Record<string, any>,
+  params: Record<string, unknown>,
   userId: string,
   supabaseClient: SupabaseClient,
-  logger?: { info: (msg: string, ctx?: any) => void; error: (msg: string, err: any, ctx?: any) => void }
-): Promise<Record<string, any>> {
+  logger?: SimpleLogger
+): Promise<Record<string, unknown>> {
   const mediaKeys = ['image_url', 'image_urls', 'input_image', 'reference_image', 'mask_image', 'image', 'images', 'thumbnail', 'cover'];
   const processed = { ...params };
   let convertedCount = 0;

@@ -237,15 +237,25 @@ Deno.serve(async (req) => {
       );
     }
 
+    interface SchemaProperty {
+      showToUser?: boolean;
+      default?: unknown;
+      enum?: unknown[];
+    }
+
+    interface InputSchema {
+      properties?: Record<string, SchemaProperty>;
+    }
+
     // Validate and filter parameters
     function validateAndFilterParameters(
-      parameters: Record<string, any>,
-      schema: any
-    ): Record<string, any> {
+      parameters: Record<string, unknown>,
+      schema: InputSchema
+    ): Record<string, unknown> {
       if (!schema?.properties) return parameters;
-      
+
       const allowedKeys = Object.keys(schema.properties);
-      const filtered: Record<string, any> = {};
+      const filtered: Record<string, unknown> = {};
       
       for (const key of allowedKeys) {
         const schemaProperty = schema.properties[key];
@@ -520,8 +530,9 @@ Deno.serve(async (req) => {
         { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
 
-    } catch (providerError: any) {
-      logger.error('Provider error', providerError, {
+    } catch (providerError: unknown) {
+      const error = providerError instanceof Error ? providerError : new Error(String(providerError));
+      logger.error('Provider error', error, {
         userId: user.id,
         metadata: { generation_id: generation.id }
       });
@@ -532,8 +543,8 @@ Deno.serve(async (req) => {
         .update({
           status: 'failed',
           tokens_used: 0,
-          provider_response: { 
-            error: providerError.message?.substring(0, 200) || 'Generation failed',
+          provider_response: {
+            error: error.message?.substring(0, 200) || 'Generation failed',
             timestamp: new Date().toISOString()
           }
         })
@@ -556,14 +567,14 @@ Deno.serve(async (req) => {
         resource_type: 'generation',
         resource_id: generation.id,
         metadata: {
-          error: providerError.message,
+          error: error.message,
           model_id: model.id,
           tokens_refunded: tokenCost,
           provider: 'runware'
         }
       });
 
-      throw providerError;
+      throw error;
     }
 
   } catch (error) {

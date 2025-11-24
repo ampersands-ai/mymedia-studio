@@ -22,8 +22,18 @@ Deno.serve(async (req) => {
     return handleCorsPreflight(req);
   }
 
-  let body: any;
-  let user: any;
+  interface RequestBody {
+    user_id?: string;
+    amount?: number;
+    action?: string;
+  }
+
+  interface AuthUser {
+    id: string;
+  }
+
+  let body: RequestBody | undefined;
+  let user: AuthUser | undefined;
 
   try {
     logger.info('Processing token management request');

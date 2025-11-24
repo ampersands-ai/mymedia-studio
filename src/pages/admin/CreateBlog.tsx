@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { logger } from "@/lib/logger";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,7 +78,7 @@ export default function CreateBlog() {
       setSuggestedTopics(data.topics);
       toast.success(`Generated ${data.topics.length} topic ideas!`);
     } catch (error: any) {
-      console.error('Error generating topics:', error);
+      logger.error('Error generating topics', error);
       toast.error(error.message || 'Failed to generate topics');
     } finally {
       setIsGeneratingTopics(false);
@@ -135,7 +136,7 @@ export default function CreateBlog() {
 
       toast.success('Blog post generated successfully! Review and edit as needed.');
     } catch (error: any) {
-      console.error('Error generating blog post:', error);
+      logger.error('Error generating blog post', error);
       toast.error(error.message || 'Failed to generate blog post');
     } finally {
       setIsGeneratingPost(false);
@@ -239,7 +240,7 @@ export default function CreateBlog() {
       toast.success(saveStatus === 'published' ? 'Blog post published!' : 'Draft saved!');
       return post.id;
     } catch (error: any) {
-      console.error('Error saving blog post:', error);
+      logger.error('Error saving blog post', error);
       toast.error(error.message || 'Failed to save blog post');
       return null;
     } finally {
@@ -260,7 +261,7 @@ export default function CreateBlog() {
         description: data.failed > 0 ? `${data.failed} failed to send` : undefined,
       });
     } catch (error: any) {
-      console.error('Error sending emails:', error);
+      logger.error('Error sending emails', error);
       toast.error(error.message || 'Failed to send emails');
     } finally {
       setIsSendingEmail(false);

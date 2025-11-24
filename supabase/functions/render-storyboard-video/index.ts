@@ -28,14 +28,13 @@ Deno.serve(async (req) => {
   }
 
   const requestId = crypto.randomUUID();
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+  const logger = new EdgeLogger('render-storyboard-video', requestId, supabaseClient, true);
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    const logger = new EdgeLogger('render-storyboard-video', requestId, supabaseClient, true);
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -569,7 +568,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('[render-storyboard-video] Error:', error);
+    logger.error('Render storyboard video error', error instanceof Error ? error : undefined);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),

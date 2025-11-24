@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Upload, X, Volume2, FileText, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { logger } from "@/lib/logger";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { VoiceSelector } from "./VoiceSelector";
@@ -109,10 +110,10 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
         // Handle array of strings (Veo Reference model)
         const currentArray = Array.isArray(value) ? value : [];
         const maxItems = schema.maxItems || 10;
-        
+
         if (currentArray.length >= maxItems) {
           // Use toast if available
-          console.warn(`Maximum ${maxItems} images allowed`);
+          logger.warn(`Maximum ${maxItems} images allowed`);
           return;
         }
         

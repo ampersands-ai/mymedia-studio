@@ -5,25 +5,33 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getModel, getModelConfig, getAvailableModelRecordIds } from "../_shared/registry/index.ts";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('test-registry', requestId);
+
   try {
     // Test 1: List available models
     const availableIds = getAvailableModelRecordIds();
-    console.log(`✅ Found ${availableIds.length} models in registry`);
+    logger.info('Found models in registry', { metadata: { count: availableIds.length } });
 
     // Test 2: Get a specific model (ElevenLabs Fast)
     const testRecordId = "7cd9f31d-82d6-49a8-a4ae-13dbe9b73c2f";
-    console.log(`Testing model import for record_id: ${testRecordId}`);
+    logger.info('Testing model import', { metadata: { recordId: testRecordId } });
 
     const model = await getModel(testRecordId);
-    console.log(`✅ Model imported successfully`);
-    console.log(`Model name: ${model.MODEL_CONFIG.modelName}`);
-    console.log(`Provider: ${model.MODEL_CONFIG.provider}`);
+    logger.info('Model imported successfully');
+    logger.info('Model details', {
+      metadata: {
+        name: model.MODEL_CONFIG.modelName,
+        provider: model.MODEL_CONFIG.provider
+      }
+    });
 
     // Test 3: Get config only
     const config = await getModelConfig(testRecordId);
-    console.log(`✅ Model config retrieved`);
+    logger.info('Model config retrieved');
 
     return new Response(
       JSON.stringify({
@@ -42,7 +50,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("❌ Registry test failed:", error);
+    logger.error('Registry test failed', error instanceof Error ? error : new Error(String(error)));
     return new Response(
       JSON.stringify({
         success: false,

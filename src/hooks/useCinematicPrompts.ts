@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getSurpriseMePrompt as getHardcodedPrompt } from "@/data/surpriseMePrompts";
+import { logger } from "@/lib/logger";
 
 type CreationType = 'image_editing' | 'prompt_to_image' | 'prompt_to_video' | 'image_to_video' | 'prompt_to_audio';
 
@@ -27,9 +28,9 @@ export const useCinematicPrompts = () => {
         .select('*')
         .eq('is_active', true)
         .order('quality_score', { ascending: false, nullsFirst: false });
-      
+
       if (error) {
-        console.error('Error fetching cinematic prompts:', error);
+        logger.error('Error fetching cinematic prompts', error);
         return [];
       }
       

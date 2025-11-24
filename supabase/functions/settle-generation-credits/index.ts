@@ -2,8 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { settleCredits, releaseCredits } from './creditSettlement.ts';
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
-
-
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
@@ -12,11 +11,13 @@ Deno.serve(async (req) => {
     return handleCorsPreflight(req);
   }
 
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  );
+  const logger = new EdgeLogger('settle-generation-credits', crypto.randomUUID(), supabase);
+
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
 
     const { generationId, status } = await req.json();
 
@@ -58,7 +59,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Settlement error:', error);
+    logger.error('Settlement error', error instanceof Error ? error : undefined);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ error: message }), {
       status: 500,

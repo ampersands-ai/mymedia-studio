@@ -1377,7 +1377,7 @@ Keep the core intent, add key musical/audio details (genre, mood, instruments, t
   // Safety net: Force truncate if enhancement still exceeds limit for Kie.ai non-custom mode
   if (modelProvider === 'kie_ai' && contentType === 'audio' && customMode === false) {
     if (enhanced.length > 500) {
-      console.warn('Enhanced prompt truncated', { length: enhanced.length });
+      // Truncate to stay within 500 character limit
       enhanced = enhanced.slice(0, 497) + '...';
     }
   }

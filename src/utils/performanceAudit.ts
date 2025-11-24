@@ -3,6 +3,8 @@
  * Run comprehensive performance checks and generate reports
  */
 
+import { logger } from '@/lib/logger';
+
 export interface PerformanceReport {
   timestamp: string;
   metrics: {
@@ -193,7 +195,7 @@ will-change Elements: ${report.performance.willChangeCount}
  * Export report to console
  */
 export function logPerformanceReport(report: PerformanceReport): void {
-  console.log(formatPerformanceReport(report));
+  logger.info(formatPerformanceReport(report));
 }
 
 /**

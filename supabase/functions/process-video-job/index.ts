@@ -339,7 +339,7 @@ async function _getBackgroundVideo(
   if (topic && topic.trim()) {
     // Extract key terms from topic (remove filler words, limit length)
     searchQuery = extractSearchTerms(topic);
-    console.log('Using topic-based search', { jobId: videoJobId, searchQuery, topic });
+    logger.debug('Using topic-based search', { userId, metadata: { jobId: videoJobId, searchQuery, topic } });
   } else {
     // Fallback to style-based queries
     const queries: Record<string, string> = {
@@ -349,13 +349,13 @@ async function _getBackgroundVideo(
       dramatic: 'cinematic nature dramatic'
     };
     searchQuery = queries[style] || 'abstract motion background';
-    console.log('Using style-based search', { jobId: videoJobId, searchQuery, style });
+    logger.debug('Using style-based search', { userId, metadata: { jobId: videoJobId, searchQuery, style } });
   }
   const pixabayApiKey = Deno.env.get('PIXABAY_API_KEY');
   const endpoint = `https://pixabay.com/api/videos/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&per_page=20`;
   const requestSentAt = new Date();
 
-  console.log('Searching Pixabay', { userId, jobId: videoJobId, searchQuery });
+  logger.info('Searching Pixabay', { userId, metadata: { jobId: videoJobId, searchQuery } });
 
   const response = await fetch(endpoint);
 
@@ -382,7 +382,7 @@ async function _getBackgroundVideo(
       isError: !response.ok,
       errorMessage: response.ok ? undefined : `Pixabay returned ${response.status}`
     }
-  ).catch(e => console.error('Failed to log Pixabay API call', e));
+  ).catch(e => logger.error('Failed to log Pixabay API call', e instanceof Error ? e : undefined));
 
   if (!response.ok) {
     throw new Error(`Pixabay API error: ${response.status}`);
@@ -392,7 +392,7 @@ async function _getBackgroundVideo(
     throw new Error('No background videos found');
   }
 
-  console.log('Pixabay search results', { userId, jobId: videoJobId, hitCount: data.hits.length, searchQuery });
+  logger.info('Pixabay search results', { userId, metadata: { jobId: videoJobId, hitCount: data.hits.length, searchQuery } });
 
   // Filter landscape videos (width > height) longer than required duration
   const landscapeVideos = data.hits.filter((v: any) => {
@@ -411,8 +411,8 @@ async function _getBackgroundVideo(
   if (!videoUrl) {
     throw new Error('No video URL found');
   }
-  
-  console.log('Selected Pixabay video', { userId, jobId: videoJobId, videoId: video.id, duration: video.duration });
+
+  logger.info('Selected Pixabay video', { userId, metadata: { jobId: videoJobId, videoId: video.id, duration: video.duration } });
   return videoUrl;
 }
 

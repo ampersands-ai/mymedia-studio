@@ -1,20 +1,30 @@
 import type { ProviderRequest, ProviderResponse } from "./index.ts";
+import { EdgeLogger } from "../../_shared/edge-logger.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 /**
  * Lovable AI Provider - Synchronous image generation
  * Uses gpt-image-1 model (OpenAI)
  */
 export async function callLovableAI(request: ProviderRequest): Promise<ProviderResponse> {
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+  const logger = new EdgeLogger('lovable-ai-provider', crypto.randomUUID(), supabaseClient);
+
   const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
   if (!LOVABLE_API_KEY) {
     throw new Error('LOVABLE_API_KEY not configured');
   }
 
-  console.log(JSON.stringify({ 
-    event: 'lovable_ai_generation_start',
-    prompt_length: request.prompt.length,
-    aspectRatio: request.parameters.aspectRatio 
-  }));
+  logger.info('Lovable AI generation start', {
+    metadata: {
+      event: 'lovable_ai_generation_start',
+      prompt_length: request.prompt.length,
+      aspectRatio: request.parameters.aspectRatio
+    }
+  });
 
   const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
     method: 'POST',
@@ -34,22 +44,24 @@ export async function callLovableAI(request: ProviderRequest): Promise<ProviderR
 
   if (!response.ok) {
     const errorText = await response.text();
-    
+
     if (response.status === 429) {
-      console.error(JSON.stringify({ event: 'lovable_ai_rate_limit' }));
+      logger.error('Lovable AI rate limit exceeded', undefined, { metadata: { event: 'lovable_ai_rate_limit' } });
       throw new Error('Rate limit exceeded - too many requests. Please try again later.');
     }
-    
+
     if (response.status === 402) {
-      console.error(JSON.stringify({ event: 'lovable_ai_insufficient_credits' }));
+      logger.error('Lovable AI insufficient credits', undefined, { metadata: { event: 'lovable_ai_insufficient_credits' } });
       throw new Error('Insufficient AI credits. Please add credits in Settings → Workspace → Usage.');
     }
-    
-    console.error(JSON.stringify({ 
-      event: 'lovable_ai_error', 
-      status: response.status, 
-      error: errorText.substring(0, 200)
-    }));
+
+    logger.error('Lovable AI error', undefined, {
+      metadata: {
+        event: 'lovable_ai_error',
+        status: response.status,
+        error: errorText.substring(0, 200)
+      }
+    });
     throw new Error(`Lovable AI request failed: ${response.status} - ${errorText}`);
   }
 
@@ -69,11 +81,13 @@ export async function callLovableAI(request: ProviderRequest): Promise<ProviderR
   const [, format, base64Data] = base64Match;
   const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
 
-  console.log(JSON.stringify({ 
-    event: 'lovable_ai_generation_complete',
-    format,
-    sizeKB: Math.round(binaryData.length / 1024)
-  }));
+  logger.info('Lovable AI generation complete', {
+    metadata: {
+      event: 'lovable_ai_generation_complete',
+      format,
+      sizeKB: Math.round(binaryData.length / 1024)
+    }
+  });
 
   return {
     output_data: binaryData,

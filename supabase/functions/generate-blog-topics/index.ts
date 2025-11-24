@@ -1,7 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
-
-
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 interface TopicRequest {
   industry?: string;
@@ -18,12 +17,14 @@ Deno.serve(async (req) => {
     return handleCorsPreflight(req);
   }
 
-  try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
+  const requestId = crypto.randomUUID();
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  const logger = new EdgeLogger('generate-blog-topics', requestId, supabase);
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+  try {
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
 
     // Verify authentication
     const authHeader = req.headers.get('Authorization');
@@ -44,7 +45,10 @@ Deno.serve(async (req) => {
     // Default to Claude 3.5 Sonnet if no model specified
     const selectedModel = aiModel || 'claude-3-5-sonnet-20241022';
 
-    console.log('Generating blog topics:', { industry, keywords, tone, targetAudience, model: selectedModel });
+    logger.info('Generating blog topics', {
+      userId: user.id,
+      metadata: { industry, keywords, tone, targetAudience, model: selectedModel }
+    });
 
     // Build AI prompt for topic generation
     const prompt = `Generate 5 SEO-optimized blog topic ideas for ${industry || 'technology industry'} targeting ${targetAudience || 'general audience'}.
@@ -102,7 +106,10 @@ Format your response as a JSON array with this structure:
 
     const topics = JSON.parse(jsonMatch[0]);
 
-    console.log(`Generated ${topics.length} topics successfully`);
+    logger.info('Generated topics successfully', {
+      userId: user.id,
+      metadata: { topicCount: topics.length }
+    });
 
     return new Response(
       JSON.stringify({ topics }),
@@ -112,7 +119,7 @@ Format your response as a JSON array with this structure:
       }
     );
   } catch (error: any) {
-    console.error('Error generating topics:', error);
+    logger.error('Error generating topics', error instanceof Error ? error : undefined);
     return new Response(
       JSON.stringify({ error: error?.message || 'Unknown error' }),
       {

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 
 /**
  * Reserve credits - Check if user has sufficient balance WITHOUT deducting
@@ -55,7 +56,7 @@ export async function settleCredits(userId: string, generationId: string, cost: 
     .eq("id", generationId);
 
   if (genError) {
-    console.error("Failed to mark generation as charged:", genError);
+    logger.error("Failed to mark generation as charged", genError);
     throw new Error("Failed to update generation charge status");
   }
 
@@ -79,7 +80,7 @@ export async function settleCredits(userId: string, generationId: string, cost: 
     .eq("user_id", userId);
 
   if (updateError) {
-    console.error("Failed to deduct credits:", updateError);
+    logger.error("Failed to deduct credits", updateError);
     throw new Error("Failed to deduct credits");
   }
 }
@@ -99,6 +100,6 @@ export async function releaseCredits(generationId: string): Promise<void> {
     .eq("id", generationId);
 
   if (error) {
-    console.error("Failed to release reserved credits:", error);
+    logger.error("Failed to release reserved credits", error);
   }
 }

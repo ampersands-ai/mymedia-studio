@@ -1,7 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
-
-
+import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 interface BlogRequest {
   topic: string;
@@ -23,12 +22,14 @@ Deno.serve(async (req) => {
     return handleCorsPreflight(req);
   }
 
-  try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
+  const requestId = crypto.randomUUID();
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  const logger = new EdgeLogger('generate-blog-post', requestId, supabase);
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+  try {
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
 
     // Verify authentication
     const authHeader = req.headers.get('Authorization');
@@ -60,7 +61,10 @@ Deno.serve(async (req) => {
     // Default to Claude 3.5 Sonnet if no model specified
     const selectedModel = aiModel || 'claude-3-5-sonnet-20241022';
 
-    console.log('Generating blog post:', { topic, keywords, tone, length, model: selectedModel });
+    logger.info('Generating blog post', {
+      userId: user.id,
+      metadata: { topic, keywords, tone, length, model: selectedModel }
+    });
 
     // Calculate word count target
     const wordCounts = { short: 500, medium: 1000, long: 2000 };
@@ -179,7 +183,7 @@ Format your response as JSON:
       blogData.schema_data.datePublished = new Date().toISOString().split('T')[0];
     }
 
-    console.log('Blog post generated successfully');
+    logger.info('Blog post generated successfully', { userId: user.id });
 
     return new Response(
       JSON.stringify(blogData),
@@ -189,7 +193,7 @@ Format your response as JSON:
       }
     );
   } catch (error: any) {
-    console.error('Error generating blog post:', error);
+    logger.error('Error generating blog post', error instanceof Error ? error : undefined);
     return new Response(
       JSON.stringify({ error: error?.message || 'Unknown error' }),
       {

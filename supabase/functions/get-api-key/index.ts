@@ -13,6 +13,10 @@
  * HTTP 410 Gone indicates this resource is permanently unavailable.
  */
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
 
@@ -20,7 +24,13 @@ Deno.serve(async (req) => {
     return handleCorsPreflight(req);
   }
 
-  console.warn('DEPRECATED: get-api-key function called. All models should use generate-content edge function instead.');
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+  const logger = new EdgeLogger('get-api-key', crypto.randomUUID(), supabase);
+
+  logger.warn('DEPRECATED: get-api-key function called. All models should use generate-content edge function instead.');
 
   return new Response(
     JSON.stringify({

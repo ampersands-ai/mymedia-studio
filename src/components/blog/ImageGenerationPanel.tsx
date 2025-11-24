@@ -15,6 +15,7 @@ import { Loader2, ImagePlus, Sparkles, Copy, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getAllModels } from "@/lib/models/registry";
+import { logger } from "@/lib/logger";
 
 interface SuggestedImage {
   prompt: string;
@@ -155,7 +156,7 @@ export const ImageGenerationPanel = ({
       setCustomPrompt("");
       setAltText("");
     } catch (error: any) {
-      console.error("Error generating image:", error);
+      logger.error("Error generating image", error);
       toast.error(error.message || "Failed to generate image");
     } finally {
       setIsGenerating(false);

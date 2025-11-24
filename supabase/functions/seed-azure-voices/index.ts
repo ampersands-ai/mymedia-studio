@@ -590,7 +590,7 @@ serve(async (req) => {
       { voice_id: 'zu-ZA-ThembaNeural', voice_name: 'Themba', language: 'Zulu', country: 'South Africa', language_code: 'zu-ZA' }
     ];
 
-    console.log(`Seeding ${voices.length} Azure voices...`);
+    logger.info('Seeding Azure voices', { metadata: { voiceCount: voices.length } });
 
     // Upsert all voices (insert or update on conflict)
     const { error } = await supabaseAdmin

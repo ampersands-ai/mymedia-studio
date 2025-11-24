@@ -18,9 +18,10 @@ Deno.serve(async (req) => {
     return handleCorsPreflight(req);
   }
 
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const logger = new EdgeLogger('monitor-webhook-health', requestId, supabase, true);
+
   try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const logger = new EdgeLogger('monitor-webhook-health', requestId, supabase, true);
 
     logger.info('Starting webhook health monitoring check');
 
@@ -181,7 +182,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('Error in monitor-webhook-health', error instanceof Error ? error.message : String(error));
+    logger.error('Error in monitor-webhook-health', error instanceof Error ? error : undefined);
     return new Response(
       JSON.stringify({ error: error.message }),
       {

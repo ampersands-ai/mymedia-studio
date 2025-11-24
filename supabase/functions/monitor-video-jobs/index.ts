@@ -15,13 +15,13 @@ Deno.serve(async (req) => {
     return handleCorsPreflight(req);
   }
 
-  try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  );
+  const logger = new EdgeLogger('monitor-video-jobs', requestId, supabase, true);
 
-    const logger = new EdgeLogger('monitor-video-jobs', requestId, supabase, true);
+  try {
 
     logger.info('Starting video job timeout monitoring');
 
@@ -154,12 +154,12 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in monitor-video-jobs', error instanceof Error ? error.message : String(error));
+    logger.error('Error in monitor-video-jobs', error instanceof Error ? error : undefined);
     return new Response(
       JSON.stringify({ error: (error as Error).message || 'Unknown error' }),
-      { 
+      {
         status: 500,
-        headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       }
     );
   }

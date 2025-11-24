@@ -13,14 +13,13 @@ Deno.serve(async (req) => {
 
   const startTime = Date.now();
   const requestId = crypto.randomUUID();
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+  const logger = new EdgeLogger('regenerate-storyboard-scene', requestId, supabaseClient, true);
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    const logger = new EdgeLogger('regenerate-storyboard-scene', requestId, supabaseClient, true);
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -220,7 +219,7 @@ Create a scene that bridges these naturally.`;
     );
 
   } catch (error) {
-    console.error('[regenerate-storyboard-scene] Function error:', error);
+    logger.error('Regenerate storyboard scene error', error instanceof Error ? error : undefined);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),

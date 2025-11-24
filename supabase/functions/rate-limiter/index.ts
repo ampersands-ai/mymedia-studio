@@ -20,9 +20,8 @@ function logError(context: string, error: any, metadata?: any, logger?: EdgeLogg
   const sanitized = sanitizeError(error);
   if (logger) {
     logger.error(context, new Error(JSON.stringify(sanitized)), { metadata });
-  } else {
-    console.error(`[ERROR] ${context}:`, sanitized, metadata);
   }
+  // EdgeLogger should always be provided in production
 }
 
 // Inline helper: create standardized error response

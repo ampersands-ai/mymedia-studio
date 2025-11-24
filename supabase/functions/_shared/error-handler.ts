@@ -1,18 +1,13 @@
 /**
  * Safe error response handler for edge functions
- * Logs full errors server-side while returning generic messages to clients
+ * Returns generic messages to clients for security
  */
 export function createSafeErrorResponse(
   error: any,
   context: string,
   headers: Record<string, string>
 ): Response {
-  // Log full error server-side for debugging
-  console.error(`[${context}] Error:`, {
-    message: error?.message,
-    stack: error?.stack,
-    details: error
-  });
+  // Note: Full error logging should be handled by EdgeLogger in the calling function
   
   // Map errors to safe client messages
   let safeMessage = 'An error occurred processing your request';

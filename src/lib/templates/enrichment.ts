@@ -4,6 +4,7 @@
  */
 
 import { getModel } from '@/lib/models/registry';
+import { logger } from '@/lib/logger';
 import type { 
   WorkflowTemplate, 
   EnrichedTemplate, 
@@ -65,7 +66,7 @@ export async function enrichTemplates(templates: WorkflowTemplate[]): Promise<En
     if (result.status === 'fulfilled') {
       enriched.push(result.value);
     } else {
-      console.error(`Failed to enrich template ${templates[index].name}:`, result.reason);
+      logger.error(`Failed to enrich template ${templates[index].name}`, result.reason);
     }
   });
 

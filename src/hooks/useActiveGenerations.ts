@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getModel } from "@/lib/models/registry";
 import { ACTIVE_GENERATION_STATUSES } from "@/constants/generation-status";
+import { logger } from "@/lib/logger";
 
 export interface ActiveGeneration {
   id: string;
@@ -43,7 +44,7 @@ export const useActiveGenerations = () => {
           modelName = model.MODEL_CONFIG.modelName;
           contentType = model.MODEL_CONFIG.contentType;
         } catch (e) {
-          console.warn(`Failed to load model from registry:`, gen.model_record_id, e);
+          logger.warn('Failed to load model from registry', { modelRecordId: gen.model_record_id, error: e });
         }
 
         return {

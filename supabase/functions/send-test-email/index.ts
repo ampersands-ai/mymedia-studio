@@ -147,7 +147,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Test email sent successfully:", emailResponse);
+    logger.info("Test email sent successfully", { metadata: { emailResponse } });
 
     // Log to email_history
     await supabase.from("email_history").insert({

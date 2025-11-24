@@ -11,6 +11,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { logger } from "@/lib/logger";
 
 export type ExecutionStepStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'paused' | 'edited';
 export type ExecutionStepType = 'main' | 'sub' | 'log' | 'error' | 'warning';
@@ -207,11 +208,11 @@ export class EnhancedExecutionTracker {
       });
 
       if (error) {
-        console.error('Failed to initialize test execution run:', error);
+        logger.error('Failed to initialize test execution run', error);
         this.persistenceEnabled = false;
       }
     } catch (error) {
-      console.error('Failed to initialize persistence:', error);
+      logger.error('Failed to initialize persistence', error);
       this.persistenceEnabled = false;
     }
   }
@@ -283,7 +284,7 @@ export class EnhancedExecutionTracker {
         })
         .eq('test_run_id', this.flow.testRunId);
     } catch (error) {
-      console.error('Failed to save to database:', error);
+      logger.error('Failed to save to database', error);
     }
   }
 
@@ -347,7 +348,7 @@ export class EnhancedExecutionTracker {
         },
       });
     } catch (error) {
-      console.error('Failed to save step snapshot:', error);
+      logger.error('Failed to save step snapshot', error);
     }
   }
 
@@ -589,7 +590,7 @@ export class EnhancedExecutionTracker {
         timestamp: new Date(log.timestamp).toISOString(),
       });
     } catch (error) {
-      console.error('Failed to save log:', error);
+      logger.error('Failed to save log', error);
     }
   }
 
@@ -795,7 +796,7 @@ export class EnhancedExecutionTracker {
         .single();
 
       if (runError || !runData) {
-        console.error('Failed to load test run:', runError);
+        logger.error('Failed to load test run', runError);
         return null;
       }
 
@@ -883,7 +884,7 @@ export class EnhancedExecutionTracker {
 
       return tracker;
     } catch (error) {
-      console.error('Failed to load from database:', error);
+      logger.error('Failed to load from database', error);
       return null;
     }
   }

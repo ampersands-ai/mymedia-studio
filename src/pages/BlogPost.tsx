@@ -9,6 +9,7 @@ import { Helmet } from "react-helmet-async";
 import type { BlogPost as BlogPostType } from "@/types/blog";
 import { Share2, Clock, Eye, Calendar, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
@@ -39,7 +40,7 @@ export default function BlogPost() {
         await supabase.rpc('increment_blog_view_count', { post_id: data.id });
       }
     } catch (error) {
-      console.error('Error fetching blog post:', error);
+      logger.error('Error fetching blog post', error);
     } finally {
       setIsLoading(false);
     }
@@ -63,7 +64,7 @@ export default function BlogPost() {
       // Increment share count
       await supabase.rpc('increment_blog_share_count', { post_id: post.id });
     } catch (error) {
-      console.error('Error sharing:', error);
+      logger.error('Error sharing', error);
     }
   };
 

@@ -88,7 +88,7 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
         const model = getModel(parentData.model_record_id);
         parentProvider = model.MODEL_CONFIG.provider;
       } catch (e) {
-        console.warn(`Failed to load model from registry:`, parentData.model_record_id, e);
+        logger.warn('Failed to load model from registry', { modelRecordId: parentData.model_record_id, error: e });
       }
 
       if (parentData.status === 'completed') {
@@ -111,7 +111,7 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
                 const model = getModel(child.model_record_id);
                 childProvider = model.MODEL_CONFIG.provider;
               } catch (e) {
-                console.warn(`Failed to load model from registry:`, child.model_record_id, e);
+                logger.warn('Failed to load model from registry', { modelRecordId: child.model_record_id, error: e });
               }
 
               return {

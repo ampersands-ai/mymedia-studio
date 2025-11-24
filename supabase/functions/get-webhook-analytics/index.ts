@@ -17,10 +17,11 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
+
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Missing env vars', { hasUrl: !!supabaseUrl, hasServiceKey: !!supabaseServiceKey });
-      logger.error('Missing required environment variables', new Error('Configuration error'));
+      logger.error('Missing required environment variables', new Error('Configuration error'), {
+        metadata: { hasUrl: !!supabaseUrl, hasServiceKey: !!supabaseServiceKey }
+      });
       throw new Error('Server configuration error');
     }
     
@@ -93,9 +94,8 @@ Deno.serve(async (req) => {
     const { data: events, error: eventsError } = await query;
 
     if (eventsError) {
-      console.error('DB query failed', { error: eventsError, timeRange, provider });
       logger.error('Database query failed', new Error(eventsError?.message || 'Unknown error'), {
-        metadata: { timeRange, provider, startDate: startDate.toISOString(), endDate: endDate.toISOString() }
+        metadata: { error: eventsError, timeRange, provider, startDate: startDate.toISOString(), endDate: endDate.toISOString() }
       });
       throw new Error(`Database query failed: ${eventsError.message}`);
     }

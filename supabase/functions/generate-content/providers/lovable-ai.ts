@@ -1,9 +1,13 @@
 import type { ProviderRequest, ProviderResponse } from "./index.ts";
+import { EdgeLogger } from "../../_shared/edge-logger.ts";
 
 const LOVABLE_AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 export async function callLovableAI(request: ProviderRequest): Promise<ProviderResponse> {
-  console.log('[Lovable AI] Starting image generation', { model: request.model });
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('lovable-ai-provider', requestId);
+
+  logger.info('Starting image generation', { metadata: { model: request.model } });
 
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
   if (!apiKey) {
@@ -41,10 +45,12 @@ export async function callLovableAI(request: ProviderRequest): Promise<ProviderR
     ],
     modalities: ["image", "text"]
   };
-  console.log('[Lovable AI] Request payload prepared', { 
-    model: payload.model,
-    promptLength: promptField.length,
-    parameters: Object.keys(request.parameters)
+  logger.info('Request payload prepared', {
+    metadata: {
+      model: payload.model,
+      promptLength: promptField.length,
+      parameters: Object.keys(request.parameters)
+    }
   });
 
   const response = await fetch(LOVABLE_AI_GATEWAY, {
@@ -58,9 +64,11 @@ export async function callLovableAI(request: ProviderRequest): Promise<ProviderR
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('[Lovable AI] API error', { 
-      status: response.status, 
-      error: errorText 
+    logger.error('API error', new Error(`API error: ${response.status}`), {
+      metadata: {
+        status: response.status,
+        error: errorText.substring(0, 200)
+      }
     });
     
     if (response.status === 429) {
@@ -74,9 +82,11 @@ export async function callLovableAI(request: ProviderRequest): Promise<ProviderR
   }
 
   const result = await response.json();
-  console.log('[Lovable AI] Response received', { 
-    hasChoices: !!result.choices,
-    choicesCount: result.choices?.length 
+  logger.info('Response received', {
+    metadata: {
+      hasChoices: !!result.choices,
+      choicesCount: result.choices?.length
+    }
   });
 
   // Extract base64 image from response
@@ -103,9 +113,11 @@ export async function callLovableAI(request: ProviderRequest): Promise<ProviderR
     uint8Data[i] = binaryString.charCodeAt(i);
   }
 
-  console.log('[Lovable AI] Image decoded', { 
-    size_bytes: uint8Data.length,
-    size_kb: Math.round(uint8Data.length / 1024)
+  logger.info('Image decoded', {
+    metadata: {
+      size_bytes: uint8Data.length,
+      size_kb: Math.round(uint8Data.length / 1024)
+    }
   });
 
   return {

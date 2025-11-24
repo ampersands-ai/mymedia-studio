@@ -26,7 +26,7 @@ export function getGenerationType(contentType: string): 'image' | 'video' | 'aud
   const type = typeMap[contentType];
 
   if (!type) {
-    console.warn(`Unknown contentType: "${contentType}", defaulting to 'text'`);
+    // Unknown contentType, defaulting to 'text'
     return 'text';
   }
 

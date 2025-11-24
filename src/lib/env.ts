@@ -25,8 +25,6 @@ function validateEnv(): Env {
   if (!parsed.success) {
     const errorMessage = 'Environment validation failed';
     envLogger.critical(errorMessage, new Error(JSON.stringify(parsed.error.flatten())));
-    // Console error kept for immediate visibility during startup
-    console.error('❌ Invalid environment variables:', parsed.error.flatten());
     throw new Error(errorMessage);
   }
 

@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import type { NavigateFunction } from "react-router-dom";
+import { logger } from "@/lib/logger";
 
 /**
  * Get required fields from model schema
@@ -32,7 +33,7 @@ export const getImageFieldInfo = (model: any): {
   // Validate the field exists in properties
   const fieldSchema = model.input_schema.properties?.[imageFieldName];
   if (!fieldSchema) {
-    console.warn(`Image field '${imageFieldName}' declared in schema but not found in properties`);
+    logger.warn(`Image field '${imageFieldName}' declared in schema but not found in properties`);
     return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
   }
   

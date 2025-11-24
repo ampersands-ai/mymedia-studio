@@ -279,7 +279,11 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
   const planKey = planName.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
 
-  console.log(JSON.stringify({ event: 'payment_succeeded', userId, planName, tokens }));
+  // Note: EdgeLogger not available in helper functions, using structured JSON for consistency
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('payment-handler', requestId);
+
+  logger.info('Payment succeeded', { metadata: { userId, planName, tokens } });
 
   // Get current tokens
   const { data: currentSub } = await supabase
@@ -292,12 +296,13 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
   const newTokensRemaining = (currentSub?.tokens_remaining || 0) + tokens;
   const newTokensTotal = (currentSub?.tokens_total || 0) + tokens;
 
-  console.log(JSON.stringify({ 
-    event: 'adding_tokens',
-    tokens, 
-    currentRemaining: currentSub?.tokens_remaining,
-    newRemaining: newTokensRemaining 
-  }));
+  logger.info('Adding tokens', {
+    metadata: {
+      tokens,
+      currentRemaining: currentSub?.tokens_remaining,
+      newRemaining: newTokensRemaining
+    }
+  });
 
   // Update subscription with added tokens
   const { error } = await supabase
@@ -315,7 +320,7 @@ async function handlePaymentSucceeded(supabase: any, data: any, metadata: any) {
     .eq('user_id', userId);
 
   if (error) {
-    console.error(JSON.stringify({ event: 'error_updating_subscription', error: String(error) }));
+    logger.error('Error updating subscription', error as Error);
     throw error;
   }
 }
@@ -331,8 +336,10 @@ async function handlePaymentFailed(supabase: any, data: any, metadata: any) {
 
 async function handleSubscriptionActive(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
-  
-  console.log(JSON.stringify({ event: 'subscription_activated', userId }));
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('subscription-handler', requestId);
+
+  logger.info('Subscription activated', { metadata: { userId } });
 
   await supabase
     .from('user_subscriptions')
@@ -377,8 +384,10 @@ async function handleSubscriptionRenewed(supabase: any, data: any, metadata: any
   const planName = metadata.plan || 'freemium';
   const planKey = planName.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('subscription-renewed', requestId);
 
-  console.log(JSON.stringify({ event: 'subscription_renewed', userId, tokens }));
+  logger.info('Subscription renewed', { metadata: { userId, tokens } });
 
   // Get current subscription
   const { data: currentSub } = await supabase
@@ -404,8 +413,10 @@ async function handleSubscriptionPlanChanged(supabase: any, data: any, metadata:
   const newPlan = metadata.new_plan || metadata.plan;
   const planKey = newPlan.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('plan-changed', requestId);
 
-  console.log(JSON.stringify({ event: 'plan_changed', userId, newPlan, tokens }));
+  logger.info('Plan changed', { metadata: { userId, newPlan, tokens } });
 
   await supabase
     .from('user_subscriptions')
@@ -430,8 +441,10 @@ async function handleSubscriptionOnHold(supabase: any, data: any, metadata: any)
 async function handleRefundSucceeded(supabase: any, data: any, metadata: any) {
   const userId = metadata.user_id;
   const refundAmount = data.amount || 0;
-  
-  console.log(JSON.stringify({ event: 'refund_processed', userId, refundAmount }));
+  const requestId = crypto.randomUUID();
+  const logger = new EdgeLogger('refund-handler', requestId);
+
+  logger.info('Refund processed', { metadata: { userId, refundAmount } });
 
   // Optionally deduct tokens proportionally
   await supabase

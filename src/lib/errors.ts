@@ -1,3 +1,5 @@
+import { logger } from "@/lib/logger";
+
 export class AppError extends Error {
   constructor(
     public code: string,
@@ -92,7 +94,7 @@ export function handleError(error: unknown, context?: Record<string, unknown>): 
 
     // Unclassified error - return as generic AppError
     // Log for monitoring to help identify gaps in error handling
-    console.warn('[Error Classification] Unclassified error type:', errorType, '- returning UNKNOWN_ERROR');
+    logger.warn('[Error Classification] Unclassified error type', { errorType, context });
     return new AppError('UNKNOWN_ERROR', msg, 'medium', false, {
       ...context,
       originalError: errorType,

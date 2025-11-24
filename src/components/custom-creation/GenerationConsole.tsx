@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Info, History } from "lucide-react";
+import { logger } from "@/lib/logger";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
 import { OutputGrid } from "@/components/generation/OutputGrid";
 import { OutputLightbox } from "@/components/generation/OutputLightbox";
@@ -80,7 +81,7 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
   failedGenerationError,
   onClearError,
 }) => {
-  console.log('📺 GenerationConsole render', {
+  logger.debug('GenerationConsole render', {
     outputsCount: generationState.generatedOutputs.length,
     outputs: generationState.generatedOutputs,
     singleOutput: generationState.generatedOutput,

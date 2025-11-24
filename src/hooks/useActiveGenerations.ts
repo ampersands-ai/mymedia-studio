@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getModel } from "@/lib/models/registry";
+import { ACTIVE_GENERATION_STATUSES } from "@/constants/generation-status";
 
 export interface ActiveGeneration {
   id: string;
@@ -26,7 +27,7 @@ export const useActiveGenerations = () => {
         .from("generations")
         .select("id, model_id, prompt, status, created_at, model_record_id")
         .eq("user_id", user.id)
-        .in("status", ["pending", "processing"])
+        .in("status", ACTIVE_GENERATION_STATUSES as unknown as string[])
         .order("created_at", { ascending: false })
         .limit(20);
 

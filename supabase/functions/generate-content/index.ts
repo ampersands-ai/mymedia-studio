@@ -10,6 +10,7 @@ import {
   GenerateContentRequestSchema,
   type GenerateContentRequest
 } from "../_shared/schemas.ts";
+import { validateGenerationSettings } from "../_shared/jsonb-validation-schemas.ts";
 
 /**
  * GENERATE CONTENT EDGE FUNCTION
@@ -699,11 +700,24 @@ Deno.serve(async (req) => {
       const webhookToken = crypto.randomUUID();
       logger.debug('Generated webhook verification token', { userId: user.id });
 
-      // Step 2: Create generation record with webhook token in settings
-      const generationSettings = {
+      // Step 2: Validate parameters before creating generation record
+      const settingsToValidate = {
         ...parameters,
-        _webhook_token: webhookToken // Private field for webhook verification (Layer 2)
+        prompt: finalPrompt,
+        _webhook_token: webhookToken
       };
+
+      const validationResult = validateGenerationSettings(settingsToValidate);
+      if (!validationResult.success) {
+        logger.error('JSONB validation failed', undefined, {
+          userId: user.id,
+          metadata: { error: validationResult.error }
+        });
+        throw new Error(`Invalid generation settings: ${validationResult.error}`);
+      }
+
+      // Step 3: Create generation record with validated settings
+      const generationSettings = validationResult.data as Record<string, any>;
 
       const { data: gen, error: genError } = await supabase
         .from('generations')

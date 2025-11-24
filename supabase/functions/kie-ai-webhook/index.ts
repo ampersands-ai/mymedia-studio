@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     const signatureResult = validateSignature(rawBody, signature);
 
     if (!signatureResult.success) {
-      logger.error('Signature validation failed', {
+      logger.error('Signature validation failed', undefined, {
         metadata: {
           error: signatureResult.error,
           hasSignature: !!signature,

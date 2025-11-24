@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 
 // API key mapping logic for KIE AI
 function getKieApiKey(modelId: string, recordId: string): string {
@@ -111,7 +112,7 @@ Deno.serve(async (req) => {
     });
 
     // Query Kie.ai task status
-    const statusResponse = await fetch('https://api.kie.ai/api/v1/jobs/queryTask', {
+    const statusResponse = await fetch(API_ENDPOINTS.KIE_AI.queryTaskUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${kieApiKey}`,

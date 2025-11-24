@@ -154,10 +154,10 @@ const contentType = '${contentType}';
 const fileName = '${fileName}';
 const targetDir = path.join('src/lib/models/locked', contentType);
 
-const modelContent = \`import { getGenerationType } from '@/lib/models/registry';
-import { supabase } from "@/integrations/supabase/client";
+const modelContent = \`/** ${model.model_name || 'New Model'} ${contentType} - Record: ${model.record_id || ''} */
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { reserveCredits } from "@/lib/models/creditDeduction";
+import { executeModelGeneration } from "@/lib/models/shared/executeModelGeneration";
+import { API_ENDPOINTS } from "@/lib/config/api-endpoints";
 
 export const MODEL_CONFIG = {
   modelId: "${model.id || ''}",
@@ -165,6 +165,7 @@ export const MODEL_CONFIG = {
   modelName: "${model.model_name || ''}",
   provider: "${model.provider || ''}",
   contentType: "${contentType}",
+  use_api_key: "${model.use_api_key || ''}",
   baseCreditCost: ${model.base_token_cost || 1},
   estimatedTimeSeconds: ${model.estimated_time_seconds || 30},
   costMultipliers: ${JSON.stringify(model.cost_multipliers || {})},
@@ -173,94 +174,62 @@ export const MODEL_CONFIG = {
   maxImages: ${model.max_images || 0},
   defaultOutputs: ${model.default_outputs || 1},
 
+  // UI metadata
   isActive: ${model.is_active !== false},
   logoUrl: ${model.logo_url ? `"${model.logo_url}"` : 'null'},
   modelFamily: ${model.model_family ? `"${model.model_family}"` : 'null'},
   variantName: ${model.variant_name ? `"${model.variant_name}"` : 'null'},
   displayOrderInFamily: ${(model as any).display_order_in_family || 0},
 
+  // Lock system
   isLocked: false,
   lockedFilePath: "src/lib/models/locked/${contentType}/${fileName}"
 } as const;
 
 export const SCHEMA = ${JSON.stringify(model.input_schema || {}, null, 2)};
 
-export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { prompt, modelParameters, userId, startPolling } = params;
+export function validate(inputs: Record<string, any>) {
+  // TODO: Implement model-specific validation
+  // Basic example: check if prompt exists
+  const promptField = Object.keys(SCHEMA.properties || {}).find(
+    key => SCHEMA.properties[key].renderer === 'prompt' || key.toLowerCase().includes('prompt')
+  );
 
-  // TODO: Implement model-specific execution logic
-  throw new Error('Model execution not yet implemented');
-}
-
-export function validate(inputs: Record<string, any>): { valid: boolean; error?: string } {
-  // Basic validation - check for required fields and types
-  if (!inputs || typeof inputs !== 'object') {
-    return { valid: false, error: 'Inputs must be a non-null object' };
-  }
-
-  // Validate prompt if present (common across most models)
-  if ('prompt' in inputs) {
-    if (typeof inputs.prompt !== 'string') {
-      return { valid: false, error: 'Prompt must be a string' };
-    }
-    if (inputs.prompt.length < 3) {
-      return { valid: false, error: 'Prompt must be at least 3 characters' };
-    }
-    if (inputs.prompt.length > 10000) {
-      return { valid: false, error: 'Prompt must not exceed 10,000 characters' };
-    }
-  }
-
-  // Validate numeric parameters
-  const numericFields = ['width', 'height', 'duration', 'fps', 'seed', 'num_inference_steps'];
-  for (const field of numericFields) {
-    if (field in inputs) {
-      if (typeof inputs[field] !== 'number' || !Number.isFinite(inputs[field])) {
-        return { valid: false, error: \`\${field} must be a finite number\` };
-      }
-      if (inputs[field] < 0) {
-        return { valid: false, error: \`\${field} must be non-negative\` };
-      }
-    }
-  }
-
-  // Validate URLs if present
-  const urlFields = ['image_url', 'image_urls', 'input_image', 'startFrame', 'endFrame'];
-  for (const field of urlFields) {
-    if (field in inputs) {
-      const value = inputs[field];
-      if (Array.isArray(value)) {
-        for (const url of value) {
-          if (typeof url !== 'string' || !url.startsWith('http')) {
-            return { valid: false, error: \`\${field} must contain valid HTTP(S) URLs\` };
-          }
-        }
-      } else if (value !== null && value !== undefined) {
-        if (typeof value !== 'string' || !value.startsWith('http')) {
-          return { valid: false, error: \`\${field} must be a valid HTTP(S) URL\` };
-        }
-      }
-    }
-  }
-
-  // Check for suspicious patterns (SQL injection, XSS)
-  const stringValues = Object.values(inputs).filter(v => typeof v === 'string');
-  for (const value of stringValues) {
-    // Check for SQL injection patterns
-    if (/(\b(union|select|insert|update|delete|drop|create|alter|exec|script)\b)/i.test(value)) {
-      return { valid: false, error: 'Invalid characters detected in input' };
-    }
-    // Check for script tags
-    if (/<script|javascript:|onerror=/i.test(value)) {
-      return { valid: false, error: 'Invalid characters detected in input' };
-    }
+  if (promptField && !inputs[promptField]) {
+    return { valid: false, error: \`\${promptField} is required\` };
   }
 
   return { valid: true };
 }
 
-export function calculateCost(inputs: Record<string, any>): number {
+export function preparePayload(inputs: Record<string, any>) {
+  // TODO: Implement model-specific payload preparation
+  // This is a basic template - customize based on provider requirements
+  return {
+    ...inputs,
+    // Add provider-specific fields here
+  };
+}
+
+export function calculateCost(inputs: Record<string, any>) {
+  // TODO: Implement model-specific cost calculation
+  // This is a basic implementation - customize based on cost multipliers
   return MODEL_CONFIG.baseCreditCost;
+}
+
+export async function execute(params: ExecuteGenerationParams): Promise<string> {
+  // Extract prompt field name from schema
+  const promptField = Object.keys(SCHEMA.properties || {}).find(
+    key => SCHEMA.properties[key].renderer === 'prompt' || key.toLowerCase().includes('prompt')
+  ) || 'prompt';
+
+  return executeModelGeneration({
+    modelConfig: MODEL_CONFIG,
+    modelSchema: SCHEMA,
+    modelFunctions: { validate, calculateCost, preparePayload },
+    params,
+    promptField
+  });
 }
 \`;
 

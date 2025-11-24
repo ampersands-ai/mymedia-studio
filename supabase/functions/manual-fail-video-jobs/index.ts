@@ -7,12 +7,12 @@ import {
   createValidationErrorResponse 
 } from "../_shared/validation.ts";
 import {
-import { GENERATION_STATUS } from "../_shared/constants.ts";
   handleOptionsRequest,
   createJsonResponse,
   createErrorResponse,
   corsHeaders
 } from "../_shared/cors-headers.ts";
+import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);

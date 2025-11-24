@@ -5,6 +5,9 @@
 
 import { logger } from '@/lib/logger';
 
+// Store interval ID for cleanup
+let updateCheckInterval: ReturnType<typeof setInterval> | null = null;
+
 export function registerServiceWorker() {
   // ✅ ONLY register in production
   if ('serviceWorker' in navigator && import.meta.env.PROD) {
@@ -18,8 +21,13 @@ export function registerServiceWorker() {
           operation: 'registerServiceWorker'
         });
 
+        // Clear any existing update check interval (prevents memory leak)
+        if (updateCheckInterval) {
+          clearInterval(updateCheckInterval);
+        }
+
         // Check for updates every hour
-        setInterval(() => {
+        updateCheckInterval = setInterval(() => {
           registration.update();
         }, 60 * 60 * 1000);
 
@@ -49,6 +57,12 @@ export function registerServiceWorker() {
  * Auto-unregister service worker in dev mode
  */
 export async function unregisterServiceWorker() {
+  // Clear update check interval
+  if (updateCheckInterval) {
+    clearInterval(updateCheckInterval);
+    updateCheckInterval = null;
+  }
+
   if (import.meta.env.DEV && 'serviceWorker' in navigator) {
     try {
       const registrations = await navigator.serviceWorker.getRegistrations();
@@ -66,6 +80,16 @@ export async function unregisterServiceWorker() {
         operation: 'unregisterServiceWorker'
       });
     }
+  }
+}
+
+/**
+ * Cleanup function - call when app is unmounting (for hot reload in dev)
+ */
+export function cleanupServiceWorker() {
+  if (updateCheckInterval) {
+    clearInterval(updateCheckInterval);
+    updateCheckInterval = null;
   }
 }
 

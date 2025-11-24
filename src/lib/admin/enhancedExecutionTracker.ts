@@ -638,6 +638,9 @@ export class EnhancedExecutionTracker {
       message: `Execution completed in ${this.flow.totalDuration}ms`,
       executionContext: 'client',
     });
+
+    // Cleanup resources (prevent memory leak)
+    this.cleanup();
   }
 
   /**

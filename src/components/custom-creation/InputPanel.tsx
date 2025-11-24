@@ -135,43 +135,43 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   const useIncrementRenderer = modelSchema?.useIncrementRenderer ?? true;
   const useOutputFormatRenderer = modelSchema?.useOutputFormatRenderer ?? false;
 
-  // Build set of fields that use specialized renderers
+  // Build set of fields that use specialized renderers (schema-driven approach)
   const specializedFields = new Set<string>();
 
-  // Prompt renderer fields
-  if (usePromptRenderer && hasPromptField) {
-    if (modelSchema?.properties?.prompt) specializedFields.add('prompt');
-    if (modelSchema?.properties?.positivePrompt) specializedFields.add('positivePrompt');
-    if (modelSchema?.properties?.positive_prompt) specializedFields.add('positive_prompt');
-  }
+  // Iterate through all schema properties and check renderer property
+  if (modelSchema?.properties) {
+    Object.entries(modelSchema.properties).forEach(([key, prop]: [string, any]) => {
+      // Prompt renderer fields
+      if (usePromptRenderer && hasPromptField && prop.renderer === 'prompt') {
+        specializedFields.add(key);
+      }
 
-  // Image renderer fields
-  // Special case: Don't use specialized renderer for startFrame if endFrame exists (Veo HQ/Fast)
-  // so both can be rendered side-by-side in the schema loop
-  const hasEndFrame = modelSchema?.properties?.endFrame;
-  const shouldUseSpecializedImageRenderer = useImageRenderer && imageFieldName && 
-    !(imageFieldName === 'startFrame' && hasEndFrame);
-  
-  if (shouldUseSpecializedImageRenderer) {
-    specializedFields.add(imageFieldName);
-  }
+      // Image renderer fields
+      // Special case: Don't use specialized renderer for startFrame if endFrame exists (Veo HQ/Fast)
+      const hasEndFrame = modelSchema?.properties?.endFrame;
+      const shouldUseSpecializedImageRenderer = useImageRenderer &&
+        prop.renderer === 'image' &&
+        !(key === 'startFrame' && hasEndFrame);
 
-  // Duration renderer fields
-  if (useDurationRenderer && hasDuration) {
-    specializedFields.add('duration');
-  }
+      if (shouldUseSpecializedImageRenderer && key === imageFieldName) {
+        specializedFields.add(key);
+      }
 
-  // Increment renderer fields
-  if (useIncrementRenderer && hasIncrement) {
-    if (modelSchema?.properties?.increment) specializedFields.add('increment');
-    if (modelSchema?.properties?.incrementBySeconds) specializedFields.add('incrementBySeconds');
-  }
+      // Duration renderer fields
+      if (useDurationRenderer && hasDuration && prop.renderer === 'duration') {
+        specializedFields.add(key);
+      }
 
-  // Output format renderer fields
-  if (useOutputFormatRenderer) {
-    if (modelSchema?.properties?.outputFormat) specializedFields.add('outputFormat');
-    if (modelSchema?.properties?.output_format) specializedFields.add('output_format');
-    if (modelSchema?.properties?.format) specializedFields.add('format');
+      // Increment renderer fields
+      if (useIncrementRenderer && hasIncrement && prop.renderer === 'increment') {
+        specializedFields.add(key);
+      }
+
+      // Output format renderer fields
+      if (useOutputFormatRenderer && prop.renderer === 'outputFormat') {
+        specializedFields.add(key);
+      }
+    });
   }
 
   const [showScrollTop, setShowScrollTop] = useState(false);

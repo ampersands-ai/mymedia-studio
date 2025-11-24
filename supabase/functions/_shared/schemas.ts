@@ -102,6 +102,7 @@ export const GenerateContentRequestSchema = z.object({
   workflow_step_number: z.number().int().positive().optional(),
   user_id: z.string().uuid().optional(),
   test_mode: z.boolean().default(false),
+  test_run_id: z.string().uuid().optional(), // For comprehensive model testing system
 });
 
 export const ModelInputSchemaPropertySchema = z.object({

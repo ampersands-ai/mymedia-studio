@@ -60,23 +60,23 @@ Each parameter explicitly declares which specialized renderer it uses via the `r
 }
 ```
 
-## Setting Renderers in Parameters Inspector
+## Setting Renderers in Model Schema
 
-### For Admins/Developers:
+### For Developers:
 
-1. Navigate to **Comprehensive Model Testing** page (`/admin/model-health/comprehensive-test`)
-2. Select a model from the list
-3. Click the **"Parameters"** tab
-4. For each parameter, you'll see a **"Specialized Renderer"** dropdown in the card
-5. Select the appropriate renderer:
-   - **Default (Generic Input)** - Standard input based on parameter type
-   - **Prompt Renderer** - For main text prompts with enhancements
-   - **Image Uploader** - For image file uploads with preview
-   - **Voice Selector** - For voice selection UI
-   - **Duration Input** - For time duration sliders
-   - **Increment Toggle** - For increment checkboxes
-   - **Output Format** - For format selection sections
-6. Click **"Push to Schema"** to save the changes to the database
+Renderers are configured in the model's TypeScript schema definition file:
+
+1. Navigate to the model file in `src/lib/models/locked/`
+2. Locate the `SCHEMA` export
+3. For each parameter property, add the appropriate `renderer` field:
+   - **Default (omit renderer)** - Standard input based on parameter type
+   - **`renderer: "prompt"`** - For main text prompts with enhancements
+   - **`renderer: "image"`** - For image file uploads with preview
+   - **`renderer: "voice"`** - For voice selection UI
+   - **`renderer: "duration"`** - For time duration sliders
+   - **`renderer: "increment"`** - For increment checkboxes
+   - **`renderer: "output-format"`** - For format selection sections
+4. Save the file and the changes will be reflected immediately
 
 ## How It Works
 

@@ -20,9 +20,11 @@ import { differenceInMonths } from "date-fns";
 import { clearAllCaches } from "@/utils/cacheManagement";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 import { logger } from "@/lib/logger";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 const Settings = () => {
   const { user } = useAuth();
+  const { execute } = useErrorHandler();
   const location = useLocation();
   const defaultTab = (location.state as any)?.defaultTab || 'profile';
   const [loading, setLoading] = useState(false);
@@ -66,24 +68,29 @@ const Settings = () => {
   }, [user]);
 
   const fetchUserCreatedDate = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("created_at")
-        .eq("id", user?.id)
-        .maybeSingle();
+    await execute(
+      async () => {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("created_at")
+          .eq("id", user?.id)
+          .maybeSingle();
 
-      if (error) throw error;
-      if (data?.created_at) {
-        setUserCreatedAt(new Date(data.created_at));
+        if (error) throw error;
+        if (data?.created_at) {
+          setUserCreatedAt(new Date(data.created_at));
+        }
+      },
+      {
+        showSuccessToast: false,
+        showErrorToast: false,
+        context: {
+          component: 'Settings',
+          operation: 'fetchUserCreatedDate',
+          userId: user?.id
+        }
       }
-    } catch (error) {
-      logger.error("Error fetching user created date", error instanceof Error ? error : new Error(String(error)), {
-        component: 'Settings',
-        operation: 'fetchUserCreatedDate',
-        userId: user?.id
-      });
-    }
+    );
   };
 
   // Plan pricing mapping
@@ -135,90 +142,112 @@ const Settings = () => {
   }, [savings]);
 
   const fetchProfile = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user?.id)
-        .maybeSingle();
+    await execute(
+      async () => {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user?.id)
+          .maybeSingle();
 
-      if (error) throw error;
-      if (data) {
-        setProfileData({
-          full_name: data.full_name || "",
-          phone_number: data.phone_number || "",
-          zipcode: data.zipcode || "",
-          email_verified: data.email_verified || false,
-        });
+        if (error) throw error;
+        if (data) {
+          setProfileData({
+            full_name: data.full_name || "",
+            phone_number: data.phone_number || "",
+            zipcode: data.zipcode || "",
+            email_verified: data.email_verified || false,
+          });
+        }
+      },
+      {
+        showSuccessToast: false,
+        errorMessage: "Failed to load profile data",
+        context: {
+          component: 'Settings',
+          operation: 'fetchProfile',
+          userId: user?.id
+        }
       }
-    } catch (error) {
-      logger.error("Error fetching profile", error instanceof Error ? error : new Error(String(error)), {
-        component: 'Settings',
-        operation: 'fetchProfile',
-        userId: user?.id
-      });
-      toast.error("Failed to load profile data");
-    }
+    );
   };
 
   const fetchGenerations = async () => {
     setLoadingGenerations(true);
     try {
-      const { data, error } = await supabase
-        .from("generations")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
+      await execute(
+        async () => {
+          const { data, error } = await supabase
+            .from("generations")
+            .select("*")
+            .eq("user_id", user?.id)
+            .order("created_at", { ascending: false })
+            .limit(20);
 
-      if (error) throw error;
-      setGenerations(data || []);
-    } catch (error) {
-      logger.error('Error fetching generations', error as Error, {
-        component: 'Settings',
-        operation: 'fetchGenerations',
-        userId: user?.id
-      });
-      toast.error("Failed to load generation history");
+          if (error) throw error;
+          setGenerations(data || []);
+        },
+        {
+          showSuccessToast: false,
+          errorMessage: "Failed to load generation history",
+          context: {
+            component: 'Settings',
+            operation: 'fetchGenerations',
+            userId: user?.id
+          }
+        }
+      );
     } finally {
       setLoadingGenerations(false);
     }
   };
 
   const fetchSubscription = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("user_subscriptions")
-        .select("*")
-        .eq("user_id", user?.id)
-        .maybeSingle();
+    await execute(
+      async () => {
+        const { data, error } = await supabase
+          .from("user_subscriptions")
+          .select("*")
+          .eq("user_id", user?.id)
+          .maybeSingle();
 
-      if (error) throw error;
-      setSubscription(data);
-    } catch (error) {
-      logger.error("Error fetching subscription", error instanceof Error ? error : new Error(String(error)), {
-        component: 'Settings',
-        operation: 'fetchSubscription',
-        userId: user?.id
-      });
-    }
+        if (error) throw error;
+        setSubscription(data);
+      },
+      {
+        showSuccessToast: false,
+        showErrorToast: false,
+        context: {
+          component: 'Settings',
+          operation: 'fetchSubscription',
+          userId: user?.id
+        }
+      }
+    );
   };
 
   const fetchSessions = async () => {
     setLoadingSessions(true);
     try {
-      const { data, error } = await supabase.functions.invoke('session-manager', {
-        body: { action: 'list' }
-      });
+      await execute(
+        async () => {
+          const { data, error } = await supabase.functions.invoke('session-manager', {
+            body: { action: 'list' }
+          });
 
-      if (error) throw error;
-      setSessions(data?.sessions || []);
-    } catch (error) {
-      logger.error("Error fetching sessions", error instanceof Error ? error : new Error(String(error)), {
-        component: 'Settings',
-        operation: 'fetchSessions',
-        userId: user?.id
-      });
+          if (error) throw error;
+          setSessions(data?.sessions || []);
+        },
+        {
+          showSuccessToast: false,
+          showErrorToast: false,
+          context: {
+            component: 'Settings',
+            operation: 'fetchSessions',
+            userId: user?.id
+          }
+        }
+      );
     } finally {
       setLoadingSessions(false);
     }
@@ -227,21 +256,28 @@ const Settings = () => {
   const fetchAuditLogs = async () => {
     setLoadingAuditLogs(true);
     try {
-      const { data, error } = await supabase
-        .from("audit_logs")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
+      await execute(
+        async () => {
+          const { data, error } = await supabase
+            .from("audit_logs")
+            .select("*")
+            .eq("user_id", user?.id)
+            .order("created_at", { ascending: false })
+            .limit(20);
 
-      if (error) throw error;
-      setAuditLogs(data || []);
-    } catch (error) {
-      logger.error("Error fetching audit logs", error instanceof Error ? error : new Error(String(error)), {
-        component: 'Settings',
-        operation: 'fetchAuditLogs',
-        userId: user?.id
-      });
+          if (error) throw error;
+          setAuditLogs(data || []);
+        },
+        {
+          showSuccessToast: false,
+          showErrorToast: false,
+          context: {
+            component: 'Settings',
+            operation: 'fetchAuditLogs',
+            userId: user?.id
+          }
+        }
+      );
     } finally {
       setLoadingAuditLogs(false);
     }
@@ -253,85 +289,88 @@ const Settings = () => {
     setLoading(true);
 
     try {
-      // Validate inputs
-      const result = profileUpdateSchema.safeParse({
-        full_name: profileData.full_name,
-        phoneNumber: profileData.phone_number,
-        zipcode: profileData.zipcode,
-      });
+      await execute(
+        async () => {
+          // Validate inputs
+          const result = profileUpdateSchema.safeParse({
+            full_name: profileData.full_name,
+            phoneNumber: profileData.phone_number,
+            zipcode: profileData.zipcode,
+          });
 
-      if (!result.success) {
-        const errors: Record<string, string> = {};
-        result.error.errors.forEach((err) => {
-          if (err.path[0]) {
-            errors[err.path[0].toString()] = err.message;
+          if (!result.success) {
+            const errors: Record<string, string> = {};
+            result.error.errors.forEach((err) => {
+              if (err.path[0]) {
+                errors[err.path[0].toString()] = err.message;
+              }
+            });
+            setValidationErrors(errors);
+            setLoading(false);
+            return;
           }
-        });
-        setValidationErrors(errors);
-        setLoading(false);
-        return;
-      }
 
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: profileData.full_name,
-          phone_number: profileData.phone_number,
-          zipcode: profileData.zipcode,
-        })
-        .eq("id", user?.id);
+          const { error } = await supabase
+            .from("profiles")
+            .update({
+              full_name: profileData.full_name,
+              phone_number: profileData.phone_number,
+              zipcode: profileData.zipcode,
+            })
+            .eq("id", user?.id);
 
-      if (error) throw error;
-      
-      // Log profile update
-      try {
-        await supabase.functions.invoke('audit-log', {
-          body: { 
-            action: 'profile_updated',
-            resource_type: 'profile',
-            resource_id: user?.id,
-            metadata: {
-              updated_fields: ['full_name', 'phone_number', 'zipcode']
-            }
+          if (error) throw error;
+
+          // Log profile update
+          try {
+            await supabase.functions.invoke('audit-log', {
+              body: {
+                action: 'profile_updated',
+                resource_type: 'profile',
+                resource_id: user?.id,
+                metadata: {
+                  updated_fields: ['full_name', 'phone_number', 'zipcode']
+                }
+              }
+            });
+          } catch (logError) {
+            logger.error('Failed to log audit event', logError instanceof Error ? logError : new Error(String(logError)), {
+              component: 'Settings',
+              operation: 'profile_update_audit',
+              userId: user?.id
+            });
           }
-        });
-        } catch (logError) {
-        logger.error('Failed to log audit event', logError instanceof Error ? logError : new Error(String(logError)), {
-          component: 'Settings',
-          operation: 'profile_update_audit',
-          userId: user?.id
-        });
-      }
 
-      // Track activity
-      try {
-        const { clientLogger } = await import('@/lib/logging/client-logger');
-        await clientLogger.activity({
-          activityType: 'settings',
-          activityName: 'profile_updated',
-          routeName: 'Settings',
-          description: 'Updated profile settings',
-          metadata: {
-            fields_changed: Object.keys({ full_name: profileData.full_name, phone_number: profileData.phone_number, zipcode: profileData.zipcode }),
-          },
-        });
-        } catch (trackError) {
-        logger.error('Failed to track activity', trackError instanceof Error ? trackError : new Error(String(trackError)), {
-          component: 'Settings',
-          operation: 'profile_update_activity',
-          userId: user?.id
-        });
-      }
-      
-      toast.success("Profile updated successfully!");
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error("Error updating profile", error instanceof Error ? error : new Error(String(error)), {
-        component: 'Settings',
-        operation: 'handleUpdateProfile',
-        userId: user?.id
-      });
-      toast.error(error.message || "Failed to update profile");
+          // Track activity
+          try {
+            const { clientLogger } = await import('@/lib/logging/client-logger');
+            await clientLogger.activity({
+              activityType: 'settings',
+              activityName: 'profile_updated',
+              routeName: 'Settings',
+              description: 'Updated profile settings',
+              metadata: {
+                fields_changed: Object.keys({ full_name: profileData.full_name, phone_number: profileData.phone_number, zipcode: profileData.zipcode }),
+              },
+            });
+          } catch (trackError) {
+            logger.error('Failed to track activity', trackError instanceof Error ? trackError : new Error(String(trackError)), {
+              component: 'Settings',
+              operation: 'profile_update_activity',
+              userId: user?.id
+            });
+          }
+        },
+        {
+          successMessage: "Profile updated successfully!",
+          errorMessage: "Failed to update profile",
+          context: {
+            component: 'Settings',
+            operation: 'handleUpdateProfile',
+            userId: user?.id
+          }
+        }
+      );
     } finally {
       setLoading(false);
     }

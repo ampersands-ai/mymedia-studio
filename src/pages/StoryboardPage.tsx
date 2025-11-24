@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +21,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export default function StoryboardPage() {
+  const { execute } = useErrorHandler();
   const { storyboard, clearStoryboard } = useStoryboard();
   const [showInputForm, setShowInputForm] = useState(true);
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -40,19 +42,27 @@ export default function StoryboardPage() {
   };
 
   const confirmReset = async () => {
-    try {
-      const { error } = await supabase.functions.invoke('delete-storyboard', {
-        body: { storyboardId: storyboard?.id }
-      });
-      
-      if (error) throw error;
-      
-      clearStoryboard();
-      toast.success('Storyboard deleted', { id: 'storyboard-reset' });
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      toast.error(error.message || 'Failed to delete storyboard', { id: 'delete-error' });
-    }
+    await execute(
+      async () => {
+        const { error } = await supabase.functions.invoke('delete-storyboard', {
+          body: { storyboardId: storyboard?.id }
+        });
+
+        if (error) throw error;
+
+        clearStoryboard();
+      },
+      {
+        successMessage: 'Storyboard deleted',
+        errorMessage: 'Failed to delete storyboard',
+        toastId: 'storyboard-reset',
+        context: {
+          component: 'StoryboardPage',
+          operation: 'confirmReset',
+          storyboardId: storyboard?.id,
+        }
+      }
+    );
     setShowResetDialog(false);
   };
 

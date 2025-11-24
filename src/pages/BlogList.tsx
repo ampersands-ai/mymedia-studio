@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { logger } from "@/lib/logger";
 import { Badge } from "@/components/ui/badge";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { Input } from "@/components/ui/input";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
@@ -12,6 +13,7 @@ import { BlogPost } from "@/types/blog";
 import { Clock, Eye, Calendar } from "lucide-react";
 
 export default function BlogList() {
+  const { execute } = useErrorHandler();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,17 +37,26 @@ export default function BlogList() {
 
   const fetchPosts = async () => {
     try {
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('status', 'published')
-        .order('published_at', { ascending: false });
+      await execute(
+        async () => {
+          const { data, error } = await supabase
+            .from('blog_posts')
+            .select('*')
+            .eq('status', 'published')
+            .order('published_at', { ascending: false });
 
-      if (error) throw error;
-      setPosts(data as BlogPost[] || []);
-      setFilteredPosts(data as BlogPost[] || []);
-    } catch (error) {
-      logger.error('Error fetching blog posts', error);
+          if (error) throw error;
+          setPosts(data as BlogPost[] || []);
+          setFilteredPosts(data as BlogPost[] || []);
+        },
+        {
+          showSuccessToast: false,
+          context: {
+            component: 'BlogList',
+            operation: 'fetchPosts',
+          }
+        }
+      );
     } finally {
       setIsLoading(false);
     }

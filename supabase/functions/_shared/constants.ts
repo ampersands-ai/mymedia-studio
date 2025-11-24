@@ -88,3 +88,64 @@ export const DELIVERY_STATUS = {
   BOUNCED: 'bounced',
   OPENED: 'opened'
 } as const;
+
+// System configuration constants
+export const SYSTEM_LIMITS = {
+  // Maximum concurrent requests for generate-content endpoint
+  // Prevents overwhelming the system during high traffic
+  CONCURRENT_REQUESTS: 750,
+
+  // Maximum prompt length in characters
+  MAX_PROMPT_LENGTH: 10000,
+
+  // Maximum file upload size in bytes (100MB)
+  MAX_FILE_SIZE: 100 * 1024 * 1024
+} as const;
+
+// Timeout configuration (in milliseconds)
+export const TIMEOUTS = {
+  // Default timeout for HTTP requests (60 seconds)
+  DEFAULT: 60000,
+
+  // Long-running operations (10 minutes)
+  LONG_RUNNING: 600000,
+
+  // Short operations (10 seconds)
+  SHORT: 10000,
+
+  // Circuit breaker timeout (1 minute)
+  CIRCUIT_BREAKER: 60000,
+
+  // Storage circuit breaker timeout (30 seconds)
+  CIRCUIT_BREAKER_STORAGE: 30000
+} as const;
+
+// Retry configuration
+export const RETRY_CONFIG = {
+  // Maximum number of retry attempts
+  MAX_ATTEMPTS: 3,
+
+  // Initial retry delay in milliseconds
+  INITIAL_DELAY: 1000,
+
+  // Maximum retry delay in milliseconds (for exponential backoff)
+  MAX_DELAY: 30000,
+
+  // Multiplier for exponential backoff
+  BACKOFF_MULTIPLIER: 2
+} as const;
+
+// Polling configuration
+export const POLLING_CONFIG = {
+  // Initial polling interval (5 seconds)
+  INITIAL_INTERVAL: 5000,
+
+  // Maximum polling interval (60 seconds)
+  MAX_INTERVAL: 60000,
+
+  // Polling interval multiplier for exponential backoff
+  INTERVAL_MULTIPLIER: 1.5,
+
+  // Maximum polling duration (2 hours)
+  MAX_DURATION: 7200000
+} as const;

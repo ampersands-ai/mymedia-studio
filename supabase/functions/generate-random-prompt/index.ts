@@ -74,7 +74,8 @@ Deno.serve(async (req) => {
       throw new Error('No prompt generated');
     }
 
-    logger.info('Prompt generated successfully', { metadata: { prompt: generatedPrompt } });
+    // SECURITY: Do not log prompt content (even AI-generated prompts may contain sensitive themes)
+    logger.info('Prompt generated successfully', { metadata: { promptLength: generatedPrompt.length } });
     logger.logDuration('Prompt generation', startTime);
 
     return new Response(

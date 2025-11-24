@@ -11,7 +11,7 @@ import {
   type GenerateContentRequest
 } from "../_shared/schemas.ts";
 import { validateGenerationSettings } from "../_shared/jsonb-validation-schemas.ts";
-import { GENERATION_STATUS } from "../_shared/constants.ts";
+import { GENERATION_STATUS, SYSTEM_LIMITS } from "../_shared/constants.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 /**
@@ -72,7 +72,8 @@ interface Model {
 
 // Phase 3: Request queuing and circuit breaker
 // Increased from 100 to 750 for better scalability under high load
-const CONCURRENT_LIMIT = 750;
+// Use centralized system limits configuration
+const CONCURRENT_LIMIT = SYSTEM_LIMITS.CONCURRENT_REQUESTS;
 const activeRequests = new Map<string, Promise<GenerationResult>>();
 
 const CIRCUIT_BREAKER = {

@@ -183,7 +183,8 @@ export async function callRunware(
     }
   }
 
-  logger.info('Prompt', { metadata: { prompt: effectivePrompt.substring(0, 100), truncated: effectivePrompt.length > 100 } });
+  // SECURITY: Do not log prompt content (potential PII)
+  logger.info('Prompt received', { metadata: { promptLength: effectivePrompt.length } });
 
   // Determine task type from parameters or infer from model/params
   const taskType = params.taskType || (params.frameImages ? "videoInference" : "imageInference");

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { logger } from "@/lib/logger";
 import { Card } from "@/components/ui/card";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -39,6 +40,7 @@ interface SuggestedImage {
 
 export default function CreateBlog() {
   const navigate = useNavigate();
+  const { execute } = useErrorHandler();
   const [isGeneratingTopics, setIsGeneratingTopics] = useState(false);
   const [isGeneratingPost, setIsGeneratingPost] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -75,23 +77,33 @@ export default function CreateBlog() {
   const handleGenerateTopics = async () => {
     setIsGeneratingTopics(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-blog-topics', {
-        body: {
-          industry,
-          keywords: topicKeywords,
-          tone: topicTone,
-          targetAudience,
-          aiModel: selectedAIModel,
+      await execute(
+        async () => {
+          const { data, error } = await supabase.functions.invoke('generate-blog-topics', {
+            body: {
+              industry,
+              keywords: topicKeywords,
+              tone: topicTone,
+              targetAudience,
+              aiModel: selectedAIModel,
+            },
+          });
+
+          if (error) throw error;
+
+          setSuggestedTopics(data.topics);
         },
-      });
-
-      if (error) throw error;
-
-      setSuggestedTopics(data.topics);
-      toast.success(`Generated ${data.topics.length} topic ideas!`);
-    } catch (error) {
-      logger.error('Error generating topics', error as Error);
-      toast.error((error as Error).message || 'Failed to generate topics');
+        {
+          successMessage: `Generated ${suggestedTopics.length || 'multiple'} topic ideas!`,
+          errorMessage: 'Failed to generate topics',
+          context: {
+            component: 'CreateBlog',
+            operation: 'handleGenerateTopics',
+            industry,
+            keywordCount: topicKeywords.length
+          }
+        }
+      );
     } finally {
       setIsGeneratingTopics(false);
     }
@@ -111,45 +123,54 @@ export default function CreateBlog() {
 
     setIsGeneratingPost(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-blog-post', {
-        body: {
-          topic: title,
-          keywords: topicKeywords,
-          tone: topicTone,
-          length: 'medium',
-          includeImages: true,
-          numImages: 3,
-          targetAudience,
-          internalLinks: backlinks.filter(b => b.is_internal),
-          externalLinks: backlinks.filter(b => !b.is_internal),
-          aiModel: selectedAIModel,
+      await execute(
+        async () => {
+          const { data, error } = await supabase.functions.invoke('generate-blog-post', {
+            body: {
+              topic: title,
+              keywords: topicKeywords,
+              tone: topicTone,
+              length: 'medium',
+              includeImages: true,
+              numImages: 3,
+              targetAudience,
+              internalLinks: backlinks.filter(b => b.is_internal),
+              externalLinks: backlinks.filter(b => !b.is_internal),
+              aiModel: selectedAIModel,
+            },
+          });
+
+          if (error) throw error;
+
+          // Populate all fields
+          setTitle(data.title);
+          setSlug(data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+          setContent(data.content);
+          setExcerpt(data.excerpt);
+          setSeoMetadata({
+            meta_title: data.meta_title,
+            meta_description: data.meta_description,
+            meta_keywords: data.meta_keywords,
+            og_title: data.og_title,
+            og_description: data.og_description,
+            twitter_title: data.twitter_title,
+            twitter_description: data.twitter_description,
+            schema_data: data.schema_data,
+          });
+          setTags(data.tags || []);
+          setSuggestedImages(data.suggested_images || []);
         },
-      });
-
-      if (error) throw error;
-
-      // Populate all fields
-      setTitle(data.title);
-      setSlug(data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
-      setContent(data.content);
-      setExcerpt(data.excerpt);
-      setSeoMetadata({
-        meta_title: data.meta_title,
-        meta_description: data.meta_description,
-        meta_keywords: data.meta_keywords,
-        og_title: data.og_title,
-        og_description: data.og_description,
-        twitter_title: data.twitter_title,
-        twitter_description: data.twitter_description,
-        schema_data: data.schema_data,
-      });
-      setTags(data.tags || []);
-      setSuggestedImages(data.suggested_images || []);
-
-      toast.success('Blog post generated successfully! Review and edit as needed.');
-    } catch (error) {
-      logger.error('Error generating blog post', error as Error);
-      toast.error((error as Error).message || 'Failed to generate blog post');
+        {
+          successMessage: 'Blog post generated successfully! Review and edit as needed.',
+          errorMessage: 'Failed to generate blog post',
+          context: {
+            component: 'CreateBlog',
+            operation: 'handleGenerateBlogPost',
+            topic: title,
+            backlinkCount: backlinks.length
+          }
+        }
+      );
     } finally {
       setIsGeneratingPost(false);
     }
@@ -209,51 +230,63 @@ export default function CreateBlog() {
 
     setIsSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const result = await execute(
+        async () => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error('Not authenticated');
 
-      const finalSlug = slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+          const finalSlug = slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-      const { data: post, error } = await supabase
-        .from('blog_posts')
-        .insert({
-          author_id: user.id,
-          title,
-          slug: finalSlug,
-          content,
-          excerpt,
-          status: saveStatus,
-          published_at: saveStatus === 'published' ? new Date().toISOString() : null,
-          is_featured: isFeatured,
-          featured_image_url: featuredImageUrl,
-          ai_generated: true,
-          generation_prompt: title,
-          reading_time: Math.ceil(content.replace(/<[^>]*>/g, '').split(/\s+/).length / 200),
-          ...seoMetadata,
-        })
-        .select()
-        .single();
+          const { data: post, error } = await supabase
+            .from('blog_posts')
+            .insert({
+              author_id: user.id,
+              title,
+              slug: finalSlug,
+              content,
+              excerpt,
+              status: saveStatus,
+              published_at: saveStatus === 'published' ? new Date().toISOString() : null,
+              is_featured: isFeatured,
+              featured_image_url: featuredImageUrl,
+              ai_generated: true,
+              generation_prompt: title,
+              reading_time: Math.ceil(content.replace(/<[^>]*>/g, '').split(/\s+/).length / 200),
+              ...seoMetadata,
+            })
+            .select()
+            .single();
 
-      if (error) throw error;
+          if (error) throw error;
 
-      // Insert backlinks if any
-      if (backlinks.length > 0 && post) {
-        await supabase.from('blog_backlinks').insert(
-          backlinks.map((link, i) => ({
-            blog_post_id: post.id,
-            url: link.url,
-            anchor_text: link.anchor_text,
-            is_internal: link.is_internal,
-            position: i,
-          }))
-        );
-      }
+          // Insert backlinks if any
+          if (backlinks.length > 0 && post) {
+            await supabase.from('blog_backlinks').insert(
+              backlinks.map((link, i) => ({
+                blog_post_id: post.id,
+                url: link.url,
+                anchor_text: link.anchor_text,
+                is_internal: link.is_internal,
+                position: i,
+              }))
+            );
+          }
 
-      toast.success(saveStatus === 'published' ? 'Blog post published!' : 'Draft saved!');
-      return post.id;
+          return post.id;
+        },
+        {
+          successMessage: saveStatus === 'published' ? 'Blog post published!' : 'Draft saved!',
+          errorMessage: 'Failed to save blog post',
+          context: {
+            component: 'CreateBlog',
+            operation: 'handleSave',
+            saveStatus,
+            hasBacklinks: backlinks.length > 0
+          }
+        }
+      );
+      return result || null;
     } catch (error) {
-      logger.error('Error saving blog post', error as Error);
-      toast.error((error as Error).message || 'Failed to save blog post');
       return null;
     } finally {
       setIsSaving(false);
@@ -263,18 +296,28 @@ export default function CreateBlog() {
   const sendEmailDistribution = async (postId: string) => {
     setIsSendingEmail(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-blog-email-distribution', {
-        body: { blogPostId: postId },
-      });
+      await execute(
+        async () => {
+          const { data, error } = await supabase.functions.invoke('send-blog-email-distribution', {
+            body: { blogPostId: postId },
+          });
 
-      if (error) throw error;
+          if (error) throw error;
 
-      toast.success(`Email sent to ${data.sent} users!`, {
-        description: data.failed > 0 ? `${data.failed} failed to send` : undefined,
-      });
-    } catch (error) {
-      logger.error('Error sending emails', error as Error);
-      toast.error((error as Error).message || 'Failed to send emails');
+          toast.success(`Email sent to ${data.sent} users!`, {
+            description: data.failed > 0 ? `${data.failed} failed to send` : undefined,
+          });
+        },
+        {
+          showSuccessToast: false,
+          errorMessage: 'Failed to send emails',
+          context: {
+            component: 'CreateBlog',
+            operation: 'sendEmailDistribution',
+            postId
+          }
+        }
+      );
     } finally {
       setIsSendingEmail(false);
     }

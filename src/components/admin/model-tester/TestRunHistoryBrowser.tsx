@@ -109,8 +109,14 @@ export function TestRunHistoryBrowser({
 
       if (error) throw error;
 
-      // Filter by search term (model name or tags)
-      let filteredData = data || [];
+      // Parse execution_data from JSON and filter by search term
+      let filteredData = (data || []).map(run => ({
+        ...run,
+        execution_data: typeof run.execution_data === 'string' 
+          ? JSON.parse(run.execution_data) 
+          : run.execution_data
+      })) as TestRunRecord[];
+      
       if (filter.search) {
         const searchLower = filter.search.toLowerCase();
         filteredData = filteredData.filter(

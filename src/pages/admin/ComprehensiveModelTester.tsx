@@ -312,7 +312,7 @@ const ComprehensiveModelTester = () => {
         "insert",
         {
           user_id: user.id,
-          model_id: selectedModel.model_id,
+          model_id: selectedModel.record_id,
           model_record_id: selectedModel.record_id,
           type: getGenerationType(selectedModel.content_type || ''),
           prompt,
@@ -333,7 +333,7 @@ const ComprehensiveModelTester = () => {
         .from("generations")
         .insert({
           user_id: user.id,
-          model_id: selectedModel.model_id,
+          model_id: selectedModel.record_id,
           model_record_id: selectedModel.record_id,
           type: getGenerationType(selectedModel.content_type || ''),
           prompt,
@@ -559,7 +559,7 @@ const ComprehensiveModelTester = () => {
 
   const handleBookmark = useCallback(async () => {
     if (tracker && executionFlow) {
-      const name = prompt("Enter bookmark name:");
+      const name = window.prompt("Enter bookmark name:");
       if (name) {
         await tracker.bookmark(name, [selectedModel?.provider || ''], prompt);
         toast.success("Test run bookmarked");
@@ -637,7 +637,7 @@ const ComprehensiveModelTester = () => {
         key: " ",
         description: "Play / Pause execution",
         action: () => {
-          if (isExecuting || tracker?.flow.status === 'running') {
+          if (isExecuting || tracker?.getFlow().status === 'running') {
             handlePause();
           } else {
             handlePlay();

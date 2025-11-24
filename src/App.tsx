@@ -103,15 +103,25 @@ const AppContent = () => {
 
     // Listen for app state changes
     let appStateListener: PluginListenerHandle | undefined;
-    CapacitorApp.addListener('appStateChange', ({ isActive }) => {
-      logger.debug('Capacitor app state changed', {
-        component: 'App',
-        isActive,
-        operation: 'appStateListener'
-      });
-    }).then(listener => {
-      appStateListener = listener;
-    });
+
+    const setupAppStateListener = async () => {
+      try {
+        appStateListener = await CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+          logger.debug('Capacitor app state changed', {
+            component: 'App',
+            isActive,
+            operation: 'appStateListener'
+          });
+        });
+      } catch (err) {
+        logger.error('Failed to setup app state listener', err as Error, {
+          component: 'App',
+          operation: 'setupAppStateListener'
+        });
+      }
+    };
+
+    setupAppStateListener();
 
     return () => {
       if (appStateListener) {

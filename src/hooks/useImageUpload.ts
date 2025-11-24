@@ -94,16 +94,20 @@ export const useImageUpload = (currentModel: AIModel | null) => {
   // Persist images to sessionStorage when they change
   useEffect(() => {
     const storageKey = getStorageKey(currentModel?.record_id || null);
-    
+
     if (uploadedImages.length > 0) {
-      Promise.all(uploadedImages.map(fileToStorable))
-        .then(storable => {
+      const persistImages = async () => {
+        try {
+          const storable = await Promise.all(uploadedImages.map(fileToStorable));
           sessionStorage.setItem(storageKey, JSON.stringify(storable));
           logger.info(`Persisted ${storable.length} images to sessionStorage`);
-        })
-        .catch(err => {
-          logger.error('Failed to persist images', err);
-        });
+        } catch (err) {
+          logger.error('Failed to persist images', err as Error);
+          toast.error('Failed to save images. They will be lost on page refresh.');
+        }
+      };
+
+      persistImages();
     } else {
       sessionStorage.removeItem(storageKey);
     }

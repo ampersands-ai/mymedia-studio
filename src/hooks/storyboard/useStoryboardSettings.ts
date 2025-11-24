@@ -32,11 +32,12 @@ export const useStoryboardSettings = (currentStoryboardId: string | null) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
-      
+
       // Track activity
-      import('@/lib/logging/client-logger').then(({ clientLogger }) => {
+      try {
+        const { clientLogger } = await import('@/lib/logging/client-logger');
         clientLogger.activity({
           activityType: 'storyboard',
           activityName: 'storyboard_settings_updated',
@@ -47,7 +48,14 @@ export const useStoryboardSettings = (currentStoryboardId: string | null) => {
             settings: Object.keys(variables),
           },
         });
-      });
+      } catch (err) {
+        logger.error('Failed to log storyboard settings activity', err as Error, {
+          component: 'useStoryboardSettings',
+          operation: 'trackActivity',
+          storyboardId: currentStoryboardId
+        });
+        // Don't throw - logging failure shouldn't break settings update
+      }
     },
     onError: (error: Error) => {
       logger.error('Update render settings failed', error, {

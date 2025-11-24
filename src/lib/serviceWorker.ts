@@ -8,40 +8,39 @@ import { logger } from '@/lib/logger';
 export function registerServiceWorker() {
   // ✅ ONLY register in production
   if ('serviceWorker' in navigator && import.meta.env.PROD) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .then((registration) => {
-          logger.info('Service Worker registered successfully', {
-            utility: 'serviceWorker',
-            scope: registration.scope,
-            operation: 'registerServiceWorker'
-          });
+    window.addEventListener('load', async () => {
+      try {
+        const registration = await navigator.serviceWorker.register('/sw.js');
 
-          // Check for updates every hour
-          setInterval(() => {
-            registration.update();
-          }, 60 * 60 * 1000);
+        logger.info('Service Worker registered successfully', {
+          utility: 'serviceWorker',
+          scope: registration.scope,
+          operation: 'registerServiceWorker'
+        });
 
-          // Notify user when update is available
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            newWorker?.addEventListener('statechange', () => {
-              if (
-                newWorker.state === 'installed' &&
-                navigator.serviceWorker.controller
-              ) {
-                showUpdateNotification();
-              }
-            });
-          });
-        })
-        .catch((err) => {
-          logger.error('Service Worker registration failed', err, {
-            utility: 'serviceWorker',
-            operation: 'registerServiceWorker'
+        // Check for updates every hour
+        setInterval(() => {
+          registration.update();
+        }, 60 * 60 * 1000);
+
+        // Notify user when update is available
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          newWorker?.addEventListener('statechange', () => {
+            if (
+              newWorker.state === 'installed' &&
+              navigator.serviceWorker.controller
+            ) {
+              showUpdateNotification();
+            }
           });
         });
+      } catch (err) {
+        logger.error('Service Worker registration failed', err as Error, {
+          utility: 'serviceWorker',
+          operation: 'registerServiceWorker'
+        });
+      }
     });
   }
 }
@@ -49,9 +48,10 @@ export function registerServiceWorker() {
 /**
  * Auto-unregister service worker in dev mode
  */
-export function unregisterServiceWorker() {
+export async function unregisterServiceWorker() {
   if (import.meta.env.DEV && 'serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then((registrations) => {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
       if (registrations.length > 0) {
         logger.warn('Service Worker active in dev mode, auto-unregistering', {
           utility: 'serviceWorker',
@@ -60,7 +60,12 @@ export function unregisterServiceWorker() {
         });
         registrations.forEach((reg) => reg.unregister());
       }
-    });
+    } catch (err) {
+      logger.error('Failed to unregister service workers', err as Error, {
+        utility: 'serviceWorker',
+        operation: 'unregisterServiceWorker'
+      });
+    }
   }
 }
 
@@ -108,24 +113,32 @@ function showUpdateNotification() {
  */
 export async function clearAllCaches() {
   if ('serviceWorker' in navigator) {
-    // Unregister service worker
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(registrations.map((reg) => reg.unregister()));
+    try {
+      // Unregister service worker
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((reg) => reg.unregister()));
 
-    // Clear all caches
-    const cacheNames = await caches.keys();
-    await Promise.all(cacheNames.map((name) => caches.delete(name)));
+      // Clear all caches
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map((name) => caches.delete(name)));
 
-    // Clear storage
-    localStorage.clear();
-    sessionStorage.clear();
+      // Clear storage
+      localStorage.clear();
+      sessionStorage.clear();
 
-    logger.info('All caches and storage cleared', {
-      utility: 'serviceWorker',
-      cacheCount: cacheNames.length,
-      registrationCount: registrations.length,
-      operation: 'clearAllCaches'
-    });
-    window.location.reload();
+      logger.info('All caches and storage cleared', {
+        utility: 'serviceWorker',
+        cacheCount: cacheNames.length,
+        registrationCount: registrations.length,
+        operation: 'clearAllCaches'
+      });
+      window.location.reload();
+    } catch (err) {
+      logger.error('Failed to clear caches', err as Error, {
+        utility: 'serviceWorker',
+        operation: 'clearAllCaches'
+      });
+      throw err; // Re-throw so caller knows it failed
+    }
   }
 }

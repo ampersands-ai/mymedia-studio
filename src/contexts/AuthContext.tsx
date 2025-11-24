@@ -85,22 +85,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (hasCode && !hasError) {
       // Perform the OAuth code exchange once, then auth listener will update state
-      supabase.auth
-        .exchangeCodeForSession(window.location.href)
-        .catch((e) => authLogger.error("OAuth exchange failed", e as Error))
-        .finally(() => {
+      (async () => {
+        try {
+          await supabase.auth.exchangeCodeForSession(window.location.href);
+        } catch (e) {
+          authLogger.error("OAuth exchange failed", e as Error);
+        } finally {
           // Clean the URL so we don't keep re-exchanging the code on refresh
           const cleanUrl = `${url.origin}${url.pathname}${url.hash}`;
           window.history.replaceState({}, document.title, cleanUrl);
           setLoading(false);
-        });
+        }
+      })();
     } else {
       // THEN check for existing session
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      });
+      (async () => {
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          if (error) {
+            authLogger.error('Failed to get session', error as Error);
+          }
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        } catch (err) {
+          authLogger.error('Error getting session', err as Error);
+          setLoading(false);
+        }
+      })();
     }
 
     return () => subscription.unsubscribe();

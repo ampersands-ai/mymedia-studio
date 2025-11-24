@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, error_id: errorRecord.id }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
+  } catch (error) {
     logger.critical('Error in log-error function', error);
     
     return new Response(

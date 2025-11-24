@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
         headers: { ...responseHeaders, 'Content-Type': 'application/json' },
       }
     );
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error sending blog emails', error instanceof Error ? error : new Error(String(error)));
     return new Response(
       JSON.stringify({ error: error?.message || 'Unknown error' }),

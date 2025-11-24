@@ -85,7 +85,7 @@ Generate ONE creative topic now:`
       JSON.stringify({ topic }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error generating video topic:', error as any);
     return new Response(
       JSON.stringify({ error: error.message || 'Failed to generate topic' }),

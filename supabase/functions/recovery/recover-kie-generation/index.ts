@@ -184,7 +184,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     webhookLogger.error('Recovery failed', error, {});
     return new Response(
       JSON.stringify({ 

@@ -31,7 +31,7 @@ export interface GenerationResponse {
 }
 
 export interface ModelListResponse {
-  models: any[];
+  models: unknown[];
   count: number;
 }
 

@@ -88,7 +88,8 @@ export const BulkPreviewGenerator = ({ storyboard, scenes, onGenerateAll }: Bulk
           generated: result.generated
         });
       }
-    } catch (error: any) {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       if (error.name === 'AbortError' || error.message.includes('cancelled')) {
         logger.debug('Bulk generation cancelled', {
           component: 'BulkPreviewGenerator',

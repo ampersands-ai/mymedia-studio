@@ -259,7 +259,7 @@ Deno.serve(async (req) => {
       headers: { ...responseHeaders, 'Content-Type': 'application/json' }
     });
 
-  } catch (error: any) {
+  } catch (error) {
     if (generationId) {
       webhookLogger.failure(generationId, error.message, { provider: 'midjourney' });
     } else {

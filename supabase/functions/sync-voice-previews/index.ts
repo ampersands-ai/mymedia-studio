@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
         });
 
         logger.info('Voice uploaded successfully', { metadata: { voiceName: topVoice.name } });
-      } catch (error: any) {
+      } catch (error) {
         logger.error('Failed to process voice', error, { metadata: { voiceName: topVoice.name } });
         results.push({
           voice_id: topVoice.id,
@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
       }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error in sync-voice-previews', error);
     return new Response(
       JSON.stringify({ 

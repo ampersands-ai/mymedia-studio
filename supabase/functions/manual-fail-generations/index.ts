@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Manual fail error', error as Error);
     return new Response(
       JSON.stringify({ error: error.message }),

@@ -87,7 +87,8 @@ export async function deleteTemplate(
     }
 
     toast.success("Template deleted successfully");
-  } catch (error: any) {
+  } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
     logger.error('Template deletion failed', error, {
       utility: 'template-operations',
       templateId: template.id,

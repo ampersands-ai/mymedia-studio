@@ -5,11 +5,18 @@ interface AlertPayload {
   failureRate?: number;
   storageFailures?: number;
   threshold?: number;
-  details?: any;
-  metadata?: any;
+  details?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }
 
-export function generateSlackPayload(payload: AlertPayload, settings: any) {
+interface WebhookSettings {
+  failure_rate_threshold: number;
+  storage_failure_threshold: number;
+  check_interval_minutes: number;
+  cooldown_minutes?: number;
+}
+
+export function generateSlackPayload(payload: AlertPayload, settings: WebhookSettings) {
   const isTest = payload.type === 'test';
   const isFailureRate = payload.type === 'failure_rate';
   
@@ -103,7 +110,7 @@ export function generateSlackPayload(payload: AlertPayload, settings: any) {
   };
 }
 
-export function generateDiscordPayload(payload: AlertPayload, settings: any) {
+export function generateDiscordPayload(payload: AlertPayload, settings: WebhookSettings) {
   const isTest = payload.type === 'test';
   const isFailureRate = payload.type === 'failure_rate';
   

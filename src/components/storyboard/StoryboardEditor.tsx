@@ -107,7 +107,8 @@ export const StoryboardEditor = () => {
       }
       
       toast.success('Video rendering started!');
-    } catch (error: any) {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       logger.error('Video rendering failed to start', error, {
         component: 'StoryboardEditor',
         operation: 'handleRender',
@@ -123,7 +124,8 @@ export const StoryboardEditor = () => {
     try {
       await renderVideo(true);
       toast.success('Video re-rendering started!');
-    } catch (error: any) {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       logger.error('Video re-rendering failed to start', error, {
         component: 'StoryboardEditor',
         operation: 'handleConfirmRerender',

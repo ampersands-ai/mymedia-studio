@@ -155,7 +155,8 @@ export const ImageGenerationPanel = ({
       // Reset form
       setCustomPrompt("");
       setAltText("");
-    } catch (error: any) {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       logger.error("Error generating image", error);
       toast.error(error.message || "Failed to generate image");
     } finally {

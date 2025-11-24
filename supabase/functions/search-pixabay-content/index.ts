@@ -87,7 +87,7 @@ serve(async (req) => {
       JSON.stringify({ items, total: data.total }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error in search-pixabay-content', error as Error);
     return new Response(
       JSON.stringify({ error: error.message }),

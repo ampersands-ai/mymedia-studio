@@ -9,7 +9,7 @@ export const clientLogger = {
     routeName: string;
     userAction?: string;
     severity?: 'low' | 'medium' | 'high' | 'critical';
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   }) => {
     try {
       await supabase.functions.invoke('log-error', {
@@ -51,7 +51,7 @@ export const clientLogger = {
     activityName: string;
     routeName?: string;
     description?: string;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
     durationMs?: number;
   }) => {
     try {

@@ -130,7 +130,7 @@ Recommended Actions:
       JSON.stringify({ success: true }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error in send-generation-timeout-alert function', error instanceof Error ? error : new Error(String(error)));
     return new Response(
       JSON.stringify({ error: error.message }),

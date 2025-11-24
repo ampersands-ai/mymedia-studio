@@ -7,16 +7,24 @@
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../../_shared/edge-logger.ts";
 import { getModel } from "../../_shared/registry/index.ts";
-import {
 import { GENERATION_STATUS } from "../../_shared/constants.ts";
+import {
   replaceTemplateVariables,
   resolveInputMappings,
   coerceParametersToSchema,
   sanitizeParametersForProviders,
 } from "./parameter-resolver.ts";
 
+interface Generation {
+  id: string;
+  workflow_execution_id?: string;
+  workflow_step_number?: number;
+  storage_path?: string | null;
+  tokens_used?: number;
+}
+
 export async function orchestrateWorkflow(
-  generation: any,
+  generation: Generation,
   storagePath: string | null,
   isMultiOutput: boolean,
   supabase: SupabaseClient
@@ -48,10 +56,10 @@ export async function orchestrateWorkflow(
     }
 
     const currentStepNumber = generation.workflow_step_number;
-    const template = workflowExecution.workflow_templates as any;
-    const steps = template.workflow_steps as any[];
+    const template = workflowExecution.workflow_templates as Record<string, unknown>;
+    const steps = (template.workflow_steps as unknown[]) || [];
     const totalSteps = steps.length;
-    const currentStep = steps.find((s: any) => s.step_number === currentStepNumber);
+    const currentStep = steps.find((s: Record<string, unknown>) => s.step_number === currentStepNumber);
 
     logger.info('Current step status', { 
       metadata: { currentStep: currentStepNumber, totalSteps } 
@@ -73,11 +81,11 @@ export async function orchestrateWorkflow(
     }
 
     // Update step_outputs
-    const existingOutputs = (workflowExecution.step_outputs as Record<string, any>) || {};
+    const existingOutputs = (workflowExecution.step_outputs as Record<string, unknown>) || {};
     const updatedOutputs = {
       ...existingOutputs,
       [`step${currentStepNumber}`]: {
-        [currentStep?.output_key || 'output']: stepOutputPath,
+        [(currentStep as Record<string, unknown>)?.output_key as string || 'output']: stepOutputPath,
         generation_id: generation.id,
       },
     };
@@ -88,7 +96,7 @@ export async function orchestrateWorkflow(
     // Check if there are more steps
     if (currentStepNumber < totalSteps) {
       const nextStepNumber = currentStepNumber + 1;
-      const nextStep = steps.find((s: any) => s.step_number === nextStepNumber);
+      const nextStep = steps.find((s: Record<string, unknown>) => s.step_number === nextStepNumber) as Record<string, unknown>;
       
       logger.info('Starting next step', { 
         metadata: { nextStepNumber, totalSteps } 
@@ -199,12 +207,13 @@ export async function orchestrateWorkflow(
         })
         .eq('id', generation.workflow_execution_id);
 
-      logger.info('Workflow execution completed', { 
-        metadata: { workflowExecutionId: generation.workflow_execution_id } 
+      logger.info('Workflow execution completed', {
+        metadata: { workflowExecutionId: generation.workflow_execution_id }
       });
     }
-  } catch (orchestrationError: any) {
-    logger.error('Error in workflow orchestration', orchestrationError);
+  } catch (orchestrationError) {
+    const err = orchestrationError instanceof Error ? orchestrationError : new Error(String(orchestrationError));
+    logger.error('Error in workflow orchestration', err);
     // Don't fail the entire webhook - the generation is complete
   }
 }

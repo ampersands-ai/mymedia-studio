@@ -356,7 +356,8 @@ const Auth = () => {
         }
         navigate("/dashboard/custom-creation");
       }
-    } catch (error: any) {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       toast.error(error.message || "An error occurred");
     } finally {
       setLoading(false);
@@ -372,7 +373,8 @@ const Auth = () => {
         },
       });
       if (error) throw error;
-    } catch (error: any) {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       toast.error(error.message || "An error occurred");
     }
   };

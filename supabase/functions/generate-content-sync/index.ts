@@ -566,7 +566,7 @@ Deno.serve(async (req) => {
       throw providerError;
     }
 
-  } catch (error: any) {
+  } catch (error) {
     return createSafeErrorResponse(error, 'generate-content-sync', responseHeaders);
   }
 });

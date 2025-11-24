@@ -292,7 +292,7 @@ Deno.serve(async (req) => {
               metadata: { childId, index: i } 
             });
           }
-        } catch (error: any) {
+        } catch (error) {
           logger.error(`Error processing output ${i + 1}`, error instanceof Error ? error : undefined, { 
             userId: user.id,
             metadata: { index: i } 
@@ -392,7 +392,7 @@ Deno.serve(async (req) => {
       );
     }
 
-  } catch (error: any) {
+  } catch (error) {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);

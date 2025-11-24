@@ -10,10 +10,19 @@ import { toast } from 'sonner';
 import { Mail, Save, Send, AlertCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
+interface AdminNotificationSettings {
+  enabled: boolean;
+  recipient_email: string;
+  error_alerts: { enabled: boolean; min_severity: string };
+  daily_summary: { enabled: boolean; time: string };
+  user_registration: { enabled: boolean };
+  generation_errors: { enabled: boolean; threshold: number };
+}
+
 export default function EmailSettings() {
   const [loading, setLoading] = useState(false);
   const [testingEmail, setTestingEmail] = useState(false);
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<{ admin_notifications: AdminNotificationSettings }>({
     admin_notifications: {
       enabled: false,
       recipient_email: '',
@@ -38,10 +47,11 @@ export default function EmailSettings() {
 
       if (error) throw error;
       if (data?.setting_value) {
-        setSettings({ admin_notifications: data.setting_value as any });
+        setSettings({ admin_notifications: data.setting_value as AdminNotificationSettings });
       }
-    } catch (error: any) {
-      logger.error('Failed to load email settings', error as Error, { 
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Failed to load email settings', err, {
         component: 'EmailSettings',
         operation: 'loadSettings'
       });
@@ -62,8 +72,9 @@ export default function EmailSettings() {
 
       if (error) throw error;
       toast.success('Email settings saved successfully');
-    } catch (error: any) {
-      logger.error('Failed to save email settings', error as Error, { 
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Failed to save email settings', err, {
         component: 'EmailSettings',
         operation: 'handleSave'
       });
@@ -87,8 +98,9 @@ export default function EmailSettings() {
 
       if (error) throw error;
       toast.success('Test email sent! Check your inbox.');
-    } catch (error: any) {
-      logger.error('Failed to send test email', error as Error, { 
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Failed to send test email', err, {
         component: 'EmailSettings',
         operation: 'handleTestEmail'
       });
@@ -98,12 +110,12 @@ export default function EmailSettings() {
     }
   };
 
-  const updateSetting = (path: string[], value: any) => {
+  const updateSetting = (path: string[], value: unknown) => {
     setSettings((prev) => {
       const newSettings = { ...prev };
-      let current: any = newSettings.admin_notifications;
+      let current: Record<string, unknown> = newSettings.admin_notifications as unknown as Record<string, unknown>;
       for (let i = 0; i < path.length - 1; i++) {
-        current = current[path[i]];
+        current = current[path[i]] as Record<string, unknown>;
       }
       current[path[path.length - 1]] = value;
       return newSettings;

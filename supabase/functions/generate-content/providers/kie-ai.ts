@@ -207,7 +207,7 @@ export async function callKieAI(
       }
     };
 
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Kie.ai provider error', error, { metadata: { model: request.model } });
     throw new Error(`Kie.ai provider failed: ${error.message}`);
   }

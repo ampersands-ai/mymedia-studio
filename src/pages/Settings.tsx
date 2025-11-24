@@ -324,7 +324,8 @@ const Settings = () => {
       }
       
       toast.success("Profile updated successfully!");
-    } catch (error: any) {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       logger.error("Error updating profile", error instanceof Error ? error : new Error(String(error)), {
         component: 'Settings',
         operation: 'handleUpdateProfile',

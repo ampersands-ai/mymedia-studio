@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
       }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     webhookLogger.error('Recovery router failed', error, {});
     return new Response(
       JSON.stringify({ 

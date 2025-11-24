@@ -93,7 +93,7 @@ serve(async () => {
         logger.info('API check complete', {
           metadata: { displayName: config.display_name, status, responseTimeMs: responseTime }
         });
-      } catch (error: any) {
+      } catch (error) {
         responseTime = Date.now() - startTime
 
         if (error.name === 'AbortError') {

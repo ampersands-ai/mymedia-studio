@@ -118,7 +118,7 @@ Format your response as a JSON array with this structure:
         headers: { ...responseHeaders, 'Content-Type': 'application/json' },
       }
     );
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error generating topics', error instanceof Error ? error : undefined);
     return new Response(
       JSON.stringify({ error: error?.message || 'Unknown error' }),

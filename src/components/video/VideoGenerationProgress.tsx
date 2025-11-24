@@ -87,7 +87,8 @@ export function VideoGenerationProgress({
       } else {
         toast.info('Video is still being generated. Please wait...');
       }
-    } catch (error: any) {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       componentLogger.error('Status check failed', error, {
         operation: 'handleCheckStatus',
         generationId

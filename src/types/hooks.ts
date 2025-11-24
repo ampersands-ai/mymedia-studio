@@ -27,7 +27,7 @@ export interface GenerationParams {
 }
 
 export interface UseModelsReturn {
-  models: any[];
+  models: unknown[];
   isLoading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;

@@ -165,7 +165,7 @@ ${body.error_stack ? `Stack Trace:\n${body.error_stack}` : 'No stack trace avail
       JSON.stringify({ success: true }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Fatal error in send-error-alert', error);
     return new Response(
       JSON.stringify({ error: error.message }),

@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ voices: voicesWithLocalPreviews }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error in get-voices function', error as Error);
     return new Response(
       JSON.stringify({

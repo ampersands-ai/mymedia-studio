@@ -178,7 +178,7 @@ export class HttpClient {
             `HTTP ${response.status}: ${response.statusText}${errorText ? ` - ${errorText.substring(0, 200)}` : ''}`
           );
 
-        } catch (error: any) {
+        } catch (error) {
           lastError = error;
 
           // Handle timeout
@@ -250,7 +250,7 @@ export class HttpClient {
 
       return data;
 
-    } catch (error: any) {
+    } catch (error) {
       const duration = Date.now() - startTime;
       
       // Check if circuit breaker error
@@ -387,7 +387,7 @@ export class HttpClient {
       });
 
       return response;
-    } catch (error: any) {
+    } catch (error) {
       this.logger.error('HEAD request failed', error, {
         duration: Date.now() - startTime,
         metadata: { url: this.sanitizeUrl(url), requestId }

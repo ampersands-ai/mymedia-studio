@@ -7,7 +7,7 @@ import type { TemplateLandingPage } from "@/hooks/useTemplateLanding";
 export interface StructuredDataSchema {
   "@context": string;
   "@type": string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -61,7 +61,7 @@ export function generateHowToSchema(
       currency: "USD",
       value: "0",
     },
-    step: template.steps.map((step: any, index: number) => ({
+    step: template.steps.map((step: { title?: string; description?: string; image_url?: string }, index: number) => ({
       "@type": "HowToStep",
       position: index + 1,
       name: step.title,
@@ -82,7 +82,7 @@ export function generateFAQSchema(
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: template.faqs.map((faq: any) => ({
+    mainEntity: template.faqs.map((faq: { question?: string; answer?: string }) => ({
       "@type": "Question",
       name: faq.question,
       acceptedAnswer: {

@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
+import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 
 
 
@@ -49,7 +50,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     logger.info('Fetching voices from ElevenLabs');
-    const voicesResponse = await fetch('https://api.elevenlabs.io/v1/voices', {
+    const voicesResponse = await fetch(`${API_ENDPOINTS.ELEVENLABS.fullUrl}/voices`, {
       headers: { 'xi-api-key': ELEVENLABS_API_KEY }
     });
 

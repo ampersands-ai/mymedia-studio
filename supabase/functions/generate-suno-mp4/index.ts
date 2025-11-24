@@ -4,6 +4,7 @@ import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
+import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 
 
 
@@ -268,7 +269,7 @@ Deno.serve(async (req) => {
       } 
     });
 
-    const kieResponse = await fetch('https://api.kie.ai/api/v1/mp4/generate', {
+    const kieResponse = await fetch(API_ENDPOINTS.KIE_AI.mp4GenerateUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${KIE_API_KEY}`,

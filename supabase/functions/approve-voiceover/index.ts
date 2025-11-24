@@ -2,6 +2,7 @@ import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
+import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 
 // Type definitions
 interface SanitizedData {
@@ -411,7 +412,7 @@ async function getBackgroundImages(
   }
 
   // Request 6 images from Pixabay
-  const endpoint = `https://pixabay.com/api/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&image_type=photo&orientation=${orientation}&per_page=6`;
+  const endpoint = `${API_ENDPOINTS.PIXABAY.apiUrl}/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&image_type=photo&orientation=${orientation}&per_page=6`;
   const requestSentAt = new Date();
 
   const response = await fetch(endpoint);
@@ -505,7 +506,7 @@ async function getBackgroundVideos(
   
   // Request more videos (40 instead of 20) to have enough variety
   const pixabayApiKey = Deno.env.get('PIXABAY_API_KEY');
-  const endpoint = `https://pixabay.com/api/videos/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&per_page=40`;
+  const endpoint = `${API_ENDPOINTS.PIXABAY.apiUrl}/videos/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&per_page=40`;
   const requestSentAt = new Date();
 
   const response = await fetch(endpoint);
@@ -784,7 +785,7 @@ async function assembleVideo(
   });
 
   // Submit to Shotstack API
-  const endpoint = 'https://api.shotstack.io/v1/render';
+  const endpoint = API_ENDPOINTS.SHOTSTACK.renderUrl;
   const requestSentAt = new Date();
 
   const response = await fetch(endpoint, {
@@ -1001,7 +1002,7 @@ async function pollRenderStatus(supabase: SupabaseClient, jobId: string, renderI
   while (attempts < maxAttempts) {
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    const endpoint = `https://api.shotstack.io/v1/render/${renderId}`;
+    const endpoint = API_ENDPOINTS.SHOTSTACK.getRenderStatusUrl(renderId);
     const requestSentAt = new Date();
 
     const response = await fetch(endpoint, {

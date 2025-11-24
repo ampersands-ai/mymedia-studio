@@ -1,5 +1,6 @@
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
@@ -20,7 +21,7 @@ Deno.serve(async (req) => {
 
     logger.info('Fetching voices from ElevenLabs');
 
-    const response = await fetch('https://api.elevenlabs.io/v1/voices', {
+    const response = await fetch(`${API_ENDPOINTS.ELEVENLABS.fullUrl}/voices`, {
       headers: {
         'xi-api-key': ELEVENLABS_API_KEY
       }

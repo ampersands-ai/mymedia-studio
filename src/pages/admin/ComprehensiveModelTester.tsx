@@ -57,7 +57,6 @@ const ComprehensiveModelTester = () => {
 
   // State
   const [selectedModelId, setSelectedModelId] = useState<string>("");
-  const [prompt, setPrompt] = useState<string>("");
   const [modelParameters, setModelParameters] = useState<Record<string, any>>({});
   const [executionFlow, setExecutionFlow] = useState<ExecutionFlow | null>(null);
   const [tracker, setTracker] = useState<EnhancedExecutionTracker | null>(null);
@@ -93,7 +92,6 @@ const ComprehensiveModelTester = () => {
   const handleModelChange = useCallback(
     (modelId: string) => {
       setSelectedModelId(modelId);
-      setPrompt("");
       setModelParameters({});
       setExecutionFlow(null);
       setTracker(null);
@@ -115,11 +113,6 @@ const ComprehensiveModelTester = () => {
   const executeWithInstrumentation = useCallback(async () => {
     if (!selectedModel || !user) {
       toast.error("Please select a model and ensure you're logged in");
-      return;
-    }
-
-    if (!prompt.trim()) {
-      toast.error("Please enter a prompt");
       return;
     }
 
@@ -208,10 +201,10 @@ const ComprehensiveModelTester = () => {
       // ====== STEP 2: Prepare Inputs ======
       const step2 = newTracker.addStep(createStepConfig(
         "Prepare Inputs",
-        "Merge prompt with model parameters",
+        "Prepare model parameters for execution",
         getModelFilePath(selectedModel.content_type || '', selectedModel.model_name, selectedModel.is_locked || false),
         "prepareInputs",
-        { prompt, modelParameters },
+        { modelParameters },
         {
           canEdit: true,
           canRerun: true,
@@ -220,8 +213,12 @@ const ComprehensiveModelTester = () => {
         }
       ));
 
-      newTracker.startStep(step2.id, { prompt, modelParameters });
-      const inputs = { ...modelParameters, prompt, positivePrompt: prompt };
+      newTracker.startStep(step2.id, { modelParameters });
+      const inputs = { ...modelParameters };
+      // Support both 'prompt' and 'positivePrompt' conventions
+      if (inputs.prompt && !inputs.positivePrompt) {
+        inputs.positivePrompt = inputs.prompt;
+      }
       newTracker.completeStep(step2.id, { mergedInputs: inputs }, { inputs });
 
       // ====== STEP 3: Validate Inputs ======
@@ -315,7 +312,7 @@ const ComprehensiveModelTester = () => {
           model_id: selectedModel.record_id,
           model_record_id: selectedModel.record_id,
           type: getGenerationType(selectedModel.content_type || ''),
-          prompt,
+          prompt: inputs.prompt || inputs.positivePrompt || '',
           tokens_used: cost,
           status: "pending",
           settings: modelParameters,
@@ -336,7 +333,7 @@ const ComprehensiveModelTester = () => {
           model_id: selectedModel.record_id,
           model_record_id: selectedModel.record_id,
           type: getGenerationType(selectedModel.content_type || ''),
-          prompt,
+          prompt: inputs.prompt || inputs.positivePrompt || '',
           tokens_used: cost,
           status: "pending",
           settings: modelParameters,
@@ -405,7 +402,7 @@ const ComprehensiveModelTester = () => {
           generationId: gen.id,
           model_config: modelModule.MODEL_CONFIG,
           model_schema: modelModule.SCHEMA,
-          prompt: inputs.positivePrompt || prompt,
+          prompt: inputs.prompt || inputs.positivePrompt || '',
           custom_parameters: payload,
           test_mode: true, // TEST MODE FLAG
         },
@@ -425,7 +422,7 @@ const ComprehensiveModelTester = () => {
             generationId: gen.id,
             model_config: modelModule.MODEL_CONFIG,
             model_schema: modelModule.SCHEMA,
-            prompt: inputs.positivePrompt || prompt,
+            prompt: inputs.prompt || inputs.positivePrompt || '',
             custom_parameters: payload,
             test_mode: true,
           },
@@ -504,7 +501,7 @@ const ComprehensiveModelTester = () => {
       unsubscribe();
       unsubscribeLogs();
     }
-  }, [selectedModel, user, prompt, modelParameters]);
+  }, [selectedModel, user, modelParameters]);
 
   /**
    * Handle execution control
@@ -604,7 +601,13 @@ const ComprehensiveModelTester = () => {
 
     setTracker(newTracker);
     setExecutionFlow(executionData);
-    setPrompt(executionData.steps.find(s => s.inputs?.prompt)?.inputs?.prompt || '');
+    // Restore parameters from the execution data
+    const replayStep = executionData.steps.find(s => s.inputs?.prompt || s.inputs?.modelParameters);
+    if (replayStep?.inputs?.modelParameters) {
+      setModelParameters(replayStep.inputs.modelParameters);
+    } else if (replayStep?.inputs?.prompt) {
+      setModelParameters(prev => ({ ...prev, prompt: replayStep.inputs.prompt }));
+    }
     toast.success("Ready to replay execution");
   }, [user]);
 
@@ -721,7 +724,8 @@ const ComprehensiveModelTester = () => {
     return (
       <div className="space-y-3">
         {Object.entries(properties).map(([key, prop]: [string, any]) => {
-          if (key === 'prompt' || key === 'positivePrompt') return null;
+          // Skip properties marked as showToUser: false
+          if (prop.showToUser === false) return null;
 
           const value = modelParameters[key];
 
@@ -783,6 +787,17 @@ const ComprehensiveModelTester = () => {
                     <SelectItem value="false">No</SelectItem>
                   </SelectContent>
                 </Select>
+              ) : key === 'prompt' || key === 'positivePrompt' ? (
+                <Textarea
+                  id={key}
+                  value={value ?? prop.default ?? ''}
+                  onChange={(e) =>
+                    setModelParameters(prev => ({ ...prev, [key]: e.target.value }))
+                  }
+                  placeholder={`Enter ${prop.title || key}...`}
+                  rows={4}
+                  disabled={isExecuting}
+                />
               ) : (
                 <Input
                   id={key}
@@ -936,18 +951,6 @@ const ComprehensiveModelTester = () => {
                 </h2>
 
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="prompt">Prompt</Label>
-                    <Textarea
-                      id="prompt"
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="Enter your prompt here..."
-                      rows={4}
-                      disabled={isExecuting}
-                    />
-                  </div>
-
                   {!schemaLoading && renderParameterInputs()}
                 </div>
 
@@ -955,7 +958,7 @@ const ComprehensiveModelTester = () => {
                   className="w-full"
                   size="lg"
                   onClick={executeWithInstrumentation}
-                  disabled={isExecuting || !prompt.trim() || !selectedModel}
+                  disabled={isExecuting || !selectedModel}
                 >
                   <Play className="mr-2 h-5 w-5" />
                   {isExecuting ? "Executing..." : "Execute with Full Tracking"}

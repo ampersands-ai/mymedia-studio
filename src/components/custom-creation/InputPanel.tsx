@@ -135,6 +135,13 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   const useIncrementRenderer = modelSchema?.useIncrementRenderer ?? true;
   const useOutputFormatRenderer = modelSchema?.useOutputFormatRenderer ?? false;
 
+  // Calculate shouldUseSpecializedImageRenderer once (outside loop)
+  // Special case: Don't use specialized renderer for startFrame if endFrame exists (Veo HQ/Fast)
+  const hasEndFrame = modelSchema?.properties?.endFrame;
+  const shouldUseSpecializedImageRenderer = useImageRenderer &&
+    imageFieldName &&
+    !(imageFieldName === 'startFrame' && hasEndFrame);
+
   // Build set of fields that use specialized renderers (schema-driven approach)
   const specializedFields = new Set<string>();
 
@@ -147,13 +154,9 @@ export const InputPanel: React.FC<InputPanelProps> = ({
       }
 
       // Image renderer fields
-      // Special case: Don't use specialized renderer for startFrame if endFrame exists (Veo HQ/Fast)
-      const hasEndFrame = modelSchema?.properties?.endFrame;
-      const shouldUseSpecializedImageRenderer = useImageRenderer &&
-        prop.renderer === 'image' &&
-        !(key === 'startFrame' && hasEndFrame);
-
-      if (shouldUseSpecializedImageRenderer && key === imageFieldName) {
+      if (shouldUseSpecializedImageRenderer &&
+          prop.renderer === 'image' &&
+          key === imageFieldName) {
         specializedFields.add(key);
       }
 

@@ -5,6 +5,7 @@ import { EdgeLogger } from "../_shared/edge-logger.ts";
 
 // Security validators
 import { validateUrlToken } from "./security/url-token-validator.ts";
+import { validateSignature } from "./security/signature-validator.ts";
 import { validateVerifyToken } from "./security/verify-token-validator.ts";
 import { validateTiming } from "./security/timing-validator.ts";
 import { validateIdempotency } from "./security/idempotency-validator.ts";
@@ -43,13 +44,32 @@ Deno.serve(async (req) => {
     const urlTokenResult = validateUrlToken(url);
     if (!urlTokenResult.success) {
       logger.warn('URL token validation failed', { metadata: { url: url.toString() } });
-      return new Response(urlTokenResult.shouldReturn404 ? 'Not Found' : 'Bad Request', { 
+      return new Response(urlTokenResult.shouldReturn404 ? 'Not Found' : 'Bad Request', {
         status: urlTokenResult.shouldReturn404 ? 404 : 400,
         headers: corsHeaders
       });
     }
-    
-    const payload = await req.json();
+
+    // === LAYER 5: HMAC SIGNATURE VALIDATION ===
+    // Must validate signature on raw body before JSON parsing for integrity check
+    const rawBody = await req.text();
+    const signature = req.headers.get('X-Kie-Signature');
+    const signatureResult = validateSignature(rawBody, signature);
+
+    if (!signatureResult.success) {
+      logger.error('Signature validation failed', {
+        metadata: {
+          error: signatureResult.error,
+          hasSignature: !!signature,
+        }
+      });
+      return new Response('Forbidden', {
+        status: 403,
+        headers: corsHeaders
+      });
+    }
+
+    const payload = JSON.parse(rawBody);
     logger.info('Webhook payload received', { metadata: { payload } });
 
     const taskId = payload.data?.taskId || payload.data?.task_id;

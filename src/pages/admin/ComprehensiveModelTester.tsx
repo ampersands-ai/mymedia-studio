@@ -50,6 +50,12 @@ import {
 } from "lucide-react";
 import { initializeParameters } from "@/types/model-schema";
 import { loadModelSourceCode, getModelFilePath } from "@/lib/admin/codeAnalysis";
+import {
+  EXECUTION_CONTEXT,
+  STEP_TYPE,
+  GENERATION_STATUS,
+  TEST_MODE_CONFIG,
+} from "@/constants/execution-constants";
 
 const ComprehensiveModelTester = () => {
   const { user } = useAuth();
@@ -125,12 +131,7 @@ const ComprehensiveModelTester = () => {
       selectedModel.provider || 'unknown',
       selectedModel.content_type || 'unknown',
       user.id,
-      {
-        testMode: true,
-        skipBilling: true,
-        mode: 'auto',
-        persistenceEnabled: true,
-      }
+      TEST_MODE_CONFIG.DEFAULT
     );
 
     setTracker(newTracker);
@@ -155,8 +156,8 @@ const ComprehensiveModelTester = () => {
         {
           canEdit: false,
           canRerun: false,
-          stepType: 'main',
-          executionContext: 'client',
+          stepType: STEP_TYPE.MAIN,
+          executionContext: EXECUTION_CONTEXT.CLIENT,
         }
       ));
 
@@ -208,8 +209,8 @@ const ComprehensiveModelTester = () => {
         {
           canEdit: true,
           canRerun: true,
-          stepType: 'main',
-          executionContext: 'client',
+          stepType: STEP_TYPE.MAIN,
+          executionContext: EXECUTION_CONTEXT.CLIENT,
         }
       ));
 
@@ -285,8 +286,8 @@ const ComprehensiveModelTester = () => {
         {
           canEdit: false,
           canRerun: false,
-          stepType: 'main',
-          executionContext: 'client',
+          stepType: STEP_TYPE.MAIN,
+          executionContext: EXECUTION_CONTEXT.CLIENT,
         }
       ));
 
@@ -314,14 +315,14 @@ const ComprehensiveModelTester = () => {
           type: getGenerationType(selectedModel.content_type || ''),
           prompt: inputs.prompt || inputs.positivePrompt || null,
           tokens_used: cost,
-          status: "pending",
+          status: GENERATION_STATUS.PENDING,
           settings: modelParameters,
         },
         {
           canEdit: true,
           canRerun: false,
-          stepType: 'main',
-          executionContext: 'database',
+          stepType: STEP_TYPE.MAIN,
+          executionContext: EXECUTION_CONTEXT.DATABASE,
         }
       ));
 
@@ -335,7 +336,7 @@ const ComprehensiveModelTester = () => {
           type: getGenerationType(selectedModel.content_type || ''),
           prompt: inputs.prompt || inputs.positivePrompt || null,
           tokens_used: cost,
-          status: "pending",
+          status: GENERATION_STATUS.PENDING,
           settings: modelParameters,
         })
         .select()
@@ -409,8 +410,8 @@ const ComprehensiveModelTester = () => {
         {
           canEdit: true,
           canRerun: true,
-          stepType: 'main',
-          executionContext: 'edge_function',
+          stepType: STEP_TYPE.MAIN,
+          executionContext: EXECUTION_CONTEXT.EDGE_FUNCTION,
         }
       ));
 
@@ -433,7 +434,7 @@ const ComprehensiveModelTester = () => {
         newTracker.failStep(step8.id, funcError.message, funcError.stack);
         await supabase
           .from("generations")
-          .update({ status: "failed" })
+          .update({ status: GENERATION_STATUS.FAILED })
           .eq("id", gen.id);
         throw new Error(`Edge function failed: ${funcError.message}`);
       }
@@ -463,8 +464,8 @@ const ComprehensiveModelTester = () => {
         {
           canEdit: false,
           canRerun: false,
-          stepType: 'main',
-          executionContext: 'client',
+          stepType: STEP_TYPE.MAIN,
+          executionContext: EXECUTION_CONTEXT.CLIENT,
         }
       ));
 
@@ -592,12 +593,7 @@ const ComprehensiveModelTester = () => {
       executionData.modelProvider,
       executionData.modelContentType,
       user?.id || '',
-      {
-        testMode: true,
-        skipBilling: true,
-        mode: 'auto',
-        persistenceEnabled: true,
-      }
+      TEST_MODE_CONFIG.DEFAULT
     );
 
     setTracker(newTracker);

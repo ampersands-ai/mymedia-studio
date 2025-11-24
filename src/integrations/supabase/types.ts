@@ -3218,6 +3218,7 @@ export type Database = {
           uptime_percentage: number
         }[]
       }
+      get_auth_headers: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

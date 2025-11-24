@@ -3,7 +3,7 @@
  * Central configuration for all AI providers
  */
 
-import { API_ENDPOINTS } from './api-endpoints.ts';
+import { API_ENDPOINTS } from '../api-endpoints.ts';
 
 export interface ProviderConfig {
   name: string;

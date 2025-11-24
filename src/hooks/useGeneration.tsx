@@ -107,7 +107,7 @@ export const useGeneration = () => {
       });
 
       // Retry logic for token concurrency errors (409)
-      const getErrorStatus = (err: any) => err?.status || err?.context?.status;
+      const getErrorStatus = (err: unknown) => (err as { status?: number; context?: { status?: number } })?.status || (err as { context?: { status?: number } })?.context?.status;
       if (error && (getErrorStatus(error) === 409 || error.message?.includes("TOKEN_CONCURRENCY"))) {
         const MAX_CLIENT_RETRIES = 3;
         let attempt = 0;

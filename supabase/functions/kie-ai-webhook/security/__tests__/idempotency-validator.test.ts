@@ -6,7 +6,7 @@ import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
 import { validateIdempotency } from "../idempotency-validator.ts";
 
 // Mock Supabase client
-const createMockSupabase = (existingEvent: any = null, insertError: any = null) => ({
+const createMockSupabase = (existingEvent: Record<string, unknown> | null = null, insertError: Record<string, unknown> | null = null) => ({
   from: () => ({
     select: () => ({
       eq: () => ({

@@ -44,7 +44,7 @@ serve(async (req) => {
     const data = await response.json();
     
     // Transform Pixabay response with robust key mapping
-    const items = (data.hits || []).map((hit: any) => {
+    const items = (data.hits || []).map((hit: { id: number; name?: string; title?: string; duration?: number; previewURL?: string; preview_url?: string; preview?: { url?: string }; audioURL?: string; audio_url?: string; url?: string; genre?: string; category?: string; pageURL?: string; tags?: string; user?: string; user_id?: number }) => {
       const name = hit.name || hit.title || `Track ${hit.id}`;
       const duration = Number(hit.duration) || 0;
       const previewURL = hit.previewURL || hit.preview_url || hit.preview?.url || '';

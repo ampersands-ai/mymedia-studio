@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       
       try {
         // Find the voice in the ElevenLabs response
-        const voiceData = voicesData.voices?.find((v: any) => v.voice_id === topVoice.id);
+        const voiceData = voicesData.voices?.find((v: { voice_id: string; preview_url?: string }) => v.voice_id === topVoice.id);
         if (!voiceData || !voiceData.preview_url) {
           results.push({
             voice_id: topVoice.id,

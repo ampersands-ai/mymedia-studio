@@ -48,7 +48,7 @@ export function ParameterDialog({
     isAdvanced: false,
   });
   const [enumInput, setEnumInput] = useState('');
-  const [enumList, setEnumList] = useState<any[]>([]);
+  const [enumList, setEnumList] = useState<(string | number | boolean)[]>([]);
 
   useEffect(() => {
     if (parameter) {
@@ -106,8 +106,8 @@ export function ParameterDialog({
 
   const handleAddEnum = () => {
     if (!enumInput.trim()) return;
-    
-    let value: any = enumInput.trim();
+
+    let value: string | number | boolean = enumInput.trim();
     
     if (formData.type === 'number' || formData.type === 'integer') {
       const num = parseFloat(value);
@@ -310,7 +310,7 @@ export function ParameterDialog({
                 step={formData.type === 'number' || formData.type === 'integer' ? 0.01 : undefined}
                 value={formData.default !== undefined && formData.default !== null ? String(formData.default) : ''}
                 onChange={(e) => {
-                  let value: any = e.target.value;
+                  let value: string | number = e.target.value;
                   if (formData.type === 'number') value = parseFloat(value);
                   if (formData.type === 'integer') value = parseInt(value);
                   setFormData({ ...formData, default: value });

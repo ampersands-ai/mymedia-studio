@@ -38,7 +38,7 @@ interface TokenDispute {
     status: string;
     tokens_used: number;
     model_id: string | null;
-    settings: any;
+    settings: Record<string, unknown>;
     workflow_execution_id?: string | null;
     provider_response?: {
       data?: {

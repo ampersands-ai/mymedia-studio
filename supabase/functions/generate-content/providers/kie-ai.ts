@@ -82,9 +82,9 @@ export async function callKieAI(
   const callbackUrl = `${supabaseUrl}/functions/v1/kie-ai-webhook?token=${urlToken}&verify=${webhookToken}`;
   
   logger.debug('Callback URL configured with security tokens');
-  
+
   const useFlatStructure = request.payload_structure === 'flat';
-  let payload: any;
+  let payload: Record<string, unknown>;
   
   // Handle reference_image_urls - ensure it's an array if it's a string
   if (request.parameters.reference_image_urls && typeof request.parameters.reference_image_urls === 'string') {

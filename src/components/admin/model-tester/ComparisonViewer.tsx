@@ -28,7 +28,7 @@ interface StepComparison {
   runs: {
     status?: string;
     duration?: number;
-    outputs?: any;
+    outputs?: unknown;
     error?: string;
   }[];
   hasDifference: boolean;

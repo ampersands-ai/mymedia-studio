@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
 
         if (data && Array.isArray(data.data)) {
           totalSent += batch.length;
-          emailServiceIds.push(...data.data.map((d: any) => d.id));
+          emailServiceIds.push(...data.data.map((d: { id: string }) => d.id));
         }
       } catch (batchError) {
         logger.error('Error sending batch', batchError instanceof Error ? batchError : new Error(String(batchError)));

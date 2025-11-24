@@ -164,7 +164,7 @@ const ComprehensiveModelTester = () => {
 
       newTracker.startStep(step1.id, { selectedModel });
 
-      let modelModule: any;
+      let modelModule: ReturnType<typeof getModel>;
       try {
         modelModule = getModel(selectedModel.record_id);
 
@@ -374,7 +374,7 @@ const ComprehensiveModelTester = () => {
       ));
 
       newTracker.startStep(step7.id, { inputs });
-      let payload: any = {};
+      let payload: Record<string, unknown> = {};
       if (modelModule.preparePayload) {
         payload = modelModule.preparePayload(inputs);
       } else {

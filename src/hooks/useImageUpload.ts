@@ -38,7 +38,7 @@ const fileToDataUrl = (file: File): Promise<string> => {
 /**
  * Reconstruct File from stored data
  */
-const storableToFile = (stored: any): File => {
+const storableToFile = (stored: { dataUrl: string; type: string; name: string; lastModified?: number }): File => {
   const arr = stored.dataUrl.split(',');
   const mime = arr[0].match(/:(.*?);/)?.[1] || stored.type;
   const bstr = atob(arr[1]);

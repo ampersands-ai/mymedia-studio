@@ -285,7 +285,7 @@ export async function callRunware(
     }
 
     // Check for inference result in response
-    const inferenceResult = responseData.data?.find((item: any) =>
+    const inferenceResult = responseData.data?.find((item: { taskUUID: string; imageURL?: string; imageUUID?: string; videoURL?: string }) =>
       item.taskUUID === taskUUID && (item.imageURL || item.imageUUID || item.videoURL)
     );
 

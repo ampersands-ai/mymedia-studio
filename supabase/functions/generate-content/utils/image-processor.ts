@@ -61,11 +61,11 @@ export async function uploadBase64Image(
  * Convert all base64 images in parameters to signed URLs
  */
 export async function convertImagesToUrls(
-  parameters: Record<string, any>,
+  parameters: Record<string, unknown>,
   userId: string,
   supabaseClient: SupabaseClient,
-  logger?: { info: (msg: string, ctx?: any) => void }
-): Promise<Record<string, any>> {
+  logger?: { info: (msg: string, ctx?: Record<string, unknown>) => void }
+): Promise<Record<string, unknown>> {
   const processed = { ...parameters };
   let convertedCount = 0;
   

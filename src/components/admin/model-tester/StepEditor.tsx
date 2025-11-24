@@ -15,16 +15,16 @@ import { Save, X } from "lucide-react";
 
 interface StepEditorProps {
   step: ExecutionStep;
-  onSave: (newInputs: Record<string, any>) => void;
+  onSave: (newInputs: Record<string, unknown>) => void;
   onCancel: () => void;
 }
 
 export function StepEditor({ step, onSave, onCancel }: StepEditorProps) {
-  const [editedInputs, setEditedInputs] = useState<Record<string, any>>(
+  const [editedInputs, setEditedInputs] = useState<Record<string, unknown>>(
     JSON.parse(JSON.stringify(step.inputs))
   );
 
-  const handleInputChange = (key: string, value: any) => {
+  const handleInputChange = (key: string, value: unknown) => {
     setEditedInputs(prev => ({
       ...prev,
       [key]: value
@@ -35,7 +35,7 @@ export function StepEditor({ step, onSave, onCancel }: StepEditorProps) {
     onSave(editedInputs);
   };
 
-  const renderInputField = (key: string, value: any) => {
+  const renderInputField = (key: string, value: unknown) => {
     const type = typeof value;
 
     if (type === 'boolean') {

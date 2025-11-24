@@ -25,8 +25,8 @@ interface GenerationDialogProps {
   onDownloadAll?: () => Promise<void>;
   onViewHistory: () => void;
   onRetry?: () => void;
-  onboardingProgress?: any;
-  updateOnboardingProgress?: (updates: any) => void;
+  onboardingProgress?: Record<string, unknown>;
+  updateOnboardingProgress?: (updates: Record<string, unknown>) => void;
 }
 
 /**

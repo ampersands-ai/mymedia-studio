@@ -133,7 +133,7 @@ export function TemplateSEOHead({ template }: TemplateSEOHeadProps) {
       const faqSchema = {
         "@context": "https://schema.org",
         "@type": "FAQPage",
-        mainEntity: template.faqs.map((faq: any) => ({
+        mainEntity: template.faqs.map((faq: { question: string; answer: string }) => ({
           "@type": "Question",
           name: faq.question,
           acceptedAnswer: {

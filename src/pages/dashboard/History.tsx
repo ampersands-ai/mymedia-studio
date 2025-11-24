@@ -162,7 +162,7 @@ interface Generation {
   is_batch_output?: boolean;
   workflow_execution_id?: string | null;
   is_video_job?: boolean;
-  video_job_data?: any;
+  video_job_data?: Record<string, unknown>;
   source_table?: 'generation' | 'video_job' | 'storyboard';
   video_job_id?: string | null;
   storyboard_id?: string | null;

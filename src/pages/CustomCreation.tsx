@@ -250,8 +250,8 @@ const CustomCreation = () => {
         logger.error('Generation was already failed');
         
         try {
-          const pr: any = currentGen.provider_response || {};
-          const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || (pr?.error && pr?.error?.message);
+          const pr: Record<string, unknown> = (currentGen.provider_response as Record<string, unknown>) || {};
+          const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || ((pr?.error as Record<string, unknown>)?.message);
           const msg = detailed ? String(detailed) : `Generation ${currentGen.status}`;
           
           // Store error in state for persistent display
@@ -405,8 +405,8 @@ const CustomCreation = () => {
                     .select('provider_response, status')
                     .eq('id', payload.new.id)
                     .single();
-                  const pr: any = gen?.provider_response || {};
-                  const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || (pr?.error && pr?.error?.message);
+                  const pr: Record<string, unknown> = (gen?.provider_response as Record<string, unknown>) || {};
+                  const detailed = pr?.error || pr?.message || pr?.error_message || pr?.detail || ((pr?.error as Record<string, unknown>)?.message);
                   const msg = detailed ? String(detailed) : `Generation ${newStatus}`;
 
                   // Store error in state for persistent display

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { logger } from './logger';
 
 describe('Logger', () => {
-  let consoleSpy: any;
+  let consoleSpy: { log: ReturnType<typeof vi.spyOn>; warn: ReturnType<typeof vi.spyOn>; error: ReturnType<typeof vi.spyOn> };
   let originalEnv: string;
 
   beforeEach(() => {

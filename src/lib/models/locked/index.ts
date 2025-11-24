@@ -194,7 +194,7 @@ export interface ModelModule {
   validate: (inputs: Record<string, unknown>) => ValidationResult;
   preparePayload: (inputs: Record<string, unknown>) => Record<string, unknown> | unknown[];
   calculateCost: (inputs: Record<string, unknown>) => number;
-  execute: (params: any) => Promise<string>;
+  execute: (params: Record<string, unknown>) => Promise<string>;
 }
 
 /**

@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
+import { API_ENDPOINTS } from "@/lib/config/api-endpoints";
 
 export const MODEL_CONFIG = { modelId: "bytedance:2@2", recordId: "3ac57af3-f7f0-4205-b1a4-3c7c3c1c7dad", modelName: "Seedance V1.0 Pro Fast", provider: "runware", contentType: "image_to_video",
-  use_api_key: "RUNWARE_API_KEY_IMAGE_TO_VIDEO", baseCreditCost: 1.5, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 1, defaultOutputs: 1, 
+  use_api_key: "RUNWARE_API_KEY_IMAGE_TO_VIDEO", baseCreditCost: 1.5, estimatedTimeSeconds: 30, costMultipliers: {}, apiEndpoint: API_ENDPOINTS.RUNWARE.fullUrl, payloadStructure: "flat", maxImages: 1, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/seedream.png",

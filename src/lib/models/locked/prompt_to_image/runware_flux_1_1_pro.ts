@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
+import { API_ENDPOINTS } from "@/lib/config/api-endpoints";
 
 export const MODEL_CONFIG = { modelId: "runware:flux-1.1-pro", recordId: "e9c7a5f3-8d4b-6f2c-9a1e-5d8b3c7f4a6e", modelName: "runware flux 1.1 pro", provider: "runware", contentType: "prompt_to_image",
-  use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE", baseCreditCost: 0.25, estimatedTimeSeconds: 18, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
+  use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE", baseCreditCost: 0.25, estimatedTimeSeconds: 18, costMultipliers: {}, apiEndpoint: API_ENDPOINTS.RUNWARE.fullUrl, payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/plum.png",

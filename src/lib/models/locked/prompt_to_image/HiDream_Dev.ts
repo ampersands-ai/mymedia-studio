@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
+import { API_ENDPOINTS } from "@/lib/config/api-endpoints";
 
 export const MODEL_CONFIG = { modelId: "runware:97@2", recordId: "79ce627d-f90c-47b2-ae3f-9437d93f4529", modelName: "HiDream Dev", provider: "runware", contentType: "prompt_to_image",
-  use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE", baseCreditCost: 0.5, estimatedTimeSeconds: 15, costMultipliers: {}, apiEndpoint: "https://api.runware.ai/v1", payloadStructure: "direct", maxImages: 0, defaultOutputs: 1, 
+  use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE", baseCreditCost: 0.5, estimatedTimeSeconds: 15, costMultipliers: {}, apiEndpoint: API_ENDPOINTS.RUNWARE.fullUrl, payloadStructure: "direct", maxImages: 0, defaultOutputs: 1, 
   // UI metadata
   isActive: true,
   logoUrl: "/logos/hidream.png",

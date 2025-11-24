@@ -11,9 +11,11 @@ import { Share2, Clock, Eye, Calendar, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import DOMPurify from "dompurify";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
+  const { execute } = useErrorHandler();
   const [post, setPost] = useState<BlogPostType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -34,23 +36,33 @@ export default function BlogPost() {
 
   const fetchPost = async () => {
     try {
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('slug', slug)
-        .eq('status', 'published')
-        .single();
+      await execute(
+        async () => {
+          const { data, error } = await supabase
+            .from('blog_posts')
+            .select('*')
+            .eq('slug', slug)
+            .eq('status', 'published')
+            .single();
 
-      if (error) throw error;
-      
-      setPost(data as BlogPostType);
+          if (error) throw error;
 
-      // Increment view count
-      if (data) {
-        await supabase.rpc('increment_blog_view_count', { post_id: data.id });
-      }
-    } catch (error) {
-      logger.error('Error fetching blog post', error);
+          setPost(data as BlogPostType);
+
+          // Increment view count
+          if (data) {
+            await supabase.rpc('increment_blog_view_count', { post_id: data.id });
+          }
+        },
+        {
+          showSuccessToast: false,
+          context: {
+            component: 'BlogPost',
+            operation: 'fetchPost',
+            slug,
+          }
+        }
+      );
     } finally {
       setIsLoading(false);
     }
@@ -59,23 +71,31 @@ export default function BlogPost() {
   const handleShare = async () => {
     if (!post) return;
 
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: post.title,
-          text: post.excerpt || '',
-          url: window.location.href,
-        });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast.success('Link copied to clipboard!');
-      }
+    await execute(
+      async () => {
+        if (navigator.share) {
+          await navigator.share({
+            title: post.title,
+            text: post.excerpt || '',
+            url: window.location.href,
+          });
+        } else {
+          await navigator.clipboard.writeText(window.location.href);
+          toast.success('Link copied to clipboard!');
+        }
 
-      // Increment share count
-      await supabase.rpc('increment_blog_share_count', { post_id: post.id });
-    } catch (error) {
-      logger.error('Error sharing', error);
-    }
+        // Increment share count
+        await supabase.rpc('increment_blog_share_count', { post_id: post.id });
+      },
+      {
+        showSuccessToast: false, // We show custom toast for clipboard
+        context: {
+          component: 'BlogPost',
+          operation: 'handleShare',
+          postId: post.id,
+        }
+      }
+    );
   };
 
   if (isLoading) {

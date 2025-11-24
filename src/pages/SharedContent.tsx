@@ -6,10 +6,12 @@ import { Card } from '@/components/ui/card';
 import { Download, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 export default function SharedContent() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
+  const { execute } = useErrorHandler();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [contentUrl, setContentUrl] = useState<string | null>(null);
@@ -28,26 +30,33 @@ export default function SharedContent() {
 
   const fetchSharedContent = async () => {
     try {
-      const { data, error: fetchError } = await supabase.functions.invoke('get-shared-content', {
-        body: { token }
-      });
+      await execute(
+        async () => {
+          const { data, error: fetchError } = await supabase.functions.invoke('get-shared-content', {
+            body: { token }
+          });
 
-      if (fetchError) throw fetchError;
+          if (fetchError) throw fetchError;
 
-      if (data.error) {
-        setError(data.error);
-      } else {
-        setContentUrl(data.signed_url);
-        setContentType(data.content_type);
-      }
-    } catch (err) {
-      logger.error('Error fetching shared content', err instanceof Error ? err : new Error(String(err)), {
-        component: 'SharedContent',
-        operation: 'fetchSharedContent',
-        token,
-        errorMessage: err?.message
-      });
-      setError(err.message || 'Failed to load shared content');
+          if (data.error) {
+            setError(data.error);
+          } else {
+            setContentUrl(data.signed_url);
+            setContentType(data.content_type);
+          }
+        },
+        {
+          showSuccessToast: false,
+          context: {
+            component: 'SharedContent',
+            operation: 'fetchSharedContent',
+            token,
+          },
+          onError: (error) => {
+            setError(error.message || 'Failed to load shared content');
+          }
+        }
+      );
     } finally {
       setLoading(false);
     }
@@ -55,23 +64,32 @@ export default function SharedContent() {
 
   const handleDownload = async () => {
     if (!contentUrl) return;
-    
+
     toast.loading('Preparing download...', { id: 'download' });
-    try {
-      const response = await fetch(contentUrl);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = `shared-${contentType}-${Date.now()}.${contentType === 'video' ? 'mp4' : contentType === 'audio' ? 'mp3' : 'png'}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(blobUrl);
-      document.body.removeChild(a);
-      toast.success('Download started!', { id: 'download' });
-    } catch {
-      toast.error('Download failed', { id: 'download' });
-    }
+    await execute(
+      async () => {
+        const response = await fetch(contentUrl);
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `shared-${contentType}-${Date.now()}.${contentType === 'video' ? 'mp4' : contentType === 'audio' ? 'mp3' : 'png'}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(blobUrl);
+        document.body.removeChild(a);
+      },
+      {
+        successMessage: 'Download started!',
+        errorMessage: 'Download failed',
+        toastId: 'download',
+        context: {
+          component: 'SharedContent',
+          operation: 'handleDownload',
+          contentType,
+        }
+      }
+    );
   };
 
   if (loading) {

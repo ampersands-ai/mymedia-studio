@@ -32,7 +32,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import type { ExecutionFlow } from "@/lib/admin/enhancedExecutionTracker";
 
 interface TestRunRecord {

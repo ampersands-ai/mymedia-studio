@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { TestExecutionLogger } from "../_shared/test-execution-logger.ts";
 import { callProvider } from "./providers/index.ts";
 import { calculateTokenCost } from "./utils/token-calculator.ts";
 import { uploadToStorage } from "./utils/storage.ts";
@@ -209,6 +210,8 @@ Deno.serve(async (req) => {
 
     // Verify admin status for test_mode
     let isTestMode = false;
+    let testLogger: TestExecutionLogger | null = null;
+
     if (test_mode && isServiceRole) {
       const { data: adminRole } = await supabase
         .from('user_roles')
@@ -216,10 +219,17 @@ Deno.serve(async (req) => {
         .eq('user_id', authenticatedUser.id)
         .eq('role', 'admin')
         .single();
-      
+
       if (adminRole) {
         isTestMode = true;
         logger.info('TEST_MODE: Non-billable test run for admin user', { userId: authenticatedUser.id });
+
+        // Initialize test execution logger for comprehensive tracking
+        testLogger = new TestExecutionLogger(
+          supabase,
+          test_run_id || null,
+          true // isTestMode
+        );
       } else {
         logger.warn('test_mode requested but user is not admin - ignoring flag', { userId: authenticatedUser.id });
       }
@@ -693,7 +703,7 @@ Deno.serve(async (req) => {
         ...parameters,
         _webhook_token: webhookToken // Private field for webhook verification (Layer 2)
       };
-      
+
       const { data: gen, error: genError } = await supabase
         .from('generations')
         .insert({
@@ -718,11 +728,35 @@ Deno.serve(async (req) => {
 
       if (genError || !gen) {
         logger.error('Generation creation failed', genError || undefined);
+        if (testLogger) {
+          await testLogger.logError(
+            genError || new Error('Failed to create generation record'),
+            'createGenerationRecord',
+            { model_id: model.id, user_id: user.id }
+          );
+        }
         throw new Error('Failed to create generation record');
       }
 
       generation = gen;
       generationCreated = true;
+
+      // Log to test execution system if in test mode
+      if (testLogger && generation) {
+        await testLogger.logEdgeFunctionStart({
+          generationId: generation.id,
+          modelId: model.id,
+          provider: model.provider,
+          userId: user.id,
+        });
+
+        await testLogger.logDatabaseUpdate(
+          'generations',
+          'insert',
+          generation.id,
+          { status: 'pending', tokens_used: tokenCost }
+        );
+      }
 
       // Ensure generation is non-null before proceeding
       if (!generation) {
@@ -963,9 +997,16 @@ Deno.serve(async (req) => {
             has_prompt_in_params: hasPromptField
           }
         });
-        
+
         // Get webhookToken from generation settings for Kie.ai provider
         const webhookToken = (createdGeneration.settings as any)?._webhook_token;
+
+        // Log provider API call if in test mode
+        const apiCallStartTime = Date.now();
+        if (testLogger) {
+          await testLogger.logProviderRouting(model.provider, model.api_endpoint);
+          await testLogger.logProviderApiCall(model.provider, providerRequest, apiCallStartTime);
+        }
 
         const providerResponse: any = await Promise.race([
           callProvider(model.provider, providerRequest, webhookToken),
@@ -973,6 +1014,23 @@ Deno.serve(async (req) => {
         ]);
 
         if (timeoutId) clearTimeout(timeoutId);
+
+        const apiCallDuration = Date.now() - apiCallStartTime;
+
+        // Log provider response if in test mode
+        if (testLogger) {
+          await testLogger.logProviderApiResponse(
+            model.provider,
+            providerResponse,
+            apiCallDuration,
+            true
+          );
+          await testLogger.logPerformance(
+            'providerApiCall',
+            apiCallDuration,
+            { provider: model.provider, model_id: model.id }
+          );
+        }
 
         logger.info('Provider response received', {
           userId: user.id,
@@ -1025,10 +1083,11 @@ Deno.serve(async (req) => {
 
         // Phase 3: Process storage upload asynchronously (fire-and-forget with improved error handling)
         const generationId = createdGeneration.id;
-        
+
         // Upload and update in background (don't await, but with proper error handling)
         (async () => {
           try {
+            const uploadStartTime = Date.now();
             let storagePath: string;
             let fileSize = providerResponse.file_size;
 
@@ -1066,10 +1125,17 @@ Deno.serve(async (req) => {
               );
             }
 
+            const uploadDuration = Date.now() - uploadStartTime;
+
             logger.info('Uploaded to storage', {
               userId: user.id,
               metadata: { storage_path: storagePath }
             });
+
+            // Log storage upload if in test mode
+            if (testLogger) {
+              await testLogger.logStorageUpload(storagePath, fileSize, uploadDuration);
+            }
 
             const { data: { publicUrl } } = supabase.storage
               .from('generated-content')
@@ -1086,6 +1152,16 @@ Deno.serve(async (req) => {
                 provider_response: providerResponse.metadata
               })
               .eq('id', generationId);
+
+            // Log database update if in test mode
+            if (testLogger) {
+              await testLogger.logDatabaseUpdate(
+                'generations',
+                'update',
+                generationId,
+                { status: 'completed', output_url: publicUrl }
+              );
+            }
 
             await supabase.from('audit_logs').insert({
               user_id: user.id,

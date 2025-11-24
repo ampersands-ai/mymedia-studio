@@ -179,10 +179,11 @@ export class HttpClient {
           );
 
         } catch (error) {
-          lastError = error;
+          lastError = error as Error;
+          const err = error as Error;
 
           // Handle timeout
-          if (error.name === 'AbortError') {
+          if (err.name === 'AbortError') {
             const timeoutError = new Error(`Request timeout after ${timeout}ms`);
             this.logger.error('HTTP request timeout', timeoutError, {
               metadata: { url: this.sanitizeUrl(url), timeout, requestId }
@@ -197,7 +198,7 @@ export class HttpClient {
               metadata: { 
                 url: this.sanitizeUrl(url),
                 attempt: attempt + 1,
-                error: error.message,
+                error: err.message || String(error),
                 delay,
                 requestId
               }
@@ -252,10 +253,11 @@ export class HttpClient {
 
     } catch (error) {
       const duration = Date.now() - startTime;
+      const err = error as Error;
       
       // Check if circuit breaker error
-      if (error.message?.includes('Circuit breaker is open')) {
-        this.logger.error('Circuit breaker open - request blocked', error, {
+      if (err.message?.includes('Circuit breaker is open')) {
+        this.logger.error('Circuit breaker open - request blocked', err, {
           duration,
           metadata: { 
             url: this.sanitizeUrl(url),
@@ -264,11 +266,11 @@ export class HttpClient {
           }
         });
       } else {
-        this.logger.error('HTTP request failed', error, {
+        this.logger.error('HTTP request failed', err, {
           duration,
           metadata: { 
             url: this.sanitizeUrl(url),
-            error: error.message,
+            error: err.message || String(error),
             requestId,
             ...options.context 
           }
@@ -388,7 +390,7 @@ export class HttpClient {
 
       return response;
     } catch (error) {
-      this.logger.error('HEAD request failed', error, {
+      this.logger.error('HEAD request failed', error as Error, {
         duration: Date.now() - startTime,
         metadata: { url: this.sanitizeUrl(url), requestId }
       });

@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
           id: generation.id,
           provider,
           status: 'error',
-          error: err.message
+          error: (err as Error).message || String(err)
         });
       }
     }
@@ -164,11 +164,12 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    webhookLogger.error('Auto-recovery failed', error, {});
+    webhookLogger.error('Auto-recovery failed', error as Error, {});
+    const err = error as Error;
     return new Response(
       JSON.stringify({ 
         error: 'Auto-recovery failed',
-        message: error.message 
+        message: err.message || String(error)
       }),
       { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );

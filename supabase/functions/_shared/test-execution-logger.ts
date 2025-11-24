@@ -312,19 +312,23 @@ export class TestExecutionLogger {
       "_webhook_token",
     ];
 
-    const masked = Array.isArray(data) ? [...data] : { ...data as Record<string, unknown> };
+    const masked = Array.isArray(data) 
+      ? ([...data] as unknown as Record<string, unknown>)
+      : { ...data as Record<string, unknown> };
 
     for (const key in masked) {
       const lowerKey = key.toLowerCase();
+      const value = masked[key];
+      
       if (sensitiveKeys.some((sk) => lowerKey.includes(sk))) {
-        const value = String(masked[key]);
-        if (value.length > 8) {
-          masked[key] = `***${value.slice(-4)}`;
+        const strValue = String(value);
+        if (strValue.length > 8) {
+          masked[key] = `***${strValue.slice(-4)}`;
         } else {
           masked[key] = "***";
         }
-      } else if (typeof masked[key] === "object" && masked[key] !== null) {
-        masked[key] = this.maskSensitiveData(masked[key]);
+      } else if (typeof value === "object" && value !== null) {
+        masked[key] = this.maskSensitiveData(value);
       }
     }
 

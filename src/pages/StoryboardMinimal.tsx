@@ -7,6 +7,7 @@ import { GlassTextarea } from '@/components/glass/GlassTextarea';
 import { GlassSelect } from '@/components/glass/GlassSelect';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { useAzureVoices } from '@/hooks/useAzureVoices';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { toast } from 'sonner';
 import {
   Wand2,
@@ -22,6 +23,7 @@ import { OptimizedGenerationPreview } from '@/components/generation/OptimizedGen
 import { supabase } from '@/integrations/supabase/client';
 
 export default function StoryboardMinimal() {
+  const { execute } = useErrorHandler();
   const {
     storyboard,
     scenes,
@@ -65,57 +67,71 @@ export default function StoryboardMinimal() {
       return;
     }
 
-    try {
-      await generateStoryboard({
-        topic: topic.trim(),
-        duration,
-        style,
-        tone,
-        voiceID: voiceId,
-        voiceName,
-        mediaType: 'image',
-      });
-      toast.success('Storyboard generated!');
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('Failed to generate storyboard', error as Error, { 
-        component: 'StoryboardMinimal',
-        operation: 'handleGenerateStoryboard',
-        topic,
-        duration,
-        style,
-        tone
-      });
-    }
+    await execute(
+      async () => {
+        await generateStoryboard({
+          topic: topic.trim(),
+          duration,
+          style,
+          tone,
+          voiceID: voiceId,
+          voiceName,
+          mediaType: 'image',
+        });
+      },
+      {
+        successMessage: 'Storyboard generated!',
+        errorMessage: 'Failed to generate storyboard',
+        context: {
+          component: 'StoryboardMinimal',
+          operation: 'handleGenerateStoryboard',
+          topic,
+          duration,
+          style,
+          tone
+        }
+      }
+    );
   };
 
   const handleRenderVideo = async () => {
-    try {
-      await renderVideo();
-      toast.success('Video rendering started!');
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('Failed to render video', error as Error, { 
-        component: 'StoryboardMinimal',
-        operation: 'handleRenderVideo',
-        storyboardId: storyboard?.id
-      });
-    }
+    await execute(
+      async () => {
+        await renderVideo();
+      },
+      {
+        successMessage: 'Video rendering started!',
+        errorMessage: 'Failed to render video',
+        context: {
+          component: 'StoryboardMinimal',
+          operation: 'handleRenderVideo',
+          storyboardId: storyboard?.id
+        }
+      }
+    );
   };
 
   const handleReset = async () => {
     if (storyboard?.id) {
-      try {
-        await supabase.functions.invoke('delete-storyboard', {
-          body: { storyboardId: storyboard.id }
-        });
-        clearStoryboard();
-        setTopic('');
-        setDuration(60);
-        toast.success('Storyboard reset!');
-      } catch {
-        toast.error('Failed to reset storyboard');
-      }
+      await execute(
+        async () => {
+          await supabase.functions.invoke('delete-storyboard', {
+            body: { storyboardId: storyboard.id }
+          });
+          clearStoryboard();
+          setTopic('');
+          setDuration(60);
+        },
+        {
+          successMessage: 'Storyboard reset!',
+          errorMessage: 'Failed to reset storyboard',
+          context: {
+            component: 'StoryboardMinimal',
+            operation: 'handleReset',
+            storyboardId: storyboard.id
+          }
+        }
+      );
     }
   };
 

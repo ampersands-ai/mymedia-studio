@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { logger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { Badge } from "@/components/ui/badge";
 import { Carousel, CarouselViewport, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useAllTemplates } from "@/hooks/useTemplates";
@@ -37,6 +38,7 @@ interface WorkflowTemplate {
 
 const Templates = () => {
   const { user } = useAuth();
+  const { execute } = useErrorHandler();
   const { data: allTemplates, isLoading } = useAllTemplates();
   const navigate = useNavigate();
   
@@ -150,37 +152,42 @@ const Templates = () => {
       };
       
       // Process all templates in parallel
-      try {
-        const urlPromises = allTemplates
-          .filter(template => template.before_image_url || template.after_image_url || template.thumbnail_url)
-          .map(async (template) => {
-            const [beforeUrl, afterUrl, thumbnailUrl] = await Promise.all([
-              getSignedUrl(template.before_image_url || null),
-              getSignedUrl(template.after_image_url || null),
-              getSignedUrl(template.thumbnail_url || null)
-            ]);
+      await execute(
+        async () => {
+          const urlPromises = allTemplates
+            .filter(template => template.before_image_url || template.after_image_url || template.thumbnail_url)
+            .map(async (template) => {
+              const [beforeUrl, afterUrl, thumbnailUrl] = await Promise.all([
+                getSignedUrl(template.before_image_url || null),
+                getSignedUrl(template.after_image_url || null),
+                getSignedUrl(template.thumbnail_url || null)
+              ]);
 
-            return {
-              id: template.id,
-              urls: { before: beforeUrl, after: afterUrl, thumbnail: thumbnailUrl }
-            };
+              return {
+                id: template.id,
+                urls: { before: beforeUrl, after: afterUrl, thumbnail: thumbnailUrl }
+              };
+            });
+
+          const results = await Promise.all(urlPromises);
+
+          const urlsMap: Record<string, { before: string | null, after: string | null, thumbnail: string | null }> = {};
+          results.forEach(result => {
+            urlsMap[result.id] = result.urls as { before: string | null, after: string | null, thumbnail: string | null };
           });
 
-        const results = await Promise.all(urlPromises);
-
-        const urlsMap: Record<string, { before: string | null, after: string | null, thumbnail: string | null }> = {};
-        results.forEach(result => {
-          urlsMap[result.id] = result.urls as { before: string | null, after: string | null, thumbnail: string | null };
-        });
-
-        setSignedUrls(urlsMap);
-      } catch (err) {
-        logger.error('Failed to generate signed URLs for templates', err as Error, {
-          component: 'Templates',
-          operation: 'generateSignedUrls'
-        });
-        // Continue with empty URLs map - templates will show without images
-      }
+          setSignedUrls(urlsMap);
+        },
+        {
+          showSuccessToast: false,
+          showErrorToast: false,
+          context: {
+            component: 'Templates',
+            operation: 'generateSignedUrls',
+            templateCount: allTemplates.length
+          }
+        }
+      );
     };
     
     generateSignedUrls();

@@ -2,6 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { GENERATION_STATUS, WEBHOOK_CALLBACK_STATES } from "../_shared/constants.ts";
 
 // Security validators
 import { validateUrlToken } from "./security/url-token-validator.ts";
@@ -160,8 +161,8 @@ Deno.serve(async (req) => {
                              '超过', '失败', '错误', '錯誤', '失敗', 'erreur', 'fehler'];
     const hasFailurePattern = failurePatterns.some(pattern => msgStr.includes(pattern));
     
-    const isSuccess = state === 'success' || httpCode === 200 || msgStr.includes('success');
-    const isFailed = state === 'failed' || 
+    const isSuccess = state === WEBHOOK_CALLBACK_STATES.SUCCESS || httpCode === 200 || msgStr.includes('success');
+    const isFailed = state === WEBHOOK_CALLBACK_STATES.FAILED || 
                      (httpCode !== null && httpCode >= 400) || 
                      hasFailurePattern;
 
@@ -180,7 +181,7 @@ Deno.serve(async (req) => {
       await supabase
         .from('generations')
         .update({
-          status: 'failed',
+          status: GENERATION_STATUS.FAILED,
           provider_response: {
             error: sanitizedError,
             error_type: 'provider_failure',
@@ -195,7 +196,7 @@ Deno.serve(async (req) => {
       await supabase.functions.invoke('settle-generation-credits', {
         body: {
           generationId: generation.id,
-          status: 'failed'
+          status: GENERATION_STATUS.FAILED
         }
       });
 
@@ -212,7 +213,7 @@ Deno.serve(async (req) => {
         kie_credits_remaining: remainedCredits,
         our_tokens_charged: generation.tokens_used,
         model_id: generation.model_id || 'unknown',
-        task_status: 'failed',
+        task_status: GENERATION_STATUS.FAILED,
         processing_time_seconds: 0
       });
 
@@ -228,7 +229,7 @@ Deno.serve(async (req) => {
         logger.info('Image has complete results');
       } else if (callbackType && callbackType.toLowerCase() !== 'complete') {
         logger.info('Partial image callback', { metadata: { callbackType } });
-        await supabase.from('generations').update({ status: 'processing', provider_response: payload }).eq('id', generation.id);
+        await supabase.from('generations').update({ status: GENERATION_STATUS.PROCESSING, provider_response: payload }).eq('id', generation.id);
         return new Response(
           JSON.stringify({ success: true, message: `Partial webhook acknowledged` }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -239,7 +240,7 @@ Deno.serve(async (req) => {
         logger.info('Audio has complete results', { metadata: { urlCount: items.length } });
       } else if (callbackType && callbackType.toLowerCase() !== 'complete') {
         logger.info('Partial audio callback', { metadata: { callbackType } });
-        await supabase.from('generations').update({ status: 'processing', provider_response: payload }).eq('id', generation.id);
+        await supabase.from('generations').update({ status: GENERATION_STATUS.PROCESSING, provider_response: payload }).eq('id', generation.id);
         return new Response(
           JSON.stringify({ success: true, message: `Partial webhook acknowledged` }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -250,7 +251,7 @@ Deno.serve(async (req) => {
         logger.info('Video has complete results');
       } else if (callbackType && callbackType.toLowerCase() !== 'complete') {
         logger.info('Partial video callback', { metadata: { callbackType } });
-        await supabase.from('generations').update({ status: 'processing', provider_response: payload }).eq('id', generation.id);
+        await supabase.from('generations').update({ status: GENERATION_STATUS.PROCESSING, provider_response: payload }).eq('id', generation.id);
         return new Response(
           JSON.stringify({ success: true, message: `Partial webhook acknowledged` }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -311,7 +312,7 @@ Deno.serve(async (req) => {
         const downloadResult = await downloadContent(resultUrls[0]);
         if (!downloadResult.success || !downloadResult.data) {
           await supabase.from('generations').update({
-            status: 'failed',
+            status: GENERATION_STATUS.FAILED,
             provider_response: { error: 'Failed to download from provider', timestamp: new Date().toISOString() }
           }).eq('id', generation.id);
           
@@ -319,7 +320,7 @@ Deno.serve(async (req) => {
           await supabase.functions.invoke('settle-generation-credits', {
             body: {
               generationId: generation.id,
-              status: 'failed'
+              status: GENERATION_STATUS.FAILED
             }
           });
           
@@ -341,7 +342,7 @@ Deno.serve(async (req) => {
         
         if (!uploadResult.success) {
           await supabase.from('generations').update({
-            status: 'failed',
+            status: GENERATION_STATUS.FAILED,
             provider_response: { error: 'Storage upload failed', timestamp: new Date().toISOString() }
           }).eq('id', generation.id);
           
@@ -349,7 +350,7 @@ Deno.serve(async (req) => {
           await supabase.functions.invoke('settle-generation-credits', {
             body: {
               generationId: generation.id,
-              status: 'failed'
+              status: GENERATION_STATUS.FAILED
             }
           });
           
@@ -375,7 +376,7 @@ Deno.serve(async (req) => {
         kie_credits_remaining: remainedCredits,
         our_tokens_charged: generation.tokens_used,
         model_id: generation.model_id || 'unknown',
-        task_status: 'success',
+        task_status: WEBHOOK_CALLBACK_STATES.SUCCESS,
         processing_time_seconds: costTime
       });
 

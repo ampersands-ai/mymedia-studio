@@ -676,7 +676,21 @@ Deno.serve(async (req) => {
       const webhookToken = crypto.randomUUID();
       logger.debug('Generated webhook verification token', { userId: user.id });
 
-      // Step 2: Validate parameters before creating generation record
+      // Step 2: Detect base64 images in parameters (prevent DoS via oversized JSONB)
+      const paramString = JSON.stringify(parameters);
+      if (paramString.includes('data:image/') || paramString.includes(';base64,')) {
+        logger.error('Base64 image detected in parameters', undefined, {
+          userId: user.id,
+          metadata: { paramSize: paramString.length }
+        });
+        
+        throw new Error(
+          'Base64-encoded images are not allowed in parameters. ' +
+          'Please upload images to storage first and pass the URL instead.'
+        );
+      }
+
+      // Step 3: Validate parameters before creating generation record
       const settingsToValidate = {
         ...parameters,
         prompt: finalPrompt,
@@ -692,7 +706,7 @@ Deno.serve(async (req) => {
         throw new Error(`Invalid generation settings: ${validationResult.error}`);
       }
 
-      // Step 3: Create generation record with validated settings
+      // Step 4: Create generation record with validated settings
       const generationSettings = validationResult.data as Record<string, any>;
 
       const { data: gen, error: genError } = await supabase

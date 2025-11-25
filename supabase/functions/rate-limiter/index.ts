@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { getErrorMessage } from "../_shared/error-utils.ts";
 
 
 
@@ -27,7 +28,7 @@ function logError(context: string, error: unknown, metadata?: Record<string, unk
 // Inline helper: create standardized error response
 function createErrorResponse(error: unknown, headers: HeadersInit, context: string, metadata?: Record<string, unknown>, logger?: EdgeLogger): Response {
   logError(context, error, metadata, logger);
-  const message = error?.message || 'An error occurred';
+  const message = getErrorMessage(error);
   const status = message.includes('Unauthorized') || message.includes('authorization') ? 401
     : message.includes('Forbidden') ? 403
     : message.includes('not found') ? 404
@@ -258,9 +259,9 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     logger.error('Rate limiter error', error as Error);
-    return createErrorResponse(error, corsHeaders, 'rate-limiter', {
+    return createErrorResponse(error, responseHeaders, 'rate-limiter', {
       identifier: body?.identifier,
       action: body?.action,
-    });
+    }, logger);
   }
 });

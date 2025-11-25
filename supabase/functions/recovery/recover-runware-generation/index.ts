@@ -8,6 +8,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { webhookLogger } from "../../_shared/logger.ts";
 import { GENERATION_STATUS } from "../../_shared/constants.ts";
+import { getErrorMessage } from "../../_shared/error-utils.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -118,7 +119,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: 'Recovery failed',
-        message: error.message 
+        message: getErrorMessage(error)
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

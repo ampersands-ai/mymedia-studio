@@ -9,6 +9,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
+import { toError, getErrorMessage } from "../_shared/error-utils.ts";
 
 
 
@@ -177,7 +178,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    logger.error('Processing failed', error);
+    logger.error('Processing failed', toError(error));
     
     // Release credits on failure
     if (generation_id) {
@@ -189,14 +190,14 @@ serve(async (req) => {
           }
         });
       } catch (settlementError) {
-        logger.error('Credit settlement failed', settlementError as Error);
+        logger.error('Credit settlement failed', toError(settlementError));
       }
     }
     
     return new Response(
       JSON.stringify({ 
         error: 'Processing failed',
-        message: error.message 
+        message: getErrorMessage(error)
       }),
       { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );

@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
+import { toError, getErrorMessage } from "../_shared/error-utils.ts";
 
 
 
@@ -167,11 +168,11 @@ Deno.serve(async (req) => {
         await new Promise(resolve => setTimeout(resolve, 500));
 
       } catch (error) {
-        logger.error('Processing error', error, { metadata: { generationId: gen.id } });
+        logger.error('Processing error', toError(error), { metadata: { generationId: gen.id } });
         results.failed++;
         results.errors.push({
           generation_id: gen.id,
-          error: error.message
+          error: getErrorMessage(error)
         });
       }
     }
@@ -195,9 +196,9 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    logger.error('Retry pending Midjourney error', error);
+    logger.error('Retry pending Midjourney error', toError(error));
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: getErrorMessage(error) }),
       { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }

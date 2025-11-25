@@ -6,6 +6,7 @@ import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 
 
 serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('search-pixabay-audio', requestId);
   

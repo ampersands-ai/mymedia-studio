@@ -9,6 +9,12 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { webhookLogger } from "../../_shared/logger.ts";
 import { GENERATION_STATUS } from "../../_shared/constants.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../../_shared/cors.ts";
+import { getErrorMessage } from "../../_shared/error-utils.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
@@ -116,7 +122,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: 'Recovery failed',
-        message: error.message 
+        message: getErrorMessage(error)
       }),
       { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );

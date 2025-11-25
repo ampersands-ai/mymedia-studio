@@ -8,6 +8,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { webhookLogger } from "../../_shared/logger.ts";
 import { API_ENDPOINTS } from "../../_shared/api-endpoints.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../../_shared/cors.ts";
+import { getErrorMessage } from "../../_shared/error-utils.ts";
 
 // API key mapping logic for KIE AI
 function getKieApiKey(modelId: string, recordId: string): string {
@@ -188,7 +189,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: 'Recovery failed',
-        message: error.message 
+        message: getErrorMessage(error)
       }),
       { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );

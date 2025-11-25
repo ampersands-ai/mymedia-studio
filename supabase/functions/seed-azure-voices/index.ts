@@ -6,6 +6,8 @@ import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 
 serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+  
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);
   }

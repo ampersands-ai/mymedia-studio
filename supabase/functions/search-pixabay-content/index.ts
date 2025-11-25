@@ -2,10 +2,12 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
+import { getErrorMessage } from "../_shared/error-utils.ts";
 
 
 
 serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('search-pixabay-content', requestId);
   const startTime = Date.now();
@@ -111,10 +113,11 @@ serve(async (req) => {
     );
   } catch (error) {
     logger.error('Error in search-pixabay-content', error as Error);
+    const errorMessage = getErrorMessage(error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { 
-        status: error.message === 'Unauthorized' ? 401 : 500,
+        status: errorMessage === 'Unauthorized' ? 401 : 500,
         headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
       }
     );

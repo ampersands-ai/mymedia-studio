@@ -41,13 +41,14 @@ Deno.serve(async (req) => {
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    logger.error('Error checking video status', error);
+    const err = error as Error;
+    logger.error('Error checking video status', err);
     
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: err.message || 'Internal server error' }),
       { 
         status: 400,
-        headers: { ...responseHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' }
       }
     );
   }

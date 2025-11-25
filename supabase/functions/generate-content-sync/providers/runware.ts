@@ -148,7 +148,7 @@ export async function callRunware(
   // Get schema properties (what fields this model actually accepts)
   const params = request.parameters || {};
   const schemaProperties = request.input_schema?.properties || {};
-  const requiredFields = request.input_schema?.required || [];
+  const requiredFields: string[] = request.input_schema?.required || [];
 
   // Handle prompt fields dynamically (prompt, positivePrompt, positive_prompt)
   const promptAliases = ['prompt', 'positivePrompt', 'positive_prompt'];
@@ -160,9 +160,11 @@ export async function callRunware(
     const isPromptRequired = requiredFields.includes(promptField);
     
     // Get effective prompt value
+    const paramValue = params[promptField];
+    const paramStr = typeof paramValue === 'string' ? paramValue : String(paramValue || '');
     effectivePrompt = (
       request.prompt?.trim() || 
-      params[promptField]?.trim() || 
+      paramStr.trim() || 
       ''
     );
     

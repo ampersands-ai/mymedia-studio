@@ -213,9 +213,10 @@ Deno.serve(async (req) => {
     }
 
   } catch (error) {
-    logger.error('Error checking video status', error);
+    const err = error as Error;
+    logger.error('Error checking video status', err);
     return new Response(
-      JSON.stringify({ error: error.message || 'Internal server error' }),
+      JSON.stringify({ error: err.message || 'Internal server error' }),
       { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }

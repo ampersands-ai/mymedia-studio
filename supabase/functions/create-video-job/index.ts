@@ -212,13 +212,14 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
     const logger = new EdgeLogger('create-video-job', requestId, supabaseClient, true);
+    const err = error as Error;
     
-    logger.error('Error in create-video-job', error, { metadata: { job_id } });
+    logger.error('Error in create-video-job', err, { metadata: { job_id } });
     
-    const status = error.message === 'Unauthorized' ? 401 : 400;
+    const status = err.message === 'Unauthorized' ? 401 : 400;
     
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: err.message || 'Internal server error' }),
       { 
         status,
         headers: { ...responseHeaders, 'Content-Type': 'application/json' } 

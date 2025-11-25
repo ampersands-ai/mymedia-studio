@@ -185,7 +185,7 @@ Original prompt: "${prompt}"`;
     );
 
   } catch (error) {
-    logger.error('Prompt enhancement failed', error);
+    logger.error('Prompt enhancement failed', error as Error);
     
     const errorMessage = error instanceof Error ? error.message : 'Failed to enhance prompt';
     const status = errorMessage.includes('Insufficient') ? 402 

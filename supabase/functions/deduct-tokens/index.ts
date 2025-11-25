@@ -6,7 +6,8 @@ import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 // Inline helper: create standardized error response
 function createErrorResponse(error: unknown, headers: HeadersInit): Response {
-  const message = error?.message || 'An error occurred';
+  const err = error as Error;
+  const message = err?.message || 'An error occurred';
   const status = message.includes('Unauthorized') || message.includes('authorization') ? 401
     : message.includes('Forbidden') ? 403
     : message.includes('not found') ? 404
@@ -122,6 +123,11 @@ Deno.serve(async (req) => {
         retries--;
         await new Promise(resolve => setTimeout(resolve, 50));
       }
+    }
+
+    // Ensure updatedSubscriptionFinal is defined
+    if (!updatedSubscriptionFinal) {
+      throw new Error('Failed to update subscription');
     }
 
     // Log credit usage for security monitoring

@@ -1,7 +1,14 @@
+-- ⚠️ SECURITY WARNING: This migration contains hardcoded JWT tokens
+-- This has been superseded by migration 20251125_fix_hardcoded_tokens.sql
+-- which uses Supabase Vault for secure token storage.
+-- See: supabase/VAULT_SETUP.md for instructions.
+--
+-- DO NOT USE THIS MIGRATION DIRECTLY IN PRODUCTION!
+
 -- Enable pg_cron extension (should already be enabled)
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
--- Enable pg_net extension (should already be enabled)  
+-- Enable pg_net extension (should already be enabled)
 CREATE EXTENSION IF NOT EXISTS pg_net;
 
 -- Remove any existing cron jobs with same names (cleanup)

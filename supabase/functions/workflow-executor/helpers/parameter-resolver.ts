@@ -22,9 +22,9 @@ export function replaceTemplateVariables(
   template: string,
   context: Record<string, unknown>
 ): string {
-  return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+  return template.replace(/\{\{([^}]+)\}\}/g, (match, path): string => {
     const value = getNestedValue(context, path.trim());
-    return value ?? match;
+    return value !== undefined && value !== null ? String(value) : match;
   });
 }
 
@@ -83,12 +83,14 @@ function coerceValueToSchema(value: unknown, schema: JsonSchema): unknown {
     }
     case 'number': {
       if (value === undefined || value === null) return value;
-      const n = Array.isArray(value) ? parseFloat(value[0]) : parseFloat(value);
+      const strValue = Array.isArray(value) ? String(value[0]) : String(value);
+      const n = parseFloat(strValue);
       return Number.isNaN(n) ? value : n;
     }
     case 'integer': {
       if (value === undefined || value === null) return value;
-      const n = Array.isArray(value) ? parseInt(value[0]) : parseInt(value);
+      const strValue = Array.isArray(value) ? String(value[0]) : String(value);
+      const n = parseInt(strValue, 10);
       return Number.isNaN(n) ? value : n;
     }
     case 'boolean': {

@@ -260,10 +260,11 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
     if (generationId) {
-      webhookLogger.failure(generationId, error.message, { provider: 'midjourney' });
+      webhookLogger.failure(generationId, err.message, { provider: 'midjourney' });
     } else {
-      webhookLogger.error('Webhook processing failed', error, { provider: 'midjourney' });
+      webhookLogger.error('Webhook processing failed', err, { provider: 'midjourney' });
     }
 
     // Track webhook analytics for failure
@@ -277,12 +278,12 @@ Deno.serve(async (req) => {
       event_type: 'generation_complete',
       status: 'failure',
       duration_ms: Date.now() - webhookStartTime,
-      error_code: error.code || 'UNKNOWN_ERROR',
-      metadata: { generation_id: generationId, task_id: taskId, error: error.message }
+      error_code: (err as any).code || 'UNKNOWN_ERROR',
+      metadata: { generation_id: generationId, task_id: taskId, error: err.message }
     }).then(({ error: analyticsError }) => {
       if (analyticsError) webhookLogger.error('Failed to track analytics', analyticsError);
     });
 
-    return createSafeErrorResponse(error, 'midjourney-webhook', corsHeaders);
+    return createSafeErrorResponse(err, 'midjourney-webhook', responseHeaders);
   }
 });

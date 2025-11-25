@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -10,9 +10,11 @@ interface StoreSecretRequest {
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getResponseHeaders(req);
+  
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -81,44 +83,57 @@ Deno.serve(async (req) => {
 
     console.log("Installing vault extension if needed...");
     
-    // Install vault extension (idempotent operation)
-    const { error: extensionError } = await supabase.rpc("exec_sql", {
-      sql: "CREATE EXTENSION IF NOT EXISTS supabase_vault;"
-    }).catch(() => {
-      // If exec_sql doesn't exist, try direct SQL
-      return supabase.from("_migrations").select("*").limit(1); // Dummy query to check connection
-    });
+    // Install vault extension (idempotent operation) - skip if not available
+    try {
+      await supabase.rpc("exec_sql", {
+        sql: "CREATE EXTENSION IF NOT EXISTS supabase_vault;"
+      });
+    } catch (error) {
+      console.log("Vault extension setup skipped:", error);
+    }
 
     // Store secret in vault
     console.log("Storing secret in vault...");
     
-    const { data: vaultData, error: vaultError } = await supabase.rpc(
-      "vault_create_secret",
-      {
-        secret: secret_value,
-        name: secret_name
-      }
-    ).catch(async () => {
+    let vaultData = null;
+    let vaultError = null;
+    
+    try {
+      const result = await supabase.rpc(
+        "vault_create_secret",
+        {
+          secret: secret_value,
+          name: secret_name
+        }
+      );
+      vaultData = result.data;
+      vaultError = result.error;
+    } catch (error) {
       // Fallback: Try using the vault schema directly
-      const { data, error } = await supabase
-        .schema("vault")
-        .from("secrets")
-        .insert({
-          name: secret_name,
-          secret: secret_value
-        })
-        .select()
-        .single();
-      
-      return { data, error };
-    });
+      try {
+        const result = await supabase
+          .schema("vault")
+          .from("secrets")
+          .insert({
+            name: secret_name,
+            secret: secret_value
+          })
+          .select()
+          .single();
+        vaultData = result.data;
+        vaultError = result.error;
+      } catch (fallbackError) {
+        vaultError = fallbackError;
+      }
+    }
 
     if (vaultError) {
       console.error("Vault error:", vaultError);
+      const errorMessage = vaultError instanceof Error ? vaultError.message : String(vaultError);
       return new Response(
         JSON.stringify({ 
           error: "Failed to store secret in vault",
-          details: vaultError.message 
+          details: errorMessage 
         }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

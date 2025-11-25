@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
       if (firstStep.model_record_id) {
         const model = await getModel(firstStep.model_record_id);
         if (model.SCHEMA) {
-          coercedParameters = coerceParametersToSchema(allParameters, model.SCHEMA);
+          coercedParameters = coerceParametersToSchema(allParameters, model.SCHEMA as any);
         }
       }
     } catch (e) {
@@ -221,6 +221,6 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    return createSafeErrorResponse(error, 'workflow-executor', corsHeaders);
+    return createSafeErrorResponse(error, 'workflow-executor', responseHeaders);
   }
 });

@@ -89,9 +89,9 @@ Deno.serve(async (req) => {
     }, {} as Record<string, SecurityConfigRow['config_value']>);
 
     // Extract values with defaults
-    const failedLoginConfig = thresholds.failed_login_threshold || { window_minutes: 15, count: 5 };
-    const rapidSignupConfig = thresholds.rapid_signup_threshold || { window_hours: 1, count: 3 };
-    const tokenUsageConfig = thresholds.token_usage_threshold || { window_hours: 1, tokens: 1000 };
+    const failedLoginConfig = { window_minutes: 15, count: 5, ...thresholds.failed_login_threshold };
+    const rapidSignupConfig = { window_hours: 1, count: 3, ...thresholds.rapid_signup_threshold };
+    const tokenUsageConfig = { window_hours: 1, tokens: 1000, ...thresholds.token_usage_threshold };
 
     // Check for multiple failed login attempts from same IP
     const failedLoginWindow = new Date(now.getTime() - failedLoginConfig.window_minutes * 60 * 1000);

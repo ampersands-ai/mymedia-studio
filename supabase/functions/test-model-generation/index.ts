@@ -18,6 +18,11 @@ interface TestStep {
 serve(async (req) => {
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('test-model-generation', requestId);
+  const responseHeaders = getResponseHeaders(req);
+
+  if (req.method === 'OPTIONS') {
+    return handleCorsPreflight(req);
+  }
 
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);

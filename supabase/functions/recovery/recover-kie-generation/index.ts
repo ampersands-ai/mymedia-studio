@@ -7,6 +7,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { webhookLogger } from "../../_shared/logger.ts";
 import { API_ENDPOINTS } from "../../_shared/api-endpoints.ts";
+import { getResponseHeaders, handleCorsPreflight } from "../../_shared/cors.ts";
 import { getErrorMessage } from "../../_shared/error-utils.ts";
 
 // API key mapping logic for KIE AI
@@ -18,17 +19,17 @@ function getKieApiKey(modelId: string, recordId: string): string {
     'f8e9c7a5-9d4b-6f2c-8a1e-5d7b3c9f4a6e',
     'e9c8b7a6-8d5c-4f3e-9a2f-6d8b5c9e4a7f',
   ];
-  
+
   const sora2Models = [
     'd7f8c5a3-9b2e-6f4d-8c9a-5e7b3a6d4f8c',
     'c6e5b4a3-5d2f-1c0e-6a9f-3d5b6c7e4a8f',
   ];
-  
+
   const nanoBananaModels = ['c7e9a5f3-8d4b-6f2c-9a1e-5d8b3c7f4a6e'];
   const seedreamV4Models = ['d2ffb834-fc59-4c80-bf48-c2cc25281fdd', 'a6c8e4f7-9d2b-5f3c-8a6e-7d4b9c5f3a8e'];
-  
+
   let secretName: string;
-  
+
   if (veo3Models.includes(recordId)) secretName = 'KIE_AI_API_KEY_VEO3';
   else if (sora2Models.includes(recordId)) secretName = 'KIE_AI_API_KEY_SORA2';
   else if (nanoBananaModels.includes(recordId)) secretName = 'KIE_AI_API_KEY_NANO_BANANA';
@@ -39,24 +40,21 @@ function getKieApiKey(modelId: string, recordId: string): string {
   else if (modelId.includes('prompt_to_video')) secretName = 'KIE_AI_API_KEY_PROMPT_TO_VIDEO';
   else if (modelId.includes('prompt_to_audio')) secretName = 'KIE_AI_API_KEY_PROMPT_TO_AUDIO';
   else secretName = 'KIE_AI_API_KEY';
-  
+
   const apiKey = Deno.env.get(secretName) || Deno.env.get('KIE_AI_API_KEY');
-  
+
   if (!apiKey) {
     throw new Error(`${secretName} not configured`);
   }
-  
+
   return apiKey;
 }
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsPreflight(req);
   }
 
   try {
@@ -65,7 +63,7 @@ serve(async (req) => {
     if (!generation_id) {
       return new Response(
         JSON.stringify({ error: 'generation_id is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -87,7 +85,7 @@ serve(async (req) => {
       webhookLogger.error('Generation not found', genError, { generationId: generation_id });
       return new Response(
         JSON.stringify({ error: 'Generation not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 404, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -98,7 +96,7 @@ serve(async (req) => {
       webhookLogger.error('No task_id found', null, { generationId: generation_id });
       return new Response(
         JSON.stringify({ error: 'No task_id found in generation' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -129,7 +127,7 @@ serve(async (req) => {
           error: 'Failed to check KIE status',
           details: errorText 
         }),
-        { status: kieResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: kieResponse.status, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -183,7 +181,7 @@ serve(async (req) => {
         status: taskStatus.data?.state,
         result: taskStatus 
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
@@ -193,7 +191,7 @@ serve(async (req) => {
         error: 'Recovery failed',
         message: getErrorMessage(error)
       }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

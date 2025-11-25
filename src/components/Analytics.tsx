@@ -8,8 +8,8 @@ import type {
 } from '@/types/analytics';
 import { hasGTag as checkGTag } from '@/types/analytics';
 
-// Google Analytics tracking ID - Replace with your actual GA4 measurement ID
-const GA_MEASUREMENT_ID = 'G-XXXXXXXXXX';
+// Google Analytics tracking ID - configured via environment variable
+const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || '';
 
 export const Analytics = () => {
   const location = useLocation();

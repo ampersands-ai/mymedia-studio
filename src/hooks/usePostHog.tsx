@@ -2,9 +2,14 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserTokens } from './useUserTokens';
-import { trackPageView, identifyUser, setUserProperties } from '@/lib/posthog';
+import { trackPageView, identifyUser, setUserProperties, posthog } from '@/lib/posthog';
 import { useGenerationTracking } from './useGenerationTracking';
 
+/**
+ * Hook for PostHog analytics integration.
+ * Handles page view tracking, user identification, and generation tracking.
+ * Returns the posthog instance for direct event capture.
+ */
 export const usePostHog = () => {
   const location = useLocation();
   const { user } = useAuth();
@@ -33,4 +38,7 @@ export const usePostHog = () => {
 
   // Track generation completions
   useGenerationTracking();
+
+  // Return posthog instance for direct event capture
+  return posthog;
 };

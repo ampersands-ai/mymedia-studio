@@ -44,7 +44,7 @@ export function resolveInputMappings(
   return resolved;
 }
 
-interface JsonSchema {
+export interface JsonSchema {
   type?: string | string[];
   properties?: Record<string, JsonSchema>;
 }
@@ -76,7 +76,7 @@ function coerceValueToSchema(value: unknown, schema: JsonSchema): unknown {
     case 'number': 
     case 'integer': {
       if (value === undefined || value === null) return value;
-      const n = Array.isArray(value) ? parseFloat(value[0]) : parseFloat(value);
+      const n = Array.isArray(value) ? parseFloat(String(value[0])) : parseFloat(String(value));
       return Number.isNaN(n) ? value : n;
     }
     case 'boolean': {

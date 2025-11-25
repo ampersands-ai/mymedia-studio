@@ -8,6 +8,8 @@ import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 
 
 serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);
   }

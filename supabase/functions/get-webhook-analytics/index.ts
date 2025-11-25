@@ -149,11 +149,11 @@ Deno.serve(async (req) => {
     }, {} as Record<string, WebhookEvent[]>);
 
     const byProvider = Object.entries(providerGroups).map(([provider, providerEvents]) => {
-      const events = providerEvents;
+      const events = providerEvents as WebhookEvent[];
       const total = events.length;
-      const success = events.filter((e) => e.status === 'success').length;
-      const failure = events.filter((e) => e.status === 'failure').length;
-      const providerDurations = events.filter((e) => e.duration_ms).map((e) => e.duration_ms!);
+      const success = events.filter((e: WebhookEvent) => e.status === 'success').length;
+      const failure = events.filter((e: WebhookEvent) => e.status === 'failure').length;
+      const providerDurations = events.filter((e: WebhookEvent) => e.duration_ms).map((e: WebhookEvent) => e.duration_ms!);
       const avgDur = providerDurations.length > 0 ? providerDurations.reduce((a: number, b: number) => a + b, 0) / providerDurations.length : 0;
       const sorted = [...providerDurations].sort((a, b) => a - b);
       const p95 = sorted.length > 0 ? sorted[Math.floor(sorted.length * 0.95)] : 0;

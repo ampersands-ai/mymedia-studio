@@ -148,7 +148,7 @@ export async function callRunware(
   // Get schema properties (what fields this model actually accepts)
   const params = request.parameters || {};
   const schemaProperties = request.input_schema?.properties || {};
-  const requiredFields: string[] = request.input_schema?.required || [];
+  const requiredFields = (request.input_schema?.required || []) as string[];
 
   // Handle prompt fields dynamically (prompt, positivePrompt, positive_prompt)
   const promptAliases = ['prompt', 'positivePrompt', 'positive_prompt'];
@@ -345,7 +345,7 @@ export async function callRunware(
     const uint8Data = new Uint8Array(contentData);
 
     // Determine file extension
-    const outputFormat = params.outputFormat?.toLowerCase() || (isVideo ? 'mp4' : 'webp');
+    const outputFormat = (params.outputFormat as string | undefined)?.toLowerCase() || (isVideo ? 'mp4' : 'webp');
     const fileExtension = determineFileExtension(outputFormat, contentUrl, isVideo);
 
     logger.info('Download complete', { metadata: { bytes: uint8Data.length, extension: fileExtension } });

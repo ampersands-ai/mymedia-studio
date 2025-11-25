@@ -80,9 +80,10 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     logger.error('Error in get-voices function', error as Error);
+    const errorMsg = error instanceof Error ? error.message : 'Failed to fetch voices';
     return new Response(
       JSON.stringify({
-        error: error.message || 'Failed to fetch voices',
+        error: errorMsg,
         voices: []
       }),
       {

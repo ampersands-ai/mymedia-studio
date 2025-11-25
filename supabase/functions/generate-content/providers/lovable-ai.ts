@@ -48,7 +48,7 @@ export async function callLovableAI(request: ProviderRequest): Promise<ProviderR
   logger.info('Request payload prepared', {
     metadata: {
       model: payload.model,
-      promptLength: promptField.length,
+      promptLength: typeof promptField === 'string' ? promptField.length : 0,
       parameters: Object.keys(request.parameters)
     }
   });

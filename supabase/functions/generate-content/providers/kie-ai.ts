@@ -210,7 +210,8 @@ export async function callKieAI(
     };
 
   } catch (error) {
-    logger.error('Kie.ai provider error', error, { metadata: { model: request.model } });
-    throw new Error(`Kie.ai provider failed: ${error.message}`);
+    logger.error('Kie.ai provider error', error as Error, { metadata: { model: request.model } });
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Kie.ai provider failed: ${errorMsg}`);
   }
 }

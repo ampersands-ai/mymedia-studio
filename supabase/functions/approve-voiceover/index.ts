@@ -444,7 +444,7 @@ async function getBackgroundImages(
     throw new Error('Pixabay API error');
   }
 
-  if (!data.hits?.length) {
+  if (!data || !data.hits?.length) {
     throw new Error('No background images found');
   }
 
@@ -539,7 +539,7 @@ async function getBackgroundVideos(
     throw new Error('Pixabay API error');
   }
   
-  if (!data.hits?.length) {
+  if (!data || !data.hits?.length) {
     throw new Error('No background videos found');
   }
 

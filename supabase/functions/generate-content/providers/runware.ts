@@ -155,7 +155,7 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
 
   logger.info('Prompt extraction', { metadata: {
     hasPrompt: !!prompt,
-    promptLength: prompt.length
+    promptLength: typeof prompt === 'string' ? prompt.length : 0
   }});
 
   logger.info('Calling Runware API', { metadata: { model: cleanModel, taskUUID, provider: 'runware' } });
@@ -191,10 +191,11 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
 
   if (promptField) {
     // Check if this model's schema requires a prompt
-    const isPromptRequired = requiredFields.includes(promptField);
+    const isPromptRequired = (requiredFields as string[]).includes(promptField);
     
     // Get effective prompt value from parameters only
-    const effectivePrompt = params[promptField]?.trim() || '';
+    const promptValue = params[promptField];
+    const effectivePrompt = typeof promptValue === 'string' ? promptValue.trim() : '';
     
     // Validate ONLY if schema says it's required
     if (isPromptRequired && (!effectivePrompt || effectivePrompt.length < 2)) {
@@ -220,9 +221,10 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
   }
 
   // Convert frameImages to Runware format for video tasks
-  if (isVideo && taskPayload.frameImages !== undefined) {
-    logger.info('Converting frame images', { metadata: { frameCount: taskPayload.frameImages.length } });
-    taskPayload.frameImages = await convertFrameImagesToRunwareFormat(taskPayload.frameImages, logger);
+  if (isVideo && taskPayload.frameImages !== undefined && taskPayload.frameImages !== null) {
+    const frameImages = taskPayload.frameImages as string[];
+    logger.info('Converting frame images', { metadata: { frameCount: frameImages.length } });
+    taskPayload.frameImages = await convertFrameImagesToRunwareFormat(frameImages, logger);
   }
 
   // Add uploadEndpoint for direct upload to storage (if provided by caller)
@@ -369,7 +371,7 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
     const uint8Data = new Uint8Array(contentData);
 
     // Determine file extension
-    const outputFormat = taskPayload.outputFormat?.toLowerCase() || (isVideo ? 'mp4' : 'webp');
+    const outputFormat = (taskPayload.outputFormat as string | undefined)?.toLowerCase() || (isVideo ? 'mp4' : 'webp');
     const fileExtension = determineFileExtension(outputFormat, contentUrl, isVideo);
 
     logger.info('Content downloaded successfully', { metadata: { size_bytes: uint8Data.length, extension: fileExtension, taskUUID } });

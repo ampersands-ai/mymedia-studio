@@ -5,9 +5,9 @@
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 export function replaceTemplateVariables(template: string, context: Record<string, unknown>): string {
-  return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+  return template.replace(/\{\{([^}]+)\}\}/g, (match, path): string => {
     const value = getNestedValue(context, path.trim());
-    return value ?? match;
+    return value != null ? String(value) : match;
   });
 }
 

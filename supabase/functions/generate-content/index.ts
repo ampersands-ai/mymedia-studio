@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { TestExecutionLogger } from "../_shared/test-execution-logger.ts";
-import { callProvider } from "./providers/index.ts";
+import { callProvider, type ProviderRequest } from "./providers/index.ts";
 import { calculateTokenCost } from "./utils/token-calculator.ts";
 import { uploadToStorage } from "./utils/storage.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
@@ -1035,7 +1035,7 @@ Deno.serve(async (req) => {
         }
 
         const providerResponse = await Promise.race([
-          callProvider(model.provider, providerRequest as ProviderRequest, webhookToken),
+          callProvider(model.provider, providerRequest as unknown as ProviderRequest, webhookToken),
           timeoutPromise
         ]) as ProviderResponse;
 
@@ -1144,6 +1144,9 @@ Deno.serve(async (req) => {
               }
             } else {
               // Normal upload flow
+              if (!providerResponse.file_extension) {
+                throw new Error('Missing file extension from provider response');
+              }
               storagePath = await uploadToStorage(
                 supabase,
                 user.id,

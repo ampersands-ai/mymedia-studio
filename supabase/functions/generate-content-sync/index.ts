@@ -298,7 +298,7 @@ Deno.serve(async (req) => {
 
     const parameters = validateAndFilterParameters(
       custom_parameters, 
-      model.input_schema ? { properties: model.input_schema.properties || {}, required: model.input_schema.required || [] } : { properties: {}, required: [] }
+      model.input_schema as InputSchema || { properties: {} }
     );
     
     logger.debug('Parameters validated', {

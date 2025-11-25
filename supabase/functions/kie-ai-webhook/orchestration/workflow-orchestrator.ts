@@ -59,7 +59,9 @@ export async function orchestrateWorkflow(
     const template = workflowExecution.workflow_templates as Record<string, unknown>;
     const steps = (template.workflow_steps as unknown[]) || [];
     const totalSteps = steps.length;
-    const currentStep = steps.find((s: Record<string, unknown>) => s.step_number === currentStepNumber);
+    const currentStep = steps.find((s): s is Record<string, unknown> => 
+      typeof s === 'object' && s !== null && 'step_number' in s && (s as Record<string, unknown>).step_number === currentStepNumber
+    );
 
     logger.info('Current step status', { 
       metadata: { currentStep: currentStepNumber, totalSteps } 

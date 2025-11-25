@@ -68,12 +68,10 @@ export async function validateVerifyToken(
       .maybeSingle();
 
     if (data) {
-      generation = data;
-
       // ADR 007: Enrich generation with model metadata from registry
       try {
         const modelConfig = await getModelConfig(data.model_record_id);
-        generation.modelMetadata = {
+        data.modelMetadata = {
           id: modelConfig.id, // Provider's model ID (for Midjourney detection, etc.)
           model_name: modelConfig.modelName,
           estimated_time_seconds: modelConfig.estimatedTimeSeconds || 300
@@ -86,6 +84,7 @@ export async function validateVerifyToken(
         // Continue without model metadata - validation will catch if needed
       }
 
+      generation = data;
       break;
     }
 

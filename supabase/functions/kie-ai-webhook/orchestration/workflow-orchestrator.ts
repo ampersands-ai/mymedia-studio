@@ -96,10 +96,24 @@ export async function orchestrateWorkflow(
     // Check if there are more steps
     if (currentStepNumber < totalSteps) {
       const nextStepNumber = currentStepNumber + 1;
-      const nextStep = steps.find((s: Record<string, unknown>) => s.step_number === nextStepNumber) as Record<string, unknown>;
-      
-      logger.info('Starting next step', { 
-        metadata: { nextStepNumber, totalSteps } 
+      const nextStep = steps.find((s: Record<string, unknown>) => s.step_number === nextStepNumber) as Record<string, unknown> | undefined;
+
+      if (!nextStep) {
+        logger.error('Next step not found in workflow', new Error('Missing step'), {
+          metadata: { nextStepNumber, totalSteps }
+        });
+        await supabase
+          .from('workflow_executions')
+          .update({
+            status: GENERATION_STATUS.FAILED,
+            error_message: `Step ${nextStepNumber} not found in workflow template`,
+          })
+          .eq('id', generation.workflow_execution_id);
+        return;
+      }
+
+      logger.info('Starting next step', {
+        metadata: { nextStepNumber, totalSteps }
       });
 
       await supabase

@@ -15,6 +15,8 @@ interface GenerationCompleteRequest {
 }
 
 Deno.serve(async (req: Request): Promise<Response> => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);
   }
@@ -24,7 +26,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   try {
     const { generation_id, user_id, generation_duration_seconds }: GenerationCompleteRequest = await req.json();
-    
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""

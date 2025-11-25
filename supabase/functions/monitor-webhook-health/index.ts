@@ -182,9 +182,9 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    logger.error('Error in monitor-webhook-health', error instanceof Error ? error : undefined);
+    logger.error('Error in monitor-webhook-health', error instanceof Error ? error : new Error(String(error)));
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       {
         status: 500,
         headers: { ...responseHeaders, 'Content-Type': 'application/json' },

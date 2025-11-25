@@ -79,14 +79,15 @@ export async function uploadToStorage(
       publicUrl: publicUrl || undefined
     };
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown upload error';
     webhookLogger.upload('unknown', false, {
-      error: error.message || 'Unknown upload error',
+      error: errorMessage,
       generationId,
       userId
     });
     return {
       success: false,
-      error: error.message || 'Unknown upload error'
+      error: errorMessage
     };
   }
 }

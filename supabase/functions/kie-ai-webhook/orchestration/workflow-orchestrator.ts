@@ -127,21 +127,17 @@ export async function orchestrateWorkflow(
       const resolvedMappings = resolveInputMappings(nextStep?.input_mappings || {}, context);
       const allParameters = { ...(nextStep?.parameters || {}), ...resolvedMappings };
 
+      // Validate nextStep exists before proceeding
+      if (!nextStep) {
+        throw new Error(`Step ${nextStepNumber} not found in workflow template`);
+      }
+
       // Coerce parameters to schema
       let coercedParameters = allParameters;
       try {
-    if (!nextStep) {
-      throw new Error(`Step ${nextStepNumber} not found in workflow`);
-    }
-    
-    let resolvedPrompt = '';
-    if (nextStep.model_record_id) {
+        if (nextStep.model_record_id) {
           // ADR 007: Get schema from model registry instead of database
-    if (!nextStep) {
-      throw new Error(`Step ${nextStepNumber} not found in workflow`);
-    }
-    
-    const model = await getModel(nextStep.model_record_id);
+          const model = await getModel(nextStep.model_record_id);
           if (model.SCHEMA) {
             coercedParameters = coerceParametersToSchema(allParameters, model.SCHEMA as unknown as import("./parameter-resolver.ts").JsonSchema);
           }

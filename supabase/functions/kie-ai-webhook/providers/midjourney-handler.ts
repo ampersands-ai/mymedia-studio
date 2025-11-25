@@ -16,7 +16,7 @@ export function isMidjourneyModel(modelId: string | undefined): boolean {
 
 export function hasMidjourneyResults(payload: MidjourneyPayload, modelId?: string): boolean {
   return isMidjourneyModel(modelId) &&
-         payload.data?.resultUrls &&
+         !!payload.data?.resultUrls &&
          Array.isArray(payload.data.resultUrls);
 }
 

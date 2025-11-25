@@ -15,6 +15,8 @@ interface GenerationCompleteRequest {
 }
 
 Deno.serve(async (req: Request): Promise<Response> => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);
   }

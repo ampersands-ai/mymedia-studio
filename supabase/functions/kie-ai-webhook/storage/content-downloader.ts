@@ -43,12 +43,13 @@ export async function downloadContent(url: string): Promise<DownloadResult> {
       contentType
     };
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown download error';
     webhookLogger.download(url, false, {
-      error: error.message || 'Unknown download error'
+      error: errorMessage
     });
     return {
       success: false,
-      error: error.message || 'Unknown download error'
+      error: errorMessage
     };
   }
 }

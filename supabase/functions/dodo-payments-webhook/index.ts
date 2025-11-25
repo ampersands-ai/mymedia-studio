@@ -429,16 +429,20 @@ async function handleSubscriptionRenewed(supabase: SupabaseClient, data: Webhook
   // Get current subscription
   const { data: currentSub } = await supabase
     .from('user_subscriptions')
-    .select('tokens_remaining')
+    .select('tokens_remaining, tokens_total')
     .eq('user_id', userId)
     .single();
+
+  if (!currentSub) {
+    throw new Error('Subscription not found');
+  }
 
   // Add new tokens
   await supabase
     .from('user_subscriptions')
     .update({
       tokens_remaining: currentSub.tokens_remaining + tokens,
-      tokens_total: currentSub.tokens_total + tokens,
+      tokens_total: (currentSub.tokens_total || 0) + tokens,
       status: 'active',
       current_period_end: data.current_period_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     })

@@ -87,8 +87,9 @@ Generate ONE creative topic now:`
     );
   } catch (error) {
     logger.error('Error generating video topic:', error as any);
+    const errorMsg = error instanceof Error ? error.message : 'Failed to generate topic';
     return new Response(
-      JSON.stringify({ error: error.message || 'Failed to generate topic' }),
+      JSON.stringify({ error: errorMsg }),
       { 
         status: 500,
         headers: { ...responseHeaders, 'Content-Type': 'application/json' } 

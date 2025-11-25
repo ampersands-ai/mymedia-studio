@@ -120,8 +120,9 @@ Format your response as a JSON array with this structure:
     );
   } catch (error) {
     logger.error('Error generating topics', error instanceof Error ? error : undefined);
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: error?.message || 'Unknown error' }),
+      JSON.stringify({ error: errorMsg }),
       {
         status: 500,
         headers: { ...responseHeaders, 'Content-Type': 'application/json' },

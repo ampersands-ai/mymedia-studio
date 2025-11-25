@@ -398,8 +398,9 @@ Deno.serve(async (req) => {
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
     const errorLogger = new EdgeLogger('fix-stuck-generation', requestId, supabaseClient, true);
     errorLogger.error('Fix generation error', error instanceof Error ? error : undefined);
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMsg }),
       { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }

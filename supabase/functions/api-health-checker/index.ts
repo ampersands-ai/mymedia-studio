@@ -199,7 +199,7 @@ async function handleUnhealthyAPI(
   // Count consecutive failures
   let consecutiveFailures = 0
   for (const check of recentChecks) {
-    if (check.status !== 'healthy') {
+    if ((check as { status: string }).status !== 'healthy') {
       consecutiveFailures++
     } else {
       break

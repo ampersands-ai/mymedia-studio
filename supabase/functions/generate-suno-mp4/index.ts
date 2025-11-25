@@ -370,6 +370,6 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    return createSafeErrorResponse(error, 'generate-suno-mp4', corsHeaders);
+    return createSafeErrorResponse(error, 'generate-suno-mp4', responseHeaders);
   }
 });

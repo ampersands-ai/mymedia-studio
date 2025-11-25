@@ -13,13 +13,15 @@ import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 
 serve(async (req) => {
+  const responseHeaders = getResponseHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);
   }
 
   const logger = new EdgeLogger('process-runware-response', crypto.randomUUID());
   let generation_id: string | undefined;
-  
+
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''

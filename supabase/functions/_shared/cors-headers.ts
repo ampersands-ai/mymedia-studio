@@ -1,6 +1,8 @@
 /**
  * Standardized CORS and security headers for all edge functions
- * 
+ *
+ * SECURITY: Uses dynamic origin validation to prevent CSRF attacks
+ *
  * Security headers explained:
  * - X-Content-Type-Options: Prevents MIME-sniffing attacks
  * - X-Frame-Options: Prevents clickjacking attacks
@@ -10,23 +12,56 @@
  * - Strict-Transport-Security: Enforces HTTPS (production only)
  */
 
-export const corsHeaders = {
-  // CORS configuration
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
-  'Access-Control-Max-Age': '86400', // 24 hours
-  
-  // Security headers
-  'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
-  'X-XSS-Protection': '1; mode=block',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'geolocation=(), microphone=(), camera=(), payment=()',
-  
-  // Content type
-  'Content-Type': 'application/json',
-};
+/**
+ * Get allowed origin based on environment configuration
+ */
+function getAllowedOrigin(requestOrigin: string | null): string {
+  const allowedOriginsEnv = Deno.env.get('ALLOWED_ORIGINS');
+  const allowedOrigins = allowedOriginsEnv
+    ? allowedOriginsEnv.split(',').map(origin => origin.trim())
+    : [
+        'https://yourappurl.com',
+        'http://localhost:5173',
+        'http://localhost:3000',
+      ];
+
+  if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+    return requestOrigin;
+  }
+
+  return allowedOrigins[0];
+}
+
+/**
+ * Get CORS headers with dynamic origin
+ * @deprecated Use getResponseHeaders from _shared/cors.ts instead
+ */
+export function getCorsHeaders(requestOrigin: string | null): Record<string, string> {
+  return {
+    // CORS configuration - SECURE: Dynamic origin validation
+    'Access-Control-Allow-Origin': getAllowedOrigin(requestOrigin),
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id',
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
+    'Access-Control-Max-Age': '86400', // 24 hours
+    'Access-Control-Allow-Credentials': 'true',
+
+    // Security headers
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '1; mode=block',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'geolocation=(), microphone=(), camera=(), payment=()',
+
+    // Content type
+    'Content-Type': 'application/json',
+  };
+}
+
+/**
+ * Legacy wildcard CORS - DEPRECATED
+ * @deprecated This is insecure. Use getCorsHeaders(req.headers.get('Origin')) instead
+ */
+export const corsHeaders = getCorsHeaders(null);
 
 /**
  * Security headers for production environments (includes HSTS)

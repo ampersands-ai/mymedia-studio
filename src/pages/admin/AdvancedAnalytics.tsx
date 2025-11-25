@@ -121,22 +121,22 @@ export const AdvancedAnalytics = () => {
   };
 
   const fetchUserEngagement = async () => {
-    const { data: users } = await supabase.auth.admin.listUsers();
-    const { data: generations } = await supabase
-      .from('generations')
-      .select('user_id, status');
-
-    const totalUsers = users?.users?.length || 0;
-    const activeUsers = new Set((generations || []).map(g => g.user_id)).size;
-    const completedGens = (generations || []).filter(g => g.status === 'completed').length;
-    const totalGens = generations?.length || 0;
-
-    setUserEngagement({
-      totalUsers,
-      activeUsers,
-      successRate: totalGens > 0 ? ((completedGens / totalGens) * 100).toFixed(1) : 0,
-      avgGensPerUser: totalUsers > 0 ? (totalGens / totalUsers).toFixed(1) : 0
+    // SECURITY: Call secure edge function instead of client-side admin SDK
+    const { data, error } = await supabase.functions.invoke('admin-analytics', {
+      method: 'POST'
     });
+
+    if (error) {
+      logger.error('Failed to fetch user engagement', error as Error, {
+        component: 'AdvancedAnalytics',
+        operation: 'fetchUserEngagement'
+      });
+      throw error;
+    }
+
+    if (data?.success && data?.data?.userEngagement) {
+      setUserEngagement(data.data.userEngagement);
+    }
   };
 
   if (loading) {

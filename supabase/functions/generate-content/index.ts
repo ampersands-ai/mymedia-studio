@@ -1,7 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { TestExecutionLogger } from "../_shared/test-execution-logger.ts";
-import { callProvider, type ProviderRequest } from "./providers/index.ts";
+import { callProvider } from "./providers/index.ts";
+import type { ProviderRequest, ProviderResponse } from "../_shared/provider-types.ts";
+import { isProviderRequest } from "../_shared/provider-types.ts";
 import { calculateTokenCost } from "./utils/token-calculator.ts";
 import { uploadToStorage } from "./utils/storage.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
@@ -1034,8 +1036,13 @@ Deno.serve(async (req) => {
           [key: string]: unknown;
         }
 
+        // Validate provider request structure
+        if (!isProviderRequest(providerRequest)) {
+          throw new Error('Invalid provider request structure');
+        }
+
         const providerResponse = await Promise.race([
-          callProvider(model.provider, providerRequest as unknown as ProviderRequest, webhookToken),
+          callProvider(model.provider, providerRequest, webhookToken),
           timeoutPromise
         ]) as ProviderResponse;
 

@@ -5,11 +5,7 @@
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { webhookLogger } from "../../_shared/logger.ts";
-
-interface GenerationRecord {
-  id: string;
-  user_id: string;
-}
+import type { GenerationRecord } from "../../_shared/database-types.ts";
 
 export interface IdempotencyResult {
   success: boolean;

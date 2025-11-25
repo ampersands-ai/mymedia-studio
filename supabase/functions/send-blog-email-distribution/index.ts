@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { getErrorMessage } from "../_shared/error-utils.ts";
 
 
 
@@ -185,7 +186,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     logger.error('Error sending blog emails', error instanceof Error ? error : new Error(String(error)));
     return new Response(
-      JSON.stringify({ error: error?.message || 'Unknown error' }),
+      JSON.stringify({ error: getErrorMessage(error) }),
       {
         status: 500,
         headers: { ...responseHeaders, 'Content-Type': 'application/json' },

@@ -15,6 +15,7 @@ interface WelcomeEmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  const responseHeaders = getResponseHeaders(req);
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('send-welcome-email', requestId);
   
@@ -134,11 +135,11 @@ const handler = async (req: Request): Promise<Response> => {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        ...corsHeaders,
+        ...responseHeaders,
       },
     });
   } catch (error) {
-    return createSafeErrorResponse(error, "send-welcome-email", corsHeaders);
+    return createSafeErrorResponse(error, "send-welcome-email", responseHeaders);
   }
 };
 

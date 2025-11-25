@@ -3,6 +3,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 import { generateEmailHTML } from "../_shared/email-templates.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { toError, getErrorMessage } from "../_shared/error-utils.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -166,9 +167,9 @@ ${body.error_stack ? `Stack Trace:\n${body.error_stack}` : 'No stack trace avail
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    logger.error('Fatal error in send-error-alert', error);
+    logger.error('Fatal error in send-error-alert', toError(error));
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: getErrorMessage(error) }),
       { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }

@@ -72,6 +72,28 @@ interface Model {
   payload_structure?: string;
 }
 
+// Normalize content type to match database constraint
+function normalizeContentType(contentType: string): 'image' | 'video' | 'text' | 'audio' {
+  const normalized = contentType.toLowerCase();
+  
+  // Map various content types to allowed database values
+  if (normalized.includes('image') || normalized.includes('photo') || normalized.includes('picture')) {
+    return 'image';
+  }
+  if (normalized.includes('video') || normalized.includes('animation')) {
+    return 'video';
+  }
+  if (normalized.includes('audio') || normalized.includes('voice') || normalized.includes('music') || normalized.includes('sound')) {
+    return 'audio';
+  }
+  if (normalized.includes('text') || normalized.includes('caption') || normalized.includes('script')) {
+    return 'text';
+  }
+  
+  // Default to text for unknown types
+  return 'text';
+}
+
 // Phase 3: Request queuing and circuit breaker
 // Increased from 100 to 750 for better scalability under high load
 // Use centralized system limits configuration
@@ -726,7 +748,7 @@ Deno.serve(async (req) => {
           user_id: user.id,
           model_id: model.id,
           model_record_id: model.record_id,
-          type: model.content_type,
+          type: normalizeContentType(model.content_type),
           prompt: finalPrompt,
           original_prompt: originalPrompt,
           enhanced_prompt: enhance_prompt ? finalPrompt : null,
@@ -743,15 +765,31 @@ Deno.serve(async (req) => {
         .single();
 
       if (genError || !gen) {
-        logger.error('Generation creation failed', genError || undefined);
+        const errorDetails = genError ? {
+          message: genError.message,
+          details: genError.details,
+          hint: genError.hint,
+          code: genError.code
+        } : 'No data returned';
+        
+        logger.error('Generation creation failed', genError || undefined, {
+          metadata: {
+            model_id: model.id,
+            user_id: user.id,
+            content_type: model.content_type,
+            normalized_type: normalizeContentType(model.content_type),
+            error_details: errorDetails
+          }
+        });
+        
         if (testLogger) {
           await testLogger.logError(
             genError || new Error('Failed to create generation record'),
             'createGenerationRecord',
-            { model_id: model.id, user_id: user.id }
+            { model_id: model.id, user_id: user.id, error_details: errorDetails }
           );
         }
-        throw new Error('Failed to create generation record');
+        throw new Error(`Failed to create generation record: ${JSON.stringify(errorDetails)}`);
       }
 
       generation = gen;

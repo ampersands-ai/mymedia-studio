@@ -204,7 +204,7 @@ Deno.serve(async (req) => {
     }
   } catch (error) {
     logger.error('Webhook processing failed', error instanceof Error ? error : new Error(String(error)));
-    return createSafeErrorResponse(error, 'dodo-payments-webhook', corsHeaders);
+    return createSafeErrorResponse(error, 'dodo-payments-webhook', responseHeaders);
   }
 });
 
@@ -303,7 +303,15 @@ async function handleWebhookEvent(supabase: SupabaseClient, event: WebhookEvent)
 }
 
 async function handlePaymentSucceeded(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+  if (!metadata) {
+    throw new Error('Missing metadata in payment succeeded event');
+  }
+  
   const userId = metadata.user_id;
+  if (!userId) {
+    throw new Error('Missing user_id in metadata');
+  }
+  
   const planName = metadata.plan || 'freemium';
   const planKey = planName.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
@@ -438,8 +446,20 @@ async function handleSubscriptionRenewed(supabase: SupabaseClient, data: Webhook
 }
 
 async function handleSubscriptionPlanChanged(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+  if (!metadata) {
+    throw new Error('Missing metadata in plan changed event');
+  }
+  
   const userId = metadata?.user_id;
+  if (!userId) {
+    throw new Error('Missing user_id in metadata');
+  }
+  
   const newPlan = metadata?.new_plan || metadata?.plan;
+  if (!newPlan) {
+    throw new Error('Missing plan information in metadata');
+  }
+  
   const planKey = newPlan.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
   const requestId = crypto.randomUUID();

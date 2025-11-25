@@ -8,6 +8,7 @@ import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../../_shared/edge-logger.ts";
 import { getModel } from "../../_shared/registry/index.ts";
 import { GENERATION_STATUS } from "../../_shared/constants.ts";
+import type { GenerationRecord } from "../../_shared/database-types.ts";
 import {
   replaceTemplateVariables,
   resolveInputMappings,
@@ -15,13 +16,8 @@ import {
   sanitizeParametersForProviders,
 } from "./parameter-resolver.ts";
 
-interface Generation {
-  id: string;
-  workflow_execution_id?: string;
-  workflow_step_number?: number;
-  storage_path?: string | null;
-  tokens_used?: number;
-}
+// Minimal interface for workflow orchestration
+interface Generation extends Pick<GenerationRecord, 'id' | 'workflow_execution_id' | 'workflow_step_number' | 'storage_path' | 'tokens_used'> {}
 
 export async function orchestrateWorkflow(
   generation: Generation,
@@ -56,10 +52,21 @@ export async function orchestrateWorkflow(
     }
 
     const currentStepNumber = generation.workflow_step_number;
+    interface WorkflowStep {
+      step_number: number;
+      step_name: string;
+      model_record_id: string;
+      model_id?: string;
+      prompt_template?: string;
+      parameters?: Record<string, unknown>;
+      input_mappings?: Record<string, string>;
+      output_key?: string;
+    }
+
     const template = workflowExecution.workflow_templates as Record<string, unknown>;
-    const steps = (template.workflow_steps as unknown[]) || [];
+    const steps = (template.workflow_steps as WorkflowStep[]) || [];
     const totalSteps = steps.length;
-    const currentStep = steps.find((s: Record<string, unknown>) => s.step_number === currentStepNumber);
+    const currentStep = steps.find(s => s.step_number === currentStepNumber);
 
     logger.info('Current step status', { 
       metadata: { currentStep: currentStepNumber, totalSteps } 
@@ -85,7 +92,7 @@ export async function orchestrateWorkflow(
     const updatedOutputs = {
       ...existingOutputs,
       [`step${currentStepNumber}`]: {
-        [(currentStep as Record<string, unknown>)?.output_key as string || 'output']: stepOutputPath,
+        [currentStep?.output_key || 'output']: stepOutputPath,
         generation_id: generation.id,
       },
     };
@@ -96,24 +103,10 @@ export async function orchestrateWorkflow(
     // Check if there are more steps
     if (currentStepNumber < totalSteps) {
       const nextStepNumber = currentStepNumber + 1;
-      const nextStep = steps.find((s: Record<string, unknown>) => s.step_number === nextStepNumber) as Record<string, unknown> | undefined;
-
-      if (!nextStep) {
-        logger.error('Next step not found in workflow', new Error('Missing step'), {
-          metadata: { nextStepNumber, totalSteps }
-        });
-        await supabase
-          .from('workflow_executions')
-          .update({
-            status: GENERATION_STATUS.FAILED,
-            error_message: `Step ${nextStepNumber} not found in workflow template`,
-          })
-          .eq('id', generation.workflow_execution_id);
-        return;
-      }
-
-      logger.info('Starting next step', {
-        metadata: { nextStepNumber, totalSteps }
+      const nextStep = steps.find(s => s.step_number === nextStepNumber);
+      
+      logger.info('Starting next step', { 
+        metadata: { nextStepNumber, totalSteps } 
       });
 
       await supabase
@@ -131,8 +124,13 @@ export async function orchestrateWorkflow(
         ...updatedOutputs,
       };
 
-      const resolvedMappings = resolveInputMappings(nextStep.input_mappings || {}, context);
-      const allParameters = { ...nextStep.parameters, ...resolvedMappings };
+      const resolvedMappings = resolveInputMappings(nextStep?.input_mappings || {}, context);
+      const allParameters = { ...(nextStep?.parameters || {}), ...resolvedMappings };
+
+      // Validate nextStep exists before proceeding
+      if (!nextStep) {
+        throw new Error(`Step ${nextStepNumber} not found in workflow template`);
+      }
 
       // Coerce parameters to schema
       let coercedParameters = allParameters;
@@ -141,7 +139,7 @@ export async function orchestrateWorkflow(
           // ADR 007: Get schema from model registry instead of database
           const model = await getModel(nextStep.model_record_id);
           if (model.SCHEMA) {
-            coercedParameters = coerceParametersToSchema(allParameters, model.SCHEMA);
+            coercedParameters = coerceParametersToSchema(allParameters, model.SCHEMA as unknown as import("./parameter-resolver.ts").JsonSchema);
           }
         }
       } catch (e) {
@@ -164,7 +162,7 @@ export async function orchestrateWorkflow(
           : String(sanitizedParameters.prompt);
         resolvedPrompt = replaceTemplateVariables(promptString, context);
       } else {
-        resolvedPrompt = replaceTemplateVariables(nextStep.prompt_template, context);
+        resolvedPrompt = replaceTemplateVariables(nextStep.prompt_template || '', context);
       }
 
       logger.info('Resolved prompt for next step', { 
@@ -174,7 +172,7 @@ export async function orchestrateWorkflow(
       // Start next step
       const generateResponse = await supabase.functions.invoke('generate-content', {
         body: {
-          model_id: nextStep.model_id,
+          model_id: nextStep.model_id || null,
           model_record_id: nextStep.model_record_id,
           prompt: resolvedPrompt,
           custom_parameters: sanitizedParameters,
@@ -205,7 +203,7 @@ export async function orchestrateWorkflow(
 
       const finalOutput = updatedOutputs[`step${totalSteps}`];
       const finalOutputUrl = finalOutput
-        ? finalOutput[Object.keys(finalOutput).find(k => k !== 'generation_id') || 'output']
+        ? (finalOutput as Record<string, unknown>)[Object.keys(finalOutput).find(k => k !== 'generation_id') || 'output']
         : null;
 
       logger.info('Final output URL determined', { metadata: { finalOutputUrl } });

@@ -2,6 +2,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { TestExecutionLogger } from "../_shared/test-execution-logger.ts";
 import { callProvider } from "./providers/index.ts";
+import type { ProviderRequest, ProviderResponse } from "../_shared/provider-types.ts";
+import { isProviderRequest } from "../_shared/provider-types.ts";
 import { calculateTokenCost } from "./utils/token-calculator.ts";
 import { uploadToStorage } from "./utils/storage.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
@@ -515,7 +517,7 @@ Deno.serve(async (req) => {
 
     let validatedParameters = validateAndFilterParameters(
       parameters,
-      model.input_schema
+      model.input_schema || { properties: {}, required: [] }
     );
 
     // Coerce parameter types based on schema (e.g., "true" -> true for booleans)
@@ -544,7 +546,7 @@ Deno.serve(async (req) => {
       return coerced;
     }
 
-    validatedParameters = coerceParametersBySchema(validatedParameters, model.input_schema);
+    validatedParameters = coerceParametersBySchema(validatedParameters, model.input_schema || { properties: {} });
 
     // NOTE: Parameter validation and defaults are handled by validateAndFilterParameters()
     // which only passes parameters explicitly defined in the model's input_schema.
@@ -1034,6 +1036,11 @@ Deno.serve(async (req) => {
           [key: string]: unknown;
         }
 
+        // Validate provider request structure
+        if (!isProviderRequest(providerRequest)) {
+          throw new Error('Invalid provider request structure');
+        }
+
         const providerResponse = await Promise.race([
           callProvider(model.provider, providerRequest, webhookToken),
           timeoutPromise
@@ -1068,7 +1075,10 @@ Deno.serve(async (req) => {
 
         if (isWebhookProvider) {
           // For webhook providers, update with task_id and mark as processing
-          const taskId = providerResponse.metadata.task_id;
+          const taskId = providerResponse.metadata?.task_id;
+          if (!taskId) {
+            throw new Error('Missing task_id from webhook provider');
+          }
           logger.info('Webhook-based provider', {
             userId: user.id,
             metadata: { task_id: taskId, generation_id: createdGeneration.id }
@@ -1141,11 +1151,14 @@ Deno.serve(async (req) => {
               }
             } else {
               // Normal upload flow
+              if (!providerResponse.file_extension) {
+                throw new Error('Missing file extension from provider response');
+              }
               storagePath = await uploadToStorage(
                 supabase,
                 user.id,
                 generationId,
-                providerResponse.output_data,
+                providerResponse.output_data as Uint8Array,
                 providerResponse.file_extension,
                 model.content_type
               );

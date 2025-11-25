@@ -95,13 +95,14 @@ serve(async () => {
         });
       } catch (error) {
         responseTime = Date.now() - startTime
+        const err = error as Error;
 
-        if (error.name === 'AbortError') {
+        if (err.name === 'AbortError') {
           status = 'timeout'
           errorMessage = `Timeout after ${config.timeout_seconds}s`
         } else {
           status = 'error'
-          errorMessage = error.message || 'Unknown error'
+          errorMessage = err.message || String(error) || 'Unknown error'
         }
 
         logger.warn('API check failed', {
@@ -128,7 +129,7 @@ serve(async () => {
 
       // Check if we need to create an alert
       if (status !== 'healthy' && config.is_critical) {
-        await handleUnhealthyAPI(supabaseClient, config, status, errorMessage)
+        await handleUnhealthyAPI(supabaseClient as any, config, status, errorMessage)
       }
 
       results.push({
@@ -188,17 +189,17 @@ async function handleUnhealthyAPI(
   // Get recent health checks to count consecutive failures
   const { data: recentChecks } = await supabase
     .from('api_health_checks')
-    .select('status')
+    .select('status, checked_at')
     .eq('api_config_id', config.id)
     .order('checked_at', { ascending: false })
     .limit(config.alert_threshold)
 
-  if (!recentChecks) return
+  if (!recentChecks || recentChecks.length === 0) return
 
   // Count consecutive failures
   let consecutiveFailures = 0
   for (const check of recentChecks) {
-    if (check.status !== 'healthy') {
+    if ((check as { status: string }).status !== 'healthy') {
       consecutiveFailures++
     } else {
       break
@@ -221,7 +222,7 @@ async function handleUnhealthyAPI(
 
     if (!existingAlert) {
       // Create new alert
-      const { error: alertError } = await supabase
+      const { error: alertError } = await (supabase as any)
         .from('api_health_alerts')
         .insert({
           api_config_id: config.id,

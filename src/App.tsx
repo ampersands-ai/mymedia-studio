@@ -72,6 +72,7 @@ const EmailHistory = lazy(() => import("./pages/admin/EmailHistory").then(m => (
 const AdvancedAnalytics = lazy(() => import("./pages/admin/AdvancedAnalytics").then(m => ({ default: m.AdvancedAnalytics })));
 const CreateBlog = lazy(() => import("./pages/admin/CreateBlog"));
 const ComprehensiveModelTester = lazy(() => import("./pages/admin/ComprehensiveModelTester"));
+const VaultSetup = lazy(() => import("./pages/admin/VaultSetup"));
 const DebugPanel = lazy(() => import("./components/dev/DebugPanel").then(m => ({ default: m.DebugPanel })));
 const RouteErrorBoundary = lazy(() => import("./components/error/RouteErrorBoundary").then(m => ({ default: m.RouteErrorBoundary })));
 
@@ -181,6 +182,7 @@ const AppContent = () => {
               <Route path="email-history" element={<RouteErrorBoundary routeName="Admin > Email History"><EmailHistory /></RouteErrorBoundary>} />
               <Route path="advanced-analytics" element={<RouteErrorBoundary routeName="Admin > Advanced Analytics"><AdvancedAnalytics /></RouteErrorBoundary>} />
               <Route path="blog/create" element={<RouteErrorBoundary routeName="Admin > Create Blog"><CreateBlog /></RouteErrorBoundary>} />
+              <Route path="vault-setup" element={<RouteErrorBoundary routeName="Admin > Vault Setup"><VaultSetup /></RouteErrorBoundary>} />
             </Route>
             <Route path="/pricing" element={<RouteErrorBoundary routeName="Pricing"><Pricing /></RouteErrorBoundary>} />
             <Route path="/privacy" element={<RouteErrorBoundary routeName="Privacy"><Privacy /></RouteErrorBoundary>} />

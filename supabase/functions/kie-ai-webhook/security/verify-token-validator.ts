@@ -7,16 +7,10 @@
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getModelConfig } from "../../_shared/registry/index.ts";
+import type { GenerationRecord } from "../../_shared/database-types.ts";
 
-interface GenerationRecord {
-  id: string;
-  user_id: string;
-  provider_task_id: string;
-  status: string;
-  model_record_id: string;
-  settings?: {
-    _webhook_token?: string;
-  };
+// Extended generation with runtime metadata
+interface GenerationWithMetadata extends GenerationRecord {
   modelMetadata?: {
     id: string;
     model_name: string;
@@ -26,7 +20,7 @@ interface GenerationRecord {
 
 export interface VerifyTokenResult {
   success: boolean;
-  generation?: GenerationRecord;
+  generation?: GenerationWithMetadata;
   error?: string;
   statusCode?: number;
 }
@@ -53,7 +47,7 @@ export async function validateVerifyToken(
   }
   
   // Fetch generation with retry logic for race conditions
-  let generation: GenerationRecord | null = null;
+  let generation: GenerationWithMetadata | null = null;
   let findError: Error | null = null;
   let retryCount = 0;
   const maxRetries = 3;
@@ -68,10 +62,12 @@ export async function validateVerifyToken(
       .maybeSingle();
 
     if (data) {
+      generation = data as GenerationWithMetadata;
+
       // ADR 007: Enrich generation with model metadata from registry
       try {
         const modelConfig = await getModelConfig(data.model_record_id);
-        data.modelMetadata = {
+        (generation as GenerationWithMetadata).modelMetadata = {
           id: modelConfig.id, // Provider's model ID (for Midjourney detection, etc.)
           model_name: modelConfig.modelName,
           estimated_time_seconds: modelConfig.estimatedTimeSeconds || 300
@@ -84,7 +80,6 @@ export async function validateVerifyToken(
         // Continue without model metadata - validation will catch if needed
       }
 
-      generation = data;
       break;
     }
 
@@ -114,8 +109,9 @@ export async function validateVerifyToken(
     };
   }
   
-  // Validate verify token matches stored token
-  const storedToken = generation.settings?._webhook_token;
+  // Extract stored token from settings
+  const settings = generation.settings as Record<string, unknown> | null;
+  const storedToken = settings?._webhook_token as string | undefined;
   if (!storedToken || storedToken !== verifyToken) {
     webhookLogger.failure(generation.id, 'SECURITY LAYER 2 FAILED: Invalid verify token', {
       generation_id: generation.id,

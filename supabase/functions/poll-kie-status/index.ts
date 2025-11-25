@@ -237,10 +237,9 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
-    logger.error('Fatal error in poll-kie-status', err);
+    logger.error('Fatal error in poll-kie-status', error instanceof Error ? error : new Error(String(error)));
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }

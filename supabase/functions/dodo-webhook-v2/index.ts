@@ -324,6 +324,9 @@ async function handleWebhookEvent(supabase: SupabaseClient, event: WebhookEvent,
 }
 
 async function handlePaymentSucceeded(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+  if (!metadata) {
+    throw new Error('Missing metadata');
+  }
   const userId = metadata.user_id;
   const planName = metadata.plan || 'freemium';
   const planKey = planName.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
@@ -346,7 +349,7 @@ async function handlePaymentSucceeded(supabase: SupabaseClient, data: WebhookEve
             plan_name: planName,
             amount: data.amount,
             currency: data.currency,
-            billing_period: metadata.billing_period || "monthly",
+            billing_period: metadata?.billing_period || "monthly",
           },
         }),
       });
@@ -458,16 +461,20 @@ async function handleSubscriptionRenewed(supabase: SupabaseClient, data: Webhook
   // Get current subscription
   const { data: currentSub } = await supabase
     .from('user_subscriptions')
-    .select('tokens_remaining')
+    .select('tokens_remaining, tokens_total')
     .eq('user_id', userId)
     .single();
+
+  if (!currentSub) {
+    throw new Error('Subscription not found');
+  }
 
   // Add new tokens
   await supabase
     .from('user_subscriptions')
     .update({
       tokens_remaining: currentSub.tokens_remaining + tokens,
-      tokens_total: currentSub.tokens_total + tokens,
+      tokens_total: (currentSub.tokens_total || 0) + tokens,
       status: 'active',
       current_period_end: data.current_period_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     })
@@ -475,8 +482,14 @@ async function handleSubscriptionRenewed(supabase: SupabaseClient, data: Webhook
 }
 
 async function handleSubscriptionPlanChanged(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
-  const userId = metadata?.user_id;
-  const newPlan = metadata?.new_plan || metadata?.plan;
+  if (!metadata) {
+    throw new Error('Missing metadata');
+  }
+  const userId = metadata.user_id;
+  const newPlan = metadata.new_plan || metadata.plan;
+  if (!newPlan) {
+    throw new Error('Missing plan information');
+  }
   const planKey = newPlan.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
 

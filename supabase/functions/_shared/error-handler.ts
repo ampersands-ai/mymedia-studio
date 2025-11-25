@@ -1,3 +1,5 @@
+import { normalizeHeaders } from "./validation.ts";
+
 /**
  * Safe error response handler for edge functions
  * Returns generic messages to clients for security
@@ -5,8 +7,9 @@
 export function createSafeErrorResponse(
   error: unknown,
   context: string,
-  headers: Record<string, string>
+  headers: HeadersInit
 ): Response {
+  const normalizedHeaders = normalizeHeaders(headers);
   // Note: Full error logging should be handled by EdgeLogger in the calling function
   
   // Map errors to safe client messages
@@ -40,7 +43,7 @@ export function createSafeErrorResponse(
     { 
       status, 
       headers: { 
-        ...headers, 
+        ...normalizedHeaders, 
         'Content-Type': 'application/json' 
       } 
     }

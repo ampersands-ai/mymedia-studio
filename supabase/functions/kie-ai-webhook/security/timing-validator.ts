@@ -10,13 +10,10 @@
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { webhookLogger } from "../../_shared/logger.ts";
 import { GENERATION_STATUS } from "../../_shared/constants.ts";
+import type { GenerationRecord } from "../../_shared/database-types.ts";
 
-interface GenerationRecord {
-  id: string;
-  user_id: string;
-  provider_task_id: string;
-  created_at: string;
-  model_id?: string;
+// Extended generation with runtime metadata
+interface GenerationWithMetadata extends GenerationRecord {
   modelMetadata?: {
     estimated_time_seconds?: number;
     model_name?: string;
@@ -68,7 +65,7 @@ function extractHttpCode(payload?: WebhookPayload): number | null {
 }
 
 export async function validateTiming(
-  generation: GenerationRecord,
+  generation: GenerationWithMetadata,
   supabase: SupabaseClient,
   payload?: WebhookPayload
 ): Promise<TimingResult> {
@@ -89,7 +86,7 @@ export async function validateTiming(
                     failurePatterns.some(pattern => msgStr.includes(pattern));
 
   webhookLogger.info('Timing analysis', {
-    taskId: generation.provider_task_id,
+    taskId: generation.provider_task_id || undefined,
     generationId: generation.id,
     model: generation.modelMetadata?.model_name,
     estimated_seconds: estimatedSeconds,
@@ -104,7 +101,7 @@ export async function validateTiming(
   // Only check timing for success callbacks to prevent replay attacks
   if (!isFailure && processingTime < MIN_PROCESSING_TIME) {
     webhookLogger.failure(generation.id, 'SECURITY LAYER 3 FAILED: Webhook too fast - possible replay attack', {
-      taskId: generation.provider_task_id,
+      taskId: generation.provider_task_id || undefined,
       generation_id: generation.id,
       processing_ms: processingTime,
       threshold_ms: MIN_PROCESSING_TIME,
@@ -137,7 +134,7 @@ export async function validateTiming(
     const severityLevel = processingTime > (MAX_PROCESSING_TIME * 2) ? 'high' : 'medium';
     
     webhookLogger.info(`Late webhook detected [${severityLevel} severity]`, {
-      taskId: generation.provider_task_id,
+      taskId: generation.provider_task_id || undefined,
       generation_id: generation.id,
       processing_seconds: Math.round(processingTime / 1000),
       max_threshold_seconds: Math.round(MAX_PROCESSING_TIME / 1000),
@@ -162,7 +159,7 @@ export async function validateTiming(
   }
   
   webhookLogger.info('Layer 3 passed: Webhook timing validated', {
-    taskId: generation.provider_task_id,
+    taskId: generation.provider_task_id || undefined,
     generationId: generation.id
   });
   return { success: true };

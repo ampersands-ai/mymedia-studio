@@ -313,13 +313,39 @@ export function withValidation<T>(
   };
 }
 
+// ========================================
+// HEADER UTILITIES
+// ========================================
+
+/**
+ * Convert HeadersInit to Record<string, string>
+ */
+export function normalizeHeaders(headers: HeadersInit): Record<string, string> {
+  if (headers instanceof Headers) {
+    const normalized: Record<string, string> = {};
+    headers.forEach((value, key) => {
+      normalized[key] = value;
+    });
+    return normalized;
+  }
+  if (Array.isArray(headers)) {
+    const normalized: Record<string, string> = {};
+    headers.forEach(([key, value]) => {
+      normalized[key] = value;
+    });
+    return normalized;
+  }
+  return headers as Record<string, string>;
+}
+
 /**
  * Create a standardized validation error response
  */
 export function createValidationErrorResponse(
   formattedErrors: Record<string, string[]>,
-  headers: Record<string, string>
+  headers: HeadersInit
 ): Response {
+  const normalizedHeaders = normalizeHeaders(headers);
   return new Response(
     JSON.stringify({
       error: 'Validation failed',
@@ -328,7 +354,7 @@ export function createValidationErrorResponse(
     { 
       status: 400,
       headers: {
-        ...headers,
+        ...normalizedHeaders,
         'Content-Type': 'application/json'
       }
     }

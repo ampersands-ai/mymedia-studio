@@ -3,6 +3,7 @@ import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
 import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
+import { toError } from "../_shared/error-utils.ts";
 
 
 
@@ -113,12 +114,13 @@ Deno.serve(async (req) => {
 
         logger.info('Voice uploaded successfully', { metadata: { voiceName: topVoice.name } });
       } catch (error) {
-        logger.error('Failed to process voice', error, { metadata: { voiceName: topVoice.name } });
+        const err = toError(error);
+        logger.error('Failed to process voice', err, { metadata: { voiceName: topVoice.name } });
         results.push({
           voice_id: topVoice.id,
           name: topVoice.name,
           status: GENERATION_STATUS.FAILED,
-          error: error.message
+          error: err.message
         });
       }
     }
@@ -143,11 +145,12 @@ Deno.serve(async (req) => {
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    logger.error('Error in sync-voice-previews', error);
+    const err = toError(error);
+    logger.error('Error in sync-voice-previews', err);
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: error.message 
+        error: err.message 
       }),
       { 
         status: 500,

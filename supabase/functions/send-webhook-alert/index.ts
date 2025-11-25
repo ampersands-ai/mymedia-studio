@@ -25,6 +25,7 @@ interface AlertPayload {
 serve(async (req) => {
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('send-webhook-alert', requestId);
+  const responseHeaders = getResponseHeaders(req);
 
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);
@@ -42,7 +43,7 @@ serve(async (req) => {
 
     if (settingsError) throw settingsError;
 
-    const settings = settingsData?.setting_value as Record<string, unknown>;
+    const settings = (settingsData?.setting_value as Record<string, any>) || {};
 
     if (!settings?.enabled && req.method !== 'POST') {
       return new Response(
@@ -56,7 +57,7 @@ serve(async (req) => {
       const payload: AlertPayload = await req.json();
 
       // Check if at least one notification channel is enabled
-      const hasEmailChannel = settings?.enable_email && settings?.admin_emails?.length > 0;
+      const hasEmailChannel = settings?.enable_email && Array.isArray(settings?.admin_emails) && settings.admin_emails.length > 0;
       const hasSlackChannel = settings?.enable_slack && settings?.slack_webhook_url;
       const hasDiscordChannel = settings?.enable_discord && settings?.discord_webhook_url;
 
@@ -69,12 +70,13 @@ serve(async (req) => {
 
       // Check cooldown (except for test alerts)
       if (payload.type !== 'test') {
-        const cooldownMinutes = settings.cooldown_minutes || 30;
+        const cooldownMinutes = (settings.cooldown_minutes as number) || 30;
+        const cooldownMs = cooldownMinutes * 60 * 1000;
         const { data: recentAlert } = await supabase
           .from('audit_logs')
           .select('created_at')
           .eq('action', `webhook_alert_${payload.type}`)
-          .gte('created_at', new Date(Date.now() - cooldownMinutes * 60 * 1000).toISOString())
+          .gte('created_at', new Date(Date.now() - cooldownMs).toISOString())
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -102,9 +104,9 @@ serve(async (req) => {
       };
 
       // Send email alerts
-      if (hasEmailChannel) {
+      if (hasEmailChannel && Array.isArray(settings.admin_emails)) {
         const htmlContent = generateEmailHTML(payload, settings);
-        const emailPromises = settings.admin_emails.map((email: string) =>
+        const emailPromises = (settings.admin_emails as string[]).map((email: string) =>
           resend.emails.send({
             from: 'Webhook Monitor <alerts@resend.dev>',
             to: [email],
@@ -113,18 +115,18 @@ serve(async (req) => {
           })
         );
 
-        const emailResults = await Promise.allSettled(emailPromises);
-        results.email.sent = emailResults.filter(r => r.status === 'fulfilled').length;
-        results.email.failed = emailResults.filter(r => r.status === 'rejected').length;
+      const emailResults = await Promise.allSettled(emailPromises);
+      results.email.sent = emailResults.filter((r: PromiseSettledResult<any>) => r.status === 'fulfilled').length;
+      results.email.failed = emailResults.filter((r: PromiseSettledResult<any>) => r.status === 'rejected').length;
         logger.info('Email alerts sent', { 
           metadata: { sent: results.email.sent, failed: results.email.failed } 
         });
       }
 
       // Send Slack alert
-      if (hasSlackChannel) {
+      if (hasSlackChannel && typeof settings.slack_webhook_url === 'string') {
         try {
-          const slackPayload = generateSlackPayload(payload, settings);
+          const slackPayload = generateSlackPayload(payload, settings as any);
           const slackResponse = await fetch(settings.slack_webhook_url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -148,9 +150,9 @@ serve(async (req) => {
       }
 
       // Send Discord alert
-      if (hasDiscordChannel) {
+      if (hasDiscordChannel && typeof settings.discord_webhook_url === 'string') {
         try {
-          const discordPayload = generateDiscordPayload(payload, settings);
+          const discordPayload = generateDiscordPayload(payload, settings as any);
           const discordResponse = await fetch(settings.discord_webhook_url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -196,7 +198,7 @@ serve(async (req) => {
       let severity = 'info';
       if (payload.type === 'failure_rate' && (payload.failureRate || 0) > 50) {
         severity = 'critical';
-      } else if (payload.type === 'storage_spike' && (payload.storageFailures || 0) > settings.storage_failure_threshold * 2) {
+      } else if (payload.type === 'storage_spike' && (payload.storageFailures || 0) > ((settings.storage_failure_threshold as number) || 10) * 2) {
         severity = 'critical';
       } else if (payload.type !== 'test') {
         severity = 'warning';

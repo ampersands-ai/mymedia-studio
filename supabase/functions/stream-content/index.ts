@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
 
     // Create service client for storage operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const logger = new EdgeLogger('stream-content', requestId, supabase, false);
+    const streamLogger = new EdgeLogger('stream-content', requestId, supabase, false);
 
     const url = new URL(req.url);
     const bucket = url.searchParams.get("bucket") || "generated-content";
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     // 🔒 SECURITY: Validate bucket is allowed
     const allowedBuckets = ["generated-content", "generations", "storyboards"];
     if (!allowedBuckets.includes(bucket)) {
-      logger.warn("Unauthorized bucket access attempt", { metadata: { bucket, path, userId: user.id } });
+      streamLogger.warn("Unauthorized bucket access attempt", { metadata: { bucket, path, userId: user.id } });
       return new Response(JSON.stringify({ error: "Access denied to bucket" }), {
         status: 403,
         headers: { ...responseHeaders, "Content-Type": "application/json" },
@@ -72,20 +72,17 @@ Deno.serve(async (req) => {
 
     // For user-specific paths, verify ownership
     if (bucket === "generated-content" && !path.startsWith(`${user.id}/`)) {
-      logger.warn("Unauthorized path access attempt", { metadata: { bucket, path, userId: user.id } });
+      streamLogger.warn("Unauthorized path access attempt", { metadata: { bucket, path, userId: user.id } });
       return new Response(JSON.stringify({ error: "Access denied to this resource" }), {
         status: 403,
         headers: { ...responseHeaders, "Content-Type": "application/json" },
       });
     }
 
-    logger.debug('Stream request', { metadata: { bucket, path, userId: user.id, hasRange: !!req.headers.get("range") } });
+    streamLogger.debug('Stream request', { metadata: { bucket, path, userId: user.id, hasRange: !!req.headers.get("range") } });
 
     // Forward Range header for proper streaming support
     const range = req.headers.get("range");
-
-    const logger = new EdgeLogger('stream-content', requestId, supabase, false);
-    logger.debug('Stream request', { metadata: { bucket, path, hasRange: !!range } });
 
     // Create a short-lived signed URL to the file
     const { data, error } = await supabase.storage
@@ -93,7 +90,7 @@ Deno.serve(async (req) => {
       .createSignedUrl(path, 60); // 1 minute is enough for proxied fetch
 
     if (error || !data?.signedUrl) {
-      logger.error("Failed to create signed URL", error ?? undefined, { metadata: { bucket, path } });
+      streamLogger.error("Failed to create signed URL", error ?? undefined, { metadata: { bucket, path } });
       return new Response(JSON.stringify({ error: "File not found or not accessible" }), {
         status: 404,
         headers: { ...responseHeaders, "Content-Type": "application/json" },

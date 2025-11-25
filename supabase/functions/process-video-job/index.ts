@@ -408,7 +408,7 @@ async function _getBackgroundVideo(
     throw new Error(`Pixabay API error: ${response.status}`);
   }
   
-  if (!data.hits?.length) {
+  if (!data?.hits?.length) {
     throw new Error('No background videos found');
   }
 

@@ -3,6 +3,7 @@
  *
  * SECURITY: Replaces client-side admin SDK usage
  * Only accessible by users with admin role
+ * Updated: 2025-11-25 - Force redeploy for ALLOWED_ORIGINS
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';

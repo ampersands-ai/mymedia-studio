@@ -105,7 +105,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
 
         if (model) {
           models[step.step_number] = {
-            input_schema: model.SCHEMA,
+            input_schema: model.SCHEMA as any,
             max_images: model.MODEL_CONFIG.maxImages,
             content_type: model.MODEL_CONFIG.contentType as ContentType,
             provider: model.MODEL_CONFIG.provider
@@ -122,7 +122,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
   }, [workflow, open, initializeDefaults]);
 
   const handleInputChange = (fieldName: string, value: unknown) => {
-    setInputs(prev => ({ ...prev, [fieldName]: value }));
+    setInputs(prev => ({ ...prev, [fieldName]: value as WorkflowParameterValue }));
   };
 
   // Validate workflow - mirrors Custom Creation validation (lines 549-590)

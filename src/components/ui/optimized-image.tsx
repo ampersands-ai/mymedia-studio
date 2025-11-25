@@ -136,7 +136,7 @@ export const OptimizedImage = ({
             )}
             onLoad={() => setIsLoading(false)}
             onError={() => {
-              logger.error('Fallback image failed', { src: fallbackUrl });
+              logger.error('Fallback image failed', new Error(`Image failed: ${fallbackUrl}`));
               setIsLoading(false);
               setHasError(true);
             }}
@@ -173,7 +173,7 @@ export const OptimizedImage = ({
               )}
               onLoad={() => setIsLoading(false)}
               onError={() => {
-                logger.error('Optimized image load failed', { src: isSupabaseImage ? jpegUrl : src });
+                logger.error('Optimized image load failed', new Error(`Image failed: ${isSupabaseImage ? jpegUrl : src}`));
                 // Try fallback to public URL for Supabase images
                 if (isSupabaseImage && !fallbackUrl) {
                   logger.info('Falling back to public URL', { src });

@@ -78,7 +78,14 @@ export function ParameterDialog({
 
     if (enumList.length > 0) {
       const hasDefault = formData.default !== undefined && formData.default !== null && formData.default !== '';
-      if (hasDefault && !enumList.includes(formData.default)) {
+      if (hasDefault && Array.isArray(formData.default)) {
+        // For array defaults, check if all elements are in enum
+        const allValid = formData.default.every(v => enumList.includes(v as string | number));
+        if (!allValid) {
+          toast.error("All default values must be in enum options");
+          return;
+        }
+      } else if (hasDefault && !enumList.includes(formData.default as string | number)) {
         toast.error("Default value must be one of the enum options");
         return;
       }
@@ -94,7 +101,7 @@ export function ParameterDialog({
     const paramToSave: Parameter = {
       ...formData,
       label: formData.label || formatLabel(formData.name),
-      enum: enumList.length > 0 ? enumList : undefined,
+      enum: enumList.length > 0 ? (enumList.filter((v): v is string | number => typeof v === 'string' || typeof v === 'number')) : undefined,
     };
 
     onSave(paramToSave);
@@ -311,8 +318,8 @@ export function ParameterDialog({
                 value={formData.default !== undefined && formData.default !== null ? String(formData.default) : ''}
                 onChange={(e) => {
                   let value: string | number = e.target.value;
-                  if (formData.type === 'number') value = parseFloat(value);
-                  if (formData.type === 'integer') value = parseInt(value);
+                  if (formData.type === 'number') value = parseFloat(String(value));
+                  if (formData.type === 'integer') value = parseInt(String(value), 10);
                   setFormData({ ...formData, default: value });
                 }}
                 onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}

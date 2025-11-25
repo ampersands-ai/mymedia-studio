@@ -174,19 +174,24 @@ const CustomCreation = () => {
   useEffect(() => {
     if (!state.pollingGenerationId) return;
 
+    // Store channel reference for cleanup
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    // Capture the generation ID at effect creation time to avoid stale closures
+    const generationId = state.pollingGenerationId;
+
     const setupRealtimeAndCheckStatus = async () => {
-      logger.info('Setting up realtime subscription', { generationId: state.pollingGenerationId });
+      logger.info('Setting up realtime subscription', { generationId });
 
       // IMMEDIATE STATUS CHECK (fixes race condition for fast completions)
       const { data: currentGen } = await supabase
         .from('generations')
         .select('id, status, storage_path, is_batch_output, type, output_index, provider_response')
-        .eq('id', state.pollingGenerationId)
+        .eq('id', generationId)
         .single();
 
       if (currentGen?.status === 'completed') {
         logger.info('Generation already completed, handling immediately');
-        
+
         let outputs: GenerationOutput[] = [];
 
         // Handle batch outputs (multiple images/audio)
@@ -195,7 +200,7 @@ const CustomCreation = () => {
           const { data: children } = await supabase
             .from('generations')
             .select('id, storage_path, output_index, model_id, type, provider_task_id')
-            .eq('parent_generation_id', state.pollingGenerationId)
+            .eq('parent_generation_id', generationId)
             .order('output_index', { ascending: true });
 
           if (children && children.length > 0) {
@@ -304,15 +309,15 @@ const CustomCreation = () => {
       }
 
       // If not yet completed, set up realtime subscription
-      const channel = supabase
-        .channel(`generation-${state.pollingGenerationId}`)
+      channel = supabase
+        .channel(`generation-${generationId}`)
         .on(
           'postgres_changes',
           {
             event: 'UPDATE',
             schema: 'public',
             table: 'generations',
-            filter: `id=eq.${state.pollingGenerationId}`
+            filter: `id=eq.${generationId}`
           },
           async (payload) => {
             logger.info('Realtime update received', { payload });
@@ -321,17 +326,20 @@ const CustomCreation = () => {
 
             if (newStatus === 'completed') {
               logger.info('Generation completed via realtime');
-              
+
               // Stop polling
               stopPolling();
-              
+
+              // Use payload.new.id which is guaranteed to be correct
+              const completedGenerationId = payload.new.id;
+
               // Fetch the full generation data
               const { data: generationData } = await supabase
                 .from('generations')
                 .select('id, storage_path, output_index, type, is_batch_output')
-                .eq('id', state.pollingGenerationId)
+                .eq('id', completedGenerationId)
                 .single();
-              
+
               let outputs: GenerationOutput[] = [];
 
               // Handle batch outputs (multiple images/audio)
@@ -340,7 +348,7 @@ const CustomCreation = () => {
                 const { data: children } = await supabase
                   .from('generations')
                   .select('id, storage_path, output_index, model_id, type, provider_task_id')
-                  .eq('parent_generation_id', state.pollingGenerationId)
+                  .eq('parent_generation_id', completedGenerationId)
                   .order('output_index', { ascending: true });
 
                 if (children && children.length > 0) {
@@ -369,7 +377,7 @@ const CustomCreation = () => {
 
               if (outputs.length > 0) {
                 logger.info('Updating UI with realtime data', { outputs });
-                
+
                 // Update state immediately
                 updateState({
                   generatedOutputs: outputs,
@@ -380,20 +388,20 @@ const CustomCreation = () => {
                   pollingGenerationId: null,
                   parentGenerationId: generationData.id,
                 });
-                
+
                 // Update onboarding progress
                 if (progress && !progress.checklist.completedFirstGeneration) {
                   updateProgress({ completedFirstGeneration: true });
                   setFirstGeneration(generationData.id);
                 }
-                
+
                 // Auto-scroll to output on mobile
                 setTimeout(() => {
                   if (outputSectionRef.current && window.innerWidth < 1024) {
                     outputSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }
                 }, 300);
-                
+
       // Generate caption if enabled
       if (state.generateCaption && outputs.length > 0) {
         generateCaption(outputs);
@@ -454,14 +462,17 @@ const CustomCreation = () => {
           }
         )
         .subscribe();
-
-      return () => {
-        logger.info('Cleaning up realtime subscription');
-        supabase.removeChannel(channel);
-      };
     };
 
     setupRealtimeAndCheckStatus();
+
+    // Cleanup: remove channel when effect re-runs or component unmounts
+    return () => {
+      if (channel) {
+        logger.info('Cleaning up realtime subscription');
+        supabase.removeChannel(channel);
+      }
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.pollingGenerationId, stopPolling, updateState, progress, updateProgress, setFirstGeneration, state.generateCaption]);
 
